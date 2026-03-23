@@ -169,10 +169,15 @@ a{color:var(--cyan);text-decoration:none}
 .hero-card.go::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle,rgba(34,197,94,.06) 0%,transparent 60%);animation:heroPulse 4s ease-in-out infinite}
 @keyframes heroPulse{0%,100%{opacity:.5;transform:scale(.9)}50%{opacity:1;transform:scale(1.1)}}
 
-.hero-status{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px}
+.hero-status{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;display:flex;align-items:center;gap:8px}
 .hero-card.go .hero-status{color:var(--green)}
 .hero-card.maybe .hero-status{color:var(--yellow)}
 .hero-card.nogo .hero-status{color:var(--red)}
+.hero-status .hero-live{width:6px;height:6px;border-radius:50%;animation:livePulse 2s ease-in-out infinite}
+.hero-card.go .hero-live{background:var(--green)}
+.hero-card.maybe .hero-live{background:var(--yellow)}
+.hero-card.nogo .hero-live{background:var(--red)}
+@keyframes livePulse{0%,100%{opacity:1;box-shadow:0 0 0 0 currentColor}50%{opacity:.7;box-shadow:0 0 0 4px transparent}}
 
 .hero-main{display:flex;align-items:center;gap:14px;margin-bottom:8px}
 .hero-wind{font-size:2.8rem;font-weight:800;line-height:1;letter-spacing:-2px}
@@ -186,9 +191,25 @@ a{color:var(--cyan);text-decoration:none}
 .hero-dir{display:inline-flex;align-items:center;gap:3px}
 .hero-dir .wind-arrow{font-size:1rem;transition:transform .5s}
 
-.hero-window{font-size:.72rem;padding:5px 10px;border-radius:8px;background:rgba(255,255,255,.05);display:inline-flex;align-items:center;gap:5px}
+.hero-bottom{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.hero-window{font-size:.68rem;padding:5px 10px;border-radius:8px;background:rgba(255,255,255,.05);display:inline-flex;align-items:center;gap:5px}
 .hero-card.go .hero-window{color:var(--green)}
 .hero-card.maybe .hero-window{color:var(--yellow)}
+.hero-gear{font-size:.68rem;padding:5px 10px;border-radius:8px;background:rgba(6,182,212,.1);color:var(--cyan);display:inline-flex;align-items:center;gap:5px}
+.hero-share{background:none;border:1px solid var(--bg3);color:var(--muted);font-family:inherit;font-size:.68rem;padding:5px 10px;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;margin-left:auto;transition:all .15s}
+.hero-share:active{background:var(--cyan-glow);color:var(--cyan);transform:scale(.95)}
+.hero-countdown{font-size:.68rem;padding:5px 10px;border-radius:8px;background:rgba(234,179,8,.1);color:var(--yellow);display:inline-flex;align-items:center;gap:5px;font-variant-numeric:tabular-nums}
+
+/* Session timeline */
+.session-timeline{display:flex;gap:2px;margin-top:10px;height:20px;border-radius:6px;overflow:hidden;background:var(--bg)}
+.st-block{flex:1;position:relative;transition:all .2s;min-width:0}
+.st-block.st-go{background:rgba(34,197,94,.35)}
+.st-block.st-maybe{background:rgba(234,179,8,.2)}
+.st-block.st-no{background:rgba(148,163,184,.06)}
+.st-block.st-rain{background:rgba(59,130,246,.2)}
+.st-block.st-now{outline:2px solid var(--cyan);outline-offset:-1px;border-radius:3px;z-index:1}
+.st-block .st-label{position:absolute;bottom:-14px;left:50%;transform:translateX(-50%);font-size:.45rem;color:var(--dim);white-space:nowrap}
+.st-block .st-val{font-size:.5rem;font-weight:700;color:var(--text);text-align:center;line-height:20px;opacity:.8}
 
 /* ====== WEEK GRID ====== */
 .week-grid{margin-bottom:10px;background:var(--bg2);border:1px solid var(--bg3);border-radius:var(--radius);overflow:hidden}
@@ -222,6 +243,13 @@ a{color:var(--cyan);text-decoration:none}
 
 /* Distance badge */
 .dist-badge{font-size:.55rem;color:var(--dim);background:var(--bg);padding:2px 6px;border-radius:10px;margin-left:4px}
+
+/* Pull to refresh */
+.ptr-indicator{text-align:center;height:0;overflow:hidden;transition:height .2s;color:var(--cyan);font-size:.7rem;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px}
+.ptr-indicator.pulling{height:40px}
+.ptr-indicator.refreshing{height:40px}
+.ptr-indicator svg{width:16px;height:16px;transition:transform .2s}
+.ptr-indicator.refreshing svg{animation:spin .8s linear infinite}
 
 /* Bottom safe area padding */
 .content::after{content:'';display:block;height:var(--safe-bottom);min-height:8px}
@@ -265,6 +293,7 @@ a{color:var(--cyan);text-decoration:none}
 </nav>
 
 <main class="content">
+  <div class="ptr-indicator" id="ptrIndicator"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 10a7 7 0 0112.9-3.7M17 10a7 7 0 01-12.9 3.7"/><path d="M3 4v4h4M17 16v-4h-4" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="ptrText">Suelta para actualizar</span></div>
   <!-- SPOTS TAB -->
   <div class="tab-pane active" id="tab-spots">
     <div class="notif-banner" id="notifBanner" style="display:none">
@@ -604,7 +633,19 @@ function getNearbySpots() {
   return nearby.slice(0, 12); // max 12 nearby
 }
 
+// ========== GEAR RECOMMENDATION ==========
+function getGear(windKn) {
+  if (windKn >= 30) return { kite: '5-7m', board: 'Directional', icon: 'S' };
+  if (windKn >= 24) return { kite: '7-9m', board: 'TT / Surf', icon: 'M' };
+  if (windKn >= 18) return { kite: '9-12m', board: 'TT / Foil', icon: 'M' };
+  if (windKn >= 14) return { kite: '12-14m', board: 'TT / Foil', icon: 'L' };
+  if (windKn >= 10) return { kite: '14-17m', board: 'Foil', icon: 'XL' };
+  return { kite: 'Foil only', board: 'Foil', icon: '—' };
+}
+
 // ========== HERO CARD ==========
+let _countdownTimer = null;
+
 function renderHero() {
   const el = document.getElementById('heroCard');
   const nearby = getNearbySpots();
@@ -629,29 +670,110 @@ function renderHero() {
   const cls = st.status === 'green' ? 'go' : st.status === 'yellow' ? 'maybe' : 'nogo';
   const msg = st.label === 'Lluvia' ? 'LLUVIA' : st.status === 'green' ? 'SEND IT' : st.status === 'yellow' ? 'SE PUEDE' : 'ESPERA';
 
+  // Gear
+  const gear = getGear(wind);
+
+  // Window + countdown
   let windowHtml = '';
+  let countdownHtml = '';
   if (analysis.bestWindow) {
-    windowHtml = `<div class="hero-window"><svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><path d="M8 4v4l3 2"/></svg> ${analysis.bestWindow.label} &middot; ${analysis.bestWindow.detail}</div>`;
+    const bw = analysis.bestWindow;
+    windowHtml = `<div class="hero-window"><svg viewBox="0 0 16 16" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><path d="M8 4v4l3 2"/></svg>${bw.label} · ${bw.detail}</div>`;
+    if (bw.hoursFromNow > 0) {
+      countdownHtml = `<div class="hero-countdown" id="heroCountdown" data-target="${bw.start.toISOString()}"><svg viewBox="0 0 16 16" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 3v5l3 2"/><circle cx="8" cy="8" r="6.5"/></svg>en ${formatCountdown(bw.start)}</div>`;
+    }
   }
+
+  // Session timeline (today 10-20h)
+  let timelineHtml = buildSessionTimeline(best, d);
 
   el.className = 'hero-card ' + cls;
   el.innerHTML = `
-    <div class="hero-status">${msg}</div>
+    <div class="hero-status"><span class="hero-live"></span>${msg}</div>
     <div class="hero-main">
       <div><div class="hero-wind">${Math.round(wind)}</div><div class="hero-unit">kn</div></div>
       <div class="hero-info">
         <div class="hero-spot">${best.name}</div>
         <div class="hero-meta">
           <span class="hero-dir"><span class="wind-arrow" style="transform:rotate(${dir+180}deg)">&#8593;</span> ${degToCompass(dir)}</span>
-          &middot; Rafaga ${Math.round(gust)}kn
-          ${wave != null ? '&middot; Olas '+wave.toFixed(1)+'m' : ''}
-          ${dist != null ? '&middot; '+dist+'km' : ''}
-          ${rain > 0.5 ? '&middot; <span style="color:#3b82f6">'+rain.toFixed(1)+'mm/h</span>' : ''}
-          ${temp != null && temp < 10 ? '&middot; <span style="color:#94a3b8">'+Math.round(temp)+'°C</span>' : ''}
+          · Rafaga ${Math.round(gust)}kn
+          ${wave != null ? '· Olas '+wave.toFixed(1)+'m' : ''}
+          ${dist != null ? '· '+dist+'km' : ''}
+          ${rain > 0.5 ? '· <span style="color:#3b82f6">'+rain.toFixed(1)+'mm</span>' : ''}
+          ${temp != null ? '· '+Math.round(temp)+'°C' : ''}
         </div>
       </div>
     </div>
-    ${windowHtml}`;
+    <div class="hero-bottom">
+      ${windowHtml}${countdownHtml}
+      <div class="hero-gear"><svg viewBox="0 0 16 16" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 14C2 8 8 2 14 2"/><circle cx="5" cy="11" r="2"/></svg>${gear.kite}</div>
+      <button class="hero-share" onclick="shareSpot('${best.id}')"><svg viewBox="0 0 16 16" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 8h8M12 8l-3-3M12 8l-3 3"/></svg>Enviar</button>
+    </div>
+    ${timelineHtml}`;
+
+  // Start countdown updates
+  if (_countdownTimer) clearInterval(_countdownTimer);
+  if (analysis.bestWindow?.hoursFromNow > 0) {
+    _countdownTimer = setInterval(() => {
+      const cdEl = document.getElementById('heroCountdown');
+      if (!cdEl) { clearInterval(_countdownTimer); return; }
+      const target = new Date(cdEl.dataset.target);
+      cdEl.querySelector('svg').nextSibling.textContent = 'en ' + formatCountdown(target);
+    }, 60000);
+  }
+}
+
+function formatCountdown(target) {
+  const diff = target - new Date();
+  if (diff <= 0) return 'ahora';
+  const h = Math.floor(diff / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  if (h > 24) return Math.floor(h/24) + 'd ' + (h%24) + 'h';
+  if (h > 0) return h + 'h ' + m + 'min';
+  return m + 'min';
+}
+
+function buildSessionTimeline(spot, d) {
+  if (!d?.wind?.hourly) return '';
+  const now = new Date();
+  const today = now.toDateString();
+  const times = d.wind.hourly.time;
+  const blocks = [];
+  for (let i = 0; i < times.length; i++) {
+    const dt = new Date(times[i]);
+    if (dt.toDateString() !== today) { if (blocks.length > 0) break; continue; }
+    const hr = dt.getHours();
+    if (hr < 10 || hr > 20) continue;
+    const w = d.wind.hourly.wind_speed_10m[i];
+    const rn = d.wind.hourly.precipitation?.[i] || 0;
+    const isNow = hr === now.getHours();
+    const good = w >= spot.windMin && w <= spot.windMax && rn < 2;
+    const maybe = w >= 8 && w <= 35 && rn < 2;
+    const rain = rn >= 2;
+    let cls = rain ? 'st-rain' : good ? 'st-go' : maybe ? 'st-maybe' : 'st-no';
+    if (isNow) cls += ' st-now';
+    const showLabel = hr % 3 === 1 || hr === 10 || hr === 20;
+    blocks.push(`<div class="st-block ${cls}" title="${hr}h: ${Math.round(w)}kn"><div class="st-val">${Math.round(w)}</div>${showLabel ? '<div class="st-label">'+hr+'h</div>' : ''}</div>`);
+  }
+  if (!blocks.length) return '';
+  return `<div class="session-timeline">${blocks.join('')}</div>`;
+}
+
+function shareSpot(spotId) {
+  const spot = SPOTS.find(s => s.id === spotId);
+  const d = spotData[spotId];
+  const st = getSpotStatus(spot);
+  const wind = d?.wind?.current?.wind_speed_10m ?? 0;
+  const dir = d?.wind?.current?.wind_direction_10m ?? 0;
+  const status = st.label;
+  const text = `${spot.name}: ${Math.round(wind)}kn ${degToCompass(dir)} (${status}) — cussen.cl/wind`;
+  if (navigator.share) {
+    navigator.share({ title: 'KiteSpot', text }).catch(() => {});
+  } else {
+    navigator.clipboard?.writeText(text);
+    const btn = document.querySelector('.hero-share');
+    if (btn) { btn.textContent = 'Copiado'; setTimeout(() => { btn.innerHTML = '<svg viewBox="0 0 16 16" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 8h8M12 8l-3-3M12 8l-3 3"/></svg>Enviar'; }, 2000); }
+  }
 }
 
 // ========== WEEK GRID ==========
@@ -1078,6 +1200,29 @@ async function init() {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(() => {});
   }
+
+  // Pull to refresh
+  let _ptrStart = 0, _ptrActive = false;
+  const ptrEl = document.getElementById('ptrIndicator');
+  document.addEventListener('touchstart', e => {
+    if (window.scrollY === 0) { _ptrStart = e.touches[0].clientY; _ptrActive = true; }
+  }, { passive: true });
+  document.addEventListener('touchmove', e => {
+    if (!_ptrActive) return;
+    const dy = e.touches[0].clientY - _ptrStart;
+    if (dy > 30 && dy < 120) { ptrEl.classList.add('pulling'); ptrEl.classList.remove('refreshing'); }
+  }, { passive: true });
+  document.addEventListener('touchend', async () => {
+    if (ptrEl.classList.contains('pulling')) {
+      ptrEl.classList.remove('pulling');
+      ptrEl.classList.add('refreshing');
+      document.getElementById('ptrText').textContent = 'Actualizando...';
+      await refreshData();
+      ptrEl.classList.remove('refreshing');
+      document.getElementById('ptrText').textContent = 'Suelta para actualizar';
+    }
+    _ptrActive = false;
+  });
 }
 
 init();
