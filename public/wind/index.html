@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>KiteSpot Chile — Condiciones de kitesurf en tiempo real</title>
+<meta name="description" content="Consulta el viento, oleaje y condiciones de kitesurf en los mejores spots de Chile. Dashboard en tiempo real con semaforo, mapa y alertas.">
+<meta name="theme-color" content="#06b6d4">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<meta property="og:title" content="KiteSpot Chile">
+<meta property="og:description" content="Condiciones de kitesurf en tiempo real para spots de Chile">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://cussen.cl/wind/">
+<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0f172a;--bg2:#1e293b;--bg3:#334155;
+  --text:#e2e8f0;--muted:#94a3b8;--dim:#64748b;
+  --cyan:#06b6d4;--cyan2:#0891b2;--cyan-glow:rgba(6,182,212,.15);
+  --orange:#f97316;--orange2:#ea580c;
+  --green:#22c55e;--yellow:#eab308;--red:#ef4444;
+  --radius:14px;--radius-sm:10px;
+  --header-h:44px;--nav-h:40px;
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+}
+html{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%;-webkit-font-smoothing:antialiased}
+body{min-height:100vh;min-height:100dvh;overflow-x:hidden;overscroll-behavior-y:contain}
+a{color:var(--cyan);text-decoration:none}
+
+/* Header — compact */
+.header{position:sticky;top:0;z-index:100;background:rgba(15,23,42,.88);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid rgba(148,163,184,.08);padding:8px 12px;padding-top:calc(8px + var(--safe-top));height:calc(var(--header-h) + var(--safe-top));display:flex;align-items:center;justify-content:space-between}
+.header-left{display:flex;align-items:center;gap:8px}
+.logo{font-size:1.1rem;font-weight:800;background:linear-gradient(135deg,var(--cyan),var(--orange));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.location-badge{font-size:.68rem;color:var(--muted);background:var(--bg2);padding:3px 8px;border-radius:20px;display:flex;align-items:center;gap:4px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn-icon{background:none;border:none;color:var(--muted);cursor:pointer;padding:8px;border-radius:8px;transition:all .2s;min-width:36px;min-height:36px;display:flex;align-items:center;justify-content:center}
+.btn-icon:active{color:var(--cyan);background:var(--cyan-glow);transform:scale(.92)}
+.btn-icon.spinning svg{animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Nav — horizontal, compact */
+.nav{position:sticky;top:calc(var(--header-h) + var(--safe-top));z-index:99;background:rgba(15,23,42,.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);display:flex;border-bottom:1px solid rgba(148,163,184,.06);height:var(--nav-h)}
+.tab-btn{flex:1;background:none;border:none;color:var(--dim);font-family:inherit;font-size:.65rem;font-weight:600;padding:0;cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;letter-spacing:.4px;text-transform:uppercase;min-height:var(--nav-h);-webkit-tap-highlight-color:transparent}
+.ico-tab{width:16px;height:16px;flex-shrink:0}
+.ico-inline{width:11px;height:11px;vertical-align:-1px}
+.ico-btn{width:16px;height:16px}
+.ico-empty{width:40px;height:40px;margin-bottom:10px;opacity:.3}
+.tab-btn.active{color:var(--cyan);border-bottom-color:var(--cyan)}
+.tab-btn:active{color:var(--text);transform:scale(.95)}
+
+/* Content — edge-to-edge on mobile */
+.content{max-width:720px;margin:0 auto;padding:8px}
+.tab-pane{display:none}
+.tab-pane.active{display:block}
+
+/* Cards — tighter, touch-optimized */
+.spot-list{display:flex;flex-direction:column;gap:8px}
+.spot-card{background:var(--bg2);border:1px solid var(--bg3);border-radius:var(--radius);padding:12px;cursor:pointer;transition:all .15s;animation:fadeUp .3s ease both;-webkit-tap-highlight-color:transparent;will-change:transform}
+.spot-card:active{transform:scale(.985);background:rgba(30,41,59,.8)}
+.spot-card.status-green{border-left:3px solid var(--green)}
+.spot-card.status-yellow{border-left:3px solid var(--yellow)}
+.spot-card.status-red{border-left:3px solid var(--red)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px}
+.spot-name{font-size:.88rem;font-weight:700;line-height:1.2}
+.spot-region{font-size:.65rem;color:var(--muted);margin-top:1px}
+.card-top-right{display:flex;align-items:center;gap:6px}
+.status-badge{font-size:.6rem;font-weight:700;padding:3px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:.5px}
+.status-badge.green{background:rgba(34,197,94,.15);color:var(--green)}
+.status-badge.yellow{background:rgba(234,179,8,.15);color:var(--yellow)}
+.status-badge.red{background:rgba(239,68,68,.15);color:var(--red)}
+.fav-btn{background:none;border:none;cursor:pointer;padding:6px;opacity:.35;transition:all .15s;min-width:28px;min-height:28px;display:flex;align-items:center;justify-content:center;border-radius:6px;-webkit-tap-highlight-color:transparent}
+.fav-btn:active{transform:scale(.85)}
+.fav-btn.active{opacity:1;color:var(--cyan)}
+
+.card-data{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:6px}
+.data-item{text-align:center}
+.data-label{font-size:.55rem;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;margin-bottom:1px}
+.data-value{font-size:.95rem;font-weight:700}
+.data-unit{font-size:.6rem;color:var(--muted);font-weight:500}
+.wind-arrow{display:inline-block;transition:transform .3s}
+
+/* Forecast strip — momentum scroll */
+.card-forecast{display:flex;gap:3px;overflow-x:auto;-ms-overflow-style:none;scrollbar-width:none;padding:3px 0;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}
+.card-forecast::-webkit-scrollbar{display:none}
+.fc-hour{flex:0 0 auto;text-align:center;padding:3px 5px;border-radius:6px;background:var(--bg);min-width:38px;scroll-snap-align:start}
+.fc-hour .fc-time{font-size:.5rem;color:var(--dim);margin-bottom:1px}
+.fc-hour .fc-wind{font-size:.7rem;font-weight:700}
+.fc-hour .fc-arrow{font-size:.6rem;color:var(--dim)}
+.fc-hour.fc-green .fc-wind{color:var(--green)}
+.fc-hour.fc-yellow .fc-wind{color:var(--yellow)}
+.fc-hour.fc-red .fc-wind{color:var(--red)}
+
+/* Expanded card detail */
+.card-detail{display:none;margin-top:8px;padding-top:8px;border-top:1px solid var(--bg3)}
+.spot-card.expanded .card-detail{display:block}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px}
+.detail-item{background:var(--bg);border-radius:var(--radius-sm);padding:8px;text-align:center}
+.detail-item .data-label{margin-bottom:3px}
+.detail-item .data-value{font-size:1.05rem}
+.chart-wrap{height:150px;position:relative;margin-top:6px}
+
+
+/* 7-day forecast in spot cards */
+.fc-days{margin-bottom:8px}
+.fc-day-row{margin-bottom:6px}
+.fc-day-label{font-size:.55rem;color:var(--cyan);font-weight:600;text-transform:uppercase;margin-bottom:3px}
+.fc-day-hours{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.fc-day-hours::-webkit-scrollbar{display:none}
+.fc-day-item{flex:0 0 auto;text-align:center;min-width:30px;padding:3px 2px;border-radius:5px;background:var(--bg)}
+.fc-day-item .fc-time{font-size:.45rem;color:var(--dim)}
+.fc-day-item .fc-wind{font-size:.65rem;font-weight:700}
+.fc-day-item .fc-arrow{font-size:.5rem;color:var(--dim)}
+.fc-day-item.dg .fc-wind{color:var(--green)}
+.fc-day-item.dy .fc-wind{color:var(--yellow)}
+.fc-day-item.dr .fc-wind{color:var(--red)}
+.fc-day-item.fc-rain{background:rgba(59,130,246,.2)}
+.fc-day-item.fc-rain .fc-time{color:#3b82f6}
+.fc-day-item.fc-cold .fc-time{color:#94a3b8}
+.fc-day-summary{display:flex;align-items:center;gap:6px;font-size:.6rem;color:var(--muted);margin-top:2px}
+.fc-day-summary .best{color:var(--green);font-weight:700}
+
+/* Best moment + week score */
+.best-moment{font-size:.7rem;padding:6px 10px;border-radius:8px;margin-bottom:6px;display:flex;align-items:center;gap:6px;line-height:1.3}
+.best-moment.has-window{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.2);color:var(--green)}
+.best-moment.no-window{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.15);color:var(--red)}
+.best-moment .bm-icon{font-size:.85rem;flex-shrink:0}
+.best-moment .bm-text{flex:1}
+.best-moment .bm-when{font-weight:700}
+.week-dots{display:flex;gap:3px;margin-left:auto}
+.week-dot{width:8px;height:8px;border-radius:50%;background:var(--bg3)}
+.week-dot.wd-green{background:var(--green)}
+.week-dot.wd-yellow{background:var(--yellow)}
+.week-dot.wd-red{background:var(--red)}
+
+/* Empty states */
+.empty-state{text-align:center;padding:48px 20px;color:var(--muted)}
+.empty-state svg{display:block;margin:0 auto}
+.empty-state p{font-size:.82rem;line-height:1.5}
+
+
+/* Notification permission banner */
+.notif-banner{background:linear-gradient(135deg,rgba(6,182,212,.08),rgba(249,115,22,.08));border:1px solid rgba(6,182,212,.3);border-radius:var(--radius);padding:12px;margin-bottom:10px;display:flex;align-items:center;gap:10px}
+.notif-banner p{font-size:.75rem;flex:1;line-height:1.4}
+.notif-banner .btn-sm{background:var(--cyan);color:var(--bg);border:none;font-family:inherit;font-size:.72rem;font-weight:600;padding:8px 14px;border-radius:8px;cursor:pointer;white-space:nowrap}
+
+/* Updated timestamp */
+.updated{text-align:center;font-size:.6rem;color:var(--dim);padding:6px;margin-top:2px}
+
+/* Loading */
+.loading{text-align:center;padding:48px 20px;color:var(--muted)}
+.loading .spinner{width:32px;height:32px;border:2.5px solid var(--bg3);border-top-color:var(--cyan);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
+.load-progress{font-size:.7rem;color:var(--cyan);font-weight:600;margin-top:6px}
+
+/* ====== HERO CARD ====== */
+.hero-card{border-radius:16px;padding:20px 16px;margin-bottom:10px;position:relative;overflow:hidden;min-height:80px}
+.hero-loading{display:flex;align-items:center;justify-content:center;height:80px}
+.hero-card.go{background:linear-gradient(135deg,rgba(34,197,94,.15),rgba(6,182,212,.1));border:1px solid rgba(34,197,94,.25)}
+.hero-card.maybe{background:linear-gradient(135deg,rgba(234,179,8,.12),rgba(249,115,22,.08));border:1px solid rgba(234,179,8,.2)}
+.hero-card.nogo{background:linear-gradient(135deg,rgba(239,68,68,.1),rgba(148,163,184,.05));border:1px solid rgba(239,68,68,.15)}
+.hero-card.go::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle,rgba(34,197,94,.06) 0%,transparent 60%);animation:heroPulse 4s ease-in-out infinite}
+@keyframes heroPulse{0%,100%{opacity:.5;transform:scale(.9)}50%{opacity:1;transform:scale(1.1)}}
+
+.hero-status{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px}
+.hero-card.go .hero-status{color:var(--green)}
+.hero-card.maybe .hero-status{color:var(--yellow)}
+.hero-card.nogo .hero-status{color:var(--red)}
+
+.hero-main{display:flex;align-items:center;gap:14px;margin-bottom:8px}
+.hero-wind{font-size:2.8rem;font-weight:800;line-height:1;letter-spacing:-2px}
+.hero-card.go .hero-wind{color:var(--green)}
+.hero-card.maybe .hero-wind{color:var(--yellow)}
+.hero-card.nogo .hero-wind{color:var(--text)}
+.hero-unit{font-size:.7rem;color:var(--muted);font-weight:500}
+.hero-info{flex:1}
+.hero-spot{font-size:1rem;font-weight:700;margin-bottom:2px}
+.hero-meta{font-size:.68rem;color:var(--muted);line-height:1.4}
+.hero-dir{display:inline-flex;align-items:center;gap:3px}
+.hero-dir .wind-arrow{font-size:1rem;transition:transform .5s}
+
+.hero-window{font-size:.72rem;padding:5px 10px;border-radius:8px;background:rgba(255,255,255,.05);display:inline-flex;align-items:center;gap:5px}
+.hero-card.go .hero-window{color:var(--green)}
+.hero-card.maybe .hero-window{color:var(--yellow)}
+
+/* ====== WEEK GRID ====== */
+.week-grid{margin-bottom:10px;background:var(--bg2);border:1px solid var(--bg3);border-radius:var(--radius);overflow:hidden}
+.wg-header{display:flex;border-bottom:1px solid var(--bg3)}
+.wg-header .wg-label{flex:0 0 100px;padding:6px 8px;font-size:.55rem;font-weight:600;color:var(--dim);text-transform:uppercase}
+.wg-header .wg-day{flex:1;text-align:center;padding:6px 2px;font-size:.55rem;font-weight:600;color:var(--muted)}
+.wg-header .wg-day.today{color:var(--cyan)}
+.wg-row{display:flex;border-bottom:1px solid rgba(51,65,85,.4);transition:background .15s}
+.wg-row:last-child{border-bottom:none}
+.wg-row:active{background:rgba(6,182,212,.05)}
+.wg-row .wg-label{flex:0 0 100px;padding:5px 8px;font-size:.62rem;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:3px}
+.wg-km{font-size:.45rem;color:var(--dim);font-weight:400}
+.wg-row .wg-cell{flex:1;display:flex;align-items:center;justify-content:center;padding:5px 1px;position:relative}
+.wg-dot{width:10px;height:10px;border-radius:50%;transition:transform .2s}
+.wg-dot.wg-go{background:var(--green);box-shadow:0 0 6px rgba(34,197,94,.4)}
+.wg-dot.wg-maybe{background:var(--yellow);box-shadow:0 0 4px rgba(234,179,8,.3)}
+.wg-dot.wg-no{background:var(--bg3)}
+.wg-dot.wg-rain{outline:2px solid #3b82f6;outline-offset:1px}
+.wg-dot.wg-cold{outline:2px solid #94a3b8;outline-offset:1px}
+.wg-dot.wg-rain.wg-cold{outline-color:#60a5fa}
+.wg-cell:hover .wg-dot{transform:scale(1.4)}
+.wg-peak{font-size:.5rem;color:var(--dim);position:absolute;bottom:1px}
+
+/* Search mini */
+.spot-list-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding:0 2px}
+.spot-list-header>span{font-size:.7rem;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.5px}
+.search-wrap-mini{display:flex;align-items:center;gap:4px;background:var(--bg2);border:1px solid var(--bg3);border-radius:8px;padding:4px 8px}
+.search-wrap-mini svg{color:var(--dim);flex-shrink:0}
+.search-wrap-mini input{background:none;border:none;color:var(--text);font-family:inherit;font-size:.72rem;outline:none;width:80px}
+.search-wrap-mini input::placeholder{color:var(--dim)}
+
+/* Distance badge */
+.dist-badge{font-size:.55rem;color:var(--dim);background:var(--bg);padding:2px 6px;border-radius:10px;margin-left:4px}
+
+/* Bottom safe area padding */
+.content::after{content:'';display:block;height:var(--safe-bottom);min-height:8px}
+
+/* Desktop */
+@media(min-width:640px){
+  .header{padding:10px 20px}
+  .content{padding:16px}
+  .card-data{grid-template-columns:repeat(5,1fr)}
+  .spot-card{padding:16px}
+  .spot-card:hover{border-color:var(--cyan);transform:translateY(-1px)}
+  .spot-name{font-size:.95rem}
+  .data-value{font-size:1.05rem}
+}
+
+/* Small phones */
+@media(max-width:360px){
+  .spot-name{font-size:.8rem}
+  .data-value{font-size:.85rem}
+  .tab-btn{font-size:.6rem}
+  .status-badge{font-size:.55rem;padding:2px 6px}
+  .fc-hour{min-width:34px;padding:2px 4px}
+  .content{padding:6px}
+}
+
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-left">
+    <span class="logo">KiteSpot</span>
+    <span class="location-badge" id="locationBadge"><svg class="ico-inline" viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="6" r="2.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1C5.2 1 3 3.2 3 6c0 3.5 5 8.5 5 8.5s5-5 5-8.5C13 3.2 10.8 1 8 1z" fill="none" stroke="currentColor" stroke-width="1.5"/></svg> Localizando...</span>
+  </div>
+  <button class="btn-icon" id="refreshBtn" onclick="refreshData()" title="Actualizar"><svg class="ico-btn" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 10a7 7 0 0112.9-3.7M17 10a7 7 0 01-12.9 3.7"/><path d="M3 4v4h4M17 16v-4h-4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+</header>
+
+<nav class="nav">
+  <button class="tab-btn active" onclick="showTab('spots',this)"><svg class="ico-tab" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2l4 8-4 8-4-8z"/><path d="M3 7h4M3 11h3M13 7h4M14 11h3" stroke-linecap="round" opacity=".5"/></svg>SPOTS</button>
+  <button class="tab-btn" onclick="showTab('favs',this)"><svg class="ico-tab" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2l2.5 5 5.5.8-4 3.9.9 5.3L10 14.5 5.1 17l.9-5.3-4-3.9 5.5-.8z"/></svg>FAVS</button>
+</nav>
+
+<main class="content">
+  <!-- SPOTS TAB -->
+  <div class="tab-pane active" id="tab-spots">
+    <div class="notif-banner" id="notifBanner" style="display:none">
+      <p>Activa notificaciones para saber cuando un spot se pone bueno</p>
+      <button class="btn-sm" onclick="requestNotifPermission()">Activar</button>
+    </div>
+    <!-- Hero recommendation -->
+    <div id="heroCard" class="hero-card">
+      <div class="hero-loading"><div class="spinner"></div></div>
+    </div>
+    <!-- Week grid -->
+    <div id="weekGrid" class="week-grid"></div>
+    <!-- Spot list -->
+    <div class="spot-list-header">
+      <span>Spots cercanos</span>
+      <div class="search-wrap-mini">
+        <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8.5" cy="8.5" r="6"/><path d="M13 13l5 5" stroke-linecap="round"/></svg>
+        <input type="text" id="searchInput" placeholder="Buscar..." oninput="filterSpots()">
+      </div>
+    </div>
+    <div class="spot-list" id="spotList"></div>
+    <div class="updated" id="updatedTime"></div>
+  </div>
+
+  <!-- FAVORITES TAB -->
+  <div class="tab-pane" id="tab-favs">
+    <div class="spot-list" id="favList">
+      <div class="empty-state"><svg class="ico-empty" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 4l5 10 11 1.6-8 7.8 1.9 11L20 29l-9.9 5.4L12 23.4l-8-7.8L15 14z"/></svg><p>Toca la estrella en cualquier spot para agregarlo a favoritos</p></div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ========== SPOTS DATABASE ==========
+const SPOTS = [
+  { id:'matanzas', name:'Matanzas', region:'O\'Higgins', lat:-33.96, lon:-71.87, windMin:15, windMax:25, idealDir:[180,225,247], level:'Intermedio-Avanzado', desc:'Olas y viento side-shore consistente. El spot mas famoso de Chile.' },
+  { id:'pichilemu', name:'Pichilemu (La Puntilla)', region:'O\'Higgins', lat:-34.39, lon:-72.00, windMin:12, windMax:25, idealDir:[202,225,247], level:'Todos', desc:'Agua plana en la puntilla, ideal para freestyle y principiantes.' },
+  { id:'ritoque', name:'Ritoque', region:'Valparaiso', lat:-32.83, lon:-71.53, windMin:15, windMax:30, idealDir:[180,225,247], level:'Intermedio', desc:'Playa larga con viento termal potente en verano.' },
+  { id:'laboca', name:'La Boca (Concon)', region:'Valparaiso', lat:-32.92, lon:-71.53, windMin:12, windMax:25, idealDir:[202,225,247], level:'Todos', desc:'Desembocadura del rio Aconcagua. Agua plana y accesible.' },
+  { id:'tongoy', name:'Tongoy', region:'Coquimbo', lat:-30.26, lon:-71.50, windMin:15, windMax:30, idealDir:[180,202,225], level:'Intermedio', desc:'Bahia con viento constante y aguas mas calidas.' },
+  { id:'maitencillo', name:'Maitencillo', region:'Valparaiso', lat:-32.65, lon:-71.44, windMin:12, windMax:25, idealDir:[202,225,247], level:'Todos', desc:'Playa accesible con buen viento de tarde.' },
+  { id:'algarrobo', name:'Algarrobo', region:'Valparaiso', lat:-33.36, lon:-71.68, windMin:12, windMax:20, idealDir:[202,225,270], level:'Principiante', desc:'Bahia protegida con agua mas calma. Ideal para aprender.' },
+  { id:'elyali', name:'El Yali', region:'Valparaiso', lat:-33.75, lon:-71.70, windMin:15, windMax:25, idealDir:[202,225,247], level:'Intermedio', desc:'Spot tranquilo sin crowds, viento side-shore.' },
+  { id:'cachagua', name:'Cachagua', region:'Valparaiso', lat:-32.58, lon:-71.45, windMin:12, windMax:25, idealDir:[202,225,247], level:'Todos', desc:'Playa amplia con condiciones variables.' },
+  { id:'laserena', name:'La Serena (El Faro)', region:'Coquimbo', lat:-29.91, lon:-71.27, windMin:15, windMax:30, idealDir:[180,202], level:'Intermedio-Avanzado', desc:'Viento fuerte y constante. Uno de los spots mas ventosos.' },
+  { id:'iquique', name:'Iquique (Playa Brava)', region:'Tarapaca', lat:-20.22, lon:-70.15, windMin:12, windMax:25, idealDir:[180,202,225], level:'Intermedio', desc:'Viento termal del desierto. Navegable casi todo el ano.' },
+  { id:'arica', name:'Arica (Chinchorro)', region:'Arica y Parinacota', lat:-18.48, lon:-70.33, windMin:12, windMax:20, idealDir:[180,202,225], level:'Todos', desc:'El spot mas al norte. Agua tibia y viento suave.' },
+  // Zona Sur + Lagos (coords from kitetrip)
+  { id:'pucon', name:'Pucon (Lago Villarrica)', region:'Araucania', lat:-39.27, lon:-71.97, windMin:10, windMax:22, idealDir:[270,292,315], level:'Todos', desc:'Lago Villarrica con viento termal de montana. Agua dulce, paisaje volcanico.' },
+  { id:'llanquihue', name:'Playa Wiehoff (Llanquihue)', region:'Los Lagos', lat:-41.25, lon:-73.00, windMin:10, windMax:22, idealDir:[270,292,315,225], level:'Todos', desc:'Playa de la ciudad de Llanquihue. Flat water, vista al Osorno y Calbuco.' },
+  { id:'ptovaras', name:'Puerto Varas', region:'Los Lagos', lat:-41.32, lon:-72.98, windMin:10, windMax:22, idealDir:[270,292,315], level:'Todos', desc:'Costanera del lago Llanquihue. Viento termal de tarde, agua plana.' },
+  { id:'ensenada', name:'Ensenada', region:'Los Lagos', lat:-41.19, lon:-72.53, windMin:12, windMax:25, idealDir:[270,247,225], level:'Todos', desc:'Orilla oriente del Llanquihue. Viento canalizado, flat water.' },
+  { id:'ptooctay', name:'Puerto Octay', region:'Los Lagos', lat:-40.98, lon:-72.90, windMin:10, windMax:22, idealDir:[180,202,225], level:'Todos', desc:'Costa norte del Llanquihue. Flat water, menos crowds.' },
+  { id:'eldaddy', name:'El Daddy (Rio San Nicolas)', region:'Los Lagos', lat:-41.656, lon:-73.657, windMin:12, windMax:25, idealDir:[270,292,315], level:'Intermedio', desc:'Desembocadura rio San Nicolas. Flat water poco profundo, spot local.' },
+  { id:'amortajado', name:'Amortajado', region:'Los Lagos', lat:-41.636, lon:-73.669, windMin:15, windMax:30, idealDir:[270,292,315], level:'Avanzado', desc:'Costa del Pacifico. Olas y viento fuerte, solo expertos.' },
+  { id:'puelo', name:'Puelo (Estuario Reloncavi)', region:'Los Lagos', lat:-41.675, lon:-72.356, windMin:12, windMax:25, idealDir:[270,247,292], level:'Intermedio', desc:'Estuario del Reloncavi. Flat to chop, paisaje espectacular.' },
+  { id:'ancud', name:'Ancud (Piedra Run)', region:'Los Lagos', lat:-41.921, lon:-74.007, windMin:12, windMax:25, idealDir:[270,292,315], level:'Intermedio', desc:'Costa Pacifico de Chiloe. Olas y viento oceanico.' },
+  { id:'carelmapu', name:'Carelmapu', region:'Los Lagos', lat:-41.74, lon:-73.71, windMin:15, windMax:30, idealDir:[270,292,315], level:'Avanzado', desc:'Mar abierto frente a Chiloe. Oleaje fuerte, viento potente.' },
+  { id:'llicobajo', name:'Llico Bajo', region:'Los Lagos', lat:-41.284, lon:-73.843, windMin:12, windMax:25, idealDir:[270,292,315], level:'Intermedio', desc:'Playa y desembocadura de rio. Beach break con viento side-shore.' },
+  { id:'puertomontt', name:'Puerto Montt (Pelluco)', region:'Los Lagos', lat:-41.49, lon:-72.88, windMin:10, windMax:20, idealDir:[270,292,315], level:'Todos', desc:'Bahia protegida en el seno de Reloncavi. Agua salada, mareas moderadas.' },
+  // Costa Sur
+  { id:'pucatrihue', name:'Pucatrihue', region:'Los Rios', lat:-40.53, lon:-73.72, windMin:15, windMax:30, idealDir:[225,247,270], level:'Avanzado', desc:'Playa oceanica expuesta. Olas grandes y viento fuerte, solo expertos.' },
+  { id:'mehuin', name:'Mehuin', region:'Los Rios', lat:-39.43, lon:-73.22, windMin:12, windMax:25, idealDir:[225,247,270], level:'Intermedio', desc:'Desembocadura del rio Lingue. Mix de olas y flat water.' },
+  { id:'lebu', name:'Lebu', region:'Biobio', lat:-37.61, lon:-73.66, windMin:15, windMax:30, idealDir:[202,225,247], level:'Intermedio-Avanzado', desc:'Costa del carbon. Viento fuerte y consistente, olas potentes.' },
+  { id:'dichato', name:'Dichato', region:'Biobio', lat:-36.55, lon:-72.93, windMin:12, windMax:25, idealDir:[202,225,270], level:'Todos', desc:'Bahia abierta al SW con buen viento de tarde en verano.' },
+  { id:'constitucion', name:'Constitucion', region:'Maule', lat:-35.33, lon:-72.42, windMin:15, windMax:25, idealDir:[202,225,247], level:'Intermedio', desc:'Desembocadura del Maule. Viento termal potente y olas medianas.' },
+];
+
+// ========== STATE ==========
+let spotData = {};       // {spotId: {current, hourly, marine}}
+let userLat = null, userLon = null;
+let favorites = JSON.parse(localStorage.getItem('ks_favs') || '[]');
+let charts = {};
+
+// ========== TABS ==========
+function showTab(tab, btn) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  btn.classList.add('active');
+  if (tab === 'favs') renderFavorites();
+}
+
+// ========== GEOLOCATION ==========
+function getLocation() {
+  return new Promise(resolve => {
+    if (!navigator.geolocation) { document.getElementById('locationBadge').textContent = 'Chile'; resolve(); return; }
+    navigator.geolocation.getCurrentPosition(
+      pos => { userLat = pos.coords.latitude; userLon = pos.coords.longitude; updateLocationBadge(); resolve(); },
+      () => { document.getElementById('locationBadge').textContent = 'Chile'; resolve(); },
+      { timeout: 5000, maximumAge: 300000 }
+    );
+  });
+}
+
+function updateLocationBadge() {
+  if (!userLat) return;
+  const nearest = findNearest();
+  document.getElementById('locationBadge').textContent = nearest ? `Cerca de ${nearest.name}` : 'Chile';
+}
+
+function findNearest() {
+  if (!userLat) return null;
+  let min = Infinity, best = null;
+  SPOTS.forEach(s => { const d = haversine(userLat, userLon, s.lat, s.lon); if (d < min) { min = d; best = s; } });
+  return best;
+}
+
+function haversine(lat1, lon1, lat2, lon2) {
+  const R = 6371, dLat = (lat2-lat1)*Math.PI/180, dLon = (lon2-lon1)*Math.PI/180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function distanceToSpot(spot) {
+  if (!userLat) return null;
+  return Math.round(haversine(userLat, userLon, spot.lat, spot.lon));
+}
+
+// ========== DATA FETCHING ==========
+const CACHE_TTL = 15 * 60 * 1000; // 15 min
+
+async function fetchWithRetry(url, retries = 3) {
+  for (let attempt = 0; attempt < retries; attempt++) {
+    try {
+      const r = await fetch(url);
+      if (r.ok) return r.json();
+      if (r.status === 429 && attempt < retries - 1) {
+        await new Promise(ok => setTimeout(ok, 1000 * (attempt + 1)));
+        continue;
+      }
+    } catch(e) {}
+    return null;
+  }
+  return null;
+}
+
+async function fetchAllSpots() {
+  const cached = localStorage.getItem('ks_data');
+  const cachedTime = parseInt(localStorage.getItem('ks_time') || '0');
+  if (cached && Date.now() - cachedTime < CACHE_TTL) {
+    spotData = JSON.parse(cached);
+    renderSpots();
+    updateTimestamp(cachedTime);
+    return;
+  }
+
+  // Only fetch nearby spots (200km) + favorites — not all 29
+  let spotsToFetch = [...SPOTS];
+  if (userLat) {
+    const nearby = SPOTS.filter(s => haversine(userLat, userLon, s.lat, s.lon) <= NEARBY_RADIUS);
+    const favOnly = SPOTS.filter(s => favorites.includes(s.id) && !nearby.includes(s));
+    spotsToFetch = [...nearby, ...favOnly];
+    spotsToFetch.sort((a, b) => haversine(userLat, userLon, a.lat, a.lon) - haversine(userLat, userLon, b.lat, b.lon));
+  }
+
+  const total = spotsToFetch.length;
+  document.getElementById('spotList').innerHTML = `<div class="loading"><div class="spinner"></div>Cargando ${total} spots<div class="load-progress" id="loadProgress">0/${total}</div></div>`;
+
+  const prog = document.getElementById('loadProgress');
+  const BATCH = userLat ? 2 : 3; // smaller batches when nearby (fewer spots), larger when all
+  for (let i = 0; i < spotsToFetch.length; i += BATCH) {
+    const batch = spotsToFetch.slice(i, i + BATCH);
+    const results = await Promise.allSettled(batch.map(async spot => {
+      const [wind, marine] = await Promise.all([
+        fetchWithRetry(`https://api.open-meteo.com/v1/forecast?latitude=${spot.lat}&longitude=${spot.lon}&current=wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,weather_code,precipitation&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,precipitation,weather_code&forecast_days=7&wind_speed_unit=kn&timezone=America/Santiago`),
+        fetchWithRetry(`https://marine-api.open-meteo.com/v1/marine?latitude=${spot.lat}&longitude=${spot.lon}&current=wave_height,wave_period,wave_direction&hourly=wave_height&forecast_days=7&timezone=America/Santiago`)
+      ]);
+      return { id: spot.id, wind, marine };
+    }));
+    results.forEach(r => { if (r.status === 'fulfilled' && r.value.wind && !r.value.wind.error) spotData[r.value.id] = r.value; });
+    if (prog) prog.textContent = `${Math.min(i + BATCH, total)}/${total}`;
+    if (i + BATCH < spotsToFetch.length) await new Promise(ok => setTimeout(ok, 400));
+  }
+
+  const now = Date.now();
+  localStorage.setItem('ks_data', JSON.stringify(spotData));
+  localStorage.setItem('ks_time', String(now));
+  renderSpots();
+  updateTimestamp(now);
+  checkAlerts();
+}
+
+function updateTimestamp(time) {
+  const d = new Date(time);
+  document.getElementById('updatedTime').textContent = `Actualizado: ${d.toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'})}`;
+}
+
+async function refreshData() {
+  localStorage.removeItem('ks_data');
+  localStorage.removeItem('ks_time');
+  const btn = document.getElementById('refreshBtn');
+  btn.classList.add('spinning');
+  await fetchAllSpots();
+  btn.classList.remove('spinning');
+}
+
+// ========== SCORING ==========
+function getSpotStatus(spot) {
+  const d = spotData[spot.id];
+  if (!d || !d.wind || !d.wind.current) return { status: 'unknown', color: 'red', label: 'Sin datos', warn: '' };
+
+  const wind = d.wind.current.wind_speed_10m;
+  const gust = d.wind.current.wind_gusts_10m;
+  const dir = d.wind.current.wind_direction_10m;
+  const rain = d.wind.current.precipitation || 0;
+  const temp = d.wind.current.temperature_2m;
+  const wcode = d.wind.current.weather_code || 0;
+
+  // Rain: >2mm/h = no go, >0.5mm = warning
+  const heavyRain = rain > 2 || wcode >= 63; // 63+ = heavy rain/thunderstorm
+  const lightRain = rain > 0.5 || (wcode >= 51 && wcode < 63);
+  // Cold: <10°C warning
+  const cold = temp != null && temp < 10;
+
+  if (heavyRain) return { status: 'red', color: 'red', label: 'Lluvia', warn: `${rain.toFixed(1)}mm/h` };
+
+  const dirOk = isDirectionFavorable(dir, spot.idealDir);
+  const gustOk = gust < 40;
+  const gustWarn = gust >= 35;
+
+  let warn = '';
+  if (lightRain) warn = 'Llovizna';
+  if (cold) warn += (warn ? ' + ' : '') + `${Math.round(temp)}°C`;
+
+  if (wind >= spot.windMin && wind <= spot.windMax && dirOk && gustOk && !gustWarn && !lightRain) {
+    return { status: 'green', color: 'green', label: 'Send it', warn };
+  }
+  if ((wind >= 8 && wind < spot.windMin) || (wind > spot.windMax && wind <= 35) || !dirOk || gustWarn || lightRain) {
+    if (wind >= 8 && wind <= 35) return { status: 'yellow', color: 'yellow', label: lightRain ? 'Llovizna' : 'Maybe', warn };
+  }
+  return { status: 'red', color: 'red', label: 'No go', warn };
+}
+
+function isDirectionFavorable(actual, idealDirs) {
+  return idealDirs.some(ideal => {
+    let diff = Math.abs(actual - ideal);
+    if (diff > 180) diff = 360 - diff;
+    return diff <= 45;
+  });
+}
+
+function getStatusScore(status) {
+  return status === 'green' ? 0 : status === 'yellow' ? 1 : 2;
+}
+
+// ========== BEST MOMENT ANALYSIS ==========
+function analyzeBestMoment(spot) {
+  const d = spotData[spot.id];
+  if (!d?.wind?.hourly) return { bestWindow: null, weekDots: [], goodDays: 0, nextGoodIdx: -1 };
+
+  const times = d.wind.hourly.time;
+  const speeds = d.wind.hourly.wind_speed_10m;
+  const dirs = d.wind.hourly.wind_direction_10m;
+  const now = new Date();
+
+  // Find best windows (consecutive good hours 10-20h)
+  let bestWindow = null;
+  let bestScore = 0;
+  let currentWindow = null;
+
+  // Week dots: one per day, best status of navigable hours
+  const dayMap = {};
+
+  for (let i = 0; i < times.length; i++) {
+    const dt = new Date(times[i]);
+    const hr = dt.getHours();
+    if (hr < 10 || hr > 20) continue;
+    if (dt < now) continue;
+
+    const spd = speeds[i];
+    const dir = dirs[i];
+    const rain = d.wind.hourly.precipitation?.[i] || 0;
+    const temp = d.wind.hourly.temperature_2m?.[i];
+    const noRain = rain < 2;
+    const isGood = spd >= spot.windMin && spd <= spot.windMax && isDirectionFavorable(dir, spot.idealDir) && noRain;
+    const isMaybe = spd >= 8 && spd <= 35;
+
+    // Day dot tracking
+    const dayKey = dt.toDateString();
+    if (!dayMap[dayKey]) dayMap[dayKey] = { date: dt, best: 'red', rain: false, cold: false };
+    if (isGood) dayMap[dayKey].best = 'green';
+    else if (isMaybe && dayMap[dayKey].best !== 'green') dayMap[dayKey].best = 'yellow';
+    if (rain > 0.5) dayMap[dayKey].rain = true;
+    if (temp != null && temp < 10) dayMap[dayKey].cold = true;
+
+    // Best window tracking
+    if (isGood) {
+      if (!currentWindow) currentWindow = { start: dt, end: dt, startIdx: i, avgSpeed: spd, count: 1 };
+      else { currentWindow.end = dt; currentWindow.avgSpeed += spd; currentWindow.count++; }
+    } else {
+      if (currentWindow) {
+        currentWindow.avgSpeed /= currentWindow.count;
+        const score = currentWindow.count * currentWindow.avgSpeed;
+        if (score > bestScore) { bestScore = score; bestWindow = { ...currentWindow }; }
+      }
+      currentWindow = null;
+    }
+  }
+  // Close last window
+  if (currentWindow) {
+    currentWindow.avgSpeed /= currentWindow.count;
+    const score = currentWindow.count * currentWindow.avgSpeed;
+    if (score > bestScore) { bestScore = score; bestWindow = { ...currentWindow }; }
+  }
+
+  const weekDots = Object.values(dayMap).slice(0, 7);
+  const goodDays = weekDots.filter(d => d.best === 'green').length;
+
+  // Format best window
+  if (bestWindow) {
+    const isToday = bestWindow.start.toDateString() === now.toDateString();
+    const isTomorrow = bestWindow.start.toDateString() === new Date(now.getTime() + 86400000).toDateString();
+    const dayLabel = isToday ? 'Hoy' : isTomorrow ? 'Manana' : bestWindow.start.toLocaleDateString('es-CL', { weekday: 'short', day: 'numeric' });
+    const startH = bestWindow.start.getHours();
+    const endH = bestWindow.end.getHours() + 1;
+    const dir = dirs[bestWindow.startIdx];
+    bestWindow.label = `${dayLabel} ${startH}-${endH}h`;
+    bestWindow.detail = `${Math.round(bestWindow.avgSpeed)}kn ${degToCompass(dir)}`;
+    bestWindow.hoursFromNow = Math.round((bestWindow.start - now) / 3600000);
+  }
+
+  return { bestWindow, weekDots, goodDays, nextGoodIdx: bestWindow?.startIdx ?? -1 };
+}
+
+// ========== NEARBY SPOTS ==========
+const NEARBY_RADIUS = 200; // km
+
+function getNearbySpots() {
+  let nearby = [...SPOTS];
+  if (userLat) {
+    nearby = nearby.map(s => ({ ...s, dist: haversine(userLat, userLon, s.lat, s.lon) }));
+    nearby = nearby.filter(s => s.dist <= NEARBY_RADIUS);
+    nearby.sort((a, b) => a.dist - b.dist);
+  }
+  return nearby.slice(0, 12); // max 12 nearby
+}
+
+// ========== HERO CARD ==========
+function renderHero() {
+  const el = document.getElementById('heroCard');
+  const nearby = getNearbySpots();
+  if (!nearby.length) { el.innerHTML = '<div class="hero-loading"><div class="spinner"></div></div>'; return; }
+
+  // Find best spot: green first (nearest), then yellow (nearest)
+  let best = nearby.find(s => getSpotStatus(s).status === 'green');
+  if (!best) best = nearby.find(s => getSpotStatus(s).status === 'yellow');
+  if (!best) best = nearby[0];
+
+  const st = getSpotStatus(best);
+  const d = spotData[best.id];
+  const wind = d?.wind?.current?.wind_speed_10m ?? 0;
+  const dir = d?.wind?.current?.wind_direction_10m ?? 0;
+  const gust = d?.wind?.current?.wind_gusts_10m ?? 0;
+  const wave = d?.marine?.current?.wave_height;
+  const analysis = analyzeBestMoment(best);
+  const dist = best.dist ? Math.round(best.dist) : null;
+
+  const rain = d?.wind?.current?.precipitation || 0;
+  const temp = d?.wind?.current?.temperature_2m;
+  const cls = st.status === 'green' ? 'go' : st.status === 'yellow' ? 'maybe' : 'nogo';
+  const msg = st.label === 'Lluvia' ? 'LLUVIA' : st.status === 'green' ? 'SEND IT' : st.status === 'yellow' ? 'SE PUEDE' : 'ESPERA';
+
+  let windowHtml = '';
+  if (analysis.bestWindow) {
+    windowHtml = `<div class="hero-window"><svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><path d="M8 4v4l3 2"/></svg> ${analysis.bestWindow.label} &middot; ${analysis.bestWindow.detail}</div>`;
+  }
+
+  el.className = 'hero-card ' + cls;
+  el.innerHTML = `
+    <div class="hero-status">${msg}</div>
+    <div class="hero-main">
+      <div><div class="hero-wind">${Math.round(wind)}</div><div class="hero-unit">kn</div></div>
+      <div class="hero-info">
+        <div class="hero-spot">${best.name}</div>
+        <div class="hero-meta">
+          <span class="hero-dir"><span class="wind-arrow" style="transform:rotate(${dir+180}deg)">&#8593;</span> ${degToCompass(dir)}</span>
+          &middot; Rafaga ${Math.round(gust)}kn
+          ${wave != null ? '&middot; Olas '+wave.toFixed(1)+'m' : ''}
+          ${dist != null ? '&middot; '+dist+'km' : ''}
+          ${rain > 0.5 ? '&middot; <span style="color:#3b82f6">'+rain.toFixed(1)+'mm/h</span>' : ''}
+          ${temp != null && temp < 10 ? '&middot; <span style="color:#94a3b8">'+Math.round(temp)+'°C</span>' : ''}
+        </div>
+      </div>
+    </div>
+    ${windowHtml}`;
+}
+
+// ========== WEEK GRID ==========
+function renderWeekGrid() {
+  const el = document.getElementById('weekGrid');
+  const nearby = getNearbySpots();
+  if (!nearby.length) { el.innerHTML = ''; return; }
+
+  // Get day labels (next 7 days)
+  const now = new Date();
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(now.getTime() + i * 86400000);
+    days.push({
+      date: d,
+      label: i === 0 ? 'Hoy' : d.toLocaleDateString('es-CL', { weekday: 'short' }).slice(0,2),
+      dateStr: d.toDateString(),
+      isToday: i === 0
+    });
+  }
+
+  // Header
+  let html = '<div class="wg-header"><div class="wg-label">Spot</div>';
+  days.forEach(d => { html += `<div class="wg-day ${d.isToday?'today':''}">${d.label}</div>`; });
+  html += '</div>';
+
+  // Rows
+  nearby.forEach(spot => {
+    const analysis = analyzeBestMoment(spot);
+    const dotMap = {};
+    analysis.weekDots.forEach(wd => { dotMap[wd.date.toDateString()] = wd; });
+
+    // Get peak wind per day
+    const peakMap = {};
+    const sd = spotData[spot.id];
+    if (sd?.wind?.hourly) {
+      sd.wind.hourly.time.forEach((t, i) => {
+        const dt = new Date(t);
+        const hr = dt.getHours();
+        if (hr < 10 || hr > 20) return;
+        const key = dt.toDateString();
+        const spd = sd.wind.hourly.wind_speed_10m[i];
+        if (!peakMap[key] || spd > peakMap[key]) peakMap[key] = spd;
+      });
+    }
+
+    const spotDist = spot.dist ? Math.round(spot.dist) : null;
+    const distLabel = spotDist != null ? `<span class="wg-km">${spotDist}km</span>` : '';
+    html += `<div class="wg-row" onclick="scrollToSpot('${spot.id}')"><div class="wg-label">${spot.name.split('(')[0].trim()}${distLabel}</div>`;
+    days.forEach(d => {
+      const dayData = dotMap[d.dateStr] || { best: 'red', rain: false, cold: false };
+      const status = typeof dayData === 'string' ? dayData : dayData.best;
+      const rain = dayData.rain || false;
+      const cold = dayData.cold || false;
+      const cls = (status === 'green' ? 'wg-go' : status === 'yellow' ? 'wg-maybe' : 'wg-no')
+        + (rain ? ' wg-rain' : '') + (cold ? ' wg-cold' : '');
+      const peak = peakMap[d.dateStr];
+      html += `<div class="wg-cell"><div class="wg-dot ${cls}"></div>${peak?'<span class="wg-peak">'+Math.round(peak)+'</span>':''}</div>`;
+    });
+    html += '</div>';
+  });
+
+  el.innerHTML = html;
+}
+
+function scrollToSpot(spotId) {
+  const card = document.getElementById('card-' + spotId);
+  if (card) { card.scrollIntoView({ behavior: 'smooth', block: 'center' }); card.classList.add('expanded'); }
+}
+
+// ========== RENDERING ==========
+function renderSpots() {
+  // Render hero + grid
+  renderHero();
+  renderWeekGrid();
+
+  // Render spot list — nearby only, sorted by distance
+  const list = document.getElementById('spotList');
+  let sorted = getNearbySpots();
+
+  const searchTerm = document.getElementById('searchInput')?.value?.toLowerCase() || '';
+  if (searchTerm) {
+    sorted = SPOTS.filter(s => s.name.toLowerCase().includes(searchTerm) || s.region.toLowerCase().includes(searchTerm));
+    // Fetch data on-demand for spots not yet loaded
+    const toFetch = sorted.filter(s => !spotData[s.id]);
+    if (toFetch.length) {
+      fetchSpotsOnDemand(toFetch);
+    }
+  }
+
+  if (!sorted.length && !searchTerm) {
+    list.innerHTML = '<div class="empty-state"><p>No hay spots cercanos. Activa tu ubicacion.</p></div>';
+    return;
+  }
+
+  list.innerHTML = sorted.map((spot, i) => buildSpotCard(spot, i)).join('');
+}
+
+function buildSpotCard(spot, idx) {
+  const d = spotData[spot.id];
+  const st = getSpotStatus(spot);
+  const wind = d?.wind?.current?.wind_speed_10m ?? '—';
+  const gust = d?.wind?.current?.wind_gusts_10m ?? '—';
+  const dir = d?.wind?.current?.wind_direction_10m ?? 0;
+  const wave = d?.marine?.current?.wave_height ?? '—';
+  const temp = d?.wind?.current?.temperature_2m ?? '—';
+  const isFav = favorites.includes(spot.id);
+  const dist = distanceToSpot(spot);
+  const distHtml = dist !== null ? `<span class="dist-badge">${dist} km</span>` : '';
+
+  // Best moment analysis
+  const analysis = analyzeBestMoment(spot);
+  let bestHtml = '';
+  if (analysis.bestWindow) {
+    const bw = analysis.bestWindow;
+    bestHtml = `<div class="best-moment has-window"><svg class="bm-icon" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><path d="M8 4v4l3 2"/></svg><span class="bm-text"><span class="bm-when">${bw.label}</span> ${bw.detail}</span><div class="week-dots">${analysis.weekDots.map(d=>`<div class="week-dot wd-${d.best}"></div>`).join('')}</div></div>`;
+  } else {
+    bestHtml = `<div class="best-moment no-window"><svg class="bm-icon" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><path d="M5.5 5.5l5 5M10.5 5.5l-5 5"/></svg><span class="bm-text">Sin ventana esta semana</span><div class="week-dots">${analysis.weekDots.map(d=>`<div class="week-dot wd-${d.best}"></div>`).join('')}</div></div>`;
+  }
+
+  // Next hours forecast strip
+  let fcHtml = '';
+  if (d?.wind?.hourly) {
+    const now = new Date();
+    const times = d.wind.hourly.time;
+    const startIdx = times.findIndex(t => new Date(t) >= now);
+    if (startIdx >= 0) {
+      for (let i = startIdx; i < Math.min(startIdx + 8, times.length); i++) {
+        const w = d.wind.hourly.wind_speed_10m[i];
+        const dd = d.wind.hourly.wind_direction_10m[i];
+        const hr = new Date(times[i]).getHours();
+        const fcSt = w >= spot.windMin && w <= spot.windMax ? 'fc-green' : w >= 8 ? 'fc-yellow' : 'fc-red';
+        fcHtml += `<div class="fc-hour ${fcSt}"><div class="fc-time">${hr}:00</div><div class="fc-wind">${Math.round(w)}</div><div class="fc-arrow" style="transform:rotate(${dd+180}deg)">↑</div></div>`;
+      }
+    }
+  }
+
+  return `<div class="spot-card status-${st.status}" onclick="toggleDetail('${spot.id}', this)" id="card-${spot.id}">
+    <div class="card-top">
+      <div><div class="spot-name">${spot.name}${distHtml}</div><div class="spot-region">${spot.region} · ${spot.level}</div></div>
+      <div class="card-top-right">
+        <span class="status-badge ${st.color}">${st.label}</span>
+        <button class="fav-btn ${isFav?'active':''}" onclick="toggleFav(event,'${spot.id}')"><svg viewBox="0 0 20 20" width="16" height="16" fill="${isFav?'currentColor':'none'}" stroke="currentColor" stroke-width="1.5"><path d="M10 2l2.5 5 5.5.8-4 3.9.9 5.3L10 14.5 5.1 17l.9-5.3-4-3.9 5.5-.8z"/></svg></button>
+      </div>
+    </div>
+    ${bestHtml}
+    <div class="card-data">
+      <div class="data-item"><div class="data-label">Viento</div><div class="data-value">${typeof wind==='number'?Math.round(wind):'—'}<span class="data-unit"> kn</span></div></div>
+      <div class="data-item"><div class="data-label">Rafaga</div><div class="data-value">${typeof gust==='number'?Math.round(gust):'—'}<span class="data-unit"> kn</span></div></div>
+      <div class="data-item"><div class="data-label">Dir</div><div class="data-value"><span class="wind-arrow" style="transform:rotate(${dir+180}deg)">↑</span> ${degToCompass(dir)}</div></div>
+      <div class="data-item"><div class="data-label">Olas</div><div class="data-value">${typeof wave==='number'?wave.toFixed(1):'—'}<span class="data-unit"> m</span></div></div>
+    </div>
+    ${fcHtml ? `<div class="card-forecast">${fcHtml}</div>` : ''}
+    <div class="card-detail" id="detail-${spot.id}">
+      <div class="detail-grid">
+        <div class="detail-item"><div class="data-label">Temperatura</div><div class="data-value">${typeof temp==='number'?Math.round(temp):'—'}°C</div></div>
+        <div class="detail-item"><div class="data-label">Olas</div><div class="data-value">${d?.marine?.current?.wave_period?.toFixed(1) ?? '—'}<span class="data-unit"> s</span></div></div>
+        <div class="detail-item"><div class="data-label">Dir olas</div><div class="data-value">${degToCompass(d?.marine?.current?.wave_direction ?? 0)}</div></div>
+        <div class="detail-item"><div class="data-label">Ideal</div><div class="data-value">${spot.windMin}-${spot.windMax}<span class="data-unit"> kn</span></div></div>
+      </div>
+      <p style="font-size:.75rem;color:var(--muted);line-height:1.4;margin-bottom:8px">${spot.desc}</p>
+      ${build7DayForecast(spot, d)}
+      <div class="chart-wrap"><canvas id="chart-${spot.id}"></canvas></div>
+    </div>
+  </div>`;
+}
+
+function build7DayForecast(spot, d) {
+  if (!d?.wind?.hourly) return '';
+  const times = d.wind.hourly.time;
+  const now = new Date();
+  let html = '<div class="fc-days">';
+  let lastDay = '';
+  let dayHtml = '';
+  let dayCount = 0;
+
+  for (let i = 0; i < times.length && dayCount < 7; i++) {
+    const dt = new Date(times[i]);
+    const hr = dt.getHours();
+    if (hr < 10 || hr > 20) continue;
+    if (dt < now && dt.toDateString() === now.toDateString() && hr < now.getHours()) continue;
+
+    const dayStr = dt.toLocaleDateString('es-CL', { weekday: 'short', day: 'numeric', month: 'short' });
+    if (dayStr !== lastDay) {
+      if (dayHtml) { html += `<div class="fc-day-hours">${dayHtml}</div></div>`; }
+      lastDay = dayStr;
+      dayHtml = '';
+      dayCount++;
+      const isToday = dt.toDateString() === now.toDateString();
+      const label = isToday ? 'Hoy' : dayStr;
+      html += `<div class="fc-day-row"><div class="fc-day-label">${label}</div>`;
+    }
+
+    const w = d.wind.hourly.wind_speed_10m[i];
+    const dd = d.wind.hourly.wind_direction_10m[i];
+    const rn = d.wind.hourly.precipitation?.[i] || 0;
+    const tp = d.wind.hourly.temperature_2m?.[i];
+    const noRn = rn < 2;
+    const cls = (w >= spot.windMin && w <= spot.windMax && noRn) ? 'dg' : w >= 8 ? 'dy' : 'dr';
+    const extraCls = (rn > 0.5 ? ' fc-rain' : '') + (tp != null && tp < 10 ? ' fc-cold' : '');
+    dayHtml += `<div class="fc-day-item ${cls}${extraCls}"><div class="fc-time">${hr}h</div><div class="fc-wind">${Math.round(w)}</div><div class="fc-arrow" style="transform:rotate(${dd+180}deg)">&#8593;</div></div>`;
+  }
+  if (dayHtml) html += `<div class="fc-day-hours">${dayHtml}</div></div>`;
+  html += '</div>';
+  return html;
+}
+
+function toggleDetail(spotId, el) {
+  const card = el || document.getElementById('card-' + spotId);
+  if (!card) return;
+  const wasExpanded = card.classList.contains('expanded');
+  document.querySelectorAll('.spot-card.expanded').forEach(c => c.classList.remove('expanded'));
+  if (!wasExpanded) {
+    card.classList.add('expanded');
+    const canvas = card.querySelector('canvas');
+    if (canvas) renderChart(spotId, canvas);
+  }
+}
+
+let _chartJsLoaded = false;
+function loadChartJs() {
+  if (_chartJsLoaded) return Promise.resolve();
+  return new Promise(resolve => {
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js';
+    s.onload = () => { _chartJsLoaded = true; resolve(); };
+    document.head.appendChild(s);
+  });
+}
+
+async function renderChart(spotId, canvasEl) {
+  const d = spotData[spotId];
+  if (!d?.wind?.hourly) return;
+  const canvas = canvasEl || document.getElementById('chart-' + spotId);
+  if (!canvas) return;
+  const chartKey = canvas.id || spotId;
+  if (charts[chartKey]) { charts[chartKey].destroy(); delete charts[chartKey]; }
+  await loadChartJs();
+
+  const now = new Date();
+  const times = d.wind.hourly.time;
+  const startIdx = times.findIndex(t => new Date(t) >= now);
+  if (startIdx < 0) return;
+  const end = Math.min(startIdx + 24, times.length);
+
+  const labels = [];
+  const windData = [];
+  const gustData = [];
+  const rainData = [];
+  const tempData = [];
+  for (let i = startIdx; i < end; i++) {
+    labels.push(new Date(times[i]).getHours() + ':00');
+    windData.push(Math.round(d.wind.hourly.wind_speed_10m[i]));
+    gustData.push(Math.round(d.wind.hourly.wind_gusts_10m[i]));
+    rainData.push(d.wind.hourly.precipitation?.[i] || 0);
+    tempData.push(d.wind.hourly.temperature_2m?.[i] || null);
+  }
+
+  const spot = SPOTS.find(s => s.id === spotId);
+  const hasRain = rainData.some(r => r > 0);
+
+  charts[chartKey] = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Viento (kn)', data: windData, borderColor: '#06b6d4', backgroundColor: 'rgba(6,182,212,.1)', fill: true, tension: .3, pointRadius: 0, yAxisID: 'y' },
+        { label: 'Rafaga (kn)', data: gustData, borderColor: '#f97316', backgroundColor: 'transparent', borderDash: [4,4], tension: .3, pointRadius: 0, yAxisID: 'y' },
+        { label: 'Lluvia (mm)', data: rainData, type: 'bar', backgroundColor: 'rgba(59,130,246,.35)', borderColor: 'rgba(59,130,246,.6)', borderWidth: 1, borderRadius: 2, yAxisID: 'yRain', barPercentage: .6, hidden: !hasRain },
+        { label: 'Temp (°C)', data: tempData, borderColor: '#94a3b8', backgroundColor: 'transparent', borderDash: [2,3], tension: .3, pointRadius: 0, borderWidth: 1, yAxisID: 'yTemp' }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { labels: { color: '#94a3b8', font: { size: 9, family: 'Inter' }, boxWidth: 12, padding: 8 } },
+        tooltip: {
+          backgroundColor: '#1e293b', titleColor: '#e2e8f0', bodyColor: '#94a3b8', borderColor: '#334155', borderWidth: 1,
+          callbacks: { label: ctx => {
+            if (ctx.dataset.label === 'Lluvia (mm)' && ctx.raw === 0) return null;
+            return `${ctx.dataset.label}: ${ctx.raw}`;
+          }}
+        }
+      },
+      scales: {
+        x: { ticks: { color: '#64748b', font: { size: 9 }, maxTicksLimit: 8 }, grid: { color: 'rgba(148,163,184,.06)' } },
+        y: { position: 'left', ticks: { color: '#64748b', font: { size: 9 } }, grid: { color: 'rgba(148,163,184,.08)' }, suggestedMin: 0, title: { display: false } },
+        yRain: { position: 'right', display: hasRain, ticks: { color: '#3b82f6', font: { size: 8 } }, grid: { display: false }, suggestedMin: 0, suggestedMax: Math.max(...rainData) * 2 || 5 },
+        yTemp: { display: false, suggestedMin: 0 }
+      }
+    },
+    plugins: [{
+      id: 'idealZone',
+      beforeDraw(chart) {
+        if (!spot) return;
+        const { ctx, chartArea: { left, right }, scales: { y } } = chart;
+        const top = y.getPixelForValue(spot.windMax);
+        const bottom = y.getPixelForValue(spot.windMin);
+        ctx.save();
+        ctx.fillStyle = 'rgba(34,197,94,.08)';
+        ctx.fillRect(left, top, right - left, bottom - top);
+        ctx.restore();
+      }
+    }]
+  });
+}
+
+function degToCompass(deg) {
+  const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+  return dirs[Math.round(deg / 22.5) % 16];
+}
+
+let _filterTimer;
+function filterSpots() { clearTimeout(_filterTimer); _filterTimer = setTimeout(renderSpots, 300); }
+
+async function fetchSpotsOnDemand(spots) {
+  for (const spot of spots) {
+    if (spotData[spot.id]) continue;
+    try {
+      const [wind, marine] = await Promise.all([
+        fetchWithRetry(`https://api.open-meteo.com/v1/forecast?latitude=${spot.lat}&longitude=${spot.lon}&current=wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,weather_code,precipitation&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,precipitation,weather_code&forecast_days=7&wind_speed_unit=kn&timezone=America/Santiago`),
+        fetchWithRetry(`https://marine-api.open-meteo.com/v1/marine?latitude=${spot.lat}&longitude=${spot.lon}&current=wave_height,wave_period,wave_direction&hourly=wave_height&forecast_days=7&timezone=America/Santiago`)
+      ]);
+      if (wind && !wind.error) {
+        spotData[spot.id] = { id: spot.id, wind, marine };
+        localStorage.setItem('ks_data', JSON.stringify(spotData));
+        renderSpots(); // Re-render with new data
+      }
+    } catch(e) {}
+  }
+}
+
+function destroyCharts() {
+  Object.values(charts).forEach(c => c.destroy());
+  charts = {};
+}
+
+// ========== FAVORITES ==========
+function toggleFav(e, spotId) {
+  e.stopPropagation();
+  const wasFav = favorites.includes(spotId);
+  if (wasFav) favorites = favorites.filter(f => f !== spotId);
+  else favorites.push(spotId);
+  localStorage.setItem('ks_favs', JSON.stringify(favorites));
+  // Update just the button that was clicked
+  const btn = e.currentTarget;
+  const isFav = !wasFav;
+  btn.classList.toggle('active', isFav);
+  const svg = btn.querySelector('svg');
+  if (svg) svg.setAttribute('fill', isFav ? 'currentColor' : 'none');
+}
+
+function renderFavorites() {
+  const list = document.getElementById('favList');
+  if (!favorites.length) {
+    list.innerHTML = '<div class="empty-state"><svg class="ico-empty" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 4l5 10 11 1.6-8 7.8 1.9 11L20 29l-9.9 5.4L12 23.4l-8-7.8L15 14z"/></svg><p>Toca la estrella en cualquier spot para agregarlo a favoritos</p></div>';
+    return;
+  }
+  const favSpots = SPOTS.filter(s => favorites.includes(s.id));
+  list.innerHTML = favSpots.map((s, i) => buildSpotCard(s, i)).join('');
+}
+
+// ========== NOTIFICATIONS ==========
+
+function requestNotifPermission() {
+  if ('Notification' in window) {
+    Notification.requestPermission().then(p => {
+      if (p === 'granted') document.getElementById('notifBanner').style.display = 'none';
+    });
+  }
+}
+
+function checkAlerts() {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  const last = JSON.parse(localStorage.getItem('ks_lastAlert') || '{}');
+  // Auto-alert on all nearby spots that go green
+  getNearbySpots().forEach(spot => {
+    const st = getSpotStatus(spot);
+    const isGood = st.status === 'green';
+    const wasGood = last[spot.id] === true;
+    if (isGood && !wasGood) {
+      const d = spotData[spot.id];
+      const wind = d?.wind?.current?.wind_speed_10m || 0;
+      const dir = d?.wind?.current?.wind_direction_10m || 0;
+      new Notification(`${spot.name} esta ON!`, {
+        body: `${Math.round(wind)} kn ${degToCompass(dir)}${spot.dist ? ' - '+Math.round(spot.dist)+'km' : ''}`,
+        icon: 'icon.svg', tag: 'kitespot-' + spot.id
+      });
+    }
+    last[spot.id] = isGood;
+  });
+  localStorage.setItem('ks_lastAlert', JSON.stringify(last));
+}
+
+// ========== INIT ==========
+async function init() {
+  await getLocation();
+  fetchAllSpots();
+
+  // Show notification banner if not granted
+  if ('Notification' in window && Notification.permission === 'default') {
+    document.getElementById('notifBanner').style.display = 'flex';
+  }
+
+  // Auto-refresh every 30 min
+  setInterval(() => { refreshData(); }, 30 * 60 * 1000);
+
+  // Register SW
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+}
+
+init();
+</script>
+</body>
+</html>
