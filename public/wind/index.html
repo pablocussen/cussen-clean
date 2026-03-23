@@ -718,8 +718,16 @@ function renderWeekGrid() {
 }
 
 function scrollToSpot(spotId) {
-  const card = document.getElementById('card-' + spotId);
-  if (card) { card.scrollIntoView({ behavior: 'smooth', block: 'center' }); card.classList.add('expanded'); }
+  // Find the card in the active tab pane
+  const activePane = document.querySelector('.tab-pane.active');
+  const card = activePane?.querySelector('#card-' + spotId) || document.getElementById('card-' + spotId);
+  if (card) {
+    document.querySelectorAll('.spot-card.expanded').forEach(c => c.classList.remove('expanded'));
+    card.classList.add('expanded');
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const canvas = card.querySelector('canvas');
+    if (canvas) renderChart(spotId, canvas);
+  }
 }
 
 // ========== RENDERING ==========
@@ -968,7 +976,7 @@ function degToCompass(deg) {
 let _filterTimer;
 function filterSpots() { clearTimeout(_filterTimer); _filterTimer = setTimeout(renderSpots, 300); }
 
-async function fetchSpotsOnDemand(spots) {
+async function fetchSpotsOnDemand(spots, callback) {
   for (const spot of spots) {
     if (spotData[spot.id]) continue;
     try {
@@ -979,7 +987,10 @@ async function fetchSpotsOnDemand(spots) {
       if (wind && !wind.error) {
         spotData[spot.id] = { id: spot.id, wind, marine };
         localStorage.setItem('ks_data', JSON.stringify(spotData));
-        renderSpots(); // Re-render with new data
+        // Re-render the active view
+        const activeTab = document.querySelector('.tab-pane.active')?.id;
+        if (activeTab === 'tab-favs') renderFavorites();
+        else renderSpots();
       }
     } catch(e) {}
   }
@@ -1012,6 +1023,9 @@ function renderFavorites() {
     return;
   }
   const favSpots = SPOTS.filter(s => favorites.includes(s.id));
+  // Fetch data on-demand for fav spots not yet loaded
+  const toFetch = favSpots.filter(s => !spotData[s.id]);
+  if (toFetch.length) fetchSpotsOnDemand(toFetch);
   list.innerHTML = favSpots.map((s, i) => buildSpotCard(s, i)).join('');
 }
 
