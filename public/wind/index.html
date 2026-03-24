@@ -244,6 +244,41 @@ a{color:var(--cyan);text-decoration:none}
 /* Distance badge */
 .dist-badge{font-size:.55rem;color:var(--dim);background:var(--bg);padding:2px 6px;border-radius:10px;margin-left:4px}
 
+/* Thermal risk badge */
+.thermal-badge{display:inline-flex;align-items:center;gap:4px;font-size:.6rem;font-weight:600;padding:3px 8px;border-radius:6px;margin-top:4px}
+.thermal-badge.thermal-ok{background:rgba(34,197,94,.1);color:var(--green)}
+.thermal-badge.thermal-warn{background:rgba(234,179,8,.12);color:var(--yellow)}
+.thermal-badge.thermal-bad{background:rgba(239,68,68,.1);color:var(--red)}
+.thermal-badge svg{flex-shrink:0}
+
+/* Rain overlay on card */
+.rain-overlay{position:absolute;top:0;right:0;padding:4px 8px;border-radius:0 var(--radius) 0 8px;font-size:.6rem;font-weight:700;display:flex;align-items:center;gap:3px}
+.rain-overlay.rain-heavy{background:rgba(59,130,246,.2);color:#60a5fa}
+.rain-overlay.rain-light{background:rgba(59,130,246,.1);color:#93c5fd}
+.spot-card{position:relative;overflow:hidden}
+
+/* Tide info */
+.tide-info{display:flex;align-items:center;gap:4px;font-size:.6rem;color:var(--muted);margin-top:4px}
+.tide-info svg{flex-shrink:0}
+
+/* Suggest spot modal */
+.suggest-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:12px;margin-top:10px;background:var(--bg2);border:1px dashed var(--bg3);border-radius:var(--radius);color:var(--muted);font-family:inherit;font-size:.75rem;cursor:pointer;transition:all .15s}
+.suggest-btn:active{background:var(--cyan-glow);color:var(--cyan);border-color:var(--cyan)}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(8px);z-index:200;display:flex;align-items:flex-end;justify-content:center;animation:fadeIn .2s}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal-content{background:var(--bg2);border:1px solid var(--bg3);border-radius:16px 16px 0 0;padding:20px;width:100%;max-width:480px;max-height:80vh;overflow-y:auto;animation:slideUp .3s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.modal-header h3{font-size:1rem;font-weight:700}
+.modal-close{background:none;border:none;color:var(--muted);cursor:pointer;padding:8px}
+.modal-form{display:flex;flex-direction:column;gap:12px}
+.modal-form input,.modal-form textarea{background:var(--bg);border:1px solid var(--bg3);border-radius:8px;padding:10px 12px;color:var(--text);font-family:inherit;font-size:.8rem;outline:none;transition:border-color .15s}
+.modal-form input:focus,.modal-form textarea:focus{border-color:var(--cyan)}
+.modal-form textarea{resize:vertical;min-height:60px}
+.modal-form .btn-submit{background:var(--cyan);color:var(--bg);border:none;font-family:inherit;font-size:.8rem;font-weight:600;padding:12px;border-radius:8px;cursor:pointer;transition:all .15s}
+.modal-form .btn-submit:active{transform:scale(.97);opacity:.9}
+.modal-form .form-help{font-size:.65rem;color:var(--dim)}
+
 /* Pull to refresh */
 .ptr-indicator{text-align:center;height:0;overflow:hidden;transition:height .2s;color:var(--cyan);font-size:.7rem;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px}
 .ptr-indicator.pulling{height:40px}
@@ -315,6 +350,7 @@ a{color:var(--cyan);text-decoration:none}
       </div>
     </div>
     <div class="spot-list" id="spotList"></div>
+    <button class="suggest-btn" onclick="showSuggestModal()"><svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 4v12M4 10h12" stroke-linecap="round"/></svg>Falta tu spot? Sugierelo</button>
     <div class="updated" id="updatedTime"></div>
   </div>
 
@@ -462,7 +498,7 @@ async function fetchAllSpots() {
     const results = await Promise.allSettled(batch.map(async spot => {
       const [wind, marine] = await Promise.all([
         fetchWithRetry(`https://api.open-meteo.com/v1/forecast?latitude=${spot.lat}&longitude=${spot.lon}&current=wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,weather_code,precipitation&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,precipitation,weather_code&forecast_days=7&wind_speed_unit=kn&timezone=America/Santiago`),
-        fetchWithRetry(`https://marine-api.open-meteo.com/v1/marine?latitude=${spot.lat}&longitude=${spot.lon}&current=wave_height,wave_period,wave_direction&hourly=wave_height&forecast_days=7&timezone=America/Santiago`)
+        fetchWithRetry(`https://marine-api.open-meteo.com/v1/marine?latitude=${spot.lat}&longitude=${spot.lon}&current=wave_height,wave_period,wave_direction,sea_surface_temperature&hourly=wave_height&forecast_days=7&timezone=America/Santiago`)
       ]);
       return { id: spot.id, wind, marine };
     }));
@@ -522,6 +558,11 @@ function getSpotStatus(spot) {
   if (cold) warn += (warn ? ' + ' : '') + `${Math.round(temp)}°C`;
 
   if (wind >= spot.windMin && wind <= spot.windMax && dirOk && gustOk && !gustWarn && !lightRain) {
+    // Check thermal risk — if bad, downgrade to yellow
+    const thermal = getThermalRisk(spot);
+    if (thermal?.level === 'bad') {
+      return { status: 'yellow', color: 'yellow', label: 'Termica', warn: thermal.msg };
+    }
     return { status: 'green', color: 'green', label: 'Send it', warn };
   }
   if ((wind >= 8 && wind < spot.windMin) || (wind > spot.windMax && wind <= 35) || !dirOk || gustWarn || lightRain) {
@@ -702,6 +743,7 @@ function renderHero() {
           ${dist != null ? '· '+dist+'km' : ''}
           ${rain > 0.5 ? '· <span style="color:#3b82f6">'+rain.toFixed(1)+'mm</span>' : ''}
           ${temp != null ? '· '+Math.round(temp)+'°C' : ''}
+          ${d?.marine?.current?.sea_surface_temperature != null ? '· Mar '+Math.round(d.marine.current.sea_surface_temperature)+'°C' : ''}
         </div>
       </div>
     </div>
@@ -710,6 +752,7 @@ function renderHero() {
       <div class="hero-gear"><svg viewBox="0 0 16 16" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 14C2 8 8 2 14 2"/><circle cx="5" cy="11" r="2"/></svg>${gear.kite}</div>
       <button class="hero-share" onclick="shareSpot('${best.id}')"><svg viewBox="0 0 16 16" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 8h8M12 8l-3-3M12 8l-3 3"/></svg>Enviar</button>
     </div>
+    ${thermalBadgeHtml(best)}
     ${timelineHtml}`;
 
   // Start countdown updates
@@ -921,8 +964,9 @@ function buildSpotCard(spot, idx) {
   }
 
   return `<div class="spot-card status-${st.status}" onclick="toggleDetail('${spot.id}', this)" id="card-${spot.id}">
+    ${rainOverlayHtml(spot)}
     <div class="card-top">
-      <div><div class="spot-name">${spot.name}${distHtml}</div><div class="spot-region">${spot.region} · ${spot.level}</div></div>
+      <div><div class="spot-name">${spot.name}${distHtml}</div><div class="spot-region">${spot.region} · ${spot.level}</div>${thermalBadgeHtml(spot)}</div>
       <div class="card-top-right">
         <span class="status-badge ${st.color}">${st.label}</span>
         <button class="fav-btn ${isFav?'active':''}" onclick="toggleFav(event,'${spot.id}')"><svg viewBox="0 0 20 20" width="16" height="16" fill="${isFav?'currentColor':'none'}" stroke="currentColor" stroke-width="1.5"><path d="M10 2l2.5 5 5.5.8-4 3.9.9 5.3L10 14.5 5.1 17l.9-5.3-4-3.9 5.5-.8z"/></svg></button>
@@ -938,9 +982,9 @@ function buildSpotCard(spot, idx) {
     ${fcHtml ? `<div class="card-forecast">${fcHtml}</div>` : ''}
     <div class="card-detail" id="detail-${spot.id}">
       <div class="detail-grid">
-        <div class="detail-item"><div class="data-label">Temperatura</div><div class="data-value">${typeof temp==='number'?Math.round(temp):'—'}°C</div></div>
-        <div class="detail-item"><div class="data-label">Olas</div><div class="data-value">${d?.marine?.current?.wave_period?.toFixed(1) ?? '—'}<span class="data-unit"> s</span></div></div>
-        <div class="detail-item"><div class="data-label">Dir olas</div><div class="data-value">${degToCompass(d?.marine?.current?.wave_direction ?? 0)}</div></div>
+        <div class="detail-item"><div class="data-label">Aire</div><div class="data-value">${typeof temp==='number'?Math.round(temp):'—'}°C</div></div>
+        <div class="detail-item"><div class="data-label">Mar</div><div class="data-value">${d?.marine?.current?.sea_surface_temperature != null ? Math.round(d.marine.current.sea_surface_temperature) : '—'}°C</div></div>
+        <div class="detail-item"><div class="data-label">Olas</div><div class="data-value">${d?.marine?.current?.wave_height?.toFixed(1) ?? '—'}<span class="data-unit">m</span> · ${d?.marine?.current?.wave_period?.toFixed(0) ?? '—'}<span class="data-unit">s</span></div></div>
         <div class="detail-item"><div class="data-label">Ideal</div><div class="data-value">${spot.windMin}-${spot.windMax}<span class="data-unit"> kn</span></div></div>
       </div>
       <p style="font-size:.75rem;color:var(--muted);line-height:1.4;margin-bottom:8px">${spot.desc}</p>
@@ -1096,6 +1140,91 @@ function degToCompass(deg) {
   return dirs[Math.round(deg / 22.5) % 16];
 }
 
+// ========== THERMAL RISK ==========
+function getThermalRisk(spot) {
+  const d = spotData[spot.id];
+  if (!d?.wind?.current || !d?.marine?.current) return null;
+  const landTemp = d.wind.current.temperature_2m;
+  const seaTemp = d.marine.current.sea_surface_temperature;
+  if (landTemp == null || seaTemp == null) return null;
+  const delta = landTemp - seaTemp;
+  const wind = d.wind.current.wind_speed_10m || 0;
+  // High delta + low wind = thermal turbulence at shore
+  if (delta > 12 && wind < 15) return { level: 'bad', delta: Math.round(delta), msg: 'Viento no baja a la orilla', landTemp: Math.round(landTemp), seaTemp: Math.round(seaTemp) };
+  if (delta > 8 && wind < 18) return { level: 'warn', delta: Math.round(delta), msg: 'Viento inestable en orilla', landTemp: Math.round(landTemp), seaTemp: Math.round(seaTemp) };
+  return { level: 'ok', delta: Math.round(delta), msg: 'Viento llega a la orilla', landTemp: Math.round(landTemp), seaTemp: Math.round(seaTemp) };
+}
+
+function thermalBadgeHtml(spot) {
+  const t = getThermalRisk(spot);
+  if (!t) return '';
+  const icon = t.level === 'ok' ? '<svg viewBox="0 0 16 16" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 8l3 3 5-6"/></svg>'
+    : '<svg viewBox="0 0 16 16" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 4v5M8 11v1"/></svg>';
+  return `<div class="thermal-badge thermal-${t.level}" title="Tierra ${t.landTemp}°C · Mar ${t.seaTemp}°C · Δ${t.delta}°C">${icon}${t.msg} <span style="opacity:.6">(Δ${t.delta}°C)</span></div>`;
+}
+
+// ========== RAIN OVERLAY ==========
+function rainOverlayHtml(spot) {
+  const d = spotData[spot.id];
+  if (!d?.wind?.current) return '';
+  const rain = d.wind.current.precipitation || 0;
+  if (rain < 0.5) return '';
+  const heavy = rain > 2;
+  return `<div class="rain-overlay ${heavy ? 'rain-heavy' : 'rain-light'}"><svg viewBox="0 0 16 16" width="10" height="10" fill="currentColor"><path d="M8 2C8 2 3 8 3 11a5 5 0 0010 0C13 8 8 2 8 2z"/></svg>${rain.toFixed(1)}mm</div>`;
+}
+
+// ========== SUGGEST SPOT ==========
+function showSuggestModal() {
+  // Get user location for auto-fill
+  const latStr = userLat ? userLat.toFixed(4) : '';
+  const lonStr = userLon ? userLon.toFixed(4) : '';
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+  overlay.innerHTML = `<div class="modal-content">
+    <div class="modal-header"><h3>Sugerir un spot</h3><button class="modal-close" onclick="this.closest('.modal-overlay').remove()"><svg viewBox="0 0 20 20" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l8 8M14 6l-8 8"/></svg></button></div>
+    <div class="modal-form">
+      <input type="text" id="sugName" placeholder="Nombre del spot" required>
+      <input type="text" id="sugRegion" placeholder="Region (ej: Los Lagos)">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <input type="text" id="sugLat" placeholder="Latitud" value="${latStr}">
+        <input type="text" id="sugLon" placeholder="Longitud" value="${lonStr}">
+      </div>
+      <p class="form-help">Si no sabes las coordenadas, describe la ubicacion abajo</p>
+      <textarea id="sugDesc" placeholder="Descripcion, como llegar, tipo de viento..."></textarea>
+      <input type="text" id="sugContact" placeholder="Tu nombre o WhatsApp (opcional)">
+      <button class="btn-submit" onclick="submitSuggestion()">Enviar sugerencia</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+}
+
+function submitSuggestion() {
+  const name = document.getElementById('sugName')?.value?.trim();
+  if (!name) { document.getElementById('sugName').style.borderColor = 'var(--red)'; return; }
+  const data = {
+    name,
+    region: document.getElementById('sugRegion')?.value?.trim() || '',
+    lat: document.getElementById('sugLat')?.value?.trim() || '',
+    lon: document.getElementById('sugLon')?.value?.trim() || '',
+    desc: document.getElementById('sugDesc')?.value?.trim() || '',
+    contact: document.getElementById('sugContact')?.value?.trim() || '',
+    timestamp: new Date().toISOString()
+  };
+  // Store locally (no backend yet)
+  const suggestions = JSON.parse(localStorage.getItem('ks_suggestions') || '[]');
+  suggestions.push(data);
+  localStorage.setItem('ks_suggestions', JSON.stringify(suggestions));
+  // Close modal and show confirmation
+  document.querySelector('.modal-overlay')?.remove();
+  // Show toast
+  const toast = document.createElement('div');
+  toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--green);color:#000;padding:10px 20px;border-radius:8px;font-size:.8rem;font-weight:600;z-index:300;animation:fadeUp .3s';
+  toast.textContent = 'Spot sugerido! Lo revisaremos pronto';
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
+
 let _filterTimer;
 function filterSpots() { clearTimeout(_filterTimer); _filterTimer = setTimeout(renderSpots, 300); }
 
@@ -1105,7 +1234,7 @@ async function fetchSpotsOnDemand(spots, callback) {
     try {
       const [wind, marine] = await Promise.all([
         fetchWithRetry(`https://api.open-meteo.com/v1/forecast?latitude=${spot.lat}&longitude=${spot.lon}&current=wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,weather_code,precipitation&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,precipitation,weather_code&forecast_days=7&wind_speed_unit=kn&timezone=America/Santiago`),
-        fetchWithRetry(`https://marine-api.open-meteo.com/v1/marine?latitude=${spot.lat}&longitude=${spot.lon}&current=wave_height,wave_period,wave_direction&hourly=wave_height&forecast_days=7&timezone=America/Santiago`)
+        fetchWithRetry(`https://marine-api.open-meteo.com/v1/marine?latitude=${spot.lat}&longitude=${spot.lon}&current=wave_height,wave_period,wave_direction,sea_surface_temperature&hourly=wave_height&forecast_days=7&timezone=America/Santiago`)
       ]);
       if (wind && !wind.error) {
         spotData[spot.id] = { id: spot.id, wind, marine };
