@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="es" data-es-title="CLAUDIA - Tu Asistente Inteligente de Construcción" data-en-title="CLAUDIA - Your Smart Construction Assistant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>CLAUDIA - Tu Asistente Inteligente de Construcción</title>
+
+    <!-- PWA Meta Tags -->
+    <meta name="description" content="Tu asistente personal para gestión de proyectos de construcción con APUs profesionales">
+    <meta name="theme-color" content="#667eea">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="CLAUDIA">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/icon-192.png">
+
+    <!-- Optimized CSS v5.3 (Minified) -->
+    <link rel="stylesheet" href="css/claudia.min.css">
+
+    <link rel="stylesheet" href="css/claudia-main.min.css">
+    <!-- Chart.js REMOVIDO - No esencial para maestros -->
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div>
+                <h1>
+                    <span style="font-size: 36px;" aria-hidden="true"></span>
+                    <span style="font-weight: 700; font-size: 32px;">Claud</span><span style="font-weight: 700; font-size: 32px; background: linear-gradient(135deg, #10b981 0%, #047857 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; text-fill-color: transparent;">IA</span>
+                    <span style="font-size: 13px; color: #666; font-weight: 400; margin-left: 8px; vertical-align: middle; opacity: 0.8;" data-es="Inteligencia Artificial para Construcción" data-en="Artificial Intelligence for Construction">Inteligencia Artificial para Construcción</span>
+                </h1>
+                <div id="user-plan-badge" style="margin-top: 8px;"></div>
+                <p class="subtitle" data-es="Presupuestos Profesionales · Compra Inteligente · Máxima Utilidad" data-en="Professional Budgets · Smart Purchasing · Maximum Profit">Presupuestos Profesionales · Compra Inteligente · Máxima Utilidad</p>
+                <!-- Botón Telegram MEJORADO -->
+                <button id="telegram-connect-btn" style="margin-top: 12px; background: linear-gradient(135deg, #0088cc 0%, #005580 100%); color: white; border: none; padding: 12px 24px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 12px rgba(0, 136, 204, 0.3); position: relative; overflow: hidden;">
+                    <span style="position: relative; z-index: 2;">Conectar con Telegram</span>
+                    <span style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%); opacity: 0; transition: opacity 0.3s; z-index: 1;"></span>
+                </button>
+                <div id="telegram-status-badge" style="margin-top: 8px; font-size: 13px; display: none;"></div>
+            </div>
+            <div class="logo" style="font-size: 52px;" aria-hidden="true"></div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Proyecto Actual -->
+            <section class="card" id="project-card" aria-labelledby="project-card-title">
+                <div class="card-header">
+                    <div class="card-icon" aria-hidden="true"></div>
+                    <h2 class="card-title" id="project-card-title" data-es="Mis Proyectos" data-en="My Projects">Mis Proyectos</h2>
+                </div>
+
+                <!-- Selector de Proyectos -->
+                <div class="input-group">
+                    <label for="project-selector">Proyecto Activo</label>
+                    <div style="display: flex; gap: 8px;">
+                        <select id="project-selector" onchange="switchProject(this.value)" style="flex: 1; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 15px;">
+                            <!-- Loaded by JS -->
+                        </select>
+                        <button id="btn-create-new-project" class="btn" style="width: auto; padding: 12px 16px;" title="Nuevo Proyecto" aria-label="Crear Nuevo Proyecto">
+                            <span aria-hidden="true"></span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="project-name">Nombre del proyecto</label>
+                    <input type="text" id="project-name" placeholder="Ej: Ampliación Casa" value="Mi Proyecto" onblur="saveCurrentProject()">
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px;">
+                    <button class="btn btn-secondary" onclick="showTemplates()">
+                        <span aria-hidden="true"></span>
+                        <span>Plantilla</span>
+                    </button>
+                    <button class="btn btn-secondary" onclick="showProjectOptions()">
+                        <span aria-hidden="true"></span>
+                        <span>Opciones</span>
+                    </button>
+                </div>
+
+                <!-- Tip de edición -->
+                <div style="background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%); padding: 12px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #667eea; display: flex; align-items: center; gap: 10px;" role="alert">
+                    <span style="font-size: 24px;" aria-hidden="true"></span>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600; font-size: 13px; color: #333; margin-bottom: 2px;">¡Tip! Edita tus actividades</div>
+                        <div style="font-size: 12px; color: #666;">Haz clic en las cantidades (ej: "15 m2 ") para editarlas. Presiona para eliminar.</div>
+                    </div>
+                </div>
+
+                <div id="project-activities">
+                    <div class="project-empty">
+                        <div style="font-size: 48px; margin-bottom: 10px;" aria-hidden="true"></div>
+                        <div style="font-weight: 600; margin-bottom: 5px;">Sin actividades</div>
+                        <div style="font-size: 13px; color: #757575;">Busca y agrega actividades a tu proyecto</div>
+                    </div>
+                </div>
+
+                <div id="project-summary" style="display: none;">
+                    <!-- TOTAL DEL PROYECTO - DISEÑO PRO -->
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 25px; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(102, 126, 234, 0.25); cursor: help;" title="Este es el precio total de todas las actividades sumadas. Incluye materiales y mano de obra.">
+                        <div style="color: rgba(255,255,255,0.9); font-size: 14px; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">Presupuesto Total</div>
+                        <div id="project-total-amount" style="color: white; font-size: 42px; font-weight: 800; line-height: 1; text-shadow: 0 2px 8px rgba(0,0,0,0.2);">$0</div>
+                        <div style="color: rgba(255,255,255,0.8); font-size: 13px; margin-top: 8px;">IVA incluido · Precios referenciales</div>
+                        <div style="color: rgba(255,255,255,0.7); font-size: 11px; margin-top: 6px; font-style: italic;">Click "Lista de Compras" para ver el desglose completo</div>
+                    </div>
+
+                    <!-- CUBICACIÓN RESUMIDA - PUNTO CRÍTICO #2 -->
+                    <div id="project-cubicacion-summary" style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 15px; border: 2px solid #e5e7eb; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                        <!-- Populated by JS -->
+                    </div>
+
+                    <!-- Resumen de Costos por Categoría -->
+                    <div id="cost-summary-simple" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); padding: 20px; border-radius: 12px; margin-bottom: 15px; border: 2px solid #10b981;">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px;">
+                            <span style="font-size: 24px;" aria-hidden="true"></span>
+                            <span style="font-weight: 700; font-size: 16px; color: #047857;">Desglose por Categoría</span>
+                        </div>
+                        <div id="cost-breakdown-simple" style="display: grid; gap: 12px;">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+
+                    <!-- BOTONES ESENCIALES PARA MAESTROS -->
+
+                    <!-- LISTA DE COMPRAS - LO MÁS IMPORTANTE -->
+                    <button id="shopping-list-btn" class="btn" onclick="generarListaCompra()" style="width: 100%; background: linear-gradient(135deg, #10b981 0%, #047857 100%); color: white; border: none; font-weight: 700; margin-bottom: 15px; font-size: 18px; padding: 18px;">
+                        <span style="font-size: 17px;">LISTA DE COMPRAS</span>
+                    </button>
+
+                    <!-- EXPORTAR -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                        <button class="btn" onclick="exportToExcel()" style="background: #059669; color: white; border: none; font-weight: 600; padding: 12px;">
+                            <span>Exportar Excel</span>
+                        </button>
+                        <button class="btn" onclick="copyPresupuestoToClipboard()" style="background: #0ea5e9; color: white; border: none; font-weight: 600; padding: 12px;">
+                            <span>Copiar</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tareas y Bitácora -->
+            <section class="card" aria-labelledby="tasks-card-title">
+                <div class="card-header">
+                    <div class="card-icon" aria-hidden="true"></div>
+                    <h2 class="card-title" id="tasks-card-title" data-es="Tareas del Proyecto" data-en="Project Tasks">Tareas del Proyecto</h2>
+                </div>
+
+                <div class="input-group">
+                    <label for="new-task-input">Nueva Tarea</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="new-task-input" placeholder="Ej: Comprar materiales en ferretería">
+                        <select id="task-priority" style="width: 100px; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px;" aria-label="Prioridad de la tarea">
+                            <option value="low">🟢 Baja</option>
+                            <option value="normal" selected>🟡 Normal</option>
+                            <option value="high">Alta</option>
+                        </select>
+                        <button class="btn" onclick="addTaskFromInput()" style="width: auto; padding: 12px 16px;" aria-label="Agregar tarea"></button>
+                    </div>
+                </div>
+
+                <div id="tasks-list">
+                    <div class="project-empty">
+                        <div style="font-size: 48px; margin-bottom: 10px;" aria-hidden="true"></div>
+                        <div style="font-weight: 600; margin-bottom: 5px;">Sin tareas</div>
+                        <div style="font-size: 13px; color: #757575;">Agrega tareas para organizar tu proyecto</div>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 15px;">
+                    <button class="btn btn-secondary" onclick="showLogConfig()">
+                        <span aria-hidden="true"></span>
+                        <span>Configurar Bitácora</span>
+                    </button>
+                    <button class="btn btn-secondary" onclick="previewDailyLog()">
+                        <span aria-hidden="true"></span>
+                        <span>Vista Previa</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Favoritos de APUs -->
+            <section class="card" id="favorites-card" style="display: none;" aria-labelledby="favorites-card-title">
+                <div class="card-header">
+                    <div class="card-icon" aria-hidden="true"></div>
+                    <h2 class="card-title" id="favorites-card-title" data-es="Mis Favoritos" data-en="My Favorites">Mis Favoritos</h2>
+                </div>
+                <p class="card-description" style="font-size: 13px; color: #757575; margin-bottom: 15px;">
+                    Acceso rápido a tus actividades más usadas
+                </p>
+                <div id="favorites-list" style="display: grid; gap: 8px;">
+                    <!-- Populated by JS -->
+                </div>
+            </section>
+
+            <!-- Navegador de APUs -->
+            <section class="card" aria-labelledby="apu-navigator-title">
+                <div class="card-header">
+                    <div class="card-icon" aria-hidden="true"></div>
+                    <h2 class="card-title" id="apu-navigator-title" data-es="Buscar Actividades" data-en="Search Activities">Buscar Actividades</h2>
+                </div>
+                <p class="card-description">
+                    Busca y agrega actividades profesionales a tu proyecto
+                </p>
+
+                <!-- BUSCADOR INTELIGENTE -->
+                <div style="margin-bottom: 20px;">
+                    <input
+                        type="text"
+                        id="apu-search-input"
+                        placeholder="Buscar por nombre, código o material... (ej: radier, excavación, pintura)"
+                        style="width: 100%; padding: 14px 16px; font-size: 15px; border: 2px solid #e0e0e0; border-radius: 12px; transition: all 0.3s ease;"
+                        onkeyup="filterAPUs(this.value)"
+                        onfocus="this.style.borderColor='#10b981'"
+                        onblur="this.style.borderColor='#e0e0e0'"
+                    >
+                    <div id="search-results-count" style="margin-top: 8px; font-size: 13px; color: #666; display: none;">
+                        Mostrando <strong id="results-count">0</strong> resultados
+                    </div>
+                </div>
+
+                <!-- FILTRO POR CATEGORÍA + BOTÓN COLAPSAR -->
+                <div style="margin-bottom: 20px;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
+                        <label style="font-weight: 600; font-size: 14px; color: #333;">Filtrar por categoría:</label>
+                        <button onclick="toggleAllCategories()" id="toggle-all-btn" style="padding: 6px 12px; background: #10b981; color: white; border: none; border-radius: 6px; font-size: 12px; cursor: pointer; font-weight: 600;">
+                            Colapsar Todo
+                        </button>
+                    </div>
+                    <select id="category-filter" onchange="filterByCategory(this.value)" style="width: 100%; padding: 12px; font-size: 14px; border: 2px solid #e0e0e0; border-radius: 10px; background: white;">
+                        <option value="">Todas las categorías (14)</option>
+                    </select>
+                </div>
+
+                <div id="apu-navigator"></div>
+            </section>
+
+            <!-- Formulario para Agregar Actividad -->
+            <section class="card" id="add-activity-form" style="display: none;" aria-labelledby="add-activity-title">
+                <div class="card-header">
+                    <div class="card-icon" aria-hidden="true"></div>
+                    <h2 class="card-title" id="add-activity-title" data-es="Agregar al Proyecto" data-en="Add to Project">Agregar al Proyecto</h2>
+                </div>
+
+                <div class="selected-apu-info">
+                    <div class="selected-apu-label">Actividad:</div>
+                    <div class="selected-apu-name" id="selected-apu-name"></div>
+                </div>
+
+                <div id="apu-details-content"></div>
+
+                <div class="input-group">
+                    <label for="cantidad">Cantidad</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="number" id="cantidad" placeholder="Ej: 24" step="0.1" value="1" style="flex: 1;">
+                        <input type="text" id="unidad-display" disabled style="width: 80px; background: #f5f5f5; text-align: center;" aria-label="Unidad de medida">
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn" onclick="addActivityToProject()" style="flex: 1;">
+                        <span aria-hidden="true"></span>
+                        <span>Agregar a Proyecto</span>
+                    </button>
+                    <button class="btn btn-secondary" onclick="cancelAddActivity()" aria-label="Cancelar">
+                        <span aria-hidden="true"></span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Presupuesto Completo del Proyecto -->
+            <section class="card" id="full-budget" style="display: none;" aria-labelledby="full-budget-title">
+                <div class="card-header">
+                    <div class="card-icon" aria-hidden="true"></div>
+                    <h2 class="card-title" id="full-budget-title" data-es="Presupuesto Completo" data-en="Full Budget">Presupuesto Completo</h2>
+                </div>
+                <div id="budget-content"></div>
+                <button class="btn btn-secondary" onclick="closeBudget()">
+                    <span aria-hidden="true">←</span>
+                    <span>Volver</span>
+                </button>
+            </section>
+
+            <!-- Chat Interface -->
+            <section class="chat-container" aria-labelledby="chat-title">
+                <div class="chat-header">
+                    <h2 id="chat-title"><span aria-hidden="true"></span> Chatea con Claudia</h2>
+                    <div class="chat-status">
+                        <span class="status-dot"></span>
+                        <span>En línea</span>
+                    </div>
+                </div>
+                <div class="chat-messages" id="chat-messages">
+                    <!-- Messages loaded by JavaScript -->
+                </div>
+                <div class="chat-input-container">
+                    <!-- Voice Status -->
+                    <div class="voice-status" id="voice-status">
+                        <div class="voice-status-text" id="voice-status-text">Escuchando...</div>
+                        <div class="voice-waveform">
+                            <div class="voice-waveform-bar"></div>
+                            <div class="voice-waveform-bar"></div>
+                            <div class="voice-waveform-bar"></div>
+                            <div class="voice-waveform-bar"></div>
+                            <div class="voice-waveform-bar"></div>
+                        </div>
+                    </div>
+
+                    <div class="chat-input-wrapper">
+                        <input type="text" class="chat-input" id="chat-input" placeholder="Escribe o usa el botón de voz..." aria-label="Mensaje para Claudia">
+
+                        <!-- Push-to-Talk Voice Button -->
+                        <div style="display: flex; flex-direction: column; align-items: center;">
+                            <button class="voice-button" id="voice-btn"
+                                    onmousedown="startVoiceRecording(event)"
+                                    onmouseup="stopVoiceRecording()"
+                                    onmouseleave="stopVoiceRecording()"
+                                    ontouchstart="startVoiceRecording(event)"
+                                    ontouchend="stopVoiceRecording()"
+                                    aria-label="Mantén presionado para grabar un mensaje de voz">
+                                <span aria-hidden="true"></span>
+                            </button>
+                            <div class="voice-hint" id="voice-hint">Mantén presionado</div>
+                        </div>
+
+                        <button class="chat-send" onclick="sendMessage()" aria-label="Enviar mensaje">
+                            <span aria-hidden="true"></span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <!-- Bitácora Panel -->
+            <section class="bitacora-panel" aria-labelledby="bitacora-title">
+                <div class="bitacora-header">
+                    <h2 id="bitacora-title" class="card-title" style="color: white; font-size: 16px;">
+                        <span aria-hidden="true"></span>
+                        <span>Bitácora de Obra</span>
+                    </h2>
+                </div>
+                <div class="bitacora-content" id="bitacora-content">
+                    <!-- Loaded by JavaScript -->
+                </div>
+            </section>
+
+            <!-- Alertas y Tareas Panel -->
+            <section class="alerts-panel" aria-labelledby="alerts-title">
+                <div class="alerts-header">
+                    <h2 id="alerts-title" class="card-title" style="color: white; font-size: 16px;">
+                        <span aria-hidden="true"></span>
+                        <span>Alertas & Tareas</span>
+                    </h2>
+                </div>
+                <div class="alerts-content" id="alerts-content">
+                    <!-- Loaded by JavaScript -->
+                </div>
+            </section>
+        </aside>
+    </div>
+
+    <!-- Modal Plantillas -->
+    <div class="modal-overlay" id="templates-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <span></span>
+                    <span>Plantillas de Proyecto</span>
+                </div>
+                <button class="modal-close" onclick="closeTemplates()"></button>
+            </div>
+            <div class="modal-body">
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                    Selecciona una plantilla para comenzar rápidamente tu proyecto
+                </p>
+                <div class="templates-grid" id="templates-grid">
+                    <!-- Loaded by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Opciones de Proyecto -->
+    <div class="modal-overlay" id="project-options-modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <span></span>
+                    <span>Opciones del Proyecto</span>
+                </div>
+                <button class="modal-close" onclick="closeProjectOptions()"></button>
+            </div>
+            <div class="modal-body">
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <button class="btn btn-secondary" onclick="duplicateCurrentProject()" style="width: 100%;">
+                        <span></span>
+                        <span>Duplicar Proyecto</span>
+                    </button>
+                    <button class="btn btn-secondary" onclick="exportCurrentProject()" style="width: 100%;">
+                        <span></span>
+                        <span>Exportar Proyecto</span>
+                    </button>
+                    <button class="btn btn-secondary" onclick="shareCurrentProject()" style="width: 100%;">
+                        <span></span>
+                        <span>Compartir Proyecto</span>
+                    </button>
+                    <button class="btn" onclick="deleteCurrentProject()" style="width: 100%; background: #dc2626;">
+                        <span></span>
+                        <span>Eliminar Proyecto</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Configuración de Bitácora -->
+    <div class="modal-overlay" id="log-config-modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <span></span>
+                    <span>Configuración de Bitácora Diaria</span>
+                </div>
+                <button class="modal-close" onclick="closeLogConfig()"></button>
+            </div>
+            <div class="modal-body">
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                    Configura CLAUDIA para enviarte resúmenes automáticos de tu proyecto
+                </p>
+
+                <!-- Bitácora Nocturna -->
+                <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                        <input type="checkbox" id="log-enabled" style="width: 20px; height: 20px;">
+                        <label for="log-enabled" style="font-weight: 600; margin: 0;">
+                            Activar Bitácora Nocturna
+                        </label>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Hora de Envío</label>
+                        <input type="time" id="log-time" value="18:00">
+                    </div>
+
+                    <div class="input-group">
+                        <label>Email (opcional)</label>
+                        <input type="email" id="log-email" placeholder="tu@email.com">
+                    </div>
+
+                    <div class="input-group">
+                        <label>WhatsApp (opcional)</label>
+                        <input type="tel" id="log-whatsapp" placeholder="+56912345678">
+                        <small style="color: #757575; font-size: 12px;">Formato internacional (+56...)</small>
+                    </div>
+                </div>
+
+                <!-- Mensaje Matutino -->
+                <div style="background: #fff3e0; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                        <input type="checkbox" id="morning-enabled" style="width: 20px; height: 20px;">
+                        <label for="morning-enabled" style="font-weight: 600; margin: 0;">
+                            Activar Mensaje Motivacional Matutino
+                        </label>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Hora de Envío</label>
+                        <input type="time" id="morning-time" value="08:00">
+                    </div>
+
+                    <p style="font-size: 13px; color: #757575; margin: 10px 0 0 0;">
+                        CLAUDIA te enviará un mensaje motivacional con tus tareas prioritarias cada mañana
+                    </p>
+                </div>
+
+                <!-- Recordatorios de Tareas -->
+                <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                        <input type="checkbox" id="reminders-enabled" style="width: 20px; height: 20px;">
+                        <label for="reminders-enabled" style="font-weight: 600; margin: 0;">
+                            Activar Recordatorios de Tareas
+                        </label>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Número para SMS/WhatsApp</label>
+                        <input type="tel" id="reminder-phone" placeholder="+56912345678">
+                        <small style="color: #757575; font-size: 12px;">Se enviará recordatorio de tareas urgentes</small>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Frecuencia de Recordatorios</label>
+                        <select id="reminder-frequency" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                            <option value="daily">Diario (tareas pendientes)</option>
+                            <option value="morning">Solo mañana (08:00)</option>
+                            <option value="afternoon">Solo tarde (15:00)</option>
+                            <option value="urgent">Solo tareas urgentes (alta prioridad)</option>
+                        </select>
+                    </div>
+
+                    <p style="font-size: 13px; color: #757575; margin: 10px 0 0 0;">
+                        CLAUDIA te recordará tus tareas pendientes automáticamente
+                    </p>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn" onclick="saveLogConfig()" style="flex: 1;">
+                        Guardar Configuración
+                    </button>
+                    <button class="btn btn-secondary" onclick="closeLogConfig()">
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Vista Previa Bitácora -->
+    <div class="modal-overlay" id="log-preview-modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <span></span>
+                    <span>Vista Previa de Bitácora</span>
+                </div>
+                <button class="modal-close" onclick="closeLogPreview()"></button>
+            </div>
+            <div class="modal-body">
+                <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                    Así se verá tu bitácora diaria:
+                </p>
+                <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; font-family: monospace; font-size: 13px; white-space: pre-wrap; line-height: 1.6;" id="log-preview-content">
+                    <!-- Loaded by JavaScript -->
+                </div>
+                <button class="btn btn-secondary" onclick="closeLogPreview()" style="width: 100%; margin-top: 15px;">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Vinculación Telegram -->
+    <div class="modal-overlay" id="telegram-linking-modal" style="display: none;">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #0088cc 0%, #005580 100%);">
+                <div class="modal-title">
+                    <span></span>
+                    <span>Conectar con Telegram</span>
+                </div>
+                <button class="modal-close" onclick="closeTelegramLinking()"></button>
+            </div>
+            <div class="modal-body">
+                <p style="color: var(--text-secondary); margin-bottom: 20px; line-height: 1.6;">
+                    <strong>Recibe notificaciones automáticas en Telegram:</strong><br>
+                    • Resúmenes diarios de tus proyectos<br>
+                    • Recordatorios de tareas pendientes<br>
+                    • Alertas importantes<br>
+                    • Actualiza desde Telegram sin abrir la web
+                </p>
+
+                <!-- Código de Vinculación -->
+                <div style="background: linear-gradient(135deg, #e0f7ff 0%, #b3e5fc 100%); padding: 20px; border-radius: 12px; margin: 20px 0; text-align: center; border: 2px solid #0088cc;">
+                    <div style="font-size: 14px; color: #005580; margin-bottom: 10px; font-weight: 600;">
+                        Tu código de vinculación:
+                    </div>
+                    <div id="telegram-code" style="font-size: 42px; font-weight: 800; letter-spacing: 10px; color: #0088cc; font-family: 'Courier New', monospace; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        ------
+                    </div>
+                    <div style="font-size: 12px; color: #666; margin-top: 8px; font-style: italic;">
+                        Válido por 15 minutos
+                    </div>
+                </div>
+
+                <!-- Error Message -->
+                <div id="telegram-error" style="display: none; background: #ffebee; color: #c62828; padding: 12px; border-radius: 8px; margin: 15px 0; font-size: 14px;">
+                    <!-- Error text here -->
+                </div>
+
+                <!-- Instrucciones -->
+                <div style="background: #fffbeb; padding: 15px; border-left: 4px solid #f59e0b; margin: 20px 0; border-radius: 4px;">
+                    <div style="font-weight: 600; margin-bottom: 10px; color: #92400e;">Pasos a seguir:</div>
+                    <ol style="margin: 0; padding-left: 20px; color: #78350f; line-height: 1.8;">
+                        <li>Abre <strong>Telegram</strong> en tu celular</li>
+                        <li>Busca: <code style="background: #fef3c7; padding: 2px 6px; border-radius: 4px; font-weight: 600;">@ClaudiaPro_Bot</code></li>
+                        <li>Envía: <code style="background: #fef3c7; padding: 2px 6px; border-radius: 4px; font-weight: 600;">/start</code></li>
+                        <li>Envía: <code style="background: #fef3c7; padding: 2px 6px; border-radius: 4px; font-weight: 600;">/vincular [CÓDIGO]</code></li>
+                        <li>¡Listo! Recibirás confirmación</li>
+                    </ol>
+                </div>
+
+                <!-- Botones -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px;">
+                    <button class="btn btn-secondary" onclick="closeTelegramLinking()">
+                        Cancelar
+                    </button>
+                    <button class="btn" onclick="generateLinkingCode()" style="background: #0088cc;">
+                        Nuevo Código
+                    </button>
+                </div>
+
+                <!-- Link directo a Telegram -->
+                <div style="text-align: center; margin-top: 15px;">
+                    <a href="https://t.me/ClaudiaPro_bot" target="_blank" style="color: #0088cc; text-decoration: none; font-size: 14px; font-weight: 600;">
+                        Abrir @ClaudiaPro_bot →
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Preview APU -->
+    <div class="modal-overlay" id="apu-preview-modal" style="display: none;" onclick="if(event.target === this) closeAPUPreview();">
+        <div class="modal-content" style="max-width: 700px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                <div class="modal-title">
+                    <span></span>
+                    <span id="preview-apu-name">Detalle de Actividad</span>
+                </div>
+                <button class="modal-close" onclick="closeAPUPreview()"></button>
+            </div>
+            <div class="modal-body">
+                <div style="background: #f0fdf4; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #10b981;">
+                    <div style="font-size: 13px; color: #065f46; font-weight: 600;">Categoría</div>
+                    <div style="font-size: 15px; color: #047857; margin-top: 4px;" id="preview-apu-categoria">-</div>
+                </div>
+
+                <div id="preview-apu-content">
+                    <!-- Content will be populated by JavaScript -->
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 24px;">
+                    <button class="btn btn-secondary" onclick="closeAPUPreview()" style="flex: 1;">
+                        Cancelar
+                    </button>
+                    <button class="btn" id="preview-add-btn" style="flex: 2; background: #10b981;">
+                        Agregar al Proyecto
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK v9 (Modular) - ACTIVADO -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs, updateDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getAnalytics } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCCQJJjoYoZdwDAr6FTxvrqcMlPkjl0e_Q",
+            authDomain: "claudia-i8bxh.firebaseapp.com",
+            projectId: "claudia-i8bxh",
+            storageBucket: "claudia-i8bxh.firebasestorage.app",
+            messagingSenderId: "59768552257",
+            appId: "1:59768552257:web:fedbf6ee635fa367337fc0",
+            measurementId: "G-3GMP8P4QJD"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const analytics = getAnalytics(app);
+
+        window.firebaseApp = app;
+        window.firebaseAuth = auth;
+        window.firebaseDb = db;
+        window.firebaseAnalytics = analytics;
+        window.firebaseModules = {
+            onAuthStateChanged,
+            signInWithEmailAndPassword,
+            createUserWithEmailAndPassword,
+            signOut,
+            GoogleAuthProvider,
+            signInWithPopup,
+            doc,
+            setDoc,
+            getDoc,
+            collection,
+            query,
+            where,
+            getDocs,
+            updateDoc,
+            serverTimestamp
+        };
+
+        console.log('Firebase initialized successfully');
+        console.log('Authentication ready');
+        console.log('Firestore ready');
+        console.log('Analytics ready');
+
+        // Load Auth module after Firebase is ready
+        const authScript = document.createElement('script');
+        authScript.src = 'js/claudia-auth.js';
+        authScript.onload = () => console.log('Auth module loaded after Firebase');
+        document.body.appendChild(authScript);
+    </script>
+
+    <!-- CLAUDIA v8.0 LITE - CORE ONLY (Fast Load) -->
+    <script src="js/claudia-complete.js"></script>
+
+    <!-- SMART PROJECT CREATOR WITH AI (2025-01-17) -->
+    <link rel="stylesheet" href="css/smart-project-creator.css">
+    <script src="js/claudia-smart-project-creator.js"></script>
+
+    <!-- Lazy Load Helper -->
+    <script>
+        // Lazy load modules only when needed
+        window.loadedModules = new Set();
+
+        window.loadModule = function(moduleName, callback) {
+            if (window.loadedModules.has(moduleName)) {
+                if (callback) callback();
+                return Promise.resolve();
+            }
+
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = `js/${moduleName}.js`;
+                script.onload = () => {
+                    window.loadedModules.add(moduleName);
+                    console.log(`${moduleName} loaded`);
+                    if (callback) callback();
+                    resolve();
+                };
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+        };
+
+        // Auto-load essential modules after page is interactive
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', loadEssentialModules);
+        } else {
+            loadEssentialModules();
+        }
+
+        function loadEssentialModules() {
+            // Load in background after page is interactive
+            setTimeout(() => {
+                loadModule('claudia-materials-breakdown');
+                loadModule('claudia-price-comparison-pro').then(() => {
+                    if (window.PriceComparisonPro && !window.priceComparisonPro) {
+                        window.priceComparisonPro = new window.PriceComparisonPro();
+                        window.priceComparisonPro.init();
+                    }
+                });
+
+                // MÓDULOS DE INTELIGENCIA AVANZADA (sin afectar funcionalidad actual)
+                loadModule('claudia-smart-shopping'); // Lista inteligente de compras optimizada
+                loadModule('claudia-ai-suggestions');  // Sugerencias proactivas basadas en comportamiento
+                loadModule('claudia-smart');           // Chat super inteligente con bitácora
+            }, 100);
+        }
+
+        console.log('CLAUDIA CORE loaded - Ready to use!');
+
+        // FIX: Asegurar que el botón de Telegram funcione
+        document.addEventListener('DOMContentLoaded', function() {
+            const telegramBtn = document.getElementById('telegram-connect-btn');
+            if (telegramBtn) {
+                telegramBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('[CLAUDIA] Click en botón Telegram detectado');
+
+                    if (typeof window.openTelegramLinking === 'function') {
+                        window.openTelegramLinking();
+                    } else {
+                        console.error('[CLAUDIA] Función openTelegramLinking no disponible');
+                        alert('Función de Telegram no disponible. Recarga la página.');
+                    }
+                });
+
+                // Efecto hover
+                telegramBtn.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-2px)';
+                    this.style.boxShadow = '0 6px 16px rgba(0, 136, 204, 0.4)';
+                });
+
+                telegramBtn.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                    this.style.boxShadow = '0 4px 12px rgba(0, 136, 204, 0.3)';
+                });
+
+                console.log('[CLAUDIA] Event listener de Telegram agregado');
+            }
+        });
+    </script>
+<!-- Scripts críticos para funcionalidad inmediata -->
+<script src="js/claudia-telegram-linking.js"></script>
+<script src="js/claudia-apu-preview-enhanced.js"></script>
+<script src="js/claudia-export-pro.js"></script>
+<script src="js/claudia-smart-suggestions.js"></script>
+
+<!-- Scripts no críticos con defer -->
+<script src="js/claudia-search-optimized.js" defer></script>
+<script src="js/claudia-search-filter.js" defer></script>
+<script src="js/claudia-savings-dashboard.js" defer></script>
+<script src="js/claudia-price-comparison.js" defer></script>
+<script src="js/claudia-analytics.js" defer></script>
+
+<!-- Scripts de monetización con defer -->
+<script src="js/claudia-freemium.js" defer></script>
+<script src="js/claudia-mercadopago.js" defer></script>
+<script src="js/claudia-email-templates.js" defer></script>
+<script src="js/claudia-onboarding.js" defer></script>
+<script src="../../../../assets/i18n.js"></script>
+</body>
+</html>

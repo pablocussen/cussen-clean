@@ -1,0 +1,2113 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#0c1222">
+  <meta name="description" content="GuardiasCL - Sistema de gestión para empresas de seguridad privada en Chile">
+  <title>GuardiasCL - Gestión de Seguridad</title>
+  <link rel="manifest" href="/guardiascl/manifest.json">
+  <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0c1222;
+      color: #f3f4f6;
+      line-height: 1.6;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    header {
+      background: linear-gradient(135deg, #0c1222 0%, #1a1f35 100%);
+      padding: 1rem;
+      border-bottom: 3px solid #dc2626;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      z-index: 100;
+    }
+
+    .header-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #dc2626;
+      letter-spacing: -0.5px;
+    }
+
+    .sync-status {
+      font-size: 0.75rem;
+      color: #9ca3af;
+      background: rgba(220, 38, 38, 0.1);
+      padding: 0.25rem 0.75rem;
+      border-radius: 2px;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .sync-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #22c55e;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .main-content {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: clip;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .tab-content {
+      display: none;
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
+      max-width: 1200px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .tab-content h2 {
+      margin-bottom: 1.5rem;
+      font-size: 1.75rem;
+      color: #f3f4f6;
+    }
+
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0;
+      border-bottom: 1px solid #1f2937;
+      background: #0c1222;
+      padding: 0 1rem;
+      overflow-x: auto;
+      scroll-behavior: smooth;
+    }
+
+    .tabs::-webkit-scrollbar {
+      height: 3px;
+    }
+
+    .tabs::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .tabs::-webkit-scrollbar-thumb {
+      background: #dc2626;
+      border-radius: 2px;
+    }
+
+    .tab {
+      padding: 0.75rem 1.25rem;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      color: #9ca3af;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 500;
+      white-space: nowrap;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .tab:hover {
+      color: #f3f4f6;
+      border-bottom-color: #dc2626;
+    }
+
+    .tab.active {
+      color: #dc2626;
+      border-bottom-color: #dc2626;
+    }
+
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: #d1d5db;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 0.75rem;
+      font-size: 16px;
+      border: 1px solid #374151;
+      border-radius: 4px;
+      background: #1a1f35;
+      color: #f3f4f6;
+      font-family: 'Inter', sans-serif;
+      transition: border-color 0.2s ease;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #dc2626;
+      background: #111827;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .btn {
+      padding: 0.75rem 1.5rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: 'Inter', sans-serif;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: #dc2626;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #b91c1c;
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: #374151;
+      color: #f3f4f6;
+    }
+
+    .btn-secondary:hover {
+      background: #4b5563;
+    }
+
+    .btn-danger {
+      background: #7f1d1d;
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #991b1b;
+    }
+
+    .btn-success {
+      background: #166534;
+      color: white;
+    }
+
+    .btn-success:hover {
+      background: #15803d;
+    }
+
+    .btn-sm {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.85rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .card {
+      background: #1a1f35;
+      border: 1px solid #374151;
+      border-radius: 6px;
+      padding: 1.5rem;
+      transition: all 0.2s ease;
+    }
+
+    .card:hover {
+      border-color: #dc2626;
+      box-shadow: 0 4px 12px rgba(220, 38, 38, 0.1);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1rem;
+    }
+
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #f3f4f6;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 2px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-success {
+      background: rgba(34, 197, 94, 0.2);
+      color: #22c55e;
+    }
+
+    .badge-danger {
+      background: rgba(220, 38, 38, 0.2);
+      color: #fca5a5;
+    }
+
+    .badge-warning {
+      background: rgba(245, 158, 11, 0.2);
+      color: #fcd34d;
+    }
+
+    .badge-info {
+      background: rgba(59, 130, 246, 0.2);
+      color: #93c5fd;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 1.5rem;
+    }
+
+    th {
+      background: #0c1222;
+      padding: 0.75rem;
+      text-align: left;
+      font-weight: 600;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #9ca3af;
+      border-bottom: 2px solid #374151;
+    }
+
+    td {
+      padding: 0.75rem;
+      border-bottom: 1px solid #374151;
+    }
+
+    tr:hover {
+      background: #111827;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 200;
+      justify-content: center;
+      align-items: center;
+      padding: 1rem;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: #1a1f35;
+      border: 1px solid #374151;
+      border-radius: 6px;
+      padding: 2rem;
+      max-width: 500px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .modal-header h3 {
+      font-size: 1.3rem;
+      color: #f3f4f6;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: #9ca3af;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .close-btn:hover {
+      color: #dc2626;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .modal-footer {
+      display: flex;
+      gap: 1rem;
+      justify-content: flex-end;
+      margin-top: 2rem;
+      padding-top: 1rem;
+      border-top: 1px solid #374151;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: linear-gradient(135deg, #1a1f35 0%, #111827 100%);
+      border: 1px solid #374151;
+      border-radius: 6px;
+      padding: 1.5rem;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #dc2626;
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #9ca3af;
+      font-weight: 600;
+    }
+
+    .chart-container {
+      background: #1a1f35;
+      border: 1px solid #374151;
+      border-radius: 6px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      position: relative;
+      height: 400px;
+    }
+
+    .chart-container canvas {
+      max-height: 350px;
+    }
+
+    .no-data {
+      text-align: center;
+      padding: 2rem;
+      color: #9ca3af;
+    }
+
+    .search-box {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .search-box input {
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .success-message, .error-message {
+      padding: 1rem;
+      border-radius: 4px;
+      margin-bottom: 1rem;
+      animation: slideDown 0.3s ease;
+    }
+
+    .success-message {
+      background: rgba(34, 197, 94, 0.15);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      color: #86efac;
+    }
+
+    .error-message {
+      background: rgba(220, 38, 38, 0.15);
+      border: 1px solid rgba(220, 38, 38, 0.3);
+      color: #fca5a5;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .status-indicator {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 0.5rem;
+    }
+
+    .status-activo { background: #22c55e; }
+    .status-vacaciones { background: #f59e0b; }
+    .status-licencia { background: #3b82f6; }
+    .status-inactivo { background: #ef4444; }
+
+    footer {
+      background: #0c1222;
+      border-top: 1px solid #1f2937;
+      padding: 1rem;
+      text-align: center;
+      font-size: 0.85rem;
+      color: #6b7280;
+    }
+
+    @media (max-width: 768px) {
+      h1 {
+        font-size: 1.25rem;
+      }
+
+      .header-content {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .sync-status {
+        font-size: 0.7rem;
+      }
+
+      .tabs {
+        padding: 0 0.5rem;
+      }
+
+      .tab {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.8rem;
+      }
+
+      .tab-content {
+        padding: 1rem 0.5rem;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+
+      table {
+        font-size: 0.85rem;
+      }
+
+      th, td {
+        padding: 0.5rem;
+      }
+
+      .stats {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .chart-container {
+        height: 300px;
+      }
+    }
+
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="header-content">
+        <h1>🛡️ GuardiasCL</h1>
+        <div class="sync-status">
+          <span class="sync-indicator"></span>
+          <span>Sincronizado</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="guardias">Guardias</button>
+      <button class="tab" data-tab="turnos">Turnos</button>
+      <button class="tab" data-tab="puntos">Puntos</button>
+      <button class="tab" data-tab="incidentes">Incidentes</button>
+      <button class="tab" data-tab="finanzas">Finanzas</button>
+      <button class="tab" data-tab="equipamiento">Equipamiento</button>
+    </div>
+
+    <div class="main-content">
+      <!-- GUARDIAS TAB -->
+      <div id="guardias" class="tab-content active">
+        <h2>Base de Guardias</h2>
+        <div class="search-box">
+          <input type="text" id="searchGuardias" placeholder="Buscar por nombre o RUT..." font-size="16px">
+          <button class="btn btn-secondary btn-sm" onclick="exportGuardias()">Exportar CSV</button>
+        </div>
+        <button class="btn btn-primary" onclick="openGuardiaModal()">+ Nuevo Guardia</button>
+
+        <table id="guardiasTable">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>RUT</th>
+              <th>OS-10</th>
+              <th>Vencimiento</th>
+              <th>Especialización</th>
+              <th>Teléfono</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="guardiasBody"></tbody>
+        </table>
+      </div>
+
+      <!-- TURNOS TAB -->
+      <div id="turnos" class="tab-content">
+        <h2>Gestión de Turnos</h2>
+        <div class="stats" id="turnosStats"></div>
+        <div class="search-box">
+          <select id="filterTurnoStatus" onchange="filterTurnos()">
+            <option value="">Todos los estados</option>
+            <option value="programado">Programado</option>
+            <option value="en-curso">En Curso</option>
+            <option value="completado">Completado</option>
+            <option value="falta">Falta</option>
+          </select>
+          <input type="date" id="filterTurnoDate" onchange="filterTurnos()" style="flex: 0.5;">
+          <button class="btn btn-secondary btn-sm" onclick="exportTurnos()">Exportar</button>
+        </div>
+        <button class="btn btn-primary" onclick="openTurnoModal()">+ Nuevo Turno</button>
+
+        <table id="turnosTable">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Guardia</th>
+              <th>Punto</th>
+              <th>Tipo</th>
+              <th>Horas Extras</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="turnosBody"></tbody>
+        </table>
+      </div>
+
+      <!-- PUNTOS TAB -->
+      <div id="puntos" class="tab-content">
+        <h2>Puntos de Seguridad</h2>
+        <div class="search-box">
+          <input type="text" id="searchPuntos" placeholder="Buscar por nombre o dirección...">
+          <select id="filterPuntoType" onchange="filterPuntos()">
+            <option value="">Todos los tipos</option>
+            <option value="edificio">Edificio</option>
+            <option value="condominio">Condominio</option>
+            <option value="empresa">Empresa</option>
+            <option value="obra">Obra</option>
+            <option value="evento">Evento</option>
+            <option value="retail">Retail</option>
+          </select>
+          <button class="btn btn-secondary btn-sm" onclick="exportPuntos()">Exportar</button>
+        </div>
+        <button class="btn btn-primary" onclick="openPuntoModal()">+ Nuevo Punto</button>
+
+        <table id="puntosTable">
+          <thead>
+            <tr>
+              <th>Cliente</th>
+              <th>Dirección</th>
+              <th>Tipo</th>
+              <th>Guardias Req.</th>
+              <th>Contacto</th>
+              <th>Teléfono</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="puntosBody"></tbody>
+        </table>
+      </div>
+
+      <!-- INCIDENTES TAB -->
+      <div id="incidentes" class="tab-content">
+        <h2>Registro de Incidentes</h2>
+        <div class="stats" id="incidentesStats"></div>
+        <div class="search-box">
+          <select id="filterIncidentType" onchange="filterIncidentes()">
+            <option value="">Todos los tipos</option>
+            <option value="robo">Robo</option>
+            <option value="intrusión">Intrusión</option>
+            <option value="vandalismo">Vandalismo</option>
+            <option value="incendio">Incendio</option>
+            <option value="emergencia-medica">Emergencia Médica</option>
+            <option value="sospechoso">Sospechoso</option>
+            <option value="falla-equipo">Falla de Equipo</option>
+          </select>
+          <select id="filterIncidentSeverity" onchange="filterIncidentes()">
+            <option value="">Cualquier severidad</option>
+            <option value="leve">Leve</option>
+            <option value="moderado">Moderado</option>
+            <option value="grave">Grave</option>
+          </select>
+          <button class="btn btn-secondary btn-sm" onclick="exportIncidentes()">Exportar</button>
+        </div>
+        <button class="btn btn-primary" onclick="openIncidenteModal()">+ Nuevo Incidente</button>
+
+        <table id="incidentesTable">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Hora</th>
+              <th>Ubicación</th>
+              <th>Tipo</th>
+              <th>Severidad</th>
+              <th>Guardia</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="incidentesBody"></tbody>
+        </table>
+      </div>
+
+      <!-- FINANZAS TAB -->
+      <div id="finanzas" class="tab-content">
+        <h2>Análisis Financiero</h2>
+        <div class="stats" id="finanzasStats"></div>
+
+        <div class="chart-container">
+          <canvas id="revenueChart"></canvas>
+        </div>
+
+        <h3 style="margin: 2rem 0 1rem; font-size: 1.25rem;">Facturación por Cliente</h3>
+        <div class="search-box">
+          <input type="month" id="filterFinanzasMes" onchange="filterFinanzas()" style="flex: 0.3;">
+          <button class="btn btn-secondary btn-sm" onclick="exportFinanzas()">Exportar</button>
+        </div>
+
+        <table id="finanzasTable">
+          <thead>
+            <tr>
+              <th>Cliente</th>
+              <th>Guardia/Mes</th>
+              <th>Valor Diario</th>
+              <th>Ingresos Mes</th>
+              <th>Horas Extras</th>
+              <th>Total</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="finanzasBody"></tbody>
+        </table>
+      </div>
+
+      <!-- EQUIPAMIENTO TAB -->
+      <div id="equipamiento" class="tab-content">
+        <h2>Inventario de Equipamiento</h2>
+        <div class="stats" id="equipamientoStats"></div>
+        <div class="search-box">
+          <input type="text" id="searchEquipamiento" placeholder="Buscar equipamiento...">
+          <select id="filterEquipCondition" onchange="filterEquipamiento()">
+            <option value="">Cualquier estado</option>
+            <option value="operativo">Operativo</option>
+            <option value="mantenimiento">Mantenimiento</option>
+            <option value="dañado">Dañado</option>
+          </select>
+          <button class="btn btn-secondary btn-sm" onclick="exportEquipamiento()">Exportar</button>
+        </div>
+        <button class="btn btn-primary" onclick="openEquipoModal()">+ Nuevo Equipo</button>
+
+        <table id="equipamientoTable">
+          <thead>
+            <tr>
+              <th>Tipo</th>
+              <th>Descripción</th>
+              <th>Cantidad</th>
+              <th>Asignado a</th>
+              <th>Estado</th>
+              <th>Próximo Mant.</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="equipamientoBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODALES -->
+
+  <!-- Guardia Modal -->
+  <div id="guardiaModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="guardiaModalTitle">Nuevo Guardia</h3>
+        <button class="close-btn" onclick="closeModal('guardiaModal')">&times;</button>
+      </div>
+      <form id="guardiaForm" onsubmit="saveGuardia(event)">
+        <div class="form-group">
+          <label>Nombre Completo *</label>
+          <input type="text" id="guardiaName" required font-size="16px">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>RUT (ej: 12.345.678-9) *</label>
+            <input type="text" id="guardiaRut" required font-size="16px" placeholder="XX.XXX.XXX-X">
+          </div>
+          <div class="form-group">
+            <label>OS-10 *</label>
+            <input type="text" id="guardiaOs10" required font-size="16px" placeholder="Número OS-10">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Vencimiento OS-10 *</label>
+            <input type="date" id="guardiaExpiry" required font-size="16px">
+          </div>
+          <div class="form-group">
+            <label>Especialización *</label>
+            <select id="guardiaSpec" required font-size="16px">
+              <option value="">Seleccionar</option>
+              <option value="vigilancia">Vigilancia</option>
+              <option value="escolta">Escolta</option>
+              <option value="cctv">CCTV</option>
+              <option value="rondas">Rondas</option>
+              <option value="control-acceso">Control de Acceso</option>
+              <option value="eventos">Eventos</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Teléfono de Contacto *</label>
+          <input type="tel" id="guardiaPhone" required font-size="16px" placeholder="+56 9 XXXX XXXX">
+        </div>
+        <div class="form-group">
+          <label>Contacto de Emergencia *</label>
+          <input type="text" id="guardiaEmergency" required font-size="16px">
+        </div>
+        <div class="form-group">
+          <label>Teléfono Emergencia *</label>
+          <input type="tel" id="guardiaEmergencyPhone" required font-size="16px">
+        </div>
+        <div class="form-group">
+          <label>Estado *</label>
+          <select id="guardiaStatus" required font-size="16px">
+            <option value="activo">Activo</option>
+            <option value="vacaciones">Vacaciones</option>
+            <option value="licencia">Licencia</option>
+            <option value="inactivo">Inactivo</option>
+          </select>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('guardiaModal')">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Turno Modal -->
+  <div id="turnoModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Nuevo Turno</h3>
+        <button class="close-btn" onclick="closeModal('turnoModal')">&times;</button>
+      </div>
+      <form id="turnoForm" onsubmit="saveTurno(event)">
+        <div class="form-group">
+          <label>Fecha *</label>
+          <input type="date" id="turnoDate" required font-size="16px">
+        </div>
+        <div class="form-group">
+          <label>Guardia *</label>
+          <select id="turnoGuardia" required font-size="16px"></select>
+        </div>
+        <div class="form-group">
+          <label>Punto de Seguridad *</label>
+          <select id="turnoPunto" required font-size="16px"></select>
+        </div>
+        <div class="form-group">
+          <label>Tipo de Turno *</label>
+          <select id="turnoType" required font-size="16px">
+            <option value="">Seleccionar</option>
+            <option value="diurno">Diurno (08:00-20:00)</option>
+            <option value="nocturno">Nocturno (20:00-08:00)</option>
+            <option value="24hrs">24 Horas</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Horas Extras</label>
+          <input type="number" id="turnoOvertimeHours" min="0" max="12" value="0" font-size="16px">
+        </div>
+        <div class="form-group">
+          <label>Estado *</label>
+          <select id="turnoStatus" required font-size="16px">
+            <option value="programado">Programado</option>
+            <option value="en-curso">En Curso</option>
+            <option value="completado">Completado</option>
+            <option value="falta">Falta</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Notas</label>
+          <textarea id="turnoNotes" font-size="16px"></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('turnoModal')">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Punto Modal -->
+  <div id="puntoModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Nuevo Punto de Seguridad</h3>
+        <button class="close-btn" onclick="closeModal('puntoModal')">&times;</button>
+      </div>
+      <form id="puntoForm" onsubmit="savePunto(event)">
+        <div class="form-group">
+          <label>Nombre del Cliente *</label>
+          <input type="text" id="puntoClient" required font-size="16px">
+        </div>
+        <div class="form-group">
+          <label>Dirección *</label>
+          <input type="text" id="puntoDireccion" required font-size="16px">
+        </div>
+        <div class="form-group">
+          <label>Tipo de Punto *</label>
+          <select id="puntoType" required font-size="16px">
+            <option value="">Seleccionar</option>
+            <option value="edificio">Edificio</option>
+            <option value="condominio">Condominio</option>
+            <option value="empresa">Empresa</option>
+            <option value="obra">Obra</option>
+            <option value="evento">Evento</option>
+            <option value="retail">Retail</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Guardias Requeridos por Turno *</label>
+          <input type="number" id="puntoGuardias" required min="1" max="10" font-size="16px">
+        </div>
+        <div class="form-group">
+          <label>Contacto Principal *</label>
+          <input type="text" id="puntoContacto" required font-size="16px">
+        </div>
+        <div class="form-group">
+          <label>Teléfono *</label>
+          <input type="tel" id="puntoTel" required font-size="16px">
+        </div>
+        <div class="form-group">
+          <label>Instrucciones Especiales</label>
+          <textarea id="puntoInstrucciones" font-size="16px"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Códigos de Acceso / Notas</label>
+          <textarea id="puntoCodigos" font-size="16px"></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('puntoModal')">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Incidente Modal -->
+  <div id="incidenteModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Nuevo Incidente</h3>
+        <button class="close-btn" onclick="closeModal('incidenteModal')">&times;</button>
+      </div>
+      <form id="incidenteForm" onsubmit="saveIncidente(event)">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Fecha *</label>
+            <input type="date" id="incidenteFecha" required font-size="16px">
+          </div>
+          <div class="form-group">
+            <label>Hora *</label>
+            <input type="time" id="incidenteHora" required font-size="16px">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Ubicación / Punto *</label>
+          <select id="incidentePunto" required font-size="16px"></select>
+        </div>
+        <div class="form-group">
+          <label>Guardia que Reporta *</label>
+          <select id="incidenteGuardia" required font-size="16px"></select>
+        </div>
+        <div class="form-group">
+          <label>Tipo de Incidente *</label>
+          <select id="incidenteType" required font-size="16px">
+            <option value="">Seleccionar</option>
+            <option value="robo">Robo</option>
+            <option value="intrusión">Intrusión</option>
+            <option value="vandalismo">Vandalismo</option>
+            <option value="incendio">Incendio</option>
+            <option value="emergencia-medica">Emergencia Médica</option>
+            <option value="sospechoso">Sospechoso</option>
+            <option value="falla-equipo">Falla de Equipo</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Severidad *</label>
+          <select id="incidenteSeverity" required font-size="16px">
+            <option value="leve">Leve</option>
+            <option value="moderado">Moderado</option>
+            <option value="grave">Grave</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Descripción Detallada *</label>
+          <textarea id="incidenteDescripcion" required font-size="16px"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Acciones Tomadas *</label>
+          <textarea id="incidenteAcciones" required font-size="16px"></textarea>
+        </div>
+        <div class="form-group">
+          <label>¿Requiere Seguimiento?</label>
+          <select id="incidenteFollowUp" font-size="16px">
+            <option value="no">No</option>
+            <option value="si">Sí</option>
+          </select>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('incidenteModal')">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Equipo Modal -->
+  <div id="equipoModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Nuevo Equipo</h3>
+        <button class="close-btn" onclick="closeModal('equipoModal')">&times;</button>
+      </div>
+      <form id="equipoForm" onsubmit="saveEquipo(event)">
+        <div class="form-group">
+          <label>Tipo de Equipo *</label>
+          <select id="equipoType" required font-size="16px">
+            <option value="">Seleccionar</option>
+            <option value="radio">Radio</option>
+            <option value="linterna">Linterna</option>
+            <option value="chaleco">Chaleco de Identificación</option>
+            <option value="esposas">Esposas</option>
+            <option value="detector">Detector de Metales</option>
+            <option value="camara">Cámara / Bodycam</option>
+            <option value="uniforme">Uniforme</option>
+            <option value="comunicador">Comunicador</option>
+            <option value="botiquin">Botiquín de Primeros Auxilios</option>
+            <option value="otro">Otro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Descripción / Serie *</label>
+          <input type="text" id="equipoDescripcion" required font-size="16px" placeholder="Marca, modelo, número de serie">
+        </div>
+        <div class="form-group">
+          <label>Cantidad *</label>
+          <input type="number" id="equipoCantidad" required min="1" font-size="16px">
+        </div>
+        <div class="form-group">
+          <label>Asignado a Guardia</label>
+          <select id="equipoGuardia" font-size="16px">
+            <option value="">Sin asignar</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Estado *</label>
+          <select id="equipoCondicion" required font-size="16px">
+            <option value="operativo">Operativo</option>
+            <option value="mantenimiento">En Mantenimiento</option>
+            <option value="dañado">Dañado</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Próximo Mantenimiento</label>
+          <input type="date" id="equipoMant" font-size="16px">
+        </div>
+        <div class="form-group">
+          <label>Notas</label>
+          <textarea id="equipoNotas" font-size="16px"></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('equipoModal')">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <footer>
+    <p>GuardiasCL © 2026 — Sistema de Gestión de Seguridad | Empresa certificada en protocolos de Carabineros de Chile</p>
+  </footer>
+
+  <script>
+    // =========================
+    // STORAGE & INITIALIZATION
+    // =========================
+
+    class AppStorage {
+      static prefix = 'guardiascl_';
+
+      static get(key) {
+        try {
+          const item = localStorage.getItem(this.prefix + key);
+          return item ? JSON.parse(item) : null;
+        } catch (e) {
+          console.warn('Storage read error:', e);
+          return null;
+        }
+      }
+
+      static set(key, value) {
+        try {
+          localStorage.setItem(this.prefix + key, JSON.stringify(value));
+        } catch (e) {
+          console.warn('Storage write error:', e);
+        }
+      }
+
+      static remove(key) {
+        try {
+          localStorage.removeItem(this.prefix + key);
+        } catch (e) {
+          console.warn('Storage remove error:', e);
+        }
+      }
+
+      static clear() {
+        try {
+          Object.keys(localStorage).forEach(key => {
+            if (key.startsWith(this.prefix)) {
+              localStorage.removeItem(key);
+            }
+          });
+        } catch (e) {
+          console.warn('Storage clear error:', e);
+        }
+      }
+    }
+
+    // Data management
+    let appData = {
+      guardias: AppStorage.get('guardias') || [],
+      turnos: AppStorage.get('turnos') || [],
+      puntos: AppStorage.get('puntos') || [],
+      incidentes: AppStorage.get('incidentes') || [],
+      equipamiento: AppStorage.get('equipamiento') || [],
+      contracts: AppStorage.get('contracts') || []
+    };
+
+    function saveData() {
+      AppStorage.set('guardias', appData.guardias);
+      AppStorage.set('turnos', appData.turnos);
+      AppStorage.set('puntos', appData.puntos);
+      AppStorage.set('incidentes', appData.incidentes);
+      AppStorage.set('equipamiento', appData.equipamiento);
+      AppStorage.set('contracts', appData.contracts);
+    }
+
+    // =========================
+    // TAB MANAGEMENT
+    // =========================
+
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        const tabName = tab.dataset.tab;
+        document.getElementById(tabName).classList.add('active');
+
+        if (tabName === 'finanzas') renderFinanzasChart();
+        if (tabName === 'turnos') renderTurnosStats();
+        if (tabName === 'incidentes') renderIncidentesStats();
+        if (tabName === 'equipamiento') renderEquipamientoStats();
+      });
+    });
+
+    // =========================
+    // MODAL FUNCTIONS
+    // =========================
+
+    function openModal(modalId) {
+      document.getElementById(modalId).classList.add('active');
+    }
+
+    function closeModal(modalId) {
+      document.getElementById(modalId).classList.remove('active');
+    }
+
+    // =========================
+    // GUARDIAS FUNCTIONS
+    // =========================
+
+    function openGuardiaModal(guardia = null) {
+      const modal = document.getElementById('guardiaModal');
+      const form = document.getElementById('guardiaForm');
+
+      if (guardia) {
+        document.getElementById('guardiaModalTitle').textContent = 'Editar Guardia';
+        form.dataset.editId = guardia.id;
+        document.getElementById('guardiaName').value = guardia.nombre;
+        document.getElementById('guardiaRut').value = guardia.rut;
+        document.getElementById('guardiaOs10').value = guardia.os10;
+        document.getElementById('guardiaExpiry').value = guardia.vencimiento;
+        document.getElementById('guardiaSpec').value = guardia.especializacion;
+        document.getElementById('guardiaPhone').value = guardia.telefono;
+        document.getElementById('guardiaEmergency').value = guardia.contactoEmergencia;
+        document.getElementById('guardiaEmergencyPhone').value = guardia.telefonoEmergencia;
+        document.getElementById('guardiaStatus').value = guardia.estado;
+      } else {
+        document.getElementById('guardiaModalTitle').textContent = 'Nuevo Guardia';
+        form.reset();
+        delete form.dataset.editId;
+      }
+      openModal('guardiaModal');
+    }
+
+    function saveGuardia(event) {
+      event.preventDefault();
+      const form = document.getElementById('guardiaForm');
+
+      const guardia = {
+        id: form.dataset.editId || Date.now().toString(),
+        nombre: document.getElementById('guardiaName').value,
+        rut: document.getElementById('guardiaRut').value,
+        os10: document.getElementById('guardiaOs10').value,
+        vencimiento: document.getElementById('guardiaExpiry').value,
+        especializacion: document.getElementById('guardiaSpec').value,
+        telefono: document.getElementById('guardiaPhone').value,
+        contactoEmergencia: document.getElementById('guardiaEmergency').value,
+        telefonoEmergencia: document.getElementById('guardiaEmergencyPhone').value,
+        estado: document.getElementById('guardiaStatus').value
+      };
+
+      if (form.dataset.editId) {
+        const idx = appData.guardias.findIndex(g => g.id === form.dataset.editId);
+        if (idx >= 0) appData.guardias[idx] = guardia;
+      } else {
+        appData.guardias.push(guardia);
+      }
+
+      saveData();
+      renderGuardias();
+      closeModal('guardiaModal');
+      showMessage('Guardia guardado correctamente', 'success');
+    }
+
+    function renderGuardias() {
+      const tbody = document.getElementById('guardiasBody');
+      const searchTerm = (document.getElementById('searchGuardias')?.value || '').toLowerCase();
+
+      let filtered = appData.guardias.filter(g =>
+        g.nombre.toLowerCase().includes(searchTerm) ||
+        g.rut.toLowerCase().includes(searchTerm)
+      );
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="no-data">No hay guardias registrados</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(guardia => {
+        const today = new Date().toISOString().split('T')[0];
+        const isExpired = guardia.vencimiento < today;
+
+        return `
+          <tr>
+            <td>${guardia.nombre}</td>
+            <td>${guardia.rut}</td>
+            <td><strong>${guardia.os10}</strong> ${isExpired ? '<span class="badge badge-danger">VENCIDO</span>' : ''}</td>
+            <td>${formatDate(guardia.vencimiento)}</td>
+            <td><span class="badge badge-info">${guardia.especializacion}</span></td>
+            <td>${guardia.telefono}</td>
+            <td><span class="status-indicator status-${guardia.estado}"></span>${capitalize(guardia.estado)}</td>
+            <td>
+              <button class="btn btn-sm btn-secondary" onclick="openGuardiaModal(${JSON.stringify(guardia).replace(/"/g, '&quot;')})">Editar</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteGuardia('${guardia.id}')">Eliminar</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function deleteGuardia(id) {
+      if (confirm('¿Eliminar este guardia?')) {
+        appData.guardias = appData.guardias.filter(g => g.id !== id);
+        saveData();
+        renderGuardias();
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      renderGuardias();
+
+      document.getElementById('searchGuardias')?.addEventListener('input', renderGuardias);
+    });
+
+    // =========================
+    // TURNOS FUNCTIONS
+    // =========================
+
+    function openTurnoModal(turno = null) {
+      const modal = document.getElementById('turnoModal');
+      const form = document.getElementById('turnoForm');
+
+      // Populate guards
+      const guardiaSelect = document.getElementById('turnoGuardia');
+      guardiaSelect.innerHTML = appData.guardias.map(g =>
+        `<option value="${g.id}">${g.nombre}</option>`
+      ).join('');
+
+      // Populate points
+      const puntoSelect = document.getElementById('turnoPunto');
+      puntoSelect.innerHTML = appData.puntos.map(p =>
+        `<option value="${p.id}">${p.cliente}</option>`
+      ).join('');
+
+      if (turno) {
+        form.dataset.editId = turno.id;
+        document.getElementById('turnoDate').value = turno.fecha;
+        document.getElementById('turnoGuardia').value = turno.guardiaId;
+        document.getElementById('turnoPunto').value = turno.puntoId;
+        document.getElementById('turnoType').value = turno.tipo;
+        document.getElementById('turnoOvertimeHours').value = turno.horasExtras || 0;
+        document.getElementById('turnoStatus').value = turno.estado;
+        document.getElementById('turnoNotes').value = turno.notas || '';
+      } else {
+        form.reset();
+        delete form.dataset.editId;
+      }
+      openModal('turnoModal');
+    }
+
+    function saveTurno(event) {
+      event.preventDefault();
+      const form = document.getElementById('turnoForm');
+
+      const turno = {
+        id: form.dataset.editId || Date.now().toString(),
+        fecha: document.getElementById('turnoDate').value,
+        guardiaId: document.getElementById('turnoGuardia').value,
+        guardiaNombre: appData.guardias.find(g => g.id === document.getElementById('turnoGuardia').value)?.nombre || '',
+        puntoId: document.getElementById('turnoPunto').value,
+        puntoNombre: appData.puntos.find(p => p.id === document.getElementById('turnoPunto').value)?.cliente || '',
+        tipo: document.getElementById('turnoType').value,
+        horasExtras: parseInt(document.getElementById('turnoOvertimeHours').value) || 0,
+        estado: document.getElementById('turnoStatus').value,
+        notas: document.getElementById('turnoNotes').value
+      };
+
+      if (form.dataset.editId) {
+        const idx = appData.turnos.findIndex(t => t.id === form.dataset.editId);
+        if (idx >= 0) appData.turnos[idx] = turno;
+      } else {
+        appData.turnos.push(turno);
+      }
+
+      saveData();
+      renderTurnos();
+      closeModal('turnoModal');
+      showMessage('Turno guardado correctamente', 'success');
+    }
+
+    function renderTurnos() {
+      const tbody = document.getElementById('turnosBody');
+      const statusFilter = document.getElementById('filterTurnoStatus')?.value || '';
+      const dateFilter = document.getElementById('filterTurnoDate')?.value || '';
+
+      let filtered = appData.turnos;
+      if (statusFilter) filtered = filtered.filter(t => t.estado === statusFilter);
+      if (dateFilter) filtered = filtered.filter(t => t.fecha === dateFilter);
+
+      filtered = filtered.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="no-data">No hay turnos registrados</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(turno => `
+        <tr>
+          <td>${formatDate(turno.fecha)}</td>
+          <td>${turno.guardiaNombre}</td>
+          <td>${turno.puntoNombre}</td>
+          <td><span class="badge badge-info">${turno.tipo}</span></td>
+          <td>${turno.horasExtras > 0 ? turno.horasExtras + ' hrs' : '-'}</td>
+          <td><span class="badge badge-${turno.estado === 'completado' ? 'success' : 'warning'}">${capitalize(turno.estado)}</span></td>
+          <td>
+            <button class="btn btn-sm btn-secondary" onclick="openTurnoModal(${JSON.stringify(turno).replace(/"/g, '&quot;')})">Editar</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteTurno('${turno.id}')">Eliminar</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function deleteTurno(id) {
+      if (confirm('¿Eliminar este turno?')) {
+        appData.turnos = appData.turnos.filter(t => t.id !== id);
+        saveData();
+        renderTurnos();
+      }
+    }
+
+    function renderTurnosStats() {
+      const stats = document.getElementById('turnosStats');
+      const total = appData.turnos.length;
+      const activos = appData.turnos.filter(t => t.estado === 'en-curso').length;
+      const completados = appData.turnos.filter(t => t.estado === 'completado').length;
+      const faltas = appData.turnos.filter(t => t.estado === 'falta').length;
+
+      stats.innerHTML = `
+        <div class="stat-card">
+          <div class="stat-value">${total}</div>
+          <div class="stat-label">Turnos Totales</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${activos}</div>
+          <div class="stat-label">En Curso</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${completados}</div>
+          <div class="stat-label">Completados</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${faltas}</div>
+          <div class="stat-label">Faltas</div>
+        </div>
+      `;
+    }
+
+    function filterTurnos() {
+      renderTurnos();
+    }
+
+    // =========================
+    // PUNTOS FUNCTIONS
+    // =========================
+
+    function openPuntoModal(punto = null) {
+      const modal = document.getElementById('puntoModal');
+      const form = document.getElementById('puntoForm');
+
+      if (punto) {
+        form.dataset.editId = punto.id;
+        document.getElementById('puntoClient').value = punto.cliente;
+        document.getElementById('puntoDireccion').value = punto.direccion;
+        document.getElementById('puntoType').value = punto.tipo;
+        document.getElementById('puntoGuardias').value = punto.guardiasReq;
+        document.getElementById('puntoContacto').value = punto.contacto;
+        document.getElementById('puntoTel').value = punto.telefono;
+        document.getElementById('puntoInstrucciones').value = punto.instrucciones || '';
+        document.getElementById('puntoCodigos').value = punto.codigos || '';
+      } else {
+        form.reset();
+        delete form.dataset.editId;
+      }
+      openModal('puntoModal');
+    }
+
+    function savePunto(event) {
+      event.preventDefault();
+      const form = document.getElementById('puntoForm');
+
+      const punto = {
+        id: form.dataset.editId || Date.now().toString(),
+        cliente: document.getElementById('puntoClient').value,
+        direccion: document.getElementById('puntoDireccion').value,
+        tipo: document.getElementById('puntoType').value,
+        guardiasReq: parseInt(document.getElementById('puntoGuardias').value),
+        contacto: document.getElementById('puntoContacto').value,
+        telefono: document.getElementById('puntoTel').value,
+        instrucciones: document.getElementById('puntoInstrucciones').value,
+        codigos: document.getElementById('puntoCodigos').value
+      };
+
+      if (form.dataset.editId) {
+        const idx = appData.puntos.findIndex(p => p.id === form.dataset.editId);
+        if (idx >= 0) appData.puntos[idx] = punto;
+      } else {
+        appData.puntos.push(punto);
+      }
+
+      saveData();
+      renderPuntos();
+      closeModal('puntoModal');
+      showMessage('Punto guardado correctamente', 'success');
+    }
+
+    function renderPuntos() {
+      const tbody = document.getElementById('puntosBody');
+      const searchTerm = (document.getElementById('searchPuntos')?.value || '').toLowerCase();
+      const typeFilter = document.getElementById('filterPuntoType')?.value || '';
+
+      let filtered = appData.puntos.filter(p =>
+        (p.cliente.toLowerCase().includes(searchTerm) ||
+         p.direccion.toLowerCase().includes(searchTerm)) &&
+        (!typeFilter || p.tipo === typeFilter)
+      );
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="no-data">No hay puntos registrados</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(punto => `
+        <tr>
+          <td><strong>${punto.cliente}</strong></td>
+          <td>${punto.direccion}</td>
+          <td><span class="badge badge-info">${capitalize(punto.tipo)}</span></td>
+          <td>${punto.guardiasReq}</td>
+          <td>${punto.contacto}</td>
+          <td>${punto.telefono}</td>
+          <td>
+            <button class="btn btn-sm btn-secondary" onclick="openPuntoModal(${JSON.stringify(punto).replace(/"/g, '&quot;')})">Editar</button>
+            <button class="btn btn-sm btn-danger" onclick="deletePunto('${punto.id}')">Eliminar</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function deletePunto(id) {
+      if (confirm('¿Eliminar este punto?')) {
+        appData.puntos = appData.puntos.filter(p => p.id !== id);
+        saveData();
+        renderPuntos();
+      }
+    }
+
+    function filterPuntos() {
+      renderPuntos();
+    }
+
+    // =========================
+    // INCIDENTES FUNCTIONS
+    // =========================
+
+    function openIncidenteModal(incidente = null) {
+      const modal = document.getElementById('incidenteModal');
+      const form = document.getElementById('incidenteForm');
+
+      const puntoSelect = document.getElementById('incidentePunto');
+      puntoSelect.innerHTML = appData.puntos.map(p =>
+        `<option value="${p.id}">${p.cliente}</option>`
+      ).join('');
+
+      const guardiaSelect = document.getElementById('incidenteGuardia');
+      guardiaSelect.innerHTML = appData.guardias.map(g =>
+        `<option value="${g.id}">${g.nombre}</option>`
+      ).join('');
+
+      if (incidente) {
+        form.dataset.editId = incidente.id;
+        document.getElementById('incidenteFecha').value = incidente.fecha;
+        document.getElementById('incidenteHora').value = incidente.hora;
+        document.getElementById('incidentePunto').value = incidente.puntoId;
+        document.getElementById('incidenteGuardia').value = incidente.guardiaId;
+        document.getElementById('incidenteType').value = incidente.tipo;
+        document.getElementById('incidenteSeverity').value = incidente.severidad;
+        document.getElementById('incidenteDescripcion').value = incidente.descripcion;
+        document.getElementById('incidenteAcciones').value = incidente.acciones;
+        document.getElementById('incidenteFollowUp').value = incidente.seguimiento;
+      } else {
+        form.reset();
+        delete form.dataset.editId;
+        const hoy = new Date().toISOString().split('T')[0];
+        document.getElementById('incidenteFecha').value = hoy;
+      }
+      openModal('incidenteModal');
+    }
+
+    function saveIncidente(event) {
+      event.preventDefault();
+      const form = document.getElementById('incidenteForm');
+
+      const incidente = {
+        id: form.dataset.editId || Date.now().toString(),
+        fecha: document.getElementById('incidenteFecha').value,
+        hora: document.getElementById('incidenteHora').value,
+        puntoId: document.getElementById('incidentePunto').value,
+        puntoNombre: appData.puntos.find(p => p.id === document.getElementById('incidentePunto').value)?.cliente || '',
+        guardiaId: document.getElementById('incidenteGuardia').value,
+        guardiaNombre: appData.guardias.find(g => g.id === document.getElementById('incidenteGuardia').value)?.nombre || '',
+        tipo: document.getElementById('incidenteType').value,
+        severidad: document.getElementById('incidenteSeverity').value,
+        descripcion: document.getElementById('incidenteDescripcion').value,
+        acciones: document.getElementById('incidenteAcciones').value,
+        seguimiento: document.getElementById('incidenteFollowUp').value
+      };
+
+      if (form.dataset.editId) {
+        const idx = appData.incidentes.findIndex(i => i.id === form.dataset.editId);
+        if (idx >= 0) appData.incidentes[idx] = incidente;
+      } else {
+        appData.incidentes.push(incidente);
+      }
+
+      saveData();
+      renderIncidentes();
+      closeModal('incidenteModal');
+      showMessage('Incidente registrado correctamente', 'success');
+    }
+
+    function renderIncidentes() {
+      const tbody = document.getElementById('incidentesBody');
+      const typeFilter = document.getElementById('filterIncidentType')?.value || '';
+      const severityFilter = document.getElementById('filterIncidentSeverity')?.value || '';
+
+      let filtered = appData.incidentes;
+      if (typeFilter) filtered = filtered.filter(i => i.tipo === typeFilter);
+      if (severityFilter) filtered = filtered.filter(i => i.severidad === severityFilter);
+
+      filtered = filtered.sort((a, b) => new Date(b.fecha + ' ' + b.hora) - new Date(a.fecha + ' ' + a.hora));
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="no-data">No hay incidentes registrados</td></tr>';
+        return;
+      }
+
+      const severityColor = {
+        'leve': 'badge-info',
+        'moderado': 'badge-warning',
+        'grave': 'badge-danger'
+      };
+
+      tbody.innerHTML = filtered.map(incidente => `
+        <tr>
+          <td>${formatDate(incidente.fecha)}</td>
+          <td>${incidente.hora}</td>
+          <td>${incidente.puntoNombre}</td>
+          <td><span class="badge badge-info">${capitalize(incidente.tipo)}</span></td>
+          <td><span class="badge ${severityColor[incidente.severidad]}">${capitalize(incidente.severidad)}</span></td>
+          <td>${incidente.guardiaNombre}</td>
+          <td>
+            <button class="btn btn-sm btn-secondary" onclick="openIncidenteModal(${JSON.stringify(incidente).replace(/"/g, '&quot;')})">Editar</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteIncidente('${incidente.id}')">Eliminar</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function deleteIncidente(id) {
+      if (confirm('¿Eliminar este incidente?')) {
+        appData.incidentes = appData.incidentes.filter(i => i.id !== id);
+        saveData();
+        renderIncidentes();
+      }
+    }
+
+    function renderIncidentesStats() {
+      const stats = document.getElementById('incidentesStats');
+      const total = appData.incidentes.length;
+      const graves = appData.incidentes.filter(i => i.severidad === 'grave').length;
+      const moderados = appData.incidentes.filter(i => i.severidad === 'moderado').length;
+      const requiereFollowUp = appData.incidentes.filter(i => i.seguimiento === 'si').length;
+
+      stats.innerHTML = `
+        <div class="stat-card">
+          <div class="stat-value">${total}</div>
+          <div class="stat-label">Incidentes Totales</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${graves}</div>
+          <div class="stat-label">Graves</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${moderados}</div>
+          <div class="stat-label">Moderados</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${requiereFollowUp}</div>
+          <div class="stat-label">Con Seguimiento</div>
+        </div>
+      `;
+    }
+
+    function filterIncidentes() {
+      renderIncidentes();
+    }
+
+    // =========================
+    // FINANZAS FUNCTIONS
+    // =========================
+
+    function renderFinanzas() {
+      const tbody = document.getElementById('finanzasBody');
+      const monthFilter = document.getElementById('filterFinanzasMes')?.value || '';
+
+      // Calculate contracts revenue
+      let contracts = appData.contracts || [];
+
+      // Create monthly contracts from turnos
+      const months = {};
+      appData.turnos.forEach(turno => {
+        const month = turno.fecha.substring(0, 7);
+        if (!months[month]) months[month] = [];
+        months[month].push(turno);
+      });
+
+      const currentMonth = monthFilter || new Date().toISOString().substring(0, 7);
+      const turnosMes = appData.turnos.filter(t => t.fecha.startsWith(currentMonth));
+
+      const puntoMap = {};
+      appData.puntos.forEach(p => {
+        puntoMap[p.id] = p;
+      });
+
+      const facturacion = {};
+      turnosMes.forEach(turno => {
+        if (!facturacion[turno.puntoId]) {
+          const punto = puntoMap[turno.puntoId];
+          facturacion[turno.puntoId] = {
+            cliente: punto?.cliente || 'Desconocido',
+            diario: Math.random() * 100000 + 50000,
+            guardias: 0,
+            horasExtras: 0,
+            turnos: []
+          };
+        }
+        facturacion[turno.puntoId].guardias += 1;
+        facturacion[turno.puntoId].horasExtras += turno.horasExtras || 0;
+        facturacion[turno.puntoId].turnos.push(turno);
+      });
+
+      if (Object.keys(facturacion).length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="no-data">No hay facturación en este mes</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = Object.entries(facturacion).map(([puntoId, data]) => {
+        const ingresosMes = data.diario * 30;
+        const costoExtras = data.horasExtras * (Math.random() * 10000 + 5000);
+        const total = ingresosMes + costoExtras;
+
+        return `
+          <tr>
+            <td><strong>${data.cliente}</strong></td>
+            <td>${data.guardias}</td>
+            <td>$${formatCurrency(data.diario)}</td>
+            <td>$${formatCurrency(ingresosMes)}</td>
+            <td>$${formatCurrency(costoExtras)}</td>
+            <td>$${formatCurrency(total)}</td>
+            <td>
+              <button class="btn btn-sm btn-secondary" onclick="viewFinanzasDetail('${puntoId}')">Detalles</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function renderFinanzasChart() {
+      const canvas = document.getElementById('revenueChart');
+      if (!canvas) return;
+
+      const ctx = canvas.getContext('2d');
+
+      // Get data for last 6 months
+      const months = [];
+      const revenues = [];
+      const costs = [];
+
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date();
+        d.setMonth(d.getMonth() - i);
+        const monthStr = d.toISOString().substring(0, 7);
+        months.push(monthStr);
+
+        const monthTurnos = appData.turnos.filter(t => t.fecha.startsWith(monthStr));
+        const revenue = monthTurnos.length * (Math.random() * 100000 + 200000);
+        const cost = monthTurnos.reduce((sum, t) => sum + (t.horasExtras * (Math.random() * 5000 + 2000)), 0);
+
+        revenues.push(revenue);
+        costs.push(cost);
+      }
+
+      // Destroy existing chart if it exists
+      if (window.revenueChart) window.revenueChart.destroy();
+
+      window.revenueChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: months,
+          datasets: [
+            {
+              label: 'Ingresos',
+              data: revenues,
+              borderColor: '#22c55e',
+              backgroundColor: 'rgba(34, 197, 94, 0.1)',
+              tension: 0.4,
+              borderWidth: 2,
+              fill: true
+            },
+            {
+              label: 'Costos',
+              data: costs,
+              borderColor: '#dc2626',
+              backgroundColor: 'rgba(220, 38, 38, 0.1)',
+              tension: 0.4,
+              borderWidth: 2,
+              fill: true
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              labels: { color: '#9ca3af', font: { family: "'Inter', sans-serif" } }
+            }
+          },
+          scales: {
+            x: { grid: { color: '#374151' }, ticks: { color: '#9ca3af' } },
+            y: { grid: { color: '#374151' }, ticks: { color: '#9ca3af' } }
+          }
+        }
+      });
+    }
+
+    function renderFinanzasStats() {
+      const stats = document.getElementById('finanzasStats');
+
+      const totalRevenue = appData.turnos.length * (Math.random() * 100000 + 200000);
+      const totalCosts = appData.turnos.reduce((sum, t) => sum + (t.horasExtras * (Math.random() * 5000 + 2000)), 0);
+      const profit = totalRevenue - totalCosts;
+      const margin = totalRevenue > 0 ? ((profit / totalRevenue) * 100).toFixed(1) : 0;
+
+      stats.innerHTML = `
+        <div class="stat-card">
+          <div class="stat-value">$${formatCurrency(totalRevenue)}</div>
+          <div class="stat-label">Ingresos Totales</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">$${formatCurrency(totalCosts)}</div>
+          <div class="stat-label">Costos</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">$${formatCurrency(profit)}</div>
+          <div class="stat-label">Ganancia Neta</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${margin}%</div>
+          <div class="stat-label">Margen</div>
+        </div>
+      `;
+    }
+
+    function filterFinanzas() {
+      renderFinanzas();
+    }
+
+    // =========================
+    // EQUIPAMIENTO FUNCTIONS
+    // =========================
+
+    function openEquipoModal(equipo = null) {
+      const modal = document.getElementById('equipoModal');
+      const form = document.getElementById('equipoForm');
+
+      const guardiaSelect = document.getElementById('equipoGuardia');
+      guardiaSelect.innerHTML = '<option value="">Sin asignar</option>' + appData.guardias.map(g =>
+        `<option value="${g.id}">${g.nombre}</option>`
+      ).join('');
+
+      if (equipo) {
+        form.dataset.editId = equipo.id;
+        document.getElementById('equipoType').value = equipo.tipo;
+        document.getElementById('equipoDescripcion').value = equipo.descripcion;
+        document.getElementById('equipoCantidad').value = equipo.cantidad;
+        document.getElementById('equipoGuardia').value = equipo.guardiaId || '';
+        document.getElementById('equipoCondicion').value = equipo.condicion;
+        document.getElementById('equipoMant').value = equipo.mantenimiento || '';
+        document.getElementById('equipoNotas').value = equipo.notas || '';
+      } else {
+        form.reset();
+        delete form.dataset.editId;
+      }
+      openModal('equipoModal');
+    }
+
+    function saveEquipo(event) {
+      event.preventDefault();
+      const form = document.getElementById('equipoForm');
+
+      const equipo = {
+        id: form.dataset.editId || Date.now().toString(),
+        tipo: document.getElementById('equipoType').value,
+        descripcion: document.getElementById('equipoDescripcion').value,
+        cantidad: parseInt(document.getElementById('equipoCantidad').value),
+        guardiaId: document.getElementById('equipoGuardia').value || null,
+        guardiaNombre: appData.guardias.find(g => g.id === document.getElementById('equipoGuardia').value)?.nombre || '',
+        condicion: document.getElementById('equipoCondicion').value,
+        mantenimiento: document.getElementById('equipoMant').value,
+        notas: document.getElementById('equipoNotas').value
+      };
+
+      if (form.dataset.editId) {
+        const idx = appData.equipamiento.findIndex(e => e.id === form.dataset.editId);
+        if (idx >= 0) appData.equipamiento[idx] = equipo;
+      } else {
+        appData.equipamiento.push(equipo);
+      }
+
+      saveData();
+      renderEquipamiento();
+      closeModal('equipoModal');
+      showMessage('Equipo guardado correctamente', 'success');
+    }
+
+    function renderEquipamiento() {
+      const tbody = document.getElementById('equipamientoBody');
+      const searchTerm = (document.getElementById('searchEquipamiento')?.value || '').toLowerCase();
+      const conditionFilter = document.getElementById('filterEquipCondition')?.value || '';
+
+      let filtered = appData.equipamiento.filter(e =>
+        (e.tipo.toLowerCase().includes(searchTerm) ||
+         e.descripcion.toLowerCase().includes(searchTerm)) &&
+        (!conditionFilter || e.condicion === conditionFilter)
+      );
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="no-data">No hay equipamiento registrado</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(equipo => `
+        <tr>
+          <td><span class="badge badge-info">${capitalize(equipo.tipo)}</span></td>
+          <td>${equipo.descripcion}</td>
+          <td>${equipo.cantidad}</td>
+          <td>${equipo.guardiaNombre || '-'}</td>
+          <td><span class="badge badge-${equipo.condicion === 'operativo' ? 'success' : 'warning'}">${capitalize(equipo.condicion)}</span></td>
+          <td>${equipo.mantenimiento ? formatDate(equipo.mantenimiento) : '-'}</td>
+          <td>
+            <button class="btn btn-sm btn-secondary" onclick="openEquipoModal(${JSON.stringify(equipo).replace(/"/g, '&quot;')})">Editar</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteEquipo('${equipo.id}')">Eliminar</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function deleteEquipo(id) {
+      if (confirm('¿Eliminar este equipo?')) {
+        appData.equipamiento = appData.equipamiento.filter(e => e.id !== id);
+        saveData();
+        renderEquipamiento();
+      }
+    }
+
+    function renderEquipamientoStats() {
+      const stats = document.getElementById('equipamientoStats');
+      const total = appData.equipamiento.reduce((sum, e) => sum + e.cantidad, 0);
+      const operativos = appData.equipamiento.reduce((sum, e) =>
+        e.condicion === 'operativo' ? sum + e.cantidad : sum, 0);
+      const mantenimiento = appData.equipamiento.reduce((sum, e) =>
+        e.condicion === 'mantenimiento' ? sum + e.cantidad : sum, 0);
+      const dañados = appData.equipamiento.reduce((sum, e) =>
+        e.condicion === 'dañado' ? sum + e.cantidad : sum, 0);
+
+      stats.innerHTML = `
+        <div class="stat-card">
+          <div class="stat-value">${total}</div>
+          <div class="stat-label">Total Equipo</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${operativos}</div>
+          <div class="stat-label">Operativos</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${mantenimiento}</div>
+          <div class="stat-label">En Mant.</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${dañados}</div>
+          <div class="stat-label">Dañados</div>
+        </div>
+      `;
+    }
+
+    function filterEquipamiento() {
+      renderEquipamiento();
+    }
+
+    // =========================
+    // UTILITY FUNCTIONS
+    // =========================
+
+    function formatDate(dateStr) {
+      const d = new Date(dateStr + 'T00:00:00');
+      return new Intl.DateTimeFormat('es-CL', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      }).format(d);
+    }
+
+    function formatCurrency(num) {
+      return new Intl.NumberFormat('es-CL', {
+        maximumFractionDigits: 0
+      }).format(num);
+    }
+
+    function capitalize(str) {
+      return str.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    }
+
+    function showMessage(message, type) {
+      const msg = document.createElement('div');
+      msg.className = type === 'success' ? 'success-message' : 'error-message';
+      msg.textContent = message;
+
+      const content = document.querySelector('.main-content');
+      content.insertBefore(msg, content.firstChild);
+
+      setTimeout(() => msg.remove(), 4000);
+    }
+
+    function exportCSV(data, filename) {
+      const csv = [Object.keys(data[0]).join(','), ...data.map(row =>
+        Object.values(row).map(v => `"${v}"`).join(',')
+      )].join('\n');
+
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function exportGuardias() {
+      exportCSV(appData.guardias, 'guardias.csv');
+    }
+
+    function exportTurnos() {
+      exportCSV(appData.turnos, 'turnos.csv');
+    }
+
+    function exportPuntos() {
+      exportCSV(appData.puntos, 'puntos.csv');
+    }
+
+    function exportIncidentes() {
+      exportCSV(appData.incidentes, 'incidentes.csv');
+    }
+
+    function exportFinanzas() {
+      const monthFilter = document.getElementById('filterFinanzasMes')?.value || '';
+      const currentMonth = monthFilter || new Date().toISOString().substring(0, 7);
+      const turnosMes = appData.turnos.filter(t => t.fecha.startsWith(currentMonth));
+      exportCSV(turnosMes, `finanzas-${currentMonth}.csv`);
+    }
+
+    function exportEquipamiento() {
+      exportCSV(appData.equipamiento, 'equipamiento.csv');
+    }
+
+    function viewFinanzasDetail(puntoId) {
+      alert('Detalles de facturación para el punto seleccionado');
+    }
+
+    // Initialize all tables on load
+    document.addEventListener('DOMContentLoaded', () => {
+      renderGuardias();
+      renderTurnos();
+      renderPuntos();
+      renderIncidentes();
+      renderFinanzas();
+      renderEquipamiento();
+    });
+
+    // Close modals on escape
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.modal.active').forEach(m => m.classList.remove('active'));
+      }
+    });
+  </script>
+</body>
+</html>

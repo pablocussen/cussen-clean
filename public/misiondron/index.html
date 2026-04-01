@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0f172a">
+<meta name="description" content="Planificador de misiones para drones - Chile">
+<title>MisiónDron</title>
+<link rel="manifest" href="data:application/json,{%22name%22:%22Misi%C3%B3nDron%22,%22short_name%22:%22Misi%C3%B3nDron%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%230f172a%22,%22theme_color%22:%22%230f172a%22}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f172a;--card:#1e293b;--card2:#0f1f35;--border:#334155;
+  --accent:#38bdf8;--green:#4ade80;--yellow:#fbbf24;--red:#f87171;
+  --text:#e2e8f0;--muted:#94a3b8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+header{
+  background:linear-gradient(90deg,#0c1929,#0f2540);
+  padding:13px 18px;position:sticky;top:0;z-index:50;
+  display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--border);
+}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-icon{font-size:26px}
+.logo-text{font-size:18px;font-weight:700;letter-spacing:.5px;color:var(--accent)}
+.logo-sub{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace}
+.header-time{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);text-align:right}
+nav{
+  background:#1e293b;border-bottom:2px solid var(--border);
+  display:flex;overflow-x:auto;position:sticky;top:62px;z-index:40;
+  scrollbar-width:none;
+}
+nav::-webkit-scrollbar{display:none}
+.tab-btn{
+  flex:0 0 auto;padding:12px 16px;font-size:13px;font-weight:600;
+  color:var(--muted);background:none;border:none;cursor:pointer;
+  white-space:nowrap;border-bottom:3px solid transparent;
+  transition:color .2s,border-color .2s;font-family:'Inter',sans-serif;
+}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-content{display:none;padding:16px;max-width:800px;margin:0 auto}
+.tab-content.active{display:block}
+/* Cards */
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:14px}
+.card2{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:14px}
+.card-title{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--accent);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+/* Form elements */
+label{display:block;font-size:13px;font-weight:500;color:var(--muted);margin-bottom:5px}
+select,input[type=text],input[type=number],input[type=time],input[type=date],textarea{
+  width:100%;background:#0f172a;border:1px solid var(--border);
+  color:var(--text);padding:10px 12px;border-radius:7px;font-size:16px;
+  font-family:'Inter',sans-serif;outline:none;transition:border-color .2s;
+}
+select:focus,input:focus,textarea:focus{border-color:var(--accent)}
+input[type=range]{width:100%;accent-color:var(--accent);height:6px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.form-col{margin-bottom:12px}
+@media(max-width:480px){.form-row{grid-template-columns:1fr}}
+/* Buttons */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:11px 20px;border-radius:8px;font-size:14px;font-weight:700;
+  cursor:pointer;border:none;font-family:'Inter',sans-serif;transition:opacity .2s,transform .1s;
+  letter-spacing:.3px;
+}
+.btn:active{transform:scale(.97)}
+.btn-accent{background:var(--accent);color:#0f172a}
+.btn-green{background:var(--green);color:#0f172a}
+.btn-red{background:var(--red);color:#0f172a}
+.btn-muted{background:var(--border);color:var(--text)}
+.btn-yellow{background:var(--yellow);color:#0f172a}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-sm{padding:7px 13px;font-size:12px}
+/* Result box */
+.result-box{border-radius:10px;padding:16px;margin-top:14px;border:2px solid}
+.result-go{border-color:var(--green);background:rgba(74,222,128,.08)}
+.result-nogo{border-color:var(--red);background:rgba(248,113,113,.08)}
+.result-caution{border-color:var(--yellow);background:rgba(251,191,36,.08)}
+.result-title{font-size:20px;font-weight:800;margin-bottom:10px}
+.result-item{display:flex;align-items:center;gap:8px;font-size:15px;margin-bottom:6px;font-family:'JetBrains Mono',monospace}
+.status-ok{color:var(--green)}
+.status-warn{color:var(--yellow)}
+.status-bad{color:var(--red)}
+/* Forecast table */
+.forecast-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px}
+.forecast-table th{background:#0f172a;color:var(--muted);padding:8px 10px;text-align:left;font-weight:600;border-bottom:1px solid var(--border)}
+.forecast-table td{padding:8px 10px;border-bottom:1px solid rgba(51,65,85,.5);font-family:'JetBrains Mono',monospace}
+.forecast-table tr:last-child td{border-bottom:none}
+.forecast-table tr:hover td{background:rgba(255,255,255,.03)}
+/* Checklist */
+.check-item{
+  display:flex;align-items:center;gap:10px;padding:10px 12px;
+  border-radius:7px;margin-bottom:5px;cursor:pointer;
+  border:1px solid var(--border);background:var(--card2);
+  transition:background .15s,border-color .15s;user-select:none;
+}
+.check-item:hover{background:rgba(56,189,248,.06);border-color:rgba(56,189,248,.3)}
+.check-item.checked{background:rgba(74,222,128,.08);border-color:rgba(74,222,128,.35)}
+.check-icon{width:22px;height:22px;border-radius:50%;border:2px solid var(--border);
+  display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;transition:all .2s}
+.check-item.checked .check-icon{background:var(--green);border-color:var(--green);color:#0f172a}
+.check-label{font-size:14px;flex:1}
+.check-item.checked .check-label{color:var(--muted);text-decoration:line-through}
+.check-category{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--accent);margin:14px 0 6px}
+.progress-bar{height:8px;background:var(--border);border-radius:4px;overflow:hidden;margin-bottom:12px}
+.progress-fill{height:100%;background:var(--green);border-radius:4px;transition:width .3s}
+.progress-text{font-size:13px;color:var(--muted);margin-bottom:8px;font-family:'JetBrains Mono',monospace}
+/* Params */
+.param-result{background:#0f172a;border:1px solid var(--border);border-radius:8px;padding:14px;margin-top:10px}
+.param-value{font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:600;color:var(--accent)}
+.param-unit{font-size:13px;color:var(--muted);margin-left:4px}
+.param-hint{font-size:13px;color:var(--yellow);margin-top:6px}
+.param-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.param-card{background:#0f172a;border:1px solid var(--border);border-radius:8px;padding:12px}
+.param-card-label{font-size:11px;color:var(--muted);margin-bottom:4px}
+.param-card-val{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:600;color:var(--text)}
+.slider-val{font-family:'JetBrains Mono',monospace;font-size:16px;color:var(--accent);font-weight:600}
+/* Normativa */
+.norm-table{width:100%;border-collapse:collapse;font-size:13px}
+.norm-table th{background:#0c1929;color:var(--accent);padding:9px 10px;text-align:left;border-bottom:1px solid var(--border)}
+.norm-table td{padding:8px 10px;border-bottom:1px solid rgba(51,65,85,.4);font-size:13px}
+.norm-table tr:last-child td{border-bottom:none}
+.badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700}
+.badge-red{background:rgba(248,113,113,.2);color:var(--red);border:1px solid rgba(248,113,113,.3)}
+.badge-yellow{background:rgba(251,191,36,.2);color:var(--yellow);border:1px solid rgba(251,191,36,.3)}
+.badge-green{background:rgba(74,222,128,.2);color:var(--green);border:1px solid rgba(74,222,128,.3)}
+.badge-blue{background:rgba(56,189,248,.2);color:var(--accent);border:1px solid rgba(56,189,248,.3)}
+.norm-section{margin-bottom:10px;padding:12px;background:var(--card2);border-radius:8px;border-left:3px solid var(--accent)}
+.norm-section h4{font-size:14px;font-weight:700;color:var(--accent);margin-bottom:6px}
+.norm-section p,.norm-section li{font-size:13px;color:var(--text);line-height:1.6}
+.norm-section ul{padding-left:16px}
+/* Missions */
+.mission-card{background:var(--card2);border:1px solid var(--border);border-radius:9px;padding:14px;margin-bottom:10px;position:relative}
+.mission-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.mission-title{font-size:15px;font-weight:700}
+.mission-meta{font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:3px}
+.mission-notes{font-size:13px;color:var(--muted);margin-top:6px;font-style:italic}
+.mission-del{background:none;border:none;color:var(--red);cursor:pointer;font-size:18px;padding:2px 6px;opacity:.6}
+.mission-del:hover{opacity:1}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.stat-box{background:var(--card2);border:1px solid var(--border);border-radius:9px;padding:14px;text-align:center}
+.stat-num{font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:700;color:var(--accent)}
+.stat-label{font-size:12px;color:var(--muted);margin-top:3px}
+/* Loading */
+.loading{text-align:center;padding:30px;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:14px}
+.spinner{display:inline-block;width:28px;height:28px;border:3px solid var(--border);
+  border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* Toast */
+.toast{
+  position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+  background:#1e293b;border:1px solid var(--border);border-radius:8px;
+  padding:10px 20px;font-size:14px;z-index:999;
+  animation:toastIn .3s ease;box-shadow:0 8px 32px rgba(0,0,0,.5);
+}
+@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+/* Modal */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;
+  display:flex;align-items:center;justify-content:center;padding:16px;
+}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:20px;width:100%;max-width:440px;max-height:90vh;overflow-y:auto}
+.modal-title{font-size:17px;font-weight:700;color:var(--accent);margin-bottom:16px}
+.modal-actions{display:flex;gap:10px;margin-top:16px;justify-content:flex-end}
+.hidden{display:none!important}
+/* Info rows */
+.info-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(51,65,85,.4);font-size:14px}
+.info-row:last-child{border-bottom:none}
+.info-val{font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--accent)}
+select option{background:#1e293b}
+textarea{resize:vertical;min-height:60px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="logo-icon">🚁</span>
+    <div>
+      <div class="logo-text">MisiónDron</div>
+      <div class="logo-sub">Planificador · Chile</div>
+    </div>
+  </div>
+  <div class="header-time" id="headerTime"></div>
+</header>
+
+<nav id="mainNav">
+  <button class="tab-btn active" onclick="showTab('gonogo',this)">🟢 GO/NO-GO</button>
+  <button class="tab-btn" onclick="showTab('checklist',this)">✅ Checklist</button>
+  <button class="tab-btn" onclick="showTab('params',this)">📐 Parámetros</button>
+  <button class="tab-btn" onclick="showTab('normativa',this)">📋 Normativa</button>
+  <button class="tab-btn" onclick="showTab('misiones',this)">📁 Misiones</button>
+</nav>
+
+<!-- TAB 1: GO/NO-GO -->
+<div id="tab-gonogo" class="tab-content active">
+  <div class="card">
+    <div class="card-title">⚙️ Configuración de Vuelo</div>
+    <div class="form-row">
+      <div class="form-col">
+        <label>Zona de vuelo</label>
+        <select id="zona">
+          <option value="">-- Seleccionar --</option>
+          <option value="-33.45,-70.67">Santiago</option>
+          <option value="-33.05,-71.62">Valparaíso</option>
+          <option value="-36.82,-73.05">Concepción</option>
+          <option value="-38.73,-72.59">Temuco</option>
+          <option value="-41.47,-72.94">Puerto Montt</option>
+          <option value="-23.65,-70.40">Antofagasta</option>
+          <option value="-29.90,-71.25">La Serena</option>
+          <option value="-20.21,-70.15">Iquique</option>
+          <option value="-18.48,-70.33">Arica</option>
+          <option value="-34.17,-70.74">Rancagua</option>
+          <option value="-35.43,-71.66">Talca</option>
+          <option value="-36.61,-72.10">Chillán</option>
+          <option value="-37.47,-72.35">Los Ángeles</option>
+          <option value="-40.57,-73.13">Osorno</option>
+          <option value="-39.81,-73.24">Valdivia</option>
+          <option value="-27.37,-70.33">Copiapó</option>
+          <option value="-45.57,-72.07">Coyhaique</option>
+          <option value="-53.15,-70.92">Punta Arenas</option>
+        </select>
+      </div>
+      <div class="form-col">
+        <label>Hora de inicio</label>
+        <input type="time" id="horaInicio" value="09:00">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-col">
+        <label>Duración estimada (min)</label>
+        <input type="number" id="duracion" value="30" min="5" max="240">
+      </div>
+      <div class="form-col">
+        <label>Tipo de dron</label>
+        <select id="tipoDron">
+          <option value="250">&lt;250g</option>
+          <option value="2000">250g – 2kg</option>
+          <option value="25000">2 – 25kg</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-col">
+      <label>Tipo de operación</label>
+      <select id="tipoOp">
+        <option value="vlos">Visual VLOS</option>
+        <option value="urbana">Zona urbana</option>
+        <option value="personas">Sobre personas</option>
+        <option value="nocturna">Nocturna</option>
+      </select>
+    </div>
+    <button class="btn btn-accent" style="width:100%;margin-top:8px;font-size:15px;padding:13px" onclick="evaluarCondiciones()">
+      🔍 EVALUAR CONDICIONES
+    </button>
+  </div>
+
+  <div id="gonogoResult" class="hidden"></div>
+
+  <div id="forecastSection" class="hidden">
+    <div class="card">
+      <div class="card-title">⏱️ Pronóstico 6 horas</div>
+      <div style="overflow-x:auto">
+        <table class="forecast-table" id="forecastTable">
+          <thead>
+            <tr>
+              <th>Hora</th>
+              <th>Viento</th>
+              <th>Ráfagas</th>
+              <th>Lluvia</th>
+              <th>Nube</th>
+            </tr>
+          </thead>
+          <tbody id="forecastBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 2: CHECKLIST -->
+<div id="tab-checklist" class="tab-content">
+  <div class="card">
+    <div class="card-title">📋 Lista Pre-Vuelo</div>
+    <div class="progress-text" id="checkProgress">0 / 25 ítems completados</div>
+    <div class="progress-bar"><div class="progress-fill" id="checkBar" style="width:0%"></div></div>
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+      <button class="btn btn-muted btn-sm" onclick="resetChecklist()">↺ Reiniciar</button>
+      <button class="btn btn-accent btn-sm" onclick="markAll()">✓ Todo</button>
+      <button id="readyBtn" class="btn btn-green btn-sm hidden">🟢 LISTO PARA VOLAR</button>
+    </div>
+    <div id="checklistItems"></div>
+  </div>
+</div>
+
+<!-- TAB 3: PARÁMETROS -->
+<div id="tab-params" class="tab-content">
+
+  <div class="card">
+    <div class="card-title">📷 Calculadora GSD</div>
+    <div class="form-col">
+      <label>Altitud AGL: <span class="slider-val" id="altVal">100</span> m</label>
+      <input type="range" id="altSlider" min="30" max="500" value="100" oninput="calcGSD()">
+    </div>
+    <div class="form-row">
+      <div class="form-col">
+        <label>Ancho sensor (mm)</label>
+        <input type="number" id="sensorW" value="6.3" step="0.1" oninput="calcGSD()">
+      </div>
+      <div class="form-col">
+        <label>Longitud focal (mm)</label>
+        <input type="number" id="focalLen" value="4.5" step="0.1" oninput="calcGSD()">
+      </div>
+    </div>
+    <div class="form-col">
+      <label>Resolución (px ancho)</label>
+      <input type="number" id="imgW" value="4000" oninput="calcGSD()">
+    </div>
+    <div class="param-result" id="gsdResult">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:6px">GSD calculado</div>
+      <div><span class="param-value" id="gsdVal">--</span><span class="param-unit">cm/px</span></div>
+      <div class="param-hint" id="gsdHint"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🗺️ Cobertura y Tiempo</div>
+    <div class="form-row">
+      <div class="form-col">
+        <label>Área (ha)</label>
+        <input type="number" id="area" value="10" min="0.1" step="0.1" oninput="calcCoverage()">
+      </div>
+      <div class="form-col">
+        <label>Velocidad vuelo (km/h)</label>
+        <input type="number" id="velVuelo" value="50" min="5" max="120" oninput="calcCoverage()">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-col">
+        <label>Overlap frontal (%)</label>
+        <input type="number" id="overlapF" value="80" min="50" max="95" oninput="calcCoverage()">
+      </div>
+      <div class="form-col">
+        <label>Overlap lateral (%)</label>
+        <input type="number" id="overlapL" value="70" min="50" max="95" oninput="calcCoverage()">
+      </div>
+    </div>
+    <div class="param-grid" id="coverageResult">
+      <div class="param-card"><div class="param-card-label">N° pasadas</div><div class="param-card-val" id="nPasadas">--</div></div>
+      <div class="param-card"><div class="param-card-label">N° fotos est.</div><div class="param-card-val" id="nFotos">--</div></div>
+      <div class="param-card"><div class="param-card-label">Tiempo (min)</div><div class="param-card-val" id="tVuelo">--</div></div>
+      <div class="param-card"><div class="param-card-label">Baterías (25min)</div><div class="param-card-val" id="nBaterias">--</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🔋 Calculadora Batería</div>
+    <div class="form-row">
+      <div class="form-col">
+        <label>Capacidad (mAh)</label>
+        <input type="number" id="batMah" value="5000" oninput="calcBattery()">
+      </div>
+      <div class="form-col">
+        <label>Consumo hover (A)</label>
+        <input type="number" id="hovA" value="8" step="0.5" oninput="calcBattery()">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-col">
+        <label>Consumo vuelo (A)</label>
+        <input type="number" id="flyA" value="12" step="0.5" oninput="calcBattery()">
+      </div>
+      <div class="form-col">
+        <label>Reserva mínima (%)</label>
+        <input type="number" id="reserva" value="20" min="10" max="40" oninput="calcBattery()">
+      </div>
+    </div>
+    <div class="param-result">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:8px">Resultado batería</div>
+      <div class="info-row">
+        <span>Tiempo útil estimado</span>
+        <span class="info-val" id="batTime">-- min</span>
+      </div>
+      <div class="info-row">
+        <span>Activar RTH al llegar a</span>
+        <span class="info-val" id="batRTH">-- %</span>
+      </div>
+      <div class="info-row">
+        <span>Voltaje RTH (3S LiPo)</span>
+        <span class="info-val" id="batVolt">-- V</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- TAB 4: NORMATIVA -->
+<div id="tab-normativa" class="tab-content">
+
+  <div class="card">
+    <div class="card-title">⚖️ Normativa DGAC Chile</div>
+    <div class="norm-section">
+      <h4>Categorías por peso</h4>
+      <p>La DGAC clasifica los RPAS según su masa máxima de despegue (MTOW):</p>
+      <ul style="margin-top:6px">
+        <li><strong>&lt;250g</strong> — Uso libre con precauciones básicas. Sin registro obligatorio.</li>
+        <li><strong>250g – 2kg</strong> — Registro en DGAC obligatorio. Certificado piloto para comerciales.</li>
+        <li><strong>2 – 25kg</strong> — Autorización DGAC por operación. Seguro obligatorio. Plan de vuelo.</li>
+        <li><strong>&gt;25kg</strong> — Certificado de aeronavegabilidad. Regulación completa.</li>
+      </ul>
+    </div>
+    <div class="norm-section" style="border-color:var(--yellow)">
+      <h4>¿Cuándo necesitas autorización DGAC?</h4>
+      <ul>
+        <li>Operar en espacio aéreo controlado (zonas CTR, TMA)</li>
+        <li>Vuelo sobre áreas urbanas densamente pobladas</li>
+        <li>Operaciones nocturnas (fuera de horas diurnas)</li>
+        <li>Vuelo sobre 120m AGL en zonas no urbanas</li>
+        <li>Operaciones comerciales con drones &gt;250g</li>
+        <li>Zonas de emergencia o actividad especial</li>
+      </ul>
+    </div>
+    <div class="norm-section" style="border-color:var(--red)">
+      <h4>Zonas Restringidas y Prohibidas</h4>
+      <ul>
+        <li>Radio 9km de aeropuertos y aeródromos</li>
+        <li>Instalaciones militares y navales</li>
+        <li>Parques Nacionales CONAF (requiere autorización especial)</li>
+        <li>Sobre grupos de personas sin autorización</li>
+        <li>Instalaciones críticas: centrales eléctricas, represas, puertos</li>
+        <li>Sobre carreteras y vías públicas activas</li>
+        <li>Fronteras internacionales (15km)</li>
+      </ul>
+    </div>
+    <div class="norm-section" style="border-color:var(--green)">
+      <h4>Requisitos Operacionales</h4>
+      <ul>
+        <li>Mantener visual VLOS en todo momento</li>
+        <li>No operar bajo lluvia, niebla densa o tormenta eléctrica</li>
+        <li>Ceder paso siempre a aeronaves tripuladas</li>
+        <li>Respetar privacidad: no fotografiar propiedades sin permiso</li>
+        <li>Aterrizar si la batería llega al nivel de reserva</li>
+        <li>Llevar documentación del dron y del piloto</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📊 Tabla Resumen Normativa</div>
+    <div style="overflow-x:auto">
+      <table class="norm-table">
+        <thead>
+          <tr>
+            <th>Peso</th>
+            <th>Registro</th>
+            <th>Autorización</th>
+            <th>Seguro</th>
+            <th>Certificado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="badge badge-green">&lt;250g</span></td>
+            <td>No requerido</td>
+            <td>Generalmente no</td>
+            <td>Recomendado</td>
+            <td>No</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-yellow">250g–2kg</span></td>
+            <td><span class="badge badge-red">Obligatorio</span></td>
+            <td>Comercial: sí</td>
+            <td>Comercial: sí</td>
+            <td>Comercial: sí</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-red">2–25kg</span></td>
+            <td><span class="badge badge-red">Obligatorio</span></td>
+            <td><span class="badge badge-red">Siempre</span></td>
+            <td><span class="badge badge-red">Obligatorio</span></td>
+            <td><span class="badge badge-red">Obligatorio</span></td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-red">&gt;25kg</span></td>
+            <td><span class="badge badge-red">Obligatorio</span></td>
+            <td><span class="badge badge-red">Siempre</span></td>
+            <td><span class="badge badge-red">Obligatorio</span></td>
+            <td><span class="badge badge-red">Aeronavegabilidad</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📞 Contactos Importantes</div>
+    <div class="info-row"><span>DGAC Chile (consultas)</span><span class="info-val">+56 2 2436 2000</span></div>
+    <div class="info-row"><span>DGAC sitio web</span><span class="info-val" style="font-size:12px">dgac.gob.cl</span></div>
+    <div class="info-row"><span>Emergencias aéreas</span><span class="info-val">131</span></div>
+    <div class="info-row"><span>Sistema AIM Chile (NOTAMs)</span><span class="info-val" style="font-size:12px">aim.dgac.gob.cl</span></div>
+  </div>
+
+</div>
+
+<!-- TAB 5: MISIONES -->
+<div id="tab-misiones" class="tab-content">
+  <div class="stats-grid" id="missionStats">
+    <div class="stat-box">
+      <div class="stat-num" id="totalMissions">0</div>
+      <div class="stat-label">Total misiones</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" id="totalHours">0.0</div>
+      <div class="stat-label">Horas de vuelo</div>
+    </div>
+  </div>
+
+  <button class="btn btn-accent" style="width:100%;margin-bottom:14px" onclick="openMissionModal()">
+    + Nueva Misión
+  </button>
+
+  <div id="missionsList"></div>
+</div>
+
+<!-- MISSION MODAL -->
+<div id="missionModal" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-title">📁 Registrar Misión</div>
+    <div class="form-col">
+      <label>Fecha</label>
+      <input type="date" id="mFecha">
+    </div>
+    <div class="form-col">
+      <label>Lugar</label>
+      <select id="mLugar">
+        <option value="">-- Seleccionar --</option>
+        <option>Santiago</option><option>Valparaíso</option><option>Concepción</option>
+        <option>Temuco</option><option>Puerto Montt</option><option>Antofagasta</option>
+        <option>La Serena</option><option>Iquique</option><option>Arica</option>
+        <option>Rancagua</option><option>Talca</option><option>Chillán</option>
+        <option>Los Ángeles</option><option>Osorno</option><option>Valdivia</option>
+        <option>Copiapó</option><option>Coyhaique</option><option>Punta Arenas</option>
+        <option>Otro</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <div class="form-col">
+        <label>Tipo</label>
+        <select id="mTipo">
+          <option>Cartografía</option><option>Inspección</option><option>Fotografía</option>
+          <option>Video</option><option>Termografía</option><option>Agricultura</option>
+          <option>Topografía</option>
+        </select>
+      </div>
+      <div class="form-col">
+        <label>Duración (min)</label>
+        <input type="number" id="mDuracion" value="30" min="1">
+      </div>
+    </div>
+    <div class="form-col">
+      <label>Equipo / Dron</label>
+      <input type="text" id="mEquipo" placeholder="Ej: DJI Mini 3 Pro">
+    </div>
+    <div class="form-col">
+      <label>Resultado</label>
+      <select id="mResultado">
+        <option value="exitosa">✅ Exitosa</option>
+        <option value="problemas">⚠️ Con problemas</option>
+        <option value="cancelada">❌ Cancelada</option>
+      </select>
+    </div>
+    <div class="form-col">
+      <label>Notas</label>
+      <textarea id="mNotas" placeholder="Observaciones, condiciones, incidencias..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-muted" onclick="closeMissionModal()">Cancelar</button>
+      <button class="btn btn-accent" onclick="saveMission()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toastEl" class="toast hidden"></div>
+
+<script>
+// ============================================================
+// CLOCK
+// ============================================================
+function updateClock(){
+  const now = new Date();
+  const d = now.toLocaleDateString('es-CL',{weekday:'short',day:'2-digit',month:'short'});
+  const t = now.toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'});
+  const el = document.getElementById('headerTime');
+  if(el) el.innerHTML = d+'<br>'+t;
+}
+updateClock();
+setInterval(updateClock,10000);
+
+// ============================================================
+// TABS
+// ============================================================
+function showTab(id, btn){
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+let toastTimer;
+function showToast(msg){
+  const el = document.getElementById('toastEl');
+  el.textContent = msg;
+  el.classList.remove('hidden');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>el.classList.add('hidden'),2600);
+}
+
+// ============================================================
+// TAB 1: GO/NO-GO
+// ============================================================
+const WIND_LIMITS = { '250':20, '2000':30, '25000':40 };
+
+async function evaluarCondiciones(){
+  const zona = document.getElementById('zona').value;
+  const tipoDron = document.getElementById('tipoDron').value;
+  const horaInicio = document.getElementById('horaInicio').value;
+  const duracion = parseInt(document.getElementById('duracion').value)||30;
+  const tipoOp = document.getElementById('tipoOp').value;
+
+  if(!zona){ showToast('⚠️ Selecciona una zona de vuelo'); return; }
+
+  const [lat,lon] = zona.split(',');
+  const resultDiv = document.getElementById('gonogoResult');
+  const forecastSec = document.getElementById('forecastSection');
+  resultDiv.className = '';
+  resultDiv.innerHTML = '<div class="loading"><div class="spinner"></div><br>Consultando Open-Meteo...</div>';
+  resultDiv.classList.remove('hidden');
+  forecastSec.classList.add('hidden');
+
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=windspeed_10m,windgusts_10m,precipitation,cloudcover,visibility,temperature_2m&current_weather=true&timezone=America/Santiago&forecast_days=2`;
+
+  let data;
+  const ctrl = new AbortController();
+  const timeout = setTimeout(()=>ctrl.abort(),10000);
+  try{
+    const res = await fetch(url,{signal:ctrl.signal});
+    clearTimeout(timeout);
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    data = await res.json();
+  }catch(e){
+    clearTimeout(timeout);
+    resultDiv.innerHTML = `<div class="result-box result-nogo"><div class="result-title">❌ Error de conexión</div><p style="font-size:14px;color:var(--muted)">${e.name==='AbortError'?'Tiempo de espera agotado (10s)':e.message}</p><p style="font-size:13px;margin-top:8px;color:var(--muted)">Verifica tu conexión a internet.</p></div>`;
+    return;
+  }
+
+  const cw = data.current_weather;
+  const hourly = data.hourly;
+  const times = hourly.time;
+
+  // Find start hour index
+  const startH = horaInicio || '09:00';
+  const nowStr = new Date().toISOString().slice(0,13);
+  let startIdx = 0;
+  for(let i=0;i<times.length;i++){
+    if(times[i].slice(11,16) === startH){
+      if(times[i].slice(0,13) >= nowStr){ startIdx=i; break; }
+    }
+  }
+
+  // Get duration in hours
+  const durH = Math.ceil(duracion/60);
+  const endIdx = Math.min(startIdx+Math.max(durH,1), times.length-1);
+
+  // Aggregate worst conditions during mission window
+  let maxWind=0, maxGusts=0, maxRain=0, maxCloud=0, minVis=99999, avgTemp=0, tempCount=0;
+  for(let i=startIdx;i<=endIdx;i++){
+    maxWind = Math.max(maxWind, hourly.windspeed_10m[i]||0);
+    maxGusts = Math.max(maxGusts, hourly.windgusts_10m[i]||0);
+    maxRain = Math.max(maxRain, hourly.precipitation[i]||0);
+    maxCloud = Math.max(maxCloud, hourly.cloudcover[i]||0);
+    const vis = hourly.visibility ? (hourly.visibility[i]||99999) : 99999;
+    minVis = Math.min(minVis, vis);
+    if(hourly.temperature_2m[i]!=null){ avgTemp+=hourly.temperature_2m[i]; tempCount++; }
+  }
+  if(tempCount) avgTemp=Math.round(avgTemp/tempCount*10)/10;
+
+  const visKm = minVis===99999 ? 10 : Math.round(minVis/1000*10)/10;
+  const windLimit = WIND_LIMITS[tipoDron]||30;
+
+  // Decision logic
+  let status = 'GO';
+  const issues = [];
+  const cautions = [];
+
+  if(maxWind > windLimit){ status='NO-GO'; issues.push(`Viento ${maxWind.toFixed(1)} km/h supera límite ${windLimit} km/h`); }
+  else if(maxWind > windLimit*0.8){ cautions.push(`Viento ${maxWind.toFixed(1)} km/h cerca del límite (${windLimit} km/h)`); if(status==='GO') status='CAUTION'; }
+
+  if(maxGusts > windLimit+10){ status='NO-GO'; issues.push(`Ráfagas ${maxGusts.toFixed(1)} km/h muy peligrosas`); }
+  else if(maxGusts > windLimit){ cautions.push(`Ráfagas ${maxGusts.toFixed(1)} km/h`); if(status==='GO') status='CAUTION'; }
+
+  if(maxRain > 0.1){ status='NO-GO'; issues.push(`Lluvia ${maxRain.toFixed(1)} mm — No volar`); }
+
+  if(visKm < 3){ status='NO-GO'; issues.push(`Visibilidad ${visKm} km — Mínimo 3 km`); }
+
+  if(maxCloud > 80){ if(status==='GO') status='CAUTION'; cautions.push(`Nubosidad ${maxCloud}%`); }
+
+  // Operation-specific checks
+  if(tipoOp==='nocturna'){ cautions.push('Operación nocturna: requiere autorización DGAC'); if(status==='GO') status='CAUTION'; }
+  if(tipoOp==='personas'){ cautions.push('Vuelo sobre personas: requisitos especiales DGAC'); if(status==='GO') status='CAUTION'; }
+  if(tipoOp==='urbana'){ cautions.push('Zona urbana: verificar NOTAMs y restricciones'); if(status==='GO') status='CAUTION'; }
+
+  // Render result
+  const getWindSt = (v,lim) => v>lim?'bad':v>lim*0.8?'warn':'ok';
+  const getRainSt = (v) => v>0.1?'bad':v>0?'warn':'ok';
+  const getVisSt = (v) => v<3?'bad':v<5?'warn':'ok';
+  const getCloudSt = (v) => v>80?'warn':'ok';
+  const stIcon = s => s==='ok'?'✅':s==='warn'?'⚠️':'❌';
+
+  const boxClass = status==='GO'?'result-go':status==='NO-GO'?'result-nogo':'result-caution';
+  const titleEmoji = status==='GO'?'🟢':status==='NO-GO'?'🔴':'🟡';
+  const titleText = status==='GO'?'GO — Condiciones OK':status==='NO-GO'?'NO-GO — Vuelo no seguro':'PRECAUCIÓN';
+
+  let html = `<div class="result-box ${boxClass}">
+    <div class="result-title">${titleEmoji} ${titleText}</div>
+    <div class="result-item ${getWindSt(maxWind,windLimit)==='ok'?'status-ok':getWindSt(maxWind,windLimit)==='warn'?'status-warn':'status-bad'}">
+      ${stIcon(getWindSt(maxWind,windLimit))} 💨 Viento: ${maxWind.toFixed(1)} km/h (límite ${windLimit} km/h)
+    </div>
+    <div class="result-item ${getWindSt(maxGusts,windLimit+10)==='ok'?'status-ok':getWindSt(maxGusts,windLimit+10)==='warn'?'status-warn':'status-bad'}">
+      ${stIcon(getWindSt(maxGusts,windLimit+10))} 🌬️ Ráfagas: ${maxGusts.toFixed(1)} km/h
+    </div>
+    <div class="result-item ${getRainSt(maxRain)==='ok'?'status-ok':getRainSt(maxRain)==='warn'?'status-warn':'status-bad'}">
+      ${stIcon(getRainSt(maxRain))} 🌧️ Lluvia: ${maxRain.toFixed(1)} mm
+    </div>
+    <div class="result-item ${getVisSt(visKm)==='ok'?'status-ok':getVisSt(visKm)==='warn'?'status-warn':'status-bad'}">
+      ${stIcon(getVisSt(visKm))} 👁️ Visibilidad: ${visKm>=10?'>10':visKm} km
+    </div>
+    <div class="result-item ${getCloudSt(maxCloud)==='ok'?'status-ok':'status-warn'}">
+      ${stIcon(getCloudSt(maxCloud))} ☁️ Nubosidad: ${maxCloud}%
+    </div>
+    <div class="result-item" style="color:var(--muted)">
+      🌡️ Temperatura: ${avgTemp}°C
+    </div>`;
+
+  if(cautions.length){
+    html += `<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(251,191,36,.3)">`;
+    cautions.forEach(c=>{ html+=`<div style="font-size:13px;color:var(--yellow);margin-bottom:4px">⚠️ ${c}</div>`; });
+    html += `</div>`;
+  }
+  if(issues.length){
+    html += `<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(248,113,113,.3)">`;
+    issues.forEach(is=>{ html+=`<div style="font-size:13px;color:var(--red);margin-bottom:4px">❌ ${is}</div>`; });
+    html += `</div>`;
+  }
+  html += `</div>`;
+  resultDiv.innerHTML = html;
+
+  // Forecast table: next 6 hours from startIdx
+  const tbody = document.getElementById('forecastBody');
+  tbody.innerHTML = '';
+  const fEnd = Math.min(startIdx+6, times.length);
+  for(let i=startIdx;i<fEnd;i++){
+    const hr = times[i].slice(11,16);
+    const w = (hourly.windspeed_10m[i]||0).toFixed(1);
+    const g = (hourly.windgusts_10m[i]||0).toFixed(1);
+    const r = (hourly.precipitation[i]||0).toFixed(1);
+    const cl = hourly.cloudcover[i]||0;
+    const wc = parseFloat(w)>windLimit?'status-bad':parseFloat(w)>windLimit*0.8?'status-warn':'status-ok';
+    const rc = parseFloat(r)>0.1?'status-bad':parseFloat(r)>0?'status-warn':'';
+    const clc = cl>80?'status-warn':'';
+    tbody.innerHTML += `<tr>
+      <td>${hr}</td>
+      <td class="${wc}">${w} km/h</td>
+      <td class="${parseFloat(g)>windLimit+10?'status-bad':parseFloat(g)>windLimit?'status-warn':''}">${g} km/h</td>
+      <td class="${rc}">${r} mm</td>
+      <td class="${clc}">${cl}%</td>
+    </tr>`;
+  }
+  forecastSec.classList.remove('hidden');
+}
+
+// ============================================================
+// TAB 2: CHECKLIST
+// ============================================================
+const CHECKLIST_ITEMS = [
+  { cat:'🚁 DRON', items:[
+    'GPS fix ≥8 satélites confirmado',
+    'Brújula calibrada (compass cal)',
+    'RTH (Return to Home) configurado',
+    'Altura RTH establecida (>obstáculos)',
+    'Baterías del dron ≥80%',
+    'Baterías bien insertadas y aseguradas',
+    'Hélices revisadas (sin grietas, bien fijadas)',
+    'Gimbal desbloqueado y calibrado',
+    'Cámara funcionando (preview OK)',
+    'Tarjeta SD insertada y con espacio',
+  ]},
+  { cat:'🎮 CONTROLADOR', items:[
+    'Batería del controlador ≥80%',
+    'Enlace RC establecido con aeronave',
+    'Modos de vuelo configurados',
+    'Failsafe configurado (RC loss)',
+    'App actualizada y misión cargada',
+    'Antenas del controlador posicionadas',
+  ]},
+  { cat:'⚙️ OPERACIONAL', items:[
+    'NOTAMs revisados para la zona',
+    'Autorización DGAC obtenida si aplica',
+    'Espacio aéreo verificado (no CTR/TMA)',
+    'Zona libre de obstáculos inspeccionada',
+    'Observadores/asistentes posicionados',
+    'Clima verificado (viento, lluvia, vis)',
+    'Plan de emergencia definido (RTH/aterrizaje)',
+    'Documento del dron y piloto disponibles',
+    'Seguro vigente (si operación comercial)',
+  ]}
+];
+
+let checkState = {};
+
+function loadCheckState(){
+  try{ const s = localStorage.getItem('dron_checklist'); if(s) checkState=JSON.parse(s); }catch(e){}
+}
+
+function saveCheckState(){
+  try{ localStorage.setItem('dron_checklist',JSON.stringify(checkState)); }catch(e){}
+}
+
+function renderChecklist(){
+  loadCheckState();
+  const container = document.getElementById('checklistItems');
+  container.innerHTML = '';
+  let total=0, done=0;
+  CHECKLIST_ITEMS.forEach(cat=>{
+    const catDiv = document.createElement('div');
+    catDiv.className = 'check-category';
+    catDiv.textContent = cat.cat;
+    container.appendChild(catDiv);
+    cat.items.forEach(item=>{
+      total++;
+      const key = item;
+      const checked = !!checkState[key];
+      if(checked) done++;
+      const el = document.createElement('div');
+      el.className = 'check-item'+(checked?' checked':'');
+      el.innerHTML = `<div class="check-icon">${checked?'✓':''}</div><span class="check-label">${item}</span>`;
+      el.onclick = ()=>{ checkState[key]=!checkState[key]; saveCheckState(); renderChecklist(); };
+      container.appendChild(el);
+    });
+  });
+  updateProgress(done,total);
+}
+
+function updateProgress(done,total){
+  const pct = total?Math.round(done/total*100):0;
+  document.getElementById('checkProgress').textContent = `${done} / ${total} ítems completados (${pct}%)`;
+  document.getElementById('checkBar').style.width = pct+'%';
+  const readyBtn = document.getElementById('readyBtn');
+  if(pct===100){ readyBtn.classList.remove('hidden'); }
+  else{ readyBtn.classList.add('hidden'); }
+}
+
+function resetChecklist(){
+  if(!confirm('¿Reiniciar todos los ítems?')) return;
+  checkState = {};
+  saveCheckState();
+  renderChecklist();
+  showToast('Checklist reiniciada');
+}
+
+function markAll(){
+  CHECKLIST_ITEMS.forEach(cat=>cat.items.forEach(item=>{ checkState[item]=true; }));
+  saveCheckState();
+  renderChecklist();
+  showToast('¡Todos marcados!');
+}
+
+renderChecklist();
+
+// ============================================================
+// TAB 3: PARAMS
+// ============================================================
+function calcGSD(){
+  const alt = parseFloat(document.getElementById('altSlider').value)||100;
+  const sw = parseFloat(document.getElementById('sensorW').value)||6.3;
+  const fl = parseFloat(document.getElementById('focalLen').value)||4.5;
+  const imgW = parseFloat(document.getElementById('imgW').value)||4000;
+  document.getElementById('altVal').textContent = alt;
+
+  if(sw<=0||fl<=0||imgW<=0){ return; }
+  // GSD (cm/px) = (sensor_width_mm / focal_length_mm) * (altitude_m / image_width_px) * 100
+  const gsd = (sw/fl)*(alt/imgW)*100;
+  document.getElementById('gsdVal').textContent = gsd.toFixed(2);
+
+  // Altitude needed for GSD < 5cm (1:1000)
+  const altFor5 = 5*fl*imgW/(sw*100);
+  let hint = '';
+  if(gsd < 5){
+    hint = `✅ Apto para cartografía 1:1000 (GSD < 5 cm/px)`;
+  } else {
+    hint = `Para cartografía 1:1000 (GSD < 5 cm/px) → volar a ${altFor5.toFixed(0)} m AGL`;
+  }
+  document.getElementById('gsdHint').textContent = hint;
+}
+
+function calcCoverage(){
+  const area = parseFloat(document.getElementById('area').value)||10;
+  const vel = parseFloat(document.getElementById('velVuelo').value)||50;
+  const of = parseFloat(document.getElementById('overlapF').value)||80;
+  const ol = parseFloat(document.getElementById('overlapL').value)||70;
+  const alt = parseFloat(document.getElementById('altSlider').value)||100;
+  const sw = parseFloat(document.getElementById('sensorW').value)||6.3;
+  const fl = parseFloat(document.getElementById('focalLen').value)||4.5;
+  const imgW = parseFloat(document.getElementById('imgW').value)||4000;
+
+  // GSD
+  const gsd_m = (sw/fl)*(alt/imgW)/100;
+  const footprintW = imgW * gsd_m; // meters
+  const footprintH = (imgW*(3/4)) * gsd_m; // assuming 4:3
+
+  const spacing = footprintH * (1-ol/100);
+  const area_m2 = area * 10000;
+  const side = Math.sqrt(area_m2);
+
+  const nPasadas = Math.ceil(side / spacing) + 1;
+  const distPorPasada = side;
+  const photosPerStrip = Math.ceil(distPorPasada / (footprintW*(1-of/100))) + 1;
+  const nFotos = nPasadas * photosPerStrip;
+
+  const distTotal_km = (nPasadas * distPorPasada) / 1000;
+  const tVuelo_min = Math.round((distTotal_km / vel) * 60 + nPasadas*0.3);
+  const nBat = Math.ceil(tVuelo_min / 25);
+
+  document.getElementById('nPasadas').textContent = nPasadas;
+  document.getElementById('nFotos').textContent = nFotos;
+  document.getElementById('tVuelo').textContent = tVuelo_min;
+  document.getElementById('nBaterias').textContent = nBat;
+}
+
+function calcBattery(){
+  const mah = parseFloat(document.getElementById('batMah').value)||5000;
+  const hovA = parseFloat(document.getElementById('hovA').value)||8;
+  const flyA = parseFloat(document.getElementById('flyA').value)||12;
+  const res = parseFloat(document.getElementById('reserva').value)||20;
+
+  const avgA = (hovA*0.3 + flyA*0.7);
+  const usableMah = mah * (1 - res/100);
+  const tMin = Math.round((usableMah/1000) / avgA * 60);
+  const rthPct = res + 5;
+
+  // For 3S LiPo: 3.7V nominal, 4.2V full, 3.5V cutoff
+  const rthVolt = (3.5 + (4.2-3.5)*(rthPct/100)) * 3;
+
+  document.getElementById('batTime').textContent = tMin+' min';
+  document.getElementById('batRTH').textContent = rthPct+'%';
+  document.getElementById('batVolt').textContent = rthVolt.toFixed(1)+' V';
+}
+
+// Init calcs
+calcGSD();
+calcCoverage();
+calcBattery();
+
+// Sync GSD slider to coverage calc
+document.getElementById('altSlider').addEventListener('input', ()=>{ calcGSD(); calcCoverage(); });
+
+// ============================================================
+// TAB 5: MISSIONS
+// ============================================================
+let missions = [];
+
+function loadMissions(){
+  try{
+    const s = localStorage.getItem('dron_missions');
+    if(s) missions = JSON.parse(s);
+  }catch(e){ missions=[]; }
+}
+
+function saveMissions(){
+  try{ localStorage.setItem('dron_missions',JSON.stringify(missions)); }catch(e){}
+}
+
+function renderMissions(){
+  loadMissions();
+  const list = document.getElementById('missionsList');
+  const total = missions.length;
+  const totalMin = missions.reduce((a,m)=>a+(parseInt(m.duracion)||0),0);
+  const totalHrs = (totalMin/60).toFixed(1);
+
+  document.getElementById('totalMissions').textContent = total;
+  document.getElementById('totalHours').textContent = totalHrs;
+
+  if(!total){
+    list.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);font-size:14px">No hay misiones registradas.<br>Registra tu primera misión arriba.</div>';
+    return;
+  }
+
+  const sorted = [...missions].sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  list.innerHTML = sorted.map((m,idx)=>{
+    const realIdx = missions.findIndex(x=>x.id===m.id);
+    const resEmoji = m.resultado==='exitosa'?'✅':m.resultado==='problemas'?'⚠️':'❌';
+    const resColor = m.resultado==='exitosa'?'var(--green)':m.resultado==='problemas'?'var(--yellow)':'var(--red)';
+    return `<div class="mission-card">
+      <div class="mission-header">
+        <div>
+          <div class="mission-title">${m.tipo} — ${m.lugar||'N/A'}</div>
+          <div class="mission-meta">${m.fecha} · ${m.duracion} min · ${m.equipo||'—'}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:18px;color:${resColor}">${resEmoji}</span>
+          <button class="mission-del" onclick="deleteMission('${m.id}')">🗑</button>
+        </div>
+      </div>
+      ${m.notas?`<div class="mission-notes">${m.notas}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function openMissionModal(){
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('mFecha').value = today;
+  document.getElementById('mLugar').value = '';
+  document.getElementById('mTipo').value = 'Cartografía';
+  document.getElementById('mDuracion').value = '30';
+  document.getElementById('mEquipo').value = '';
+  document.getElementById('mResultado').value = 'exitosa';
+  document.getElementById('mNotas').value = '';
+  document.getElementById('missionModal').classList.remove('hidden');
+}
+
+function closeMissionModal(){
+  document.getElementById('missionModal').classList.add('hidden');
+}
+
+function saveMission(){
+  const fecha = document.getElementById('mFecha').value;
+  const lugar = document.getElementById('mLugar').value;
+  const tipo = document.getElementById('mTipo').value;
+  const duracion = document.getElementById('mDuracion').value;
+  const equipo = document.getElementById('mEquipo').value;
+  const resultado = document.getElementById('mResultado').value;
+  const notas = document.getElementById('mNotas').value;
+
+  if(!fecha){ showToast('⚠️ Ingresa la fecha'); return; }
+  if(!lugar){ showToast('⚠️ Selecciona un lugar'); return; }
+
+  const mission = {
+    id: Date.now().toString(36)+Math.random().toString(36).slice(2,6),
+    fecha, lugar, tipo, duracion, equipo, resultado, notas
+  };
+
+  loadMissions();
+  missions.push(mission);
+  saveMissions();
+  renderMissions();
+  closeMissionModal();
+  showToast('✅ Misión registrada');
+}
+
+function deleteMission(id){
+  if(!confirm('¿Eliminar esta misión?')) return;
+  loadMissions();
+  missions = missions.filter(m=>m.id!==id);
+  saveMissions();
+  renderMissions();
+  showToast('Misión eliminada');
+}
+
+renderMissions();
+
+// Close modal on overlay click
+document.getElementById('missionModal').addEventListener('click', function(e){
+  if(e.target===this) closeMissionModal();
+});
+</script>
+</body>
+</html>

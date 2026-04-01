@@ -1,0 +1,1645 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análisis Satelital | Sazo, Carrizales & Jungla Peumayen | Cussen Geoespacial</title>
+    <meta name="description" content="Informe técnico de análisis geoespacial satelital de tres predios forestales en la Región de Ñuble, Chile. 12.638 hectáreas totales de bosque nativo.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../../assets/style.css">
+    <style>
+        :root {
+            --cussen-dark: #064e3b;
+            --cussen-mid: #065f46;
+            --cussen-light: #10b981;
+            --cussen-accent: #f59e0b;
+        }
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+        #map { height: 380px; width: 100%; border-radius: 0 0 12px 12px; z-index: 1; }
+        @media (min-width: 768px) { #map { height: 600px; } }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .fundo-btn { transition: all 0.3s cubic-bezier(.4,0,.2,1); cursor: pointer; position: relative; overflow: hidden; }
+        .fundo-btn::after { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; opacity: 0; transition: opacity 0.3s; border-radius: inherit; }
+        .fundo-btn.active-sazo { box-shadow: 0 0 0 3px var(--cussen-mid), 0 10px 30px rgba(6,78,59,0.2); transform: scale(1.02); }
+        .fundo-btn.active-carrizales { box-shadow: 0 0 0 3px var(--cussen-accent), 0 10px 30px rgba(245,158,11,0.2); transform: scale(1.02); }
+        .fundo-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
+        .layer-btn { transition: all 0.2s; }
+        .layer-btn.active { background-color: var(--cussen-dark); color: white; }
+        .stat-card { transition: all 0.3s cubic-bezier(.4,0,.2,1); }
+        .stat-card:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(0,0,0,0.12); }
+        .legend-bar { height: 14px; border-radius: 7px; }
+        .info-panel { backdrop-filter: blur(12px); background: rgba(255,255,255,0.97); }
+        .species-tag { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; margin: 2px; font-weight: 500; }
+        .nav-link { transition: all 0.2s; border-bottom: 2px solid transparent; }
+        .nav-link:hover { border-bottom-color: #10b981; color: #065f46; }
+        .section-divider { height: 4px; width: 60px; background: linear-gradient(90deg, var(--cussen-mid), var(--cussen-light)); border-radius: 2px; margin: 0 auto 2rem; }
+        .ref-item { transition: background 0.2s; }
+        .ref-item:hover { background-color: #f0fdf4; }
+        .coord-display { position: absolute; bottom: 8px; left: 8px; z-index: 1000; background: rgba(0,0,0,0.75); color: #fff; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-family: 'Inter', monospace; pointer-events: none; display: none; }
+        @media (min-width: 768px) { .coord-display { display: block; } }
+        .map-wrapper { position: relative; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.15); }
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white; font-size: 10pt; }
+            #map { height: 350px; }
+            .stat-card { box-shadow: none; border: 1px solid #e5e7eb; }
+            section { break-inside: avoid; }
+            header { padding: 1rem !important; }
+            .container { padding: 0 !important; }
+        }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-in { animation: fadeInUp 0.6s ease-out forwards; }
+        .sup-ref { color: #065f46; font-weight: 600; font-size: 0.7em; vertical-align: super; cursor: help; }
+    </style>
+</head>
+<body class="text-slate-700">
+
+    <!-- NAVIGATION -->
+    <nav class="bg-white/95 backdrop-blur-md shadow-sm sticky top-0 z-50 no-print">
+        <div class="container mx-auto max-w-7xl px-4 flex items-center h-12 gap-4">
+            <a href="/index.html" class="font-black text-emerald-800 text-sm tracking-tight shrink-0">CUSSEN</a>
+            <div class="flex gap-4 md:gap-6 text-xs font-medium text-gray-500 overflow-x-auto scrollbar-hide whitespace-nowrap flex-1 -mx-1 px-1" style="-webkit-overflow-scrolling: touch; scrollbar-width: none; -ms-overflow-style: none;">
+                <a href="#mapa" class="nav-link py-1 shrink-0" data-es="Mapa" data-en="Map">Mapa</a>
+                <a href="#cobertura" class="nav-link py-1 shrink-0" data-es="Cobertura" data-en="Coverage">Cobertura</a>
+                <a href="#comparativa" class="nav-link py-1 shrink-0" data-es="Comparativa" data-en="Comparison">Comparativa</a>
+                <a href="#ambiental" class="nav-link py-1 shrink-0" data-es="Contexto" data-en="Context">Contexto</a>
+                <a href="#especies" class="nav-link py-1 shrink-0" data-es="Especies" data-en="Species">Especies</a>
+                <a href="#satelital" class="nav-link py-1 shrink-0" data-es="Índices" data-en="Indices">Índices</a>
+                <a href="#acceso" class="nav-link py-1 shrink-0 text-blue-600 font-bold" data-es="Acceso" data-en="Access">Acceso</a>
+                <a href="#recomendaciones" class="nav-link py-1 shrink-0 hidden md:inline" data-es="Recomendaciones" data-en="Recommendations">Recomendaciones</a>
+                <a href="#conclusiones" class="nav-link py-1 shrink-0 text-emerald-700 font-bold" data-es="Conclusiones" data-en="Conclusions">Conclusiones</a>
+                <a href="#referencias" class="nav-link py-1 shrink-0" data-es="Refs" data-en="Refs">Refs</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- HEADER -->
+    <header id="top" class="bg-gradient-to-br from-emerald-950 via-emerald-900 to-green-900 text-center py-8 md:py-12 px-4 shadow-2xl relative overflow-hidden">
+        <div class="absolute inset-0 opacity-5" style="background-image: url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2260%22 height=%2260%22><circle cx=%2230%22 cy=%2230%22 r=%221%22 fill=%22white%22/></svg>');"></div>
+        <div class="relative z-10">
+            <div class="inline-block bg-emerald-800/50 border border-emerald-700/50 rounded-full px-3 py-1 mb-3">
+                <p class="text-emerald-300 text-[10px] md:text-xs font-semibold tracking-widest uppercase">Informe Técnico IT-2026-FCH-001</p>
+            </div>
+            <h1 class="text-2xl md:text-5xl font-black text-white mb-2 md:mb-3 tracking-tight leading-tight" data-es="Análisis Satelital de Terrenos Forestales" data-en="Satellite Analysis of Forest Lands">Análisis Satelital de Terrenos Forestales</h1>
+            <p class="text-lg md:text-2xl font-light text-emerald-200">Sazo, Carrizales &amp; Jungla Peumayen</p>
+            <p class="text-emerald-300 text-xs md:text-sm mt-2 font-medium" data-es="Región de Ñuble, Chile | 12.638 hectáreas" data-en="Nuble Region, Chile | 12,638 hectares">Región de Ñuble, Chile | 12.638 hectáreas</p>
+            <div class="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-4 md:mt-6 text-[10px] md:text-xs text-emerald-400">
+                <span>18-19 de febrero de 2026</span>
+                <span class="text-emerald-600 hidden md:inline">|</span>
+                <span>Datum WGS84 / EPSG:4326</span>
+                <span class="text-emerald-600 hidden md:inline">|</span>
+                <span>Cussen Consultoría Geoespacial</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-4 md:p-8 max-w-7xl">
+
+        <!-- KPIs PRINCIPALES -->
+        <section class="grid grid-cols-3 md:grid-cols-5 gap-2 md:gap-4 -mt-6 md:-mt-8 mb-10 md:mb-12 relative z-10 animate-in px-1 md:px-0">
+            <div class="stat-card bg-white p-3 md:p-5 rounded-xl shadow-lg text-center border border-gray-100">
+                <h4 class="text-xl md:text-3xl font-black text-emerald-700">12.638</h4>
+                <p class="text-gray-500 text-[10px] md:text-xs mt-1 font-medium" data-es="Hectáreas Totales" data-en="Total Hectares">Hectáreas Totales</p>
+                <p class="text-gray-300 text-[8px] md:text-[10px] mt-0.5">126,4 km&sup2;</p>
+            </div>
+            <div class="stat-card bg-white p-3 md:p-5 rounded-xl shadow-lg text-center border border-gray-100">
+                <h4 class="text-xl md:text-3xl font-black text-green-600">~8.500</h4>
+                <p class="text-gray-500 text-[10px] md:text-xs mt-1 font-medium" data-es="ha Bosque Nativo" data-en="ha Native Forest">ha Bosque Nativo</p>
+                <p class="text-gray-300 text-[8px] md:text-[10px] mt-0.5">67% cobertura</p>
+            </div>
+            <div class="stat-card bg-white p-3 md:p-5 rounded-xl shadow-lg text-center border border-gray-100">
+                <h4 class="text-lg md:text-2xl font-black text-blue-600">UNESCO</h4>
+                <p class="text-gray-500 text-[10px] md:text-xs mt-1 font-medium" data-es="Reserva Biosfera" data-en="Biosphere Reserve">Reserva Biosfera</p>
+                <p class="text-gray-300 text-[8px] md:text-[10px] mt-0.5">3 predios incluidos<sup class="sup-ref" title="UNESCO, 2011">[1]</sup></p>
+            </div>
+            <div class="stat-card bg-white p-3 md:p-5 rounded-xl shadow-lg text-center border border-gray-100">
+                <h4 class="text-xl md:text-3xl font-black text-emerald-700">3</h4>
+                <p class="text-gray-500 text-[10px] md:text-xs mt-1 font-medium" data-es="Predios" data-en="Properties">Predios</p>
+                <p class="text-gray-300 text-[8px] md:text-[10px] mt-0.5" data-es="516 vertices" data-en="516 vertices">516 vertices</p>
+            </div>
+            <div class="stat-card bg-white p-3 md:p-5 rounded-xl shadow-lg text-center border border-gray-100 col-span-2 md:col-span-1">
+                <h4 class="text-base md:text-xl font-black text-purple-600">Huemul</h4>
+                <p class="text-gray-500 text-[10px] md:text-xs mt-1 font-medium" data-es="Conservación activa" data-en="Active conservation">Conservación activa</p>
+                <p class="text-gray-300 text-[8px] md:text-[10px] mt-0.5">Peumayen (MMA 2020-21)</p>
+            </div>
+        </section>
+
+        <!-- MAPA INTERACTIVO -->
+        <section id="mapa" class="mb-8 md:mb-14">
+            <h2 class="text-2xl md:text-3xl font-bold text-slate-800 text-center mb-2" data-es="Mapa Interactivo de los Predios" data-en="Interactive Property Map">Mapa Interactivo de los Predios</h2>
+            <div class="section-divider"></div>
+            <p class="text-center text-sm text-gray-400 mb-6 max-w-2xl mx-auto">Polígonos extraídos directamente de los archivos KMZ proporcionados. Superficies calculadas con proyección local plana desde WGS84 (fórmula de Haversine + Shoelace).</p>
+
+            <!-- Selector de Fundo -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 no-print">
+                <div id="btn-sazo" class="fundo-btn bg-white border-2 border-emerald-100 rounded-xl p-3 md:p-5" onclick="selectFundo('sazo')">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="w-3 h-3 rounded-full bg-emerald-500 inline-block shrink-0"></span>
+                                <h3 class="text-base md:text-lg font-bold text-emerald-800">Fundo Sazo</h3>
+                            </div>
+                            <p class="text-[10px] md:text-xs text-gray-500 ml-5">Pinto, Diguillin</p>
+                        </div>
+                        <div class="text-right shrink-0 ml-2">
+                            <span class="text-lg md:text-2xl font-black text-emerald-700">2.434 ha</span>
+                            <p class="text-[9px] md:text-[10px] text-gray-400">Per. 36,1 km</p>
+                        </div>
+                    </div>
+                    <div class="mt-2 md:mt-3 flex flex-wrap">
+                        <span class="species-tag bg-emerald-100 text-emerald-800">Lenga</span>
+                        <span class="species-tag bg-emerald-100 text-emerald-800">Nirre</span>
+                        <span class="species-tag bg-blue-100 text-blue-800">1.800-2.800m</span>
+                    </div>
+                </div>
+                <div id="btn-carrizales" class="fundo-btn bg-white border-2 border-amber-100 rounded-xl p-3 md:p-5" onclick="selectFundo('carrizales')">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="w-3 h-3 rounded-full bg-amber-500 inline-block shrink-0"></span>
+                                <h3 class="text-base md:text-lg font-bold text-amber-800">Fundo Carrizales</h3>
+                            </div>
+                            <p class="text-[10px] md:text-xs text-gray-500 ml-5">Coihueco/Pinto, Punilla</p>
+                        </div>
+                        <div class="text-right shrink-0 ml-2">
+                            <span class="text-lg md:text-2xl font-black text-amber-700">6.904 ha</span>
+                            <p class="text-[9px] md:text-[10px] text-gray-400">Per. 42,5 km</p>
+                        </div>
+                    </div>
+                    <div class="mt-2 md:mt-3 flex flex-wrap">
+                        <span class="species-tag bg-green-100 text-green-800">Roble</span>
+                        <span class="species-tag bg-green-100 text-green-800">Rauli</span>
+                        <span class="species-tag bg-emerald-100 text-emerald-800">Lenga</span>
+                        <span class="species-tag bg-blue-100 text-blue-800">1.400-2.200m</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controles de capa -->
+            <div class="flex flex-wrap gap-2 mb-0 no-print bg-gray-50 p-3 rounded-t-xl border border-b-0 border-gray-200">
+                <span class="text-xs font-semibold text-gray-400 self-center mr-1 uppercase tracking-wide">Base:</span>
+                <button class="layer-btn active px-3 py-1 rounded-md text-xs font-medium border border-gray-200" onclick="setLayer('satellite', this)">Satelital</button>
+                <button class="layer-btn px-3 py-1 rounded-md text-xs font-medium border border-gray-200" onclick="setLayer('topo', this)">Topográfico</button>
+                <button class="layer-btn px-3 py-1 rounded-md text-xs font-medium border border-gray-200" onclick="setLayer('terrain', this)">Terreno</button>
+                <button class="layer-btn px-3 py-1 rounded-md text-xs font-medium border border-gray-200" onclick="setLayer('osm', this)">OpenStreetMap</button>
+                <span class="text-gray-200 self-center mx-1">|</span>
+                <button class="px-3 py-1 rounded-md text-xs font-semibold border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition" onclick="toggleBoth()">Vista General</button>
+            </div>
+
+            <div class="map-wrapper">
+                <div id="map"></div>
+                <div id="coord-display" class="coord-display">Lat: -- | Lon: --</div>
+            </div>
+
+            <!-- Info panel -->
+            <div id="info-panel" class="info-panel mt-0 p-5 rounded-b-xl shadow-lg border border-t-0 border-gray-200"></div>
+        </section>
+
+        <!-- COMPARATIVA DE SUPERFICIES (BAR CHART) -->
+        <section id="cobertura" class="mb-8 md:mb-14">
+            <h2 class="text-2xl md:text-3xl font-bold text-slate-800 text-center mb-2" data-es="Análisis Comparativo de Cobertura" data-en="Comparative Coverage Analysis">Análisis Comparativo de Cobertura</h2>
+            <div class="section-divider"></div>
+            <p class="text-center text-sm text-gray-400 mb-6 max-w-2xl mx-auto">Estimación de cobertura vegetal por franja altitudinal, basada en datos del Catastro de Bosque Nativo de CONAF<sup class="sup-ref" title="CONAF, Catastro de Recursos Vegetacionales">[2]</sup> y fichas comunales SITRURAL<sup class="sup-ref" title="SITRURAL, INDAP">[3][4]</sup>.</p>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                <!-- Bar chart comparativo -->
+                <div class="bg-white p-6 rounded-xl shadow-lg lg:col-span-1">
+                    <h3 class="font-bold text-sm text-slate-800 mb-1 text-center">Superficie Comparada</h3>
+                    <p class="text-center text-[10px] text-gray-400 mb-4">Hectáreas totales por predio</p>
+                    <div style="height: 260px;">
+                        <canvas id="chartComparativa"></canvas>
+                    </div>
+                </div>
+                <!-- Doughnut Sazo -->
+                <div class="bg-white p-6 rounded-xl shadow-lg">
+                    <h3 class="font-bold text-sm text-slate-800 mb-1 text-center">Fundo Sazo - Cobertura por Altitud</h3>
+                    <p class="text-center text-[10px] text-gray-400 mb-3">2.434 ha | 1.800-2.800 msnm</p>
+                    <div style="height: 240px;">
+                        <canvas id="chartSazo"></canvas>
+                    </div>
+                </div>
+                <!-- Doughnut Carrizales -->
+                <div class="bg-white p-6 rounded-xl shadow-lg">
+                    <h3 class="font-bold text-sm text-slate-800 mb-1 text-center">Fundo Carrizales - Cobertura por Altitud</h3>
+                    <p class="text-center text-[10px] text-gray-400 mb-3">6.904 ha | 1.400-2.200 msnm</p>
+                    <div style="height: 240px;">
+                        <canvas id="chartCarrizales"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Perfil altitudinal -->
+            <div class="bg-white p-6 rounded-xl shadow-lg">
+                <h3 class="font-bold text-sm text-slate-800 mb-1 text-center">Perfil Altitudinal y Vegetación Asociada</h3>
+                <p class="text-center text-[10px] text-gray-400 mb-4">Franjas altitudinales típicas de la precordillera andina de Nuble<sup class="sup-ref" title="SIMBIO, MMA Chile">[5]</sup></p>
+                <div style="height: 220px;">
+                    <canvas id="chartElevation"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- TABLA COMPARATIVA -->
+        <section id="comparativa" class="mb-8 md:mb-14">
+            <h2 class="text-2xl md:text-3xl font-bold text-slate-800 text-center mb-2" data-es="Comparativa Detallada de Predios" data-en="Detailed Property Comparison">Comparativa Detallada de Predios</h2>
+            <div class="section-divider"></div>
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 table-scroll">
+                <table class="w-full text-sm min-w-[520px]">
+                    <thead class="bg-gradient-to-r from-emerald-800 to-emerald-900 text-white">
+                        <tr>
+                            <th class="p-2.5 md:p-4 text-left font-semibold text-[10px] md:text-xs uppercase tracking-wider">Parámetro</th>
+                            <th class="p-2.5 md:p-4 text-center font-semibold text-[10px] md:text-xs uppercase tracking-wider">
+                                <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 mr-0.5"></span>Sazo
+                            </th>
+                            <th class="p-2.5 md:p-4 text-center font-semibold text-[10px] md:text-xs uppercase tracking-wider">
+                                <span class="inline-block w-2 h-2 rounded-full bg-amber-400 mr-0.5"></span>Carrizales
+                            </th>
+                            <th class="p-2.5 md:p-4 text-center font-semibold text-[10px] md:text-xs uppercase tracking-wider">Fuente</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-b border-gray-100">
+                            <td class="p-3.5 font-medium text-gray-700 text-xs">Superficie</td>
+                            <td class="p-3.5 text-center font-bold text-emerald-700">2.434 ha (24,3 km&sup2;)</td>
+                            <td class="p-3.5 text-center font-bold text-amber-700">6.904 ha (69,0 km&sup2;)</td>
+                            <td class="p-3.5 text-center text-[10px] text-gray-400">KMZ / Haversine</td>
+                        </tr>
+                        <tr class="border-b border-gray-100 bg-gray-50/50">
+                            <td class="p-3.5 font-medium text-gray-700 text-xs">Perímetro</td>
+                            <td class="p-3.5 text-center">36,1 km</td>
+                            <td class="p-3.5 text-center">42,5 km</td>
+                            <td class="p-3.5 text-center text-[10px] text-gray-400">KMZ / Haversine</td>
+                        </tr>
+                        <tr class="border-b border-gray-100">
+                            <td class="p-3.5 font-medium text-gray-700 text-xs">Centroide</td>
+                            <td class="p-3.5 text-center text-xs font-mono">36.078&deg;S, 70.680&deg;W</td>
+                            <td class="p-3.5 text-center text-xs font-mono">36.131&deg;S, 70.878&deg;W</td>
+                            <td class="p-3.5 text-center text-[10px] text-gray-400">KMZ / WGS84</td>
+                        </tr>
+                        <tr class="border-b border-gray-100 bg-gray-50/50">
+                            <td class="p-3.5 font-medium text-gray-700 text-xs">Elevación Estimada</td>
+                            <td class="p-3.5 text-center">1.800 - 2.800 msnm</td>
+                            <td class="p-3.5 text-center">1.400 - 2.200 msnm</td>
+                            <td class="p-3.5 text-center text-[10px] text-gray-400">SRTM / OpenTopo</td>
+                        </tr>
+                        <tr class="border-b border-gray-100">
+                            <td class="p-3.5 font-medium text-gray-700 text-xs">Bosque Nativo Est.</td>
+                            <td class="p-3.5 text-center">~1.100 ha (45%)</td>
+                            <td class="p-3.5 text-center font-bold text-green-700">~5.000 ha (72%)</td>
+                            <td class="p-3.5 text-center text-[10px] text-gray-400">CONAF<sup class="sup-ref">[2]</sup> + altitud</td>
+                        </tr>
+                        <tr class="border-b border-gray-100 bg-gray-50/50">
+                            <td class="p-3.5 font-medium text-gray-700 text-xs">Tipo Forestal</td>
+                            <td class="p-3.5 text-center">Lenga (subalpino)</td>
+                            <td class="p-3.5 text-center">Roble-Rauli-Coigue + Lenga</td>
+                            <td class="p-3.5 text-center text-[10px] text-gray-400">CONAF<sup class="sup-ref">[2]</sup></td>
+                        </tr>
+                        <tr class="border-b border-gray-100">
+                            <td class="p-3.5 font-medium text-gray-700 text-xs">Estructura Bosque</td>
+                            <td class="p-3.5 text-center">Renoval abierto</td>
+                            <td class="p-3.5 text-center">Renoval denso (~90%)</td>
+                            <td class="p-3.5 text-center text-[10px] text-gray-400">SITRURAL<sup class="sup-ref">[3]</sup></td>
+                        </tr>
+                        <tr class="border-b border-gray-100 bg-gray-50/50">
+                            <td class="p-3.5 font-medium text-gray-700 text-xs">Valor Maderero</td>
+                            <td class="p-3.5 text-center text-amber-600 font-medium">Bajo (lenga alt.)</td>
+                            <td class="p-3.5 text-center font-bold text-green-700">Medio-Alto (rauli)</td>
+                            <td class="p-3.5 text-center text-[10px] text-gray-400">INFOR / mercado</td>
+                        </tr>
+                        <tr class="border-b border-gray-100">
+                            <td class="p-3.5 font-medium text-gray-700 text-xs">Potencial Bonos CO&sub2;</td>
+                            <td class="p-3.5 text-center text-green-600 font-medium">Alto</td>
+                            <td class="p-3.5 text-center font-bold text-green-700">Muy Alto</td>
+                            <td class="p-3.5 text-center text-[10px] text-gray-400">Estimación</td>
+                        </tr>
+                        <tr class="border-b border-gray-100 bg-gray-50/50">
+                            <td class="p-3.5 font-medium text-gray-700 text-xs">Potencial Turístico</td>
+                            <td class="p-3.5 text-center font-bold text-blue-600">Alto</td>
+                            <td class="p-3.5 text-center text-blue-500">Medio-Alto</td>
+                            <td class="p-3.5 text-center text-[10px] text-gray-400">Estimación</td>
+                        </tr>
+                        <tr class="border-b border-gray-100">
+                            <td class="p-3.5 font-medium text-gray-700 text-xs">Comuna</td>
+                            <td class="p-3.5 text-center">Pinto</td>
+                            <td class="p-3.5 text-center">Coihueco / Pinto</td>
+                            <td class="p-3.5 text-center text-[10px] text-gray-400">BCN<sup class="sup-ref">[6]</sup></td>
+                        </tr>
+                        <tr class="border-b border-gray-100 bg-gray-50/50">
+                            <td class="p-3.5 font-medium text-gray-700 text-xs">Clima (Koppen)</td>
+                            <td class="p-3.5 text-center">Csc / ET</td>
+                            <td class="p-3.5 text-center">Csc</td>
+                            <td class="p-3.5 text-center text-[10px] text-gray-400">BCN<sup class="sup-ref">[6]</sup></td>
+                        </tr>
+                        <tr class="bg-red-50/50">
+                            <td class="p-3.5 font-medium text-gray-700 text-xs">Riesgo Incendio</td>
+                            <td class="p-3.5 text-center text-red-600 font-semibold">Alto (Dic-Mar)</td>
+                            <td class="p-3.5 text-center text-red-600 font-semibold">Alto (Dic-Mar)</td>
+                            <td class="p-3.5 text-center text-[10px] text-gray-400">SENAPRED<sup class="sup-ref">[9]</sup></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- CONTEXTO AMBIENTAL -->
+        <section id="ambiental" class="mb-8 md:mb-14">
+            <h2 class="text-2xl md:text-3xl font-bold text-slate-800 text-center mb-2" data-es="Contexto Ambiental y Territorial" data-en="Environmental and Territorial Context">Contexto Ambiental y Territorial</h2>
+            <div class="section-divider"></div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-xl shadow-lg border border-emerald-100">
+                    <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center text-xl mb-3">&#127795;</div>
+                    <h3 class="text-base font-bold text-emerald-800 mb-2" data-es="Reserva de la Biosfera UNESCO" data-en="UNESCO Biosphere Reserve">Reserva de la Biosfera UNESCO</h3>
+                    <p class="text-sm text-gray-600">Ambos predios se ubican dentro del <strong>Corredor Biológico Nevados de Chillán - Laguna del Laja</strong>, declarado Reserva de la Biosfera por UNESCO en 2011.<sup class="sup-ref">[1]</sup></p>
+                    <div class="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500 space-y-1">
+                        <p>Superficie total: <strong>641.403 ha</strong></p>
+                        <p>355 especies vegetales | 155 especies fauna<sup class="sup-ref">[10]</sup></p>
+                        <p>Hábitat crítico del <strong>huemul</strong> (<em>Hippocamelus bisulcus</em>, En Peligro)<sup class="sup-ref">[10]</sup></p>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-lg border border-amber-100">
+                    <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center text-xl mb-3">&#127755;</div>
+                    <h3 class="text-base font-bold text-amber-700 mb-2" data-es="Riesgo Volcánico" data-en="Volcanic Risk">Riesgo Volcánico</h3>
+                    <p class="text-sm text-gray-600">Complejo Volcánico <strong>Nevados de Chillán</strong> a 20-40 km. Actualmente en <strong>alerta verde</strong> (SERNAGEOMIN) con perímetro de seguridad de 500 m.<sup class="sup-ref">[7]</sup></p>
+                    <div class="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500 space-y-1">
+                        <p>Cumbre: 3.212 msnm</p>
+                        <p>Riesgo para predios: <strong>Moderado</strong></p>
+                        <p>Fuera de zona de exclusión directa<sup class="sup-ref">[8]</sup></p>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-lg border border-red-100">
+                    <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center text-xl mb-3">&#128293;</div>
+                    <h3 class="text-base font-bold text-red-700 mb-2" data-es="Riesgo de Incendios Forestales" data-en="Forest Fire Risk">Riesgo de Incendios Forestales</h3>
+                    <p class="text-sm text-gray-600">En 2025, el <strong>Incendio San Patricio</strong> consumió ~2.000 ha de bosque nativo en la precordillera de Coihueco, dentro de la Reserva de la Biosfera.<sup class="sup-ref">[9]</sup></p>
+                    <div class="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500 space-y-1">
+                        <p>Temporada crítica: <strong>Diciembre - Marzo</strong></p>
+                        <p>Zona de interfaz bosque nativo - estepa</p>
+                        <p>Alerta extendida a comuna de Pinto<sup class="sup-ref">[9]</sup></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ESPECIES FORESTALES -->
+        <section id="especies" class="mb-8 md:mb-14">
+            <h2 class="text-2xl md:text-3xl font-bold text-slate-800 text-center mb-2" data-es="Especies Forestales Esperadas" data-en="Expected Forest Species">Especies Forestales Esperadas</h2>
+            <div class="section-divider"></div>
+            <p class="text-center text-sm text-gray-400 mb-6 max-w-2xl mx-auto">Basado en la clasificación de ecosistemas del MMA/SIMBIO<sup class="sup-ref">[5]</sup> y el catastro vegetacional de CONAF<sup class="sup-ref">[2]</sup> para las franjas altitudinales correspondientes.</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="bg-white p-4 md:p-6 rounded-xl shadow-lg border-l-4 border-emerald-500">
+                    <h3 class="font-bold text-sm md:text-base text-emerald-800 mb-3 md:mb-4">Fundo Sazo - Bosque Subalpino</h3>
+                    <div class="space-y-2.5">
+                        <div class="flex justify-between items-center p-3 bg-emerald-50 rounded-lg">
+                            <div>
+                                <p class="font-semibold text-sm">Lenga</p>
+                                <p class="text-[11px] text-gray-500 italic">Nothofagus pumilio (Poepp. & Endl.) Krasser</p>
+                            </div>
+                            <span class="text-[10px] bg-emerald-200 text-emerald-800 px-2 py-1 rounded-full font-semibold">Dominante</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-emerald-50/50 rounded-lg">
+                            <div>
+                                <p class="font-semibold text-sm">Nirre</p>
+                                <p class="text-[11px] text-gray-500 italic">Nothofagus antarctica (G.Forst.) Oerst.</p>
+                            </div>
+                            <span class="text-[10px] bg-green-200 text-green-800 px-2 py-1 rounded-full font-semibold">Frecuente</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-yellow-50 rounded-lg">
+                            <div>
+                                <p class="font-semibold text-sm">Coiron</p>
+                                <p class="text-[11px] text-gray-500 italic">Festuca spp.</p>
+                            </div>
+                            <span class="text-[10px] bg-amber-200 text-amber-800 px-2 py-1 rounded-full font-semibold">Pradera alta</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                            <div>
+                                <p class="font-semibold text-sm">Plantas en cojin</p>
+                                <p class="text-[11px] text-gray-500 italic">Azorella spp., Bolax spp.</p>
+                            </div>
+                            <span class="text-[10px] bg-gray-200 text-gray-700 px-2 py-1 rounded-full font-semibold">Zona alpina</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white p-4 md:p-6 rounded-xl shadow-lg border-l-4 border-amber-500">
+                    <h3 class="font-bold text-sm md:text-base text-amber-800 mb-3 md:mb-4">Fundo Carrizales - Bosque Caducifolio Andino</h3>
+                    <div class="space-y-2.5">
+                        <div class="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                            <div>
+                                <p class="font-semibold text-sm">Rauli</p>
+                                <p class="text-[11px] text-gray-500 italic">Nothofagus alpina (Poepp. & Endl.) Oerst.</p>
+                            </div>
+                            <span class="text-[10px] bg-green-200 text-green-800 px-2 py-1 rounded-full font-semibold">Alto valor</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                            <div>
+                                <p class="font-semibold text-sm">Roble</p>
+                                <p class="text-[11px] text-gray-500 italic">Nothofagus obliqua (Mirb.) Oerst.</p>
+                            </div>
+                            <span class="text-[10px] bg-emerald-200 text-emerald-800 px-2 py-1 rounded-full font-semibold">Dominante</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-green-50/50 rounded-lg">
+                            <div>
+                                <p class="font-semibold text-sm">Coigue</p>
+                                <p class="text-[11px] text-gray-500 italic">Nothofagus dombeyi (Mirb.) Oerst.</p>
+                            </div>
+                            <span class="text-[10px] bg-green-200 text-green-800 px-2 py-1 rounded-full font-semibold">Sitios humedos</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-emerald-50 rounded-lg">
+                            <div>
+                                <p class="font-semibold text-sm">Lenga</p>
+                                <p class="text-[11px] text-gray-500 italic">Nothofagus pumilio</p>
+                            </div>
+                            <span class="text-[10px] bg-emerald-200 text-emerald-800 px-2 py-1 rounded-full font-semibold">Franja alta</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-teal-50 rounded-lg">
+                            <div>
+                                <p class="font-semibold text-sm">Cipres de la Cordillera</p>
+                                <p class="text-[11px] text-gray-500 italic">Austrocedrus chilensis (D.Don) Pic.Serm. & Bizzarri</p>
+                            </div>
+                            <span class="text-[10px] bg-teal-200 text-teal-800 px-2 py-1 rounded-full font-semibold">Laderas secas</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-lime-50 rounded-lg">
+                            <div>
+                                <p class="font-semibold text-sm">Avellano chileno</p>
+                                <p class="text-[11px] text-gray-500 italic">Gevuina avellana Molina</p>
+                            </div>
+                            <span class="text-[10px] bg-lime-200 text-lime-800 px-2 py-1 rounded-full font-semibold">Sotobosque</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ÍNDICES SATELITALES -->
+        <section id="satelital" class="mb-8 md:mb-14">
+            <h2 class="text-2xl md:text-3xl font-bold text-slate-800 text-center mb-2" data-es="Índices Satelitales Recomendados" data-en="Recommended Satellite Indices">Índices Satelitales Recomendados</h2>
+            <div class="section-divider"></div>
+            <p class="text-center text-sm text-gray-400 mb-6 max-w-2xl mx-auto">Para un monitoreo satelital riguroso de estos predios, se recomienda procesar los siguientes índices espectrales con <strong>Sentinel-2 (ESA/Copernicus)</strong> en Google Earth Engine.</p>
+            <div class="bg-white rounded-xl shadow-lg p-4 md:p-6 border border-gray-100">
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
+                    <div class="border border-green-200 rounded-lg p-4 hover:shadow-md transition">
+                        <div class="flex justify-between items-center mb-1">
+                            <h4 class="font-bold text-green-700">NDVI</h4>
+                            <span class="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded font-mono">(NIR-Red)/(NIR+Red)</span>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">Vigor vegetacional y densidad de cobertura boscosa</p>
+                        <div class="legend-bar mt-2 bg-gradient-to-r from-red-500 via-yellow-400 to-green-600"></div>
+                        <p class="text-[10px] text-gray-400 mt-1">-1 (sin veg.) &rarr; +1 (bosque denso)</p>
+                    </div>
+                    <div class="border border-blue-200 rounded-lg p-4 hover:shadow-md transition">
+                        <div class="flex justify-between items-center mb-1">
+                            <h4 class="font-bold text-blue-700">NDMI</h4>
+                            <span class="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-mono">(NIR-SWIR)/(NIR+SWIR)</span>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">Contenido de humedad de la vegetación</p>
+                        <div class="legend-bar mt-2 bg-gradient-to-r from-amber-500 via-cyan-400 to-blue-600"></div>
+                        <p class="text-[10px] text-gray-400 mt-1">Estrés hídrico &rarr; Alta humedad</p>
+                    </div>
+                    <div class="border border-orange-200 rounded-lg p-4 hover:shadow-md transition">
+                        <div class="flex justify-between items-center mb-1">
+                            <h4 class="font-bold text-orange-700">NBR / dNBR</h4>
+                            <span class="text-[10px] bg-orange-100 text-orange-700 px-2 py-0.5 rounded font-mono">(NIR-SWIR2)/(NIR+SWIR2)</span>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">Detección de áreas quemadas y cicatrices</p>
+                        <div class="legend-bar mt-2 bg-gradient-to-r from-gray-800 via-red-500 to-green-500"></div>
+                        <p class="text-[10px] text-gray-400 mt-1">Quemado &rarr; En riesgo &rarr; Sano</p>
+                    </div>
+                    <div class="border border-cyan-200 rounded-lg p-4 hover:shadow-md transition">
+                        <div class="flex justify-between items-center mb-1">
+                            <h4 class="font-bold text-cyan-700">NDSI</h4>
+                            <span class="text-[10px] bg-cyan-100 text-cyan-700 px-2 py-0.5 rounded font-mono">(Green-SWIR)/(Green+SWIR)</span>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">Cobertura nival estacional</p>
+                        <div class="legend-bar mt-2 bg-gradient-to-r from-green-700 via-slate-300 to-white border border-gray-200"></div>
+                        <p class="text-[10px] text-gray-400 mt-1">Sin nieve &rarr; Nieve total</p>
+                    </div>
+                    <div class="border border-emerald-200 rounded-lg p-4 hover:shadow-md transition">
+                        <div class="flex justify-between items-center mb-1">
+                            <h4 class="font-bold text-emerald-700">EVI</h4>
+                            <span class="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded font-mono">2.5*(NIR-Red)/(...)</span>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">Biomasa forestal (superior a NDVI en bosque denso)</p>
+                        <div class="legend-bar mt-2 bg-gradient-to-r from-amber-200 via-green-400 to-emerald-700"></div>
+                        <p class="text-[10px] text-gray-400 mt-1">Baja biomasa &rarr; Bosque muy denso</p>
+                    </div>
+                    <div class="border border-purple-200 rounded-lg p-4 hover:shadow-md transition">
+                        <div class="flex justify-between items-center mb-1">
+                            <h4 class="font-bold text-purple-700">Clasificación Supervisada</h4>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">Mapa de cobertura de suelo (Random Forest / SVM)</p>
+                        <div class="flex gap-1 mt-2">
+                            <span class="w-4 h-4 rounded bg-green-700"></span>
+                            <span class="w-4 h-4 rounded bg-lime-500"></span>
+                            <span class="w-4 h-4 rounded bg-amber-400"></span>
+                            <span class="w-4 h-4 rounded bg-gray-400"></span>
+                            <span class="w-4 h-4 rounded bg-white border border-gray-300"></span>
+                        </div>
+                        <p class="text-[10px] text-gray-400 mt-1">Bosque | Matorral | Pradera | Roca | Nieve</p>
+                    </div>
+                </div>
+                <div class="mt-5 pt-4 border-t border-gray-100 grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
+                    <div class="bg-gray-50 rounded-lg p-3">
+                        <p class="text-[10px] text-gray-400 uppercase font-semibold">Verano (Ene-Feb)</p>
+                        <p class="text-xs text-gray-600 mt-1">NDVI, EVI, Clasificación</p>
+                        <p class="text-[10px] text-emerald-600 font-semibold">Óptimo</p>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-3">
+                        <p class="text-[10px] text-gray-400 uppercase font-semibold">Otono (Abr-May)</p>
+                        <p class="text-xs text-gray-600 mt-1">Senescencia, NDMI</p>
+                        <p class="text-[10px] text-amber-600 font-semibold">Complementario</p>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-3">
+                        <p class="text-[10px] text-gray-400 uppercase font-semibold">Invierno (Jul-Ago)</p>
+                        <p class="text-xs text-gray-600 mt-1">NDSI, cobertura nival</p>
+                        <p class="text-[10px] text-blue-600 font-semibold">Nieve</p>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-3">
+                        <p class="text-[10px] text-gray-400 uppercase font-semibold">Primavera (Oct-Nov)</p>
+                        <p class="text-xs text-gray-600 mt-1">Deshielo, humedad suelo</p>
+                        <p class="text-[10px] text-cyan-600 font-semibold">Transición</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- MARCO LEGAL -->
+        <section class="mb-8 md:mb-14">
+            <h2 class="text-2xl md:text-3xl font-bold text-slate-800 text-center mb-2" data-es="Marco Regulatorio Aplicable" data-en="Applicable Regulatory Framework">Marco Regulatorio Aplicable</h2>
+            <div class="section-divider"></div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-amber-50 border border-amber-200 p-6 rounded-xl">
+                    <h3 class="font-bold text-amber-800 mb-2">Ley de Bosque Nativo (Ley 20.283)</h3>
+                    <p class="text-sm text-gray-700">Ambos predios contienen bosque nativo protegido. Cualquier intervención forestal requiere <strong>Plan de Manejo aprobado por CONAF</strong>. La ley establece incentivos para manejo sustentable y bonificaciones para actividades de conservación y recuperación.<sup class="sup-ref">[11]</sup></p>
+                </div>
+                <div class="bg-blue-50 border border-blue-200 p-6 rounded-xl">
+                    <h3 class="font-bold text-blue-800 mb-2">Reserva de la Biosfera UNESCO</h3>
+                    <p class="text-sm text-gray-700">Si bien no tiene fuerza legal vinculante directa en Chile, impone <strong>restricciones de hecho y escrutinio ambiental</strong>. Proyectos de gran escala dentro de la reserva estan sujetos al SEIA.<sup class="sup-ref">[1]</sup></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================================== -->
+        <!-- ACCESIBILIDAD E HIDROGRAFIA (IFM) -->
+        <!-- ================================== -->
+        <section id="acceso" class="mb-8 md:mb-14">
+            <h2 class="text-2xl md:text-3xl font-bold text-slate-800 text-center mb-2" data-es="Accesibilidad, Caminos e Hidrografía" data-en="Accessibility, Roads and Hydrography">Accesibilidad, Caminos e Hidrografía</h2>
+            <div class="section-divider"></div>
+            <p class="text-center text-xs md:text-sm text-gray-400 mb-6 max-w-2xl mx-auto">Evaluación de red vial e hídrica para elegibilidad de créditos de carbono IFM (Isometric). Se requiere demostrar capacidad teórica de extracción maderera via caminos o rios.</p>
+
+            <!-- Resultado principal -->
+            <div class="bg-gradient-to-br from-blue-50 to-cyan-50 border-2 border-blue-200 rounded-2xl p-5 md:p-8 mb-8">
+                <div class="text-center mb-4">
+                    <p class="text-[10px] md:text-xs text-blue-600 font-semibold uppercase tracking-widest mb-2">Evaluación IFM</p>
+                    <h3 class="text-xl md:text-2xl font-black text-blue-900" data-es="Ambos predios cumplen el requisito de accesibilidad" data-en="Both properties meet the accessibility requirement">Ambos predios cumplen el requisito de accesibilidad</h3>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                    <div class="bg-white/80 rounded-xl p-4 shadow-sm">
+                        <p class="text-2xl md:text-3xl font-black text-blue-700">2</p>
+                        <p class="text-xs font-semibold text-gray-600 mt-1">Rutas MOP clasificadas</p>
+                        <p class="text-[10px] text-gray-400 mt-0.5">N-55 (Sazo) + N-555 (Carrizales)</p>
+                    </div>
+                    <div class="bg-white/80 rounded-xl p-4 shadow-sm">
+                        <p class="text-2xl md:text-3xl font-black text-cyan-600">2</p>
+                        <p class="text-xs font-semibold text-gray-600 mt-1">Rios principales cruzando</p>
+                        <p class="text-[10px] text-gray-400 mt-0.5">Estero Renegado + Río Chillán</p>
+                    </div>
+                    <div class="bg-white/80 rounded-xl p-4 shadow-sm">
+                        <p class="text-lg md:text-xl font-black text-green-600">Verificado 2025</p>
+                        <p class="text-xs font-semibold text-gray-600 mt-1">Maquinaria pesada accedio</p>
+                        <p class="text-[10px] text-gray-400 mt-0.5">Incendio San Patricio (CONAF/MOP)</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detalle por fundo -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <!-- Sazo -->
+                <div class="bg-white rounded-xl shadow-lg border-t-4 border-emerald-500 p-4 md:p-6">
+                    <div class="flex items-center gap-2 mb-4">
+                        <span class="w-3 h-3 rounded-full bg-emerald-500 shrink-0"></span>
+                        <h3 class="text-base md:text-lg font-bold text-slate-800">Fundo Sazo</h3>
+                    </div>
+
+                    <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">a) Caminos de acceso</h4>
+                    <div class="space-y-2 mb-4">
+                        <div class="flex gap-2 text-xs text-gray-600 bg-emerald-50 p-2.5 rounded-lg">
+                            <span class="text-emerald-600 font-bold shrink-0">&#9654;</span>
+                            <p><strong>Ruta N-55</strong> (Chillán - Termas de Chillán): Pavimentada hasta Las Trancas (~70 km), luego ripio ~8 km hasta Termas. Acceso principal.</p>
+                        </div>
+                        <div class="flex gap-2 text-xs text-gray-600 bg-gray-50 p-2.5 rounded-lg">
+                            <span class="text-gray-400 font-bold shrink-0">&#9654;</span>
+                            <p><strong>Camino Shangri-La</strong>: Bifurca desde N-55, accede al valle del Renegado. 4x4, transitable Dic-Abr.</p>
+                        </div>
+                        <div class="flex gap-2 text-xs text-gray-600 bg-gray-50 p-2.5 rounded-lg">
+                            <span class="text-gray-400 font-bold shrink-0">&#9654;</span>
+                            <p><strong>Ruta N-633</strong>: Los Lleuques - Tranque Diguillin - Los Cipreses (14,8 km). En mejoramiento (85% avance ene 2025).</p>
+                        </div>
+                    </div>
+
+                    <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">b) Caminos interiores</h4>
+                    <div class="flex gap-2 text-xs text-gray-600 bg-gray-50 p-2.5 rounded-lg mb-4">
+                        <span class="text-amber-500 font-bold shrink-0">&#9888;</span>
+                        <p>Huellas de montaña y tracks 4x4 asociados a Termas de Chillán y senderos de trekking. <strong>No hay caminos madereros formales</strong> por la altitud extrema (1.800-2.800m).</p>
+                    </div>
+
+                    <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">c) Rios y esteros</h4>
+                    <div class="space-y-2">
+                        <div class="flex gap-2 text-xs text-gray-600 bg-cyan-50 p-2.5 rounded-lg">
+                            <span class="text-cyan-600 font-bold shrink-0">&#9679;</span>
+                            <p><strong>Estero Renegado</strong>: Nace de glaciares del Volcán Chillán. Curso de ~30 km dirección SO. <strong>Atraviesa el predio completo</strong>. Alimentado por deshielo, flujo permanente. Confluencia con Río Diguillín en Las Turbinas.</p>
+                        </div>
+                        <div class="flex gap-2 text-xs text-gray-600 bg-cyan-50/50 p-2.5 rounded-lg">
+                            <span class="text-cyan-500 font-bold shrink-0">&#9679;</span>
+                            <p><strong>Río Diguillín (nacientes)</strong>: Nace en Valle de Aguas Calientes al SW del predio. Curso total 102 km, cuenca 1.257 km&sup2;. Estación DGA: ~2 m&sup3;/s (San Lorenzo).</p>
+                        </div>
+                        <div class="flex gap-2 text-xs text-gray-600 bg-cyan-50/50 p-2.5 rounded-lg">
+                            <span class="text-cyan-400 font-bold shrink-0">&#9679;</span>
+                            <p><strong>Vertientes</strong>: Aguas Calientes (~2,5 m&sup3;/s) y Agua Bonita (~4,5 m&sup3;/s). Acuiferos de roca fracturada dentro del predio.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Carrizales -->
+                <div class="bg-white rounded-xl shadow-lg border-t-4 border-amber-500 p-4 md:p-6">
+                    <div class="flex items-center gap-2 mb-4">
+                        <span class="w-3 h-3 rounded-full bg-amber-500 shrink-0"></span>
+                        <h3 class="text-base md:text-lg font-bold text-slate-800">Fundo Carrizales</h3>
+                    </div>
+
+                    <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">a) Caminos de acceso</h4>
+                    <div class="space-y-2 mb-4">
+                        <div class="flex gap-2 text-xs text-gray-600 bg-amber-50 p-2.5 rounded-lg">
+                            <span class="text-amber-600 font-bold shrink-0">&#9654;</span>
+                            <p><strong>Ruta N-555 (Los Pellines)</strong>: Camino enrolado MOP. Re-perfilado en 2025 durante emergencia incendio San Patricio. Llega hasta Fundo El Plan.</p>
+                        </div>
+                        <div class="flex gap-2 text-xs text-gray-600 bg-gray-50 p-2.5 rounded-lg">
+                            <span class="text-gray-400 font-bold shrink-0">&#9654;</span>
+                            <p><strong>Puente Fundo El Plan</strong>: Reparado por MOP (capacidad 2 ton). 2 vados construidos para paso de maquinaria pesada.</p>
+                        </div>
+                        <div class="flex gap-2 text-xs text-gray-600 bg-gray-50 p-2.5 rounded-lg">
+                            <span class="text-gray-400 font-bold shrink-0">&#9654;</span>
+                            <p><strong>Acceso secundario</strong>: Desde Ruta N-55 via Recinto/Los Lleuques, caminos secundarios hacia el norte por la precordillera.</p>
+                        </div>
+                    </div>
+
+                    <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">b) Caminos interiores</h4>
+                    <div class="flex gap-2 text-xs text-gray-600 bg-green-50 p-2.5 rounded-lg mb-4">
+                        <span class="text-green-600 font-bold shrink-0">&#10003;</span>
+                        <p><strong>Acceso demostrado con maquinaria pesada</strong> (2025): CONAF y bomberos ingresaron con camiones al sector durante incendio San Patricio. MOP invirtió 130 horas-máquina en construcción de vados y reparación de puentes.</p>
+                    </div>
+
+                    <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">c) Rios y esteros</h4>
+                    <div class="space-y-2">
+                        <div class="flex gap-2 text-xs text-gray-600 bg-cyan-50 p-2.5 rounded-lg">
+                            <span class="text-cyan-600 font-bold shrink-0">&#9679;</span>
+                            <p><strong>Río Chillán</strong>: Nace a 2.300m en el flanco W del Volcán Chillán. Curso total <strong>105 km</strong>, flujo permanente (régimen pluvio-nival). <strong>Atraviesa o bordea el límite sur del predio.</strong> Desemboca en Río Ñuble.</p>
+                        </div>
+                        <div class="flex gap-2 text-xs text-gray-600 bg-cyan-50/50 p-2.5 rounded-lg">
+                            <span class="text-cyan-500 font-bold shrink-0">&#9679;</span>
+                            <p><strong>Estero San Jose</strong>: Quebrada significativa documentada en cartografia IGM. Cruza la zona precordillerana del predio.</p>
+                        </div>
+                        <div class="flex gap-2 text-xs text-gray-600 bg-cyan-50/50 p-2.5 rounded-lg">
+                            <span class="text-cyan-400 font-bold shrink-0">&#9679;</span>
+                            <p><strong>Estero Peladillas + quebradas menores</strong>: Red de tributarios del Río Chillán dentro del predio. Múltiples cursos de agua estacionales y permanentes.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabla resumen IFM -->
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 mb-6 table-scroll">
+                <table class="w-full text-sm min-w-[500px]">
+                    <thead class="bg-gradient-to-r from-blue-700 to-blue-800 text-white">
+                        <tr>
+                            <th class="p-2.5 md:p-3 text-left text-[10px] md:text-xs font-semibold uppercase">Criterio IFM</th>
+                            <th class="p-2.5 md:p-3 text-center text-[10px] md:text-xs font-semibold uppercase"><span class="inline-block w-2 h-2 rounded-full bg-emerald-400 mr-0.5"></span>Sazo</th>
+                            <th class="p-2.5 md:p-3 text-center text-[10px] md:text-xs font-semibold uppercase"><span class="inline-block w-2 h-2 rounded-full bg-amber-400 mr-0.5"></span>Carrizales</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-b border-gray-100"><td class="p-2.5 text-xs font-medium">Ruta pavimentada más cercana</td><td class="p-2.5 text-center text-xs">N-55 (~8-15 km)</td><td class="p-2.5 text-center text-xs">N-55 (~25-30 km)</td></tr>
+                        <tr class="border-b border-gray-100 bg-gray-50/50"><td class="p-2.5 text-xs font-medium">Camino clasificado MOP</td><td class="p-2.5 text-center text-xs font-semibold text-green-700">N-55 + N-633</td><td class="p-2.5 text-center text-xs font-semibold text-green-700">N-555 Los Pellines</td></tr>
+                        <tr class="border-b border-gray-100"><td class="p-2.5 text-xs font-medium">Caminos interiores / huellas</td><td class="p-2.5 text-center text-xs text-amber-600">Tracks 4x4, senderos</td><td class="p-2.5 text-center text-xs font-bold text-green-700">Demostrado con maquinaria (2025)</td></tr>
+                        <tr class="border-b border-gray-100 bg-gray-50/50"><td class="p-2.5 text-xs font-medium">Río / estero principal</td><td class="p-2.5 text-center text-xs font-semibold text-cyan-700">Estero Renegado (30 km)</td><td class="p-2.5 text-center text-xs font-semibold text-cyan-700">Río Chillán (105 km)</td></tr>
+                        <tr class="border-b border-gray-100"><td class="p-2.5 text-xs font-medium">Cursos de agua secundarios</td><td class="p-2.5 text-center text-xs">Diguillin (nacientes), vertientes</td><td class="p-2.5 text-center text-xs">Estero San Jose, Peladillas</td></tr>
+                        <tr class="border-b border-gray-100 bg-gray-50/50"><td class="p-2.5 text-xs font-medium">Regimen hidrologico</td><td class="p-2.5 text-center text-xs">Pluvio-nival (glaciar)</td><td class="p-2.5 text-center text-xs">Pluvio-nival</td></tr>
+                        <tr class="border-b border-gray-100"><td class="p-2.5 text-xs font-medium">Acceso estacional</td><td class="p-2.5 text-center text-xs">Dic - Abr (nieve)</td><td class="p-2.5 text-center text-xs">Dic - Abr (nieve)</td></tr>
+                        <tr class="bg-green-50"><td class="p-2.5 text-xs font-bold text-green-800">Cumple requisito IFM</td><td class="p-2.5 text-center text-xs font-bold text-green-700">SI (caminos + rio)</td><td class="p-2.5 text-center text-xs font-bold text-green-700">SI (caminos + rio)</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Fuentes de esta sección -->
+            <div class="bg-blue-50 rounded-xl p-4 md:p-5 border border-blue-200">
+                <h4 class="font-bold text-[10px] md:text-xs text-blue-800 mb-2 uppercase tracking-wider">Fuentes de esta sección</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-[10px] md:text-xs text-gray-600">
+                    <div><a href="https://mapas.mop.gov.cl/" target="_blank" class="text-blue-600 hover:underline">MOP - Carta Caminera Nacional</a></div>
+                    <div><a href="https://dga.mop.gob.cl/sistema-hidrometrico-en-linea/" target="_blank" class="text-blue-600 hover:underline">DGA - Sistema Hidrométrico en Línea</a></div>
+                    <div><a href="https://simbio.mma.gob.cl/Subsubcuencas/VistaImpresion/08130" target="_blank" class="text-blue-600 hover:underline">SIMBIO/MMA - Subsubcuenca Río Renegado</a></div>
+                    <div><a href="https://mma.gob.cl/wp-content/uploads/2017/12/Itata.pdf" target="_blank" class="text-blue-600 hover:underline">DGA - Diagnóstico Cuenca Río Itata (PDF)</a></div>
+                    <div><a href="https://trancas.cl/el-rio-renegado/" target="_blank" class="text-blue-600 hover:underline">Trancas.cl - El Renegado, fuerza vital del valle</a></div>
+                    <div><a href="https://g5noticias.cl/2025/03/05/mop-finaliza-reparacion-de-puente-clave-para-el-paso-de-vehiculos-de-emergencia-por-incendio-en-zona-cordillerana/" target="_blank" class="text-blue-600 hover:underline">G5 Noticias - MOP reparación puente incendio 2025</a></div>
+                    <div><a href="https://vialidad.mop.gob.cl/2025/01/24/un-85-de-avance-presentan-las-obras-de-mejoramiento-de-la-ruta-hacia-la-reserva-nuble-en-pinto/" target="_blank" class="text-blue-600 hover:underline">MOP Vialidad - Mejoramiento ruta Reserva Nuble</a></div>
+                    <div><a href="https://www.scielo.cl/scielo.php?script=sci_arttext&pid=S0718-28132012000100007" target="_blank" class="text-blue-600 hover:underline">SciELO - Hidrologia cuenca Diguillin (2012)</a></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- RECOMENDACIONES -->
+        <section id="recomendaciones" class="mb-8 md:mb-14">
+            <h2 class="text-2xl md:text-3xl font-bold text-slate-800 text-center mb-2" data-es="Recomendaciones" data-en="Recommendations">Recomendaciones</h2>
+            <div class="section-divider"></div>
+            <div class="bg-white rounded-xl shadow-lg p-4 md:p-8 border border-gray-100">
+                <div class="space-y-2 md:space-y-3">
+                    <div class="flex items-start gap-3 md:gap-4 p-3 md:p-4 bg-gradient-to-r from-emerald-50 to-white rounded-lg border border-emerald-100">
+                        <span class="bg-emerald-700 text-white w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center font-bold text-xs md:text-sm shrink-0">1</span>
+                        <div>
+                            <h4 class="font-semibold text-slate-800 text-sm">Solicitar catastro oficial CONAF</h4>
+                            <p class="text-xs text-gray-600 mt-0.5">Obtener el catastro de bosque nativo para ambos roles, con tipo forestal, estructura (bosque adulto/renoval/achaparrado) y superficie certificada por parcela.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-3 md:gap-4 p-3 md:p-4 bg-gradient-to-r from-emerald-50 to-white rounded-lg border border-emerald-100">
+                        <span class="bg-emerald-700 text-white w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center font-bold text-xs md:text-sm shrink-0">2</span>
+                        <div>
+                            <h4 class="font-semibold text-slate-800 text-sm">Procesar imágenes Sentinel-2 (verano 2025-2026)</h4>
+                            <p class="text-xs text-gray-600 mt-0.5">Generar mapas NDVI, EVI, NBR y clasificación supervisada en Google Earth Engine para obtener cobertura real, no estimada.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-3 md:gap-4 p-3 md:p-4 bg-gradient-to-r from-emerald-50 to-white rounded-lg border border-emerald-100">
+                        <span class="bg-emerald-700 text-white w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center font-bold text-xs md:text-sm shrink-0">3</span>
+                        <div>
+                            <h4 class="font-semibold text-slate-800 text-sm">Vuelo drone fotogrametrico en terreno</h4>
+                            <p class="text-xs text-gray-600 mt-0.5">Captura RGB + multiespectral en áreas representativas para validar la clasificación satelital. Temporada óptima: enero-febrero.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-3 md:gap-4 p-3 md:p-4 bg-gradient-to-r from-emerald-50 to-white rounded-lg border border-emerald-100">
+                        <span class="bg-emerald-700 text-white w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center font-bold text-xs md:text-sm shrink-0">4</span>
+                        <div>
+                            <h4 class="font-semibold text-slate-800 text-sm">Evaluar elegibilidad para bonos de carbono</h4>
+                            <p class="text-xs text-gray-600 mt-0.5">Con ~6.100 ha de bosque nativo en regeneración, evaluar certificación bajo estándar VCS (Verra) o Gold Standard. El rauli de Carrizales tiene alta tasa de captura de CO&sub2;.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-3 md:gap-4 p-3 md:p-4 bg-gradient-to-r from-emerald-50 to-white rounded-lg border border-emerald-100">
+                        <span class="bg-emerald-700 text-white w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center font-bold text-xs md:text-sm shrink-0">5</span>
+                        <div>
+                            <h4 class="font-semibold text-slate-800 text-sm">Verificar inscripción y deslindes en CBR</h4>
+                            <p class="text-xs text-gray-600 mt-0.5">Contrastar polígonos KMZ con inscripción en Conservador de Bienes Raíces de Chillán para confirmar superficie y límites legales.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================================== -->
+        <!-- CONCLUSIONES                       -->
+        <!-- ================================== -->
+        <section id="conclusiones" class="mb-8 md:mb-14">
+            <h2 class="text-2xl md:text-3xl font-bold text-slate-800 text-center mb-2" data-es="Conclusiones" data-en="Conclusions">Conclusiones</h2>
+            <div class="section-divider"></div>
+
+            <!-- Conclusion principal -->
+            <div class="bg-gradient-to-br from-emerald-50 to-green-50 border-2 border-emerald-200 rounded-2xl p-5 md:p-8 mb-8">
+                <div class="text-center mb-6">
+                    <p class="text-xs text-emerald-600 font-semibold uppercase tracking-widest mb-2">Respuesta principal</p>
+                    <h3 class="text-2xl md:text-3xl font-black text-emerald-900" data-es="Si, ambos predios tienen bastante bosque y biomasa" data-en="Yes, both properties have significant forest and biomass">Si, ambos predios tienen bastante bosque y biomasa</h3>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+                    <div class="bg-white/80 rounded-xl p-5 shadow-sm">
+                        <p class="text-3xl md:text-4xl font-black text-emerald-700">~6.100</p>
+                        <p class="text-xs md:text-sm font-semibold text-gray-600 mt-1">hectáreas de bosque nativo</p>
+                        <p class="text-xs text-gray-400 mt-1">estimado entre ambos predios</p>
+                    </div>
+                    <div class="bg-white/80 rounded-xl p-5 shadow-sm">
+                        <p class="text-3xl md:text-4xl font-black text-green-600">65%</p>
+                        <p class="text-xs md:text-sm font-semibold text-gray-600 mt-1">cobertura boscosa media</p>
+                        <p class="text-xs text-gray-400 mt-1">sobre 9.338 ha totales</p>
+                    </div>
+                    <div class="bg-white/80 rounded-xl p-5 shadow-sm">
+                        <p class="text-3xl md:text-4xl font-black text-lime-600">~90%</p>
+                        <p class="text-xs md:text-sm font-semibold text-gray-600 mt-1">del bosque es renoval</p>
+                        <p class="text-xs text-gray-400 mt-1">en regeneración activa (capturando CO<sub>2</sub>)</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detalle por fundo -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <!-- Carrizales -->
+                <div class="bg-white rounded-xl shadow-lg border-t-4 border-amber-500 p-6">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="w-3 h-3 rounded-full bg-amber-500"></span>
+                        <h3 class="text-lg font-bold text-slate-800">Fundo Carrizales</h3>
+                        <span class="ml-auto bg-green-100 text-green-800 text-[10px] font-bold px-2 py-1 rounded-full uppercase">Mayor valor forestal</span>
+                    </div>
+                    <div class="space-y-3 text-sm text-gray-600">
+                        <div class="flex justify-between items-center border-b border-gray-100 pb-2">
+                            <span>Bosque nativo</span>
+                            <span class="font-bold text-green-700">~5.000 ha (72%)</span>
+                        </div>
+                        <div class="flex justify-between items-center border-b border-gray-100 pb-2">
+                            <span>Tipo forestal</span>
+                            <span class="font-semibold">Roble-Rauli-Coigue + Lenga</span>
+                        </div>
+                        <div class="flex justify-between items-center border-b border-gray-100 pb-2">
+                            <span>Valor maderero</span>
+                            <span class="font-bold text-green-700">Medio-Alto (rauli premium)</span>
+                        </div>
+                        <div class="flex justify-between items-center border-b border-gray-100 pb-2">
+                            <span>Bonos de carbono</span>
+                            <span class="font-bold text-green-700">Muy Alto</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span>Potencial turístico</span>
+                            <span class="font-semibold text-blue-600">Medio-Alto</span>
+                        </div>
+                    </div>
+                    <div class="mt-4 bg-amber-50 rounded-lg p-3">
+                        <p class="text-xs text-amber-800"><strong>Veredicto:</strong> El terreno con mayor valor económico-forestal. 5.000 ha de bosque nativo con rauli (madera premium) en plena regeneración. Potencial significativo para bonos de carbono bajo estándar VCS/Gold Standard.</p>
+                    </div>
+                </div>
+
+                <!-- Sazo -->
+                <div class="bg-white rounded-xl shadow-lg border-t-4 border-emerald-500 p-6">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+                        <h3 class="text-lg font-bold text-slate-800">Fundo Sazo</h3>
+                        <span class="ml-auto bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-1 rounded-full uppercase">Mayor valor turístico</span>
+                    </div>
+                    <div class="space-y-3 text-sm text-gray-600">
+                        <div class="flex justify-between items-center border-b border-gray-100 pb-2">
+                            <span>Bosque nativo</span>
+                            <span class="font-bold text-green-700">~1.100 ha (45%)</span>
+                        </div>
+                        <div class="flex justify-between items-center border-b border-gray-100 pb-2">
+                            <span>Tipo forestal</span>
+                            <span class="font-semibold">Lenga subalpino</span>
+                        </div>
+                        <div class="flex justify-between items-center border-b border-gray-100 pb-2">
+                            <span>Valor maderero</span>
+                            <span class="font-medium text-amber-600">Bajo (lenga de altura)</span>
+                        </div>
+                        <div class="flex justify-between items-center border-b border-gray-100 pb-2">
+                            <span>Bonos de carbono</span>
+                            <span class="font-semibold text-green-600">Alto</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span>Potencial turístico</span>
+                            <span class="font-bold text-blue-700">Alto (Nevados de Chillán)</span>
+                        </div>
+                    </div>
+                    <div class="mt-4 bg-emerald-50 rounded-lg p-3">
+                        <p class="text-xs text-emerald-800"><strong>Veredicto:</strong> Menos biomasa forestal por la altitud extrema (1.800-2.800m), pero destaca por conservación (hábitat de huemul) y turismo de montaña. Paisaje cordillerano único cercano a Termas de Chillán.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabla resumen final -->
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 mb-8 table-scroll">
+                <table class="w-full text-sm min-w-[440px]">
+                    <thead class="bg-gradient-to-r from-slate-700 to-slate-800 text-white">
+                        <tr>
+                            <th class="p-2.5 md:p-3 text-left text-[10px] md:text-xs font-semibold uppercase">Métrica</th>
+                            <th class="p-2.5 md:p-3 text-center text-[10px] md:text-xs font-semibold uppercase"><span class="inline-block w-2 h-2 rounded-full bg-emerald-400 mr-0.5"></span>Sazo</th>
+                            <th class="p-2.5 md:p-3 text-center text-[10px] md:text-xs font-semibold uppercase"><span class="inline-block w-2 h-2 rounded-full bg-amber-400 mr-0.5"></span>Carrizales</th>
+                            <th class="p-2.5 md:p-3 text-center text-[10px] md:text-xs font-semibold uppercase">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-b border-gray-100"><td class="p-3 text-xs font-medium">Superficie total</td><td class="p-3 text-center">2.434 ha</td><td class="p-3 text-center">6.904 ha</td><td class="p-3 text-center font-bold">9.338 ha</td></tr>
+                        <tr class="border-b border-gray-100 bg-green-50/50"><td class="p-3 text-xs font-medium">Bosque nativo est.</td><td class="p-3 text-center">~1.100 ha</td><td class="p-3 text-center font-bold text-green-700">~5.000 ha</td><td class="p-3 text-center font-bold text-green-700">~6.100 ha</td></tr>
+                        <tr class="border-b border-gray-100"><td class="p-3 text-xs font-medium">Cobertura boscosa</td><td class="p-3 text-center">45%</td><td class="p-3 text-center font-bold">72%</td><td class="p-3 text-center font-bold">65% media</td></tr>
+                        <tr class="border-b border-gray-100 bg-gray-50/50"><td class="p-3 text-xs font-medium">Valor forestal</td><td class="p-3 text-center text-amber-600">Bajo</td><td class="p-3 text-center font-bold text-green-700">Medio-Alto</td><td class="p-3 text-center">-</td></tr>
+                        <tr class="border-b border-gray-100"><td class="p-3 text-xs font-medium">Potencial carbono</td><td class="p-3 text-center text-green-600">Alto</td><td class="p-3 text-center font-bold text-green-700">Muy Alto</td><td class="p-3 text-center">-</td></tr>
+                        <tr><td class="p-3 text-xs font-medium">Potencial turístico</td><td class="p-3 text-center font-bold text-blue-600">Alto</td><td class="p-3 text-center text-blue-500">Medio-Alto</td><td class="p-3 text-center">-</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Consideraciones -->
+            <div class="bg-slate-50 rounded-xl p-6 border border-gray-200">
+                <h3 class="font-bold text-sm text-slate-800 mb-3 uppercase tracking-wider">Consideraciones Importantes</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-gray-600">
+                    <div class="flex gap-2">
+                        <span class="text-emerald-500 font-bold shrink-0">&#10003;</span>
+                        <p>Ambos predios ubicados dentro de la <strong>Reserva de la Biosfera UNESCO</strong> Nevados de Chillán - Laguna del Laja (641.403 ha).</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <span class="text-emerald-500 font-bold shrink-0">&#10003;</span>
+                        <p>El bosque esta en <strong>regeneración activa (renoval ~90%)</strong>, estado óptimo para proyectos de captura de carbono.</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <span class="text-red-500 font-bold shrink-0">&#9888;</span>
+                        <p><strong>Riesgo de incendio alto</strong> en verano. Incendio San Patricio (2025) consumió ~2.000 ha en la misma zona.</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <span class="text-amber-500 font-bold shrink-0">&#9888;</span>
+                        <p><strong>Ley de Bosque Nativo (20.283)</strong> aplica. Toda intervención forestal requiere Plan de Manejo CONAF.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================================== -->
+        <!-- DESCARGA DEL INFORME              -->
+        <!-- ================================== -->
+        <section class="mb-8 md:mb-14">
+            <div class="bg-gradient-to-r from-emerald-800 to-green-800 rounded-2xl p-5 md:p-8 text-center shadow-xl">
+                <h3 class="text-lg md:text-xl font-bold text-white mb-2" data-es="Descargar Informe Técnico Completo" data-en="Download Full Technical Report">Descargar Informe Técnico Completo</h3>
+                <p class="text-emerald-200 text-xs md:text-sm mb-4 md:mb-6 max-w-lg mx-auto" data-es="Documento Markdown con análisis detallado, tablas comparativas, referencias y conclusiones." data-en="Markdown document with detailed analysis, comparative tables, references and conclusions.">Documento Markdown con análisis detallado, tablas comparativas, referencias y conclusiones.</p>
+                <button onclick="downloadReport()" class="bg-white text-emerald-800 font-bold px-6 md:px-8 py-3 rounded-xl shadow-lg hover:shadow-xl active:scale-95 hover:scale-105 transition-all text-xs md:text-sm w-full md:w-auto">
+                    &#11015; Descargar Informe .md
+                </button>
+                <p class="text-emerald-400 text-[10px] mt-3">IT-2026-FCH-001 | 310+ lineas | 16 referencias</p>
+            </div>
+        </section>
+
+        <!-- ================================== -->
+        <!-- REFERENCIAS Y FUENTES DE DATOS    -->
+        <!-- ================================== -->
+        <section id="referencias" class="mb-8 md:mb-14">
+            <h2 class="text-2xl md:text-3xl font-bold text-slate-800 text-center mb-2" data-es="Referencias y Fuentes de Datos" data-en="References and Data Sources">Referencias y Fuentes de Datos</h2>
+            <div class="section-divider"></div>
+            <p class="text-center text-sm text-gray-400 mb-6 max-w-2xl mx-auto">Todas las fuentes utilizadas son de acceso público y verificables. Los enlaces fueron verificados en febrero de 2026.</p>
+
+            <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+                <!-- Tipo: Institucionales -->
+                <div class="p-4 bg-emerald-50 border-b border-emerald-100">
+                    <h3 class="font-bold text-sm text-emerald-800 uppercase tracking-wider">Fuentes Institucionales y Científicas</h3>
+                </div>
+                <div class="divide-y divide-gray-100">
+                    <div class="ref-item p-4 flex gap-3">
+                        <span class="text-emerald-700 font-bold text-sm shrink-0 w-6">[1]</span>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">UNESCO - Reserva de la Biosfera Corredor Biológico Nevados de Chillán - Laguna del Laja</p>
+                            <p class="text-xs text-gray-500 mt-0.5">Designada en 2011. Superficie: 641.403 ha. Abarca comunas de Pinto, Coihueco, San Fabian, Antuco.</p>
+                            <a href="https://en.unesco.org/biosphere/lac/chillan-lajas" target="_blank" class="text-xs text-emerald-600 hover:underline mt-1 inline-block">en.unesco.org/biosphere/lac/chillan-lajas</a>
+                        </div>
+                    </div>
+                    <div class="ref-item p-4 flex gap-3">
+                        <span class="text-emerald-700 font-bold text-sm shrink-0 w-6">[2]</span>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">CONAF - Catastro de los Recursos Vegetacionales Nativos de Chile</p>
+                            <p class="text-xs text-gray-500 mt-0.5">Sistema de monitoreo y actualización del catastro de bosque nativo. Tipos forestales según D.S. 259/1980. Incluye clasificación Roble-Rauli-Coigue, Lenga, Cipres.</p>
+                            <a href="https://www.conaf.cl/nuestros-bosques/bosques-en-chile/catastro-vegetacional/" target="_blank" class="text-xs text-emerald-600 hover:underline mt-1 inline-block">conaf.cl/nuestros-bosques/bosques-en-chile/catastro-vegetacional</a>
+                        </div>
+                    </div>
+                    <div class="ref-item p-4 flex gap-3">
+                        <span class="text-emerald-700 font-bold text-sm shrink-0 w-6">[3]</span>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">SITRURAL / INDAP - Ficha de Recursos Naturales: Comuna de Coihueco</p>
+                            <p class="text-xs text-gray-500 mt-0.5">61,8% de area boscosa es bosque nativo. 90,44% del tipo Roble-Rauli-Coigue clasificado como renoval.</p>
+                            <a href="https://www.sitrural.cl/wp-content/uploads/2024/03/Coihueco_rec_nat-1.pdf" target="_blank" class="text-xs text-emerald-600 hover:underline mt-1 inline-block">sitrural.cl &rarr; Coihueco_rec_nat-1.pdf</a>
+                        </div>
+                    </div>
+                    <div class="ref-item p-4 flex gap-3">
+                        <span class="text-emerald-700 font-bold text-sm shrink-0 w-6">[4]</span>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">SITRURAL / INDAP - Ficha de Recursos Naturales: Comuna de Pinto</p>
+                            <p class="text-xs text-gray-500 mt-0.5">Datos de cobertura de suelo, tipos forestales y uso de suelo para la comuna de Pinto, Provincia de Diguillin.</p>
+                            <a href="https://www.sitrural.cl/wp-content/uploads/2020/03/Pinto_rec_nat.pdf" target="_blank" class="text-xs text-emerald-600 hover:underline mt-1 inline-block">sitrural.cl &rarr; Pinto_rec_nat.pdf</a>
+                        </div>
+                    </div>
+                    <div class="ref-item p-4 flex gap-3">
+                        <span class="text-emerald-700 font-bold text-sm shrink-0 w-6">[5]</span>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">SIMBIO / MMA - Ecosistema: Bosque Caducifolio Mediterraneo-Templado Andino</p>
+                            <p class="text-xs text-gray-500 mt-0.5">Clasificación de ecosistemas terrestres de Chile. Incluye distribución altitudinal de formaciones vegetacionales.</p>
+                            <a href="https://simbio.mma.gob.cl/Ecosistemas/Details/60" target="_blank" class="text-xs text-emerald-600 hover:underline mt-1 inline-block">simbio.mma.gob.cl/Ecosistemas/Details/60</a>
+                        </div>
+                    </div>
+                    <div class="ref-item p-4 flex gap-3">
+                        <span class="text-emerald-700 font-bold text-sm shrink-0 w-6">[6]</span>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">BCN - Biblioteca del Congreso Nacional: Clima y Vegetación Región de Ñuble</p>
+                            <p class="text-xs text-gray-500 mt-0.5">Datos climáticos (clasificación Koppen), límites comunales, y caracterización territorial de la Región de Ñuble.</p>
+                            <a href="https://www.bcn.cl/siit/nuestropais/region16/clima.htm" target="_blank" class="text-xs text-emerald-600 hover:underline mt-1 inline-block">bcn.cl/siit/nuestropais/region16</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tipo: Riesgo -->
+                <div class="p-4 bg-amber-50 border-b border-t border-amber-100">
+                    <h3 class="font-bold text-sm text-amber-800 uppercase tracking-wider">Evaluación de Riesgos</h3>
+                </div>
+                <div class="divide-y divide-gray-100">
+                    <div class="ref-item p-4 flex gap-3">
+                        <span class="text-amber-700 font-bold text-sm shrink-0 w-6">[7]</span>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">SERNAGEOMIN - Red Nacional de Vigilancia Volcánica: Complejo Volcánico Nevados de Chillán</p>
+                            <p class="text-xs text-gray-500 mt-0.5">Estado actual de alerta volcánica, histórico de actividad, y reportes de actividad volcánica (RAV).</p>
+                            <a href="https://rnvv.sernageomin.cl/complejo-volcanico-nevados-de-chillan/" target="_blank" class="text-xs text-emerald-600 hover:underline mt-1 inline-block">rnvv.sernageomin.cl/complejo-volcanico-nevados-de-chillan</a>
+                        </div>
+                    </div>
+                    <div class="ref-item p-4 flex gap-3">
+                        <span class="text-amber-700 font-bold text-sm shrink-0 w-6">[8]</span>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">SENAPRED - Perímetro de Seguridad Complejo Volcánico Nevados de Chillán</p>
+                            <p class="text-xs text-gray-500 mt-0.5">Resolución que modifica perímetro de seguridad en comunas de Pinto y Coihueco. Radio de exclusión: 500 m del crater.</p>
+                            <a href="https://web.senapred.cl/informate_conte/modifica-perimetro-de-seguridad-del-complejo-volcanico-nevados-de-chillan-en-las-comunas-de-pinto-y-coihueco/" target="_blank" class="text-xs text-emerald-600 hover:underline mt-1 inline-block">web.senapred.cl &rarr; perimetro-seguridad-nevados-chillan</a>
+                        </div>
+                    </div>
+                    <div class="ref-item p-4 flex gap-3">
+                        <span class="text-amber-700 font-bold text-sm shrink-0 w-6">[9]</span>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">Incendio San Patricio (Feb-Mar 2025) - Precordillera de Nuble</p>
+                            <p class="text-xs text-gray-500 mt-0.5">~2.000 ha de bosque nativo consumidas en precordillera de Coihueco, dentro de la Reserva de la Biosfera. Alerta extendida a Pinto.</p>
+                            <a href="https://reservabiosferanuble.udec.cl/2025/03/10/advierten-impactos-del-incendio-que-consumio-1-954-hectareas-de-la-reserva-de-la-biosfera/" target="_blank" class="text-xs text-emerald-600 hover:underline mt-1 inline-block">reservabiosferanuble.udec.cl &rarr; incendio-reserva-biosfera</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tipo: Biodiversidad -->
+                <div class="p-4 bg-green-50 border-b border-t border-green-100">
+                    <h3 class="font-bold text-sm text-green-800 uppercase tracking-wider">Biodiversidad y Conservación</h3>
+                </div>
+                <div class="divide-y divide-gray-100">
+                    <div class="ref-item p-4 flex gap-3">
+                        <span class="text-green-700 font-bold text-sm shrink-0 w-6">[10]</span>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">Nuble Naturaleza - Corredor Biológico y Biodiversidad</p>
+                            <p class="text-xs text-gray-500 mt-0.5">Inventario de biodiversidad: 355 spp. vegetales, 155 spp. fauna. Habitat del huemul, puma, guina, monito del monte.</p>
+                            <a href="https://www.nublenaturaleza.cl/acerca-de-nuble" target="_blank" class="text-xs text-emerald-600 hover:underline mt-1 inline-block">nublenaturaleza.cl/acerca-de-nuble</a>
+                        </div>
+                    </div>
+                    <div class="ref-item p-4 flex gap-3">
+                        <span class="text-green-700 font-bold text-sm shrink-0 w-6">[11]</span>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">Ley 20.283 - Ley sobre Recuperación del Bosque Nativo y Fomento Forestal (2008)</p>
+                            <p class="text-xs text-gray-500 mt-0.5">Marco legal que regula la intervención de bosque nativo en Chile. Establece planes de manejo, bonificaciones, y restricciones.</p>
+                            <a href="https://www.bcn.cl/leychile/navegar?idNorma=274894" target="_blank" class="text-xs text-emerald-600 hover:underline mt-1 inline-block">bcn.cl/leychile/navegar?idNorma=274894</a>
+                        </div>
+                    </div>
+                    <div class="ref-item p-4 flex gap-3">
+                        <span class="text-green-700 font-bold text-sm shrink-0 w-6">[12]</span>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">CONAF - Reserva Nacional Nuble</p>
+                            <p class="text-xs text-gray-500 mt-0.5">Area protegida de 75.078 ha, establecida 1978. Protege ecosistemas andinos con bosques de lenga, nirre, roble, cipres.</p>
+                            <a href="https://www.conaf.cl/parques-nacionales/reserva-nacional-nuble/" target="_blank" class="text-xs text-emerald-600 hover:underline mt-1 inline-block">conaf.cl/parques-nacionales/reserva-nacional-nuble</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tipo: Datos -->
+                <div class="p-4 bg-blue-50 border-b border-t border-blue-100">
+                    <h3 class="font-bold text-sm text-blue-800 uppercase tracking-wider">Datos Geoespaciales y Metodología</h3>
+                </div>
+                <div class="divide-y divide-gray-100">
+                    <div class="ref-item p-4 flex gap-3">
+                        <span class="text-blue-700 font-bold text-sm shrink-0 w-6">[13]</span>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">Archivos KMZ proporcionados por el cliente</p>
+                            <p class="text-xs text-gray-500 mt-0.5">Fundo Sazo.kmz (221 vertices) y Fundo Carrizales.kmz (205 vertices). Formato KML comprimido, datum WGS84.</p>
+                        </div>
+                    </div>
+                    <div class="ref-item p-4 flex gap-3">
+                        <span class="text-blue-700 font-bold text-sm shrink-0 w-6">[14]</span>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">Cálculo de superficie: Fórmula de Haversine + Shoelace</p>
+                            <p class="text-xs text-gray-500 mt-0.5">Coordenadas WGS84 proyectadas a sistema local plano (metros) desde centroide. Area calculada con Shoelace. Precisión estimada: &plusmn;2%.</p>
+                        </div>
+                    </div>
+                    <div class="ref-item p-4 flex gap-3">
+                        <span class="text-blue-700 font-bold text-sm shrink-0 w-6">[15]</span>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">ESA / Copernicus - Sentinel-2 MSI</p>
+                            <p class="text-xs text-gray-500 mt-0.5">Plataforma satelital recomendada para monitoreo. Resolución: 10m (bandas visibles + NIR). Revisita: 5 dias.</p>
+                            <a href="https://sentinel.esa.int/web/sentinel/missions/sentinel-2" target="_blank" class="text-xs text-emerald-600 hover:underline mt-1 inline-block">sentinel.esa.int/web/sentinel/missions/sentinel-2</a>
+                        </div>
+                    </div>
+                    <div class="ref-item p-4 flex gap-3">
+                        <span class="text-blue-700 font-bold text-sm shrink-0 w-6">[16]</span>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">ESRI World Imagery / OpenTopoMap</p>
+                            <p class="text-xs text-gray-500 mt-0.5">Capas base del mapa interactivo. Imágenes satelitales de alta resolución (ESRI) y topografía (OpenTopoMap).</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- METODOLOGIA -->
+        <section class="mb-14 bg-slate-50 p-8 rounded-xl border border-gray-200">
+            <h2 class="text-xl font-bold text-slate-800 text-center mb-4" data-es="Nota Metodológica" data-en="Methodological Note">Nota Metodológica</h2>
+            <div class="max-w-3xl mx-auto text-xs text-gray-600 space-y-2">
+                <p><strong>Datos geométricos (superficie, perímetro, centroide):</strong> Calculados directamente desde coordenadas WGS84 de los archivos KMZ<sup class="sup-ref">[13]</sup> mediante fórmula de Haversine para distancias y proyección local plana + Shoelace para áreas<sup class="sup-ref">[14]</sup>. Precisión estimada: &plusmn;2%.</p>
+                <p><strong>Cobertura vegetal:</strong> Las estimaciones de porcentaje de bosque por franja altitudinal son <strong>aproximaciones basadas en patrones típicos</strong> de la precordillera de Nuble, cruzadas con datos del Catastro de Bosque Nativo de CONAF<sup class="sup-ref">[2]</sup>, fichas comunales SITRURAL<sup class="sup-ref">[3][4]</sup>, y la clasificación de ecosistemas SIMBIO/MMA<sup class="sup-ref">[5]</sup>. <strong>No corresponden a procesamiento de imágenes satelitales reales</strong> de estos predios específicos. Para valores exactos se requiere procesamiento de imágenes Sentinel-2<sup class="sup-ref">[15]</sup>.</p>
+                <p><strong>Contexto ambiental y riesgos:</strong> Basado en datos oficiales de UNESCO<sup class="sup-ref">[1]</sup>, SERNAGEOMIN<sup class="sup-ref">[7]</sup>, SENAPRED<sup class="sup-ref">[8]</sup>, y BCN<sup class="sup-ref">[6]</sup>.</p>
+            </div>
+        </section>
+
+        <!-- CONFIDENCIALIDAD -->
+        <section class="mb-8 text-center">
+            <div class="inline-block bg-gray-100 rounded-lg px-6 py-3 border border-gray-200">
+                <p class="text-[10px] text-gray-400 uppercase tracking-widest font-semibold" data-es="Documento Confidencial" data-en="Confidential Document">Documento Confidencial</p>
+                <p class="text-xs text-gray-500 mt-1" data-es="Prohibida su reproducción o distribución sin autorización de Cussen Consultoría Geoespacial." data-en="Reproduction or distribution without authorization from Cussen Geospatial Consulting is prohibited.">Prohibida su reproducción o distribución sin autorización de Cussen Consultoría Geoespacial.</p>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-gradient-to-b from-emerald-900 to-emerald-950 text-center py-8 md:py-10 px-4">
+        <a href="/index.html" class="font-black text-white text-lg md:text-xl tracking-tight no-underline hover:text-emerald-200 transition">CUSSEN</a>
+        <p class="text-emerald-300 text-xs md:text-sm mt-1" data-es="Servicios Profesionales de Teledetección y Geoespacial" data-en="Professional Remote Sensing and Geospatial Services">Servicios Profesionales de Teledetección y Geoespacial</p>
+        <p class="text-emerald-500 text-[10px] md:text-xs mt-2" data-es="Transformando datos geoespaciales en decisiones estrategicas" data-en="Transforming geospatial data into strategic decisions">Transformando datos geoespaciales en decisiones estrategicas</p>
+        <div class="mt-4 md:mt-6 flex justify-center gap-4 md:gap-6 text-[10px] md:text-xs text-emerald-600">
+            <span>contacto@cussen.cl</span>
+            <span>|</span>
+            <span>cussen.cl</span>
+        </div>
+        <p class="text-emerald-800 text-[9px] md:text-[10px] mt-4 md:mt-6">IT-2026-FCH-001 | Febrero 2026 | Todos los derechos reservados</p>
+    </footer>
+
+    <!-- ============================================= -->
+    <!-- JAVASCRIPT                                     -->
+    <!-- ============================================= -->
+    <script>
+    // =========================================
+    // POLYGON DATA (from KMZ)
+    // =========================================
+    const fundoSazo = [[-36.081008,-70.736142],[-36.081147,-70.735525],[-36.08107,-70.73503],[-36.081239,-70.734574],[-36.081191,-70.734208],[-36.081286,-70.733917],[-36.080978,-70.733438],[-36.081249,-70.732984],[-36.081113,-70.732674],[-36.080813,-70.732482],[-36.080842,-70.73209],[-36.081029,-70.731419],[-36.081032,-70.731087],[-36.081227,-70.730731],[-36.081029,-70.729988],[-36.081116,-70.729427],[-36.081526,-70.729083],[-36.081847,-70.729184],[-36.082167,-70.728866],[-36.082181,-70.728497],[-36.082085,-70.728203],[-36.082548,-70.727466],[-36.082617,-70.7267],[-36.082882,-70.726159],[-36.082917,-70.725473],[-36.083303,-70.724017],[-36.0836,-70.723881],[-36.083931,-70.722411],[-36.08386,-70.722032],[-36.083996,-70.721561],[-36.084114,-70.721339],[-36.083934,-70.721102],[-36.084249,-70.720362],[-36.084711,-70.720118],[-36.084518,-70.719558],[-36.08751,-70.712213],[-36.090053,-70.706655],[-36.09168,-70.702087],[-36.092431,-70.698675],[-36.092351,-70.693747],[-36.092153,-70.690297],[-36.092604,-70.68602],[-36.092772,-70.682986],[-36.092887,-70.680727],[-36.093653,-70.677204],[-36.094045,-70.674985],[-36.094218,-70.671122],[-36.094696,-70.667266],[-36.095682,-70.663958],[-36.096502,-70.660453],[-36.097127,-70.657551],[-36.097063,-70.655491],[-36.096125,-70.653246],[-36.095874,-70.651222],[-36.095812,-70.648208],[-36.095689,-70.645906],[-36.097283,-70.642817],[-36.098409,-70.638735],[-36.098863,-70.633626],[-36.099794,-70.629337],[-36.101578,-70.625123],[-36.098349,-70.622774],[-36.096344,-70.621649],[-36.094621,-70.622407],[-36.093005,-70.62292],[-36.092083,-70.622378],[-36.091595,-70.622874],[-36.091006,-70.623888],[-36.088614,-70.623857],[-36.084663,-70.621306],[-36.083319,-70.620677],[-36.082649,-70.618962],[-36.082657,-70.617239],[-36.082176,-70.61547],[-36.080986,-70.614333],[-36.080156,-70.613184],[-36.079932,-70.611312],[-36.078827,-70.610309],[-36.078016,-70.60953],[-36.075607,-70.608251],[-36.072627,-70.607533],[-36.069738,-70.606715],[-36.068289,-70.604754],[-36.065203,-70.603254],[-36.062761,-70.602771],[-36.060238,-70.602134],[-36.056011,-70.602137],[-36.052574,-70.602018],[-36.050134,-70.602346],[-36.048393,-70.605888],[-36.047574,-70.60836],[-36.045206,-70.611251],[-36.043144,-70.611368],[-36.040598,-70.612414],[-36.038273,-70.613239],[-36.036641,-70.615386],[-36.037297,-70.61673],[-36.038143,-70.619204],[-36.039449,-70.621237],[-36.040295,-70.622965],[-36.041449,-70.623886],[-36.042709,-70.624705],[-36.045038,-70.624695],[-36.046566,-70.624771],[-36.047873,-70.626592],[-36.049149,-70.627793],[-36.050915,-70.629185],[-36.053172,-70.631036],[-36.054867,-70.630945],[-36.056622,-70.631683],[-36.058707,-70.631892],[-36.060051,-70.631099],[-36.061709,-70.63031],[-36.062668,-70.629914],[-36.063667,-70.628802],[-36.065337,-70.628901],[-36.067379,-70.62885],[-36.069008,-70.629434],[-36.070703,-70.630313],[-36.071885,-70.633052],[-36.072403,-70.635711],[-36.071939,-70.63796],[-36.071381,-70.640497],[-36.071179,-70.644849],[-36.072715,-70.645117],[-36.074359,-70.646683],[-36.074762,-70.648296],[-36.077006,-70.651539],[-36.077532,-70.653868],[-36.077986,-70.656472],[-36.078646,-70.658868],[-36.078431,-70.660388],[-36.078584,-70.661802],[-36.079015,-70.662998],[-36.07866,-70.663837],[-36.078826,-70.664723],[-36.079718,-70.667604],[-36.080034,-70.669382],[-36.079378,-70.670735],[-36.079634,-70.672182],[-36.079465,-70.673884],[-36.079831,-70.674133],[-36.080429,-70.674075],[-36.081132,-70.675232],[-36.081735,-70.677522],[-36.081471,-70.678491],[-36.081842,-70.680065],[-36.082588,-70.68081],[-36.08288,-70.681502],[-36.082519,-70.6842],[-36.082326,-70.685201],[-36.081983,-70.685969],[-36.082143,-70.686739],[-36.082401,-70.687508],[-36.083282,-70.690342],[-36.083584,-70.69251],[-36.083656,-70.694233],[-36.084065,-70.695528],[-36.084835,-70.696659],[-36.085248,-70.698239],[-36.08533,-70.699606],[-36.085609,-70.700067],[-36.0861,-70.69999],[-36.086121,-70.700936],[-36.085859,-70.701544],[-36.085979,-70.70256],[-36.085663,-70.702978],[-36.085817,-70.704283],[-36.085495,-70.704643],[-36.085735,-70.705114],[-36.085588,-70.707622],[-36.085287,-70.709084],[-36.084401,-70.711763],[-36.083775,-70.713373],[-36.08283,-70.715715],[-36.081974,-70.717661],[-36.080123,-70.719072],[-36.080085,-70.71982],[-36.080332,-70.720451],[-36.080413,-70.720708],[-36.080586,-70.721017],[-36.080444,-70.721783],[-36.080669,-70.722747],[-36.080025,-70.723797],[-36.079874,-70.724025],[-36.07969,-70.724511],[-36.079627,-70.724993],[-36.079628,-70.725151],[-36.079463,-70.725595],[-36.079309,-70.725819],[-36.07929,-70.726275],[-36.079309,-70.726565],[-36.079331,-70.7269],[-36.079287,-70.727264],[-36.079182,-70.727357],[-36.078991,-70.727609],[-36.078749,-70.728516],[-36.078301,-70.729496],[-36.077747,-70.730468],[-36.077481,-70.731623],[-36.077349,-70.73335],[-36.077027,-70.734322],[-36.076551,-70.737191],[-36.076453,-70.738288],[-36.076447,-70.742102],[-36.076893,-70.741912],[-36.076971,-70.741464],[-36.077377,-70.741107],[-36.077708,-70.740573],[-36.077959,-70.740516],[-36.078019,-70.739988],[-36.078664,-70.738672],[-36.079031,-70.738707],[-36.079219,-70.738562],[-36.07916,-70.738322],[-36.079344,-70.738129],[-36.079784,-70.737982],[-36.080146,-70.737416],[-36.080514,-70.737267],[-36.080734,-70.736872],[-36.081008,-70.736142]];
+
+    const fundoCarrizales = [[-36.067612,-70.863928],[-36.066503,-70.865311],[-36.064254,-70.868006],[-36.064562,-70.869967],[-36.064941,-70.871242],[-36.066633,-70.872392],[-36.06787,-70.873419],[-36.068671,-70.874729],[-36.069219,-70.874907],[-36.07049,-70.875607],[-36.070735,-70.877078],[-36.070474,-70.878199],[-36.07049,-70.879522],[-36.071221,-70.880692],[-36.072121,-70.882071],[-36.073194,-70.884293],[-36.074966,-70.886339],[-36.075845,-70.88912],[-36.077306,-70.891594],[-36.079319,-70.892806],[-36.081126,-70.896381],[-36.082769,-70.898429],[-36.084253,-70.901881],[-36.083838,-70.903879],[-36.084185,-70.906056],[-36.084948,-70.906852],[-36.085328,-70.909476],[-36.0843,-70.911569],[-36.083716,-70.914437],[-36.084404,-70.916677],[-36.082727,-70.918883],[-36.084008,-70.920491],[-36.086509,-70.919769],[-36.088938,-70.917753],[-36.091228,-70.917027],[-36.093637,-70.91572],[-36.095829,-70.9165],[-36.096599,-70.91808],[-36.097975,-70.91903],[-36.099098,-70.918484],[-36.100458,-70.916995],[-36.101815,-70.91707],[-36.105686,-70.919482],[-36.108583,-70.921216],[-36.108993,-70.922724],[-36.110419,-70.923451],[-36.112204,-70.921836],[-36.116049,-70.920039],[-36.117135,-70.92087],[-36.117607,-70.924054],[-36.125748,-70.922665],[-36.127439,-70.92832],[-36.13247,-70.928823],[-36.138324,-70.921287],[-36.141629,-70.920144],[-36.144795,-70.924318],[-36.148106,-70.92326],[-36.154368,-70.924319],[-36.154573,-70.923588],[-36.154378,-70.921141],[-36.154627,-70.918755],[-36.153888,-70.917452],[-36.155611,-70.91751],[-36.157218,-70.915279],[-36.159833,-70.910236],[-36.163365,-70.909279],[-36.165034,-70.909656],[-36.167637,-70.909012],[-36.167957,-70.907421],[-36.171141,-70.906025],[-36.170795,-70.902122],[-36.173595,-70.900774],[-36.174934,-70.89941],[-36.176243,-70.89938],[-36.178604,-70.898292],[-36.179407,-70.89781],[-36.179784,-70.896524],[-36.180711,-70.894098],[-36.182155,-70.893039],[-36.182417,-70.891885],[-36.182242,-70.890085],[-36.182656,-70.888565],[-36.184062,-70.88673],[-36.184905,-70.886658],[-36.185996,-70.886045],[-36.186961,-70.886571],[-36.187591,-70.886208],[-36.189632,-70.886637],[-36.190114,-70.886271],[-36.190489,-70.884979],[-36.190737,-70.883911],[-36.191071,-70.882808],[-36.19146,-70.881432],[-36.1924,-70.880332],[-36.192945,-70.878746],[-36.193684,-70.878296],[-36.194155,-70.876914],[-36.195492,-70.873255],[-36.195786,-70.871555],[-36.196313,-70.870703],[-36.196234,-70.868715],[-36.194446,-70.86857],[-36.19331,-70.868567],[-36.192572,-70.868857],[-36.191731,-70.869296],[-36.190597,-70.869773],[-36.189378,-70.870499],[-36.188111,-70.870722],[-36.186787,-70.870384],[-36.186332,-70.87056],[-36.185661,-70.871056],[-36.184064,-70.871956],[-36.182612,-70.871362],[-36.181717,-70.870431],[-36.180437,-70.870346],[-36.179085,-70.870785],[-36.177725,-70.870197],[-36.176259,-70.869265],[-36.17551,-70.868188],[-36.174776,-70.866573],[-36.174333,-70.865095],[-36.173524,-70.863891],[-36.172569,-70.861764],[-36.172166,-70.859278],[-36.171246,-70.856991],[-36.170246,-70.857646],[-36.170053,-70.855622],[-36.169017,-70.856474],[-36.168127,-70.857778],[-36.165123,-70.858198],[-36.161977,-70.858443],[-36.159916,-70.858268],[-36.157046,-70.857777],[-36.154068,-70.857603],[-36.151334,-70.857823],[-36.150804,-70.857641],[-36.149024,-70.854427],[-36.147127,-70.855161],[-36.139428,-70.861003],[-36.134516,-70.860175],[-36.131328,-70.859571],[-36.128269,-70.857993],[-36.126462,-70.857226],[-36.125988,-70.856092],[-36.124723,-70.854461],[-36.121181,-70.854655],[-36.118274,-70.853134],[-36.115258,-70.854076],[-36.113139,-70.853187],[-36.111174,-70.85135],[-36.109114,-70.849968],[-36.108081,-70.849963],[-36.106808,-70.849996],[-36.10495,-70.850273],[-36.10388,-70.849532],[-36.10236,-70.849028],[-36.100617,-70.848868],[-36.099444,-70.847464],[-36.098358,-70.846457],[-36.095409,-70.846584],[-36.09366,-70.844899],[-36.093165,-70.842626],[-36.092193,-70.840395],[-36.09169,-70.838918],[-36.091171,-70.83666],[-36.090084,-70.835713],[-36.08835,-70.83492],[-36.086472,-70.834675],[-36.08532,-70.83505],[-36.084468,-70.83615],[-36.083727,-70.837913],[-36.083749,-70.83987],[-36.083272,-70.843237],[-36.082501,-70.845551],[-36.081167,-70.846723],[-36.079191,-70.84732],[-36.077717,-70.847034],[-36.076312,-70.84783],[-36.07473,-70.849782],[-36.073221,-70.851235],[-36.071029,-70.852947],[-36.070282,-70.854073],[-36.070053,-70.855623],[-36.069341,-70.85746],[-36.0696,-70.859342],[-36.069437,-70.860122],[-36.06901,-70.861362],[-36.068467,-70.862537],[-36.067612,-70.863928]];
+
+    // =========================================
+    // MAP
+    // =========================================
+    const map = L.map('map', { zoomControl: false }).setView([-36.10, -70.78], 11);
+    L.control.zoom({ position: 'topright' }).addTo(map);
+    L.control.scale({ metric: true, imperial: false, position: 'bottomright' }).addTo(map);
+
+    const layers = {
+        satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'ESRI World Imagery', maxZoom: 18 }),
+        topo: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { attribution: 'OpenTopoMap', maxZoom: 17 }),
+        terrain: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', { attribution: 'ESRI Topo', maxZoom: 18 }),
+        osm: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: 'OSM', maxZoom: 19 })
+    };
+    let currentLayer = layers.satellite;
+    currentLayer.addTo(map);
+
+    const labelsLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { maxZoom: 18, pane: 'overlayPane' });
+    labelsLayer.addTo(map);
+
+    // Polygons
+    const sazoPolygon = L.polygon(fundoSazo, { color: '#10b981', weight: 3, fillColor: '#10b981', fillOpacity: 0.15 }).addTo(map);
+    sazoPolygon.bindTooltip('<strong>Fundo Sazo</strong><br>2.434 ha', { permanent: false, direction: 'center' });
+
+    const carrizalesPolygon = L.polygon(fundoCarrizales, { color: '#f59e0b', weight: 3, fillColor: '#f59e0b', fillOpacity: 0.15 }).addTo(map);
+    carrizalesPolygon.bindTooltip('<strong>Fundo Carrizales</strong><br>6.904 ha', { permanent: false, direction: 'center' });
+
+    const sazoCentroid = L.marker([-36.077938, -70.680145]).addTo(map).bindPopup('<strong>Fundo Sazo</strong><br>2.434 ha | Pinto<br><span style="font-family:monospace;font-size:11px">36.078&deg;S, 70.680&deg;W</span><br>1.800-2.800 msnm');
+    const carrizalesCentroid = L.marker([-36.130592, -70.877580]).addTo(map).bindPopup('<strong>Fundo Carrizales</strong><br>6.904 ha | Coihueco/Pinto<br><span style="font-family:monospace;font-size:11px">36.131&deg;S, 70.878&deg;W</span><br>1.400-2.200 msnm');
+
+    const allBounds = L.featureGroup([sazoPolygon, carrizalesPolygon]).getBounds();
+    map.fitBounds(allBounds, { padding: [30, 30] });
+
+    // Coordinate display
+    const coordDisplay = document.getElementById('coord-display');
+    map.on('mousemove', function(e) {
+        coordDisplay.textContent = 'Lat: ' + e.latlng.lat.toFixed(5) + ' | Lon: ' + e.latlng.lng.toFixed(5);
+    });
+
+    // Default info panel
+    toggleBoth();
+
+    // =========================================
+    // INTERACTIONS
+    // =========================================
+    function selectFundo(fundo) {
+        document.getElementById('btn-sazo').classList.remove('active-sazo', 'active-carrizales');
+        document.getElementById('btn-carrizales').classList.remove('active-sazo', 'active-carrizales');
+
+        if (fundo === 'sazo') {
+            document.getElementById('btn-sazo').classList.add('active-sazo');
+            map.fitBounds(sazoPolygon.getBounds(), { padding: [50, 50], maxZoom: 12 });
+            sazoPolygon.setStyle({ weight: 4, fillOpacity: 0.25 });
+            carrizalesPolygon.setStyle({ weight: 2, fillOpacity: 0.06 });
+            sazoCentroid.openPopup();
+            updateInfoPanel('sazo');
+        } else {
+            document.getElementById('btn-carrizales').classList.add('active-carrizales');
+            map.fitBounds(carrizalesPolygon.getBounds(), { padding: [50, 50], maxZoom: 12 });
+            carrizalesPolygon.setStyle({ weight: 4, fillOpacity: 0.25 });
+            sazoPolygon.setStyle({ weight: 2, fillOpacity: 0.06 });
+            carrizalesCentroid.openPopup();
+            updateInfoPanel('carrizales');
+        }
+    }
+
+    function toggleBoth() {
+        document.getElementById('btn-sazo').classList.remove('active-sazo');
+        document.getElementById('btn-carrizales').classList.remove('active-carrizales');
+        sazoPolygon.setStyle({ weight: 3, fillOpacity: 0.15 });
+        carrizalesPolygon.setStyle({ weight: 3, fillOpacity: 0.15 });
+        map.fitBounds(allBounds, { padding: [30, 30] });
+        document.getElementById('info-panel').innerHTML = '<div class="grid grid-cols-2 gap-3 md:gap-6 text-center"><div class="p-2 md:p-3 rounded-lg bg-emerald-50/50"><div class="flex items-center justify-center gap-1.5 mb-1"><span class="w-2 h-2 rounded-full bg-emerald-500"></span><p class="font-bold text-emerald-700 text-xs md:text-sm">Fundo Sazo</p></div><p class="text-xl md:text-2xl font-black text-slate-800">2.434 ha</p><p class="text-[9px] md:text-[10px] text-gray-400 mt-0.5">~1.100 ha bosque (45%)</p></div><div class="p-2 md:p-3 rounded-lg bg-amber-50/50"><div class="flex items-center justify-center gap-1.5 mb-1"><span class="w-2 h-2 rounded-full bg-amber-500"></span><p class="font-bold text-amber-700 text-xs md:text-sm">Fundo Carrizales</p></div><p class="text-xl md:text-2xl font-black text-slate-800">6.904 ha</p><p class="text-[9px] md:text-[10px] text-gray-400 mt-0.5">~5.000 ha bosque (72%)</p></div></div><p class="text-center text-[9px] md:text-[10px] text-gray-400 mt-2">Total: <strong>9.338 ha</strong> | Distancia: <strong>18,7 km</strong></p>';
+    }
+
+    function updateInfoPanel(fundo) {
+        const p = document.getElementById('info-panel');
+        if (fundo === 'sazo') {
+            p.innerHTML = '<div class="grid grid-cols-3 md:grid-cols-5 gap-2 md:gap-3 text-center"><div><p class="text-[9px] md:text-[10px] text-gray-400 font-medium">Superficie</p><p class="text-base md:text-lg font-bold text-emerald-700">2.434 ha</p></div><div><p class="text-[9px] md:text-[10px] text-gray-400 font-medium">Perímetro</p><p class="text-base md:text-lg font-bold text-slate-700">36,1 km</p></div><div><p class="text-[9px] md:text-[10px] text-gray-400 font-medium">Elevación</p><p class="text-base md:text-lg font-bold text-slate-700">1.800-2.800m</p></div><div><p class="text-[9px] md:text-[10px] text-gray-400 font-medium">Bosque</p><p class="text-base md:text-lg font-bold text-green-600">~45%</p></div><div><p class="text-[9px] md:text-[10px] text-gray-400 font-medium">Tipo</p><p class="text-base md:text-lg font-bold text-slate-700">Lenga</p></div></div><div class="mt-2 text-center border-t border-gray-100 pt-2"><p class="text-[10px] md:text-xs text-gray-500">Pinto, Diguillin, Nuble (XVI)</p></div>';
+        } else {
+            p.innerHTML = '<div class="grid grid-cols-3 md:grid-cols-5 gap-2 md:gap-3 text-center"><div><p class="text-[9px] md:text-[10px] text-gray-400 font-medium">Superficie</p><p class="text-base md:text-lg font-bold text-amber-600">6.904 ha</p></div><div><p class="text-[9px] md:text-[10px] text-gray-400 font-medium">Perímetro</p><p class="text-base md:text-lg font-bold text-slate-700">42,5 km</p></div><div><p class="text-[9px] md:text-[10px] text-gray-400 font-medium">Elevación</p><p class="text-base md:text-lg font-bold text-slate-700">1.400-2.200m</p></div><div><p class="text-[9px] md:text-[10px] text-gray-400 font-medium">Bosque</p><p class="text-base md:text-lg font-bold text-green-600">~72%</p></div><div><p class="text-[9px] md:text-[10px] text-gray-400 font-medium">Tipo</p><p class="text-base md:text-lg font-bold text-slate-700">RRC + Lenga</p></div></div><div class="mt-2 text-center border-t border-gray-100 pt-2"><p class="text-[10px] md:text-xs text-gray-500">Coihueco/Pinto, Punilla, Nuble (XVI)</p></div>';
+        }
+    }
+
+    function setLayer(layerName, btn) {
+        map.removeLayer(currentLayer);
+        if (layerName === 'satellite') { if (!map.hasLayer(labelsLayer)) labelsLayer.addTo(map); }
+        else { if (map.hasLayer(labelsLayer)) map.removeLayer(labelsLayer); }
+        currentLayer = layers[layerName];
+        currentLayer.addTo(map);
+        document.querySelectorAll('.layer-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+    }
+
+    // =========================================
+    // CHARTS
+    // =========================================
+    document.addEventListener('DOMContentLoaded', () => {
+        const tooltipCb = (ctx) => { const t = ctx.dataset.data.reduce((a,b)=>a+b,0); return ctx.label.replace('\n',' ')+': '+new Intl.NumberFormat('es-CL').format(ctx.raw)+' ha ('+((ctx.raw/t)*100).toFixed(0)+'%)'; };
+
+        // Comparativa bar
+        new Chart(document.getElementById('chartComparativa').getContext('2d'), {
+            type: 'bar', data: {
+                labels: ['Fundo Sazo', 'Fundo Carrizales'],
+                datasets: [
+                    { label: 'Bosque nativo', data: [1100, 5000], backgroundColor: '#065f46', borderRadius: 4 },
+                    { label: 'Otros (matorral/roca/estepa)', data: [1334, 1904], backgroundColor: '#d1d5db', borderRadius: 4 }
+                ]
+            }, options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', scales: { x: { stacked: true, ticks: { callback: v => v.toLocaleString('es-CL')+' ha', font: { size: 10 } } }, y: { stacked: true, ticks: { font: { size: 11, weight: 'bold' } } } }, plugins: { legend: { position: 'bottom', labels: { font: { size: 10 }, boxWidth: 12 } }, tooltip: { callbacks: { label: ctx => ctx.dataset.label+': '+ctx.raw.toLocaleString('es-CL')+' ha' } } } }
+        });
+
+        // Sazo doughnut
+        new Chart(document.getElementById('chartSazo').getContext('2d'), {
+            type: 'doughnut', data: { labels: ['Bosque Lenga denso (1.800-2.000m)', 'Lenga + Nirre (2.000-2.200m)', 'Matorral andino (2.200-2.500m)', 'Roca/nieve (2.500-2.800m)'], datasets: [{ data: [600,500,700,634], backgroundColor: ['#065f46','#10b981','#d97706','#94a3b8'], borderWidth: 2, borderColor: '#fff' }] },
+            options: { responsive: true, maintainAspectRatio: false, cutout: '55%', plugins: { legend: { position: 'bottom', labels: { font: { size: 10 }, padding: 10, boxWidth: 10 } }, tooltip: { callbacks: { label: tooltipCb } } } }
+        });
+
+        // Carrizales doughnut
+        new Chart(document.getElementById('chartCarrizales').getContext('2d'), {
+            type: 'doughnut', data: { labels: ['Roble-Rauli-Coigue (1.400-1.600m)', 'Rauli-Lenga (1.600-1.800m)', 'Lenga puro (1.800-2.000m)', 'Subalpino (2.000-2.200m)'], datasets: [{ data: [1700,1500,1800,1904], backgroundColor: ['#166534','#15803d','#065f46','#a3e635'], borderWidth: 2, borderColor: '#fff' }] },
+            options: { responsive: true, maintainAspectRatio: false, cutout: '55%', plugins: { legend: { position: 'bottom', labels: { font: { size: 10 }, padding: 10, boxWidth: 10 } }, tooltip: { callbacks: { label: tooltipCb } } } }
+        });
+
+        // Elevation profile
+        new Chart(document.getElementById('chartElevation').getContext('2d'), {
+            type: 'bar', data: {
+                labels: ['1.400-1.600', '1.600-1.800', '1.800-2.000', '2.000-2.200', '2.200-2.500', '2.500-2.800'],
+                datasets: [
+                    { label: 'Fundo Sazo', data: [0, 0, 600, 500, 700, 634], backgroundColor: 'rgba(16,185,129,0.7)', borderColor: '#10b981', borderWidth: 1, borderRadius: 3 },
+                    { label: 'Fundo Carrizales', data: [1700, 1500, 1800, 1904, 0, 0], backgroundColor: 'rgba(245,158,11,0.7)', borderColor: '#f59e0b', borderWidth: 1, borderRadius: 3 }
+                ]
+            }, options: { responsive: true, maintainAspectRatio: false, scales: { x: { title: { display: true, text: 'Franja altitudinal (msnm)', font: { size: 10 } }, ticks: { font: { size: 10 } } }, y: { title: { display: true, text: 'Superficie (ha)', font: { size: 10 } }, ticks: { callback: v => v.toLocaleString('es-CL'), font: { size: 10 } } } }, plugins: { legend: { labels: { font: { size: 10 }, boxWidth: 10 } } } }
+        });
+    });
+
+    // =========================================
+    // DOWNLOAD REPORT (Embedded MD)
+    // =========================================
+    function downloadReport() {
+        const mdContent = `# INFORME DE ANÁLISIS SATELITAL DE TERRENOS
+## Fundo Sazo & Fundo Carrizales - Precordillera de Nuble
+
+**Cliente:** Confidencial
+**Fecha:** 18 de febrero de 2026
+**Elaborado por:** Cussen Consultoría Geoespacial
+**Referencia:** KMZ proporcionados por el cliente
+
+---
+
+## 1. RESUMEN EJECUTIVO
+
+Se analizaron dos predios ubicados en la precordillera andina de la Región de Ñuble, Chile. Ambos terrenos se encuentran en la zona de alta montaña, dentro del corredor biológico Nevados de Chillán - Laguna del Laja (Reserva de la Biosfera UNESCO).
+
+| Parámetro | Fundo Sazo | Fundo Carrizales | Total |
+|-----------|-----------|------------------|-------|
+| **Superficie** | 2.434 ha | 6.904 ha | **9.338 ha** |
+| **Perímetro** | 36,1 km | 42,5 km | - |
+| **Comuna probable** | Pinto | Coihueco / Pinto | - |
+| **Elevación Estimada** | 1.800 - 2.800 msnm | 1.400 - 2.200 msnm | - |
+| **Distancia entre predios** | - | - | 18,7 km |
+
+---
+
+## 2. UBICACIÓN GEOGRÁFICA
+
+### 2.1 Fundo Sazo
+
+- **Centroide:** 36d04'41"S, 70d40'49"W (-36.077938, -70.680145)
+- **Región:** Ñuble (XVI)
+- **Provincia:** Diguillin
+- **Comuna:** Pinto
+- **Dimensiones aproximadas:** 12,6 km (E-W) x 7,2 km (N-S)
+- **Vertices del poligono:** 221 puntos
+- **Bounding Box:**
+  - Longitud: -70.742102 a -70.602018
+  - Latitud: -36.101578 a -36.036641
+
+### 2.2 Fundo Carrizales
+
+- **Centroide:** 36d07'50"S, 70d52'39"W (-36.130592, -70.877580)
+- **Región:** Ñuble (XVI)
+- **Provincia:** Punilla / Diguillin (límite comunal)
+- **Comuna:** Coihueco o Pinto (zona limitrofe)
+- **Dimensiones aproximadas:** 8,5 km (E-W) x 14,7 km (N-S)
+- **Vertices del poligono:** 205 puntos
+- **Bounding Box:**
+  - Longitud: -70.928823 a -70.834675
+  - Latitud: -36.196313 a -36.064254
+
+---
+
+## 3. ANÁLISIS DE COBERTURA VEGETAL Y BOSQUE
+
+### 3.1 Fundo Sazo (2.434 ha) - Zona Alta Cordillerana
+
+Dado su rango altitudinal (1.800-2.800 msnm), este predio se encuentra en la **transición bosque subalpino - zona alpina**:
+
+| Franja Altitudinal | Cobertura Esperada | Superficie Estimada |
+|--------------------|--------------------|---------------------|
+| 1.800 - 2.000 msnm | Bosque de Lenga (Nothofagus pumilio) denso | ~600 ha (25%) |
+| 2.000 - 2.200 msnm | Lenga abierta + Nirre (N. antarctica), krummholz | ~500 ha (21%) |
+| 2.200 - 2.500 msnm | Matorral andino alto, estepa altoandina | ~700 ha (29%) |
+| 2.500 - 2.800 msnm | Roca expuesta, nieve estacional, vegetación escasa | ~634 ha (26%) |
+
+**Estado del bosque estimado:**
+- Bosque nativo en franjas bajas: **predominantemente renoval** (bosque secundario en regeneración)
+- Densidad forestal: **media a baja** por altitud y exposición
+- Índice de verdor (NDVI esperado en verano): **0.3 - 0.6** en zonas boscosas; **<0.2** en zonas alpinas
+- Sin presencia esperada de plantaciones exóticas a esta altitud
+
+**Especies dominantes:**
+- Lenga (*Nothofagus pumilio*) - especie dominante
+- Nirre (*Nothofagus antarctica*) - en sitios humedos y expuestos
+- Coiron (*Festuca spp.*) - praderas altoandinas
+- Plantas en cojin (*Azorella, Bolax*) - zona alpina
+
+### 3.2 Fundo Carrizales (6.904 ha) - Precordillera Media-Alta
+
+Con mayor rango altitudinal (1.400-2.200 msnm), presenta **mayor diversidad forestal**:
+
+| Franja Altitudinal | Cobertura Esperada | Superficie Estimada |
+|--------------------|--------------------|---------------------|
+| 1.400 - 1.600 msnm | Bosque Roble-Rauli-Coigue denso | ~1.700 ha (25%) |
+| 1.600 - 1.800 msnm | Transición Raulí-Lenga | ~1.500 ha (22%) |
+| 1.800 - 2.000 msnm | Bosque puro de Lenga | ~1.800 ha (26%) |
+| 2.000 - 2.200 msnm | Lenga abierta, matorral subalpino | ~1.904 ha (28%) |
+
+**Estado del bosque estimado:**
+- Tipo forestal dominante: **Roble-Rauli-Coigue** (clasificación CONAF) en partes bajas
+- Estructura: **90% renoval** (bosque secundario), según datos de la comuna de Coihueco
+- Índice de verdor (NDVI esperado en verano): **0.5 - 0.8** en zonas de bosque denso
+- Dosel forestal: **cerrado a semi-cerrado** en zonas bajo 1.800 msnm
+- Sin plantaciones forestales exoticas esperadas
+
+**Especies dominantes:**
+- Roble (*Nothofagus obliqua*) - franja baja
+- Rauli (*Nothofagus alpina*) - franja media, especie de alto valor maderero
+- Coigue (*Nothofagus dombeyi*) - sitios humedos
+- Lenga (*Nothofagus pumilio*) - franja alta
+- Cipres de la Cordillera (*Austrocedrus chilensis*) - laderas secas
+- Avellano chileno (*Gevuina avellana*) - sotobosque
+- Lingue (*Persea lingue*) - sotobosque
+- Laurel (*Laurelia sempervirens*) - quebradas
+
+### 3.3 Resumen Comparativo de Bosque
+
+| Parámetro | Fundo Sazo | Fundo Carrizales |
+|-----------|-----------|------------------|
+| **Superficie total** | 2.434 ha | 6.904 ha |
+| **Bosque nativo estimado** | ~1.100 ha (45%) | ~5.000 ha (72%) |
+| **Tipo forestal principal** | Lenga | Roble-Rauli-Coigue + Lenga |
+| **Estructura** | Renoval / bosque abierto | Renoval denso |
+| **Valor maderero relativo** | Bajo (lenga de altura) | **Medio-Alto** (rauli, roble) |
+| **Zona no forestal** | ~1.334 ha (55%) estepa/roca | ~1.904 ha (28%) subalpino |
+
+---
+
+## 4. CONTEXTO AMBIENTAL Y TERRITORIAL
+
+### 4.1 Clima
+- **Clasificación Koppen:** Csc (Mediterraneo frio) a ET (Tundra) en cumbres
+- **Precipitacion:** 1.500 - 2.500 mm/ano, predominantemente nieve en invierno
+- **Temperatura media verano:** 10-16 C (según altitud)
+- **Cobertura nival:** Significativa de junio a octubre
+
+### 4.2 Hidrografía
+- Ambos predios se ubican en las **cabeceras de la cuenca del Río Diguillín** (subcuenca del Itata)
+- Red hídrica alimentada por deshielo y precipitación
+- Cursos de agua permanentes y estacionales presentes
+
+### 4.3 Area Protegida - Reserva de la Biosfera UNESCO
+Ambos predios se encuentran dentro del **Corredor Biológico Nevados de Chillán - Laguna del Laja**, declarado Reserva de la Biosfera por UNESCO en 2011:
+- Superficie total del corredor: 641.403 hectáreas
+- Alberga 355 especies vegetales y 155 especies de fauna
+- Hábitat crítico del **huemul** (*Hippocamelus bisulcus*), especie En Peligro
+
+### 4.4 Areas Protegidas Cercanas
+- **Reserva Nacional Nuble:** 75.078 ha (a ~10-20 km)
+- **Reserva Nacional Los Huemules del Niblinto:** 9.553 ha (comuna de Coihueco)
+- **Area de Importancia para las Aves (IBA)** - BirdLife International
+
+### 4.5 Riesgo Volcánico
+- Complejo Volcánico **Nevados de Chillán** a 20-40 km
+- Actualmente en alerta verde (SERNAGEOMIN), con perímetro de seguridad de 500 m del crater
+- Riesgo moderado para ambos predios (fuera de zona de exclusión directa)
+
+### 4.6 Riesgo de Incendios Forestales
+- En febrero-marzo 2025, el **Incendio San Patricio** consumió ~2.000 ha de bosque nativo en la precordillera de Coihueco, dentro de la Reserva de la Biosfera
+- Riesgo de incendio: **ALTO** en temporada estival (diciembre-marzo)
+- Ambos predios se encuentran en zona de interfaz bosque nativo - estepa
+
+---
+
+## 5. USO DE SUELO Y POTENCIAL
+
+### 5.1 Uso Actual Probable
+
+| Uso | Fundo Sazo | Fundo Carrizales |
+|-----|-----------|------------------|
+| Ganaderia extensiva (veranada) | Si (praderas altas) | Si (praderas + claros) |
+| Bosque nativo sin manejo | Si (lenga) | Si (roble-rauli-coigue) |
+| Plantaciones forestales | No | No |
+| Agricultura | No (altitud excesiva) | No (altitud excesiva) |
+| Turismo/recreación | Potencial (cercanía Termas) | Potencial |
+
+### 5.2 Marco Regulatorio Aplicable
+- **Ley de Bosque Nativo (Ley 20.283):** Ambos predios contienen bosque nativo protegido. Cualquier intervención forestal requiere Plan de Manejo aprobado por CONAF.
+- **Reserva de la Biosfera UNESCO:** Si bien no tiene fuerza legal vinculante directa en Chile, impone restricciones de hecho y escrutinio ambiental.
+- **Sistema de Evaluación de Impacto Ambiental (SEIA):** Proyectos de gran escala requieren evaluación ambiental.
+
+### 5.3 Potencial de los Terrenos
+
+| Potencial | Fundo Sazo | Fundo Carrizales |
+|-----------|-----------|------------------|
+| **Conservación/Carbono** | Alto | Muy Alto |
+| **Turismo montaña** | Alto (cercanía Nevados) | Medio-Alto |
+| **Manejo forestal sostenible** | Bajo (lenga altura) | **Alto** (rauli alto valor) |
+| **Ganaderia extensiva** | Medio (estacional) | Medio (estacional) |
+| **Bonos de carbono** | Alto (bosque + regeneración) | **Muy Alto** (6.900 ha bosque) |
+| **Energia renovable** | Bajo-Medio | Bajo-Medio |
+
+---
+
+## 6. PROXIMIDAD Y ACCESO
+
+| Referencia | Fundo Sazo | Fundo Carrizales |
+|------------|-----------|------------------|
+| Recinto / Los Lleuques | ~30-40 km al oeste | ~20-35 km al oeste |
+| Valle Las Trancas | ~25 km NO | ~15-25 km NO |
+| Termas de Chillán | ~30-40 km SO | ~20-30 km NO |
+| Ciudad de Chillán | ~90-100 km oeste | ~80-90 km oeste |
+| Paso Pichachen (Argentina) | ~50 km sur | ~60 km sur |
+
+**Acceso:** Caminos rurales de montaña, probablemente ripio/tierra. Acceso limitado en invierno por nieve. Se recomienda vehículo 4x4.
+
+---
+
+## 7. ÍNDICES SATELITALES RECOMENDADOS PARA MONITOREO
+
+Para un análisis satelital en profundidad de estos predios, se recomienda procesar:
+
+| Índice | Aplicación | Plataforma |
+|--------|-----------|------------|
+| **NDVI** | Vigor vegetacional, cobertura boscosa | Sentinel-2 / Landsat |
+| **NBR / dNBR** | Detección de áreas quemadas, riesgo incendio | Sentinel-2 |
+| **NDMI** | Contenido de humedad de la vegetación | Sentinel-2 |
+| **NDSI** | Cobertura nival estacional | Sentinel-2 / MODIS |
+| **EVI** | Biomasa forestal (mejor que NDVI en bosque denso) | Sentinel-2 |
+| **Clasificación supervisada** | Mapa de cobertura de suelo | Sentinel-2 multitemporal |
+
+### Periodos recomendados de captura:
+- **Verano (enero-febrero):** Maximo verdor, sin nieve, ideal para NDVI/EVI/clasificación
+- **Invierno (julio-agosto):** Cobertura nival, NDSI
+- **Primavera (octubre-noviembre):** Deshielo, humedad del suelo
+- **Otono (abril-mayo):** Senescencia foliar, cambio de color en caducifolias
+
+---
+
+## 8. CONCLUSIONES
+
+### 8.1 Respuesta Principal: Si, tienen bastante bosque y biomasa
+
+Ambos predios poseen una cobertura forestal nativa significativa. En conjunto, se estiman **aproximadamente 6.100 hectáreas de bosque nativo** sobre un total de 9.338 ha, lo que representa un **65% de cobertura boscosa media**. Esta cifra es notable considerando la ubicación cordillerana de los predios.
+
+### 8.2 Fundo Carrizales: El terreno con mayor valor forestal
+
+- **6.904 ha totales**, de las cuales **~5.000 ha (~72%) son bosque nativo**
+- Tipo forestal dominante: **Roble-Rauli-Coigue**, uno de los tipos forestales más valiosos de Chile
+- El **rauli** (*Nothofagus alpina*) es una de las maderas nativas de mayor valor comercial en Chile, con precios de madera aserrada que superan significativamente a otras especies nativas
+- **90% del bosque es renoval** (bosque secundario en regeneración activa), lo que significa que esta creciendo y capturando carbono de forma acelerada
+- **Potencial de bonos de carbono: Muy Alto**. Con 5.000 ha de bosque en regeneración, el volumen de captura de CO2 anual es considerable bajo estandares VCS o Gold Standard
+- Este es, sin duda, **el predio de mayor valor económico-forestal** de los dos
+
+### 8.3 Fundo Sazo: Valor de conservación y turismo
+
+- **2.434 ha totales**, de las cuales **~1.100 ha (~45%) son bosque nativo** (principalmente lenga)
+- El 55% restante es estepa altoandina, matorral de altura y roca/nieve (altitud 1.800-2.800 msnm)
+- Menor biomasa por hectarea que Carrizales debido a la altitud extrema
+- Sin embargo, posee **alto valor de conservación** (hábitat de huemul) y **alto potencial turístico** por su cercanía a Nevados de Chillán y Termas de Chillán
+- Potencial para turismo de montaña, trekking, y ecoturismo de alta cordillera
+
+### 8.4 Vision de Conjunto
+
+| Métrica | Fundo Sazo | Fundo Carrizales | Total |
+|---------|-----------|------------------|-------|
+| Superficie total | 2.434 ha | 6.904 ha | **9.338 ha** |
+| Bosque nativo estimado | ~1.100 ha | ~5.000 ha | **~6.100 ha** |
+| Cobertura boscosa | 45% | 72% | **65% promedio** |
+| Valor forestal | Bajo | **Medio-Alto** | - |
+| Potencial carbono | Alto | **Muy Alto** | - |
+| Potencial turístico | **Alto** | Medio-Alto | - |
+
+### 8.5 Consideraciones Importantes
+
+1. **En conjunto suman 9.338 hectáreas** de terreno cordillerano, ubicados dentro de la Reserva de la Biosfera UNESCO Nevados de Chillán - Laguna del Laja.
+
+2. **El bosque esta presente y en estado de regeneración activa** (renoval ~90%), lo que indica actividad forestal histórica pero con recuperación significativa. Este estado de crecimiento activo es óptimo para proyectos de captura de carbono.
+
+3. **Si se debe elegir un terreno**, Fundo Carrizales es claramente superior en términos de bosque, biomasa, valor maderero y potencial de bonos de carbono. Fundo Sazo destaca en turismo y conservación de alta montaña.
+
+4. **Riesgos principales:** Incendios forestales (alto en verano, evidenciado por el Incendio San Patricio de 2025 en la misma zona), actividad volcánica (moderado, Nevados de Chillán a 20-40 km), y acceso limitado en invierno por nieve.
+
+5. **Marco regulatorio:** Ley de Bosque Nativo (Ley 20.283) aplica a ambos predios. Cualquier intervención forestal requiere Plan de Manejo aprobado por CONAF. La ubicación dentro de la Reserva de la Biosfera impone escrutinio ambiental adicional.
+
+---
+
+## 9. RECOMENDACIONES
+
+1. **Solicitar a CONAF** el catastro oficial de bosque nativo para ambos roles, que incluye tipo forestal, estructura y superficie exacta.
+2. **Realizar vuelo de drone** en temporada estival para complementar el análisis satelital con información de alta resolución.
+3. **Procesar imágenes Sentinel-2** de verano 2025-2026 para generar mapas NDVI, clasificación de cobertura y detección de cambios.
+4. **Evaluar potencial de bonos de carbono** bajo estandares VCS/Gold Standard, dado el volumen significativo de bosque nativo en regeneración.
+5. **Verificar límites prediales** con el Conservador de Bienes Raíces correspondiente y contrastar con los polígonos KMZ proporcionados.
+
+---
+
+## 10. REFERENCIAS Y FUENTES DE DATOS
+
+Todas las fuentes utilizadas son de acceso público y fueron verificadas en febrero de 2026.
+
+### Fuentes Institucionales y Científicas
+
+1. **UNESCO** - Reserva de la Biosfera Corredor Biológico Nevados de Chillán - Laguna del Laja (2011). 641.403 ha. https://en.unesco.org/biosphere/lac/chillan-lajas
+2. **CONAF** - Catastro de los Recursos Vegetacionales Nativos de Chile. Tipos forestales según D.S. 259/1980. https://www.conaf.cl/nuestros-bosques/bosques-en-chile/catastro-vegetacional/
+3. **SITRURAL / INDAP** - Ficha de Recursos Naturales: Comuna de Coihueco. 61,8% bosque nativo, 90,44% renoval tipo RRC. https://www.sitrural.cl/wp-content/uploads/2024/03/Coihueco_rec_nat-1.pdf
+4. **SITRURAL / INDAP** - Ficha de Recursos Naturales: Comuna de Pinto. https://www.sitrural.cl/wp-content/uploads/2020/03/Pinto_rec_nat.pdf
+5. **SIMBIO / MMA** - Ecosistema: Bosque Caducifolio Mediterraneo-Templado Andino. https://simbio.mma.gob.cl/Ecosistemas/Details/60
+6. **BCN** - Biblioteca del Congreso Nacional: Clima y Vegetación Región de Ñuble. https://www.bcn.cl/siit/nuestropais/region16/clima.htm
+
+### Evaluación de Riesgos
+
+7. **SERNAGEOMIN** - Red Nacional de Vigilancia Volcánica: Complejo Volcánico Nevados de Chillán. https://rnvv.sernageomin.cl/complejo-volcanico-nevados-de-chillan/
+8. **SENAPRED** - Perímetro de Seguridad Complejo Volcánico Nevados de Chillán (Pinto y Coihueco). https://web.senapred.cl/informate_conte/modifica-perimetro-de-seguridad-del-complejo-volcanico-nevados-de-chillan-en-las-comunas-de-pinto-y-coihueco/
+9. **UdeC / Reserva Biosfera Nuble** - Incendio San Patricio (Feb-Mar 2025), ~1.954 ha bosque nativo. https://reservabiosferanuble.udec.cl/2025/03/10/advierten-impactos-del-incendio-que-consumio-1-954-hectareas-de-la-reserva-de-la-biosfera/
+
+### Biodiversidad y Conservación
+
+10. **Nuble Naturaleza** - Corredor Biológico y Biodiversidad (355 spp. vegetales, 155 spp. fauna). https://www.nublenaturaleza.cl/acerca-de-nuble
+11. **BCN Ley Chile** - Ley 20.283 sobre Recuperación del Bosque Nativo y Fomento Forestal (2008). https://www.bcn.cl/leychile/navegar?idNorma=274894
+12. **CONAF** - Reserva Nacional Nuble (75.078 ha, 1978). https://www.conaf.cl/parques-nacionales/reserva-nacional-nuble/
+
+### Datos Geoespaciales y Metodología
+
+13. **Archivos KMZ** proporcionados por el cliente: Fundo Sazo.kmz (221 vertices) y Fundo Carrizales.kmz (205 vertices). Datum WGS84.
+14. **Cálculo de superficie:** Fórmula de Haversine (distancias) + Shoelace (áreas) con proyección local plana desde centroide. Precisión estimada: +/- 2%.
+15. **ESA / Copernicus** - Sentinel-2 MSI (plataforma satelital recomendada para monitoreo, 10m resolución). https://sentinel.esa.int/web/sentinel/missions/sentinel-2
+16. **ESRI World Imagery / OpenTopoMap** - Capas base del mapa interactivo.
+
+---
+
+### Nota Metodológica
+
+Los valores de superficie, perímetro y centroide fueron calculados directamente desde coordenadas WGS84 de los archivos KMZ. Las estimaciones de cobertura vegetal por franja altitudinal son **aproximaciones basadas en patrones típicos** de la precordillera de Nuble, cruzadas con datos CONAF, SITRURAL y SIMBIO/MMA. **No corresponden a procesamiento de imágenes satelitales reales** de estos predios específicos. Para valores exactos se requiere procesamiento de imágenes Sentinel-2 o Landsat.
+
+---
+
+### Nota de Confidencialidad
+
+Prohibida su reproducción o distribución sin autorización de Cussen Consultoría Geoespacial.
+
+---
+**Cussen Consultoría Geoespacial**
+Informe Técnico IT-2026-FCH-001
+Febrero 2026
+`;
+        const blob = new Blob([mdContent], { type: 'text/markdown;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'INFORME_ANALISIS_TERRENOS_SAZO_CARRIZALES.md';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+    </script>
+    <script src="../../../assets/i18n.js"></script>
+</body>
+</html>

@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0c4a7a">
+<title>HabitaCL — Calculadora Inmobiliaria Chile</title>
+<link rel="manifest" href="data:application/json,{&quot;name&quot;:&quot;HabitaCL&quot;,&quot;short_name&quot;:&quot;HabitaCL&quot;,&quot;display&quot;:&quot;standalone&quot;,&quot;background_color&quot;:&quot;#f0f6ff&quot;,&quot;theme_color&quot;:&quot;#0c4a7a&quot;}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#f0f6ff;--card:#ffffff;--card2:#e8f2ff;--border:#b8d4f0;
+  --accent:#0369a1;--text:#1e3a5f;--muted:#6b8fa5;
+  --green:#16a34a;--yellow:#d97706;--red:#dc2626;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+header{
+  background:linear-gradient(90deg,#0c4a7a,#0369a1);
+  padding:13px 18px;position:sticky;top:0;z-index:50;
+  display:flex;align-items:center;justify-content:space-between;color:white
+}
+header h1{font-size:1.15rem;font-weight:700;letter-spacing:-.3px}
+header span{font-size:.75rem;opacity:.8}
+nav{
+  background:#fff;border-bottom:2px solid var(--border);
+  display:flex;overflow-x:auto;position:sticky;top:62px;z-index:40;
+  scrollbar-width:none;
+}
+nav::-webkit-scrollbar{display:none}
+nav button{
+  flex:0 0 auto;padding:11px 18px;border:none;background:none;
+  font-family:inherit;font-size:.82rem;font-weight:600;color:var(--muted);
+  cursor:pointer;white-space:nowrap;border-bottom:3px solid transparent;
+  transition:all .15s;
+}
+nav button.active{color:var(--accent);border-bottom-color:var(--accent)}
+nav button:hover:not(.active){color:var(--text);background:#f8faff}
+main{max-width:820px;margin:0 auto;padding:18px 14px 60px}
+.tab-content{display:none}
+.tab-content.active{display:block}
+
+/* Cards */
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:14px}
+.card-title{font-size:.8rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px}
+.card2{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px}
+
+/* Form elements */
+.field{margin-bottom:14px}
+.field label{display:block;font-size:.82rem;font-weight:600;color:var(--text);margin-bottom:5px}
+.field .hint{font-size:.74rem;color:var(--muted);margin-top:3px}
+input[type="number"],input[type="text"],select{
+  width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;
+  font-family:inherit;font-size:16px;color:var(--text);background:#fff;
+  transition:border-color .15s;
+}
+input[type="number"]:focus,input[type="text"]:focus,select:focus{
+  outline:none;border-color:var(--accent);
+}
+input[type="range"]{
+  width:100%;accent-color:var(--accent);height:5px;cursor:pointer;
+}
+.range-row{display:flex;align-items:center;gap:10px;margin-top:6px}
+.range-row input[type="range"]{flex:1}
+.range-val{
+  min-width:72px;text-align:right;font-size:.9rem;font-weight:700;color:var(--accent);
+}
+.radio-group{display:flex;gap:8px;flex-wrap:wrap}
+.radio-group label{
+  display:flex;align-items:center;gap:6px;padding:7px 12px;
+  border:1.5px solid var(--border);border-radius:8px;cursor:pointer;
+  font-size:.83rem;font-weight:500;transition:all .15s;
+}
+.radio-group label:has(input:checked){
+  background:#e0f0ff;border-color:var(--accent);color:var(--accent);font-weight:700;
+}
+.radio-group input[type="radio"]{accent-color:var(--accent)}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.toggle{position:relative;display:inline-block;width:44px;height:24px}
+.toggle input{opacity:0;width:0;height:0}
+.slider-tog{
+  position:absolute;inset:0;background:#ccc;border-radius:24px;
+  transition:.2s;cursor:pointer;
+}
+.slider-tog:before{
+  content:"";position:absolute;height:18px;width:18px;left:3px;bottom:3px;
+  background:white;border-radius:50%;transition:.2s;
+}
+.toggle input:checked + .slider-tog{background:var(--accent)}
+.toggle input:checked + .slider-tog:before{transform:translateX(20px)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:480px){.grid2{grid-template-columns:1fr}}
+
+/* Result cards */
+.result-big{
+  text-align:center;padding:20px;
+  background:linear-gradient(135deg,#e0f0ff,#c7e0f8);
+  border-radius:12px;margin-bottom:14px;
+}
+.result-big .label{font-size:.8rem;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:6px}
+.result-big .amount{font-size:2rem;font-weight:800;color:var(--accent);line-height:1.1}
+.result-big .amount-uf{font-size:1rem;color:var(--muted);margin-top:3px}
+
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:.84rem}
+th{background:#e8f2ff;color:var(--text);font-weight:700;padding:8px 10px;text-align:left}
+td{padding:8px 10px;border-bottom:1px solid #e4edf6}
+tr:last-child td{border-bottom:none}
+td:last-child,th:last-child{text-align:right}
+tr.total-row td{font-weight:700;background:#f0f8ff;color:var(--accent)}
+
+.info-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:8px 0;border-bottom:1px solid #e8f0f8;font-size:.86rem;
+}
+.info-row:last-child{border-bottom:none}
+.info-row .label{color:var(--muted)}
+.info-row .val{font-weight:700}
+
+.badge{
+  display:inline-block;padding:2px 10px;border-radius:20px;font-size:.75rem;font-weight:700;
+}
+.badge-green{background:#dcfce7;color:var(--green)}
+.badge-red{background:#fee2e2;color:var(--red)}
+.badge-yellow{background:#fef3c7;color:var(--yellow)}
+
+.recommend-card{
+  padding:14px 16px;border-radius:10px;margin-top:10px;
+  border-left:4px solid;font-size:.88rem;font-weight:500;
+}
+.recommend-card.buy{background:#dcfce7;border-color:var(--green);color:#166534}
+.recommend-card.rent{background:#fef3c7;border-color:var(--yellow);color:#92400e}
+.recommend-card.neutral{background:#e0f0ff;border-color:var(--accent);color:#1e3a5f}
+
+.chart-wrap{position:relative;height:220px;margin-top:10px}
+.section-sep{height:1px;background:var(--border);margin:18px 0}
+
+.subsidy-item{
+  padding:10px 14px;border-radius:8px;margin-bottom:8px;
+  display:flex;flex-direction:column;gap:4px;
+  border:1.5px solid var(--border);
+}
+.subsidy-item.eligible{border-color:var(--green);background:#f0fdf4}
+.subsidy-item.ineligible{border-color:#e4edf6;background:#f9fbff;opacity:.7}
+.subsidy-item .sub-name{font-weight:700;font-size:.88rem}
+.subsidy-item .sub-detail{font-size:.8rem;color:var(--muted)}
+.subsidy-item .sub-amount{font-size:1rem;font-weight:800;color:var(--green)}
+
+.link-hint{
+  display:block;margin-top:12px;font-size:.82rem;color:var(--accent);
+  font-weight:500;text-decoration:none;
+}
+.link-hint:hover{text-decoration:underline}
+
+.amort-note{font-size:.77rem;color:var(--muted);margin-bottom:8px;font-style:italic}
+
+/* Scrollable amort table */
+.amort-scroll{max-height:320px;overflow-y:auto;border-radius:8px;border:1px solid var(--border)}
+.amort-scroll table th{position:sticky;top:0;z-index:1}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>HabitaCL</h1>
+    <span>Calculadora Inmobiliaria Chile</span>
+  </div>
+  <div style="font-size:.72rem;opacity:.75;text-align:right">UF $38,500<br>Mar 2026</div>
+</header>
+
+<nav id="nav">
+  <button class="active" onclick="showTab(0)">Dividendo</button>
+  <button onclick="showTab(1)">Arriendo vs Compra</button>
+  <button onclick="showTab(2)">Subsidios</button>
+  <button onclick="showTab(3)">Gastos Adicionales</button>
+</nav>
+
+<main>
+
+<!-- =================== TAB 1: DIVIDENDO =================== -->
+<div class="tab-content active" id="tab0">
+
+  <div class="card">
+    <div class="card-title">Parámetros del crédito</div>
+
+    <div class="field">
+      <label>Valor propiedad (UF)</label>
+      <div class="range-row">
+        <input type="range" id="propUF" min="500" max="8000" step="50" value="2500" oninput="syncField('propUF','propUFn');calcDiv()">
+        <span class="range-val" id="propUFdisp">2.500 UF</span>
+      </div>
+      <input type="number" id="propUFn" value="2500" min="500" max="8000" style="margin-top:7px" oninput="syncSlider('propUFn','propUF');calcDiv()">
+      <div class="hint" id="propCLP"></div>
+    </div>
+
+    <div class="field">
+      <label>Pie inicial</label>
+      <div class="range-row">
+        <input type="range" id="pieSlider" min="10" max="30" step="1" value="20" oninput="syncField('pieSlider','pieN');calcDiv()">
+        <span class="range-val" id="pieDisp">20%</span>
+      </div>
+      <input type="number" id="pieN" value="20" min="10" max="30" style="margin-top:7px" oninput="syncSlider('pieN','pieSlider');calcDiv()">
+      <div class="hint">Mín. 10% segunda vivienda · 20% primera sin subsidio</div>
+    </div>
+
+    <div class="grid2">
+      <div class="field">
+        <label>Tasa interés anual (%)</label>
+        <input type="number" id="tasa" value="4.5" min="2" max="12" step="0.1" oninput="calcDiv()">
+      </div>
+      <div class="field">
+        <label>Plazo (años)</label>
+        <select id="plazo" onchange="calcDiv()">
+          <option value="10">10 años</option>
+          <option value="15">15 años</option>
+          <option value="20" selected>20 años</option>
+          <option value="25">25 años</option>
+          <option value="30">30 años</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Tipo de tasa</label>
+      <div class="radio-group">
+        <label><input type="radio" name="tipoTasa" value="fija" checked onchange="calcDiv()"> Fija (todo el plazo)</label>
+        <label><input type="radio" name="tipoTasa" value="mixta" onchange="calcDiv()"> Mixta (fija 3 años, luego +1%)</label>
+      </div>
+    </div>
+  </div>
+
+  <div class="result-big">
+    <div class="label">Dividendo mensual estimado</div>
+    <div class="amount" id="divMensual">$0</div>
+    <div class="amount-uf" id="divMensualUF">0.00 UF/mes</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Detalle del dividendo</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Concepto</th><th>Monto mensual</th></tr></thead>
+        <tbody id="divTable"></tbody>
+      </table>
+    </div>
+    <div class="section-sep"></div>
+    <div class="info-row">
+      <span class="label">Renta requerida (banco 25%)</span>
+      <span class="val" id="rentaReq">—</span>
+    </div>
+    <div class="info-row">
+      <span class="label">Costo total del crédito</span>
+      <span class="val" id="costoTotal">—</span>
+    </div>
+    <div class="info-row">
+      <span class="label">Total pagado (capital + intereses + seguros)</span>
+      <span class="val" id="totalPagado">—</span>
+    </div>
+    <div class="info-row">
+      <span class="label">Capital solicitado</span>
+      <span class="val" id="capitalSol">—</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Evolución del crédito (por quinquenio)</div>
+    <div class="chart-wrap"><canvas id="chartDiv"></canvas></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Tabla de amortización</div>
+    <p class="amort-note">Primeros 12 meses y últimos 12 meses del crédito</p>
+    <div class="amort-scroll">
+      <table>
+        <thead>
+          <tr><th>Mes</th><th>Cuota</th><th>Capital</th><th>Interés</th><th>Saldo</th></tr>
+        </thead>
+        <tbody id="amortTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- =================== TAB 2: ARRIENDO VS COMPRA =================== -->
+<div class="tab-content" id="tab1">
+
+  <div class="card">
+    <div class="card-title">Parámetros de comparación</div>
+
+    <div class="grid2">
+      <div class="field">
+        <label>Arriendo mensual (CLP)</label>
+        <input type="number" id="arrendoCLP" value="600000" oninput="calcAVC()">
+      </div>
+      <div class="field">
+        <label>Valor propiedad (CLP)</label>
+        <input type="number" id="propAVC" value="96250000" oninput="calcAVC()">
+        <div class="hint" id="propAVCuf"></div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Período de análisis</label>
+      <div class="radio-group">
+        <label><input type="radio" name="periodoAVC" value="5" onchange="calcAVC()"> 5 años</label>
+        <label><input type="radio" name="periodoAVC" value="10" checked onchange="calcAVC()"> 10 años</label>
+        <label><input type="radio" name="periodoAVC" value="15" onchange="calcAVC()"> 15 años</label>
+        <label><input type="radio" name="periodoAVC" value="20" onchange="calcAVC()"> 20 años</label>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Plusvalía anual estimada (%)</label>
+      <div class="range-row">
+        <input type="range" id="plusvalia" min="0" max="10" step="0.5" value="3" oninput="syncField('plusvalia','plusvaliaV');calcAVC()">
+        <span class="range-val" id="plusvaliaDisp">3.0%</span>
+      </div>
+      <input type="number" id="plusvaliaV" value="3" min="0" max="10" step="0.1" style="margin-top:7px" oninput="syncSlider('plusvaliaV','plusvalia');calcAVC()">
+    </div>
+
+    <div class="field">
+      <label>Rentabilidad inversión alternativa (%)</label>
+      <div class="range-row">
+        <input type="range" id="rentInv" min="0" max="15" step="0.5" value="5" oninput="syncField('rentInv','rentInvV');calcAVC()">
+        <span class="range-val" id="rentInvDisp">5.0%</span>
+      </div>
+      <input type="number" id="rentInvV" value="5" min="0" max="15" step="0.1" style="margin-top:7px" oninput="syncSlider('rentInvV','rentInv');calcAVC()">
+    </div>
+  </div>
+
+  <div class="grid2" style="margin-bottom:14px">
+    <div class="card2" style="margin-bottom:0">
+      <div class="card-title">Arriendo</div>
+      <div id="rentSummary"></div>
+    </div>
+    <div class="card2" style="margin-bottom:0">
+      <div class="card-title">Compra</div>
+      <div id="buySummary"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div id="avcRecommend"></div>
+    <div class="section-sep"></div>
+    <div class="info-row">
+      <span class="label">Punto de equilibrio</span>
+      <span class="val" id="breakEven">—</span>
+    </div>
+    <div class="info-row">
+      <span class="label">Patrimonio acumulado (año <span id="patriAnio">—</span>)</span>
+      <span class="val" id="patrimonio">—</span>
+    </div>
+    <div class="info-row">
+      <span class="label">Plusvalía proyectada</span>
+      <span class="val" id="plusvaliaProyectada">—</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Costo acumulado en el tiempo</div>
+    <div class="chart-wrap" style="height:240px"><canvas id="chartAVC"></canvas></div>
+  </div>
+
+</div>
+
+<!-- =================== TAB 3: SUBSIDIOS =================== -->
+<div class="tab-content" id="tab2">
+
+  <div class="card">
+    <div class="card-title">Tu situación</div>
+
+    <div class="grid2">
+      <div class="field">
+        <label>Ingresos del hogar (CLP/mes)</label>
+        <input type="number" id="ingresosSub" value="1200000" oninput="calcSub()">
+      </div>
+      <div class="field">
+        <label>Valor propiedad (UF)</label>
+        <input type="number" id="propSub" value="2000" oninput="calcSub()">
+        <div class="hint" id="propSubCLP"></div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Tipo de vivienda</label>
+      <div class="radio-group">
+        <label><input type="radio" name="tipoViv" value="primera" checked onchange="calcSub()"> Primera vivienda</label>
+        <label><input type="radio" name="tipoViv" value="segunda" onchange="calcSub()"> Segunda vivienda</label>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Programa de interés</label>
+      <div class="radio-group" style="flex-direction:column">
+        <label><input type="radio" name="progSub" value="todos" checked onchange="calcSub()"> Evaluar todos</label>
+        <label><input type="radio" name="progSub" value="ds49" onchange="calcSub()"> DS49 — Sectores Vulnerables</label>
+        <label><input type="radio" name="progSub" value="ds1" onchange="calcSub()"> DS1 — Clase Media</label>
+        <label><input type="radio" name="progSub" value="ds27" onchange="calcSub()"> DS27 — Trabajadores</label>
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="toggle-row">
+        <label style="font-size:.82rem;font-weight:600">¿Tienes ahorro mínimo acumulado?</label>
+        <label class="toggle"><input type="checkbox" id="ahorro" checked onchange="calcSub()"><span class="slider-tog"></span></label>
+      </div>
+      <div class="hint" style="margin-top:6px">DS49: 10 UF mín · DS1: 50 UF mín · DS27: 30 UF mín</div>
+    </div>
+  </div>
+
+  <div id="subsidioResults"></div>
+
+  <a href="#" class="link-hint" onclick="return false">
+    Para postular: serviu.cl o en tu municipalidad →
+  </a>
+
+</div>
+
+<!-- =================== TAB 4: GASTOS ADICIONALES =================== -->
+<div class="tab-content" id="tab3">
+
+  <div class="card">
+    <div class="card-title">Datos de la propiedad</div>
+
+    <div class="grid2">
+      <div class="field">
+        <label>Valor propiedad (UF)</label>
+        <input type="number" id="propGastos" value="2500" oninput="calcGastos()">
+        <div class="hint" id="propGastosCLP"></div>
+      </div>
+      <div class="field">
+        <label>Tipo de uso</label>
+        <select id="usoPropiedad" onchange="calcGastos()">
+          <option value="vivienda">Vivienda propia</option>
+          <option value="inversion">Inversión / arriendo</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="field">
+        <label>Gastos comunes mensuales (CLP)</label>
+        <input type="number" id="gastosComunes" value="80000" oninput="calcGastos()">
+      </div>
+      <div class="field">
+        <label>Arriendo mensual esperado (CLP)</label>
+        <input type="number" id="arrendoEsp" value="650000" oninput="calcGastos()">
+        <div class="hint">Para calcular rentabilidad</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Costos de cierre (una vez)</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Concepto</th><th>% aprox.</th><th>Monto</th></tr></thead>
+        <tbody id="costosTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Costos anuales recurrentes</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Concepto</th><th>Base</th><th>Monto anual</th></tr></thead>
+        <tbody id="recurrentesTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Rentabilidad (si arrienda)</div>
+    <div id="rentabilidadCard"></div>
+  </div>
+
+</div>
+
+</main>
+
+<script>
+// ============ CONSTANTS ============
+const UF = 38500;
+const UTM = 67294;
+const SEG_DESGRAVAMEN = 0.00025; // monthly % of capital
+const SEG_INCENDIO = 0.00019;    // monthly % of capital
+
+// ============ UTILS ============
+const fmt = n => '$' + Math.round(n).toLocaleString('es-CL');
+const fmtUF = n => (n/UF).toFixed(2) + ' UF';
+const fmtUFraw = n => n.toFixed(2) + ' UF';
+const getRadio = name => { const el = document.querySelector(`input[name="${name}"]:checked`); return el ? el.value : null; }
+
+function syncField(sliderId, numId) {
+  const v = document.getElementById(sliderId).value;
+  document.getElementById(numId).value = v;
+  updateDispVal(sliderId);
+}
+function syncSlider(numId, sliderId) {
+  const v = parseFloat(document.getElementById(numId).value) || 0;
+  const sl = document.getElementById(sliderId);
+  sl.value = Math.min(Math.max(v, parseFloat(sl.min)), parseFloat(sl.max));
+  updateDispVal(sliderId);
+}
+function updateDispVal(sliderId) {
+  const map = {
+    propUF:'propUFdisp',pieSlider:'pieDisp',
+    plusvalia:'plusvaliaDisp',rentInv:'rentInvDisp'
+  };
+  const dispId = map[sliderId];
+  if (!dispId) return;
+  const v = parseFloat(document.getElementById(sliderId).value);
+  const el = document.getElementById(dispId);
+  if (sliderId === 'propUF') el.textContent = v.toLocaleString('es-CL') + ' UF';
+  else if (sliderId === 'pieSlider') el.textContent = v + '%';
+  else el.textContent = v.toFixed(1) + '%';
+}
+
+// ============ TABS ============
+function showTab(n) {
+  document.querySelectorAll('.tab-content').forEach((t,i) => t.classList.toggle('active', i===n));
+  document.querySelectorAll('#nav button').forEach((b,i) => b.classList.toggle('active', i===n));
+}
+
+// ============ CHART INSTANCES ============
+let chartDivInst = null;
+let chartAVCInst = null;
+
+// ============ TAB 1: DIVIDENDO ============
+function calcDiv() {
+  const propUF = parseFloat(document.getElementById('propUFn').value) || 2500;
+  const pieP = parseFloat(document.getElementById('pieN').value) || 20;
+  const tasa = parseFloat(document.getElementById('tasa').value) || 4.5;
+  const plazo = parseInt(document.getElementById('plazo').value) || 20;
+  const tipoTasa = getRadio('tipoTasa');
+
+  // display
+  document.getElementById('propUFdisp').textContent = propUF.toLocaleString('es-CL') + ' UF';
+  document.getElementById('pieDisp').textContent = pieP + '%';
+  document.getElementById('propCLP').textContent = 'Equivale a ' + fmt(propUF * UF);
+
+  const propCLP = propUF * UF;
+  const pieCLP = propCLP * (pieP / 100);
+  const capitalCLP = propCLP - pieCLP;
+  const capitalUF = capitalCLP / UF;
+  const r = (tasa / 100) / 12;
+  const n = plazo * 12;
+
+  // French amortization cuota (capital + interest)
+  let cuota = 0;
+  if (r > 0) cuota = capitalCLP * (r * Math.pow(1+r,n)) / (Math.pow(1+r,n) - 1);
+  else cuota = capitalCLP / n;
+
+  // Seguros (on initial capital, simplified)
+  const segDesgrMens = capitalCLP * SEG_DESGRAVAMEN;
+  const segIncMens = capitalCLP * SEG_INCENDIO;
+
+  // Mixta: after 3 years rate goes +1%
+  // For display, show first-month values; total calc handles both periods
+  const r2 = tipoTasa === 'mixta' ? ((tasa+1)/100/12) : r;
+  const n2 = tipoTasa === 'mixta' ? Math.max(n - 36, 0) : n;
+  const balAfter3 = tipoTasa === 'mixta' ? calcBalanceAfterN(capitalCLP, r, Math.min(36,n)) : 0;
+
+  // first month breakdown
+  const int1 = capitalCLP * r;
+  const amort1 = cuota - int1;
+
+  const total = cuota + segDesgrMens + segIncMens;
+
+  document.getElementById('divMensual').textContent = fmt(total);
+  document.getElementById('divMensualUF').textContent = (total/UF).toFixed(4) + ' UF/mes';
+
+  // Table
+  document.getElementById('divTable').innerHTML = `
+    <tr><td>Amortización capital</td><td>${fmt(amort1)}</td></tr>
+    <tr><td>Intereses</td><td>${fmt(int1)}</td></tr>
+    <tr><td>Seguro desgravamen</td><td>${fmt(segDesgrMens)}</td></tr>
+    <tr><td>Seguro incendio</td><td>${fmt(segIncMens)}</td></tr>
+    <tr class="total-row"><td>Total dividendo</td><td>${fmt(total)}</td></tr>
+  `;
+
+  // Info rows
+  document.getElementById('rentaReq').textContent = fmt(total / 0.25) + '/mes';
+  const totalPagado = cuota * n + (segDesgrMens + segIncMens) * n;
+  document.getElementById('costoTotal').textContent = fmt(totalPagado - capitalCLP);
+  document.getElementById('totalPagado').textContent = fmt(totalPagado);
+  document.getElementById('capitalSol').textContent = fmt(capitalCLP) + ' · ' + fmtUFraw(capitalUF);
+
+  // Chart: buckets of 5 years
+  buildDivChart(capitalCLP, r, n, cuota, plazo);
+
+  // Amort table
+  buildAmortTable(capitalCLP, r, n, cuota, segDesgrMens, segIncMens);
+
+  // Sync Tab2 prop value
+  document.getElementById('propAVC').value = Math.round(propCLP);
+  document.getElementById('propAVCuf').textContent = propUF.toLocaleString('es-CL') + ' UF';
+}
+
+function calcBalanceAfterN(capital, r, months) {
+  let bal = capital;
+  if (r === 0) return capital - (capital / (months > 0 ? months : 1)) * months;
+  const cuota = capital * (r * Math.pow(1+r, months)) / (Math.pow(1+r, months) - 1);
+  for (let i = 0; i < months; i++) {
+    const int = bal * r;
+    bal -= (cuota - int);
+  }
+  return Math.max(bal, 0);
+}
+
+function buildDivChart(capital, r, n, cuota, plazo) {
+  const buckets = [];
+  const labels = [];
+  const principals = [];
+  const interests = [];
+
+  const yrs = plazo;
+  const step = yrs <= 10 ? 2 : 5;
+
+  let bal = capital;
+  let prevBal = capital;
+  let bucketStart = 0;
+
+  for (let yr = step; yr <= yrs; yr += step) {
+    const endMonth = Math.min(yr * 12, n);
+    let totInt = 0, totAmort = 0;
+    for (let m = bucketStart; m < endMonth; m++) {
+      const int = bal * r;
+      const amort = cuota - int;
+      totInt += int;
+      totAmort += amort;
+      bal = Math.max(bal - amort, 0);
+    }
+    labels.push(`Año ${yr}`);
+    principals.push(Math.round(totAmort / 1e6 * 100) / 100);
+    interests.push(Math.round(totInt / 1e6 * 100) / 100);
+    bucketStart = endMonth;
+  }
+
+  const ctx = document.getElementById('chartDiv').getContext('2d');
+  if (chartDivInst) chartDivInst.destroy();
+  chartDivInst = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Capital (MM$)', data: principals, backgroundColor: '#0369a1', borderRadius: 4 },
+        { label: 'Intereses (MM$)', data: interests, backgroundColor: '#7dd3fc', borderRadius: 4 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { font: { family: 'Inter', size: 11 } } } },
+      scales: {
+        x: { stacked: true, ticks: { font: { family: 'Inter', size: 10 } } },
+        y: { stacked: true, ticks: { font: { family: 'Inter', size: 10 }, callback: v => 'MM$' + v } }
+      }
+    }
+  });
+}
+
+function buildAmortTable(capital, r, n, cuota, segDesgrav, segInc) {
+  let rows = '';
+  let bal = capital;
+
+  function row(m, bal0) {
+    const int = bal0 * r;
+    const amort = cuota - int;
+    const newBal = Math.max(bal0 - amort, 0);
+    return { m, cuota: cuota + segDesgrav + segInc, amort, int, bal: newBal };
+  }
+
+  const data = [];
+  let b = capital;
+  for (let m = 1; m <= n; m++) {
+    const d = row(m, b);
+    data.push(d);
+    b = d.bal;
+  }
+
+  const first12 = data.slice(0, 12);
+  const last12 = data.slice(Math.max(n - 12, 12));
+
+  let html = '';
+  first12.forEach(d => {
+    html += `<tr><td>${d.m}</td><td>${fmt(d.cuota)}</td><td>${fmt(d.amort)}</td><td>${fmt(d.int)}</td><td>${fmt(d.bal)}</td></tr>`;
+  });
+  if (n > 24) {
+    html += `<tr><td colspan="5" style="text-align:center;color:var(--muted);font-style:italic;padding:8px">· · ·</td></tr>`;
+  }
+  last12.forEach(d => {
+    html += `<tr><td>${d.m}</td><td>${fmt(d.cuota)}</td><td>${fmt(d.amort)}</td><td>${fmt(d.int)}</td><td>${fmt(Math.max(d.bal,0))}</td></tr>`;
+  });
+
+  document.getElementById('amortTable').innerHTML = html;
+}
+
+// ============ TAB 2: ARRIENDO VS COMPRA ============
+function calcAVC() {
+  const arrendoMens = parseFloat(document.getElementById('arrendoCLP').value) || 600000;
+  const propVal = parseFloat(document.getElementById('propAVC').value) || 96250000;
+  const years = parseInt(getRadio('periodoAVC')) || 10;
+  const plusP = parseFloat(document.getElementById('plusvaliaV').value) || 3;
+  const rentP = parseFloat(document.getElementById('rentInvV').value) || 5;
+
+  document.getElementById('propAVCuf').textContent = (propVal/UF).toFixed(0) + ' UF';
+  document.getElementById('plusvaliaDisp').textContent = plusP.toFixed(1) + '%';
+  document.getElementById('rentInvDisp').textContent = rentP.toFixed(1) + '%';
+
+  // --- RENT SCENARIO ---
+  // Total rent paid (no appreciation of that money)
+  // If you were to buy: you'd invest the "pie" instead
+  const pieAmt = propVal * 0.2; // assume 20% down
+  const monthlyMortg = calcCuotaMens(propVal * 0.8, 4.5, 20);
+  const rentDiff = Math.max(monthlyMortg - arrendoMens, 0); // extra money when renting is cheaper
+  const rentTotal = arrendoMens * 12 * years;
+
+  // Opportunity cost: pie invested at rentP% for years
+  const opp = pieAmt * (Math.pow(1 + rentP/100, years) - 1);
+
+  // --- BUY SCENARIO ---
+  // Total mortgage paid over period
+  const n = 20 * 12;
+  const r = 0.045 / 12;
+  const cuota = calcCuotaMens(propVal * 0.8, 4.5, 20);
+  const seg = propVal * 0.8 * (SEG_DESGRAVAMEN + SEG_INCENDIO);
+  const monthsAnalysis = years * 12;
+  const totalMortgPaid = (cuota + seg) * Math.min(monthsAnalysis, n);
+
+  // Equity after N years
+  let bal = propVal * 0.8;
+  for (let m = 0; m < Math.min(monthsAnalysis, n); m++) {
+    const int = bal * r;
+    bal = Math.max(bal - (cuota - int), 0);
+  }
+  const equity = propVal - bal + (pieAmt);
+
+  // Plusvalia
+  const propFuturo = propVal * Math.pow(1 + plusP/100, years);
+  const plusvaliaAmt = propFuturo - propVal;
+
+  // Net cost buy = total paid - equity from property value appreciation
+  const buyCostNet = totalMortgPaid + pieAmt - equity - plusvaliaAmt;
+  const rentCostNet = rentTotal - opp;
+
+  // Build yearly arrays for chart
+  const rentLine = [], buyLine = [], lbls = [];
+  let balCh = propVal * 0.8;
+  for (let y = 1; y <= years; y++) {
+    lbls.push(`Año ${y}`);
+    rentLine.push(Math.round(arrendoMens * 12 * y / 1e6 * 100) / 100);
+    const mths = Math.min(y * 12, n);
+    const propV = propVal * Math.pow(1+plusP/100, y);
+    let b = propVal * 0.8;
+    for (let m = 0; m < mths; m++) {
+      const int = b * r;
+      b = Math.max(b - (cuota - int), 0);
+    }
+    const eq = propV - b + pieAmt;
+    const paid = (cuota + seg) * mths + pieAmt;
+    buyLine.push(Math.round(Math.max(paid - eq, 0) / 1e6 * 100) / 100);
+  }
+
+  // Find break-even
+  let breakEvenYr = null;
+  for (let y = 1; y <= years; y++) {
+    if (buyLine[y-1] <= rentLine[y-1]) { breakEvenYr = y; break; }
+  }
+
+  // Summaries
+  document.getElementById('rentSummary').innerHTML = `
+    <div class="info-row"><span class="label">Total arriendo pagado</span><span class="val">${fmt(rentTotal)}</span></div>
+    <div class="info-row"><span class="label">Costo oportunidad pie (invertido)</span><span class="val" style="color:var(--green)">+${fmt(opp)}</span></div>
+    <div class="info-row"><span class="label">Costo neto arriendo</span><span class="val">${fmt(rentCostNet)}</span></div>
+  `;
+
+  document.getElementById('buySummary').innerHTML = `
+    <div class="info-row"><span class="label">Total dividendo + pie</span><span class="val">${fmt(totalMortgPaid + pieAmt)}</span></div>
+    <div class="info-row"><span class="label">Patrimonio (equity)</span><span class="val" style="color:var(--green)">+${fmt(equity)}</span></div>
+    <div class="info-row"><span class="label">Plusvalía proyectada</span><span class="val" style="color:var(--green)">+${fmt(plusvaliaAmt)}</span></div>
+    <div class="info-row"><span class="label">Costo neto compra</span><span class="val">${fmt(Math.max(buyCostNet,0))}</span></div>
+  `;
+
+  document.getElementById('patriAnio').textContent = years;
+  document.getElementById('patrimonio').textContent = fmt(equity + plusvaliaAmt);
+  document.getElementById('plusvaliaProyectada').textContent = fmt(plusvaliaAmt);
+  document.getElementById('breakEven').textContent = breakEvenYr ? `Año ${breakEvenYr}` : `Fuera del período analizado`;
+
+  const isBuyBetter = buyCostNet <= rentCostNet;
+  let recHtml = '';
+  if (breakEvenYr && breakEvenYr <= years) {
+    recHtml = `<div class="recommend-card buy">Con estos parámetros, COMPRAR es mejor a partir del año ${breakEvenYr}. Al cabo de ${years} años, el costo neto de comprar es ${fmt(Math.abs(buyCostNet - rentCostNet))} ${buyCostNet < rentCostNet ? 'menor' : 'mayor'} que arrendar.</div>`;
+  } else if (isBuyBetter) {
+    recHtml = `<div class="recommend-card buy">COMPRAR es más conveniente en este período. La plusvalía y el patrimonio acumulado superan el costo del crédito.</div>`;
+  } else {
+    recHtml = `<div class="recommend-card rent">Con estos supuestos, ARRENDAR es más conveniente en ${years} años. Considera plazos más largos o menor tasa de inversión alternativa para otro resultado.</div>`;
+  }
+  document.getElementById('avcRecommend').innerHTML = recHtml;
+
+  buildAVCChart(lbls, rentLine, buyLine);
+}
+
+function calcCuotaMens(capital, tasaAnual, plazoAnos) {
+  const r = (tasaAnual/100)/12;
+  const n = plazoAnos * 12;
+  if (r === 0) return capital / n;
+  return capital * (r * Math.pow(1+r,n)) / (Math.pow(1+r,n) - 1);
+}
+
+function buildAVCChart(labels, rentLine, buyLine) {
+  const ctx = document.getElementById('chartAVC').getContext('2d');
+  if (chartAVCInst) chartAVCInst.destroy();
+  chartAVCInst = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Costo neto arriendo (MM$)', data: rentLine, borderColor: '#d97706', backgroundColor: 'rgba(217,119,6,.1)', tension: 0.3, fill: false, pointRadius: 3 },
+        { label: 'Costo neto compra (MM$)', data: buyLine, borderColor: '#0369a1', backgroundColor: 'rgba(3,105,161,.1)', tension: 0.3, fill: false, pointRadius: 3 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { font: { family: 'Inter', size: 11 } } } },
+      scales: {
+        x: { ticks: { font: { family: 'Inter', size: 10 } } },
+        y: { ticks: { font: { family: 'Inter', size: 10 }, callback: v => 'MM$' + v } }
+      }
+    }
+  });
+}
+
+// ============ TAB 3: SUBSIDIOS ============
+function calcSub() {
+  const ingresos = parseFloat(document.getElementById('ingresosSub').value) || 0;
+  const propUF = parseFloat(document.getElementById('propSub').value) || 0;
+  const tipoViv = getRadio('tipoViv');
+  const prog = getRadio('progSub');
+  const ahorro = document.getElementById('ahorro').checked;
+  const esPrimera = tipoViv === 'primera';
+
+  document.getElementById('propSubCLP').textContent = 'Equivale a ' + fmt(propUF * UF);
+
+  // Eligibility logic
+  const results = [];
+
+  // DS49 — Vulnerables
+  const ds49Elig = esPrimera && ingresos < 800000 && propUF <= 1000 && ahorro;
+  const ds49SubsUF = 486;
+  results.push({
+    id: 'DS49',
+    nombre: 'DS49 — Sectores Vulnerables',
+    descripcion: `Ingresos <$800.000/mes · Propiedad ≤1.000 UF · Primera vivienda · Ahorro mín. 10 UF`,
+    subsidio: ds49SubsUF,
+    eligible: ds49Elig,
+    checks: [
+      { ok: esPrimera, txt: 'Primera vivienda' },
+      { ok: ingresos < 800000, txt: `Ingresos <$800.000 (actual: ${fmt(ingresos)})` },
+      { ok: propUF <= 1000, txt: `Propiedad ≤1.000 UF (actual: ${propUF} UF)` },
+      { ok: ahorro, txt: 'Ahorro mínimo 10 UF' }
+    ]
+  });
+
+  // DS1 Tramo 1
+  const ds1t1Elig = esPrimera && ingresos >= 800000 && ingresos <= 1500000 && propUF <= 2000 && ahorro;
+  results.push({
+    id: 'DS1-T1',
+    nombre: 'DS1 Tramo 1 — Clase Media',
+    descripcion: `Ingresos $800k–$1.5M/mes · Propiedad ≤2.000 UF · Primera vivienda · Ahorro mín. 50 UF`,
+    subsidio: 200,
+    eligible: ds1t1Elig,
+    checks: [
+      { ok: esPrimera, txt: 'Primera vivienda' },
+      { ok: ingresos >= 800000 && ingresos <= 1500000, txt: `Ingresos $800k–$1.5M (actual: ${fmt(ingresos)})` },
+      { ok: propUF <= 2000, txt: `Propiedad ≤2.000 UF (actual: ${propUF} UF)` },
+      { ok: ahorro, txt: 'Ahorro mínimo 50 UF' }
+    ]
+  });
+
+  // DS1 Tramo 2
+  const ds1t2Elig = esPrimera && ingresos > 1500000 && ingresos <= 2500000 && propUF <= 3000 && ahorro;
+  results.push({
+    id: 'DS1-T2',
+    nombre: 'DS1 Tramo 2 — Clase Media Alta',
+    descripcion: `Ingresos $1.5M–$2.5M/mes · Propiedad ≤3.000 UF · Primera vivienda · Ahorro mín. 50 UF`,
+    subsidio: 150,
+    eligible: ds1t2Elig,
+    checks: [
+      { ok: esPrimera, txt: 'Primera vivienda' },
+      { ok: ingresos > 1500000 && ingresos <= 2500000, txt: `Ingresos $1.5M–$2.5M (actual: ${fmt(ingresos)})` },
+      { ok: propUF <= 3000, txt: `Propiedad ≤3.000 UF (actual: ${propUF} UF)` },
+      { ok: ahorro, txt: 'Ahorro mínimo 50 UF' }
+    ]
+  });
+
+  // DS27 — Trabajadores
+  const ds27Elig = esPrimera && propUF <= 2200 && ahorro;
+  results.push({
+    id: 'DS27',
+    nombre: 'DS27 — Trabajadores',
+    descripcion: `Propiedad ≤2.200 UF · Primera vivienda · Ahorro mín. 30 UF · Para trabajadores dependientes`,
+    subsidio: 260,
+    eligible: ds27Elig,
+    checks: [
+      { ok: esPrimera, txt: 'Primera vivienda' },
+      { ok: propUF <= 2200, txt: `Propiedad ≤2.200 UF (actual: ${propUF} UF)` },
+      { ok: ahorro, txt: 'Ahorro mínimo 30 UF' }
+    ]
+  });
+
+  // Filter by program selection
+  const filteredProg = prog === 'todos' ? results : results.filter(r => r.id.toLowerCase().startsWith(prog));
+  const displayed = prog === 'todos' ? results : filteredProg;
+
+  const eligibleList = displayed.filter(r => r.eligible);
+  const bestSubsidy = eligibleList.length > 0 ? eligibleList.reduce((a,b) => a.subsidio > b.subsidio ? a : b) : null;
+
+  let html = '';
+
+  if (bestSubsidy) {
+    html += `
+      <div class="card2" style="border-color:var(--green);background:#f0fdf4;margin-bottom:14px">
+        <div style="font-size:.8rem;font-weight:700;color:var(--green);text-transform:uppercase;margin-bottom:8px">Mejor subsidio disponible</div>
+        <div style="font-size:1.5rem;font-weight:800;color:var(--green)">${bestSubsidy.subsidio.toLocaleString('es-CL')} UF</div>
+        <div style="font-size:.9rem;color:#166534;margin-top:2px">${fmt(bestSubsidy.subsidio * UF)} · ${bestSubsidy.nombre}</div>
+        <div style="font-size:.8rem;color:var(--muted);margin-top:6px">Este subsidio reduce el precio de compra. El crédito hipotecario financia la diferencia.</div>
+      </div>
+    `;
+  } else {
+    html += `<div class="recommend-card neutral" style="margin-bottom:14px">Con los datos ingresados no calificarías para ningún subsidio habitacional. Revisa los requisitos o considera ajustar el valor de la propiedad.</div>`;
+  }
+
+  displayed.forEach(item => {
+    const cls = item.eligible ? 'eligible' : 'ineligible';
+    const badge = item.eligible
+      ? `<span class="badge badge-green">Potencialmente elegible</span>`
+      : `<span class="badge badge-red">No elegible</span>`;
+
+    const checksHtml = item.checks.map(c =>
+      `<div style="font-size:.78rem;display:flex;align-items:center;gap:5px;margin-top:2px">
+        <span style="color:${c.ok ? 'var(--green)' : 'var(--red)'}">${c.ok ? '✓' : '✗'}</span>
+        <span style="color:${c.ok ? 'var(--text)' : 'var(--muted)'}">${c.txt}</span>
+      </div>`
+    ).join('');
+
+    html += `
+      <div class="subsidy-item ${cls}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+          <span class="sub-name">${item.nombre}</span>
+          ${badge}
+        </div>
+        <div class="sub-detail">${item.descripcion}</div>
+        ${item.eligible ? `<div class="sub-amount">${item.subsidio.toLocaleString('es-CL')} UF = ${fmt(item.subsidio * UF)}</div>` : ''}
+        ${checksHtml}
+      </div>
+    `;
+  });
+
+  document.getElementById('subsidioResults').innerHTML = html;
+}
+
+// ============ TAB 4: GASTOS ADICIONALES ============
+function calcGastos() {
+  const propUF = parseFloat(document.getElementById('propGastos').value) || 2500;
+  const propCLP = propUF * UF;
+  const uso = document.getElementById('usoPropiedad').value;
+  const gastosComunes = parseFloat(document.getElementById('gastosComunes').value) || 0;
+  const arrendoEsp = parseFloat(document.getElementById('arrendoEsp').value) || 0;
+
+  document.getElementById('propGastosCLP').textContent = 'Equivale a ' + fmt(propCLP);
+
+  // ONE-TIME COSTS
+  const notaria = propCLP * 0.005;    // ~0.5%
+  const cbr = propCLP * 0.01;         // ~1.0%
+  const tasacion = Math.max(80000, propCLP * 0.002);
+  const estudioTitulos = 150000;
+  const totalCierre = notaria + cbr + tasacion + estudioTitulos;
+
+  document.getElementById('costosTable').innerHTML = `
+    <tr><td>Notaría</td><td>~0.5%</td><td>${fmt(notaria)}</td></tr>
+    <tr><td>Conservador de Bienes Raíces (CBR)</td><td>~1.0%</td><td>${fmt(cbr)}</td></tr>
+    <tr><td>Tasación bancaria</td><td>~0.2%</td><td>${fmt(tasacion)}</td></tr>
+    <tr><td>Estudio de títulos</td><td>Fijo</td><td>${fmt(estudioTitulos)}</td></tr>
+    <tr class="total-row"><td colspan="2">Total costos de cierre</td><td>${fmt(totalCierre)}</td></tr>
+    <tr><td colspan="2" style="font-size:.77rem;color:var(--muted);font-style:italic">Como % del valor</td><td style="font-size:.77rem;color:var(--muted)">${((totalCierre/propCLP)*100).toFixed(2)}%</td></tr>
+  `;
+
+  // RECURRENT COSTS
+  const avaluoFiscal = propCLP * 0.80;
+  const contribuciones = avaluoFiscal * 0.0098;
+  const segDesg = propCLP * 0.8 * SEG_DESGRAVAMEN * 12;
+  const segInc = propCLP * 0.8 * SEG_INCENDIO * 12;
+  const gastComunesAnual = gastosComunes * 12;
+  const administracion = uso === 'inversion' ? arrendoEsp * 0.09 * 12 : 0;
+
+  let rows = `
+    <tr><td>Contribuciones (imp. territorial)</td><td>0.98% avalúo fiscal</td><td>${fmt(contribuciones)}/año</td></tr>
+    <tr><td>Seguro desgravamen</td><td>0.025%/mes capital</td><td>${fmt(segDesg)}/año</td></tr>
+    <tr><td>Seguro incendio</td><td>0.019%/mes capital</td><td>${fmt(segInc)}/año</td></tr>
+    <tr><td>Gastos comunes</td><td>${fmt(gastosComunes)}/mes</td><td>${fmt(gastComunesAnual)}/año</td></tr>
+  `;
+
+  if (uso === 'inversion') {
+    rows += `<tr><td>Administración propiedad (~9%)</td><td>9% renta mensual</td><td>${fmt(administracion)}/año</td></tr>`;
+  }
+
+  const totalRecurrente = contribuciones + segDesg + segInc + gastComunesAnual + administracion;
+  rows += `<tr class="total-row"><td colspan="2">Total gastos anuales</td><td>${fmt(totalRecurrente)}/año</td></tr>`;
+  rows += `<tr><td colspan="2" style="font-size:.77rem;color:var(--muted);font-style:italic">Mensualizado</td><td style="font-size:.77rem;color:var(--muted)">${fmt(totalRecurrente/12)}/mes</td></tr>`;
+
+  document.getElementById('recurrentesTable').innerHTML = rows;
+
+  // RENTABILIDAD
+  const rentBrutaAnual = arrendoEsp * 12;
+  const rentBruta = rentBrutaAnual / propCLP * 100;
+  const rentNeta = (rentBrutaAnual - totalRecurrente) / propCLP * 100;
+  const rentNetaAmt = rentBrutaAnual - totalRecurrente;
+
+  let rentColor = rentNeta >= 5 ? 'var(--green)' : rentNeta >= 3 ? 'var(--yellow)' : 'var(--red)';
+  let rentOpinion = rentNeta >= 5 ? 'Buena rentabilidad para el mercado chileno' : rentNeta >= 3 ? 'Rentabilidad moderada' : 'Rentabilidad baja — revisar precio o gastos';
+
+  document.getElementById('rentabilidadCard').innerHTML = `
+    <div class="info-row">
+      <span class="label">Renta bruta anual</span>
+      <span class="val">${fmt(rentBrutaAnual)}</span>
+    </div>
+    <div class="info-row">
+      <span class="label">Gastos totales anuales</span>
+      <span class="val" style="color:var(--red)">-${fmt(totalRecurrente)}</span>
+    </div>
+    <div class="info-row">
+      <span class="label">Renta neta anual</span>
+      <span class="val">${fmt(rentNetaAmt)}</span>
+    </div>
+    <div class="info-row">
+      <span class="label">Rentabilidad bruta</span>
+      <span class="val">${rentBruta.toFixed(2)}%</span>
+    </div>
+    <div class="info-row">
+      <span class="label">Rentabilidad neta</span>
+      <span class="val" style="color:${rentColor};font-size:1.1rem">${rentNeta.toFixed(2)}%</span>
+    </div>
+    <div class="recommend-card ${rentNeta>=5?'buy':rentNeta>=3?'rent':'neutral'}" style="margin-top:10px">${rentOpinion}. El cap rate (tasa de capitalización) promedio en Santiago es ~4–5%.</div>
+  `;
+}
+
+// ============ LOCALSTORAGE ============
+const LS_KEY = 'habitacl_v1';
+function saveState() {
+  try {
+    const s = {
+      propUF: document.getElementById('propUFn').value,
+      pie: document.getElementById('pieN').value,
+      tasa: document.getElementById('tasa').value,
+      plazo: document.getElementById('plazo').value,
+      arrendoCLP: document.getElementById('arrendoCLP').value,
+      propAVC: document.getElementById('propAVC').value,
+      ingresosSub: document.getElementById('ingresosSub').value,
+      propSub: document.getElementById('propSub').value,
+      propGastos: document.getElementById('propGastos').value,
+      gastosComunes: document.getElementById('gastosComunes').value,
+      arrendoEsp: document.getElementById('arrendoEsp').value,
+    };
+    localStorage.setItem(LS_KEY, JSON.stringify(s));
+  } catch(e) {}
+}
+function loadState() {
+  try {
+    const s = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
+    if (s.propUF) { document.getElementById('propUFn').value = s.propUF; document.getElementById('propUF').value = s.propUF; }
+    if (s.pie) { document.getElementById('pieN').value = s.pie; document.getElementById('pieSlider').value = s.pie; }
+    if (s.tasa) document.getElementById('tasa').value = s.tasa;
+    if (s.plazo) document.getElementById('plazo').value = s.plazo;
+    if (s.arrendoCLP) document.getElementById('arrendoCLP').value = s.arrendoCLP;
+    if (s.propAVC) document.getElementById('propAVC').value = s.propAVC;
+    if (s.ingresosSub) document.getElementById('ingresosSub').value = s.ingresosSub;
+    if (s.propSub) document.getElementById('propSub').value = s.propSub;
+    if (s.propGastos) document.getElementById('propGastos').value = s.propGastos;
+    if (s.gastosComunes) document.getElementById('gastosComunes').value = s.gastosComunes;
+    if (s.arrendoEsp) document.getElementById('arrendoEsp').value = s.arrendoEsp;
+  } catch(e) {}
+}
+
+// ============ INIT ============
+document.addEventListener('DOMContentLoaded', () => {
+  loadState();
+  calcDiv();
+  calcAVC();
+  calcSub();
+  calcGastos();
+
+  // Auto-save on any input change
+  document.querySelectorAll('input,select').forEach(el => {
+    el.addEventListener('change', saveState);
+  });
+
+  // Register service worker for PWA
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('data:text/javascript,self.addEventListener("fetch",e=>e.respondWith(fetch(e.request)))')
+      .catch(() => {});
+  }
+});
+</script>
+</body>
+</html>

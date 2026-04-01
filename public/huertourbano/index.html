@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<meta name="theme-color" content="#14532d">
+<meta name="description" content="Planificador de Huerto Urbano para Chile - Siembra, cosecha y cuida tu huerto según tu zona climática">
+<title>HuertoUrbano Chile</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{--bg:#f0fdf4;--card:#ffffff;--card2:#dcfce7;--border:#86efac;--accent:#16a34a;--text:#14532d;--muted:#6b8fa5;--brown:#92400e;--blue:#0369a1;--yellow:#d97706;--red:#dc2626;--orange:#ea580c;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:15px}
+header{background:linear-gradient(90deg,#14532d,#16a34a);padding:13px 18px;position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;color:white}
+header h1{font-size:1.1rem;font-weight:700;letter-spacing:-0.3px}
+header span{font-size:1.4rem}
+nav{background:#fff;border-bottom:2px solid var(--border);display:flex;overflow-x:auto;position:sticky;top:62px;z-index:40;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+.nav-btn{flex:0 0 auto;padding:10px 14px;border:none;background:none;color:var(--muted);font-size:0.75rem;font-weight:600;cursor:pointer;white-space:nowrap;border-bottom:3px solid transparent;font-family:'Inter',sans-serif;transition:color 0.2s}
+.nav-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab{display:none;padding:14px;max-width:680px;margin:0 auto}
+.tab.active{display:block}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px}
+.card2{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px}
+.card-title{font-size:0.85rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px}
+label{display:block;font-size:0.8rem;font-weight:600;color:var(--text);margin-bottom:4px;margin-top:10px}
+label:first-of-type{margin-top:0}
+select,input,textarea{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:16px;font-family:'Inter',sans-serif;color:var(--text);background:#fff;outline:none;transition:border-color 0.2s}
+select:focus,input:focus,textarea:focus{border-color:var(--accent)}
+textarea{min-height:70px;resize:vertical}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border:none;border-radius:8px;font-size:0.85rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:opacity 0.2s}
+.btn:active{opacity:0.8}
+.btn-primary{background:var(--accent);color:white}
+.btn-secondary{background:var(--card2);color:var(--accent);border:1.5px solid var(--border)}
+.btn-danger{background:#fee2e2;color:var(--red);border:1.5px solid #fca5a5}
+.btn-sm{padding:6px 12px;font-size:0.78rem}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:0.72rem;font-weight:600}
+.badge-green{background:#dcfce7;color:#15803d}
+.badge-yellow{background:#fef9c3;color:#a16207}
+.badge-orange{background:#ffedd5;color:var(--orange)}
+.badge-red{background:#fee2e2;color:var(--red)}
+.badge-blue{background:#dbeafe;color:var(--blue)}
+.badge-brown{background:#fef3c7;color:var(--brown)}
+.progress-bar{background:#e5e7eb;border-radius:20px;height:8px;overflow:hidden;margin:6px 0}
+.progress-fill{height:100%;border-radius:20px;background:linear-gradient(90deg,var(--accent),#4ade80);transition:width 0.5s}
+.plant-card{background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;position:relative}
+.plant-card.harvest-ready{border-color:#f59e0b;background:#fffbeb}
+.plant-card.harvested{opacity:0.6;border-color:#d1d5db}
+.plant-meta{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}
+.veg-card{background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:12px;cursor:pointer;transition:border-color 0.2s,transform 0.1s}
+.veg-card:hover{border-color:var(--accent);transform:translateY(-1px)}
+.veg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px}
+.veg-emoji{font-size:1.8rem;margin-bottom:4px;display:block}
+.veg-name{font-weight:700;font-size:0.9rem}
+.veg-sub{font-size:0.75rem;color:var(--muted);margin-top:2px}
+.month-calendar{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;scrollbar-width:none}
+.month-calendar::-webkit-scrollbar{display:none}
+.month-col{flex:0 0 60px;text-align:center}
+.month-header{font-size:0.7rem;font-weight:700;color:var(--muted);margin-bottom:6px;text-transform:uppercase}
+.month-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.9rem;margin:2px auto;cursor:default}
+.dot-sow{background:#dcfce7;border:1.5px solid var(--accent)}
+.dot-transplant{background:#ffedd5;border:1.5px solid var(--orange)}
+.dot-harvest{background:#fef9c3;border:1.5px solid var(--yellow)}
+.dot-none{background:#f3f4f6}
+.companion-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.companion-card{padding:10px;border-radius:10px;font-size:0.8rem}
+.companion-pos{background:#dcfce7;border:1px solid var(--border)}
+.companion-neg{background:#fee2e2;border:1px solid #fca5a5}
+.companion-title{font-weight:700;margin-bottom:2px}
+.soil-section h3{font-size:0.9rem;font-weight:700;color:var(--text);margin:10px 0 6px}
+.soil-section p{font-size:0.82rem;color:#374151;line-height:1.5;margin-bottom:8px}
+table{width:100%;border-collapse:collapse;font-size:0.8rem;margin-top:6px}
+th{background:var(--card2);padding:7px 8px;text-align:left;font-weight:600;color:var(--text);border:1px solid var(--border)}
+td{padding:7px 8px;border:1px solid #e5e7eb;vertical-align:top}
+tr:nth-child(even) td{background:#f9fafb}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;align-items:flex-end;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:16px 16px 0 0;padding:20px;width:100%;max-width:680px;max-height:90vh;overflow-y:auto}
+.modal-title{font-size:1rem;font-weight:700;margin-bottom:12px;color:var(--text)}
+.modal-emoji{font-size:2.5rem;margin-bottom:8px;display:block}
+.close-btn{float:right;background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--muted);padding:2px 6px}
+.row{display:flex;gap:10px}
+.row>*{flex:1}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+.stat-box{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center}
+.stat-number{font-size:1.4rem;font-weight:700;color:var(--accent)}
+.stat-label{font-size:0.72rem;color:var(--muted);margin-top:2px}
+.task-item{display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid #f3f4f6}
+.task-item:last-child{border-bottom:none}
+.task-icon{font-size:1.1rem;flex-shrink:0;margin-top:1px}
+.task-text{font-size:0.82rem;line-height:1.4}
+.rotation-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.rotation-card{padding:10px;border-radius:10px;font-size:0.82rem;border:1px solid}
+.pot-table{overflow-x:auto}
+.filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.filter-btn{padding:6px 12px;border:1.5px solid var(--border);border-radius:20px;background:#fff;font-size:0.78rem;font-weight:600;cursor:pointer;color:var(--muted);font-family:'Inter',sans-serif;transition:all 0.2s}
+.filter-btn.active{background:var(--accent);color:white;border-color:var(--accent)}
+.weather-alert{background:linear-gradient(135deg,#fef9c3,#fef3c7);border:1px solid #fde68a;border-radius:10px;padding:10px 12px;font-size:0.82rem;color:#78350f;display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.harvest-chart-container{height:180px;margin-top:8px}
+.empty-state{text-align:center;padding:30px 20px;color:var(--muted)}
+.empty-state .empty-icon{font-size:3rem;margin-bottom:10px}
+.empty-state p{font-size:0.85rem}
+.detail-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #f3f4f6;font-size:0.82rem}
+.detail-row:last-child{border-bottom:none}
+.detail-label{color:var(--muted)}
+.detail-val{font-weight:600;text-align:right}
+.water-btn{background:#dbeafe;color:var(--blue);border:1.5px solid #93c5fd;border-radius:8px;padding:6px 12px;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif}
+@media(min-width:480px){.veg-grid{grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>🌱 HuertoUrbano Chile</h1>
+  </div>
+  <span id="headerZone" style="font-size:0.75rem;background:rgba(255,255,255,0.2);padding:4px 8px;border-radius:8px"></span>
+</header>
+
+<nav id="mainNav">
+  <button class="nav-btn active" onclick="showTab('mihuerto')">🏡 Mi Huerto</button>
+  <button class="nav-btn" onclick="showTab('queplantar')">🌿 Qué Plantar</button>
+  <button class="nav-btn" onclick="showTab('misplantas')">🪴 Mis Plantas</button>
+  <button class="nav-btn" onclick="showTab('planifica')">📐 Planifica</button>
+  <button class="nav-btn" onclick="showTab('suelo')">🌍 Suelo</button>
+</nav>
+
+<!-- TAB 1: MI HUERTO -->
+<div class="tab active" id="tab-mihuerto">
+  <div class="card">
+    <div class="card-title">⚙️ Mi Configuración</div>
+    <label>Zona Climática</label>
+    <select id="zonaSelect" onchange="saveConfig();renderDashboard()">
+      <option value="norte">Norte árido (Regiones I-II)</option>
+      <option value="nortechico">Norte chico (Regiones III-IV)</option>
+      <option value="centro" selected>Centro (V-RM-VI)</option>
+      <option value="centrosur">Centro-Sur (VII-VIII)</option>
+      <option value="sur">Sur (IX-XIV)</option>
+      <option value="austral">Austral (XV/XI/XII)</option>
+    </select>
+    <label>Tipo de espacio</label>
+    <select id="tipoEspacio" onchange="saveConfig();renderDashboard()">
+      <option value="balcon">Balcón / Terraza (macetas)</option>
+      <option value="patio">Patio pequeño (&lt;20m²)</option>
+      <option value="jardin">Jardín mediano (20-100m²)</option>
+      <option value="huerto">Huerto grande (&gt;100m²)</option>
+    </select>
+    <div class="row" style="margin-top:10px">
+      <div>
+        <label>Espacio (m²)</label>
+        <input type="number" id="espacio" value="4" min="1" max="500" onchange="saveConfig()" style="font-size:16px">
+      </div>
+      <div>
+        <label>N° Macetas</label>
+        <input type="number" id="macetas" value="3" min="1" max="50" onchange="saveConfig()" style="font-size:16px">
+      </div>
+    </div>
+  </div>
+
+  <div id="weatherAlert"></div>
+
+  <div class="card2">
+    <div class="card-title">📅 Este mes puedes sembrar</div>
+    <div id="monthHighlights"></div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-box">
+      <div class="stat-number" id="statTotal">0</div>
+      <div class="stat-label">Plantas activas</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-number" id="statReady">0</div>
+      <div class="stat-label">Listas a cosechar</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-number" id="statSaved">$0</div>
+      <div class="stat-label">Ahorrado este año</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📋 Tareas esta semana</div>
+    <div id="weeklyTasks"></div>
+  </div>
+
+  <div class="card" id="activePlantsPreview">
+    <div class="card-title">🪴 Estado de mis plantas</div>
+    <div id="plantsPreview"></div>
+    <div style="margin-top:10px;text-align:center">
+      <button class="btn btn-secondary btn-sm" onclick="showTab('misplantas')">Ver todas mis plantas →</button>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 2: QUÉ PLANTAR -->
+<div class="tab" id="tab-queplantar">
+  <div class="card">
+    <div class="card-title">🔍 Filtros</div>
+    <div class="row">
+      <div>
+        <label>Zona</label>
+        <select id="filtroZona" onchange="renderVegList()">
+          <option value="centro">Centro (RM)</option>
+          <option value="norte">Norte árido</option>
+          <option value="nortechico">Norte chico</option>
+          <option value="centrosur">Centro-Sur</option>
+          <option value="sur">Sur</option>
+          <option value="austral">Austral</option>
+        </select>
+      </div>
+      <div>
+        <label>Mes</label>
+        <select id="filtroMes" onchange="renderVegList()">
+          <option value="0">Enero</option>
+          <option value="1">Febrero</option>
+          <option value="2">Marzo</option>
+          <option value="3">Abril</option>
+          <option value="4">Mayo</option>
+          <option value="5">Junio</option>
+          <option value="6">Julio</option>
+          <option value="7">Agosto</option>
+          <option value="8">Septiembre</option>
+          <option value="9">Octubre</option>
+          <option value="10">Noviembre</option>
+          <option value="11">Diciembre</option>
+        </select>
+      </div>
+    </div>
+    <div class="filter-row" style="margin-top:10px">
+      <button class="filter-btn active" onclick="setTypeFilter('todo',this)">Todo</button>
+      <button class="filter-btn" onclick="setTypeFilter('verdura',this)">Verduras</button>
+      <button class="filter-btn" onclick="setTypeFilter('hierba',this)">Hierbas</button>
+      <button class="filter-btn" onclick="setTypeFilter('fruta',this)">Frutas</button>
+    </div>
+    <div class="filter-row">
+      <button class="filter-btn active" id="difAll" onclick="setDifFilter('todo',this)">Toda dificultad</button>
+      <button class="filter-btn" onclick="setDifFilter('Fácil',this)">Fácil</button>
+      <button class="filter-btn" onclick="setDifFilter('Medio',this)">Medio</button>
+      <button class="filter-btn" onclick="setDifFilter('Difícil',this)">Difícil</button>
+    </div>
+  </div>
+
+  <div id="canPlantNow" class="card2" style="display:none">
+    <div class="card-title">✅ Puedes sembrar este mes</div>
+    <div id="canPlantList"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📅 Calendario Anual</div>
+    <p style="font-size:0.78rem;color:var(--muted);margin-bottom:8px">🟢 Siembra &nbsp;🟠 Trasplante &nbsp;🟡 Cosecha</p>
+    <div id="monthCalendar" class="month-calendar"></div>
+  </div>
+
+  <div class="veg-grid" id="vegGrid"></div>
+</div>
+
+<!-- TAB 3: MIS PLANTAS -->
+<div class="tab" id="tab-misplantas">
+  <div class="card">
+    <div class="card-title">➕ Registrar nueva planta</div>
+    <label>Cultivo</label>
+    <select id="addCultivo">
+      <option value="">Seleccionar...</option>
+    </select>
+    <div class="row">
+      <div>
+        <label>Fecha siembra</label>
+        <input type="date" id="addFecha">
+      </div>
+      <div>
+        <label>Cantidad</label>
+        <input type="number" id="addCantidad" value="1" min="1" max="100" style="font-size:16px">
+      </div>
+    </div>
+    <label>Ubicación</label>
+    <input type="text" id="addUbicacion" placeholder="ej: Maceta balcón, Cantero 1" style="font-size:16px">
+    <label>Notas</label>
+    <textarea id="addNotas" placeholder="Observaciones..."></textarea>
+    <div style="margin-top:12px">
+      <button class="btn btn-primary" onclick="addPlant()">🌱 Registrar planta</button>
+    </div>
+  </div>
+
+  <div id="plantListContainer">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <div style="font-size:0.85rem;font-weight:700;color:var(--text)">Mis plantas activas</div>
+      <button class="btn btn-secondary btn-sm" onclick="toggleShowHarvested()">Ver cosechadas</button>
+    </div>
+    <div id="plantList"></div>
+  </div>
+
+  <div class="card" id="harvestSummary" style="margin-top:12px">
+    <div class="card-title">🏆 Registro de cosecha</div>
+    <div id="harvestStats"></div>
+    <div class="harvest-chart-container">
+      <canvas id="harvestChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 4: PLANIFICA -->
+<div class="tab" id="tab-planifica">
+  <div class="card">
+    <div class="card-title">📐 Tu Espacio</div>
+    <div class="row">
+      <div>
+        <label>Tipo de espacio</label>
+        <select id="planTipoEspacio">
+          <option>Balcón</option>
+          <option>Patio pequeño</option>
+          <option>Jardín</option>
+          <option>Terraza</option>
+          <option>Invernadero</option>
+        </select>
+      </div>
+      <div>
+        <label>m² disponibles</label>
+        <input type="number" id="planM2" value="4" min="1" style="font-size:16px">
+      </div>
+    </div>
+    <div id="spaceRecommendation" style="margin-top:10px;font-size:0.82rem;padding:10px;background:var(--card2);border-radius:8px;color:var(--text)"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">💚 Asociaciones Positivas</div>
+    <div class="companion-grid" id="companionPos"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">❌ Asociaciones Negativas</div>
+    <div class="companion-grid" id="companionNeg"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🔄 Rotación de Cultivos (4 años)</div>
+    <p style="font-size:0.78rem;color:var(--muted);margin-bottom:10px">Rota los cultivos para evitar agotar el suelo y reducir plagas.</p>
+    <div class="rotation-grid" id="rotationGrid"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🪣 Guía de Macetas</div>
+    <div class="pot-table">
+      <table>
+        <thead>
+          <tr><th>Cultivo</th><th>Maceta mínima</th><th>Profundidad</th></tr>
+        </thead>
+        <tbody id="potTable"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 5: SUELO Y CUIDADO -->
+<div class="tab" id="tab-suelo">
+  <div class="card soil-section">
+    <div class="card-title">🌱 Preparación del Suelo en Chile</div>
+    <h3>Tierra de hoja</h3>
+    <p>Abono natural ideal para huertas chilenas. Se consigue en viveros y ferreterías agrícolas. Mezcla 1:1:1 tierra-compost-perlita para macetas.</p>
+    <h3>Humus de lombriz</h3>
+    <p>El mejor abono orgánico disponible en Chile. Agregar 20-30% al sustrato. Disponible en viveros como "Lombricultura" y ferias libres.</p>
+    <h3>Compost casero en 4 pasos</h3>
+    <p>1. <strong>Capa café</strong>: hojas secas, cartón, papel<br>2. <strong>Capa verde</strong>: restos de comida, pasto, podas<br>3. <strong>Humedad</strong>: como esponja apretada<br>4. <strong>Voltear</strong> cada 2 semanas → listo en 3 meses</p>
+    <h3>pH ideal por cultivo</h3>
+    <table>
+      <thead><tr><th>Cultivo</th><th>pH óptimo</th></tr></thead>
+      <tbody>
+        <tr><td>Tomate, Pimentón</td><td>6.0 – 6.8</td></tr>
+        <tr><td>Lechuga, Espinaca</td><td>6.0 – 7.0</td></tr>
+        <tr><td>Zanahoria, Remolacha</td><td>6.0 – 6.8</td></tr>
+        <tr><td>Papa</td><td>4.8 – 5.5</td></tr>
+        <tr><td>Frutilla</td><td>5.5 – 6.5</td></tr>
+        <tr><td>Ajo, Cebolla</td><td>6.0 – 7.0</td></tr>
+        <tr><td>Arándano</td><td>4.5 – 5.5</td></tr>
+        <tr><td>Hierbas aromáticas</td><td>6.0 – 7.0</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card soil-section">
+    <div class="card-title">💧 Riego Inteligente</div>
+    <h3>Cuándo y cómo regar</h3>
+    <p>Riega en la <strong>mañana temprano</strong> (antes de las 10am) para que las hojas se sequen durante el día y reducir enfermedades fúngicas. Evita regar en pleno sol.</p>
+    <h3>Señales de problemas</h3>
+    <table>
+      <thead><tr><th>Síntoma</th><th>Causa</th><th>Solución</th></tr></thead>
+      <tbody>
+        <tr><td>Hojas amarillas, suelo empapado</td><td>Exceso riego</td><td>Deja secar, mejora drenaje</td></tr>
+        <tr><td>Hojas marchitas, suelo seco</td><td>Falta agua</td><td>Riego profundo gradual</td></tr>
+        <tr><td>Hojas con manchas marrones en bordes</td><td>Sal acumulada</td><td>Riego abundante para lavar</td></tr>
+        <tr><td>Raíces podridas</td><td>Anegamiento</td><td>Replanta con drenaje</td></tr>
+      </tbody>
+    </table>
+    <h3>Recolección de agua de lluvia</h3>
+    <p>Usa baldes de 20L bajo canaletas o techo. El agua de lluvia no tiene cloro y es ideal para huertos. Cubre para evitar mosquitos.</p>
+  </div>
+
+  <div class="card soil-section">
+    <div class="card-title">🐛 Plagas Comunes en Chile</div>
+    <table>
+      <thead><tr><th>Plaga</th><th>Síntoma</th><th>Control orgánico</th></tr></thead>
+      <tbody>
+        <tr><td>🦟 Pulgón</td><td>Hojas pegajosas, enrolladas, colonias verdes o negras</td><td>Jabón potásico diluido, chorro de agua, mariquitas</td></tr>
+        <tr><td>🪲 Mosca blanca</td><td>Polvillo blanco bajo hojas, vuelo al mover planta</td><td>Trampas amarillas pegajosas, albahaca como repelente</td></tr>
+        <tr><td>🐌 Babosa/Caracol</td><td>Hojas comidas de noche, rastro plateado</td><td>Taza de cerveza en suelo, ceniza alrededor, cáscaras de huevo</td></tr>
+        <tr><td>🦗 Trips</td><td>Manchas plateadas en hojas, deformación</td><td>Aceite de neem, insecticida en base a spinosad</td></tr>
+        <tr><td>🕷️ Arañita roja</td><td>Telas finas, hojas amarillas/bronce en calor</td><td>Aumentar humedad, aceite de neem, jabón potásico</td></tr>
+        <tr><td>🪱 Gusano cortador</td><td>Plantas cortadas a ras del suelo</td><td>Collar de cartón, Bacillus thuringiensis</td></tr>
+        <tr><td>🍄 Oidio</td><td>Polvo blanco en hojas (hongo)</td><td>Bicarbonato 5g/L agua, leche diluida 1:10</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card soil-section">
+    <div class="card-title">🌿 Abonos Orgánicos</div>
+    <h3>Compost maduro</h3>
+    <p>Incorporar 5-10 cm al preparar el terreno. Mejora estructura del suelo, retención de agua y aporta nutrientes equilibrados.</p>
+    <h3>Humus de lombriz</h3>
+    <p>El mejor abono chileno. Aplica 1 taza por maceta mensualmente. Activa la vida microbiana del suelo. Sin riesgo de quemar raíces.</p>
+    <h3>Té de compost</h3>
+    <p>Llena un balde con compost maduro, cubre con agua, airear 24-48h. Colar y aplicar como riego semanal. Activa microorganismos benéficos.</p>
+    <h3>Orina diluida (1:10)</h3>
+    <p>Fuente de nitrógeno gratuita. Diluir 1 parte orina en 10 de agua. Aplicar al suelo (no hojas) cada 2 semanas en fase de crecimiento vegetativo.</p>
+    <h3>Calendario de fertilización</h3>
+    <table>
+      <thead><tr><th>Estación</th><th>Nutriente clave</th><th>Para qué</th></tr></thead>
+      <tbody>
+        <tr><td>🌸 Primavera</td><td>Nitrógeno (N)</td><td>Crecimiento vegetal, hojas verdes</td></tr>
+        <tr><td>☀️ Verano</td><td>Potasio (K)</td><td>Formación y calidad de frutos</td></tr>
+        <tr><td>🍂 Otoño</td><td>Fósforo (P)</td><td>Raíces fuertes, almacenamiento</td></tr>
+        <tr><td>❄️ Invierno</td><td>Materia orgánica</td><td>Descanso del suelo, preparación</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- VEG DETAIL MODAL -->
+<div class="modal-overlay" id="vegModal" onclick="closeModal(event)">
+  <div class="modal" id="vegModalContent">
+    <button class="close-btn" onclick="closeVegModal()">✕</button>
+    <div id="vegModalBody"></div>
+    <div style="margin-top:14px">
+      <button class="btn btn-primary" onclick="addFromModal()">🌱 Agregar a mis plantas</button>
+    </div>
+  </div>
+</div>
+
+<!-- HARVEST MODAL -->
+<div class="modal-overlay" id="harvestModal" onclick="closeModal(event)">
+  <div class="modal">
+    <button class="close-btn" onclick="document.getElementById('harvestModal').classList.remove('open')">✕</button>
+    <div class="modal-title">🎉 ¡Registrar cosecha!</div>
+    <input type="hidden" id="harvestPlantId">
+    <label>Cantidad cosechada (kg o unidades)</label>
+    <input type="number" id="harvestAmount" placeholder="ej: 0.5" step="0.1" min="0" style="font-size:16px">
+    <label>Unidad</label>
+    <select id="harvestUnit">
+      <option value="kg">kg</option>
+      <option value="unidades">unidades</option>
+      <option value="manojos">manojos</option>
+    </select>
+    <label>Notas de cosecha</label>
+    <textarea id="harvestNotes" placeholder="¿Cómo resultó?..."></textarea>
+    <div style="margin-top:12px">
+      <button class="btn btn-primary" onclick="confirmHarvest()">✅ Confirmar cosecha</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// =============================================
+// VEGETABLE DATABASE
+// =============================================
+const VEGETABLES = [
+  {id:'tomate',nombre:'Tomate',emoji:'🍅',tipo:'verdura',siembra:'almácigo',diasCosecha:75,espacio:60,profundidad:5,agua:'abundante',sol:'pleno',dificultad:'Medio',precioKg:1800,
+   siembraMeses:{norte:[0,1,2,7,8,9,10,11],nortechico:[0,1,7,8,9,10,11],centro:[8,9,10,11,0],centrosur:[9,10,11],sur:[10,11],austral:[10,11]},
+   cosechaMeses:{norte:[3,4,5,11,0,1],nortechico:[3,4,10,11,0],centro:[0,1,2,3],centrosur:[1,2,3],sur:[2,3],austral:[2,3]},
+   asociaPos:['Albahaca','Zanahoria','Perejil'],asociaNeg:['Pepino','Hinojo'],
+   tips:'En Chile central, sembrar en almácigo desde agosto. Proteger de heladas tardías. Requiere tutores a los 40cm.'},
+  {id:'lechuga',nombre:'Lechuga',emoji:'🥬',tipo:'verdura',siembra:'almácigo/directa',diasCosecha:45,espacio:25,profundidad:0.5,agua:'moderada',sol:'semisombra',dificultad:'Fácil',precioKg:800,
+   siembraMeses:{norte:[0,1,2,3,4,5,6,7,8,9,10,11],nortechico:[0,1,2,3,7,8,9,10,11],centro:[0,1,2,3,7,8,9,10,11],centrosur:[2,3,7,8,9,10],sur:[2,3,8,9,10],austral:[9,10,2,3]},
+   cosechaMeses:{norte:[0,1,2,3,4,5,6,7,8,9,10,11],nortechico:[0,1,2,3,4,8,9,10,11],centro:[0,1,2,3,4,9,10,11],centrosur:[4,5,10,11],sur:[4,5,11],austral:[4,11]},
+   asociaPos:['Zanahoria','Rábano','Frutilla'],asociaNeg:['Apio','Perejil'],
+   tips:'Ideal para macetas en balcón. Tolera semisombra. Cosechar hojas externas y la planta sigue produciendo.'},
+  {id:'zanahoria',nombre:'Zanahoria',emoji:'🥕',tipo:'verdura',siembra:'directa',diasCosecha:75,espacio:8,profundidad:1,agua:'moderada',sol:'pleno',dificultad:'Medio',precioKg:700,
+   siembraMeses:{norte:[0,1,2,3,7,8,9,10,11],nortechico:[0,1,7,8,9,10,11],centro:[3,4,7,8,9,10],centrosur:[3,4,8,9,10],sur:[3,4,9,10],austral:[9,10,3,4]},
+   cosechaMeses:{norte:[3,4,5,10,11,0],nortechico:[3,4,10,11,0],centro:[6,7,11,0],centrosur:[7,8,0],sur:[7,8],austral:[0,1]},
+   asociaPos:['Cebolla','Lechuga','Tomate'],asociaNeg:['Eneldo','Anís'],
+   tips:'Necesita tierra suelta y profunda. En maceta, usar mínimo 30cm de profundidad. Aclarar a 8cm entre plantas.'},
+  {id:'rabanito',nombre:'Rabanito',emoji:'🔴',tipo:'verdura',siembra:'directa',diasCosecha:25,espacio:5,profundidad:1,agua:'moderada',sol:'pleno',dificultad:'Fácil',precioKg:600,
+   siembraMeses:{norte:[0,1,2,3,4,5,6,7,8,9,10,11],nortechico:[0,1,2,3,7,8,9,10,11],centro:[3,4,5,6,7,8,9],centrosur:[3,4,5,8,9,10],sur:[3,4,9,10],austral:[9,10,3,4]},
+   cosechaMeses:{norte:[0,1,2,3,4,5,6,7,8,9,10,11],nortechico:[0,1,2,3,4,8,9,10,11],centro:[4,5,6,7,8,9,10],centrosur:[4,5,6,9,10,11],sur:[4,5,10,11],austral:[10,11,4,5]},
+   asociaPos:['Lechuga','Zanahoria','Espinaca'],asociaNeg:[],
+   tips:'El cultivo más rápido del huerto. Perfecto para niños. Cosechar antes de 30 días o se vuelve picante y fibroso.'},
+  {id:'pepino',nombre:'Pepino',emoji:'🥒',tipo:'verdura',siembra:'almácigo',diasCosecha:60,espacio:50,profundidad:2,agua:'abundante',sol:'pleno',dificultad:'Medio',precioKg:700,
+   siembraMeses:{norte:[0,1,2,9,10,11],nortechico:[0,1,9,10,11],centro:[9,10,11],centrosur:[10,11],sur:[11],austral:[]},
+   cosechaMeses:{norte:[2,3,4,11,0],nortechico:[2,3,11,0],centro:[1,2,3],centrosur:[2,3],sur:[2,3],austral:[2,3]},
+   asociaPos:['Poroto','Girasol','Rábano'],asociaNeg:['Tomate','Salvia'],
+   tips:'Necesita tutor o malla. Muy sensible a heladas. Cosechar continuamente para estimular producción.'},
+  {id:'zapallo',nombre:'Zapallo',emoji:'🎃',tipo:'verdura',siembra:'directa/almácigo',diasCosecha:90,espacio:100,profundidad:3,agua:'moderada',sol:'pleno',dificultad:'Fácil',precioKg:500,
+   siembraMeses:{norte:[0,1,2,9,10,11],nortechico:[0,1,9,10,11],centro:[9,10,11],centrosur:[10,11],sur:[11],austral:[]},
+   cosechaMeses:{norte:[3,4,5,0,1],nortechico:[3,4,0,1],centro:[1,2,3,4],centrosur:[2,3,4],sur:[3,4],austral:[3,4]},
+   asociaPos:['Maíz','Poroto','Albahaca'],asociaNeg:['Papa'],
+   tips:'Las "3 hermanas" con maíz y porotos. En maceta usa variedad "acorn" o "buttercup". Pinzar extremos para concentrar energía en los frutos.'},
+  {id:'pimenton',nombre:'Pimentón',emoji:'🫑',tipo:'verdura',siembra:'almácigo',diasCosecha:80,espacio:45,profundidad:5,agua:'moderada',sol:'pleno',dificultad:'Medio',precioKg:1500,
+   siembraMeses:{norte:[0,1,7,8,9,10,11],nortechico:[0,1,8,9,10,11],centro:[8,9,10],centrosur:[9,10],sur:[10,11],austral:[]},
+   cosechaMeses:{norte:[3,4,5,0,1],nortechico:[3,4,0,1],centro:[0,1,2,3],centrosur:[1,2,3],sur:[2,3],austral:[2,3]},
+   asociaPos:['Albahaca','Zanahoria','Cebolla'],asociaNeg:['Hinojo'],
+   tips:'Sembrar en almácigo 10 semanas antes del trasplante. En Chile centro, desde agosto en invernadero. Muy productivo en verano.'},
+  {id:'aji',nombre:'Ají',emoji:'🌶️',tipo:'verdura',siembra:'almácigo',diasCosecha:90,espacio:40,profundidad:5,agua:'moderada',sol:'pleno',dificultad:'Medio',precioKg:2000,
+   siembraMeses:{norte:[0,1,7,8,9,10,11],nortechico:[0,1,8,9,10,11],centro:[8,9,10],centrosur:[9,10],sur:[10,11],austral:[]},
+   cosechaMeses:{norte:[3,4,5,0,1],nortechico:[3,4,0,1],centro:[0,1,2,3],centrosur:[1,2,3],sur:[2,3],austral:[2,3]},
+   asociaPos:['Tomate','Albahaca'],asociaNeg:['Hinojo'],
+   tips:'Requiere calor. En zonas frías, cultivar en invernadero o maceta cerca de ventana sur. Puede ser perenne en zonas sin heladas.'},
+  {id:'berenjena',nombre:'Berenjena',emoji:'🍆',tipo:'verdura',siembra:'almácigo',diasCosecha:80,espacio:60,profundidad:5,agua:'moderada',sol:'pleno',dificultad:'Difícil',precioKg:1200,
+   siembraMeses:{norte:[0,1,8,9,10,11],nortechico:[0,1,9,10,11],centro:[9,10],centrosur:[10],sur:[11],austral:[]},
+   cosechaMeses:{norte:[3,4,0,1],nortechico:[3,4,0],centro:[1,2,3],centrosur:[2,3],sur:[3],austral:[]},
+   asociaPos:['Albahaca','Perejil'],asociaNeg:['Hinojo'],
+   tips:'La más exigente en calor. Ideal solo en zona norte y centro en Chile. Riego constante y evitar estrés hídrico.'},
+  {id:'albahaca',nombre:'Albahaca',emoji:'🌿',tipo:'hierba',siembra:'directa/almácigo',diasCosecha:35,espacio:20,profundidad:0.5,agua:'moderada',sol:'pleno',dificultad:'Fácil',precioKg:3000,
+   siembraMeses:{norte:[0,1,2,9,10,11],nortechico:[0,1,9,10,11],centro:[9,10,11],centrosur:[10,11],sur:[11],austral:[]},
+   cosechaMeses:{norte:[1,2,3,10,11,0],nortechico:[1,2,10,11,0],centro:[11,0,1,2],centrosur:[0,1,2],sur:[1,2],austral:[1,2]},
+   asociaPos:['Tomate','Pimentón','Pepino'],asociaNeg:['Salvia','Romero'],
+   tips:'Compañero ideal del tomate. Pinzar flores para mantener producción de hojas. No soporta temperaturas bajo 10°C.'},
+  {id:'perejil',nombre:'Perejil',emoji:'🌿',tipo:'hierba',siembra:'directa',diasCosecha:60,espacio:15,profundidad:0.5,agua:'moderada',sol:'semisombra',dificultad:'Fácil',precioKg:2000,
+   siembraMeses:{norte:[0,1,2,3,4,5,6,7,8,9,10,11],nortechico:[0,1,2,3,7,8,9,10,11],centro:[2,3,4,7,8,9,10,11],centrosur:[3,4,8,9,10,11],sur:[3,4,9,10,11],austral:[9,10,3,4]},
+   cosechaMeses:{norte:[0,1,2,3,4,5,6,7,8,9,10,11],nortechico:[0,1,2,3,4,5,8,9,10,11],centro:[4,5,6,9,10,11,0],centrosur:[5,6,10,11,0],sur:[5,6,11,0],austral:[11,0,5,6]},
+   asociaPos:['Tomate','Rosa','Espárrago'],asociaNeg:['Lechuga'],
+   tips:'Tarda mucho en germinar (3-4 semanas). Remojar semillas 24h antes. Cortar regularmente para estimular crecimiento.'},
+  {id:'cilantro',nombre:'Cilantro',emoji:'🌿',tipo:'hierba',siembra:'directa',diasCosecha:30,espacio:10,profundidad:0.5,agua:'moderada',sol:'semisombra',dificultad:'Fácil',precioKg:2500,
+   siembraMeses:{norte:[0,1,2,3,7,8,9,10,11],nortechico:[0,1,2,7,8,9,10,11],centro:[2,3,4,7,8,9,10,11],centrosur:[3,4,8,9,10,11],sur:[3,4,9,10],austral:[9,10,3]},
+   cosechaMeses:{norte:[1,2,3,4,8,9,10,11],nortechico:[1,2,3,8,9,10,11],centro:[3,4,5,9,10,11,0],centrosur:[4,5,10,11,0],sur:[4,5,11],austral:[11,0,4]},
+   asociaPos:['Espinaca','Lechuga','Anís'],asociaNeg:['Hinojo'],
+   tips:'En Chile es "cilantro" (no coriandro). Bolting rápido en calor. Para hoja, siembrar en otoño-primavera. Múltiples siembras escalonadas.'},
+  {id:'cebolla',nombre:'Cebolla',emoji:'🧅',tipo:'verdura',siembra:'almácigo/bulbillos',diasCosecha:120,espacio:15,profundidad:2,agua:'moderada',sol:'pleno',dificultad:'Medio',precioKg:500,
+   siembraMeses:{norte:[0,1,2,5,6,7,8],nortechico:[1,2,5,6,7,8],centro:[2,3,5,6,7,8],centrosur:[3,4,7,8,9],sur:[3,4,8,9],austral:[3,4,9]},
+   cosechaMeses:{norte:[5,6,11,0,1],nortechico:[6,7,11,0],centro:[6,7,8,11,0],centrosur:[7,8,0,1],sur:[7,8,0],austral:[7,8,0]},
+   asociaPos:['Zanahoria','Tomate','Lechuga'],asociaNeg:['Poroto','Guisante'],
+   tips:'Sembrar desde almácigo en verano para trasplantar en otoño. Los bulbillos del norte chico son ideales para huertas de la RM.'},
+  {id:'ajo',nombre:'Ajo',emoji:'🧄',tipo:'verdura',siembra:'dientes',diasCosecha:180,espacio:10,profundidad:5,agua:'poca',sol:'pleno',dificultad:'Fácil',precioKg:2500,
+   siembraMeses:{norte:[3,4,5],nortechico:[3,4,5],centro:[4,5,6],centrosur:[4,5,6,7],sur:[5,6,7],austral:[5,6,7]},
+   cosechaMeses:{norte:[9,10,11],nortechico:[9,10,11],centro:[10,11,0],centrosur:[11,0,1],sur:[0,1],austral:[0,1,2]},
+   asociaPos:['Tomate','Rosa','Zanahoria'],asociaNeg:['Poroto','Guisante','Repollo'],
+   tips:'Plantar los dientes más grandes. El ajo chileno de Curicó es reconocido. Cosechar cuando el follaje se dobla y amarillea.'},
+  {id:'acelga',nombre:'Acelga',emoji:'🥬',tipo:'verdura',siembra:'directa/almácigo',diasCosecha:50,espacio:30,profundidad:2,agua:'moderada',sol:'semisombra',dificultad:'Fácil',precioKg:500,
+   siembraMeses:{norte:[0,1,2,3,4,5,6,7,8,9,10,11],nortechico:[0,1,2,3,7,8,9,10,11],centro:[2,3,4,7,8,9,10,11],centrosur:[3,4,8,9,10],sur:[3,4,9,10],austral:[9,10,3,4]},
+   cosechaMeses:{norte:[0,1,2,3,4,5,6,7,8,9,10,11],nortechico:[0,1,2,3,4,5,8,9,10,11],centro:[4,5,6,9,10,11,0],centrosur:[5,6,10,11,0],sur:[5,6,11,0],austral:[11,0,5,6]},
+   asociaPos:['Lechuga','Rábano'],asociaNeg:['Espinaca'],
+   tips:'Muy tolerante. Cosechar hojas externas y la planta sigue produciendo por meses. Ideal para huertas de balcón.'},
+  {id:'espinaca',nombre:'Espinaca',emoji:'🥬',tipo:'verdura',siembra:'directa',diasCosecha:40,espacio:15,profundidad:1,agua:'moderada',sol:'semisombra',dificultad:'Fácil',precioKg:800,
+   siembraMeses:{norte:[3,4,5,6,7,8],nortechico:[3,4,5,6,7,8],centro:[3,4,5,6,7,8],centrosur:[3,4,5,7,8,9],sur:[3,4,8,9],austral:[3,4,9]},
+   cosechaMeses:{norte:[5,6,7,8,9,10],nortechico:[5,6,7,8,9,10],centro:[5,6,7,8,9,10],centrosur:[5,6,7,9,10,11],sur:[5,6,9,10,11],austral:[5,6,11]},
+   asociaPos:['Frutilla','Ajo','Coliflor'],asociaNeg:['Acelga'],
+   tips:'Cultivo de estación fría. Bolting rápido con días largos. Para Chile centro, sembrar desde marzo a agosto.'},
+  {id:'remolacha',nombre:'Remolacha',emoji:'🟣',tipo:'verdura',siembra:'directa',diasCosecha:60,espacio:15,profundidad:2,agua:'moderada',sol:'pleno',dificultad:'Fácil',precioKg:600,
+   siembraMeses:{norte:[0,1,2,3,7,8,9,10,11],nortechico:[0,1,7,8,9,10,11],centro:[3,4,7,8,9,10],centrosur:[3,4,8,9,10],sur:[3,4,9,10],austral:[9,10,3,4]},
+   cosechaMeses:{norte:[2,3,4,9,10,11],nortechico:[3,4,9,10,11],centro:[5,6,9,10,11,0],centrosur:[5,6,10,11,0],sur:[5,6,11],austral:[11,0,5]},
+   asociaPos:['Lechuga','Cebolla','Kohlrabi'],asociaNeg:['Poroto'],
+   tips:'Plantar en racimos de 3 semillas, luego aclarar. También se comen las hojas jóvenes en ensaladas. Muy nutritiva.'},
+  {id:'coliflor',nombre:'Coliflor',emoji:'🥦',tipo:'verdura',siembra:'almácigo',diasCosecha:90,espacio:60,profundidad:1,agua:'abundante',sol:'pleno',dificultad:'Difícil',precioKg:900,
+   siembraMeses:{norte:[3,4,5,6,7],nortechico:[3,4,5,6,7],centro:[2,3,4,6,7,8],centrosur:[3,4,7,8],sur:[3,4,8],austral:[3,4,8]},
+   cosechaMeses:{norte:[6,7,8,9,10],nortechico:[6,7,8,9,10],centro:[5,6,7,9,10,11],centrosur:[6,7,9,10,11],sur:[6,7,10,11],austral:[6,7,11]},
+   asociaPos:['Menta','Romero','Tomillo'],asociaNeg:['Tomate','Fresa'],
+   tips:'Atar las hojas externas sobre el cogollo cuando esté del tamaño de un puño para blanquearlo. Exige suelo rico en calcio.'},
+  {id:'brocoli',nombre:'Brócoli',emoji:'🥦',tipo:'verdura',siembra:'almácigo',diasCosecha:75,espacio:50,profundidad:1,agua:'abundante',sol:'pleno',dificultad:'Medio',precioKg:900,
+   siembraMeses:{norte:[3,4,5,6,7],nortechico:[3,4,5,6,7],centro:[2,3,4,6,7,8],centrosur:[3,4,7,8],sur:[3,4,8],austral:[3,4,8]},
+   cosechaMeses:{norte:[6,7,8,9,10],nortechico:[6,7,8,9,10],centro:[5,6,7,9,10,11],centrosur:[6,7,9,10,11],sur:[6,7,10,11],austral:[6,7,11]},
+   asociaPos:['Menta','Cebolla','Remolacha'],asociaNeg:['Tomate','Poroto'],
+   tips:'Cosechar la cabeza central antes de que se abran las flores. Dejar la planta: produce brotes laterales por semanas.'},
+  {id:'repollo',nombre:'Repollo',emoji:'🥬',tipo:'verdura',siembra:'almácigo',diasCosecha:90,espacio:50,profundidad:1,agua:'abundante',sol:'pleno',dificultad:'Medio',precioKg:400,
+   siembraMeses:{norte:[3,4,5,6],nortechico:[3,4,5,6],centro:[2,3,4,6,7],centrosur:[3,4,7,8],sur:[3,4,8],austral:[3,4,8]},
+   cosechaMeses:{norte:[6,7,8,9],nortechico:[6,7,8,9],centro:[5,6,7,9,10],centrosur:[6,7,9,10,11],sur:[6,7,10,11],austral:[6,7,11]},
+   asociaPos:['Menta','Romero','Eneldo'],asociaNeg:['Tomate','Fresa'],
+   tips:'Atraen polillas de la col. Usar malla anti-insectos. Los repollos colorados son más resistentes a plagas.'},
+  {id:'poroto',nombre:'Porotito verde',emoji:'🫘',tipo:'verdura',siembra:'directa',diasCosecha:60,espacio:15,profundidad:3,agua:'moderada',sol:'pleno',dificultad:'Fácil',precioKg:1200,
+   siembraMeses:{norte:[0,1,2,9,10,11],nortechico:[0,1,9,10,11],centro:[9,10,11],centrosur:[10,11],sur:[11],austral:[]},
+   cosechaMeses:{norte:[2,3,4,11,0],nortechico:[2,3,11,0],centro:[0,1,2,3],centrosur:[1,2,3],sur:[2,3],austral:[2,3]},
+   asociaPos:['Maíz','Zapallo','Zanahoria'],asociaNeg:['Cebolla','Ajo'],
+   tips:'No trasplantar, siembra directa. Fijan nitrógeno en el suelo. Cosechar tiernos antes de que la vaina se ponga amarilla.'},
+  {id:'arveja',nombre:'Arveja',emoji:'🟢',tipo:'verdura',siembra:'directa',diasCosecha:70,espacio:10,profundidad:3,agua:'moderada',sol:'pleno',dificultad:'Fácil',precioKg:1000,
+   siembraMeses:{norte:[3,4,5,6,7,8],nortechico:[3,4,5,7,8],centro:[3,4,5,6,7,8],centrosur:[3,4,5,7,8,9],sur:[4,5,8,9],austral:[4,5,9]},
+   cosechaMeses:{norte:[6,7,8,9,10,11],nortechico:[6,7,8,10,11],centro:[6,7,8,9,10,11],centrosur:[6,7,8,9,10,11],sur:[7,8,10,11],austral:[7,8,11]},
+   asociaPos:['Zanahoria','Rábano','Menta'],asociaNeg:['Cebolla','Ajo'],
+   tips:'Cultivo de invierno y primavera en Chile. Necesita tutor para trepar. Cosechar cuando la vaina está llena pero antes que amarillee.'},
+  {id:'habas',nombre:'Habas',emoji:'🫘',tipo:'verdura',siembra:'directa',diasCosecha:90,espacio:20,profundidad:5,agua:'moderada',sol:'pleno',dificultad:'Fácil',precioKg:800,
+   siembraMeses:{norte:[4,5,6,7],nortechico:[4,5,6,7],centro:[4,5,6,7],centrosur:[4,5,6,7,8],sur:[5,6,7,8],austral:[5,6,7,8]},
+   cosechaMeses:{norte:[8,9,10,11],nortechico:[8,9,10,11],centro:[7,8,9,10,11],centrosur:[8,9,10,11],sur:[9,10,11,0],austral:[9,10,11,0]},
+   asociaPos:['Coliflor','Brócoli','Papa'],asociaNeg:['Cebolla','Ajo','Fresa'],
+   tips:'Cultivo de invierno resistente al frío. Fija nitrógeno. Pinzar el ápice cuando empiecen a florecer para controlar pulgón negro.'},
+  {id:'maiz',nombre:'Maíz',emoji:'🌽',tipo:'verdura',siembra:'directa',diasCosecha:85,espacio:30,profundidad:4,agua:'abundante',sol:'pleno',dificultad:'Fácil',precioKg:600,
+   siembraMeses:{norte:[0,1,2,9,10,11],nortechico:[0,1,9,10,11],centro:[9,10,11],centrosur:[10,11],sur:[11],austral:[]},
+   cosechaMeses:{norte:[3,4,5,0,1],nortechico:[3,4,0,1],centro:[0,1,2,3],centrosur:[2,3],sur:[3,4],austral:[3,4]},
+   asociaPos:['Poroto','Zapallo','Pepino'],asociaNeg:['Tomate'],
+   tips:'Las "3 hermanas" con porotos y zapallo. Necesita polinización cruzada: plantar en bloque de 4x4 mínimo. El choclo chileno es de verano.'},
+  {id:'papa',nombre:'Papas',emoji:'🥔',tipo:'verdura',siembra:'semilla-tubérculo',diasCosecha:90,espacio:35,profundidad:15,agua:'moderada',sol:'pleno',dificultad:'Fácil',precioKg:600,
+   siembraMeses:{norte:[0,1,6,7,8],nortechico:[0,1,7,8],centro:[8,9,10,11],centrosur:[9,10,11],sur:[10,11],austral:[11,0]},
+   cosechaMeses:{norte:[3,4,5,10,11],nortechico:[4,5,11,0],centro:[0,1,2,3],centrosur:[1,2,3],sur:[2,3,4],austral:[3,4]},
+   asociaPos:['Habas','Zanahoria','Maíz'],asociaNeg:['Tomate','Zapallo'],
+   tips:'Las papas chilenas son reconocidas mundialmente (origen en Chiloé). Acumular tierra cuando el tallo crece para más tubérculos.'},
+  {id:'berros',nombre:'Berros',emoji:'💚',tipo:'verdura',siembra:'directa',diasCosecha:40,espacio:10,profundidad:0.5,agua:'abundante',sol:'semisombra',dificultad:'Fácil',precioKg:900,
+   siembraMeses:{norte:[0,1,2,3,4,5,6,7,8,9,10,11],nortechico:[0,1,2,3,7,8,9,10,11],centro:[3,4,5,6,7,8,9,10],centrosur:[3,4,5,8,9,10],sur:[3,4,9,10],austral:[9,10,3,4]},
+   cosechaMeses:{norte:[0,1,2,3,4,5,6,7,8,9,10,11],nortechico:[0,1,2,3,4,8,9,10,11],centro:[5,6,7,8,9,10,11,0],centrosur:[5,6,9,10,11],sur:[5,6,11],austral:[11,5]},
+   asociaPos:['Menta'],asociaNeg:[],
+   tips:'Necesita mucha agua y puede crecer en tierra muy húmeda. En maceta, regar 2 veces al día. Excelente para ensaladas.'},
+  {id:'rucula',nombre:'Rúcula',emoji:'🌿',tipo:'verdura',siembra:'directa',diasCosecha:30,espacio:10,profundidad:0.5,agua:'moderada',sol:'semisombra',dificultad:'Fácil',precioKg:1500,
+   siembraMeses:{norte:[0,1,2,3,4,5,6,7,8,9,10,11],nortechico:[0,1,2,3,7,8,9,10,11],centro:[3,4,5,6,7,8,9,10],centrosur:[3,4,5,8,9,10],sur:[3,4,9,10],austral:[9,10,3,4]},
+   cosechaMeses:{norte:[0,1,2,3,4,5,6,7,8,9,10,11],nortechico:[0,1,2,3,4,8,9,10,11],centro:[4,5,6,7,8,9,10,11],centrosur:[4,5,6,9,10,11],sur:[4,5,11],austral:[11,4]},
+   asociaPos:['Tomate','Espinaca'],asociaNeg:[],
+   tips:'Crece muy rápido. Bolting en calor intenso. Para hojas más suaves, cosechar antes que florezca. Ideal para balcones sombreados.'},
+  {id:'menta',nombre:'Hierbabuena / Menta',emoji:'🌿',tipo:'hierba',siembra:'estolones/almácigo',diasCosecha:45,espacio:30,profundidad:1,agua:'moderada',sol:'semisombra',dificultad:'Fácil',precioKg:2000,
+   siembraMeses:{norte:[0,1,2,3,9,10,11],nortechico:[0,1,2,9,10,11],centro:[2,3,8,9,10,11],centrosur:[3,9,10,11],sur:[3,9,10],austral:[9,10,3]},
+   cosechaMeses:{norte:[0,1,2,3,4,5,6,7,8,9,10,11],nortechico:[0,1,2,3,4,5,9,10,11],centro:[0,1,2,3,4,5,10,11],centrosur:[0,1,2,3,4,5,11],sur:[0,1,2,3,11],austral:[0,1,11]},
+   asociaPos:['Col','Arveja','Tomate'],asociaNeg:[],
+   tips:'Plantar SIEMPRE en maceta separada: es invasora. Se reproduce por estolones. Excelente para mate, té y cócteles.'},
+  {id:'tomillo',nombre:'Tomillo',emoji:'🌿',tipo:'hierba',siembra:'almácigo/esquejes',diasCosecha:60,espacio:20,profundidad:1,agua:'poca',sol:'pleno',dificultad:'Fácil',precioKg:3000,
+   siembraMeses:{norte:[0,1,2,3,8,9,10,11],nortechico:[0,1,2,3,8,9,10,11],centro:[2,3,8,9,10,11],centrosur:[3,9,10,11],sur:[3,10,11],austral:[10,11,3]},
+   cosechaMeses:{norte:[0,1,2,3,4,5,6,7,8,9,10,11],nortechico:[0,1,2,3,4,5,9,10,11],centro:[0,1,2,3,4,5,10,11],centrosur:[0,1,2,3,4,11],sur:[0,1,2,3,11],austral:[0,1,11]},
+   asociaPos:['Col','Tomate','Berenjena'],asociaNeg:[],
+   tips:'Perenne en Chile central. Muy resistente a sequía. Cosechar antes de florecer para mejor aroma. Excelente para macetas.'},
+  {id:'oregano',nombre:'Orégano',emoji:'🌿',tipo:'hierba',siembra:'almácigo/esquejes',diasCosecha:60,espacio:20,profundidad:0.5,agua:'poca',sol:'pleno',dificultad:'Fácil',precioKg:3000,
+   siembraMeses:{norte:[0,1,2,3,8,9,10,11],nortechico:[0,1,2,3,8,9,10,11],centro:[2,3,8,9,10,11],centrosur:[3,9,10,11],sur:[3,10,11],austral:[10,11,3]},
+   cosechaMeses:{norte:[0,1,2,3,4,5,6,7,8,9,10,11],nortechico:[0,1,2,3,4,5,9,10,11],centro:[0,1,2,3,4,5,10,11],centrosur:[0,1,2,3,4,11],sur:[0,1,2,3,11],austral:[0,1,11]},
+   asociaPos:['Tomate','Pimentón','Albahaca'],asociaNeg:[],
+   tips:'El orégano chileno es el mediterráneo. Más aromático seco que fresco. Cosechar antes de florecer. Perenne en la mayoría de las zonas.'},
+  {id:'romero',nombre:'Romero',emoji:'🌿',tipo:'hierba',siembra:'esquejes/almácigo',diasCosecha:90,espacio:40,profundidad:1,agua:'poca',sol:'pleno',dificultad:'Fácil',precioKg:3000,
+   siembraMeses:{norte:[0,1,2,3,8,9,10,11],nortechico:[0,1,2,3,8,9,10,11],centro:[2,3,8,9,10,11],centrosur:[3,9,10,11],sur:[3,10,11],austral:[10,11,3]},
+   cosechaMeses:{norte:[0,1,2,3,4,5,6,7,8,9,10,11],nortechico:[0,1,2,3,4,5,9,10,11],centro:[0,1,2,3,4,5,10,11],centrosur:[0,1,2,3,4,11],sur:[0,1,2,3,11],austral:[0,1,11]},
+   asociaPos:['Col','Poroto','Zanahoria'],asociaNeg:[],
+   tips:'Planta perenne y muy resistente. En Chile central puede crecer como arbusto grande. Excelente para el asado chileno. Propagar por esquejes es lo más fácil.'},
+  {id:'frutilla',nombre:'Frutilla',emoji:'🍓',tipo:'fruta',siembra:'guías/almácigo',diasCosecha:90,espacio:30,profundidad:2,agua:'moderada',sol:'pleno',dificultad:'Fácil',precioKg:2200,
+   siembraMeses:{norte:[3,4,7,8,9],nortechico:[3,4,7,8,9],centro:[3,4,7,8,9],centrosur:[3,4,8,9],sur:[3,4,9],austral:[3,9]},
+   cosechaMeses:{norte:[6,7,11,0,1],nortechico:[6,7,11,0,1],centro:[10,11,0,1,2],centrosur:[11,0,1,2],sur:[0,1,2],austral:[0,1,2]},
+   asociaPos:['Espinaca','Lechuga','Ajo'],asociaNeg:['Col','Hinojo'],
+   tips:'Las frutillas de Sagrada Familia y Curicó son famosas. Plantar en otoño para cosecha en primavera. Proteger con malla de pájaros.'},
+  {id:'frambuesa',nombre:'Frambuesa',emoji:'🫐',tipo:'fruta',siembra:'vástagos',diasCosecha:365,espacio:100,profundidad:10,agua:'moderada',sol:'pleno',dificultad:'Medio',precioKg:3500,
+   siembraMeses:{norte:[4,5,6,7,8],nortechico:[4,5,6,7,8],centro:[4,5,6,7,8],centrosur:[4,5,6,7,8],sur:[5,6,7,8],austral:[5,6,7,8]},
+   cosechaMeses:{norte:[0,1],nortechico:[11,0,1],centro:[11,0,1,2],centrosur:[0,1,2],sur:[0,1,2,3],austral:[1,2,3]},
+   asociaPos:['Ajo','Menta'],asociaNeg:['Tomate'],
+   tips:'Planta perenne y productiva por 15+ años. Zona sur de Chile es ideal. Podar en otoño los tallos que ya fructificaron.'},
+  {id:'arandano',nombre:'Arándano',emoji:'🫐',tipo:'fruta',siembra:'plantas',diasCosecha:730,espacio:150,profundidad:30,agua:'moderada',sol:'pleno',dificultad:'Difícil',precioKg:4000,
+   siembraMeses:{norte:[4,5,6],nortechico:[4,5,6],centro:[4,5,6,7],centrosur:[5,6,7],sur:[5,6,7,8],austral:[5,6,7,8]},
+   cosechaMeses:{norte:[0,1],nortechico:[11,0,1],centro:[0,1],centrosur:[0,1,2],sur:[1,2,3],austral:[1,2,3]},
+   asociaPos:['Rododendro'],asociaNeg:['Cultivos que necesitan pH alto'],
+   tips:'Requiere pH ácido 4.5-5.5. En Chile central, acidificar suelo con turba y azufre. Plantar 2+ variedades para polinización cruzada.'}
+];
+
+const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const ZONES = {norte:'Norte árido',nortechico:'Norte chico',centro:'Centro (RM)',centrosur:'Centro-Sur',sur:'Sur',austral:'Austral'};
+
+let currentTypeFilter = 'todo';
+let currentDifFilter = 'todo';
+let currentVegId = null;
+let showHarvested = false;
+let harvestChart = null;
+
+// =============================================
+// STORAGE
+// =============================================
+function loadData() {
+  try {
+    const raw = localStorage.getItem('huertourbano_v1');
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  // Demo data
+  const now = new Date();
+  const d30 = new Date(now); d30.setDate(d30.getDate() - 30);
+  const d10 = new Date(now); d10.setDate(d10.getDate() - 10);
+  return {
+    config: { zona: 'centro', tipo: 'balcon', espacio: 4, macetas: 2 },
+    plants: [
+      { id: 'p1', vegId: 'tomate', fechaSiembra: d30.toISOString().split('T')[0], ubicacion: 'Maceta balcón', cantidad: 2, notas: 'Variedad cherry', waterLog: [], fertLog: [], harvests: [] },
+      { id: 'p2', vegId: 'lechuga', fechaSiembra: d10.toISOString().split('T')[0], ubicacion: 'Maceta balcón', cantidad: 3, notas: '', waterLog: [], fertLog: [], harvests: [] }
+    ]
+  };
+}
+
+function saveData(data) {
+  try { localStorage.setItem('huertourbano_v1', JSON.stringify(data)); } catch(e) {}
+}
+
+let appData = loadData();
+
+function saveConfig() {
+  appData.config.zona = document.getElementById('zonaSelect').value;
+  appData.config.tipo = document.getElementById('tipoEspacio').value;
+  appData.config.espacio = parseFloat(document.getElementById('espacio').value) || 4;
+  appData.config.macetas = parseInt(document.getElementById('macetas').value) || 2;
+  saveData(appData);
+  document.getElementById('headerZone').textContent = ZONES[appData.config.zona];
+  document.getElementById('filtroZona').value = appData.config.zona;
+}
+
+// =============================================
+// TAB NAVIGATION
+// =============================================
+function showTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  const btns = document.querySelectorAll('.nav-btn');
+  const idx = ['mihuerto','queplantar','misplantas','planifica','suelo'].indexOf(name);
+  if (idx >= 0) btns[idx].classList.add('active');
+  if (name === 'mihuerto') renderDashboard();
+  if (name === 'queplantar') renderVegList();
+  if (name === 'misplantas') renderPlants();
+  if (name === 'planifica') renderPlanifica();
+}
+
+// =============================================
+// DASHBOARD
+// =============================================
+function renderDashboard() {
+  const now = new Date();
+  const month = now.getMonth();
+  const zona = appData.config.zona;
+  const monthName = MONTHS[month];
+
+  document.getElementById('headerZone').textContent = ZONES[zona];
+  document.getElementById('zonaSelect').value = zona;
+  document.getElementById('tipoEspacio').value = appData.config.tipo;
+  document.getElementById('espacio').value = appData.config.espacio;
+  document.getElementById('macetas').value = appData.config.macetas;
+
+  // Weather alert
+  const alerts = {
+    norte: { 0:'☀️ Calor extremo. Regar dos veces al día, preferir sombra parcial.', 5:'Temperatura ideal para hortalizas de raíz.', 6:'Invierno seco. Regar con moderación.' },
+    nortechico: { 5:'Riesgo de heladas nocturnas. Protege tus almácigos.', 6:'Heladas posibles. Cubre plantas sensibles al anochecer.' },
+    centro: { 5:'⚠️ Cuidado con heladas este mes en tu zona (V-RM-VI).', 6:'❄️ Heladas frecuentes. Proteger tomates, pepinos y albahaca.', 7:'❄️ Pleno invierno. Cubrir plantas sensibles al frío.', 4:'🌧️ Lluvias primaverales. Buena época para leguminosas.' },
+    centrosur: { 5:'❄️ Heladas probables. Solo resistentes al frío.', 6:'❄️ Invierno severo. Solo brasicas y leguminosas de invierno.', 7:'❄️ Fríos intensos. Proteger todas las plantas en maceta.' },
+    sur: { 4:'❄️ Inicio de heladas. Cosechar todo lo sensible al frío.', 5:'❄️ Invierno. Solo habas y arvejas en terreno.', 6:'❄️ Heladas seguras. Actividad mínima en huerto.', 7:'❄️ Pleno invierno austral. Planificar próxima temporada.' },
+    austral: { 3:'❄️ Otoño rápido. Cosechar antes de las primeras heladas.', 4:'❄️ Heladas severas posibles cualquier noche.', 5:'❄️ Invierno austral. Solo bajo cubierta.', 6:'❄️ Pleno invierno patagónico. Invernadero obligatorio.' }
+  };
+  const alertMsg = (alerts[zona] || {})[month];
+  const alertDiv = document.getElementById('weatherAlert');
+  alertDiv.innerHTML = alertMsg ? `<div class="weather-alert"><span>⚠️</span><span>${alertMsg}</span></div>` : '';
+
+  // Month highlights
+  const canPlant = VEGETABLES.filter(v => (v.siembraMeses[zona] || []).includes(month)).slice(0,6);
+  document.getElementById('monthHighlights').innerHTML = canPlant.length > 0
+    ? `<p style="font-size:0.83rem;margin-bottom:8px">En <strong>${monthName}</strong>, en tu zona puedes plantar:</p>`
+      + canPlant.map(v => `<span class="badge badge-green" style="margin:2px">${v.emoji} ${v.nombre}</span>`).join(' ')
+    : `<p style="font-size:0.83rem;color:var(--muted)">Mes de descanso en tu zona. Prepara el suelo y planifica la próxima temporada.</p>`;
+
+  // Stats
+  const activePlants = appData.plants.filter(p => !p.harvested);
+  document.getElementById('statTotal').textContent = activePlants.length;
+  const readyCount = activePlants.filter(p => getPlantProgress(p) >= 100).length;
+  document.getElementById('statReady').textContent = readyCount;
+
+  let totalSaved = 0;
+  appData.plants.forEach(p => {
+    const veg = VEGETABLES.find(v => v.id === p.vegId);
+    if (!veg) return;
+    (p.harvests || []).forEach(h => {
+      if (h.unit === 'kg') totalSaved += (h.amount || 0) * (veg.precioKg || 1000);
+    });
+  });
+  document.getElementById('statSaved').textContent = '$' + Math.round(totalSaved).toLocaleString('es-CL');
+
+  // Weekly tasks
+  const tasks = [];
+  activePlants.forEach(p => {
+    const veg = VEGETABLES.find(v => v.id === p.vegId);
+    if (!veg) return;
+    const prog = getPlantProgress(p);
+    if (prog >= 100) tasks.push({ icon: '🍅', text: `Cosechar ${veg.emoji} ${veg.nombre} (${p.ubicacion || 'huerto'}) — ¡lista!` });
+    else if (prog > 60 && veg.agua === 'abundante') tasks.push({ icon: '💧', text: `Regar ${veg.emoji} ${veg.nombre} abundantemente (${veg.agua})` });
+    const lastWater = p.waterLog && p.waterLog.length > 0 ? new Date(p.waterLog[p.waterLog.length-1]) : null;
+    const daysSinceWater = lastWater ? Math.floor((Date.now() - lastWater.getTime()) / 86400000) : 999;
+    if (daysSinceWater >= (veg.agua === 'poca' ? 4 : veg.agua === 'moderada' ? 2 : 1)) {
+      if (!tasks.find(t => t.text.includes(veg.nombre + ' abundantemente')))
+        tasks.push({ icon: '💧', text: `Regar ${veg.emoji} ${veg.nombre} (último riego: ${daysSinceWater > 100 ? 'no registrado' : daysSinceWater + 'd atrás'})` });
+    }
+  });
+  if (canPlant.length > 0) tasks.unshift({ icon: '🌱', text: `Sembrar en ${monthName}: ${canPlant[0].emoji} ${canPlant[0].nombre}${canPlant[1] ? ', ' + canPlant[1].emoji + ' ' + canPlant[1].nombre : ''}` });
+  if (tasks.length === 0) tasks.push({ icon: '📝', text: 'Sin tareas urgentes esta semana. ¡Buen momento para preparar el suelo!' });
+  document.getElementById('weeklyTasks').innerHTML = tasks.slice(0,5).map(t =>
+    `<div class="task-item"><span class="task-icon">${t.icon}</span><span class="task-text">${t.text}</span></div>`).join('');
+
+  // Plants preview
+  const preview = activePlants.slice(0,3);
+  if (preview.length === 0) {
+    document.getElementById('plantsPreview').innerHTML = '<div style="font-size:0.82rem;color:var(--muted);text-align:center;padding:10px">Aún no tienes plantas registradas. ¡Empieza en la pestaña "Mis Plantas"!</div>';
+  } else {
+    document.getElementById('plantsPreview').innerHTML = preview.map(p => renderMiniPlantCard(p)).join('');
+  }
+}
+
+function renderMiniPlantCard(p) {
+  const veg = VEGETABLES.find(v => v.id === p.vegId);
+  if (!veg) return '';
+  const prog = Math.min(100, getPlantProgress(p));
+  const daysSown = Math.floor((Date.now() - new Date(p.fechaSiembra).getTime()) / 86400000);
+  const status = getPlantStatus(prog);
+  return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f3f4f6">
+    <span style="font-size:1.6rem">${veg.emoji}</span>
+    <div style="flex:1;min-width:0">
+      <div style="font-weight:600;font-size:0.85rem">${veg.nombre}</div>
+      <div style="font-size:0.75rem;color:var(--muted)">${p.ubicacion || 'Huerto'} • ${daysSown}d sembrado</div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${prog}%"></div></div>
+    </div>
+    <span class="badge badge-${status.color}" style="white-space:nowrap">${status.text}</span>
+  </div>`;
+}
+
+// =============================================
+// PLANT HELPERS
+// =============================================
+function getPlantProgress(plant) {
+  const veg = VEGETABLES.find(v => v.id === plant.vegId);
+  if (!veg) return 0;
+  const daysSown = Math.floor((Date.now() - new Date(plant.fechaSiembra).getTime()) / 86400000);
+  return Math.round((daysSown / veg.diasCosecha) * 100);
+}
+
+function getPlantStatus(prog) {
+  if (prog >= 100) return { text: '🍅 Lista', color: 'orange' };
+  if (prog >= 70) return { text: '🌼 Floreciendo', color: 'yellow' };
+  if (prog >= 30) return { text: '🌿 Creciendo', color: 'green' };
+  return { text: '🌱 Germinando', color: 'blue' };
+}
+
+function getHarvestDate(plant) {
+  const veg = VEGETABLES.find(v => v.id === plant.vegId);
+  if (!veg) return '-';
+  const d = new Date(plant.fechaSiembra);
+  d.setDate(d.getDate() + veg.diasCosecha);
+  return d.toLocaleDateString('es-CL', { day:'numeric', month:'short', year:'numeric' });
+}
+
+// =============================================
+// VEG LIST
+// =============================================
+function setTypeFilter(f, btn) {
+  currentTypeFilter = f;
+  document.querySelectorAll('#tab-queplantar .filter-row:nth-of-type(1) .filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderVegList();
+}
+
+function setDifFilter(f, btn) {
+  currentDifFilter = f;
+  document.querySelectorAll('#tab-queplantar .filter-row:nth-of-type(2) .filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderVegList();
+}
+
+function renderVegList() {
+  const zona = document.getElementById('filtroZona').value;
+  const mes = parseInt(document.getElementById('filtroMes').value);
+
+  const canSow = VEGETABLES.filter(v => (v.siembraMeses[zona] || []).includes(mes));
+
+  // Can plant now banner
+  if (canSow.length > 0) {
+    document.getElementById('canPlantNow').style.display = '';
+    document.getElementById('canPlantList').innerHTML = canSow.slice(0,8).map(v =>
+      `<span style="display:inline-block;margin:2px;cursor:pointer" onclick="showVegDetail('${v.id}')"><span class="badge badge-green">${v.emoji} ${v.nombre}</span></span>`).join('');
+  } else {
+    document.getElementById('canPlantNow').style.display = 'none';
+  }
+
+  // Month calendar
+  renderMonthCalendar(zona);
+
+  // Filter veg list
+  let filtered = VEGETABLES;
+  if (currentTypeFilter !== 'todo') filtered = filtered.filter(v => v.tipo === currentTypeFilter);
+  if (currentDifFilter !== 'todo') filtered = filtered.filter(v => v.dificultad === currentDifFilter);
+
+  document.getElementById('vegGrid').innerHTML = filtered.map(v => {
+    const canSowNow = (v.siembraMeses[zona] || []).includes(mes);
+    const canHarvestNow = (v.cosechaMeses[zona] || []).includes(mes);
+    const badge = canSowNow ? '<span class="badge badge-green" style="margin-top:4px;display:inline-block">✅ Sembrar ahora</span>'
+      : canHarvestNow ? '<span class="badge badge-yellow" style="margin-top:4px;display:inline-block">🌽 Cosechar</span>' : '';
+    const difColor = v.dificultad === 'Fácil' ? 'badge-green' : v.dificultad === 'Medio' ? 'badge-yellow' : 'badge-red';
+    return `<div class="veg-card" onclick="showVegDetail('${v.id}')">
+      <span class="veg-emoji">${v.emoji}</span>
+      <div class="veg-name">${v.nombre}</div>
+      <div class="veg-sub">${v.diasCosecha}d • ${v.agua} agua</div>
+      <div style="margin-top:4px"><span class="badge ${difColor}">${v.dificultad}</span></div>
+      ${badge}
+    </div>`;
+  }).join('');
+}
+
+function renderMonthCalendar(zona) {
+  // Use a single representative veg per month for visual
+  const container = document.getElementById('monthCalendar');
+  const html = MONTHS.map((m, mi) => {
+    const sowVegs = VEGETABLES.filter(v => (v.siembraMeses[zona] || []).includes(mi)).slice(0,3);
+    const harvVegs = VEGETABLES.filter(v => (v.cosechaMeses[zona] || []).includes(mi) && !(v.siembraMeses[zona] || []).includes(mi)).slice(0,2);
+    const now = new Date().getMonth();
+    const isCurrent = mi === now;
+    let dots = '';
+    sowVegs.forEach(v => { dots += `<div class="month-dot dot-sow" title="${v.nombre}">${v.emoji}</div>`; });
+    harvVegs.forEach(v => { dots += `<div class="month-dot dot-harvest" title="${v.nombre}">${v.emoji}</div>`; });
+    if (dots === '') dots = '<div class="month-dot dot-none" style="font-size:0.6rem;color:#9ca3af">—</div>';
+    return `<div class="month-col"><div class="month-header" style="${isCurrent ? 'color:var(--accent);font-size:0.8rem' : ''}">${m.slice(0,3)}</div>${dots}</div>`;
+  }).join('');
+  container.innerHTML = html;
+}
+
+function showVegDetail(id) {
+  currentVegId = id;
+  const v = VEGETABLES.find(x => x.id === id);
+  if (!v) return;
+  const zona = document.getElementById('filtroZona').value;
+  const now = new Date().getMonth();
+  const canSow = (v.siembraMeses[zona] || []).map(m => MONTHS[m].slice(0,3)).join(', ') || 'Consultar por zona';
+  const canHarv = (v.cosechaMeses[zona] || []).map(m => MONTHS[m].slice(0,3)).join(', ') || '—';
+
+  document.getElementById('vegModalBody').innerHTML = `
+    <span class="modal-emoji">${v.emoji}</span>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      <span class="modal-title" style="margin:0">${v.nombre}</span>
+      <span class="badge badge-${v.dificultad==='Fácil'?'green':v.dificultad==='Medio'?'yellow':'red'}">${v.dificultad}</span>
+      <span class="badge badge-blue">${v.tipo}</span>
+    </div>
+    <div class="detail-row"><span class="detail-label">Siembra</span><span class="detail-val">${v.siembra}</span></div>
+    <div class="detail-row"><span class="detail-label">Días a cosecha</span><span class="detail-val">${v.diasCosecha} días</span></div>
+    <div class="detail-row"><span class="detail-label">Espacio entre plantas</span><span class="detail-val">${v.espacio} cm</span></div>
+    <div class="detail-row"><span class="detail-label">Profundidad siembra</span><span class="detail-val">${v.profundidad} cm</span></div>
+    <div class="detail-row"><span class="detail-label">Agua</span><span class="detail-val">${v.agua}</span></div>
+    <div class="detail-row"><span class="detail-label">Sol</span><span class="detail-val">${v.sol}</span></div>
+    <div class="detail-row"><span class="detail-label">Meses siembra (${ZONES[zona]})</span><span class="detail-val" style="font-size:0.78rem">${canSow}</span></div>
+    <div class="detail-row"><span class="detail-label">Meses cosecha</span><span class="detail-val" style="font-size:0.78rem">${canHarv}</span></div>
+    ${v.asociaPos.length > 0 ? `<div class="detail-row"><span class="detail-label">💚 Compañeros</span><span class="detail-val" style="font-size:0.78rem">${v.asociaPos.join(', ')}</span></div>` : ''}
+    ${v.asociaNeg.length > 0 ? `<div class="detail-row"><span class="detail-label">❌ Evitar junto a</span><span class="detail-val" style="font-size:0.78rem">${v.asociaNeg.join(', ')}</span></div>` : ''}
+    <div style="background:var(--card2);border-radius:8px;padding:10px;margin-top:10px;font-size:0.82rem;color:var(--text)"><strong>💡 Tips Chile:</strong><br>${v.tips}</div>
+  `;
+  document.getElementById('vegModal').classList.add('open');
+}
+
+function addFromModal() {
+  closeVegModal();
+  showTab('misplantas');
+  if (currentVegId) document.getElementById('addCultivo').value = currentVegId;
+}
+
+function closeVegModal() { document.getElementById('vegModal').classList.remove('open'); }
+function closeModal(e) { if (e.target === e.currentTarget) e.currentTarget.classList.remove('open'); }
+
+// =============================================
+// MY PLANTS
+// =============================================
+function renderPlants() {
+  const select = document.getElementById('addCultivo');
+  if (select.children.length <= 1) {
+    VEGETABLES.forEach(v => {
+      const opt = document.createElement('option');
+      opt.value = v.id;
+      opt.textContent = v.emoji + ' ' + v.nombre;
+      select.appendChild(opt);
+    });
+  }
+  // Default date to today
+  if (!document.getElementById('addFecha').value)
+    document.getElementById('addFecha').value = new Date().toISOString().split('T')[0];
+
+  const plants = showHarvested ? appData.plants.filter(p => p.harvested) : appData.plants.filter(p => !p.harvested);
+
+  if (plants.length === 0) {
+    document.getElementById('plantList').innerHTML = `<div class="empty-state"><div class="empty-icon">${showHarvested ? '📦' : '🌱'}</div><p>${showHarvested ? 'No tienes cosechas registradas.' : 'Aún no tienes plantas activas.\n¡Registra tu primera siembra!'}</p></div>`;
+  } else {
+    document.getElementById('plantList').innerHTML = plants.map(p => renderPlantCard(p)).join('');
+  }
+
+  renderHarvestStats();
+}
+
+function renderPlantCard(p) {
+  const veg = VEGETABLES.find(v => v.id === p.vegId);
+  if (!veg) return '';
+  const prog = Math.min(100, getPlantProgress(p));
+  const daysSown = Math.floor((Date.now() - new Date(p.fechaSiembra).getTime()) / 86400000);
+  const estHarvest = getHarvestDate(p);
+  const status = getPlantStatus(prog);
+  const lastWater = p.waterLog && p.waterLog.length > 0 ? p.waterLog[p.waterLog.length-1] : null;
+  const daysWater = lastWater ? Math.floor((Date.now() - new Date(lastWater).getTime()) / 86400000) : null;
+  const waterText = daysWater === null ? 'Sin registro' : daysWater === 0 ? 'Hoy' : daysWater === 1 ? 'Ayer' : `Hace ${daysWater} días`;
+
+  const harvestBtnVisible = prog >= 85 && !p.harvested;
+
+  return `<div class="plant-card ${prog >= 100 ? 'harvest-ready' : ''} ${p.harvested ? 'harvested' : ''}">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:1.8rem">${veg.emoji}</span>
+        <div>
+          <div style="font-weight:700;font-size:0.95rem">${veg.nombre}</div>
+          <div style="font-size:0.75rem;color:var(--muted)">${p.ubicacion || 'Huerto'} • ${p.cantidad} planta${p.cantidad > 1 ? 's' : ''}</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:4px;align-items:center">
+        <span class="badge badge-${status.color}">${status.text}</span>
+        <button onclick="deletePlant('${p.id}')" style="background:none;border:none;cursor:pointer;font-size:1rem;color:#d1d5db;padding:2px">✕</button>
+      </div>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" style="width:${prog}%"></div></div>
+    <div style="font-size:0.75rem;color:var(--muted);text-align:right;margin-top:2px">${prog}% — ${daysSown}d sembrado</div>
+    <div class="plant-meta">
+      <div style="font-size:0.78rem"><span style="color:var(--muted)">Sembrado:</span> ${new Date(p.fechaSiembra).toLocaleDateString('es-CL')}</div>
+      <div style="font-size:0.78rem"><span style="color:var(--muted)">Est. cosecha:</span> ${estHarvest}</div>
+    </div>
+    ${p.notas ? `<div style="font-size:0.78rem;color:var(--muted);font-style:italic;margin-bottom:6px">"${p.notas}"</div>` : ''}
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+      <div style="font-size:0.78rem;color:var(--muted)">💧 Último riego: <strong>${waterText}</strong></div>
+      <div style="display:flex;gap:6px">
+        <button class="water-btn" onclick="waterPlant('${p.id}')">💧 Regar hoy</button>
+        ${harvestBtnVisible ? `<button class="btn btn-secondary btn-sm" onclick="openHarvestModal('${p.id}')">🎉 Cosechar</button>` : ''}
+        ${p.harvested ? `<span class="badge badge-brown">✅ Cosechada</span>` : ''}
+      </div>
+    </div>
+    ${(p.harvests||[]).length > 0 ? `<div style="font-size:0.75rem;color:#15803d;margin-top:6px">Cosecha total: ${p.harvests.reduce((a,h)=>a+(h.amount||0),0).toFixed(1)} ${p.harvests[0].unit}</div>` : ''}
+  </div>`;
+}
+
+function addPlant() {
+  const vegId = document.getElementById('addCultivo').value;
+  const fecha = document.getElementById('addFecha').value;
+  if (!vegId || !fecha) { alert('Selecciona un cultivo y una fecha de siembra.'); return; }
+  const plant = {
+    id: 'p' + Date.now(),
+    vegId,
+    fechaSiembra: fecha,
+    ubicacion: document.getElementById('addUbicacion').value,
+    cantidad: parseInt(document.getElementById('addCantidad').value) || 1,
+    notas: document.getElementById('addNotas').value,
+    waterLog: [],
+    fertLog: [],
+    harvests: [],
+    harvested: false
+  };
+  appData.plants.push(plant);
+  saveData(appData);
+  document.getElementById('addCultivo').value = '';
+  document.getElementById('addUbicacion').value = '';
+  document.getElementById('addNotas').value = '';
+  document.getElementById('addCantidad').value = '1';
+  renderPlants();
+}
+
+function waterPlant(id) {
+  const p = appData.plants.find(x => x.id === id);
+  if (!p) return;
+  if (!p.waterLog) p.waterLog = [];
+  p.waterLog.push(new Date().toISOString());
+  saveData(appData);
+  renderPlants();
+}
+
+function deletePlant(id) {
+  if (!confirm('¿Eliminar esta planta del registro?')) return;
+  appData.plants = appData.plants.filter(p => p.id !== id);
+  saveData(appData);
+  renderPlants();
+}
+
+function toggleShowHarvested() {
+  showHarvested = !showHarvested;
+  renderPlants();
+}
+
+function openHarvestModal(id) {
+  document.getElementById('harvestPlantId').value = id;
+  document.getElementById('harvestAmount').value = '';
+  document.getElementById('harvestNotes').value = '';
+  document.getElementById('harvestModal').classList.add('open');
+}
+
+function confirmHarvest() {
+  const id = document.getElementById('harvestPlantId').value;
+  const p = appData.plants.find(x => x.id === id);
+  if (!p) return;
+  const amount = parseFloat(document.getElementById('harvestAmount').value) || 0;
+  const unit = document.getElementById('harvestUnit').value;
+  const notes = document.getElementById('harvestNotes').value;
+  if (!p.harvests) p.harvests = [];
+  p.harvests.push({ date: new Date().toISOString(), amount, unit, notes });
+  p.harvested = true;
+  saveData(appData);
+  document.getElementById('harvestModal').classList.remove('open');
+  renderPlants();
+}
+
+function renderHarvestStats() {
+  const harvests = [];
+  let totalValue = 0;
+  appData.plants.forEach(p => {
+    const veg = VEGETABLES.find(v => v.id === p.vegId);
+    if (!veg || !p.harvests || p.harvests.length === 0) return;
+    const kgTotal = p.harvests.filter(h => h.unit === 'kg').reduce((a,h) => a + (h.amount||0), 0);
+    const value = kgTotal * (veg.precioKg || 1000);
+    totalValue += value;
+    harvests.push({ name: veg.nombre, emoji: veg.emoji, kg: kgTotal, value, unit: p.harvests[0].unit });
+  });
+
+  if (harvests.length === 0) {
+    document.getElementById('harvestStats').innerHTML = '<div style="font-size:0.82rem;color:var(--muted);text-align:center;padding:10px">Aún no has registrado cosechas. ¡El momento llegará! 🌱</div>';
+    if (harvestChart) { harvestChart.destroy(); harvestChart = null; }
+    document.getElementById('harvestChart').style.display = 'none';
+    return;
+  }
+
+  document.getElementById('harvestChart').style.display = '';
+  document.getElementById('harvestStats').innerHTML = `
+    <div style="font-size:0.9rem;font-weight:700;color:var(--accent);margin-bottom:8px">🎉 Has ahorrado $${Math.round(totalValue).toLocaleString('es-CL')} en tu huerto</div>
+    ${harvests.map(h => `<div class="detail-row"><span class="detail-label">${h.emoji} ${h.name}</span><span class="detail-val">${h.kg > 0 ? h.kg.toFixed(1) + ' kg → $' + Math.round(h.value).toLocaleString('es-CL') : 'Cosechado'}</span></div>`).join('')}
+  `;
+
+  const ctx = document.getElementById('harvestChart').getContext('2d');
+  if (harvestChart) harvestChart.destroy();
+  const kgHarvests = harvests.filter(h => h.kg > 0);
+  if (kgHarvests.length === 0) { document.getElementById('harvestChart').style.display = 'none'; return; }
+  harvestChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: kgHarvests.map(h => h.emoji + ' ' + h.name),
+      datasets: [{
+        label: 'kg cosechados',
+        data: kgHarvests.map(h => h.kg),
+        backgroundColor: '#86efac',
+        borderColor: '#16a34a',
+        borderWidth: 1.5,
+        borderRadius: 6
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, ticks: { font: { size: 11 } } }, x: { ticks: { font: { size: 11 } } } }
+    }
+  });
+}
+
+// =============================================
+// PLANIFICA
+// =============================================
+const COMPANIONS = {
+  pos: [
+    { a: 'Tomate 🍅', b: 'Albahaca 🌿', reason: 'Repele mosca blanca y pulgón' },
+    { a: 'Zanahoria 🥕', b: 'Cebolla 🧅', reason: 'Repelen plagas mutuas con aroma' },
+    { a: 'Maíz 🌽', b: 'Porotos 🫘', reason: 'Las "3 hermanas" + zapallo' },
+    { a: 'Lechuga 🥬', b: 'Rábano 🔴', reason: 'El rábano ahuyenta la mosca de la lechuga' },
+    { a: 'Tomate 🍅', b: 'Zanahoria 🥕', reason: 'La zanahoria afloja la tierra del tomate' },
+    { a: 'Frutilla 🍓', b: 'Espinaca 🥬', reason: 'Aprovechan distintos nutrientes del suelo' },
+    { a: 'Brócoli 🥦', b: 'Menta 🌿', reason: 'La menta repele pulgón y mariposa blanca' },
+    { a: 'Ajo 🧄', b: 'Rosa / Tomate', reason: 'Repele hongos y pulgones' },
+  ],
+  neg: [
+    { a: 'Cebolla 🧅', b: 'Poroto 🫘', reason: 'Inhiben el crecimiento mutuo' },
+    { a: 'Pepino 🥒', b: 'Tomate 🍅', reason: 'Compiten por agua y nutrientes' },
+    { a: 'Ajo 🧄', b: 'Guisante 🟢', reason: 'El ajo inhibe el crecimiento de leguminosas' },
+    { a: 'Hinojo', b: 'Casi todo', reason: 'Libera compuestos que inhiben a la mayoría' },
+    { a: 'Papa 🥔', b: 'Tomate 🍅', reason: 'Mismas plagas y enfermedades (tizón)' },
+    { a: 'Remolacha 🟣', b: 'Poroto 🫘', reason: 'El poroto inhibe el crecimiento de la remolacha' },
+  ]
+};
+
+const ROTATION = [
+  { year: 'Año 1', group: 'Solanáceas', crops: 'Tomate, Pimentón, Ají, Berenjena', color: '#fee2e2', border: '#fca5a5', icon: '🍅' },
+  { year: 'Año 2', group: 'Leguminosas', crops: 'Porotos, Arvejas, Habas', color: '#dcfce7', border: '#86efac', icon: '🫘' },
+  { year: 'Año 3', group: 'Brasicas', crops: 'Brócoli, Repollo, Coliflor', color: '#dbeafe', border: '#93c5fd', icon: '🥦' },
+  { year: 'Año 4', group: 'Raíces', crops: 'Zanahoria, Remolacha, Rabanito', color: '#fef9c3', border: '#fde68a', icon: '🥕' },
+];
+
+const POT_GUIDE = [
+  { cultivo: 'Lechuga 🥬', maceta: '20cm diámetro', prof: '15 cm' },
+  { cultivo: 'Tomate 🍅', maceta: '40L (50cm ø)', prof: '40 cm' },
+  { cultivo: 'Zapallo 🎃', maceta: '50L+', prof: '40 cm' },
+  { cultivo: 'Hierbas 🌿', maceta: '15cm diámetro', prof: '15 cm' },
+  { cultivo: 'Zanahoria 🥕', maceta: '30cm prof. mín', prof: '30 cm' },
+  { cultivo: 'Frutilla 🍓', maceta: '20cm diámetro', prof: '15 cm' },
+  { cultivo: 'Pimentón 🫑', maceta: '15L+', prof: '30 cm' },
+  { cultivo: 'Pepino 🥒', maceta: '20L+', prof: '30 cm' },
+  { cultivo: 'Rúcula 🌿', maceta: '20cm diámetro', prof: '10 cm' },
+  { cultivo: 'Papa 🥔', maceta: '50L / saco papa', prof: '35 cm' },
+  { cultivo: 'Arándano 🫐', maceta: '40L+', prof: '40 cm' },
+  { cultivo: 'Frambuesa 🫐', maceta: '30L+', prof: '35 cm' },
+];
+
+function renderPlanifica() {
+  // Space recommendation
+  const m2 = parseFloat(document.getElementById('planM2').value) || 4;
+  const recs = m2 < 2 ? 'Con menos de 2m², ideal para hierbas aromáticas en macetas colgantes y 2-3 lechugas.' :
+    m2 < 5 ? `Con ${m2}m² puedes cultivar: 2 tomateras + 4 lechugas + hierbas. Prioriza cultivos verticales.` :
+    m2 < 20 ? `Con ${m2}m² puedes tener un huerto mixto: tomates, lechugas, acelgas, zanahorias y hierbas. Organiza en canteros de 1.2m de ancho para fácil acceso.` :
+    `Con ${m2}m² tienes un huerto grande. Implementa rotación de 4 años, zona de compost, y área de almácigos.`;
+  document.getElementById('spaceRecommendation').innerHTML = `<strong>🌱 Recomendación:</strong> ${recs}`;
+
+  document.getElementById('companionPos').innerHTML = COMPANIONS.pos.map(c =>
+    `<div class="companion-card companion-pos"><div class="companion-title">✅ ${c.a} + ${c.b}</div><div>${c.reason}</div></div>`).join('');
+
+  document.getElementById('companionNeg').innerHTML = COMPANIONS.neg.map(c =>
+    `<div class="companion-card companion-neg"><div class="companion-title">❌ ${c.a} ✕ ${c.b}</div><div>${c.reason}</div></div>`).join('');
+
+  document.getElementById('rotationGrid').innerHTML = ROTATION.map(r =>
+    `<div class="rotation-card" style="background:${r.color};border-color:${r.border}">
+      <div style="font-size:1.2rem;margin-bottom:4px">${r.icon}</div>
+      <div style="font-weight:700;font-size:0.85rem">${r.year}: ${r.group}</div>
+      <div style="font-size:0.78rem;color:var(--muted);margin-top:3px">${r.crops}</div>
+    </div>`).join('');
+
+  document.getElementById('potTable').innerHTML = POT_GUIDE.map(p =>
+    `<tr><td>${p.cultivo}</td><td>${p.maceta}</td><td>${p.prof}</td></tr>`).join('');
+}
+
+// =============================================
+// INIT
+// =============================================
+function init() {
+  // Set current month in filter
+  document.getElementById('filtroMes').value = new Date().getMonth();
+  document.getElementById('filtroZona').value = appData.config.zona;
+
+  // Load config into form
+  document.getElementById('zonaSelect').value = appData.config.zona;
+  document.getElementById('tipoEspacio').value = appData.config.tipo || 'balcon';
+  document.getElementById('espacio').value = appData.config.espacio;
+  document.getElementById('macetas').value = appData.config.macetas;
+
+  document.getElementById('headerZone').textContent = ZONES[appData.config.zona];
+  renderDashboard();
+}
+
+init();
+</script>
+</body>
+</html>

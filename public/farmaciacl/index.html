@@ -1,0 +1,2329 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="FarmaciaCL - Sistema de gestión integral para farmacias independientes de Chile">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="FarmaciaCL">
+
+    <title>FarmaciaCL - Gestión de Farmacia</title>
+
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect fill='%232563eb' width='180' height='180'/%3E%3Ctext x='90' y='100' font-size='80' font-weight='bold' fill='white' text-anchor='middle' dy='.3em'%3E⚕%3C/text%3E%3C/svg%3E">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+            height: 100%;
+            width: 100%;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .app-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        header {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: white;
+            padding: 1rem;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(37, 99, 235, 0.15);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        header p {
+            font-size: 0.875rem;
+            opacity: 0.9;
+        }
+
+        .tabs-container {
+            display: flex;
+            background: white;
+            border-bottom: 2px solid #e2e8f0;
+            overflow-x: auto;
+            position: sticky;
+            top: 0;
+            z-index: 99;
+            margin-top: 0;
+        }
+
+        .tab-btn {
+            padding: 1rem 1.25rem;
+            border: none;
+            background: white;
+            color: #64748b;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.9rem;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .tab-btn:hover {
+            color: #2563eb;
+            background: #f1f5f9;
+        }
+
+        .tab-btn.active {
+            color: #2563eb;
+            border-bottom-color: #2563eb;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 1.5rem;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .tab-content.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-weight: 500;
+            margin-bottom: 0.4rem;
+            font-size: 0.9rem;
+            color: #334155;
+        }
+
+        input, select, textarea {
+            padding: 0.75rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 0.5rem;
+            font-size: 16px;
+            font-family: inherit;
+            transition: border-color 0.2s ease;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        @media (max-width: 640px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 16px;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #1e293b;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e1;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-small {
+            padding: 0.5rem 1rem;
+            font-size: 0.8rem;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            background: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1.5rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: #f1f5f9;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        th {
+            padding: 0.875rem;
+            text-align: left;
+            font-weight: 600;
+            color: #475569;
+            font-size: 0.85rem;
+        }
+
+        td {
+            padding: 0.875rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 2rem;
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-header h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #64748b;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid;
+        }
+
+        .alert-success {
+            background: #dcfce7;
+            color: #166534;
+            border-color: #22c55e;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border-color: #ef4444;
+        }
+
+        .alert-warning {
+            background: #fef3c7;
+            color: #92400e;
+            border-color: #f59e0b;
+        }
+
+        .alert-info {
+            background: #dbeafe;
+            color: #0c4a6e;
+            border-color: #3b82f6;
+        }
+
+        .card {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(37, 99, 235, 0.15);
+        }
+
+        .stat-card h3 {
+            font-size: 0.875rem;
+            font-weight: 500;
+            opacity: 0.9;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .search-bar {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .search-bar input {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .badge-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-danger {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge-info {
+            background: #dbeafe;
+            color: #0c4a6e;
+        }
+
+        .form-section {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-section h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #1e293b;
+            border-bottom: 2px solid #2563eb;
+            padding-bottom: 0.5rem;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 2rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #64748b;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .currency {
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+        }
+
+        .low-stock {
+            background: #fef3c7;
+        }
+
+        .expired {
+            background: #fee2e2;
+        }
+
+        .receipt-preview {
+            background: white;
+            border: 2px dashed #cbd5e1;
+            padding: 1.5rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            max-width: 300px;
+        }
+
+        .receipt-line {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.25rem 0;
+        }
+
+        .receipt-total {
+            border-top: 2px solid #1e293b;
+            padding-top: 0.5rem;
+            margin-top: 0.5rem;
+            font-weight: 700;
+        }
+
+        .footer {
+            background: #1e293b;
+            color: white;
+            padding: 1.5rem;
+            text-align: center;
+            font-size: 0.875rem;
+            margin-top: auto;
+        }
+
+        .footer p {
+            margin-bottom: 0.5rem;
+        }
+
+        .compliance-note {
+            background: #dbeafe;
+            border-left: 4px solid #2563eb;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            color: #0c4a6e;
+            margin-bottom: 1rem;
+        }
+
+        .checkout-items {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .checkout-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .checkout-item:last-child {
+            border-bottom: none;
+        }
+
+        .checkout-item-info {
+            flex: 1;
+        }
+
+        .checkout-item-name {
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .checkout-item-price {
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        .checkout-item-qty {
+            font-weight: 600;
+            margin: 0 1rem;
+            min-width: 50px;
+            text-align: right;
+        }
+
+        .checkout-summary {
+            background: #f8fafc;
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .checkout-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+            font-size: 0.95rem;
+        }
+
+        .checkout-row.total {
+            border-top: 2px solid #cbd5e1;
+            padding-top: 0.75rem;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #2563eb;
+        }
+
+        .controlled-substance-badge {
+            background: #ef4444;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            margin-left: 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.25rem;
+            }
+
+            .tab-btn {
+                padding: 0.875rem 1rem;
+                font-size: 0.8rem;
+            }
+
+            .modal-content {
+                padding: 1.5rem;
+            }
+
+            .stat-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .checkout-item {
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+
+            .checkout-item-qty {
+                width: 100%;
+                margin: 0;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .tab-container {
+                padding: 0;
+            }
+
+            .tab-btn {
+                padding: 0.75rem 0.85rem;
+                font-size: 0.75rem;
+            }
+
+            .form-group {
+                margin-bottom: 1rem;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+
+            .btn-group .btn {
+                width: 100%;
+            }
+
+            .stat-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-content {
+                padding: 1.25rem;
+                border-radius: 0.5rem;
+            }
+
+            .table-container {
+                font-size: 0.85rem;
+            }
+
+            th, td {
+                padding: 0.625rem;
+            }
+
+            .chart-container {
+                height: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <h1>⚕️ FarmaciaCL</h1>
+            <p>Sistema de Gestión Integral para Farmacias Independientes</p>
+        </header>
+
+        <div class="tabs-container">
+            <button class="tab-btn active" onclick="switchTab('inventario')">📦 Inventario</button>
+            <button class="tab-btn" onclick="switchTab('ventas')">💳 Ventas</button>
+            <button class="tab-btn" onclick="switchTab('recetas')">📋 Recetas</button>
+            <button class="tab-btn" onclick="switchTab('clientes')">👥 Clientes</button>
+            <button class="tab-btn" onclick="switchTab('proveedores')">🚚 Proveedores</button>
+            <button class="tab-btn" onclick="switchTab('reportes')">📊 Reportes</button>
+        </div>
+
+        <!-- INVENTARIO TAB -->
+        <div id="inventario" class="tab-content active">
+            <div class="compliance-note">
+                ⚕️ Conforme a regulaciones ISP. Medicamentos controlados (lista F) requieren receta retenida. Verifique fechas de vencimiento cada semana.
+            </div>
+
+            <div class="search-bar">
+                <input type="text" id="invSearchInput" placeholder="Buscar por nombre, laboratorio, ingrediente activo..." onkeyup="filterInventoryTable()">
+                <button class="btn btn-secondary btn-small" onclick="openAddProductModal()">+ Nuevo Producto</button>
+            </div>
+
+            <div id="inventoryAlerts"></div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Laboratorio</th>
+                            <th>Presentación</th>
+                            <th>Stock</th>
+                            <th>Precio Compra</th>
+                            <th>Precio Venta</th>
+                            <th>Margen %</th>
+                            <th>Vencimiento</th>
+                            <th>Ubicación</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inventoryTable">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- VENTAS TAB -->
+        <div id="ventas" class="tab-content">
+            <div class="form-row">
+                <div class="form-section" style="grid-column: 1;">
+                    <h3>Búsqueda de Productos</h3>
+                    <div class="form-group">
+                        <input type="text" id="saleSearchInput" placeholder="Nombre del producto, laboratorio..." onkeyup="filterSalesProducts()">
+                    </div>
+                    <div id="salesProductList" style="max-height: 400px; overflow-y: auto;"></div>
+                </div>
+
+                <div class="form-section" style="grid-column: 1;">
+                    <h3>Carrito de Compra</h3>
+                    <div class="checkout-items" id="cartItems">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">🛒</div>
+                            <p>Carrito vacío</p>
+                        </div>
+                    </div>
+
+                    <div class="checkout-summary">
+                        <div class="checkout-row">
+                            <span>Subtotal:</span>
+                            <span class="currency" id="cartSubtotal">$0</span>
+                        </div>
+                        <div class="checkout-row">
+                            <span>Descuento:</span>
+                            <input type="number" id="discountAmount" placeholder="0" min="0" style="width: 100px; text-align: right;" onchange="recalculateCart()">
+                        </div>
+                        <div class="checkout-row total">
+                            <span>Total:</span>
+                            <span class="currency" id="cartTotal">$0</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Método de Pago</label>
+                        <select id="paymentMethod">
+                            <option value="efectivo">Efectivo</option>
+                            <option value="debito">Débito</option>
+                            <option value="credito">Crédito</option>
+                            <option value="transferencia">Transferencia</option>
+                        </select>
+                    </div>
+
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="processCheckout()">Procesar Venta</button>
+                        <button class="btn btn-secondary" onclick="clearCart()">Limpiar Carrito</button>
+                    </div>
+
+                    <div id="receiptPreview"></div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Registro de Ventas Diarias</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Fecha/Hora</th>
+                                <th>Productos</th>
+                                <th>Total</th>
+                                <th>Método</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="salesTable">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- RECETAS TAB -->
+        <div id="recetas" class="tab-content">
+            <div class="compliance-note">
+                🔒 Retención de recetas conforme a normativa ISP. Recetas cheque (lista F) deben guardarse por 2 años. Medicamentos controlados marcan obligatoriamente como "retenida".
+            </div>
+
+            <div class="search-bar">
+                <input type="text" id="recipeSearchInput" placeholder="Buscar por paciente, doctor..." onkeyup="filterRecipesTable()">
+                <button class="btn btn-secondary btn-small" onclick="openAddRecipeModal()">+ Nueva Receta</button>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Paciente</th>
+                            <th>Doctor</th>
+                            <th>Medicamentos</th>
+                            <th>Fecha</th>
+                            <th>Tipo</th>
+                            <th>Estado Retención</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recipesTable">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- CLIENTES TAB -->
+        <div id="clientes" class="tab-content">
+            <div class="search-bar">
+                <input type="text" id="customerSearchInput" placeholder="Buscar por nombre, RUT..." onkeyup="filterCustomersTable()">
+                <button class="btn btn-secondary btn-small" onclick="openAddCustomerModal()">+ Nuevo Cliente</button>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>RUT</th>
+                            <th>Medicamentos Crónicos</th>
+                            <th>Seguro</th>
+                            <th>Puntos Lealtad</th>
+                            <th>Compras</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="customersTable">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- PROVEEDORES TAB -->
+        <div id="proveedores" class="tab-content">
+            <div class="search-bar">
+                <input type="text" id="supplierSearchInput" placeholder="Buscar por nombre, contacto..." onkeyup="filterSuppliersTable()">
+                <button class="btn btn-secondary btn-small" onclick="openAddSupplierModal()">+ Nuevo Proveedor</button>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Contacto</th>
+                            <th>Teléfono</th>
+                            <th>Email</th>
+                            <th>Plazo Pago</th>
+                            <th>Próxima Entrega</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="suppliersTable">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- REPORTES TAB -->
+        <div id="reportes" class="tab-content">
+            <div class="stat-grid">
+                <div class="stat-card">
+                    <h3>Ventas Hoy</h3>
+                    <div class="value" id="todaySalesValue">$0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Transacciones</h3>
+                    <div class="value" id="todayTransactionsValue">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Margen Promedio</h3>
+                    <div class="value" id="avgMarginValue">0%</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Stock Total Valor</h3>
+                    <div class="value" id="stockValueTotal">$0</div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Tendencia de Ventas (Últimos 7 días)</h3>
+                <div class="chart-container">
+                    <canvas id="salesChart"></canvas>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Productos Más Vendidos</h3>
+                <div class="chart-container">
+                    <canvas id="topProductsChart"></canvas>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Productos Próximos a Vencer</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Stock</th>
+                                <th>Vencimiento</th>
+                                <th>Días Restantes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="expiryTable">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Análisis de Márgenes por Categoría</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Presentación</th>
+                                <th>Productos</th>
+                                <th>Margen Promedio</th>
+                                <th>Volumen Vendido</th>
+                            </tr>
+                        </thead>
+                        <tbody id="marginAnalysisTable">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="exportDailySalesCSV()">📥 Descargar Ventas (CSV)</button>
+                <button class="btn btn-primary" onclick="exportInventoryCSV()">📥 Descargar Inventario (CSV)</button>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <p><strong>FarmaciaCL v1.0</strong> - Sistema de Gestión para Farmacias Independientes</p>
+            <p>Datos sincronizados localmente. Consulte regulaciones ISP para cumplimiento de normativa de medicamentos controlados.</p>
+            <p style="margin-top: 1rem; opacity: 0.7;">© 2026 Soluciones Farmacéuticas. Uso exclusivo de farmacias independientes chilenas.</p>
+        </footer>
+    </div>
+
+    <!-- MODALS -->
+
+    <!-- Add Product Modal -->
+    <div id="addProductModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="productModalTitle">Nuevo Producto</h2>
+                <button class="modal-close" onclick="closeAddProductModal()">✕</button>
+            </div>
+            <form onsubmit="saveProduct(event)">
+                <div class="form-group">
+                    <label>Nombre del Producto *</label>
+                    <input type="text" id="productName" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Laboratorio *</label>
+                        <select id="productLab" required>
+                            <option value="">Seleccionar...</option>
+                            <option value="Laboratorio Chile">Laboratorio Chile</option>
+                            <option value="Saval">Saval</option>
+                            <option value="Andrómaco">Andrómaco</option>
+                            <option value="Farmasa">Farmasa</option>
+                            <option value="Libra">Libra</option>
+                            <option value="Bayer">Bayer</option>
+                            <option value="Pfizer">Pfizer</option>
+                            <option value="Merck">Merck</option>
+                            <option value="Abbott">Abbott</option>
+                            <option value="Otro">Otro</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Ingrediente Activo *</label>
+                        <input type="text" id="activeIngredient" placeholder="Ej: Ibuprofeno, Amoxicilina..." required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Presentación *</label>
+                        <select id="productPresentation" required>
+                            <option value="">Seleccionar...</option>
+                            <option value="Comprimidos">Comprimidos</option>
+                            <option value="Cápsulas">Cápsulas</option>
+                            <option value="Jarabe">Jarabe</option>
+                            <option value="Solución">Solución</option>
+                            <option value="Crema">Crema</option>
+                            <option value="Pomada">Pomada</option>
+                            <option value="Inyectable">Inyectable</option>
+                            <option value="Gel">Gel</option>
+                            <option value="Spray">Spray</option>
+                            <option value="Gotas">Gotas</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Dosis/Concentración</label>
+                        <input type="text" id="productDosage" placeholder="Ej: 500mg, 250ml...">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Stock Actual *</label>
+                        <input type="number" id="productStock" value="0" min="0" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Stock Mínimo Alerta *</label>
+                        <input type="number" id="productMinStock" value="5" min="0" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Precio Compra ($) *</label>
+                        <input type="number" id="productCostPrice" step="0.01" min="0" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Precio Venta ($) *</label>
+                        <input type="number" id="productSalePrice" step="0.01" min="0" required onchange="calculateMargin()">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Margen % (calculado)</label>
+                        <input type="number" id="productMargin" readonly style="background: #f1f5f9;">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Vencimiento (DD/MM/AAAA) *</label>
+                        <input type="text" id="productExpiry" placeholder="31/12/2026" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Ubicación en Estante *</label>
+                    <input type="text" id="productLocation" placeholder="Ej: Pasillo 1, Estante A, Fila 3" required>
+                </div>
+
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: normal;">
+                        <input type="checkbox" id="isControlledSubstance">
+                        <span>Medicamento Controlado (Lista F / Receta Retenida)</span>
+                    </label>
+                </div>
+
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary">Guardar Producto</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeAddProductModal()">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Recipe Modal -->
+    <div id="addRecipeModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Nueva Receta</h2>
+                <button class="modal-close" onclick="closeAddRecipeModal()">✕</button>
+            </div>
+            <form onsubmit="saveRecipe(event)">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Paciente *</label>
+                        <input type="text" id="recipePatient" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Doctor *</label>
+                        <input type="text" id="recipeDoctor" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Fecha Receta *</label>
+                        <input type="date" id="recipeDate" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Tipo *</label>
+                        <select id="recipeType" required>
+                            <option value="simple">Simple</option>
+                            <option value="cheque">Cheque (Controlada)</option>
+                            <option value="continua">Continua</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Medicamentos (separados por coma) *</label>
+                    <textarea id="recipeMedications" placeholder="Ej: Ibuprofeno 500mg, Amoxicilina 250mg..." required style="height: 100px;"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Estado Retención *</label>
+                    <select id="recipeRetentionStatus" required>
+                        <option value="simple">Simple (entregada)</option>
+                        <option value="retenida">Retenida (archivo 2 años)</option>
+                        <option value="cheque">Cheque Farmacoterapéutico (archivo 2 años)</option>
+                    </select>
+                </div>
+
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary">Guardar Receta</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeAddRecipeModal()">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Customer Modal -->
+    <div id="addCustomerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Nuevo Cliente</h2>
+                <button class="modal-close" onclick="closeAddCustomerModal()">✕</button>
+            </div>
+            <form onsubmit="saveCustomer(event)">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nombre Completo *</label>
+                        <input type="text" id="customerName" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>RUT (sin puntos ni guión) *</label>
+                        <input type="text" id="customerRUT" placeholder="ej: 12345678-9" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Medicamentos Crónicos Habituales</label>
+                    <textarea id="customerChronicMeds" placeholder="Ej: Metformina 500mg diarios, Enalapril noche..." style="height: 80px;"></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Seguro Salud</label>
+                        <select id="customerInsurance">
+                            <option value="">Sin especificar</option>
+                            <option value="Fonasa">Fonasa</option>
+                            <option value="Isapre">Isapre</option>
+                            <option value="Privado">Privado</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Puntos Lealtad Iniciales</label>
+                        <input type="number" id="customerLoyaltyPoints" value="0" min="0">
+                    </div>
+                </div>
+
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary">Guardar Cliente</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeAddCustomerModal()">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Supplier Modal -->
+    <div id="addSupplierModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Nuevo Proveedor</h2>
+                <button class="modal-close" onclick="closeAddSupplierModal()">✕</button>
+            </div>
+            <form onsubmit="saveSupplier(event)">
+                <div class="form-group">
+                    <label>Nombre Proveedor *</label>
+                    <input type="text" id="supplierName" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Contacto *</label>
+                        <input type="text" id="supplierContact" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Teléfono *</label>
+                        <input type="tel" id="supplierPhone" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="supplierEmail">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Plazo de Pago (días) *</label>
+                        <input type="number" id="supplierPaymentTerm" value="30" min="0" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Próxima Entrega Programada</label>
+                        <input type="date" id="supplierNextDelivery">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Productos Suministrados</label>
+                    <textarea id="supplierProducts" placeholder="Ej: Ibuprofeno, Amoxicilina, Paracetamol..." style="height: 80px;"></textarea>
+                </div>
+
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary">Guardar Proveedor</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeAddSupplierModal()">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // ==================== APP STATE & STORAGE ====================
+
+        const APP_VERSION = '1.0.0';
+        const LABS = ['Laboratorio Chile', 'Saval', 'Andrómaco', 'Farmasa', 'Libra', 'Bayer', 'Pfizer', 'Merck', 'Abbott'];
+        const PRESENTATIONS = ['Comprimidos', 'Cápsulas', 'Jarabe', 'Solución', 'Crema', 'Pomada', 'Inyectable', 'Gel', 'Spray', 'Gotas'];
+
+        let appData = {
+            inventory: [],
+            sales: [],
+            recipes: [],
+            customers: [],
+            suppliers: [],
+            cart: []
+        };
+
+        // ==================== STORAGE HELPERS ====================
+
+        function loadData() {
+            try {
+                const stored = localStorage.getItem('farmaciacl_data');
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    appData = { ...appData, ...parsed };
+                }
+            } catch (e) {
+                console.error('Error loading data:', e);
+                showAlert('Error al cargar datos. Usando datos por defecto.', 'error');
+            }
+        }
+
+        function saveData() {
+            try {
+                localStorage.setItem('farmaciacl_data', JSON.stringify(appData));
+            } catch (e) {
+                console.error('Error saving data:', e);
+                showAlert('Error al guardar datos.', 'error');
+            }
+        }
+
+        function showAlert(message, type = 'info') {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.textContent = message;
+
+            const container = document.querySelector('.tab-content.active');
+            if (container) {
+                container.insertBefore(alertDiv, container.firstChild);
+                setTimeout(() => alertDiv.remove(), 4000);
+            }
+        }
+
+        // ==================== TAB SWITCHING ====================
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+
+            document.getElementById(tabName)?.classList.add('active');
+            document.querySelector(`[onclick="switchTab('${tabName}')"]`)?.classList.add('active');
+
+            if (tabName === 'reportes') {
+                setTimeout(() => {
+                    renderReportCharts();
+                    renderReportTables();
+                }, 100);
+            }
+        }
+
+        // ==================== INVENTARIO ====================
+
+        function openAddProductModal() {
+            document.getElementById('productModalTitle').textContent = 'Nuevo Producto';
+            document.getElementById('addProductModal').classList.add('active');
+            document.getElementById('productName').focus();
+        }
+
+        function closeAddProductModal() {
+            document.getElementById('addProductModal').classList.remove('active');
+            document.querySelectorAll('#addProductModal input, #addProductModal select, #addProductModal textarea').forEach(el => el.value = '');
+        }
+
+        function calculateMargin() {
+            const cost = parseFloat(document.getElementById('productCostPrice').value) || 0;
+            const sale = parseFloat(document.getElementById('productSalePrice').value) || 0;
+            if (cost > 0) {
+                const margin = ((sale - cost) / cost * 100).toFixed(2);
+                document.getElementById('productMargin').value = margin;
+            }
+        }
+
+        function saveProduct(e) {
+            e.preventDefault();
+
+            const product = {
+                id: Date.now(),
+                name: document.getElementById('productName').value,
+                lab: document.getElementById('productLab').value,
+                activeIngredient: document.getElementById('activeIngredient').value,
+                presentation: document.getElementById('productPresentation').value,
+                dosage: document.getElementById('productDosage').value,
+                stock: parseInt(document.getElementById('productStock').value),
+                minStock: parseInt(document.getElementById('productMinStock').value),
+                costPrice: parseFloat(document.getElementById('productCostPrice').value),
+                salePrice: parseFloat(document.getElementById('productSalePrice').value),
+                margin: parseFloat(document.getElementById('productMargin').value),
+                expiry: document.getElementById('productExpiry').value,
+                location: document.getElementById('productLocation').value,
+                isControlled: document.getElementById('isControlledSubstance').checked,
+                createdAt: new Date().toISOString()
+            };
+
+            appData.inventory.push(product);
+            saveData();
+            closeAddProductModal();
+            renderInventoryTable();
+            showAlert('Producto agregado exitosamente.', 'success');
+        }
+
+        function renderInventoryTable() {
+            const table = document.getElementById('inventoryTable');
+            table.innerHTML = '';
+
+            let hasLowStock = false;
+            let hasExpired = false;
+
+            appData.inventory.forEach(product => {
+                const isLowStock = product.stock <= product.minStock;
+                const isExpired = isExpirySoon(product.expiry);
+
+                if (isLowStock) hasLowStock = true;
+                if (isExpired) hasExpired = true;
+
+                const row = document.createElement('tr');
+                if (isLowStock) row.classList.add('low-stock');
+                if (isExpired) row.classList.add('expired');
+
+                row.innerHTML = `
+                    <td>
+                        <strong>${product.name}</strong>
+                        ${product.isControlled ? '<span class="controlled-substance-badge">CONTROLADO</span>' : ''}
+                    </td>
+                    <td>${product.lab}</td>
+                    <td>${product.presentation}</td>
+                    <td><strong>${product.stock}</strong>${product.stock <= product.minStock ? ' ⚠️' : ''}</td>
+                    <td class="currency">$${product.costPrice.toLocaleString()}</td>
+                    <td class="currency">$${product.salePrice.toLocaleString()}</td>
+                    <td><strong>${product.margin.toFixed(1)}%</strong></td>
+                    <td>${product.expiry}${isExpired ? ' ⚠️' : ''}</td>
+                    <td>${product.location}</td>
+                    <td>
+                        <button class="btn btn-small btn-secondary" onclick="editProduct(${product.id})">Editar</button>
+                        <button class="btn btn-small btn-danger" onclick="deleteProduct(${product.id})">Eliminar</button>
+                    </td>
+                `;
+                table.appendChild(row);
+            });
+
+            renderInventoryAlerts(hasLowStock, hasExpired);
+        }
+
+        function renderInventoryAlerts(hasLowStock, hasExpired) {
+            const alertsDiv = document.getElementById('inventoryAlerts');
+            alertsDiv.innerHTML = '';
+
+            if (hasLowStock) {
+                const alert = document.createElement('div');
+                alert.className = 'alert alert-warning';
+                alert.textContent = '⚠️ Hay productos con stock bajo. Considere realizar una orden de compra.';
+                alertsDiv.appendChild(alert);
+            }
+
+            if (hasExpired) {
+                const alert = document.createElement('div');
+                alert.className = 'alert alert-danger';
+                alert.textContent = '⚠️ Hay productos próximos a vencer o vencidos. Retire del inventario.';
+                alertsDiv.appendChild(alert);
+            }
+        }
+
+        function isExpirySoon(expiryDate) {
+            try {
+                const [day, month, year] = expiryDate.split('/');
+                const expDate = new Date(year, month - 1, day);
+                const today = new Date();
+                const daysUntilExpiry = Math.floor((expDate - today) / (1000 * 60 * 60 * 24));
+                return daysUntilExpiry <= 30;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        function filterInventoryTable() {
+            const query = document.getElementById('invSearchInput').value.toLowerCase();
+            const rows = document.querySelectorAll('#inventoryTable tr');
+
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(query) ? '' : 'none';
+            });
+        }
+
+        function deleteProduct(id) {
+            if (confirm('¿Eliminar este producto?')) {
+                appData.inventory = appData.inventory.filter(p => p.id !== id);
+                saveData();
+                renderInventoryTable();
+                showAlert('Producto eliminado.', 'success');
+            }
+        }
+
+        function editProduct(id) {
+            const product = appData.inventory.find(p => p.id === id);
+            if (product) {
+                document.getElementById('productName').value = product.name;
+                document.getElementById('productLab').value = product.lab;
+                document.getElementById('activeIngredient').value = product.activeIngredient;
+                document.getElementById('productPresentation').value = product.presentation;
+                document.getElementById('productDosage').value = product.dosage;
+                document.getElementById('productStock').value = product.stock;
+                document.getElementById('productMinStock').value = product.minStock;
+                document.getElementById('productCostPrice').value = product.costPrice;
+                document.getElementById('productSalePrice').value = product.salePrice;
+                document.getElementById('productMargin').value = product.margin;
+                document.getElementById('productExpiry').value = product.expiry;
+                document.getElementById('productLocation').value = product.location;
+                document.getElementById('isControlledSubstance').checked = product.isControlled;
+                document.getElementById('productModalTitle').textContent = 'Editar Producto';
+                document.getElementById('addProductModal').classList.add('active');
+
+                // Remove old product and save new one on submit
+                document.getElementById('addProductModal').onsubmit = (e) => {
+                    e.preventDefault();
+                    appData.inventory = appData.inventory.filter(p => p.id !== id);
+                    saveProduct(e);
+                    document.getElementById('addProductModal').onsubmit = null;
+                };
+            }
+        }
+
+        // ==================== VENTAS ====================
+
+        function filterSalesProducts() {
+            const query = document.getElementById('saleSearchInput').value.toLowerCase();
+            const items = document.querySelectorAll('.sale-product-item');
+
+            items.forEach(item => {
+                const text = item.textContent.toLowerCase();
+                item.style.display = text.includes(query) ? '' : 'none';
+            });
+        }
+
+        function renderSalesProductList() {
+            const list = document.getElementById('salesProductList');
+            list.innerHTML = '';
+
+            appData.inventory.forEach(product => {
+                const div = document.createElement('div');
+                div.className = 'card sale-product-item';
+                div.style.cursor = 'pointer';
+                div.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                        <div style="flex: 1;">
+                            <strong>${product.name}</strong>
+                            <div style="font-size: 0.85rem; color: #64748b;">
+                                ${product.lab} - ${product.presentation}
+                            </div>
+                            <div style="font-size: 0.9rem; color: #2563eb; font-weight: 600;">
+                                $${product.salePrice.toLocaleString()}
+                            </div>
+                            <div style="font-size: 0.8rem; color: ${product.stock > 0 ? '#16a34a' : '#dc2626'};">
+                                Stock: ${product.stock}
+                            </div>
+                        </div>
+                        <button class="btn btn-primary btn-small" onclick="addToCart(${product.id})">+ Agregar</button>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function addToCart(productId) {
+            const product = appData.inventory.find(p => p.id === productId);
+            if (!product) return;
+
+            if (product.stock <= 0) {
+                showAlert('Producto sin stock disponible.', 'warning');
+                return;
+            }
+
+            const existingItem = appData.cart.find(item => item.productId === productId);
+            if (existingItem) {
+                if (existingItem.quantity < product.stock) {
+                    existingItem.quantity++;
+                }
+            } else {
+                appData.cart.push({
+                    productId,
+                    name: product.name,
+                    salePrice: product.salePrice,
+                    quantity: 1
+                });
+            }
+
+            renderCart();
+        }
+
+        function renderCart() {
+            const cartDiv = document.getElementById('cartItems');
+
+            if (appData.cart.length === 0) {
+                cartDiv.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🛒</div>
+                        <p>Carrito vacío</p>
+                    </div>
+                `;
+            } else {
+                cartDiv.innerHTML = appData.cart.map((item, idx) => `
+                    <div class="checkout-item">
+                        <div class="checkout-item-info">
+                            <div class="checkout-item-name">${item.name}</div>
+                            <div class="checkout-item-price">$${item.salePrice.toLocaleString()} x unidad</div>
+                        </div>
+                        <div class="checkout-item-qty">
+                            <button class="btn btn-secondary btn-small" onclick="updateCartQty(${idx}, -1)" style="width: 30px; padding: 0.25rem;">-</button>
+                            <input type="number" value="${item.quantity}" min="1" onchange="updateCartQtyInput(${idx}, this.value)" style="width: 50px; text-align: center;">
+                            <button class="btn btn-secondary btn-small" onclick="updateCartQty(${idx}, 1)" style="width: 30px; padding: 0.25rem;">+</button>
+                        </div>
+                        <div style="width: 100px; text-align: right; font-weight: 600;">
+                            $${(item.salePrice * item.quantity).toLocaleString()}
+                        </div>
+                        <button class="btn btn-danger btn-small" onclick="removeFromCart(${idx})" style="margin-left: 0.5rem;">✕</button>
+                    </div>
+                `).join('');
+            }
+
+            recalculateCart();
+        }
+
+        function updateCartQty(idx, change) {
+            if (appData.cart[idx]) {
+                appData.cart[idx].quantity = Math.max(1, appData.cart[idx].quantity + change);
+                renderCart();
+            }
+        }
+
+        function updateCartQtyInput(idx, value) {
+            if (appData.cart[idx]) {
+                appData.cart[idx].quantity = Math.max(1, parseInt(value) || 1);
+                renderCart();
+            }
+        }
+
+        function removeFromCart(idx) {
+            appData.cart.splice(idx, 1);
+            renderCart();
+        }
+
+        function recalculateCart() {
+            const subtotal = appData.cart.reduce((sum, item) => sum + (item.salePrice * item.quantity), 0);
+            const discount = parseFloat(document.getElementById('discountAmount').value) || 0;
+            const total = Math.max(0, subtotal - discount);
+
+            document.getElementById('cartSubtotal').textContent = `$${subtotal.toLocaleString()}`;
+            document.getElementById('cartTotal').textContent = `$${total.toLocaleString()}`;
+        }
+
+        function clearCart() {
+            appData.cart = [];
+            document.getElementById('discountAmount').value = '';
+            renderCart();
+            document.getElementById('receiptPreview').innerHTML = '';
+        }
+
+        function processCheckout() {
+            if (appData.cart.length === 0) {
+                showAlert('Carrito vacío.', 'warning');
+                return;
+            }
+
+            // Update inventory
+            appData.cart.forEach(item => {
+                const product = appData.inventory.find(p => p.id === item.productId);
+                if (product) {
+                    product.stock -= item.quantity;
+                }
+            });
+
+            const subtotal = appData.cart.reduce((sum, item) => sum + (item.salePrice * item.quantity), 0);
+            const discount = parseFloat(document.getElementById('discountAmount').value) || 0;
+            const total = subtotal - discount;
+
+            const sale = {
+                id: Date.now(),
+                timestamp: new Date().toLocaleString('es-CL'),
+                items: [...appData.cart],
+                subtotal,
+                discount,
+                total,
+                paymentMethod: document.getElementById('paymentMethod').value
+            };
+
+            appData.sales.push(sale);
+            saveData();
+
+            generateReceipt(sale);
+            clearCart();
+            renderSalesTable();
+            renderInventoryTable();
+            showAlert('Venta procesada exitosamente.', 'success');
+        }
+
+        function generateReceipt(sale) {
+            const receiptDiv = document.getElementById('receiptPreview');
+            const itemsHtml = sale.items.map(item => `
+                <div class="receipt-line">
+                    <span>${item.name}</span>
+                    <span>$${(item.salePrice * item.quantity).toLocaleString()}</span>
+                </div>
+            `).join('');
+
+            receiptDiv.innerHTML = `
+                <h4 style="text-align: center; margin-bottom: 0.75rem;">RECIBO DE VENTA</h4>
+                <div class="receipt-line">
+                    <span>Fecha/Hora:</span>
+                    <span>${sale.timestamp}</span>
+                </div>
+                <div style="border-top: 2px solid #1e293b; margin: 0.5rem 0;"></div>
+                ${itemsHtml}
+                <div style="border-top: 2px solid #1e293b; margin: 0.5rem 0;"></div>
+                <div class="receipt-line">
+                    <span>Subtotal:</span>
+                    <span>$${sale.subtotal.toLocaleString()}</span>
+                </div>
+                ${sale.discount > 0 ? `
+                    <div class="receipt-line">
+                        <span>Descuento:</span>
+                        <span>-$${sale.discount.toLocaleString()}</span>
+                    </div>
+                ` : ''}
+                <div class="receipt-line receipt-total">
+                    <span>TOTAL:</span>
+                    <span>$${sale.total.toLocaleString()}</span>
+                </div>
+                <div class="receipt-line" style="margin-top: 0.75rem;">
+                    <span>Método:</span>
+                    <span>${sale.paymentMethod}</span>
+                </div>
+                <div style="text-align: center; margin-top: 1rem; font-size: 0.75rem; border-top: 2px dashed #1e293b; padding-top: 0.5rem;">
+                    ¡Gracias por su compra!<br>FarmaciaCL © 2026
+                </div>
+            `;
+        }
+
+        function renderSalesTable() {
+            const table = document.getElementById('salesTable');
+            table.innerHTML = '';
+
+            appData.sales.slice().reverse().forEach(sale => {
+                const itemsStr = sale.items.map(i => `${i.name} (x${i.quantity})`).join(', ');
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${sale.timestamp}</td>
+                    <td>${itemsStr}</td>
+                    <td class="currency"><strong>$${sale.total.toLocaleString()}</strong></td>
+                    <td>${sale.paymentMethod}</td>
+                    <td>
+                        <button class="btn btn-small btn-secondary" onclick="viewSaleReceipt(${sale.id})">Ver</button>
+                    </td>
+                `;
+                table.appendChild(row);
+            });
+        }
+
+        function viewSaleReceipt(saleId) {
+            const sale = appData.sales.find(s => s.id === saleId);
+            if (sale) {
+                generateReceipt(sale);
+                document.getElementById('ventas').scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        // ==================== RECETAS ====================
+
+        function openAddRecipeModal() {
+            document.getElementById('addRecipeModal').classList.add('active');
+            document.getElementById('recipeDate').valueAsDate = new Date();
+        }
+
+        function closeAddRecipeModal() {
+            document.getElementById('addRecipeModal').classList.remove('active');
+            document.querySelectorAll('#addRecipeModal input, #addRecipeModal select, #addRecipeModal textarea').forEach(el => el.value = '');
+        }
+
+        function saveRecipe(e) {
+            e.preventDefault();
+
+            const recipe = {
+                id: Date.now(),
+                patient: document.getElementById('recipePatient').value,
+                doctor: document.getElementById('recipeDoctor').value,
+                medications: document.getElementById('recipeMedications').value,
+                date: document.getElementById('recipeDate').value,
+                type: document.getElementById('recipeType').value,
+                retentionStatus: document.getElementById('recipeRetentionStatus').value,
+                createdAt: new Date().toISOString()
+            };
+
+            appData.recipes.push(recipe);
+            saveData();
+            closeAddRecipeModal();
+            renderRecipesTable();
+            showAlert('Receta registrada conforme a normativa ISP.', 'success');
+        }
+
+        function renderRecipesTable() {
+            const table = document.getElementById('recipesTable');
+            table.innerHTML = '';
+
+            appData.recipes.forEach(recipe => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${recipe.patient}</strong></td>
+                    <td>${recipe.doctor}</td>
+                    <td><small>${recipe.medications}</small></td>
+                    <td>${recipe.date}</td>
+                    <td><span class="badge badge-info">${recipe.type}</span></td>
+                    <td>
+                        <span class="badge ${
+                            recipe.retentionStatus === 'retenida' ? 'badge-warning' :
+                            recipe.retentionStatus === 'cheque' ? 'badge-danger' :
+                            'badge-success'
+                        }">
+                            ${recipe.retentionStatus === 'simple' ? 'Entregada' :
+                              recipe.retentionStatus === 'retenida' ? 'Retenida' :
+                              'Cheque'}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-small btn-danger" onclick="deleteRecipe(${recipe.id})">Eliminar</button>
+                    </td>
+                `;
+                table.appendChild(row);
+            });
+        }
+
+        function filterRecipesTable() {
+            const query = document.getElementById('recipeSearchInput').value.toLowerCase();
+            const rows = document.querySelectorAll('#recipesTable tr');
+
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(query) ? '' : 'none';
+            });
+        }
+
+        function deleteRecipe(id) {
+            if (confirm('¿Eliminar esta receta?')) {
+                appData.recipes = appData.recipes.filter(r => r.id !== id);
+                saveData();
+                renderRecipesTable();
+            }
+        }
+
+        // ==================== CLIENTES ====================
+
+        function openAddCustomerModal() {
+            document.getElementById('addCustomerModal').classList.add('active');
+        }
+
+        function closeAddCustomerModal() {
+            document.getElementById('addCustomerModal').classList.remove('active');
+            document.querySelectorAll('#addCustomerModal input, #addCustomerModal select, #addCustomerModal textarea').forEach(el => el.value = '');
+        }
+
+        function saveCustomer(e) {
+            e.preventDefault();
+
+            const customer = {
+                id: Date.now(),
+                name: document.getElementById('customerName').value,
+                rut: document.getElementById('customerRUT').value,
+                chronicMeds: document.getElementById('customerChronicMeds').value,
+                insurance: document.getElementById('customerInsurance').value,
+                loyaltyPoints: parseInt(document.getElementById('customerLoyaltyPoints').value) || 0,
+                purchaseCount: 0,
+                createdAt: new Date().toISOString()
+            };
+
+            appData.customers.push(customer);
+            saveData();
+            closeAddCustomerModal();
+            renderCustomersTable();
+            showAlert('Cliente agregado exitosamente.', 'success');
+        }
+
+        function renderCustomersTable() {
+            const table = document.getElementById('customersTable');
+            table.innerHTML = '';
+
+            appData.customers.forEach(customer => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${customer.name}</strong></td>
+                    <td>${customer.rut}</td>
+                    <td><small>${customer.chronicMeds || '-'}</small></td>
+                    <td>${customer.insurance || '-'}</td>
+                    <td><strong>${customer.loyaltyPoints}</strong></td>
+                    <td>${customer.purchaseCount}</td>
+                    <td>
+                        <button class="btn btn-small btn-secondary" onclick="editCustomer(${customer.id})">Editar</button>
+                        <button class="btn btn-small btn-danger" onclick="deleteCustomer(${customer.id})">Eliminar</button>
+                    </td>
+                `;
+                table.appendChild(row);
+            });
+        }
+
+        function filterCustomersTable() {
+            const query = document.getElementById('customerSearchInput').value.toLowerCase();
+            const rows = document.querySelectorAll('#customersTable tr');
+
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(query) ? '' : 'none';
+            });
+        }
+
+        function deleteCustomer(id) {
+            if (confirm('¿Eliminar este cliente?')) {
+                appData.customers = appData.customers.filter(c => c.id !== id);
+                saveData();
+                renderCustomersTable();
+            }
+        }
+
+        function editCustomer(id) {
+            const customer = appData.customers.find(c => c.id === id);
+            if (customer) {
+                document.getElementById('customerName').value = customer.name;
+                document.getElementById('customerRUT').value = customer.rut;
+                document.getElementById('customerChronicMeds').value = customer.chronicMeds;
+                document.getElementById('customerInsurance').value = customer.insurance;
+                document.getElementById('customerLoyaltyPoints').value = customer.loyaltyPoints;
+                document.getElementById('addCustomerModal').classList.add('active');
+
+                document.getElementById('addCustomerModal').onsubmit = (e) => {
+                    e.preventDefault();
+                    appData.customers = appData.customers.filter(c => c.id !== id);
+                    saveCustomer(e);
+                    document.getElementById('addCustomerModal').onsubmit = null;
+                };
+            }
+        }
+
+        // ==================== PROVEEDORES ====================
+
+        function openAddSupplierModal() {
+            document.getElementById('addSupplierModal').classList.add('active');
+        }
+
+        function closeAddSupplierModal() {
+            document.getElementById('addSupplierModal').classList.remove('active');
+            document.querySelectorAll('#addSupplierModal input, #addSupplierModal select, #addSupplierModal textarea').forEach(el => el.value = '');
+        }
+
+        function saveSupplier(e) {
+            e.preventDefault();
+
+            const supplier = {
+                id: Date.now(),
+                name: document.getElementById('supplierName').value,
+                contact: document.getElementById('supplierContact').value,
+                phone: document.getElementById('supplierPhone').value,
+                email: document.getElementById('supplierEmail').value,
+                paymentTerm: parseInt(document.getElementById('supplierPaymentTerm').value),
+                nextDelivery: document.getElementById('supplierNextDelivery').value,
+                products: document.getElementById('supplierProducts').value,
+                createdAt: new Date().toISOString()
+            };
+
+            appData.suppliers.push(supplier);
+            saveData();
+            closeAddSupplierModal();
+            renderSuppliersTable();
+            showAlert('Proveedor agregado exitosamente.', 'success');
+        }
+
+        function renderSuppliersTable() {
+            const table = document.getElementById('suppliersTable');
+            table.innerHTML = '';
+
+            appData.suppliers.forEach(supplier => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${supplier.name}</strong></td>
+                    <td>${supplier.contact}</td>
+                    <td>${supplier.phone}</td>
+                    <td>${supplier.email || '-'}</td>
+                    <td>${supplier.paymentTerm} días</td>
+                    <td>${supplier.nextDelivery || '-'}</td>
+                    <td>
+                        <button class="btn btn-small btn-secondary" onclick="editSupplier(${supplier.id})">Editar</button>
+                        <button class="btn btn-small btn-danger" onclick="deleteSupplier(${supplier.id})">Eliminar</button>
+                    </td>
+                `;
+                table.appendChild(row);
+            });
+        }
+
+        function filterSuppliersTable() {
+            const query = document.getElementById('supplierSearchInput').value.toLowerCase();
+            const rows = document.querySelectorAll('#suppliersTable tr');
+
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(query) ? '' : 'none';
+            });
+        }
+
+        function deleteSupplier(id) {
+            if (confirm('¿Eliminar este proveedor?')) {
+                appData.suppliers = appData.suppliers.filter(s => s.id !== id);
+                saveData();
+                renderSuppliersTable();
+            }
+        }
+
+        function editSupplier(id) {
+            const supplier = appData.suppliers.find(s => s.id === id);
+            if (supplier) {
+                document.getElementById('supplierName').value = supplier.name;
+                document.getElementById('supplierContact').value = supplier.contact;
+                document.getElementById('supplierPhone').value = supplier.phone;
+                document.getElementById('supplierEmail').value = supplier.email;
+                document.getElementById('supplierPaymentTerm').value = supplier.paymentTerm;
+                document.getElementById('supplierNextDelivery').value = supplier.nextDelivery;
+                document.getElementById('supplierProducts').value = supplier.products;
+                document.getElementById('addSupplierModal').classList.add('active');
+
+                document.getElementById('addSupplierModal').onsubmit = (e) => {
+                    e.preventDefault();
+                    appData.suppliers = appData.suppliers.filter(s => s.id !== id);
+                    saveSupplier(e);
+                    document.getElementById('addSupplierModal').onsubmit = null;
+                };
+            }
+        }
+
+        // ==================== REPORTES ====================
+
+        let salesChart = null;
+        let topProductsChart = null;
+
+        function renderReportCharts() {
+            renderSalesChart();
+            renderTopProductsChart();
+        }
+
+        function renderSalesChart() {
+            const ctx = document.getElementById('salesChart')?.getContext('2d');
+            if (!ctx) return;
+
+            const last7Days = getLast7Days();
+            const salesByDay = {};
+
+            last7Days.forEach(date => {
+                salesByDay[date] = 0;
+            });
+
+            appData.sales.forEach(sale => {
+                const saleDate = sale.timestamp.split(',')[0];
+                if (salesByDay.hasOwnProperty(saleDate)) {
+                    salesByDay[saleDate] += sale.total;
+                }
+            });
+
+            if (salesChart) salesChart.destroy();
+
+            salesChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: last7Days,
+                    datasets: [{
+                        label: 'Ventas ($)',
+                        data: last7Days.map(d => salesByDay[d]),
+                        borderColor: '#2563eb',
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: '#2563eb',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: true, position: 'top' }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        function renderTopProductsChart() {
+            const ctx = document.getElementById('topProductsChart')?.getContext('2d');
+            if (!ctx) return;
+
+            const productSales = {};
+
+            appData.sales.forEach(sale => {
+                sale.items.forEach(item => {
+                    if (!productSales[item.name]) {
+                        productSales[item.name] = 0;
+                    }
+                    productSales[item.name] += item.quantity;
+                });
+            });
+
+            const sorted = Object.entries(productSales)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5);
+
+            if (topProductsChart) topProductsChart.destroy();
+
+            topProductsChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sorted.map(([name]) => name),
+                    datasets: [{
+                        label: 'Unidades Vendidas',
+                        data: sorted.map(([, qty]) => qty),
+                        backgroundColor: '#2563eb'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        function renderReportTables() {
+            renderExpiryTable();
+            renderMarginAnalysisTable();
+            updateStatistics();
+        }
+
+        function renderExpiryTable() {
+            const table = document.getElementById('expiryTable');
+            table.innerHTML = '';
+
+            const expiryProducts = appData.inventory
+                .map(p => ({
+                    ...p,
+                    daysUntilExpiry: calculateDaysUntilExpiry(p.expiry)
+                }))
+                .filter(p => p.daysUntilExpiry <= 60)
+                .sort((a, b) => a.daysUntilExpiry - b.daysUntilExpiry);
+
+            if (expiryProducts.length === 0) {
+                table.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #16a34a; padding: 1rem;">✓ Todos los productos vigentes</td></tr>';
+                return;
+            }
+
+            expiryProducts.forEach(product => {
+                const row = document.createElement('tr');
+                const className = product.daysUntilExpiry <= 0 ? 'expired' : 'low-stock';
+                row.className = className;
+                row.innerHTML = `
+                    <td><strong>${product.name}</strong></td>
+                    <td>${product.stock}</td>
+                    <td>${product.expiry}</td>
+                    <td>
+                        <span class="badge ${product.daysUntilExpiry <= 0 ? 'badge-danger' : 'badge-warning'}">
+                            ${product.daysUntilExpiry <= 0 ? 'VENCIDO' : product.daysUntilExpiry + ' días'}
+                        </span>
+                    </td>
+                `;
+                table.appendChild(row);
+            });
+        }
+
+        function calculateDaysUntilExpiry(expiryDate) {
+            try {
+                const [day, month, year] = expiryDate.split('/');
+                const expDate = new Date(year, month - 1, day);
+                const today = new Date();
+                return Math.floor((expDate - today) / (1000 * 60 * 60 * 24));
+            } catch (e) {
+                return 999;
+            }
+        }
+
+        function renderMarginAnalysisTable() {
+            const table = document.getElementById('marginAnalysisTable');
+            table.innerHTML = '';
+
+            const marginByPresentation = {};
+
+            appData.inventory.forEach(product => {
+                if (!marginByPresentation[product.presentation]) {
+                    marginByPresentation[product.presentation] = {
+                        count: 0,
+                        totalMargin: 0,
+                        soldQty: 0
+                    };
+                }
+                marginByPresentation[product.presentation].count++;
+                marginByPresentation[product.presentation].totalMargin += product.margin;
+            });
+
+            appData.sales.forEach(sale => {
+                sale.items.forEach(item => {
+                    const product = appData.inventory.find(p => p.name === item.name);
+                    if (product && marginByPresentation[product.presentation]) {
+                        marginByPresentation[product.presentation].soldQty += item.quantity;
+                    }
+                });
+            });
+
+            Object.entries(marginByPresentation).forEach(([presentation, data]) => {
+                const row = document.createElement('tr');
+                const avgMargin = (data.totalMargin / data.count).toFixed(2);
+                row.innerHTML = `
+                    <td><strong>${presentation}</strong></td>
+                    <td>${data.count}</td>
+                    <td><strong>${avgMargin}%</strong></td>
+                    <td>${data.soldQty}</td>
+                `;
+                table.appendChild(row);
+            });
+        }
+
+        function updateStatistics() {
+            const today = new Date().toLocaleDateString('es-CL');
+            const todaySales = appData.sales.filter(s => s.timestamp.includes(today));
+            const todayTotal = todaySales.reduce((sum, s) => sum + s.total, 0);
+            const todayCount = todaySales.length;
+
+            document.getElementById('todaySalesValue').textContent = `$${todayTotal.toLocaleString()}`;
+            document.getElementById('todayTransactionsValue').textContent = todayCount;
+
+            const avgMargin = appData.inventory.length > 0
+                ? (appData.inventory.reduce((sum, p) => sum + p.margin, 0) / appData.inventory.length).toFixed(1)
+                : 0;
+            document.getElementById('avgMarginValue').textContent = `${avgMargin}%`;
+
+            const stockValue = appData.inventory.reduce((sum, p) => sum + (p.costPrice * p.stock), 0);
+            document.getElementById('stockValueTotal').textContent = `$${stockValue.toLocaleString()}`;
+        }
+
+        function getLast7Days() {
+            const days = [];
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                days.push(d.toLocaleDateString('es-CL'));
+            }
+            return days;
+        }
+
+        function exportDailySalesCSV() {
+            const headers = 'Fecha,Hora,Productos,Subtotal,Descuento,Total,Método\n';
+            const rows = appData.sales.map(sale => {
+                const [date, time] = sale.timestamp.split(',').map(s => s.trim());
+                const products = sale.items.map(i => `${i.name} (x${i.quantity})`).join('; ');
+                return `"${date}","${time}","${products}","${sale.subtotal}","${sale.discount}","${sale.total}","${sale.paymentMethod}"`;
+            }).join('\n');
+
+            const csv = headers + rows;
+            downloadCSV(csv, 'ventas-diarias.csv');
+        }
+
+        function exportInventoryCSV() {
+            const headers = 'Nombre,Laboratorio,Presentación,Stock,Precio Compra,Precio Venta,Margen %,Vencimiento,Ubicación,Controlado\n';
+            const rows = appData.inventory.map(p => {
+                return `"${p.name}","${p.lab}","${p.presentation}","${p.stock}","${p.costPrice}","${p.salePrice}","${p.margin}","${p.expiry}","${p.location}","${p.isControlled ? 'Sí' : 'No'}"`;
+            }).join('\n');
+
+            const csv = headers + rows;
+            downloadCSV(csv, 'inventario.csv');
+        }
+
+        function downloadCSV(csv, filename) {
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+        }
+
+        // ==================== INIT ====================
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadData();
+            renderInventoryTable();
+            renderSalesProductList();
+            renderRecipesTable();
+            renderCustomersTable();
+            renderSuppliersTable();
+
+            // PWA Service Worker registration
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('sw.js').catch(e => console.log('SW registration failed', e));
+            }
+
+            // Initialize with sample data if empty
+            if (appData.inventory.length === 0) {
+                initializeSampleData();
+            }
+        });
+
+        function initializeSampleData() {
+            appData.inventory = [
+                {
+                    id: Date.now() + 1,
+                    name: 'Ibuprofeno 400mg',
+                    lab: 'Saval',
+                    activeIngredient: 'Ibuprofeno',
+                    presentation: 'Comprimidos',
+                    dosage: '400mg',
+                    stock: 150,
+                    minStock: 20,
+                    costPrice: 500,
+                    salePrice: 1200,
+                    margin: 140,
+                    expiry: '31/12/2026',
+                    location: 'Pasillo 1, Estante A',
+                    isControlled: false,
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    id: Date.now() + 2,
+                    name: 'Amoxicilina 500mg',
+                    lab: 'Laboratorio Chile',
+                    activeIngredient: 'Amoxicilina',
+                    presentation: 'Cápsulas',
+                    dosage: '500mg',
+                    stock: 50,
+                    minStock: 15,
+                    costPrice: 800,
+                    salePrice: 2500,
+                    margin: 212.5,
+                    expiry: '30/06/2026',
+                    location: 'Pasillo 2, Estante B',
+                    isControlled: false,
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    id: Date.now() + 3,
+                    name: 'Diclofenaco 75mg',
+                    lab: 'Andrómaco',
+                    activeIngredient: 'Diclofenaco',
+                    presentation: 'Inyectable',
+                    dosage: '75mg',
+                    stock: 25,
+                    minStock: 10,
+                    costPrice: 1200,
+                    salePrice: 3500,
+                    margin: 191.67,
+                    expiry: '15/08/2026',
+                    location: 'Pasillo 3, Estante C',
+                    isControlled: true,
+                    createdAt: new Date().toISOString()
+                }
+            ];
+
+            renderInventoryTable();
+            renderSalesProductList();
+            saveData();
+        }
+
+        // Close modals on escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal.active').forEach(m => m.classList.remove('active'));
+            }
+        });
+
+        // Close modals on background click
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -422,7 +422,7 @@ const I18N = {
     today:'Hoy',tomorrow:'Manana',spot:'Spot',
     bestWindow:'Mejor ventana',noWindow:'Sin ventana esta semana',
     thermalOk:'Viento llega a la orilla',thermalWarn:'Viento inestable en orilla',thermalBad:'Viento no baja a la playa',
-    thermal:'Termica',drizzle:'Llovizna',
+    thermal:'Termica',drizzle:'Llovizna',shoreWarn:'Protegido',
     air:'Aire',sea:'Mar',ideal:'Ideal',
     send:'Enviar',copied:'Copiado',
     in_:'en',min:'min',
@@ -446,7 +446,7 @@ const I18N = {
     today:'Today',tomorrow:'Tomorrow',spot:'Spot',
     bestWindow:'Best window',noWindow:'No window this week',
     thermalOk:'Wind reaches shore',thermalWarn:'Unstable wind at shore',thermalBad:'Wind not reaching beach',
-    thermal:'Thermal',drizzle:'Drizzle',
+    thermal:'Thermal',drizzle:'Drizzle',shoreWarn:'Sheltered',
     air:'Air',sea:'Sea',ideal:'Ideal',
     send:'Send',copied:'Copied',
     in_:'in',min:'min',
@@ -576,7 +576,7 @@ async function fetchAllSpots() {
     const batch = spotsToFetch.slice(i, i + BATCH);
     const results = await Promise.allSettled(batch.map(async spot => {
       const [wind, marine] = await Promise.all([
-        fetchWithRetry(`https://api.open-meteo.com/v1/forecast?latitude=${spot.lat}&longitude=${spot.lon}&current=wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,weather_code,precipitation&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,precipitation,weather_code&forecast_days=7&wind_speed_unit=kn&timezone=America/Santiago`),
+        fetchWithRetry(`https://api.open-meteo.com/v1/forecast?latitude=${spot.lat}&longitude=${spot.lon}&current=wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,weather_code,precipitation&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,precipitation,weather_code&forecast_days=7&wind_speed_unit=kn&timezone=America/Santiago&cell_selection=sea`),
         fetchWithRetry(`https://marine-api.open-meteo.com/v1/marine?latitude=${spot.lat}&longitude=${spot.lon}&current=wave_height,wave_period,wave_direction,sea_surface_temperature&hourly=wave_height&forecast_days=7&timezone=America/Santiago`)
       ]);
       return { id: spot.id, wind, marine };
@@ -613,15 +613,18 @@ function getSpotStatus(spot) {
   const d = spotData[spot.id];
   if (!d || !d.wind || !d.wind.current) return { status: 'unknown', color: 'red', label: t('noData'), warn: '' };
 
-  const wind = d.wind.current.wind_speed_10m;
-  const gust = d.wind.current.wind_gusts_10m;
+  const windRaw = d.wind.current.wind_speed_10m;
+  const gustRaw = d.wind.current.wind_gusts_10m;
+  // Apply shore correction: sheltered spots get less wind at beach level
+  const wind = shoreWindCorrection(windRaw, spot.shore);
+  const gust = shoreWindCorrection(gustRaw, spot.shore);
   const dir = d.wind.current.wind_direction_10m;
   const rain = d.wind.current.precipitation || 0;
   const temp = d.wind.current.temperature_2m;
   const wcode = d.wind.current.weather_code || 0;
 
   // Rain: >2mm/h = no go, >0.5mm = warning
-  const heavyRain = rain > 2 || wcode >= 63; // 63+ = heavy rain/thunderstorm
+  const heavyRain = rain > 2 || wcode >= 63;
   const lightRain = rain > 0.5 || (wcode >= 51 && wcode < 63);
   // Cold: <10°C warning
   const cold = temp != null && temp < 10;
@@ -635,9 +638,9 @@ function getSpotStatus(spot) {
   let warn = '';
   if (lightRain) warn = t('drizzle');
   if (cold) warn += (warn ? ' + ' : '') + `${Math.round(temp)}°C`;
+  if (spot.shore === 'sheltered') warn += (warn ? ' + ' : '') + t('shoreWarn');
 
   if (wind >= spot.windMin && wind <= spot.windMax && dirOk && gustOk && !gustWarn && !lightRain) {
-    // Check thermal risk — if bad, downgrade to yellow
     const thermal = getThermalRisk(spot);
     if (thermal?.level === 'bad') {
       return { status: 'yellow', color: 'yellow', label: t('thermal'), warn: thermal.msg };
@@ -654,8 +657,15 @@ function isDirectionFavorable(actual, idealDirs) {
   return idealDirs.some(ideal => {
     let diff = Math.abs(actual - ideal);
     if (diff > 180) diff = 360 - diff;
-    return diff <= 45;
+    return diff <= 30;
   });
+}
+
+// Shore wind correction: sheltered spots lose ~25% wind at shore, semi ~10%
+function shoreWindCorrection(speed, shore) {
+  if (shore === 'sheltered') return speed * 0.75;
+  if (shore === 'semi') return speed * 0.90;
+  return speed; // exposed = full wind
 }
 
 function getStatusScore(status) {
@@ -686,7 +696,8 @@ function analyzeBestMoment(spot) {
     if (hr < 10 || hr > 20) continue;
     if (dt < now) continue;
 
-    const spd = speeds[i];
+    const spdRaw = speeds[i];
+    const spd = shoreWindCorrection(spdRaw, spot.shore);
     const dir = dirs[i];
     const rain = d.wind.hourly.precipitation?.[i] || 0;
     const temp = d.wind.hourly.temperature_2m?.[i];
@@ -779,9 +790,9 @@ function renderHero() {
 
   const st = getSpotStatus(best);
   const d = spotData[best.id];
-  const wind = d?.wind?.current?.wind_speed_10m ?? 0;
+  const wind = shoreWindCorrection(d?.wind?.current?.wind_speed_10m ?? 0, best.shore);
   const dir = d?.wind?.current?.wind_direction_10m ?? 0;
-  const gust = d?.wind?.current?.wind_gusts_10m ?? 0;
+  const gust = shoreWindCorrection(d?.wind?.current?.wind_gusts_10m ?? 0, best.shore);
   const wave = d?.marine?.current?.wave_height;
   const analysis = analyzeBestMoment(best);
   const dist = best.dist ? Math.round(best.dist) : null;
@@ -867,7 +878,7 @@ function buildSessionTimeline(spot, d) {
     if (dt.toDateString() !== today) { if (blocks.length > 0) break; continue; }
     const hr = dt.getHours();
     if (hr < 10 || hr > 20) continue;
-    const w = d.wind.hourly.wind_speed_10m[i];
+    const w = shoreWindCorrection(d.wind.hourly.wind_speed_10m[i], spot.shore);
     const rn = d.wind.hourly.precipitation?.[i] || 0;
     const isNow = hr === now.getHours();
     const good = w >= spot.windMin && w <= spot.windMax && rn < 2;
@@ -886,7 +897,7 @@ function shareSpot(spotId) {
   const spot = SPOTS.find(s => s.id === spotId);
   const d = spotData[spotId];
   const st = getSpotStatus(spot);
-  const wind = d?.wind?.current?.wind_speed_10m ?? 0;
+  const wind = shoreWindCorrection(d?.wind?.current?.wind_speed_10m ?? 0, spot?.shore);
   const dir = d?.wind?.current?.wind_direction_10m ?? 0;
   const status = st.label;
   const text = `${spot.name}: ${Math.round(wind)}kn ${degToCompass(dir)} (${status}) — cussen.cl/wind`;
@@ -938,7 +949,7 @@ function renderWeekGrid() {
         const hr = dt.getHours();
         if (hr < 10 || hr > 20) return;
         const key = dt.toDateString();
-        const spd = sd.wind.hourly.wind_speed_10m[i];
+        const spd = shoreWindCorrection(sd.wind.hourly.wind_speed_10m[i], s.shore);
         if (!peakMap[key] || spd > peakMap[key]) peakMap[key] = spd;
       });
     }
@@ -1006,8 +1017,8 @@ function renderSpots() {
 function buildSpotCard(spot, idx) {
   const d = spotData[spot.id];
   const st = getSpotStatus(spot);
-  const wind = d?.wind?.current?.wind_speed_10m ?? '—';
-  const gust = d?.wind?.current?.wind_gusts_10m ?? '—';
+  const wind = d?.wind?.current?.wind_speed_10m != null ? shoreWindCorrection(d.wind.current.wind_speed_10m, spot.shore) : '—';
+  const gust = d?.wind?.current?.wind_gusts_10m != null ? shoreWindCorrection(d.wind.current.wind_gusts_10m, spot.shore) : '—';
   const dir = d?.wind?.current?.wind_direction_10m ?? 0;
   const wave = d?.marine?.current?.wave_height ?? '—';
   const temp = d?.wind?.current?.temperature_2m ?? '—';
@@ -1033,7 +1044,7 @@ function buildSpotCard(spot, idx) {
     const startIdx = times.findIndex(t => new Date(t) >= now);
     if (startIdx >= 0) {
       for (let i = startIdx; i < Math.min(startIdx + 8, times.length); i++) {
-        const w = d.wind.hourly.wind_speed_10m[i];
+        const w = shoreWindCorrection(d.wind.hourly.wind_speed_10m[i], spot.shore);
         const dd = d.wind.hourly.wind_direction_10m[i];
         const hr = new Date(times[i]).getHours();
         const fcSt = w >= spot.windMin && w <= spot.windMax ? 'fc-green' : w >= 8 ? 'fc-yellow' : 'fc-red';
@@ -1100,7 +1111,7 @@ function build7DayForecast(spot, d) {
       html += `<div class="fc-day-row"><div class="fc-day-label">${label}</div>`;
     }
 
-    const w = d.wind.hourly.wind_speed_10m[i];
+    const w = shoreWindCorrection(d.wind.hourly.wind_speed_10m[i], spot.shore);
     const dd = d.wind.hourly.wind_direction_10m[i];
     const rn = d.wind.hourly.precipitation?.[i] || 0;
     const tp = d.wind.hourly.temperature_2m?.[i];
@@ -1152,6 +1163,7 @@ async function renderChart(spotId, canvasEl) {
   if (startIdx < 0) return;
   const end = Math.min(startIdx + 24, times.length);
 
+  const spot = SPOTS.find(s => s.id === spotId);
   const labels = [];
   const windData = [];
   const gustData = [];
@@ -1159,13 +1171,11 @@ async function renderChart(spotId, canvasEl) {
   const tempData = [];
   for (let i = startIdx; i < end; i++) {
     labels.push(new Date(times[i]).getHours() + ':00');
-    windData.push(Math.round(d.wind.hourly.wind_speed_10m[i]));
-    gustData.push(Math.round(d.wind.hourly.wind_gusts_10m[i]));
+    windData.push(Math.round(shoreWindCorrection(d.wind.hourly.wind_speed_10m[i], spot?.shore)));
+    gustData.push(Math.round(shoreWindCorrection(d.wind.hourly.wind_gusts_10m[i], spot?.shore)));
     rainData.push(d.wind.hourly.precipitation?.[i] || 0);
     tempData.push(d.wind.hourly.temperature_2m?.[i] || null);
   }
-
-  const spot = SPOTS.find(s => s.id === spotId);
   const hasRain = rainData.some(r => r > 0);
 
   charts[chartKey] = new Chart(canvas, {
@@ -1428,7 +1438,7 @@ async function fetchSpotsOnDemand(spots, callback) {
     if (spotData[spot.id]) continue;
     try {
       const [wind, marine] = await Promise.all([
-        fetchWithRetry(`https://api.open-meteo.com/v1/forecast?latitude=${spot.lat}&longitude=${spot.lon}&current=wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,weather_code,precipitation&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,precipitation,weather_code&forecast_days=7&wind_speed_unit=kn&timezone=America/Santiago`),
+        fetchWithRetry(`https://api.open-meteo.com/v1/forecast?latitude=${spot.lat}&longitude=${spot.lon}&current=wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,weather_code,precipitation&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,precipitation,weather_code&forecast_days=7&wind_speed_unit=kn&timezone=America/Santiago&cell_selection=sea`),
         fetchWithRetry(`https://marine-api.open-meteo.com/v1/marine?latitude=${spot.lat}&longitude=${spot.lon}&current=wave_height,wave_period,wave_direction,sea_surface_temperature&hourly=wave_height&forecast_days=7&timezone=America/Santiago`)
       ]);
       if (wind && !wind.error) {
@@ -1496,7 +1506,7 @@ function checkAlerts() {
     const wasGood = last[spot.id] === true;
     if (isGood && !wasGood) {
       const d = spotData[spot.id];
-      const wind = d?.wind?.current?.wind_speed_10m || 0;
+      const wind = shoreWindCorrection(d?.wind?.current?.wind_speed_10m || 0, spot.shore);
       const dir = d?.wind?.current?.wind_direction_10m || 0;
       new Notification(`${spot.name} ${t('spotIsOn')}`, {
         body: `${Math.round(wind)} kn ${degToCompass(dir)}${spot.dist ? ' - '+Math.round(spot.dist)+'km' : ''}`,

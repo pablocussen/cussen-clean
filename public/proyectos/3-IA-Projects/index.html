@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Projects - Cussen | Desarrollo con Inteligencia Artificial</title>
+    <meta name="description" content="127 proyectos innovadores desarrollados con Inteligencia Artificial por Grupo Cussen. Teledetección, FinTech, ML y aplicaciones en producción real.">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        html{scroll-behavior:smooth}
+        body{background:#000;color:#e0e0e0;font-family:'Rajdhani',sans-serif;overflow-x:hidden;line-height:1.4}
+        img{max-width:100%;height:auto;display:block}
+        a{text-decoration:none}
+        #matrix-canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;opacity:.15}
+
+        /* Boot Screen */
+        #boot-screen{position:fixed;inset:0;z-index:9999;background:#000;display:flex;align-items:center;justify-content:center;transition:opacity .6s}
+        #boot-screen.hide{opacity:0;pointer-events:none}
+        .boot-text{font-family:'JetBrains Mono',monospace;font-size:14px;color:#00ff41;max-width:500px;padding:20px}
+        .boot-line{opacity:0;transform:translateY(5px);transition:all .3s}
+        .boot-line.show{opacity:1;transform:translateY(0)}
+        .boot-cursor{display:inline-block;width:8px;height:16px;background:#00ff41;animation:blink .6s infinite}
+        @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+        /* Nav */
+        .nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:12px 30px;display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,.8);backdrop-filter:blur(12px);border-bottom:1px solid rgba(0,255,65,.1)}
+        .nav-logo{font-family:'Orbitron',sans-serif;font-weight:900;font-size:18px;color:#fff;text-decoration:none;letter-spacing:2px}
+        .nav-links{display:flex;gap:20px}
+        .nav-links a{color:#999;text-decoration:none;font-size:14px;letter-spacing:1px;transition:color .3s}
+        .nav-links a:hover{color:#00ff41}
+
+        /* Hero */
+        .hero{position:relative;z-index:2;text-align:center;padding:120px 20px 40px}
+        .hero h1{font-family:'Orbitron',sans-serif;font-size:clamp(32px,6vw,64px);font-weight:900;color:#fff;letter-spacing:4px;line-height:1.1}
+        .hero h1 span{color:#00ff41}
+        .hero-sub{font-family:'JetBrains Mono',monospace;font-size:clamp(13px,2vw,16px);color:#00ff41;margin-top:16px;opacity:.8}
+        .hero-typing{display:inline}
+        .hero-cursor{display:inline-block;width:2px;height:1em;background:#00ff41;margin-left:2px;animation:blink .6s infinite;vertical-align:text-bottom}
+
+        /* Stats */
+        .stats-bar{position:relative;z-index:2;display:flex;justify-content:center;gap:clamp(20px,5vw,60px);padding:30px 20px;margin:0 auto;max-width:800px}
+        .stat{text-align:center}
+        .stat-num{font-family:'Orbitron',sans-serif;font-size:clamp(28px,4vw,42px);font-weight:900;color:#00ff41}
+        .stat-label{font-size:12px;color:#666;text-transform:uppercase;letter-spacing:2px;margin-top:4px}
+
+        /* Filter */
+        .filter-bar{position:sticky;top:52px;z-index:90;padding:14px 20px;display:flex;justify-content:center;gap:10px;flex-wrap:wrap;background:rgba(0,0,0,.85);backdrop-filter:blur(12px);border-bottom:1px solid rgba(0,255,65,.08)}
+        .filter-pill{font-family:'JetBrains Mono',monospace;font-size:12px;padding:6px 16px;border-radius:20px;border:1px solid #333;background:transparent;color:#777;cursor:pointer;transition:all .3s;letter-spacing:.5px}
+        .filter-pill:hover{border-color:#00ff41;color:#00ff41}
+        .filter-pill.active{border-color:#00ff41;color:#000;background:#00ff41;box-shadow:0 0 20px rgba(0,255,65,.3)}
+
+        /* Grid */
+        .grid{position:relative;z-index:2;display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px;padding:30px clamp(20px,4vw,60px) 60px;max-width:1400px;margin:0 auto}
+
+        /* Cards */
+        .card{position:relative;background:rgba(0,15,8,.85);border:1px solid rgba(0,255,65,.15);border-radius:12px;padding:0;cursor:pointer;transition:all .4s cubic-bezier(.4,0,.2,1);backdrop-filter:blur(8px);overflow:visible;opacity:0;transform:translateY(30px)}
+        .card.visible{opacity:1;transform:translateY(0)}
+        .card::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;border-radius:12px 0 0 12px}
+        .card[data-cat="geo"]::before{background:#00ff41}
+        .card[data-cat="ai"]::before{background:#00ffff}
+        .card[data-cat="tools"]::before{background:#fbbf24}
+        .card[data-cat="apps"]::before{background:#a78bfa}
+        .card:not(.flipped):hover{transform:translateY(-4px) scale(1.01);border-color:rgba(0,255,65,.4);box-shadow:0 8px 40px rgba(0,255,65,.12)}
+        .card-front::after{content:'';position:absolute;top:-100%;left:0;width:100%;height:100%;background:linear-gradient(180deg,transparent,rgba(0,255,65,.03),transparent);transition:top .6s;pointer-events:none}
+        .card:not(.flipped):hover .card-front::after{top:100%}
+        .card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+        .card-cat{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;padding:3px 8px;border-radius:4px;font-weight:500}
+        .card[data-cat="geo"] .card-cat{color:#00ff41;background:rgba(0,255,65,.1)}
+        .card[data-cat="ai"] .card-cat{color:#00ffff;background:rgba(0,255,255,.1)}
+        .card[data-cat="tools"] .card-cat{color:#fbbf24;background:rgba(251,191,36,.1)}
+        .card[data-cat="apps"] .card-cat{color:#a78bfa;background:rgba(167,139,250,.1)}
+        .card-status{display:flex;align-items:center;gap:6px;font-size:10px;letter-spacing:1px;text-transform:uppercase;font-family:'JetBrains Mono',monospace}
+        .status-dot{width:6px;height:6px;border-radius:50%}
+        .status-live .status-dot{background:#00ff41;box-shadow:0 0 8px #00ff41;animation:pulse-dot 2s infinite}
+        .status-live{color:#00ff41}
+        .status-dev .status-dot{background:#fbbf24}
+        .status-dev{color:#fbbf24}
+        .status-mvp .status-dot{background:#00ffff}
+        .status-mvp{color:#00ffff}
+        @keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.4}}
+        .card-title{font-family:'Orbitron',sans-serif;font-size:16px;font-weight:700;color:#fff;margin-bottom:8px;line-height:1.3}
+        .card-desc{font-size:14px;color:#888;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:14px}
+        .card-tech{display:flex;flex-wrap:wrap;gap:6px}
+        .card-tech span{font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 8px;border-radius:4px;background:rgba(255,255,255,.05);color:#666;border:1px solid rgba(255,255,255,.06)}
+        .card-arrow{position:absolute;bottom:20px;right:20px;color:#333;font-size:18px;transition:all .3s}
+        .card:hover .card-arrow{color:#00ff41;transform:translateX(4px)}
+
+        /* Card Flip */
+        .card{perspective:1200px}
+        .card-inner{position:relative;transition:transform 0.7s cubic-bezier(0.25,0.46,0.45,0.94);transform-style:preserve-3d;width:100%}
+        .card.flipped .card-inner{transform:rotateY(180deg)}
+        .card-front,.card-back{backface-visibility:hidden;-webkit-backface-visibility:hidden}
+        .card-front{position:relative;padding:24px;overflow:hidden}
+        .card-back{transform:rotateY(180deg);display:none;flex-direction:column;padding:24px;background:rgba(0,15,8,.95);border-radius:12px}
+        .card.flipped .card-front{display:none}
+        .card.flipped .card-back{display:flex}
+        .card.flipped{z-index:50;border-color:rgba(0,255,65,.5);animation:cardFloat 3s ease-in-out infinite,cardAppear .5s ease-out}
+        @keyframes cardFloat{0%,100%{transform:translateY(0) scale(1.03)}50%{transform:translateY(-8px) scale(1.05)}}
+        @keyframes cardAppear{from{opacity:.7;transform:translateY(10px) scale(0.98)}to{opacity:1;transform:translateY(0) scale(1.03)}}
+        .card[data-cat="geo"].flipped{border-color:#00ff41;box-shadow:0 0 30px rgba(0,255,65,.25)}
+        .card[data-cat="ai"].flipped{border-color:#00ffff;box-shadow:0 0 30px rgba(0,255,255,.25)}
+        .card[data-cat="tools"].flipped{border-color:#fbbf24;box-shadow:0 0 30px rgba(251,191,36,.25)}
+        .card[data-cat="apps"].flipped{border-color:#a78bfa;box-shadow:0 0 30px rgba(167,139,250,.25)}
+        .back-title{font-family:'Orbitron',sans-serif;font-size:18px;font-weight:700;color:#fff;margin-bottom:6px;line-height:1.3;padding-right:30px}
+        .back-status{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:10px;padding:3px 10px;border-radius:12px;margin-bottom:16px;letter-spacing:1px}
+        .back-desc{font-size:14px;color:#aaa;line-height:1.7;margin-bottom:18px}
+        .back-section-label{font-family:'JetBrains Mono',monospace;font-size:10px;color:#555;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+        .back-tech-pills{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px}
+        .back-tech-pills span{font-family:'JetBrains Mono',monospace;font-size:10px;padding:3px 10px;border-radius:4px;background:rgba(0,255,65,.08);color:#00ff41;border:1px solid rgba(0,255,65,.15);transition:all .3s}
+        .back-tech-pills span:hover{background:rgba(0,255,65,.15);transform:translateY(-1px)}
+        .back-features{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px}
+        .back-features span{font-size:12px;padding:4px 12px;border-radius:20px;background:rgba(255,255,255,.04);color:#888;border:1px solid rgba(255,255,255,.08)}
+        .back-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;padding-top:8px;border-top:1px solid rgba(255,255,255,.06)}
+        .back-btn{display:inline-block;padding:10px 28px;border-radius:24px;font-weight:700;text-decoration:none;text-transform:uppercase;letter-spacing:1px;font-size:12px;transition:all .4s cubic-bezier(.4,0,.2,1);font-family:'Rajdhani',sans-serif;text-align:center}
+        .back-btn-primary{background:linear-gradient(135deg,#00ff41,#00cc33);color:#000;box-shadow:0 0 20px rgba(0,255,65,.3)}
+        .back-btn-primary:hover{box-shadow:0 0 35px rgba(0,255,65,.5);transform:translateY(-3px) scale(1.02)}
+        .back-btn-secondary{background:rgba(255,255,255,.05);color:#aaa;border:1px solid #333}
+        .back-btn-secondary:hover{border-color:#00ff41;color:#00ff41;transform:translateY(-2px)}
+        .back-close{position:absolute;top:10px;right:14px;font-size:22px;color:#555;cursor:pointer;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;transition:all .3s;line-height:1;z-index:5}
+        .back-close:hover{color:#00ff41;border-color:#00ff41;background:rgba(0,255,65,.1);transform:rotate(90deg)}
+
+        /* Footer */
+        .site-footer{position:relative;z-index:2;text-align:center;padding:40px 20px;border-top:1px solid rgba(0,255,65,.08);color:#444;font-size:13px}
+
+        /* Lang toggle */
+        .lang-toggle{position:fixed;top:14px;right:120px;z-index:101;display:flex;gap:4px;opacity:.4;transition:opacity .3s}
+        .lang-toggle:hover{opacity:1}
+        .lang-toggle button{font-family:'JetBrains Mono',monospace;font-size:10px;padding:3px 8px;border:1px solid #444;border-radius:4px;background:transparent;color:#777;cursor:pointer;transition:all .2s}
+        .lang-toggle button:hover,.lang-toggle button.active{border-color:#00ff41;color:#00ff41}
+        /* ── Mobile ── */
+        @media(max-width:768px){
+            body{-webkit-tap-highlight-color:transparent}
+            .hero{padding:80px 16px 20px}
+            .hero h1{letter-spacing:2px}
+            .hero-sub{margin-top:10px}
+            .stats-bar{padding:16px;gap:16px}
+            .stat-label{font-size:10px;letter-spacing:1px}
+            .filter-bar{top:46px;padding:10px 16px;gap:8px;justify-content:flex-start;overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+            .filter-bar::-webkit-scrollbar{display:none}
+            .filter-pill{flex-shrink:0;padding:8px 16px;font-size:11px}
+            .grid{grid-template-columns:1fr;padding:16px 12px 40px;gap:12px}
+            .card{border-radius:10px}
+            .card-front{padding:18px 16px}
+            .card-title{font-size:15px}
+            .card-desc{font-size:13px;line-height:1.4}
+            .card-arrow{display:none}
+            .card-tech span{font-size:9px;padding:2px 6px}
+            .card-back{padding:18px 16px}
+            .back-title{font-size:14px}
+            .back-desc{font-size:12px;line-height:1.5}
+            .back-tech-pills span{font-size:9px;padding:2px 6px}
+            .back-btn{width:100%;text-align:center;padding:12px;font-size:12px}
+            .back-close{font-size:24px;top:6px;right:10px}
+            .nav{padding:10px 16px}
+            .nav-logo{font-size:16px;letter-spacing:1px}
+            .nav-links{display:none}
+            .lang-toggle{top:10px;right:12px;opacity:.7}
+            .lang-toggle button{padding:6px 10px;font-size:11px}
+            .site-footer{padding:30px 16px;font-size:12px}
+        }
+        @media(max-width:380px){
+            .hero{padding:70px 12px 16px}
+            .hero h1{font-size:26px;letter-spacing:1px}
+            .hero-sub{font-size:12px}
+            .stats-bar{gap:10px}
+            .stat-num{font-size:24px}
+            .stat-label{font-size:9px;letter-spacing:.5px}
+            .filter-bar{padding:8px 12px}
+            .grid{padding:12px 10px 30px;gap:10px}
+            .card-front{padding:14px 12px}
+            .card-cat{font-size:9px}
+            .card-title{font-size:14px}
+            .back-title{font-size:13px}
+            .back-desc{font-size:11px}
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar{width:6px}
+        ::-webkit-scrollbar-track{background:#000}
+        ::-webkit-scrollbar-thumb{background:#00ff41;border-radius:3px}
+    </style>
+</head>
+<body>
+    <canvas id="matrix-canvas"></canvas>
+
+    <!-- Boot Screen -->
+    <div id="boot-screen">
+        <div class="boot-text" id="boot-text"></div>
+    </div>
+
+    <!-- Nav -->
+    <nav class="nav">
+        <a href="../../index.html" class="nav-logo">CUSSEN</a>
+        <div class="nav-links">
+            <a href="../../servicios/" data-es="Servicios" data-en="Services">Servicios</a>
+            <a href="../../index.html#expertise" data-es="Expertise" data-en="Expertise">Expertise</a>
+            <a href="../../index.html#contact" data-es="Contacto" data-en="Contact">Contacto</a>
+        </div>
+    </nav>
+
+    <!-- Lang Toggle -->
+    <div class="lang-toggle">
+        <button onclick="switchLang('es')" id="btn-es">ES</button>
+        <button onclick="switchLang('en')" id="btn-en">EN</button>
+    </div>
+
+    <!-- Hero -->
+    <header class="hero" id="hero">
+        <h1 data-es="AI PROJECT <span>FACTORY</span>" data-en="AI PROJECT <span>FACTORY</span>">AI PROJECT <span>FACTORY</span></h1>
+        <div class="hero-sub">
+            <span class="hero-typing" id="hero-typing"></span><span class="hero-cursor"></span>
+        </div>
+    </header>
+
+    <!-- Stats -->
+    <div class="stats-bar">
+        <div class="stat">
+            <div class="stat-num" data-count="127">0</div>
+            <div class="stat-label" data-es="Proyectos" data-en="Projects">Proyectos</div>
+        </div>
+        <div class="stat">
+            <div class="stat-num" data-count="140">0</div>
+            <div class="stat-label" data-es="En Producción" data-en="In Production">En Producción</div>
+        </div>
+        <div class="stat">
+            <div class="stat-num" data-count="45">0</div>
+            <div class="stat-label" data-es="Tecnologías" data-en="Technologies">Tecnologías</div>
+        </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar" id="filter-bar">
+        <button class="filter-pill active" data-filter="all" data-es="Todos (29)" data-en="All (29)">Todos (29)</button>
+        <button class="filter-pill" data-filter="geo" data-es="Geoespacial" data-en="Geospatial">Geoespacial</button>
+        <button class="filter-pill" data-filter="ai" data-es="IA & ML" data-en="AI & ML">IA & ML</button>
+        <button class="filter-pill" data-filter="tools" data-es="Tools" data-en="Tools">Tools</button>
+        <button class="filter-pill" data-filter="apps" data-es="Apps" data-en="Apps">Apps</button>
+    </div>
+
+    <!-- Project Grid -->
+    <main class="grid" id="project-grid"></main>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+        <p data-es="&copy; 2025 Cussen - Teledetección &amp; Sustentabilidad. Todos los derechos reservados." data-en="&copy; 2025 Cussen - Remote Sensing &amp; Sustainability. All rights reserved.">&copy; 2025 Cussen - Teledetección &amp; Sustentabilidad. Todos los derechos reservados.</p>
+    </footer>
+
+    <script>
+    // ── Project Data ──
+    const projects = [
+        {
+            id: 'terrascore', cat: 'geo', title: 'TerraScore', status: 'PRODUCCION',
+            descShort: 'Score de salud ambiental en tiempo real para cualquier lugar del planeta, derivado de satélites y explicado por IA.',
+            descCommercial: 'Inteligencia ambiental en tiempo real para cualquier lugar del planeta. Score de salud ambiental derivado de satélites, explicado por IA. Gratis y para todos.',
+            descTech: 'Web app vanilla JS + Open-Meteo API (air quality + weather). Cálculo TerraScore ponderado de 6 componentes ambientales. Leaflet.js dark map, SVG score ring, particle canvas, localStorage, URL sharing. Zero dependencies backend.',
+            features: ['Score Ambiental 0-100', 'Calidad del Aire (AQI)', 'UV + Confort Térmico', 'Tendencia 24h', 'Mapa Interactivo', 'Compartir por URL'],
+            tech: ['Vanilla JS', 'Open-Meteo API', 'Leaflet.js', 'SVG Animations', 'Canvas Particles', 'Copernicus Data'],
+            landingUrl: '/terrascore/', appUrl: '/terrascore/', infoUrl: '/terrascore/'
+        },
+        {
+            id: 'claudia', cat: 'ai', title: 'CLAUDIA v8.4 PRO', status: 'PRODUCCION',
+            descShort: 'Sistema integral de gestión de construcción con IA. Comparador de precios en tiempo real, cronograma inteligente y asistente conversacional.',
+            descCommercial: 'Sistema integral de gestión de construcción con IA que revoluciona la planificación de obras. Incluye comparador de precios en tiempo real de 6 tiendas chilenas, cronograma inteligente y asistente conversacional.',
+            descTech: 'PWA construida con Python/Flask + Firebase + Claude AI. Base de datos de 816 APUs profesionales chilenas. Sistema de scraping automatizado para comparación de precios. Algoritmo de desglose automático de materiales. Chat contextual con Claude Sonnet 3.5.',
+            features: ['816 APUs Chilenas', 'Comparador 6 Tiendas', 'Cronograma IA', 'Desglose Automático', 'Chat Contextual'],
+            tech: ['Python Flask', 'Firebase Firestore', 'Gemini AI', 'PWA', 'Web Scraping'],
+            landingUrl: 'https://claudia-i8bxh.web.app', appUrl: 'https://claudia-i8bxh.web.app/app', infoUrl: 'https://github.com/pablocussen/claudia_bot'
+        },
+        {
+            id: 'whatpay', cat: 'tools', title: 'WhatPay', status: 'EN DESARROLLO',
+            descShort: 'Pagos peer-to-peer integrados nativamente con WhatsApp para Chile. Envía y recibe dinero desde el chat sin descargar apps.',
+            descCommercial: 'Plataforma de pagos peer-to-peer integrada nativamente con WhatsApp para Chile. Envía y recibe dinero desde el chat sin descargar apps. Comercios cobran con un link compartible.',
+            descTech: 'Backend Node.js + TypeScript + Express. Prisma ORM + PostgreSQL + Redis. WhatsApp Cloud API bot stateful. Transbank WebPay Plus + Khipu. Seguridad: AES-256-GCM, bcrypt, JWT KYC guards. Detección de fraude AI. SELECT FOR UPDATE anti double-spending. 1373 tests, 0 errores TS. GCP Cloud Run.',
+            features: ['Pagos P2P WhatsApp', 'Links de Cobro', 'Bot Conversacional', 'Detección Fraude AI', 'AES-256 + WebAuthn', 'Transbank + Khipu'],
+            tech: ['TypeScript', 'Node.js + Express', 'PostgreSQL + Redis', 'Prisma ORM', 'WhatsApp Cloud API', 'GCP Cloud Run'],
+            landingUrl: '/whatpay/', appUrl: '/whatpay/', infoUrl: '/whatpay/'
+        },
+        {
+            id: 'ahorcado', cat: 'apps', title: 'Ahorcado Futurista', status: 'PRODUCCION',
+            descShort: 'El clásico ahorcado reimaginado con estética cyberpunk. Efectos visuales, sonido sintetizado y música generativa.',
+            descCommercial: 'El clásico juego del ahorcado reimaginado con estética cyberpunk/neon. Efectos visuales animados, sonido sintetizado en tiempo real y música de fondo generativa.',
+            descTech: 'App R Shiny con shinyjs. Audio sintetizado con Web Audio API (oscillators). Música generativa con pads atmosféricos. CSS3 animations: glitch, neon glow, scanlines. Mobile-first.',
+            features: ['Audio Web API', 'Música Generativa', 'Estética Cyberpunk', 'Teclado Virtual Táctil', 'Gamificación'],
+            tech: ['R Shiny', 'Web Audio API', 'CSS3 Animations', 'ShinyApps.io', 'Mobile-First'],
+            landingUrl: '/ahorcado/index.html', appUrl: 'https://cussen.shinyapps.io/ahorcado_shiny/', infoUrl: '/ahorcado/index.html'
+        },
+        { id: 'abogadocl', cat: 'apps', title: 'AbogadoCL', status: 'PRODUCCION', descShort: 'AbogadoCL — Kit del Abogado Chile. Plazos judiciales, causas, aranceles, contratos y referencia legal.', descCommercial: 'AbogadoCL — Kit del Abogado Chile. Plazos judiciales, causas, aranceles, contratos y referencia legal.', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/abogadocl/', appUrl: '/abogadocl/', infoUrl: '/abogadocl/' },
+        { id: 'academiacl', cat: 'apps', title: 'AcademiaCL', status: 'PRODUCCION', descShort: 'AcademiaCL - Gestión de academia de tutorías y enseñanza privada', descCommercial: 'AcademiaCL - Gestión de academia de tutorías y enseñanza privada', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/academiacl/', appUrl: '/academiacl/', infoUrl: '/academiacl/' },
+        { id: 'acuiculturacl', cat: 'apps', title: 'AcuiculturaCL', status: 'PRODUCCION', descShort: 'Sistema de gestión integral para operaciones de acuicultura en Chile', descCommercial: 'Sistema de gestión integral para operaciones de acuicultura en Chile', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/acuiculturacl/', appUrl: '/acuiculturacl/', infoUrl: '/acuiculturacl/' },
+        { id: 'agricl', cat: 'apps', title: 'AgriCL', status: 'PRODUCCION', descShort: 'AgriCL — Gestión Agrícola para el Campo Chileno. Administra tus predios, cultivos, costos y riego offline.', descCommercial: 'AgriCL — Gestión Agrícola para el Campo Chileno. Administra tus predios, cultivos, costos y riego offline.', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/agricl/', appUrl: '/agricl/', infoUrl: '/agricl/' },
+        { id: 'agriculturacl', cat: 'apps', title: 'AgriculturaCL', status: 'PRODUCCION', descShort: 'AgriculturaCL - Gestión integral de predios agrícolas chilenos', descCommercial: 'AgriculturaCL - Gestión integral de predios agrícolas chilenos', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/agriculturacl/', appUrl: '/agriculturacl/', infoUrl: '/agriculturacl/' },
+        { id: 'aguacl', cat: 'apps', title: 'AguaCL 💧 Asesor de Riego', status: 'PRODUCCION', descShort: 'AguaCL - Asesor de Riego Inteligente para agricultores chilenos', descCommercial: 'AguaCL - Asesor de Riego Inteligente para agricultores chilenos', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/aguacl/', appUrl: '/aguacl/', infoUrl: '/aguacl/' },
+        { id: 'arquitectocl', cat: 'apps', title: 'ArquitectoCL', status: 'PRODUCCION', descShort: 'ArquitectoCL - Toolkit profesional para arquitectos y constructores en Chile', descCommercial: 'ArquitectoCL - Toolkit profesional para arquitectos y constructores en Chile', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/arquitectocl/', appUrl: '/arquitectocl/', infoUrl: '/arquitectocl/' },
+        { id: 'arriendocl', cat: 'apps', title: 'ArriendoCL', status: 'PRODUCCION', descShort: 'App ArriendoCL', descCommercial: 'App ArriendoCL', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/arriendocl/', appUrl: '/arriendocl/', infoUrl: '/arriendocl/' },
+        { id: 'asesoriacl', cat: 'apps', title: 'AsesoriaCL', status: 'PRODUCCION', descShort: 'AsesoriaCL - Gestión de consultoría empresarial profesional', descCommercial: 'AsesoriaCL - Gestión de consultoría empresarial profesional', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/asesoriacl/', appUrl: '/asesoriacl/', infoUrl: '/asesoriacl/' },
+        { id: 'becascl', cat: 'apps', title: 'BecasCL', status: 'PRODUCCION', descShort: 'BecasCL — Buscador de Becas Chile. Encuentra becas MINEDUC, JUNAEB, ANID y SENCE para estudiantes chilenos.', descCommercial: 'BecasCL — Buscador de Becas Chile. Encuentra becas MINEDUC, JUNAEB, ANID y SENCE para estudiantes chilenos.', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/becascl/', appUrl: '/becascl/', infoUrl: '/becascl/' },
+        { id: 'cafeteriacl', cat: 'apps', title: 'CafeteriaCL', status: 'PRODUCCION', descShort: 'App CafeteriaCL', descCommercial: 'App CafeteriaCL', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/cafeteriacl/', appUrl: '/cafeteriacl/', infoUrl: '/cafeteriacl/' },
+        { id: 'cajachica', cat: 'apps', title: 'CajaChica', status: 'PRODUCCION', descShort: 'App CajaChica', descCommercial: 'App CajaChica', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/cajachica/', appUrl: '/cajachica/', infoUrl: '/cajachica/' },
+        { id: 'carpinterocl', cat: 'apps', title: 'CarpinteroCL', status: 'PRODUCCION', descShort: 'App CarpinteroCL', descCommercial: 'App CarpinteroCL', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/carpinterocl/', appUrl: '/carpinterocl/', infoUrl: '/carpinterocl/' },
+        { id: 'cateringcl', cat: 'apps', title: 'CateringCL', status: 'PRODUCCION', descShort: 'CateringCL - Sistema de gestión para negocios de catering en Chile', descCommercial: 'CateringCL - Sistema de gestión para negocios de catering en Chile', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/cateringcl/', appUrl: '/cateringcl/', infoUrl: '/cateringcl/' },
+        { id: 'cerrajerocl', cat: 'apps', title: 'CerrajeroCL', status: 'PRODUCCION', descShort: 'CerrajeroCL - Sistema de gestión integral para cerrajeros chilenos', descCommercial: 'CerrajeroCL - Sistema de gestión integral para cerrajeros chilenos', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/cerrajerocl/', appUrl: '/cerrajerocl/', infoUrl: '/cerrajerocl/' },
+        { id: 'chofercl', cat: 'apps', title: 'ChoferCL', status: 'PRODUCCION', descShort: 'ChoferCL — Dashboard profesional para conductores de Uber, Cabify, InDriver, DiDi y Rappi en Chile', descCommercial: 'ChoferCL — Dashboard profesional para conductores de Uber, Cabify, InDriver, DiDi y Rappi en Chile', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/chofercl/', appUrl: '/chofercl/', infoUrl: '/chofercl/' },
+        { id: 'climahogar', cat: 'apps', title: 'ClimaHogar', status: 'PRODUCCION', descShort: 'App ClimaHogar', descCommercial: 'App ClimaHogar', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/climahogar/', appUrl: '/climahogar/', infoUrl: '/climahogar/' },
+        { id: 'clinicavetcl', cat: 'apps', title: 'ClinicaVetCL', status: 'PRODUCCION', descShort: 'ClinicaVetCL - Sistema de gestión de clínicas veterinarias chilenas', descCommercial: 'ClinicaVetCL - Sistema de gestión de clínicas veterinarias chilenas', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/clinicavetcl/', appUrl: '/clinicavetcl/', infoUrl: '/clinicavetcl/' },
+        { id: 'co2chile', cat: 'apps', title: 'CO2Chile', status: 'PRODUCCION', descShort: 'Calculadora de Huella de Carbono para Chile — CO2Chile', descCommercial: 'Calculadora de Huella de Carbono para Chile — CO2Chile', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/co2chile/', appUrl: '/co2chile/', infoUrl: '/co2chile/' },
+        { id: 'cocinascl', cat: 'apps', title: 'CocinasCL', status: 'PRODUCCION', descShort: 'Herramienta profesional de gestion para restaurantes, cafeterias, food trucks y catering en Chile', descCommercial: 'Herramienta profesional de gestion para restaurantes, cafeterias, food trucks y catering en Chile', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/cocinascl/', appUrl: '/cocinascl/', infoUrl: '/cocinascl/' },
+        { id: 'colegioscl', cat: 'apps', title: 'ColegiosCL', status: 'PRODUCCION', descShort: 'Sistema de gestión integral para colegios y escuelas chilenas', descCommercial: 'Sistema de gestión integral para colegios y escuelas chilenas', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/colegioscl/', appUrl: '/colegioscl/', infoUrl: '/colegioscl/' },
+        { id: 'conductorcl', cat: 'apps', title: 'ConductorCL 🚗', status: 'PRODUCCION', descShort: 'ConductorCL - Gestión de Vehículos para Chile', descCommercial: 'ConductorCL - Gestión de Vehículos para Chile', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/conductorcl/', appUrl: '/conductorcl/', infoUrl: '/conductorcl/' },
+        { id: 'construccioncl', cat: 'apps', title: 'ConstruccionCL', status: 'PRODUCCION', descShort: 'App ConstruccionCL', descCommercial: 'App ConstruccionCL', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/construccioncl/', appUrl: '/construccioncl/', infoUrl: '/construccioncl/' },
+        { id: 'constructoracl', cat: 'apps', title: 'ConstructoraCL', status: 'PRODUCCION', descShort: 'ConstructoraCL - Sistema de Gestión de Proyectos de Construcción', descCommercial: 'ConstructoraCL - Sistema de Gestión de Proyectos de Construcción', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/constructoracl/', appUrl: '/constructoracl/', infoUrl: '/constructoracl/' },
+        { id: 'contablecl', cat: 'apps', title: 'ContableCL', status: 'PRODUCCION', descShort: 'App ContableCL', descCommercial: 'App ContableCL', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/contablecl/', appUrl: '/contablecl/', infoUrl: '/contablecl/' },
+        { id: 'contadorcl', cat: 'apps', title: 'ContadorCL', status: 'PRODUCCION', descShort: 'ContadorCL - Gestor integral de práctica contable para contadores y bookkeepers chilenos', descCommercial: 'ContadorCL - Gestor integral de práctica contable para contadores y bookkeepers chilenos', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/contadorcl/', appUrl: '/contadorcl/', infoUrl: '/contadorcl/' },
+        { id: 'corredorpropcl', cat: 'apps', title: 'CorredorPropCL', status: 'PRODUCCION', descShort: 'Plataforma de gestión inmobiliaria para corredores de propiedades en Chile', descCommercial: 'Plataforma de gestión inmobiliaria para corredores de propiedades en Chile', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/corredorpropcl/', appUrl: '/corredorpropcl/', infoUrl: '/corredorpropcl/' },
+        { id: 'creditocl', cat: 'apps', title: 'CreditoCL', status: 'PRODUCCION', descShort: 'CreditoCL — Gestión de Deudas y Créditos Chile', descCommercial: 'CreditoCL — Gestión de Deudas y Créditos Chile', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/creditocl/', appUrl: '/creditocl/', infoUrl: '/creditocl/' },
+        { id: 'cuidadoMayor', cat: 'apps', title: 'CuidadoMayor', status: 'PRODUCCION', descShort: 'CuidadoMayor — Apoyo al Cuidado del Adulto Mayor en Chile', descCommercial: 'CuidadoMayor — Apoyo al Cuidado del Adulto Mayor en Chile', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/cuidadoMayor/', appUrl: '/cuidadoMayor/', infoUrl: '/cuidadoMayor/' },
+        { id: 'dentallcl', cat: 'apps', title: 'DentallCL', status: 'PRODUCCION', descShort: 'App DentallCL', descCommercial: 'App DentallCL', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/dentallcl/', appUrl: '/dentallcl/', infoUrl: '/dentallcl/' },
+        { id: 'dentistacl', cat: 'apps', title: 'DentistaCL', status: 'PRODUCCION', descShort: 'DentistaCL - Sistema profesional de gestión de clínicas dentales chilenas', descCommercial: 'DentistaCL - Sistema profesional de gestión de clínicas dentales chilenas', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/dentistacl/', appUrl: '/dentistacl/', infoUrl: '/dentistacl/' },
+        { id: 'djmixcl', cat: 'apps', title: 'DJMixCL', status: 'PRODUCCION', descShort: 'DJMixCL - Gestor profesional de eventos DJ para Chile', descCommercial: 'DJMixCL - Gestor profesional de eventos DJ para Chile', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/djmixcl/', appUrl: '/djmixcl/', infoUrl: '/djmixcl/' },
+        { id: 'ecoscore', cat: 'apps', title: 'EcoScore 🌱 Tu Impacto Ambiental', status: 'PRODUCCION', descShort: 'EcoScore — Tu impacto ambiental personal en Chile', descCommercial: 'EcoScore — Tu impacto ambiental personal en Chile', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/ecoscore/', appUrl: '/ecoscore/', infoUrl: '/ecoscore/' },
+        { id: 'electricistacl', cat: 'apps', title: 'ElectricistaCL', status: 'PRODUCCION', descShort: 'Toolkit profesional para electricistas y contratistas en Chile. Calculadoras SEC, presupuestos, gestión de trabajos.', descCommercial: 'Toolkit profesional para electricistas y contratistas en Chile. Calculadoras SEC, presupuestos, gestión de trabajos.', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/electricistacl/', appUrl: '/electricistacl/', infoUrl: '/electricistacl/' },
+        { id: 'empleoscl', cat: 'apps', title: 'EmpleosCL', status: 'PRODUCCION', descShort: 'EmpleosCL — Organizador de Busqueda de Empleo Chile. Postulaciones, entrevistas, sueldos y derechos laborales.', descCommercial: 'EmpleosCL — Organizador de Busqueda de Empleo Chile. Postulaciones, entrevistas, sueldos y derechos laborales.', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/empleoscl/', appUrl: '/empleoscl/', infoUrl: '/empleoscl/' },
+        { id: 'enfermeracl', cat: 'apps', title: 'EnfermeraCL', status: 'PRODUCCION', descShort: 'EnfermeraCL — Herramientas Clínicas para Enfermeras Chile. Cálculo de dosis, escalas clínicas, protocolos y FONASA.', descCommercial: 'EnfermeraCL — Herramientas Clínicas para Enfermeras Chile. Cálculo de dosis, escalas clínicas, protocolos y FONASA.', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/enfermeracl/', appUrl: '/enfermeracl/', infoUrl: '/enfermeracl/' },
+        { id: 'enferscore', cat: 'apps', title: 'EnferScore 🩺', status: 'PRODUCCION', descShort: 'EnferScore — Enfermería Clínica CESFAM/Hospital', descCommercial: 'EnferScore — Enfermería Clínica CESFAM/Hospital', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/enferscore/', appUrl: '/enferscore/', infoUrl: '/enferscore/' },
+        { id: 'eventoscl', cat: 'apps', title: 'EventosCL', status: 'PRODUCCION', descShort: 'Planificador profesional de eventos para organizadores chilenos', descCommercial: 'Planificador profesional de eventos para organizadores chilenos', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/eventoscl/', appUrl: '/eventoscl/', infoUrl: '/eventoscl/' },
+        { id: 'farmaciacl', cat: 'apps', title: 'FarmaciaCL', status: 'PRODUCCION', descShort: 'FarmaciaCL - Sistema de gestión integral para farmacias independientes de Chile', descCommercial: 'FarmaciaCL - Sistema de gestión integral para farmacias independientes de Chile', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/farmaciacl/', appUrl: '/farmaciacl/', infoUrl: '/farmaciacl/' },
+        { id: 'farmacistacl', cat: 'apps', title: 'FarmacistaCL', status: 'PRODUCCION', descShort: 'FarmacistaCL — Herramientas profesionales para Químicos Farmacéuticos en Chile', descCommercial: 'FarmacistaCL — Herramientas profesionales para Químicos Farmacéuticos en Chile', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/farmacistacl/', appUrl: '/farmacistacl/', infoUrl: '/farmacistacl/' },
+        { id: 'ferreteracl', cat: 'apps', title: 'FerreteraCL', status: 'PRODUCCION', descShort: 'FerreteraCL - Sistema de gestión para ferreterías chilenas', descCommercial: 'FerreteraCL - Sistema de gestión para ferreterías chilenas', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/ferreteracl/', appUrl: '/ferreteracl/', infoUrl: '/ferreteracl/' },
+        { id: 'finanzaslibres', cat: 'apps', title: 'FinanzasLibres', status: 'PRODUCCION', descShort: 'FinanzasLibres — Tu dashboard de finanzas personales para Chile', descCommercial: 'FinanzasLibres — Tu dashboard de finanzas personales para Chile', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/finanzaslibres/', appUrl: '/finanzaslibres/', infoUrl: '/finanzaslibres/' },
+        { id: 'fitnesscl', cat: 'apps', title: 'FitnessCL', status: 'PRODUCCION', descShort: 'FitnessCL - Gestión de gimnasios y entrenamientos personales en Chile', descCommercial: 'FitnessCL - Gestión de gimnasios y entrenamientos personales en Chile', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/fitnesscl/', appUrl: '/fitnesscl/', infoUrl: '/fitnesscl/' },
+        { id: 'fletescl', cat: 'apps', title: 'FletesCL', status: 'PRODUCCION', descShort: 'Gestión de servicios de mudanzas y fletes en Chile', descCommercial: 'Gestión de servicios de mudanzas y fletes en Chile', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/fletescl/', appUrl: '/fletescl/', infoUrl: '/fletescl/' },
+        { id: 'floristacl', cat: 'apps', title: 'FloristaCL', status: 'PRODUCCION', descShort: 'FloristaCL - Sistema de gestión para florerías', descCommercial: 'FloristaCL - Sistema de gestión para florerías', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/floristacl/', appUrl: '/floristacl/', infoUrl: '/floristacl/' },
+        { id: 'fonoscore', cat: 'apps', title: 'FonoScore', status: 'PRODUCCION', descShort: 'App FonoScore', descCommercial: 'App FonoScore', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/fonoscore/', appUrl: '/fonoscore/', infoUrl: '/fonoscore/' },
+        { id: 'fotografocl', cat: 'apps', title: 'FotografoCL', status: 'PRODUCCION', descShort: 'FotografoCL - Gestión profesional de estudio fotográfico chileno', descCommercial: 'FotografoCL - Gestión profesional de estudio fotográfico chileno', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/fotografocl/', appUrl: '/fotografocl/', infoUrl: '/fotografocl/' },
+        { id: 'funerariacl', cat: 'apps', title: 'FunerariaCL', status: 'PRODUCCION', descShort: 'FunerariaCL - Gestión integral de servicios funerarios chilenos', descCommercial: 'FunerariaCL - Gestión integral de servicios funerarios chilenos', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/funerariacl/', appUrl: '/funerariacl/', infoUrl: '/funerariacl/' },
+        { id: 'ganaderiacl', cat: 'apps', title: 'GanaderiaCL', status: 'PRODUCCION', descShort: 'Sistema profesional de gestión ganadera para criadores chilenos', descCommercial: 'Sistema profesional de gestión ganadera para criadores chilenos', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/ganaderiacl/', appUrl: '/ganaderiacl/', infoUrl: '/ganaderiacl/' },
+        { id: 'gasfitercl', cat: 'apps', title: 'GasfiterCL', status: 'PRODUCCION', descShort: 'GasfiterCL - Gestión integral para gasfíteres chilenos. Trabajos, cotizaciones, inventario, certificaciones SEC, finanza', descCommercial: 'GasfiterCL - Gestión integral para gasfíteres chilenos. Trabajos, cotizaciones, inventario, certificaciones SEC, finanzas y base de clientes.', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/gasfitercl/', appUrl: '/gasfitercl/', infoUrl: '/gasfitercl/' },
+        { id: 'gastoscl', cat: 'apps', title: 'GastosCL', status: 'PRODUCCION', descShort: 'App GastosCL', descCommercial: 'App GastosCL', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/gastoscl/', appUrl: '/gastoscl/', infoUrl: '/gastoscl/' },
+        { id: 'guardiascl', cat: 'apps', title: 'GuardiasCL', status: 'PRODUCCION', descShort: 'GuardiasCL - Sistema de gestión para empresas de seguridad privada en Chile', descCommercial: 'GuardiasCL - Sistema de gestión para empresas de seguridad privada en Chile', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/guardiascl/', appUrl: '/guardiascl/', infoUrl: '/guardiascl/' },
+        { id: 'gymcl', cat: 'apps', title: 'GymCL', status: 'PRODUCCION', descShort: 'GymCL - Sistema de gestión para gimnasios y centros de fitness en Chile', descCommercial: 'GymCL - Sistema de gestión para gimnasios y centros de fitness en Chile', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/gymcl/', appUrl: '/gymcl/', infoUrl: '/gymcl/' },
+        { id: 'habitacl', cat: 'apps', title: 'HabitaCL', status: 'PRODUCCION', descShort: 'App HabitaCL', descCommercial: 'App HabitaCL', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/habitacl/', appUrl: '/habitacl/', infoUrl: '/habitacl/' },
+        { id: 'hostalcl', cat: 'apps', title: 'HostalCL', status: 'PRODUCCION', descShort: 'HostalCL - Gestión profesional de hospedajes chilenos', descCommercial: 'HostalCL - Gestión profesional de hospedajes chilenos', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/hostalcl/', appUrl: '/hostalcl/', infoUrl: '/hostalcl/' },
+        { id: 'huertourbano', cat: 'apps', title: 'HuertoUrbano Chile', status: 'PRODUCCION', descShort: 'Planificador de Huerto Urbano para Chile - Siembra, cosecha y cuida tu huerto según tu zona climática', descCommercial: 'Planificador de Huerto Urbano para Chile - Siembra, cosecha y cuida tu huerto según tu zona climática', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/huertourbano/', appUrl: '/huertourbano/', infoUrl: '/huertourbano/' },
+        { id: 'impresoracl', cat: 'apps', title: 'ImpresoraCL', status: 'PRODUCCION', descShort: 'ImpresoraCL - Gestión completa para imprentas chilenas', descCommercial: 'ImpresoraCL - Gestión completa para imprentas chilenas', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/impresoracl/', appUrl: '/impresoracl/', infoUrl: '/impresoracl/' },
+        { id: 'inmobiliariacl', cat: 'apps', title: 'InmobiliariaCL', status: 'PRODUCCION', descShort: 'InmobiliariaCL - Gestión profesional para corredores de propiedades en Chile', descCommercial: 'InmobiliariaCL - Gestión profesional para corredores de propiedades en Chile', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/inmobiliariacl/', appUrl: '/inmobiliariacl/', infoUrl: '/inmobiliariacl/' },
+        { id: 'inventario', cat: 'apps', title: 'InventarioCL', status: 'PRODUCCION', descShort: 'InventarioCL - Control de Stock para Pequeños Negocios', descCommercial: 'InventarioCL - Control de Stock para Pequeños Negocios', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/inventario/', appUrl: '/inventario/', infoUrl: '/inventario/' },
+        { id: 'jardineroscl', cat: 'apps', title: 'JardinerosCL', status: 'PRODUCCION', descShort: 'JardinerosCL - Herramienta profesional de gestión de jardines y paisajismo para Chile', descCommercial: 'JardinerosCL - Herramienta profesional de gestión de jardines y paisajismo para Chile', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/jardineroscl/', appUrl: '/jardineroscl/', infoUrl: '/jardineroscl/' },
+        { id: 'joyeracl', cat: 'apps', title: 'JoyeraCL', status: 'PRODUCCION', descShort: 'JoyeraCL - Gestión de negocio de joyería para artesanos chilenos', descCommercial: 'JoyeraCL - Gestión de negocio de joyería para artesanos chilenos', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/joyeracl/', appUrl: '/joyeracl/', infoUrl: '/joyeracl/' },
+        { id: 'jubiladocl', cat: 'apps', title: 'JubiladoCL', status: 'PRODUCCION', descShort: 'Simulador de jubilación AFP Chile — Calcula tu pensión, compara AFPs, APV y Pilar Solidario', descCommercial: 'Simulador de jubilación AFP Chile — Calcula tu pensión, compara AFPs, APV y Pilar Solidario', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/jubiladocl/', appUrl: '/jubiladocl/', infoUrl: '/jubiladocl/' },
+        { id: 'kinescore', cat: 'apps', title: 'KinScore', status: 'PRODUCCION', descShort: 'App KinScore', descCommercial: 'App KinScore', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/kinescore/', appUrl: '/kinescore/', infoUrl: '/kinescore/' },
+        { id: 'kinesiologocl', cat: 'apps', title: 'KinesiologoCL', status: 'PRODUCCION', descShort: 'Toolkit profesional para kinesiologos en Chile. Gestion de pacientes, sesiones, ejercicios, evaluaciones y agenda.', descCommercial: 'Toolkit profesional para kinesiologos en Chile. Gestion de pacientes, sesiones, ejercicios, evaluaciones y agenda.', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/kinesiologocl/', appUrl: '/kinesiologocl/', infoUrl: '/kinesiologocl/' },
+        { id: 'laboratoriocl', cat: 'apps', title: 'LaboratorioCL', status: 'PRODUCCION', descShort: 'App LaboratorioCL', descCommercial: 'App LaboratorioCL', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/laboratoriocl/', appUrl: '/laboratoriocl/', infoUrl: '/laboratoriocl/' },
+        { id: 'lavanderacl', cat: 'apps', title: 'LavanderaCL', status: 'PRODUCCION', descShort: 'LavanderaCL - Gestión integral para lavanderías y tintorerías', descCommercial: 'LavanderaCL - Gestión integral para lavanderías y tintorerías', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/lavanderacl/', appUrl: '/lavanderacl/', infoUrl: '/lavanderacl/' },
+        { id: 'libreriacl', cat: 'apps', title: 'LibreriaCL', status: 'PRODUCCION', descShort: 'LibreriaCL - Sistema de gestión para librerías y papelerías chilenas', descCommercial: 'LibreriaCL - Sistema de gestión para librerías y papelerías chilenas', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/libreriacl/', appUrl: '/libreriacl/', infoUrl: '/libreriacl/' },
+        { id: 'logisticacl', cat: 'apps', title: 'LogisticaCL', status: 'PRODUCCION', descShort: 'LogisticaCL - Gestion profesional de carga y logistica para Chile', descCommercial: 'LogisticaCL - Gestion profesional de carga y logistica para Chile', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/logisticacl/', appUrl: '/logisticacl/', infoUrl: '/logisticacl/' },
+        { id: 'mareas', cat: 'apps', title: 'MaréasCL', status: 'PRODUCCION', descShort: 'Calculadora de Mareas para Chile — 12 puertos, predicción harmónica, actividades costeras', descCommercial: 'Calculadora de Mareas para Chile — 12 puertos, predicción harmónica, actividades costeras', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/mareas/', appUrl: '/mareas/', infoUrl: '/mareas/' },
+        { id: 'mariscocl', cat: 'apps', title: 'MariscoCL', status: 'PRODUCCION', descShort: 'MariscoCL - Gestión profesional de marisquerías chilenas', descCommercial: 'MariscoCL - Gestión profesional de marisquerías chilenas', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/mariscocl/', appUrl: '/mariscocl/', infoUrl: '/mariscocl/' },
+        { id: 'mascotascl', cat: 'apps', title: 'MascotasCL – Cuidado de Mascotas Chile', status: 'PRODUCCION', descShort: 'App MascotasCL – Cuidado de Mascotas Chile', descCommercial: 'App MascotasCL – Cuidado de Mascotas Chile', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/mascotascl/', appUrl: '/mascotascl/', infoUrl: '/mascotascl/' },
+        { id: 'mecanicoch', cat: 'apps', title: 'MecanicoCL', status: 'PRODUCCION', descShort: 'App MecanicoCL', descCommercial: 'App MecanicoCL', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/mecanicoch/', appUrl: '/mecanicoch/', infoUrl: '/mecanicoch/' },
+        { id: 'medcl', cat: 'apps', title: 'MedCL 💊 Botiquín Digital', status: 'PRODUCCION', descShort: 'MedCL – Botiquín Digital Personal para familias chilenas', descCommercial: 'MedCL – Botiquín Digital Personal para familias chilenas', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/medcl/', appUrl: '/medcl/', infoUrl: '/medcl/' },
+        { id: 'micampo', cat: 'apps', title: 'MiCampo', status: 'PRODUCCION', descShort: 'App MiCampo', descCommercial: 'App MiCampo', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/micampo/', appUrl: '/micampo/', infoUrl: '/micampo/' },
+        { id: 'minegocio', cat: 'apps', title: 'MiNegocio', status: 'PRODUCCION', descShort: 'App MiNegocio', descCommercial: 'App MiNegocio', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/minegocio/', appUrl: '/minegocio/', infoUrl: '/minegocio/' },
+        { id: 'mineracl', cat: 'apps', title: 'MineraCL', status: 'PRODUCCION', descShort: 'MineraCL - Gestión integral de operaciones mineras chilenas', descCommercial: 'MineraCL - Gestión integral de operaciones mineras chilenas', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/mineracl/', appUrl: '/mineracl/', infoUrl: '/mineracl/' },
+        { id: 'misiondron', cat: 'apps', title: 'MisiónDron', status: 'PRODUCCION', descShort: 'Planificador de misiones para drones - Chile', descCommercial: 'Planificador de misiones para drones - Chile', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/misiondron/', appUrl: '/misiondron/', infoUrl: '/misiondron/' },
+        { id: 'mudanzascl', cat: 'apps', title: 'MudanzasCL', status: 'PRODUCCION', descShort: 'MudanzasCL - Gestión profesional de mudanzas residenciales en Chile', descCommercial: 'MudanzasCL - Gestión profesional de mudanzas residenciales en Chile', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/mudanzascl/', appUrl: '/mudanzascl/', infoUrl: '/mudanzascl/' },
+        { id: 'nailscl', cat: 'apps', title: 'NailsCL', status: 'PRODUCCION', descShort: 'NailsCL - Sistema de gestión para salones de uñas en Chile', descCommercial: 'NailsCL - Sistema de gestión para salones de uñas en Chile', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/nailscl/', appUrl: '/nailscl/', infoUrl: '/nailscl/' },
+        { id: 'notascl', cat: 'apps', title: 'NotasCL', status: 'PRODUCCION', descShort: 'Calculadora de notas para estudiantes chilenos. Promedio, PAES, NEM, eximición.', descCommercial: 'Calculadora de notas para estudiantes chilenos. Promedio, PAES, NEM, eximición.', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/notascl/', appUrl: '/notascl/', infoUrl: '/notascl/' },
+        { id: 'nutricionistacl', cat: 'apps', title: 'NutricionistaCL', status: 'PRODUCCION', descShort: 'NutricionistaCL - Gestión integral de práctica nutricional para dietistas chilenos', descCommercial: 'NutricionistaCL - Gestión integral de práctica nutricional para dietistas chilenos', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/nutricionistacl/', appUrl: '/nutricionistacl/', infoUrl: '/nutricionistacl/' },
+        { id: 'nutricionistascl', cat: 'apps', title: 'NutricionistasCL', status: 'PRODUCCION', descShort: 'NutricionistasCL — Herramientas profesionales para nutricionistas en Chile', descCommercial: 'NutricionistasCL — Herramientas profesionales para nutricionistas en Chile', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/nutricionistascl/', appUrl: '/nutricionistascl/', infoUrl: '/nutricionistascl/' },
+        { id: 'nutriscore', cat: 'apps', title: 'NutriScore', status: 'PRODUCCION', descShort: 'App NutriScore', descCommercial: 'App NutriScore', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/nutriscore/', appUrl: '/nutriscore/', infoUrl: '/nutriscore/' },
+        { id: 'odontoscore', cat: 'apps', title: 'OdontScore', status: 'PRODUCCION', descShort: 'OdontScore - Gestión Clínica Dental', descCommercial: 'OdontScore - Gestión Clínica Dental', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/odontoscore/', appUrl: '/odontoscore/', infoUrl: '/odontoscore/' },
+        { id: 'opticacl', cat: 'apps', title: 'OpticaCL', status: 'PRODUCCION', descShort: 'OpticaCL - Sistema de gestión para ópticas chilenas', descCommercial: 'OpticaCL - Sistema de gestión para ópticas chilenas', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/opticacl/', appUrl: '/opticacl/', infoUrl: '/opticacl/' },
+        { id: 'panaderacl', cat: 'apps', title: 'PanaderaCL', status: 'PRODUCCION', descShort: 'PanaderaCL - Gestión profesional de panaderías chilenas', descCommercial: 'PanaderaCL - Gestión profesional de panaderías chilenas', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/panaderacl/', appUrl: '/panaderacl/', infoUrl: '/panaderacl/' },
+        { id: 'patagoniacl', cat: 'apps', title: 'PatagoniaCL', status: 'PRODUCCION', descShort: 'Condiciones en tiempo real para aventura en Patagonia Chilena — hikers, kayakers, escaladores y pescadores', descCommercial: 'Condiciones en tiempo real para aventura en Patagonia Chilena — hikers, kayakers, escaladores y pescadores', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/patagoniacl/', appUrl: '/patagoniacl/', infoUrl: '/patagoniacl/' },
+        { id: 'peluquerocl', cat: 'apps', title: 'PeluqueroCL', status: 'PRODUCCION', descShort: 'Herramienta profesional de gestion para peluquerias y barberias en Chile', descCommercial: 'Herramienta profesional de gestion para peluquerias y barberias en Chile', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/peluquerocl/', appUrl: '/peluquerocl/', infoUrl: '/peluquerocl/' },
+        { id: 'personaltrainercl', cat: 'apps', title: 'PersonalTrainerCL', status: 'PRODUCCION', descShort: 'PersonalTrainerCL - Gestión profesional de entrenamiento personal', descCommercial: 'PersonalTrainerCL - Gestión profesional de entrenamiento personal', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/personaltrainercl/', appUrl: '/personaltrainercl/', infoUrl: '/personaltrainercl/' },
+        { id: 'pintorcl', cat: 'apps', title: 'PintorCL', status: 'PRODUCCION', descShort: 'App PintorCL', descCommercial: 'App PintorCL', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/pintorcl/', appUrl: '/pintorcl/', infoUrl: '/pintorcl/' },
+        { id: 'podologocl', cat: 'apps', title: 'PodologoCL', status: 'PRODUCCION', descShort: 'PodologoCL - Gestión profesional de práctica podológica', descCommercial: 'PodologoCL - Gestión profesional de práctica podológica', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/podologocl/', appUrl: '/podologocl/', infoUrl: '/podologocl/' },
+        { id: 'primeroscl', cat: 'apps', title: 'PrimerosCL', status: 'PRODUCCION', descShort: 'Guía de primeros auxilios para Chile. Protocolos de emergencia, botiquín, evaluación primaria. Funciona sin internet.', descCommercial: 'Guía de primeros auxilios para Chile. Protocolos de emergencia, botiquín, evaluación primaria. Funciona sin internet.', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/primeroscl/', appUrl: '/primeroscl/', infoUrl: '/primeroscl/' },
+        { id: 'profesorcl', cat: 'apps', title: 'ProfesorCL', status: 'PRODUCCION', descShort: 'ProfesorCL — Kit del Docente Chile. Libro de notas, planificación, asistencia y comunicaciones.', descCommercial: 'ProfesorCL — Kit del Docente Chile. Libro de notas, planificación, asistencia y comunicaciones.', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/profesorcl/', appUrl: '/profesorcl/', infoUrl: '/profesorcl/' },
+        { id: 'proyectocl', cat: 'apps', title: 'ProyectoCL', status: 'PRODUCCION', descShort: 'App ProyectoCL', descCommercial: 'App ProyectoCL', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/proyectocl/', appUrl: '/proyectocl/', infoUrl: '/proyectocl/' },
+        { id: 'psicologocl', cat: 'apps', title: 'PsicologoCL', status: 'PRODUCCION', descShort: 'Sistema de gestión para psicólogos clínicos - Chile', descCommercial: 'Sistema de gestión para psicólogos clínicos - Chile', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/psicologocl/', appUrl: '/psicologocl/', infoUrl: '/psicologocl/' },
+        { id: 'psicoscore', cat: 'apps', title: 'PsicoScore', status: 'PRODUCCION', descShort: 'App PsicoScore', descCommercial: 'App PsicoScore', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/psicoscore/', appUrl: '/psicoscore/', infoUrl: '/psicoscore/' },
+        { id: 'quiropracl', cat: 'apps', title: 'QuiropraCL', status: 'PRODUCCION', descShort: 'QuiropraCL - Gestión de práctica quiropráctica y fisioterapia', descCommercial: 'QuiropraCL - Gestión de práctica quiropráctica y fisioterapia', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/quiropracl/', appUrl: '/quiropracl/', infoUrl: '/quiropracl/' },
+        { id: 'reciclajercl', cat: 'apps', title: 'ReciclajeCL', status: 'PRODUCCION', descShort: 'ReciclajeCL - Sistema de gestión de reciclaje y residuos para empresas chilenas', descCommercial: 'ReciclajeCL - Sistema de gestión de reciclaje y residuos para empresas chilenas', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/reciclajercl/', appUrl: '/reciclajercl/', infoUrl: '/reciclajercl/' },
+        { id: 'reclamoscl', cat: 'apps', title: 'ReclamosCL', status: 'PRODUCCION', descShort: 'Guía de derechos del consumidor en Chile. Genera reclamos SERNAC, conoce tus garantías y plazos.', descCommercial: 'Guía de derechos del consumidor en Chile. Genera reclamos SERNAC, conoce tus garantías y plazos.', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/reclamoscl/', appUrl: '/reclamoscl/', infoUrl: '/reclamoscl/' },
+        { id: 'relojeriacl', cat: 'apps', title: 'RelojeriaCL', status: 'PRODUCCION', descShort: 'App RelojeriaCL', descCommercial: 'App RelojeriaCL', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/relojeriacl/', appUrl: '/relojeriacl/', infoUrl: '/relojeriacl/' },
+        { id: 'riesgocl', cat: 'apps', title: 'RiesgoCL', status: 'PRODUCCION', descShort: 'RiesgoCL — Evaluador de riesgos naturales para comunas de Chile. Sismos, tsunamis, volcanes, incendios, inundaciones y r', descCommercial: 'RiesgoCL — Evaluador de riesgos naturales para comunas de Chile. Sismos, tsunamis, volcanes, incendios, inundaciones y remociones en masa.', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/riesgocl/', appUrl: '/riesgocl/', infoUrl: '/riesgocl/' },
+        { id: 'sastreracl', cat: 'apps', title: 'SastreraCL', status: 'PRODUCCION', descShort: 'Gestión profesional de pedidos de sastrería y costura', descCommercial: 'Gestión profesional de pedidos de sastrería y costura', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/sastreracl/', appUrl: '/sastreracl/', infoUrl: '/sastreracl/' },
+        { id: 'sbap-monitor', cat: 'apps', title: 'SBAP Monitor', status: 'PRODUCCION', descShort: 'Monitoreo satelital de áreas protegidas. NASA GIBS · MODIS Terra · CUSSEN-CSI. SBAP Región de Los Lagos.', descCommercial: 'Monitoreo satelital de áreas protegidas. NASA GIBS · MODIS Terra · CUSSEN-CSI. SBAP Región de Los Lagos.', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/sbap-monitor/', appUrl: '/sbap-monitor/', infoUrl: '/sbap-monitor/' },
+        { id: 'seguridadcl', cat: 'apps', title: 'SeguridadCL', status: 'PRODUCCION', descShort: 'App SeguridadCL', descCommercial: 'App SeguridadCL', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/seguridadcl/', appUrl: '/seguridadcl/', infoUrl: '/seguridadcl/' },
+        { id: 'sismocl', cat: 'apps', title: 'SismoCL', status: 'PRODUCCION', descShort: 'Monitor sísmico en tiempo real para Chile. Terremotos y sismos usando datos USGS.', descCommercial: 'Monitor sísmico en tiempo real para Chile. Terremotos y sismos usando datos USGS.', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/sismocl/', appUrl: '/sismocl/', infoUrl: '/sismocl/' },
+        { id: 'solarcl', cat: 'apps', title: 'SolarCL', status: 'PRODUCCION', descShort: 'SolarCL - Gestión profesional de instalaciones solares en Chile', descCommercial: 'SolarCL - Gestión profesional de instalaciones solares en Chile', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/solarcl/', appUrl: '/solarcl/', infoUrl: '/solarcl/' },
+        { id: 'sueldocl', cat: 'apps', title: 'SueldoCL', status: 'PRODUCCION', descShort: 'Calculadora laboral chilena: sueldo liquido, horas extra, finiquito y mas.', descCommercial: 'Calculadora laboral chilena: sueldo liquido, horas extra, finiquito y mas.', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/sueldocl/', appUrl: '/sueldocl/', infoUrl: '/sueldocl/' },
+        { id: 'tallerautoscl', cat: 'apps', title: 'TallerAutosCL', status: 'PRODUCCION', descShort: 'TallerAutosCL - Gestión integral de talleres de reparación de autos en Chile', descCommercial: 'TallerAutosCL - Gestión integral de talleres de reparación de autos en Chile', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/tallerautoscl/', appUrl: '/tallerautoscl/', infoUrl: '/tallerautoscl/' },
+        { id: 'tapizerocl', cat: 'apps', title: 'TapizeroCL', status: 'PRODUCCION', descShort: 'TapizeroCL - Sistema de gestión para tapicerías chilenas', descCommercial: 'TapizeroCL - Sistema de gestión para tapicerías chilenas', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/tapizerocl/', appUrl: '/tapizerocl/', infoUrl: '/tapizerocl/' },
+        { id: 'tattooshopcl', cat: 'apps', title: 'TattooShopCL', status: 'PRODUCCION', descShort: 'App TattooShopCL', descCommercial: 'App TattooShopCL', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/tattooshopcl/', appUrl: '/tattooshopcl/', infoUrl: '/tattooshopcl/' },
+        { id: 'tatuadorcl', cat: 'apps', title: 'TatuadorCL', status: 'PRODUCCION', descShort: 'TatuadorCL - Sistema de gestión para estudios de tatuajes en Chile', descCommercial: 'TatuadorCL - Sistema de gestión para estudios de tatuajes en Chile', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/tatuadorcl/', appUrl: '/tatuadorcl/', infoUrl: '/tatuadorcl/' },
+        { id: 'tecnicopccl', cat: 'apps', title: 'TecnicoPCCL', status: 'PRODUCCION', descShort: 'TecnicoPCCL - Gestor profesional de órdenes de reparación y servicios técnicos en Chile', descCommercial: 'TecnicoPCCL - Gestor profesional de órdenes de reparación y servicios técnicos en Chile', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/tecnicopccl/', appUrl: '/tecnicopccl/', infoUrl: '/tecnicopccl/' },
+        { id: 'tiendamascotascl', cat: 'apps', title: 'TiendaMascotasCL', status: 'PRODUCCION', descShort: 'TiendaMascotasCL - Sistema de gestión para tiendas de mascotas en Chile', descCommercial: 'TiendaMascotasCL - Sistema de gestión para tiendas de mascotas en Chile', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/tiendamascotascl/', appUrl: '/tiendamascotascl/', infoUrl: '/tiendamascotascl/' },
+        { id: 'transportecl', cat: 'apps', title: 'TransporteCL', status: 'PRODUCCION', descShort: 'TransporteCL - Gestión profesional de flota y logística para transportistas chilenos', descCommercial: 'TransporteCL - Gestión profesional de flota y logística para transportistas chilenos', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/transportecl/', appUrl: '/transportecl/', infoUrl: '/transportecl/' },
+        { id: 'tributoscl', cat: 'apps', title: 'TributosCL', status: 'PRODUCCION', descShort: 'Calculadora tributaria para independientes y trabajadores a honorarios en Chile. Boleta de honorarios, cotizaciones, imp', descCommercial: 'Calculadora tributaria para independientes y trabajadores a honorarios en Chile. Boleta de honorarios, cotizaciones, impuesto global complementario.', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/tributoscl/', appUrl: '/tributoscl/', infoUrl: '/tributoscl/' },
+        { id: 'vacunascl', cat: 'apps', title: 'VacunasCL', status: 'PRODUCCION', descShort: 'Carnet de Vacunas Digital para familias chilenas - Programa PAI MINSAL', descCommercial: 'Carnet de Vacunas Digital para familias chilenas - Programa PAI MINSAL', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/vacunascl/', appUrl: '/vacunascl/', infoUrl: '/vacunascl/' },
+        { id: 'veterinariacl', cat: 'apps', title: 'VeterinariaCL', status: 'PRODUCCION', descShort: 'VeterinariaCL - Sistema de gestión para clínicas veterinarias chilenas', descCommercial: 'VeterinariaCL - Sistema de gestión para clínicas veterinarias chilenas', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/veterinariacl/', appUrl: '/veterinariacl/', infoUrl: '/veterinariacl/' },
+        { id: 'veterinarocl', cat: 'apps', title: 'VeterinaroCL', status: 'PRODUCCION', descShort: 'VeterinaroCL — Herramientas profesionales para médicos veterinarios en Chile. Calculadora de dosis, pacientes, vacunas y', descCommercial: 'VeterinaroCL — Herramientas profesionales para médicos veterinarios en Chile. Calculadora de dosis, pacientes, vacunas y referencia clínica.', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/veterinarocl/', appUrl: '/veterinarocl/', infoUrl: '/veterinarocl/' },
+        { id: 'vetscore', cat: 'apps', title: 'VetScore', status: 'PRODUCCION', descShort: 'App VetScore', descCommercial: 'App VetScore', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/vetscore/', appUrl: '/vetscore/', infoUrl: '/vetscore/' },
+        { id: 'viajecl', cat: 'apps', title: 'ViajesCL', status: 'PRODUCCION', descShort: 'Planifica tu viaje perfecto por Chile. Destinos, parques nacionales, presupuesto y clima.', descCommercial: 'Planifica tu viaje perfecto por Chile. Destinos, parques nacionales, presupuesto y clima.', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/viajecl/', appUrl: '/viajecl/', infoUrl: '/viajecl/' },
+        { id: 'villaalemana', cat: 'apps', title: 'Villa Alemana 2026: Gestión de Riesgo Inteligente', status: 'PRODUCCION', descShort: 'App Villa Alemana 2026: Gestión de Riesgo Inteligente', descCommercial: 'App Villa Alemana 2026: Gestión de Riesgo Inteligente', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/villaalemana/', appUrl: '/villaalemana/', infoUrl: '/villaalemana/' },
+        { id: 'vinoscl', cat: 'apps', title: 'VinosCL', status: 'PRODUCCION', descShort: 'App VinosCL', descCommercial: 'App VinosCL', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/vinoscl/', appUrl: '/vinoscl/', infoUrl: '/vinoscl/' },
+        { id: 'vinotecacl', cat: 'apps', title: 'VinotecaCL', status: 'PRODUCCION', descShort: 'VinotecaCL - Gestión integral para tiendas de vino y sommeliers en Chile', descCommercial: 'VinotecaCL - Gestión integral para tiendas de vino y sommeliers en Chile', descTech: 'HTML5+CSS3+JS. PWA. Firebase.', features: ['Dashboard','Mobile','Reportes'], tech: ['HTML5','CSS3','JavaScript','PWA','Firebase'], landingUrl: '/vinotecacl/', appUrl: '/vinotecacl/', infoUrl: '/vinotecacl/' }
+    ];
+
+    const catLabels = { geo: 'GEO', ai: 'IA', tools: 'TOOLS', apps: 'APP' };
+
+    // ── Matrix Rain (lighter on mobile) ──
+    const isMobile = window.innerWidth <= 768;
+    const canvas = document.getElementById('matrix-canvas');
+    const ctx = canvas.getContext('2d');
+    function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+    resizeCanvas();
+    const matrixChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*アイウエオカキクケコ';
+    const fontSize = isMobile ? 10 : 16;
+    const columns = Math.floor(canvas.width / fontSize);
+    const matrixSkip = isMobile ? 3 : 1;
+    const activeColumns = Math.floor(columns / matrixSkip);
+    const drops = Array.from({length: activeColumns}, () => Math.random() * canvas.height / fontSize | 0);
+    const matrixInterval = isMobile ? 60 : 40;
+    function drawMatrix() {
+        ctx.fillStyle = 'rgba(0,0,0,0.05)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#00ff41';
+        ctx.font = fontSize + 'px monospace';
+        for (let i = 0; i < drops.length; i++) {
+            ctx.fillText(matrixChars[Math.random() * matrixChars.length | 0], i * matrixSkip * fontSize, drops[i] * fontSize);
+            if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+            drops[i]++;
+        }
+    }
+    setInterval(drawMatrix, matrixInterval);
+    window.addEventListener('resize', resizeCanvas);
+
+    // ── Boot Sequence ──
+    const bootLines = [
+        '> CUSSEN AI SYSTEMS v3.0',
+        '> Inicializando módulos...',
+        `> Cargando ${projects.length} proyectos...`,
+        '> Conexión satelital establecida',
+        '> SISTEMA LISTO'
+    ];
+    const bootEl = document.getElementById('boot-text');
+    const bootDelay = isMobile ? 200 : 350;
+    const bootEnd = isMobile ? 1200 : 2200;
+    bootLines.forEach((line, i) => {
+        const div = document.createElement('div');
+        div.className = 'boot-line';
+        div.innerHTML = line + (i === bootLines.length - 1 ? ' <span class="boot-cursor"></span>' : '');
+        bootEl.appendChild(div);
+        setTimeout(() => div.classList.add('show'), 150 + i * bootDelay);
+    });
+    setTimeout(() => document.getElementById('boot-screen').classList.add('hide'), bootEnd);
+    setTimeout(() => document.getElementById('boot-screen').style.display = 'none', bootEnd + 600);
+
+    // ── Hero Typing ──
+    const typingTexts = ['Teledetección satelital + Machine Learning', 'FinTech, GIS, Apps en producción real', 'Del concepto al deploy. Stack completo.'];
+    let txtIdx = 0, charIdx = 0, deleting = false;
+    const typingEl = document.getElementById('hero-typing');
+    function typeEffect() {
+        const current = typingTexts[txtIdx];
+        if (!deleting) {
+            typingEl.textContent = current.slice(0, ++charIdx);
+            if (charIdx === current.length) { setTimeout(() => { deleting = true; typeEffect(); }, 2000); return; }
+        } else {
+            typingEl.textContent = current.slice(0, --charIdx);
+            if (charIdx === 0) { deleting = false; txtIdx = (txtIdx + 1) % typingTexts.length; }
+        }
+        setTimeout(typeEffect, deleting ? 25 : 45);
+    }
+    setTimeout(typeEffect, bootEnd + 600);
+
+    // ── Stats Counter ──
+    document.querySelectorAll('.stat-num').forEach(el => {
+        const target = +el.dataset.count;
+        let current = 0;
+        const step = Math.max(1, Math.floor(target / 40));
+        function count() {
+            current = Math.min(current + step, target);
+            el.textContent = current;
+            if (current < target) requestAnimationFrame(count);
+        }
+        setTimeout(count, bootEnd + 200);
+    });
+
+    // ── Render Cards ──
+    const grid = document.getElementById('project-grid');
+    function getStatusClass(s) {
+        if (s === 'PRODUCCION') return 'status-live';
+        if (s === 'MVP COMPLETO') return 'status-mvp';
+        return 'status-dev';
+    }
+    function getStatusLabel(s) {
+        if (s === 'PRODUCCION') return 'LIVE';
+        if (s === 'MVP COMPLETO') return 'MVP';
+        return 'DEV';
+    }
+    projects.forEach((p, i) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.dataset.cat = p.cat;
+        card.dataset.id = p.id;
+        card.style.transitionDelay = (i % 6) * 0.08 + 's';
+        card.innerHTML = `
+            <div class="card-inner">
+                <div class="card-front">
+                    <div class="card-top">
+                        <span class="card-cat">${catLabels[p.cat]}</span>
+                        <span class="card-status ${getStatusClass(p.status)}"><span class="status-dot"></span>${getStatusLabel(p.status)}</span>
+                    </div>
+                    <div class="card-title">${p.title}</div>
+                    <div class="card-desc">${p.descShort}</div>
+                    <div class="card-tech">${p.tech.slice(0, 4).map(t => `<span>${t}</span>`).join('')}</div>
+                    <span class="card-arrow">&rarr;</span>
+                </div>
+                <div class="card-back"></div>
+            </div>
+        `;
+        card.onclick = (e) => { if (!e.target.closest('a')) flipCard(card, p); };
+        grid.appendChild(card);
+    });
+
+    // ── Scroll Reveal ──
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.card').forEach(c => observer.observe(c));
+
+    // ── Filter ──
+    let activeFilter = 'all';
+    document.querySelectorAll('.filter-pill').forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (currentFlipped) { currentFlipped.classList.remove('flipped'); currentFlipped = null; }
+            document.querySelector('.filter-pill.active').classList.remove('active');
+            btn.classList.add('active');
+            activeFilter = btn.dataset.filter;
+            document.querySelectorAll('.card').forEach(card => {
+                const match = activeFilter === 'all' || card.dataset.cat === activeFilter;
+                card.style.display = match ? '' : 'none';
+                if (match && !card.classList.contains('visible')) card.classList.add('visible');
+            });
+        });
+    });
+
+    // ── Card Flip ──
+    let currentFlipped = null;
+    function flipCard(card, p) {
+        if (card.classList.contains('flipped')) {
+            card.classList.remove('flipped');
+            currentFlipped = null;
+            return;
+        }
+        if (currentFlipped && currentFlipped !== card) {
+            currentFlipped.classList.remove('flipped');
+        }
+        const back = card.querySelector('.card-back');
+        const statusColor = p.status === 'PRODUCCION' ? '#00ff41' : p.status === 'MVP COMPLETO' ? '#00ffff' : '#fbbf24';
+        const allSame = p.landingUrl && p.appUrl && p.infoUrl && p.landingUrl === p.appUrl && p.appUrl === p.infoUrl;
+        let actionsHtml;
+        if (allSame) {
+            actionsHtml = `<a href="${p.landingUrl}" target="_blank" class="back-btn back-btn-primary">Abrir App &rarr;</a>`;
+        } else {
+            actionsHtml = '';
+            if (p.landingUrl) actionsHtml += `<a href="${p.landingUrl}" target="_blank" class="back-btn back-btn-primary">Landing</a>`;
+            if (p.appUrl && p.appUrl !== p.landingUrl) actionsHtml += `<a href="${p.appUrl}" target="_blank" class="back-btn back-btn-secondary">App</a>`;
+            if (p.infoUrl && p.infoUrl !== p.landingUrl && p.infoUrl !== p.appUrl) actionsHtml += `<a href="${p.infoUrl}" target="_blank" class="back-btn back-btn-secondary">Info</a>`;
+            if (!actionsHtml && p.landingUrl) actionsHtml = `<a href="${p.landingUrl}" target="_blank" class="back-btn back-btn-primary">Abrir App &rarr;</a>`;
+        }
+        const featuresHtml = p.features && p.features.length ? `
+            <div class="back-section-label">FEATURES</div>
+            <div class="back-features">${p.features.map(f => `<span>${f}</span>`).join('')}</div>` : '';
+        back.innerHTML = `
+            <button class="back-close" onclick="event.stopPropagation();this.closest('.card').click()">&times;</button>
+            <div class="back-title">${p.title}</div>
+            <span class="back-status" style="background:${statusColor}22;color:${statusColor};border:1px solid ${statusColor}44">${p.status}</span>
+            <div class="back-desc">${p.descCommercial}</div>
+            ${featuresHtml}
+            <div class="back-section-label">STACK</div>
+            <div class="back-tech-pills">${p.tech.map(t => `<span>${t}</span>`).join('')}</div>
+            <div class="back-actions">${actionsHtml}</div>
+        `;
+        card.classList.add('flipped');
+        currentFlipped = card;
+    }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && currentFlipped) { currentFlipped.classList.remove('flipped'); currentFlipped = null; } });
+
+    // ── Lang Toggle ──
+    function switchLang(lang) {
+        if (window.switchLanguage) window.switchLanguage(lang);
+        document.getElementById('btn-es').classList.toggle('active', lang === 'es');
+        document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+    }
+    </script>
+    <script src="../../assets/i18n.js"></script>
+</body>
+</html>

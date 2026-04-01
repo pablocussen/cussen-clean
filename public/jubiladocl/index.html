@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0369a1">
+<meta name="description" content="Simulador de jubilación AFP Chile — Calcula tu pensión, compara AFPs, APV y Pilar Solidario">
+<title>JubiladoCL — Simulador de Jubilación AFP</title>
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{--bg:#f0f6ff;--card:#ffffff;--card2:#e8f2ff;--border:#b8d4f0;--accent:#0369a1;--text:#1e3a5f;--muted:#6b8fa5;--green:#16a34a;--yellow:#d97706;--red:#dc2626;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+header{background:linear-gradient(90deg,#0c4a7a,#0369a1);padding:13px 18px;position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;color:white}
+header h1{font-size:1.15rem;font-weight:800;letter-spacing:-0.3px}
+header span{font-size:0.7rem;opacity:0.8;display:block;font-weight:400}
+.header-badge{background:rgba(255,255,255,0.15);border-radius:20px;padding:4px 10px;font-size:0.7rem;font-weight:600}
+nav{background:#fff;border-bottom:2px solid var(--border);display:flex;overflow-x:auto;position:sticky;top:62px;z-index:40;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+.tab-btn{flex:none;padding:12px 14px;font-size:0.72rem;font-weight:600;color:var(--muted);border:none;background:none;cursor:pointer;white-space:nowrap;border-bottom:3px solid transparent;transition:all 0.2s;font-family:'Inter',sans-serif}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-btn:hover{color:var(--accent)}
+.tab-content{display:none;padding:16px;max-width:700px;margin:0 auto}
+.tab-content.active{display:block}
+.card{background:var(--card);border-radius:14px;padding:16px;margin-bottom:14px;border:1px solid var(--border);box-shadow:0 1px 4px rgba(3,105,161,0.06)}
+.card2{background:var(--card2);border-radius:14px;padding:16px;margin-bottom:14px;border:1px solid var(--border)}
+.card-title{font-size:0.85rem;font-weight:700;color:var(--accent);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+label{display:block;font-size:0.78rem;font-weight:600;color:var(--text);margin-bottom:5px;margin-top:12px}
+label:first-of-type{margin-top:0}
+input[type=number],input[type=range],select{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:9px 11px;font-size:16px;color:var(--text);background:#fff;font-family:'Inter',sans-serif;outline:none;transition:border-color 0.2s}
+input[type=number]:focus,select:focus{border-color:var(--accent)}
+input[type=range]{padding:6px 0;border:none;accent-color:var(--accent);cursor:pointer}
+.range-labels{display:flex;justify-content:space-between;font-size:0.68rem;color:var(--muted);margin-top:2px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:11px 20px;border-radius:10px;font-size:0.82rem;font-weight:700;border:none;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.18s}
+.btn-primary{background:var(--accent);color:white;width:100%;margin-top:14px}
+.btn-primary:hover{background:#0284c7}
+.btn-sm{padding:7px 14px;font-size:0.73rem;border-radius:8px}
+.btn-outline{background:transparent;border:1.5px solid var(--accent);color:var(--accent)}
+.result-box{background:linear-gradient(135deg,#0c4a7a,#0369a1);border-radius:14px;padding:18px;margin-bottom:14px;color:white}
+.result-main{font-size:1.8rem;font-weight:800;letter-spacing:-0.5px}
+.result-label{font-size:0.72rem;opacity:0.8;margin-bottom:2px}
+.result-sub{font-size:0.85rem;opacity:0.9;margin-top:4px}
+.metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.metric{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:13px}
+.metric-val{font-size:1.2rem;font-weight:800;color:var(--accent)}
+.metric-lbl{font-size:0.68rem;color:var(--muted);margin-top:2px;font-weight:500}
+.semaforo{border-radius:12px;padding:13px 16px;margin-bottom:14px;font-size:0.82rem;font-weight:600;display:flex;align-items:center;gap:10px}
+.sem-green{background:#dcfce7;color:#15803d;border:1px solid #86efac}
+.sem-yellow{background:#fef9c3;color:#92400e;border:1px solid #fde047}
+.sem-red{background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5}
+.chart-wrap{position:relative;height:220px;margin-top:10px}
+table{width:100%;border-collapse:collapse;font-size:0.78rem}
+th{background:var(--card2);padding:9px 8px;text-align:left;font-weight:700;color:var(--accent);font-size:0.72rem;border-bottom:2px solid var(--border)}
+td{padding:9px 8px;border-bottom:1px solid #e8f2ff;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#f7fbff}
+.badge{display:inline-block;padding:3px 8px;border-radius:20px;font-size:0.65rem;font-weight:700}
+.badge-green{background:#dcfce7;color:#15803d}
+.badge-blue{background:#dbeafe;color:#1d4ed8}
+.badge-gray{background:#f1f5f9;color:#475569}
+.info-box{background:var(--card2);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:0 10px 10px 0;padding:12px;margin:10px 0;font-size:0.78rem;line-height:1.5}
+.highlight-row td{background:#f0fdf4}
+.progress-bar-wrap{background:#e2e8f0;border-radius:99px;height:10px;margin-top:6px;overflow:hidden}
+.progress-bar{height:10px;border-radius:99px;transition:width 0.6s}
+.section-title{font-size:1rem;font-weight:800;color:var(--text);margin:18px 0 10px}
+.pill{display:inline-block;background:var(--card2);border:1px solid var(--border);border-radius:99px;padding:5px 12px;font-size:0.72rem;font-weight:600;color:var(--accent);margin:3px 2px}
+.timeline{position:relative;padding-left:24px;margin:10px 0}
+.timeline::before{content:'';position:absolute;left:8px;top:0;bottom:0;width:2px;background:var(--border)}
+.tl-item{position:relative;margin-bottom:16px}
+.tl-dot{position:absolute;left:-20px;top:2px;width:12px;height:12px;border-radius:50%;background:var(--accent);border:2px solid white;box-shadow:0 0 0 2px var(--accent)}
+.tl-dot.tl-now{background:var(--green)}
+.tl-dot.tl-future{background:var(--muted)}
+.tl-year{font-size:0.7rem;font-weight:700;color:var(--accent)}
+.tl-desc{font-size:0.78rem;color:var(--text)}
+.faq-item{border-bottom:1px solid var(--border);padding:14px 0}
+.faq-q{font-size:0.82rem;font-weight:700;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+.faq-a{font-size:0.78rem;color:var(--muted);margin-top:8px;line-height:1.6;display:none}
+.faq-a.open{display:block}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.regime-card{border:2px solid var(--border);border-radius:12px;padding:14px;cursor:pointer;transition:all 0.2s}
+.regime-card.selected{border-color:var(--accent);background:#eff6ff}
+.regime-card h4{font-size:0.82rem;font-weight:700;margin-bottom:4px}
+.regime-card p{font-size:0.72rem;color:var(--muted);line-height:1.4}
+.fund-badge{display:inline-block;width:28px;height:28px;border-radius:50%;font-size:0.7rem;font-weight:800;line-height:28px;text-align:center;color:white}
+.fund-a{background:#dc2626}
+.fund-b{background:#ea580c}
+.fund-c{background:#0369a1}
+.fund-d{background:#16a34a}
+.fund-e{background:#475569}
+.divider{border:none;border-top:1px solid var(--border);margin:14px 0}
+.val-display{font-size:0.88rem;font-weight:700;color:var(--accent);text-align:right;min-width:90px}
+.input-row{display:flex;align-items:center;gap:8px}
+.input-row input[type=number]{flex:1}
+@media(max-width:420px){.grid2,.metric-grid,.two-col{grid-template-columns:1fr}.result-main{font-size:1.4rem}}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>JubiladoCL</h1>
+    <span>Simulador AFP Chile</span>
+  </div>
+  <div class="header-badge">2024</div>
+</header>
+
+<nav id="mainNav">
+  <button class="tab-btn active" onclick="switchTab('pension')">MI PENSIÓN</button>
+  <button class="tab-btn" onclick="switchTab('afp')">COMPARAR AFP</button>
+  <button class="tab-btn" onclick="switchTab('pilar')">PILAR SOLIDARIO</button>
+  <button class="tab-btn" onclick="switchTab('apv')">APV</button>
+  <button class="tab-btn" onclick="switchTab('planificador')">PLANIFICADOR</button>
+</nav>
+
+<!-- TAB 1: MI PENSIÓN -->
+<div id="tab-pension" class="tab-content active">
+  <div class="card">
+    <div class="card-title">Datos personales</div>
+    <div class="grid2">
+      <div>
+        <label>Edad actual</label>
+        <input type="number" id="edadActual" min="18" max="65" value="35" oninput="syncDemo()">
+      </div>
+      <div>
+        <label>Edad de jubilación</label>
+        <input type="number" id="edadJubilacion" min="55" max="70" value="65" oninput="syncDemo()">
+      </div>
+    </div>
+    <label>Género</label>
+    <div class="grid2">
+      <button class="btn btn-outline btn-sm" id="genH" onclick="setGenero('H')" style="border-radius:8px">Hombre</button>
+      <button class="btn btn-primary btn-sm" id="genM" onclick="setGenero('M')" style="border-radius:8px">Mujer</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Información financiera</div>
+    <label>Sueldo bruto mensual</label>
+    <div class="input-row">
+      <input type="range" id="sueldoRange" min="200000" max="5000000" step="50000" value="1200000" oninput="document.getElementById('sueldoNum').value=this.value;syncDemo()">
+      <span class="val-display" id="sueldoDisplay">$1.200.000</span>
+    </div>
+    <input type="number" id="sueldoNum" value="1200000" oninput="document.getElementById('sueldoRange').value=this.value;document.getElementById('sueldoDisplay').textContent=formatCLP(+this.value);syncDemo()" style="margin-top:8px">
+    <div class="range-labels"><span>$200.000</span><span>$5.000.000</span></div>
+
+    <label>Saldo actual en AFP (CLP)</label>
+    <input type="number" id="saldoActual" value="8500000" oninput="syncDemo()">
+
+    <label>AFP actual</label>
+    <select id="afpSelect" onchange="syncDemo()">
+      <option value="Capital">Capital (1.44%)</option>
+      <option value="Cupra">Cupra (0.58%)</option>
+      <option value="Habitat" selected>Habitat (1.27%)</option>
+      <option value="Modelo">Modelo (0.58%)</option>
+      <option value="PlanVital">PlanVital (1.16%)</option>
+      <option value="Provida">Provida (1.45%)</option>
+      <option value="Uno">Uno (0.49%)</option>
+    </select>
+
+    <label>Cotización voluntaria adicional (%)</label>
+    <div class="input-row">
+      <input type="range" id="cotizVolRange" min="0" max="10" step="0.5" value="0" oninput="document.getElementById('cotizVolNum').value=this.value;document.getElementById('cotizVolDisplay').textContent=this.value+'%';syncDemo()">
+      <span class="val-display" id="cotizVolDisplay">0%</span>
+    </div>
+    <input type="number" id="cotizVolNum" value="0" min="0" max="10" step="0.5" oninput="document.getElementById('cotizVolRange').value=this.value;document.getElementById('cotizVolDisplay').textContent=this.value+'%';syncDemo()">
+
+    <label>Rentabilidad esperada (%/año)</label>
+    <div class="input-row">
+      <input type="range" id="rentRange" min="1" max="12" step="0.1" value="5.5" oninput="document.getElementById('rentNum').value=this.value;document.getElementById('rentDisplay').textContent=this.value+'%';syncDemo()">
+      <span class="val-display" id="rentDisplay">5.5%</span>
+    </div>
+    <input type="number" id="rentNum" value="5.5" min="1" max="12" step="0.1" oninput="document.getElementById('rentRange').value=this.value;document.getElementById('rentDisplay').textContent=this.value+'%';syncDemo()">
+    <div class="range-labels"><span>1% (conservador)</span><span>12% (agresivo)</span></div>
+  </div>
+
+  <button class="btn btn-primary" onclick="calcPension()">Calcular mi pensión estimada</button>
+
+  <div id="pensionResults" style="display:none;margin-top:6px">
+    <div class="result-box">
+      <div class="result-label">Saldo acumulado estimado al jubilar</div>
+      <div class="result-main" id="resBalance">$0</div>
+      <div class="result-sub" id="resYears"></div>
+    </div>
+    <div class="metric-grid">
+      <div class="metric">
+        <div class="metric-val" id="resPension">$0</div>
+        <div class="metric-lbl">Pensión mensual estimada</div>
+      </div>
+      <div class="metric">
+        <div class="metric-val" id="resReemplazo">0%</div>
+        <div class="metric-lbl">Tasa de reemplazo</div>
+      </div>
+      <div class="metric">
+        <div class="metric-val" id="resAporte">$0</div>
+        <div class="metric-lbl">Aporte mensual total</div>
+      </div>
+      <div class="metric">
+        <div class="metric-val" id="resComision">$0</div>
+        <div class="metric-lbl">Comisión AFP mensual</div>
+      </div>
+    </div>
+    <div id="semaforo" class="semaforo"></div>
+    <div class="card">
+      <div class="card-title">Proyección de ahorro</div>
+      <div class="chart-wrap"><canvas id="pensionChart"></canvas></div>
+    </div>
+    <div class="info-box" id="pensionTip"></div>
+  </div>
+</div>
+
+<!-- TAB 2: COMPARAR AFP -->
+<div id="tab-afp" class="tab-content">
+  <div class="card">
+    <div class="card-title">Comisiones y rentabilidad 2024</div>
+    <div style="overflow-x:auto">
+      <table id="afpTable">
+        <thead>
+          <tr>
+            <th>AFP</th>
+            <th>Comisión</th>
+            <th>Fondo A</th>
+            <th>Fondo C</th>
+            <th>Fondo E</th>
+          </tr>
+        </thead>
+        <tbody id="afpTableBody"></tbody>
+      </table>
+    </div>
+    <div class="info-box" style="margin-top:12px">
+      <strong>Fondo recomendado por edad:</strong><br>
+      <span class="pill"><span class="fund-badge fund-a">A</span> &lt;30 años</span>
+      <span class="pill"><span class="fund-badge fund-b">B</span> 30-45</span>
+      <span class="pill"><span class="fund-badge fund-c">C</span> 45-55</span>
+      <span class="pill"><span class="fund-badge fund-d">D</span> 55-60</span>
+      <span class="pill"><span class="fund-badge fund-e">E</span> &gt;60</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Costo de la comisión en 30 años</div>
+    <div class="info-box">
+      Con sueldo de $1.000.000/mes durante 30 años, una comisión de 1% versus 0.49% representa:
+    </div>
+    <div id="costComisionResult"></div>
+    <label>Sueldo para comparar</label>
+    <div class="input-row">
+      <input type="range" id="afpSueldoRange" min="300000" max="5000000" step="50000" value="1000000" oninput="calcAfpCost(this.value)">
+      <span class="val-display" id="afpSueldoDisplay">$1.000.000</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">AFP recomendada por perfil</div>
+    <div class="grid2">
+      <div class="card2" style="margin:0;border-radius:10px">
+        <div style="font-size:0.75rem;font-weight:700;margin-bottom:6px">Joven / Bajo ingreso</div>
+        <div class="badge badge-green">Uno (0.49%)</div>
+        <div style="font-size:0.7rem;color:var(--muted);margin-top:6px">Menor comisión = más saldo acumulado</div>
+      </div>
+      <div class="card2" style="margin:0;border-radius:10px">
+        <div style="font-size:0.75rem;font-weight:700;margin-bottom:6px">Alto rendimiento</div>
+        <div class="badge badge-blue">Habitat</div>
+        <div style="font-size:0.7rem;color:var(--muted);margin-top:6px">Mejor rentabilidad histórica Fondo C/A</div>
+      </div>
+      <div class="card2" style="margin:0;border-radius:10px">
+        <div style="font-size:0.75rem;font-weight:700;margin-bottom:6px">Equilibrio costo/retorno</div>
+        <div class="badge badge-green">Modelo / Cupra</div>
+        <div style="font-size:0.7rem;color:var(--muted);margin-top:6px">0.58% comisión + buen rendimiento</div>
+      </div>
+      <div class="card2" style="margin:0;border-radius:10px">
+        <div style="font-size:0.75rem;font-weight:700;margin-bottom:6px">Mayor (55+)</div>
+        <div class="badge badge-blue">Capital / Provida</div>
+        <div style="font-size:0.7rem;color:var(--muted);margin-top:6px">Fondos D/E más estables, menor riesgo</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Comparador de ahorro a 30 años</div>
+    <div class="chart-wrap" style="height:240px"><canvas id="afpCompChart"></canvas></div>
+    <div class="info-box" style="margin-top:10px">Rentabilidad anual real de 5.5%, cotización 10%, sueldo base $1.000.000. La diferencia de comisión impacta directamente el saldo final.</div>
+  </div>
+</div>
+
+<!-- TAB 3: PILAR SOLIDARIO -->
+<div id="tab-pilar" class="tab-content">
+  <div class="card">
+    <div class="card-title">Pensión Garantizada Universal (PGU) 2024</div>
+    <div class="result-box" style="background:linear-gradient(135deg,#15803d,#16a34a)">
+      <div class="result-label">Monto mensual PGU</div>
+      <div class="result-main">$214.296</div>
+      <div class="result-sub">Actualizado enero 2024</div>
+    </div>
+    <div class="info-box">
+      <strong>Requisitos PGU:</strong><br>
+      - 65 años o más<br>
+      - Pertenecer al 90% de menores ingresos<br>
+      - Residir en Chile (mínimo 20 años desde los 20 años)<br>
+      - No recibir otra pensión superior a $1.400.000/mes
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Aporte Previsional Solidario (APS)</div>
+    <div class="info-box">
+      Si tu pensión AFP es menor a $1.400.000, el Estado complementa tu pensión. La fórmula es:<br><br>
+      <strong>APS = PGU × (1 - pensión_AFP / $1.400.000)</strong>
+    </div>
+    <label>Tu pensión AFP estimada (desde Tab 1)</label>
+    <input type="number" id="pilarPension" value="0" oninput="calcPilar()" placeholder="Ej: 300000">
+    <div id="pilarResult" style="margin-top:12px"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Pensión Básica Solidaria (PBS)</div>
+    <div class="card2" style="margin:0">
+      <div style="font-size:1.1rem;font-weight:800;color:var(--green)">$214.296/mes</div>
+      <div style="font-size:0.75rem;color:var(--muted);margin-top:4px">Para personas sin cotizaciones AFP que cumplan requisitos</div>
+    </div>
+    <div class="info-box" style="margin-top:10px">
+      La PBS es para quienes nunca cotizaron o tienen saldo AFP muy bajo y cumplen los mismos requisitos que la PGU (edad, residencia, nivel socioeconómico).
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Pensión total proyectada</div>
+    <div id="pilarTotal">
+      <div class="info-box">Ingresa tu pensión AFP estimada en el campo de arriba para ver el resumen.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">¿Cuánto ahorro previsional tienes?</div>
+    <div class="info-box">
+      <strong>Grupos de edad y situación:</strong><br><br>
+      <strong>Edad 25-35:</strong> Si cotizas consistentemente al 10% con sueldo $800k+ durante 35-40 años, probablemente superas el umbral PGU. Enfócate en APV para crecer más.<br><br>
+      <strong>Edad 35-50:</strong> Crítico evaluar si necesitas aumentar aportes via APV. Con lagunas previsionales, el APS puede ser relevante.<br><br>
+      <strong>Edad 50+:</strong> Revisa proyección realista. PGU + APS garantizan piso mínimo de $214.296.
+    </div>
+  </div>
+</div>
+
+<!-- TAB 4: APV -->
+<div id="tab-apv" class="tab-content">
+  <div class="card">
+    <div class="card-title">¿Qué es el APV?</div>
+    <div class="info-box">
+      El <strong>Ahorro Previsional Voluntario (APV)</strong> es un ahorro adicional al obligatorio del 10% que tiene <strong>beneficios tributarios</strong>. Puedes optar entre Régimen A (crédito tributario) o Régimen B (deducción de base imponible).
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Elige tu régimen APV</div>
+    <div class="two-col" id="regimeCards">
+      <div class="regime-card selected" id="regA" onclick="selectRegime('A')">
+        <h4>Régimen A</h4>
+        <p>Crédito tributario del <strong>15%</strong> sobre tus aportes. Ideal para ingresos bajos y medios.</p>
+      </div>
+      <div class="regime-card" id="regB" onclick="selectRegime('B')">
+        <h4>Régimen B</h4>
+        <p>Descuenta de la <strong>base imponible</strong>. Ideal para ingresos altos (tasa 35-40%).</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Calculadora APV</div>
+    <label>Aporte APV mensual (CLP)</label>
+    <input type="number" id="apvMonto" value="100000" oninput="calcApv()">
+
+    <label id="apvTaxLabel">Tasa de impuesto marginal (%)</label>
+    <div class="input-row">
+      <input type="range" id="apvTasaRange" min="0" max="40" step="1" value="8" oninput="document.getElementById('apvTasaNum').value=this.value;document.getElementById('apvTasaDisplay').textContent=this.value+'%';calcApv()">
+      <span class="val-display" id="apvTasaDisplay">8%</span>
+    </div>
+    <input type="number" id="apvTasaNum" value="8" min="0" max="40" oninput="document.getElementById('apvTasaRange').value=this.value;document.getElementById('apvTasaDisplay').textContent=this.value+'%';calcApv()">
+    <div class="range-labels"><span>0% (exento)</span><span>40% (máximo)</span></div>
+
+    <div id="apvResult" style="margin-top:14px"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Beneficio máximo APV Régimen A (2024)</div>
+    <div class="metric-grid">
+      <div class="metric">
+        <div class="metric-val">600 UTM</div>
+        <div class="metric-lbl">Límite anual</div>
+      </div>
+      <div class="metric">
+        <div class="metric-val">$40.376.400</div>
+        <div class="metric-lbl">Límite en pesos (600×$67.294)</div>
+      </div>
+      <div class="metric">
+        <div class="metric-val">$6.056.460</div>
+        <div class="metric-lbl">Beneficio máximo año (15%)</div>
+      </div>
+      <div class="metric">
+        <div class="metric-val">$504.705</div>
+        <div class="metric-lbl">Beneficio mensual máximo</div>
+      </div>
+    </div>
+    <div class="info-box">1 UTM = $67.294 (marzo 2026). El crédito 15% se descuenta directamente de tu impuesto anual a pagar o se deposita en tu cuenta APV si no tienes impuesto.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Proveedores APV principales</div>
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr><th>Institución</th><th>Tipo</th><th>Comisión aprox.</th><th>Nota</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>AFPs (Capital, Habitat, etc.)</td><td>Fondos A-E</td><td>0.49-1.45%</td><td>Mismos fondos que obligatorio</td></tr>
+          <tr><td>Banco Estado</td><td>Depósito APV</td><td>0.5-1.2%</td><td>Alta liquidez</td></tr>
+          <tr><td>BancoChile / Santander</td><td>Fondos mutuos</td><td>0.8-2.0%</td><td>Amplia variedad</td></tr>
+          <tr><td>Metlife / Consorcio</td><td>Seguro APV</td><td>1.0-2.5%</td><td>Incluye seguro de vida</td></tr>
+          <tr><td>Corredoras (BTG, etc.)</td><td>Fondos + acciones</td><td>0.3-1.5%</td><td>Mayor flexibilidad</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">APVC — APV Colectivo</div>
+    <div class="info-box">
+      El <strong>APV Colectivo</strong> es ofrecido por empleadores. El empleador aporta una parte y el trabajador otra. Beneficios:<br>
+      - Mismo beneficio tributario (régimen A o B)<br>
+      - El aporte del empleador puede duplicar tu ahorro<br>
+      - Consulta a tu empleador si tiene plan APVC
+    </div>
+  </div>
+</div>
+
+<!-- TAB 5: PLANIFICADOR -->
+<div id="tab-planificador" class="tab-content">
+  <div class="card">
+    <div class="card-title">Tu línea de tiempo previsional</div>
+    <div id="timeline" class="timeline"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">¿Cuánto debo ahorrar?</div>
+    <div class="info-box">Calcula cuánto necesitas ahorrar mensualmente (AFP + APV) para alcanzar tu pensión objetivo.</div>
+    <label>Pensión mensual objetivo</label>
+    <input type="number" id="targetPension" value="800000" oninput="calcGap()">
+    <label>Edad actual</label>
+    <input type="number" id="planEdad" value="35" oninput="calcGap()">
+    <label>Edad de jubilación</label>
+    <input type="number" id="planEdadJub" value="65" oninput="calcGap()">
+    <label>Saldo actual AFP</label>
+    <input type="number" id="planSaldo" value="8500000" oninput="calcGap()">
+    <label>Rentabilidad esperada (%/año)</label>
+    <input type="number" id="planRent" value="5.5" step="0.1" oninput="calcGap()">
+
+    <div id="gapResult" style="margin-top:14px"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Retiro programado vs Renta vitalicia</div>
+    <div class="grid2">
+      <div class="card2" style="margin:0;border-radius:10px;padding:12px">
+        <div style="font-size:0.8rem;font-weight:800;margin-bottom:8px;color:var(--accent)">Retiro Programado</div>
+        <ul style="font-size:0.72rem;color:var(--muted);padding-left:14px;line-height:1.8">
+          <li>El dinero sigue en tu AFP</li>
+          <li>Pensión variable (fluctúa)</li>
+          <li>Herencia si queda saldo</li>
+          <li>Puede agotarse el saldo</li>
+          <li>Puedes cambiar a renta vitalicia</li>
+        </ul>
+      </div>
+      <div class="card2" style="margin:0;border-radius:10px;padding:12px">
+        <div style="font-size:0.8rem;font-weight:800;margin-bottom:8px;color:var(--green)">Renta Vitalicia</div>
+        <ul style="font-size:0.72rem;color:var(--muted);padding-left:14px;line-height:1.8">
+          <li>Aseguradora paga de por vida</li>
+          <li>Pensión fija garantizada</li>
+          <li>Sin riesgo de quedarte sin</li>
+          <li>No hay herencia</li>
+          <li>Decisión irreversible</li>
+        </ul>
+      </div>
+    </div>
+    <div class="info-box" style="margin-top:12px">
+      <strong>Guía de decisión:</strong><br>
+      - Si tienes buena salud y longevidad familiar → <strong>Retiro programado</strong><br>
+      - Si quieres certeza total y no tienes herederos → <strong>Renta vitalicia</strong><br>
+      - Puedes combinar ambos (opción mixta)
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Preguntas frecuentes</div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">¿Puedo retirar el 10% nuevamente? <span>+</span></div>
+      <div class="faq-a">No hay nuevo retiro del 10% autorizado al 2024. Los tres retiros extraordinarios (2020-2021) fueron medidas de emergencia por la pandemia COVID-19. Actualmente no existe ningún proyecto de ley aprobado para un nuevo retiro. Retirar fondos reduce significativamente la pensión futura.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">¿Qué pasa si me quedo sin saldo en AFP? <span>+</span></div>
+      <div class="faq-a">Si se agota el saldo en el retiro programado y cumples requisitos, el Estado garantiza la Pensión Garantizada Universal (PGU) de $214.296/mes o la Pensión Básica Solidaria. Nadie queda sin pensión en Chile si cumple los requisitos de edad y residencia.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">¿Puedo cambiar de AFP? <span>+</span></div>
+      <div class="faq-a">Sí, puedes cambiarte de AFP de forma gratuita. No hay un mínimo de tiempo obligatorio en cada AFP (la restricción de "una vez al año" fue eliminada). El trámite se hace en línea o en sucursal. Tu saldo se transfiere automáticamente sin costo.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">¿Qué es la Cuenta 2 de AFP? <span>+</span></div>
+      <div class="faq-a">La Cuenta de Ahorro Voluntario (Cuenta 2) es una cuenta de ahorro adicional en tu AFP que NO tiene fin previsional obligatorio. Puedes retirar hasta 4 veces al año (sin límite en la 5ta vez) cuando quieras. Tiene los mismos fondos de inversión (A-E) que la cuenta obligatoria pero sin beneficio tributario especial (a diferencia del APV).</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">¿Cómo afectan las lagunas previsionales? <span>+</span></div>
+      <div class="faq-a">Los meses sin cotización (desempleo, trabajo informal) reducen directamente tu saldo acumulado. Si tuviste 5 años de lagunas en una carrera de 40 años, pierdes aproximadamente 12.5% de tus cotizaciones totales. El APV puede compensar parcialmente estas lagunas.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">¿El empleador puede cotizar más? <span>+</span></div>
+      <div class="faq-a">El empleador está obligado a cotizar el 10% del sueldo imponible (más la comisión AFP) en tu cuenta obligatoria. Adicionalmente, puede ofrecer APVC (APV Colectivo) donde la empresa hace aportes voluntarios adicionales. Esto es negociable en el contrato o como beneficio laboral.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Proyección comparativa</div>
+    <div class="chart-wrap" style="height:240px"><canvas id="planChart"></canvas></div>
+  </div>
+</div>
+
+<script>
+// AFP data
+const AFP_DATA = {
+  Capital:  {comision:1.44, fA:12.1, fC:8.2, fE:4.5},
+  Cupra:    {comision:0.58, fA:11.8, fC:7.9, fE:4.1},
+  Habitat:  {comision:1.27, fA:12.3, fC:8.4, fE:4.7},
+  Modelo:   {comision:0.58, fA:11.5, fC:7.8, fE:4.0},
+  PlanVital:{comision:1.16, fA:11.2, fC:7.6, fE:3.8},
+  Provida:  {comision:1.45, fA:12.0, fC:8.1, fE:4.4},
+  Uno:      {comision:0.49, fA:11.4, fC:7.7, fE:3.9}
+};
+
+const PGU = 214296;
+const PBS = 214296;
+const APS_MAX_PENSION = 1400000;
+const UTM = 67294;
+
+let genero = 'H';
+let apvRegime = 'A';
+let pensionChart = null;
+let afpCompChart = null;
+let planChart = null;
+let lastCalcResult = null;
+
+// Formatting
+function formatCLP(n) {
+  if (isNaN(n) || n === null) return '$0';
+  return '$' + Math.round(n).toLocaleString('es-CL');
+}
+function formatPct(n) {
+  return (Math.round(n * 10) / 10) + '%';
+}
+
+// Tab switching
+function switchTab(id) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  event.target.classList.add('active');
+  if (id === 'afp') initAfpTab();
+  if (id === 'planificador') initPlanificador();
+  if (id === 'apv') calcApv();
+  if (id === 'pilar') syncPilarFromPension();
+  saveState();
+}
+
+function setGenero(g) {
+  genero = g;
+  document.getElementById('genH').className = g === 'H' ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm';
+  document.getElementById('genM').className = g === 'M' ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm';
+  saveState();
+}
+
+function selectRegime(r) {
+  apvRegime = r;
+  document.getElementById('regA').className = r === 'A' ? 'regime-card selected' : 'regime-card';
+  document.getElementById('regB').className = r === 'B' ? 'regime-card selected' : 'regime-card';
+  document.getElementById('apvTaxLabel').textContent = r === 'B' ? 'Tu tasa marginal de impuesto (%)' : 'Tasa de impuesto marginal (%)';
+  calcApv();
+}
+
+// Pension calculation
+function calcPension() {
+  const edad = +document.getElementById('edadActual').value;
+  const edadJub = +document.getElementById('edadJubilacion').value;
+  const sueldo = +document.getElementById('sueldoNum').value;
+  const saldoInicial = +document.getElementById('saldoActual').value;
+  const afpName = document.getElementById('afpSelect').value;
+  const cotizVol = +document.getElementById('cotizVolNum').value / 100;
+  const rentAnual = +document.getElementById('rentNum').value / 100;
+  const comision = AFP_DATA[afpName].comision / 100;
+
+  if (edadJub <= edad) {
+    alert('La edad de jubilación debe ser mayor a la edad actual.');
+    return;
+  }
+
+  const meses = (edadJub - edad) * 12;
+  const r = rentAnual / 12;
+  const cotizTotal = 0.10 + cotizVol;
+  const aporteNeto = sueldo * cotizTotal; // Monthly contribution (net after employer deducts commission from gross)
+  const comisionMensual = sueldo * comision;
+
+  // Future value: FV = PV(1+r)^n + PMT * [((1+r)^n - 1) / r]
+  let fv;
+  if (r === 0) {
+    fv = saldoInicial + aporteNeto * meses;
+  } else {
+    const growth = Math.pow(1 + r, meses);
+    fv = saldoInicial * growth + aporteNeto * ((growth - 1) / r);
+  }
+
+  // Mortality factor (simplified BMI-like factor)
+  // Men retire at 65, life expectancy ~82 → ~204 months; women at 60, life expectancy ~86 → ~312 months
+  let factor;
+  if (genero === 'H') {
+    factor = 210 + Math.max(0, (65 - edadJub)) * 12; // men
+  } else {
+    factor = 240 + Math.max(0, (60 - edadJub)) * 12; // women
+  }
+
+  const pension = fv / factor;
+  const tasa = (pension / sueldo) * 100;
+
+  lastCalcResult = { fv, pension, tasa, sueldo, meses, edad, edadJub, aporteNeto, comisionMensual, r, saldoInicial };
+
+  // Display
+  document.getElementById('pensionResults').style.display = 'block';
+  document.getElementById('resBalance').textContent = formatCLP(fv);
+  document.getElementById('resYears').textContent = (edadJub - edad) + ' años de aportes · jubilación a los ' + edadJub;
+  document.getElementById('resPension').textContent = formatCLP(pension);
+  document.getElementById('resReemplazo').textContent = formatPct(tasa);
+  document.getElementById('resAporte').textContent = formatCLP(aporteNeto);
+  document.getElementById('resComision').textContent = formatCLP(comisionMensual);
+
+  // Semaforo
+  const sem = document.getElementById('semaforo');
+  if (tasa >= 70) {
+    sem.className = 'semaforo sem-green';
+    sem.innerHTML = '<span style="font-size:1.4rem">🟢</span><span>Excelente tasa de reemplazo — estás en buen camino</span>';
+  } else if (tasa >= 40) {
+    sem.className = 'semaforo sem-yellow';
+    sem.innerHTML = '<span style="font-size:1.4rem">🟡</span><span>Pensión moderada — considera APV para mejorarla</span>';
+  } else {
+    sem.className = 'semaforo sem-red';
+    sem.innerHTML = '<span style="font-size:1.4rem">🔴</span><span>Pensión baja — necesitas ahorro adicional urgente</span>';
+  }
+
+  // Tip
+  const tip = document.getElementById('pensionTip');
+  if (tasa < 40) {
+    tip.innerHTML = '<strong>Recomendación:</strong> Con APV Régimen A de $' + Math.round(sueldo * 0.05).toLocaleString('es-CL') + '/mes, podrías aumentar tu pensión estimada en ' + formatCLP(sueldo * 0.05 / factor * Math.pow(1 + r, meses)) + '/mes.';
+  } else if (tasa < 70) {
+    tip.innerHTML = '<strong>Consejo:</strong> Considera APV para mejorar tu tasa de reemplazo al 70%. Revisa la pestaña APV para calcular tu beneficio tributario.';
+  } else {
+    tip.innerHTML = '<strong>Excelente planificación.</strong> Mantén la cotización y considera diversificar con APV Régimen B si tienes ingresos altos.';
+  }
+
+  // Chart
+  drawPensionChart(saldoInicial, aporteNeto, r, meses, edad);
+  saveState();
+  syncPilarFromPension();
+  initPlanificador();
+}
+
+function drawPensionChart(saldoInicial, aporte, r, meses, edadInicio) {
+  const years = Math.ceil(meses / 12);
+  const labels = [];
+  const contribs = [];
+  const growths = [];
+  const totals = [];
+
+  for (let y = 0; y <= years; y++) {
+    const m = y * 12;
+    labels.push(edadInicio + y);
+    const contrib = saldoInicial + aporte * m;
+    const fv = r === 0 ? contrib : saldoInicial * Math.pow(1+r, m) + aporte * ((Math.pow(1+r,m)-1)/r);
+    contribs.push(Math.round(contrib / 1e6 * 10) / 10);
+    growths.push(Math.round((fv - contrib) / 1e6 * 10) / 10);
+    totals.push(Math.round(fv / 1e6 * 10) / 10);
+  }
+
+  const ctx = document.getElementById('pensionChart').getContext('2d');
+  if (pensionChart) pensionChart.destroy();
+  pensionChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {label:'Aportes (MM$)', data:contribs, backgroundColor:'#93c5fd', stack:'s'},
+        {label:'Rentabilidad (MM$)', data:growths, backgroundColor:'#16a34a', stack:'s'}
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {legend:{labels:{font:{size:11},boxWidth:12}}},
+      scales: {
+        x:{ticks:{font:{size:10}},title:{display:true,text:'Edad',font:{size:10}}},
+        y:{ticks:{font:{size:10},callback:v=>v+'MM'},title:{display:true,text:'Millones CLP',font:{size:10}},stacked:true}
+      }
+    }
+  });
+}
+
+function syncDemo() {
+  const sueldo = +document.getElementById('sueldoNum').value;
+  document.getElementById('sueldoRange').value = sueldo;
+  document.getElementById('sueldoDisplay').textContent = formatCLP(sueldo);
+  saveState();
+}
+
+// AFP Tab
+function initAfpTab() {
+  const tbody = document.getElementById('afpTableBody');
+  const minComision = Math.min(...Object.values(AFP_DATA).map(a => a.comision));
+  const maxFa = Math.max(...Object.values(AFP_DATA).map(a => a.fA));
+
+  let html = '';
+  for (const [name, d] of Object.entries(AFP_DATA)) {
+    const isMinCom = d.comision === minComision;
+    const isBestA = d.fA === maxFa;
+    html += `<tr class="${isMinCom ? 'highlight-row' : ''}">
+      <td><strong>${name}</strong>${isMinCom ? ' <span class="badge badge-green">Menor costo</span>' : ''}</td>
+      <td style="color:${isMinCom ? 'var(--green)' : 'inherit'};font-weight:${isMinCom ? 700 : 400}">${d.comision}%</td>
+      <td style="color:${isBestA ? 'var(--green)' : 'inherit'};font-weight:${isBestA ? 700 : 400}">+${d.fA}%</td>
+      <td>+${d.fC}%</td>
+      <td>+${d.fE}%</td>
+    </tr>`;
+  }
+  tbody.innerHTML = html;
+
+  calcAfpCost(1000000);
+  drawAfpCompChart();
+}
+
+function calcAfpCost(sueldo) {
+  sueldo = +sueldo;
+  document.getElementById('afpSueldoDisplay').textContent = formatCLP(sueldo);
+  document.getElementById('afpSueldoRange').value = sueldo;
+
+  const r = 0.055 / 12;
+  const meses = 360; // 30 años
+  const growth = Math.pow(1 + r, meses);
+
+  // Calculate final balance with different commissions
+  const aporte = sueldo * 0.10;
+  const fvBase = aporte * ((growth - 1) / r);
+
+  // Commission reduces effective salary for contribution calculation
+  // More importantly, commission is a drag on net contribution
+  const results = {};
+  for (const [name, d] of Object.entries(AFP_DATA)) {
+    const comision = d.comision / 100;
+    const aporteNeto = sueldo * 0.10;
+    const costoAnual = sueldo * comision * 12;
+    const costTotal30 = costoAnual * 30;
+    // Opportunity cost: what if that commission was invested
+    const fvCosto = (sueldo * comision) * ((growth - 1) / r);
+    results[name] = { costoTotal: costTotal30, fvCosto: Math.round(fvCosto) };
+  }
+
+  const unoFv = results['Uno'].fvCosto;
+  const capitalFv = results['Capital'].fvCosto;
+  const diff = capitalFv - unoFv;
+
+  let html = `<div class="metric-grid" style="margin-top:12px">`;
+  for (const [name, res] of Object.entries(results)) {
+    html += `<div class="metric">
+      <div class="metric-val" style="font-size:1rem">${formatCLP(res.fvCosto)}</div>
+      <div class="metric-lbl">Costo oportunidad AFP ${name}</div>
+    </div>`;
+  }
+  html += `</div>`;
+  html += `<div class="info-box"><strong>Diferencia Capital vs Uno:</strong> ${formatCLP(diff)} menos en saldo final por mayor comisión (sueldo ${formatCLP(sueldo)}, 30 años, 5.5% rent.).</div>`;
+  document.getElementById('costComisionResult').innerHTML = html;
+}
+
+function drawAfpCompChart() {
+  const r = 0.055 / 12;
+  const meses = 360;
+  const sueldo = 1000000;
+  const aporte = sueldo * 0.10;
+  const labels = [];
+  for (let y = 5; y <= 30; y += 5) labels.push(y + ' años');
+
+  const datasets = [];
+  const colors = ['#0369a1','#16a34a','#dc2626','#d97706','#7c3aed','#0891b2','#be123c'];
+  let ci = 0;
+  for (const [name, d] of Object.entries(AFP_DATA)) {
+    const data = [];
+    for (let y = 5; y <= 30; y += 5) {
+      const m = y * 12;
+      const g = Math.pow(1 + r, m);
+      const fv = aporte * ((g - 1) / r);
+      // Subtract opportunity cost of commission
+      const comCost = (sueldo * d.comision / 100) * ((g - 1) / r);
+      data.push(Math.round((fv - comCost) / 1e6 * 10) / 10);
+    }
+    datasets.push({label: name, data, borderColor: colors[ci], backgroundColor: colors[ci] + '20', tension: 0.3, pointRadius: 4});
+    ci++;
+  }
+
+  const ctx = document.getElementById('afpCompChart').getContext('2d');
+  if (afpCompChart) afpCompChart.destroy();
+  afpCompChart = new Chart(ctx, {
+    type: 'line',
+    data: {labels, datasets},
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {legend:{labels:{font:{size:9},boxWidth:10}}},
+      scales: {
+        x:{ticks:{font:{size:10}}},
+        y:{ticks:{font:{size:10},callback:v=>v+'MM'},title:{display:true,text:'Saldo neto (MM CLP)',font:{size:10}}}
+      }
+    }
+  });
+}
+
+// Pilar Solidario
+function syncPilarFromPension() {
+  if (lastCalcResult) {
+    document.getElementById('pilarPension').value = Math.round(lastCalcResult.pension);
+    calcPilar();
+  }
+}
+
+function calcPilar() {
+  const pension = +document.getElementById('pilarPension').value || 0;
+
+  let apsAmount = 0;
+  let pguEligible = pension < APS_MAX_PENSION;
+  let html = '';
+
+  if (pguEligible) {
+    apsAmount = PGU * (1 - pension / APS_MAX_PENSION);
+    apsAmount = Math.max(0, Math.min(PGU, apsAmount));
+  }
+
+  const pensionTotal = pension + (pguEligible ? apsAmount : 0);
+
+  if (pension === 0) {
+    html = `<div class="semaforo sem-yellow"><span>📋</span><span>Ingresa tu pensión AFP estimada para calcular el APS.</span></div>`;
+  } else if (!pguEligible) {
+    html = `<div class="semaforo sem-green"><span>✅</span><span>Tu pensión de ${formatCLP(pension)} supera el umbral de $1.400.000 — no recibirías APS pero tampoco lo necesitas.</span></div>`;
+  } else if (pension < 214296) {
+    html = `<div class="semaforo sem-red"><span>⚠️</span><span>Pensión muy baja. APS: ${formatCLP(apsAmount)}/mes</span></div>`;
+  } else {
+    html = `<div class="semaforo sem-yellow"><span>💛</span><span>APS estimado: ${formatCLP(Math.round(apsAmount))}/mes (complemento del Estado)</span></div>`;
+  }
+
+  document.getElementById('pilarResult').innerHTML = html;
+
+  // Total summary
+  let totalHtml = `<div class="metric-grid">
+    <div class="metric"><div class="metric-val">${formatCLP(Math.round(pension))}</div><div class="metric-lbl">Pensión AFP propia</div></div>
+    <div class="metric"><div class="metric-val">${formatCLP(Math.round(apsAmount))}</div><div class="metric-lbl">APS del Estado</div></div>
+    <div class="metric" style="grid-column:1/-1"><div class="metric-val" style="font-size:1.4rem">${formatCLP(Math.round(pensionTotal))}</div><div class="metric-lbl">Pensión total mensual estimada</div></div>
+  </div>`;
+
+  if (pensionTotal < 350000) {
+    totalHtml += `<div class="semaforo sem-red"><span>🔴</span><span>Pensión total muy baja — considera APV urgentemente</span></div>`;
+  } else if (pensionTotal < 600000) {
+    totalHtml += `<div class="semaforo sem-yellow"><span>🟡</span><span>Pensión total ajustada — el APV puede mejorarla significativamente</span></div>`;
+  } else {
+    totalHtml += `<div class="semaforo sem-green"><span>🟢</span><span>Pensión total razonable para costos de vida básicos en Chile</span></div>`;
+  }
+
+  document.getElementById('pilarTotal').innerHTML = totalHtml;
+}
+
+// APV
+function calcApv() {
+  const monto = +document.getElementById('apvMonto').value || 0;
+  const tasa = +document.getElementById('apvTasaNum').value / 100;
+  const montoAnual = monto * 12;
+
+  let beneficio = 0;
+  let html = '';
+
+  if (apvRegime === 'A') {
+    // 15% tax credit, max 600 UTM/year
+    const limiteAnual = 600 * UTM;
+    const aporteLimitado = Math.min(montoAnual, limiteAnual);
+    beneficio = aporteLimitado * 0.15;
+    const limiteAporte = limiteAnual / 12;
+
+    html = `
+    <div class="metric-grid">
+      <div class="metric"><div class="metric-val">${formatCLP(monto)}</div><div class="metric-lbl">Aporte mensual APV</div></div>
+      <div class="metric"><div class="metric-val">${formatCLP(beneficio / 12)}</div><div class="metric-lbl">Crédito tributario mensual</div></div>
+      <div class="metric"><div class="metric-val">${formatCLP(montoAnual)}</div><div class="metric-lbl">Aporte anual total</div></div>
+      <div class="metric"><div class="metric-val">${formatCLP(beneficio)}</div><div class="metric-lbl">Beneficio tributario anual</div></div>
+    </div>
+    <div class="info-box">
+      <strong>Régimen A:</strong> El 15% de crédito tributario se descuenta de tu impuesto a pagar o se deposita en tu cuenta APV.<br>
+      Límite mensual efectivo: ${formatCLP(limiteAporte)}/mes (600 UTM/año = ${formatCLP(limiteAnual)}/año).
+      ${monto > limiteAporte ? '<br><span style="color:var(--yellow)"><strong>Atención:</strong> Tu aporte supera el límite beneficiado por Régimen A. El exceso va sin beneficio tributario.</span>' : ''}
+    </div>`;
+  } else {
+    // Regime B: deduction from taxable income
+    beneficio = montoAnual * tasa;
+
+    html = `
+    <div class="metric-grid">
+      <div class="metric"><div class="metric-val">${formatCLP(monto)}</div><div class="metric-lbl">Aporte mensual APV</div></div>
+      <div class="metric"><div class="metric-val">${formatCLP(beneficio / 12)}</div><div class="metric-lbl">Ahorro impuesto mensual</div></div>
+      <div class="metric"><div class="metric-val">${formatCLP(montoAnual)}</div><div class="metric-lbl">Aporte anual total</div></div>
+      <div class="metric"><div class="metric-val">${formatCLP(beneficio)}</div><div class="metric-lbl">Ahorro impuesto anual</div></div>
+    </div>
+    <div class="info-box">
+      <strong>Régimen B:</strong> Reduces tu base imponible en ${formatCLP(montoAnual)}/año. Con tasa marginal ${(tasa*100).toFixed(0)}%, ahorras ${formatCLP(beneficio)} en impuestos.
+      ${tasa < 0.23 ? '<br><span style="color:var(--yellow)"><strong>Consejo:</strong> Con tasa marginal baja, el Régimen A (15% fijo) podría ser mejor para ti.</span>' : ''}
+    </div>`;
+  }
+
+  document.getElementById('apvResult').innerHTML = html;
+}
+
+// Planificador
+function initPlanificador() {
+  if (lastCalcResult) {
+    document.getElementById('planEdad').value = lastCalcResult.edad;
+    document.getElementById('planEdadJub').value = lastCalcResult.edadJub;
+    document.getElementById('planSaldo').value = Math.round(lastCalcResult.saldoInicial);
+  }
+  buildTimeline();
+  calcGap();
+  drawPlanChart();
+}
+
+function buildTimeline() {
+  const edad = +document.getElementById('planEdad').value || 35;
+  const edadJub = +document.getElementById('planEdadJub').value || 65;
+  const saldo = +document.getElementById('planSaldo').value || 0;
+  const r = 0.055 / 12;
+  const anoActual = 2026;
+
+  let html = '';
+  const milestones = [
+    {age: edad, label: 'Hoy', desc: `Saldo: ${formatCLP(saldo)}`, now: true},
+  ];
+
+  // Add checkpoints every 10 years
+  for (let a = Math.ceil(edad / 10) * 10; a < edadJub; a += 10) {
+    const m = (a - edad) * 12;
+    const fv = saldo * Math.pow(1+r, m) + (lastCalcResult ? lastCalcResult.aporteNeto : 0) * ((Math.pow(1+r,m)-1)/r);
+    milestones.push({age: a, label: `Año ${anoActual + (a - edad)}`, desc: `Proyección: ${formatCLP(Math.round(fv))}`, now: false});
+  }
+
+  milestones.push({age: edadJub, label: `Jubilación (${anoActual + edadJub - edad})`, desc: lastCalcResult ? `Saldo estimado: ${formatCLP(Math.round(lastCalcResult.fv))}` : 'Calcula tu pensión primero', now: false, goal: true});
+
+  for (const m of milestones) {
+    html += `<div class="tl-item">
+      <div class="tl-dot ${m.now ? 'tl-now' : m.goal ? '' : 'tl-future'}"></div>
+      <div class="tl-year">${m.age} años — ${m.label}</div>
+      <div class="tl-desc">${m.desc}</div>
+    </div>`;
+  }
+
+  document.getElementById('timeline').innerHTML = html;
+}
+
+function calcGap() {
+  const targetPension = +document.getElementById('targetPension').value || 0;
+  const edad = +document.getElementById('planEdad').value || 35;
+  const edadJub = +document.getElementById('planEdadJub').value || 65;
+  const saldo = +document.getElementById('planSaldo').value || 0;
+  const rentAnual = +document.getElementById('planRent').value / 100 || 0.055;
+
+  if (targetPension <= 0 || edadJub <= edad) {
+    document.getElementById('gapResult').innerHTML = '';
+    return;
+  }
+
+  const meses = (edadJub - edad) * 12;
+  const r = rentAnual / 12;
+  const factor = genero === 'H' ? 210 : 240;
+
+  // Required capital at retirement
+  const capitalNecesario = targetPension * factor;
+
+  // Current saldo future value
+  const fvSaldo = r === 0 ? saldo : saldo * Math.pow(1 + r, meses);
+
+  // Capital still needed from future contributions
+  const capitalFaltante = Math.max(0, capitalNecesario - fvSaldo);
+
+  // Required monthly payment PMT = capitalFaltante * r / ((1+r)^n - 1)
+  let aporteMensualNecesario = 0;
+  if (r === 0) {
+    aporteMensualNecesario = meses > 0 ? capitalFaltante / meses : 0;
+  } else {
+    const growth = Math.pow(1 + r, meses);
+    aporteMensualNecesario = capitalFaltante * r / (growth - 1);
+  }
+
+  const aporteActual = lastCalcResult ? lastCalcResult.aporteNeto : 0;
+  const brecha = aporteMensualNecesario - aporteActual;
+  const apvNecesario = Math.max(0, brecha);
+
+  let html = `<div class="metric-grid">
+    <div class="metric"><div class="metric-val">${formatCLP(Math.round(capitalNecesario))}</div><div class="metric-lbl">Capital necesario al jubilar</div></div>
+    <div class="metric"><div class="metric-val">${formatCLP(Math.round(aporteMensualNecesario))}</div><div class="metric-lbl">Ahorro mensual requerido</div></div>
+    <div class="metric"><div class="metric-val">${formatCLP(Math.round(aporteActual))}</div><div class="metric-lbl">Ahorro actual (AFP 10%)</div></div>
+    <div class="metric"><div class="metric-val" style="color:${apvNecesario > 0 ? 'var(--red)' : 'var(--green)'}">${formatCLP(Math.round(apvNecesario))}</div><div class="metric-lbl">APV adicional necesario</div></div>
+  </div>`;
+
+  if (apvNecesario > 0) {
+    html += `<div class="semaforo sem-yellow"><span>💡</span><span>Necesitas <strong>${formatCLP(Math.round(apvNecesario))}/mes</strong> en APV adicional para alcanzar tu meta de ${formatCLP(targetPension)}/mes.</span></div>`;
+  } else {
+    html += `<div class="semaforo sem-green"><span>✅</span><span>Tu ahorro actual es suficiente para alcanzar tu meta de pensión.</span></div>`;
+  }
+
+  document.getElementById('gapResult').innerHTML = html;
+  buildTimeline();
+  drawPlanChart();
+}
+
+function drawPlanChart() {
+  if (!lastCalcResult) return;
+  const {saldoInicial, aporteNeto, r, meses, edad} = lastCalcResult;
+  const years = Math.ceil(meses / 12);
+
+  const labels = [];
+  const sinApv = [];
+  const conApv = [];
+  const apvMonto = +document.getElementById('apvMonto').value || 100000;
+  const r2 = r;
+
+  for (let y = 0; y <= years; y++) {
+    const m = y * 12;
+    labels.push(edad + y);
+    const g = r === 0 ? 1 : Math.pow(1 + r, m);
+    const fvBase = r === 0 ? saldoInicial + aporteNeto * m : saldoInicial * g + aporteNeto * ((g - 1) / r);
+    const fvApv = r === 0 ? fvBase + apvMonto * m : fvBase + apvMonto * ((g - 1) / r2);
+    sinApv.push(Math.round(fvBase / 1e6 * 10) / 10);
+    conApv.push(Math.round(fvApv / 1e6 * 10) / 10);
+  }
+
+  const ctx = document.getElementById('planChart').getContext('2d');
+  if (planChart) planChart.destroy();
+  planChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {label:'Sin APV (MM$)', data:sinApv, borderColor:'#0369a1', backgroundColor:'#0369a120', tension:0.3, fill:true},
+        {label:'Con APV +$'+Math.round(apvMonto/1000)+'k/mes (MM$)', data:conApv, borderColor:'#16a34a', backgroundColor:'#16a34a20', tension:0.3, fill:true}
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {legend:{labels:{font:{size:11},boxWidth:12}}},
+      scales: {
+        x:{ticks:{font:{size:10}},title:{display:true,text:'Edad',font:{size:10}}},
+        y:{ticks:{font:{size:10},callback:v=>v+'MM'},title:{display:true,text:'Saldo (MM CLP)',font:{size:10}}}
+      }
+    }
+  });
+}
+
+// FAQ toggle
+function toggleFaq(el) {
+  const answer = el.nextElementSibling;
+  const isOpen = answer.classList.contains('open');
+  // Close all
+  document.querySelectorAll('.faq-a').forEach(a => a.classList.remove('open'));
+  document.querySelectorAll('.faq-q span:last-child').forEach(s => s.textContent = '+');
+  if (!isOpen) {
+    answer.classList.add('open');
+    el.querySelector('span:last-child').textContent = '−';
+  }
+}
+
+// LocalStorage
+function saveState() {
+  try {
+    const state = {
+      edadActual: document.getElementById('edadActual').value,
+      edadJubilacion: document.getElementById('edadJubilacion').value,
+      sueldoNum: document.getElementById('sueldoNum').value,
+      saldoActual: document.getElementById('saldoActual').value,
+      afpSelect: document.getElementById('afpSelect').value,
+      cotizVolNum: document.getElementById('cotizVolNum').value,
+      rentNum: document.getElementById('rentNum').value,
+      genero,
+      apvRegime,
+      apvMonto: document.getElementById('apvMonto').value
+    };
+    localStorage.setItem('jubiladocl_v1', JSON.stringify(state));
+  } catch(e) {}
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem('jubiladocl_v1');
+    if (!raw) return;
+    const s = JSON.parse(raw);
+    if (s.edadActual) document.getElementById('edadActual').value = s.edadActual;
+    if (s.edadJubilacion) document.getElementById('edadJubilacion').value = s.edadJubilacion;
+    if (s.sueldoNum) {
+      document.getElementById('sueldoNum').value = s.sueldoNum;
+      document.getElementById('sueldoRange').value = s.sueldoNum;
+      document.getElementById('sueldoDisplay').textContent = formatCLP(+s.sueldoNum);
+    }
+    if (s.saldoActual) document.getElementById('saldoActual').value = s.saldoActual;
+    if (s.afpSelect) document.getElementById('afpSelect').value = s.afpSelect;
+    if (s.cotizVolNum) {
+      document.getElementById('cotizVolNum').value = s.cotizVolNum;
+      document.getElementById('cotizVolRange').value = s.cotizVolNum;
+      document.getElementById('cotizVolDisplay').textContent = s.cotizVolNum + '%';
+    }
+    if (s.rentNum) {
+      document.getElementById('rentNum').value = s.rentNum;
+      document.getElementById('rentRange').value = s.rentNum;
+      document.getElementById('rentDisplay').textContent = s.rentNum + '%';
+    }
+    if (s.genero) setGenero(s.genero);
+    if (s.apvRegime) selectRegime(s.apvRegime);
+    if (s.apvMonto) document.getElementById('apvMonto').value = s.apvMonto;
+  } catch(e) {}
+}
+
+// Init
+loadState();
+// Auto-calculate on load with demo data
+setTimeout(() => {
+  calcPension();
+  calcApv();
+  calcPilar();
+}, 100);
+</script>
+</body>
+</html>

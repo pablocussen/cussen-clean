@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ViajesCL - Planificador de Viajes por Chile</title>
+<meta name="description" content="Planifica tu viaje perfecto por Chile. Destinos, parques nacionales, presupuesto y clima.">
+<meta name="theme-color" content="#0c4a6e">
+<link rel="manifest" href="data:application/json,%7B%22name%22%3A%22ViajesCL%22%2C%22short_name%22%3A%22ViajesCL%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23f0f9ff%22%2C%22theme_color%22%3A%22%230c4a6e%22%7D">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f0f9ff;--accent:#0369a1;--text:#0c4a6e;--card:#fff;--border:#bae6fd;--success:#059669;--warn:#d97706;--danger:#dc2626;--light:#e0f2fe;--shadow:0 2px 8px rgba(3,105,161,.12)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:70px}
+header{background:linear-gradient(90deg,#0c4a6e,#0369a1);color:#fff;padding:16px 20px;text-align:center;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.15)}
+header h1{font-size:1.4rem;font-weight:700;letter-spacing:-.5px}
+header p{font-size:.75rem;opacity:.85;margin-top:2px}
+nav{position:fixed;bottom:0;left:0;right:0;background:#fff;display:flex;border-top:2px solid var(--border);z-index:100;box-shadow:0 -2px 12px rgba(0,0,0,.08)}
+nav button{flex:1;padding:8px 2px 10px;border:none;background:none;cursor:pointer;font-family:inherit;font-size:.6rem;font-weight:600;color:#64748b;display:flex;flex-direction:column;align-items:center;gap:2px;transition:.2s}
+nav button.active{color:var(--accent);background:var(--light)}
+nav button .ico{font-size:1.2rem}
+.tab{display:none;padding:16px;max-width:800px;margin:0 auto}
+.tab.active{display:block}
+.card{background:var(--card);border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:var(--shadow);border:1px solid var(--border)}
+.card h3{font-size:1rem;margin-bottom:8px;color:var(--text)}
+.badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:.65rem;font-weight:600;margin:2px}
+.badge-playa{background:#dbeafe;color:#1e40af}.badge-naturaleza{background:#dcfce7;color:#166534}
+.badge-desierto{background:#fef3c7;color:#92400e}.badge-montana{background:#e0e7ff;color:#3730a3}
+.badge-patagonia{background:#f0fdfa;color:#115e59}.badge-ciudad{background:#fce7f3;color:#9d174d}
+.badge-bajo{background:#dcfce7;color:#166534}.badge-medio{background:#fef9c3;color:#854d0e}.badge-alto{background:#fee2e2;color:#991b1b}
+.filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.filters select,.filters input{padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:.85rem;background:#fff;color:var(--text)}
+.filters input{flex:1;min-width:120px}
+.dest-grid{display:grid;gap:12px}
+.dest-card{background:var(--card);border-radius:12px;padding:14px;box-shadow:var(--shadow);border:1px solid var(--border);cursor:pointer;transition:.2s}
+.dest-card:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(3,105,161,.2)}
+.dest-card h3{font-size:.95rem;margin-bottom:4px}
+.dest-card .meta{font-size:.75rem;color:#64748b;margin-bottom:6px}
+.dest-card .desc{font-size:.8rem;line-height:1.4;color:#334155}
+.dest-detail{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px}
+.dest-detail .inner{background:#fff;border-radius:16px;padding:24px;max-width:500px;width:100%;max-height:80vh;overflow-y:auto}
+.dest-detail .close{float:right;background:none;border:none;font-size:1.3rem;cursor:pointer;color:#64748b}
+.dest-detail h2{font-size:1.2rem;margin-bottom:12px;padding-right:30px}
+.dest-detail .info-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f1f5f9;font-size:.85rem}
+btn,.btn{display:inline-block;padding:10px 20px;border-radius:10px;border:none;background:var(--accent);color:#fff;font-family:inherit;font-size:.85rem;font-weight:600;cursor:pointer;transition:.2s;text-align:center}
+.btn:hover{background:#075985;transform:translateY(-1px)}
+.btn-sm{padding:6px 14px;font-size:.78rem;border-radius:8px}
+.btn-outline{background:transparent;color:var(--accent);border:2px solid var(--accent)}
+.btn-outline:hover{background:var(--accent);color:#fff}
+.btn-danger{background:var(--danger)}.btn-danger:hover{background:#b91c1c}
+.btn-success{background:var(--success)}.btn-success:hover{background:#047857}
+input,select,textarea{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:.85rem;color:var(--text);margin-bottom:10px;background:#fff}
+textarea{resize:vertical;min-height:60px}
+label{display:block;font-size:.78rem;font-weight:600;margin-bottom:4px;color:#475569}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.budget-bar{height:8px;border-radius:99px;background:#e2e8f0;overflow:hidden;margin:8px 0}
+.budget-bar .fill{height:100%;border-radius:99px;transition:.3s}
+.section-title{font-size:1.1rem;font-weight:700;margin:20px 0 12px;padding-bottom:8px;border-bottom:2px solid var(--border)}
+.section-title:first-child{margin-top:0}
+.tip-box{background:var(--light);border-left:4px solid var(--accent);padding:12px 14px;border-radius:0 8px 8px 0;margin:10px 0;font-size:.82rem;line-height:1.5}
+.park-card{background:var(--card);border-radius:12px;padding:14px;box-shadow:var(--shadow);border:1px solid var(--border);margin-bottom:12px}
+.park-card h3{font-size:.95rem;margin-bottom:6px}
+.park-card .detail{font-size:.78rem;color:#475569;line-height:1.6}
+.climate-zone{background:var(--card);border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:var(--shadow);border-left:4px solid var(--accent)}
+.cost-example{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:12px 0}
+.cost-card{background:var(--light);border-radius:10px;padding:12px;text-align:center}
+.cost-card .amount{font-size:1.3rem;font-weight:700;color:var(--accent)}
+.cost-card .label{font-size:.72rem;color:#64748b;margin-top:4px}
+.trip-list-item{display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--card);border-radius:10px;margin-bottom:8px;box-shadow:var(--shadow);border:1px solid var(--border)}
+.trip-list-item h4{font-size:.9rem;margin-bottom:2px}
+.trip-list-item .sub{font-size:.75rem;color:#64748b}
+.day-block{background:#f8fafc;border-radius:10px;padding:14px;margin:10px 0;border:1px solid #e2e8f0}
+.day-block h4{font-size:.88rem;margin-bottom:8px;color:var(--accent)}
+.empty{text-align:center;padding:40px 20px;color:#94a3b8;font-size:.9rem}
+.month-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:10px 0}
+.month-cell{padding:8px 4px;text-align:center;border-radius:8px;font-size:.7rem;font-weight:600}
+.month-best{background:#dcfce7;color:#166534}.month-ok{background:#fef9c3;color:#854d0e}.month-avoid{background:#fee2e2;color:#991b1b}
+.emergency-box{background:#fef2f2;border:2px solid #fecaca;border-radius:12px;padding:16px;margin:12px 0}
+.emergency-box h4{color:var(--danger);margin-bottom:8px}
+.emergency-num{display:inline-block;background:var(--danger);color:#fff;padding:4px 12px;border-radius:99px;font-size:.85rem;font-weight:700;margin:4px}
+.template-card{background:var(--card);border-radius:12px;padding:16px;box-shadow:var(--shadow);border:1px solid var(--border);margin-bottom:12px}
+.template-card h3{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.template-card .range{font-size:1.3rem;font-weight:700;color:var(--accent)}
+.calc-result{background:linear-gradient(135deg,#0c4a6e,#0369a1);color:#fff;border-radius:12px;padding:20px;text-align:center;margin:16px 0}
+.calc-result .total{font-size:2rem;font-weight:700}
+.calc-result .sub{font-size:.8rem;opacity:.85;margin-top:4px}
+.hidden{display:none!important}
+@media(min-width:600px){.dest-grid{grid-template-columns:1fr 1fr}.cost-example{grid-template-columns:1fr 1fr 1fr}.form-row{grid-template-columns:1fr 1fr 1fr}}
+</style>
+</head>
+<body>
+<header>
+<h1>ViajesCL</h1>
+<p>Planificador de Viajes por Chile</p>
+</header>
+
+<div id="tab-destinos" class="tab active">
+<h2 class="section-title">Destinos de Chile</h2>
+<div class="filters">
+<input type="text" id="dest-search" placeholder="Buscar destino..." oninput="filterDestinos()">
+<select id="dest-type" onchange="filterDestinos()"><option value="">Todos los tipos</option><option value="Playa">Playa</option><option value="Naturaleza">Naturaleza</option><option value="Desierto">Desierto</option><option value="Montana">Montana</option><option value="Patagonia">Patagonia</option><option value="Ciudad">Ciudad</option></select>
+<select id="dest-region" onchange="filterDestinos()"><option value="">Todas las regiones</option></select>
+<select id="dest-budget" onchange="filterDestinos()"><option value="">Todo presupuesto</option><option value="Bajo">Bajo</option><option value="Medio">Medio</option><option value="Alto">Alto</option></select>
+</div>
+<div id="dest-grid" class="dest-grid"></div>
+</div>
+
+<div id="tab-planificador" class="tab">
+<div id="plan-list-view">
+<h2 class="section-title">Mis Viajes</h2>
+<div id="trip-list"></div>
+<button class="btn" onclick="showNewTrip()" style="width:100%;margin-top:12px">+ Crear Nuevo Viaje</button>
+</div>
+<div id="plan-form-view" class="hidden">
+<h2 class="section-title">Nuevo Viaje</h2>
+<div class="card">
+<label>Nombre del viaje</label>
+<input type="text" id="trip-name" placeholder="Ej: Aventura en Pucon">
+<div class="form-row">
+<div><label>Fecha inicio</label><input type="date" id="trip-start"></div>
+<div><label>Fecha fin</label><input type="date" id="trip-end"></div>
+</div>
+<div class="form-row">
+<div><label>Ciudad de partida</label><input type="text" id="trip-origin" value="Santiago"></div>
+<div><label>Personas</label><input type="number" id="trip-people" value="2" min="1"></div>
+</div>
+<div class="form-row">
+<div><label>Presupuesto total ($CLP)</label><input type="number" id="trip-budget" placeholder="200000"></div>
+<div><label>Transporte</label><select id="trip-transport"><option value="Auto">Auto</option><option value="Bus">Bus</option><option value="Avion">Avion</option></select></div>
+</div>
+<div id="trip-days-container"></div>
+<button class="btn-sm btn" onclick="addTripDay()">+ Agregar Dia</button>
+<div id="trip-budget-summary" class="hidden" style="margin-top:16px"></div>
+<div style="display:flex;gap:10px;margin-top:16px">
+<button class="btn btn-success" onclick="saveTrip()" style="flex:1">Guardar Viaje</button>
+<button class="btn btn-outline" onclick="cancelTripForm()" style="flex:1">Cancelar</button>
+</div>
+</div>
+</div>
+<div id="plan-detail-view" class="hidden">
+<button class="btn-sm btn-outline" onclick="backToTripList()" style="margin-bottom:12px">Volver</button>
+<div id="trip-detail-content"></div>
+</div>
+</div>
+
+<div id="tab-parques" class="tab">
+<h2 class="section-title">Parques Nacionales de Chile</h2>
+<div class="tip-box">Los parques nacionales de Chile son administrados por CONAF. Reserva tu entrada en <strong>reservas.conaf.cl</strong></div>
+<div class="filters">
+<input type="text" id="park-search" placeholder="Buscar parque..." oninput="filterParks()">
+</div>
+<div id="parks-grid"></div>
+</div>
+
+<div id="tab-presupuesto" class="tab">
+<h2 class="section-title">Presupuesto de Viaje</h2>
+<div id="budget-templates"></div>
+<h2 class="section-title">Calculadora Pre-Viaje</h2>
+<div class="card">
+<div class="form-row">
+<div><label>Transporte ida/vuelta ($)</label><input type="number" id="calc-transport" value="0" oninput="calcBudget()"></div>
+<div><label>Noches</label><input type="number" id="calc-nights" value="3" min="1" oninput="calcBudget()"></div>
+</div>
+<div class="form-row">
+<div><label>Alojamiento/noche ($)</label><input type="number" id="calc-lodging" value="25000" oninput="calcBudget()"></div>
+<div><label>Dias</label><input type="number" id="calc-days" value="4" min="1" oninput="calcBudget()"></div>
+</div>
+<div class="form-row">
+<div><label>Comida/dia ($)</label><input type="number" id="calc-food" value="15000" oninput="calcBudget()"></div>
+<div><label>Actividades total ($)</label><input type="number" id="calc-activities" value="30000" oninput="calcBudget()"></div>
+</div>
+<label><input type="checkbox" id="calc-emergency" checked oninput="calcBudget()"> Fondo emergencia 10%</label>
+<div id="calc-result" class="calc-result">
+<div class="sub">Presupuesto estimado</div>
+<div class="total" id="calc-total">$0</div>
+<div class="sub" id="calc-breakdown"></div>
+</div>
+</div>
+<h2 class="section-title">Costos Rapidos de Referencia</h2>
+<div id="quick-costs"></div>
+<h2 class="section-title">Tips para Ahorrar</h2>
+<div id="saving-tips"></div>
+</div>
+
+<div id="tab-clima" class="tab">
+<h2 class="section-title">Zonas Climaticas de Chile</h2>
+<div id="climate-zones"></div>
+<h2 class="section-title">Mejor Epoca por Region</h2>
+<div id="month-map" class="card"></div>
+<h2 class="section-title">Mal de Altura</h2>
+<div id="altitude-info" class="card"></div>
+<h2 class="section-title">Seguridad y Emergencias</h2>
+<div id="safety-info"></div>
+<h2 class="section-title">Tips Practicos</h2>
+<div id="practical-tips"></div>
+</div>
+
+<nav>
+<button class="active" onclick="switchTab('destinos')"><span class="ico">🗺️</span>Destinos</button>
+<button onclick="switchTab('planificador')"><span class="ico">📋</span>Planificador</button>
+<button onclick="switchTab('parques')"><span class="ico">🌲</span>Parques</button>
+<button onclick="switchTab('presupuesto')"><span class="ico">💰</span>Presupuesto</button>
+<button onclick="switchTab('clima')"><span class="ico">🌤️</span>Clima</button>
+</nav>
+
+<div id="dest-detail-modal" class="dest-detail hidden" onclick="if(event.target===this)closeDetail()"></div>
+
+<script>
+const DESTINOS=[
+{nombre:"San Pedro de Atacama",emoji:"🏜️",region:"Antofagasta",tipo:"Desierto",temporada:"Mar-Nov",dias:4,presupuesto:"Alto",distancia:1670,desc:"Capital arqueologica de Chile. Geiseres del Tatio, Valle de la Luna, Salar de Atacama y cielos estrellados unicos en el mundo. Altitud 2400m."},
+{nombre:"Arica",emoji:"☀️",region:"Arica y Parinacota",tipo:"Playa",temporada:"Todo el ano",dias:3,presupuesto:"Medio",distancia:2060,desc:"La ciudad de la eterna primavera. Playas, arqueologia Chinchorro y puerta al altiplano con el PN Lauca."},
+{nombre:"Iquique",emoji:"🏄",region:"Tarapaca",tipo:"Playa",temporada:"Todo el ano",dias:3,presupuesto:"Medio",distancia:1850,desc:"Paraiso del surf y parapente. Zona Franca, playa Cavancha, Humberstone y la duna gigante de Cerro Dragon."},
+{nombre:"Valle del Elqui",emoji:"⭐",region:"Coquimbo",tipo:"Naturaleza",temporada:"Todo el ano",dias:3,presupuesto:"Medio",distancia:472,desc:"Valle mistico de cielos despejados, pisco artesanal y astroturismo. Cuna de Gabriela Mistral."},
+{nombre:"La Serena",emoji:"🌊",region:"Coquimbo",tipo:"Playa",temporada:"Dic-Mar",dias:4,presupuesto:"Medio",distancia:470,desc:"Playas extensas, arquitectura colonial y acceso al Valle del Elqui. Perfecta para familias."},
+{nombre:"Vina del Mar",emoji:"🎡",region:"Valparaiso",tipo:"Ciudad",temporada:"Dic-Mar",dias:2,presupuesto:"Medio",distancia:120,desc:"La ciudad jardin. Reloj de flores, casino, playas y vida nocturna a pasos de Valparaiso."},
+{nombre:"Valparaiso",emoji:"🎨",region:"Valparaiso",tipo:"Ciudad",temporada:"Oct-Abr",dias:3,presupuesto:"Bajo",distancia:120,desc:"Patrimonio UNESCO. Cerros coloridos, street art, ascensores patrimoniales y bohemia portuena."},
+{nombre:"Isla Negra",emoji:"📝",region:"Valparaiso",tipo:"Naturaleza",temporada:"Oct-Abr",dias:1,presupuesto:"Bajo",distancia:110,desc:"Casa-museo de Pablo Neruda frente al oceano. Lugar de inspiracion del poeta Nobel."},
+{nombre:"Cajon del Maipo",emoji:"⛰️",region:"Metropolitana",tipo:"Montana",temporada:"Todo el ano",dias:2,presupuesto:"Bajo",distancia:60,desc:"Escapada de Santiago: termas, trekking, rafting, Embalse el Yeso y el volcan San Jose."},
+{nombre:"Pichilemu",emoji:"🏄",region:"OHiggins",tipo:"Playa",temporada:"Oct-Abr",dias:3,presupuesto:"Bajo",distancia:194,desc:"Capital del surf en Chile. Punta de Lobos, olas de clase mundial y ambiente relajado."},
+{nombre:"Constitucion",emoji:"🌅",region:"Maule",tipo:"Playa",temporada:"Dic-Mar",dias:2,presupuesto:"Bajo",distancia:365,desc:"Rocas erosionadas, Piedra de la Iglesia y reserva natural. Destino costero tranquilo."},
+{nombre:"Chillan",emoji:"♨️",region:"Nuble",tipo:"Montana",temporada:"Jun-Sep (ski), Dic-Mar",dias:3,presupuesto:"Medio",distancia:400,desc:"Termas de Chillan con ski en invierno y trekking en verano. Nevados de Chillan volcando activo."},
+{nombre:"Concepcion",emoji:"🏙️",region:"Biobio",tipo:"Ciudad",temporada:"Oct-Abr",dias:2,presupuesto:"Bajo",distancia:510,desc:"Ciudad universitaria y cultural. Puerta de entrada al sur de Chile. Humedal Los Batros."},
+{nombre:"Pucon",emoji:"🌋",region:"Araucania",tipo:"Naturaleza",temporada:"Dic-Mar",dias:4,presupuesto:"Medio",distancia:780,desc:"Capital de la aventura! Volcan Villarrica, termas, rafting, kayak y lago cristalino. Imperdible."},
+{nombre:"Villarrica",emoji:"🏡",region:"Araucania",tipo:"Naturaleza",temporada:"Dic-Mar",dias:2,presupuesto:"Bajo",distancia:770,desc:"Version tranquila de Pucon. Lago Villarrica, ferias costumbristas y el volcan de fondo."},
+{nombre:"Huilo-Huilo",emoji:"🧚",region:"Los Rios",tipo:"Naturaleza",temporada:"Oct-Abr",dias:3,presupuesto:"Alto",distancia:840,desc:"Reserva biologica de bosque valdiviano. Hotel Montana Magica, senderos entre helechos gigantes."},
+{nombre:"Valdivia",emoji:"🍺",region:"Los Rios",tipo:"Ciudad",temporada:"Dic-Mar",dias:3,presupuesto:"Bajo",distancia:840,desc:"Ciudad fluvial, cerveza artesanal Kunstmann, mercado fluvial con lobos marinos y fuertes espanoles."},
+{nombre:"Puerto Varas",emoji:"🌲",region:"Los Lagos",tipo:"Naturaleza",temporada:"Dic-Mar",dias:4,presupuesto:"Medio",distancia:1020,desc:"Ciudad de rosas al borde del lago Llanquihue. Volcanes Osorno y Calbuco, gastronomia alemana."},
+{nombre:"Frutillar",emoji:"🎵",region:"Los Lagos",tipo:"Ciudad",temporada:"Dic-Mar",dias:2,presupuesto:"Medio",distancia:1000,desc:"Pueblo aleman a orillas del Llanquihue. Teatro del Lago, kuchen y vista perfecta al Osorno."},
+{nombre:"Puerto Montt",emoji:"🚢",region:"Los Lagos",tipo:"Ciudad",temporada:"Dic-Mar",dias:2,presupuesto:"Bajo",distancia:1030,desc:"Puerta de entrada a la Patagonia y Chiloe. Mercado Angelmo, mariscos frescos y ferry a Chaiten."},
+{nombre:"Chiloe",emoji:"🏘️",region:"Los Lagos",tipo:"Naturaleza",temporada:"Dic-Mar",dias:4,presupuesto:"Bajo",distancia:1135,desc:"Isla magica con iglesias UNESCO, palafitos, curanto, mitologia y bosques nativos. Unica en Chile."},
+{nombre:"Chaiten",emoji:"🌿",region:"Los Lagos",tipo:"Patagonia",temporada:"Dic-Mar",dias:3,presupuesto:"Medio",distancia:1290,desc:"Puerta a la Carretera Austral. PN Pumalin, termas del Amarillo y bosques alerce milenarios."},
+{nombre:"Coyhaique",emoji:"🛣️",region:"Aysen",tipo:"Patagonia",temporada:"Dic-Mar",dias:4,presupuesto:"Medio",distancia:1450,desc:"Capital de la Carretera Austral. Pesca con mosca, Lago General Carrera, Catedral de Marmol."},
+{nombre:"Lago General Carrera",emoji:"💎",region:"Aysen",tipo:"Patagonia",temporada:"Nov-Mar",dias:3,presupuesto:"Medio",distancia:1600,desc:"Lago mas grande de Chile. Cuevas y Catedral de Marmol, aguas turquesas increibles."},
+{nombre:"Villa OHiggins",emoji:"🏕️",region:"Aysen",tipo:"Patagonia",temporada:"Dic-Feb",dias:3,presupuesto:"Medio",distancia:1900,desc:"Fin de la Carretera Austral. Aislamiento total, glaciares, trekking extremo. Solo para aventureros."},
+{nombre:"Torres del Paine",emoji:"🏔️",region:"Magallanes",tipo:"Patagonia",temporada:"Oct-Abr",dias:5,presupuesto:"Alto",distancia:2680,desc:"La joya de Chile! Circuito W y O, glaciar Grey, guanacos, pumas y paisajes que quitan el aliento."},
+{nombre:"Punta Arenas",emoji:"🐧",region:"Magallanes",tipo:"Patagonia",temporada:"Oct-Mar",dias:2,presupuesto:"Medio",distancia:3090,desc:"Ciudad mas austral continental. Pinguineras, Estrecho de Magallanes y Zona Franca."},
+{nombre:"Puerto Natales",emoji:"🏔️",region:"Magallanes",tipo:"Patagonia",temporada:"Oct-Abr",dias:3,presupuesto:"Medio",distancia:2820,desc:"Base para Torres del Paine. Fiordo Ultima Esperanza, Cueva del Milodon y glaciar Balmaceda."},
+{nombre:"Isla de Pascua",emoji:"🗿",region:"Valparaiso",tipo:"Desierto",temporada:"Oct-Abr",dias:5,presupuesto:"Alto",distancia:3700,desc:"Rapa Nui: la isla mas remota del mundo. Moais, cultura Rapanui, playas volcanicas. Experiencia unica."},
+{nombre:"Robinson Crusoe",emoji:"🏝️",region:"Valparaiso",tipo:"Naturaleza",temporada:"Nov-Mar",dias:4,presupuesto:"Alto",distancia:670,desc:"Archipielago Juan Fernandez. Endemismo biologico, buceo, lobos marinos y la cueva de Selkirk."},
+{nombre:"Portillo",emoji:"⛷️",region:"Valparaiso",tipo:"Montana",temporada:"Jun-Sep",dias:3,presupuesto:"Alto",distancia:160,desc:"Centro de ski iconico en la cordillera. Laguna del Inca, nieve polvo y hoteles con vista andina."},
+{nombre:"Siete Tazas",emoji:"💧",region:"Maule",tipo:"Naturaleza",temporada:"Oct-Abr",dias:2,presupuesto:"Bajo",distancia:275,desc:"Cascadas escalonadas en 7 pozones naturales. Salto de la Leona, trekking en bosque nativo."}
+];
+
+const PARQUES=[
+{nombre:"PN Torres del Paine",emoji:"🏔️",entrada:"$21.000 adulto / $6.400 nino",actividades:"Circuito W (4-5d), Circuito O (8-10d), Base Torres, Glaciar Grey, navegacion",fauna:"Puma, guanaco, condor, flamenco austral",temporada:"Octubre a Abril (mejor Dic-Feb)",camping:"Si - refugios $45k-65k/noche, camping gratis en circuitos"},
+{nombre:"PN Villarrica",emoji:"🌋",entrada:"$5.500 adulto / $1.800 nino",actividades:"Ascenso al volcan, ski, termas geometricas, trekking sector Quetrupillan",fauna:"Pudu, monito del monte, carpintero negro",temporada:"Todo el ano (ski Jun-Sep, trekking Nov-Abr)",camping:"Si - $6.000/persona"},
+{nombre:"PN Conguillio",emoji:"🌳",entrada:"$5.500 adulto / $1.800 nino",actividades:"Sendero Sierra Nevada, Laguna Captrén, Laguna Arcoiris, ski en volcan Llaima",fauna:"Carpintero negro, pudu, araucarias milenarias",temporada:"Dic-Mar (caminos cerrados en invierno)",camping:"Si - $8.000/persona"},
+{nombre:"PN Chiloe",emoji:"🦊",entrada:"$4.000 adulto / $1.000 nino",actividades:"Sendero dunas de Cucao, playa Cole-Cole, bosque valdiviano, avistamiento fauna",fauna:"Zorro de Chiloe (endémico), pudu, nutria marina",temporada:"Dic-Mar (llueve mucho en invierno)",camping:"Si - Cole-Cole $6.000/persona"},
+{nombre:"PN Huerquehue",emoji:"🌿",entrada:"$4.000 adulto / $1.000 nino",actividades:"Sendero Los Lagos (lagunas verde, chica, toro), bosques de araucarias",fauna:"Carpintero, chucao, pudu",temporada:"Nov-Abr",camping:"Si - $5.000/persona"},
+{nombre:"PN Los Flamencos",emoji:"🦩",entrada:"$5.000 adulto",actividades:"Salar de Atacama, lagunas altiplanicas, Valle de la Luna, Geiseres del Tatio",fauna:"Flamenco andino, vicuna, vizcacha",temporada:"Mar-Nov (evitar lluvias altiplano Ene-Feb)",camping:"No oficial, campings en San Pedro"},
+{nombre:"PN La Campana",emoji:"🌴",entrada:"$4.000 adulto / $1.000 nino",actividades:"Sendero al cerro La Campana, palmas chilenas, bosque esclerofilo",fauna:"Zorro culpeo, aguilucho, palma chilena",temporada:"Todo el ano (fresco en invierno)",camping:"Si - Granizo y Cajón Grande $5.000/persona"},
+{nombre:"PN Pan de Azucar",emoji:"🏜️",entrada:"$4.000 adulto / $1.000 nino",actividades:"Isla Pan de Azucar, playas desierticas, cactus endémicos, snorkel",fauna:"Pinguino de Humboldt, chungungo, delfin nariz de botella",temporada:"Todo el ano",camping:"Si - playa Piqueros $6.000/persona"},
+{nombre:"PN Radal Siete Tazas",emoji:"💧",entrada:"$4.000 adulto / $1.000 nino",actividades:"Siete Tazas, Salto de la Leona, Salto Velo de la Novia, trekking Valle del Indio",fauna:"Degu, zorro, aguilucho",temporada:"Oct-Abr (pozones helados en invierno)",camping:"Si - $5.000/persona"},
+{nombre:"PN Patagonia",emoji:"🦁",entrada:"$5.500 adulto",actividades:"Avistamiento huemul, trekking Lago Chico, ruta de los pioneros",fauna:"Huemul (en peligro), puma, condor",temporada:"Nov-Mar",camping:"Si - gratuito en sectores habilitados"},
+{nombre:"MN Cueva del Milodon",emoji:"🦥",entrada:"$5.000 adulto / $2.500 nino",actividades:"Cueva principal del Milodon, mirador, silla del diablo, senderos bosque",fauna:"Condor, caiquenes, sitio paleontologico",temporada:"Todo el ano",camping:"No - alojar en Puerto Natales (15km)"},
+{nombre:"PN Queulat",emoji:"🧊",entrada:"$5.500 adulto",actividades:"Ventisquero Colgante, sendero rio Guillermo, termas del rio Sauce",fauna:"Pudu, huemul, carpintero negro",temporada:"Dic-Mar (lluvioso en invierno)",camping:"Si - $6.000/persona"},
+{nombre:"PN Lauca",emoji:"🦙",entrada:"$4.000 adulto",actividades:"Lago Chungara, Parinacota pueblo aymara, termas de Jurasi, bofedales",fauna:"Vicuna, vizcacha, flamenco, surí",temporada:"Abr-Nov (evitar lluvias Ene-Feb)",camping:"Si - basico, llevar equipo propio"},
+{nombre:"PN Nahuelbuta",emoji:"🌲",entrada:"$3.500 adulto",actividades:"Piedra del Aguila (mirador), bosque araucarias, sendero Pehuenco",fauna:"Pudu, zorro, carpintero negro",temporada:"Nov-Abr (nieve en invierno)",camping:"Si - $4.000/persona"},
+{nombre:"PN Puyehue",emoji:"♨️",entrada:"$4.000 adulto / $1.000 nino",actividades:"Termas de Puyehue, ski Antillanca, sendero Raimapu, saltos de agua",fauna:"Puma, chucao, monito del monte",temporada:"Todo el ano (termas), ski Jun-Sep",camping:"Si - Aguas Calientes $5.000/persona"},
+{nombre:"PN Bernardo OHiggins",emoji:"🧊",entrada:"$10.000 adulto (acceso solo por barco)",actividades:"Glaciar Pio XI (mayor del hemisferio sur), navegacion fiordos, kayak",fauna:"Huemul, elefante marino, condor",temporada:"Nov-Mar",camping:"No - tour desde Puerto Natales"},
+{nombre:"PN Tierra del Fuego",emoji:"🐧",entrada:"$5.000 adulto",actividades:"Pinguinera Rey, lago Blanco, bosque subpolar, fauna austral extrema",fauna:"Pinguino Rey, caiquenes, guanaco fueguino",temporada:"Nov-Mar",camping:"Basico - equipo propio necesario"},
+{nombre:"PN Volcan Isluga",emoji:"🌋",entrada:"$4.000 adulto",actividades:"Pueblo de Isluga, termas de Enquelga, bofedales, geisers de Puchuldiza",fauna:"Vicuna, flamenco, suri",temporada:"Abr-Nov",camping:"Basico en Enquelga"},
+{nombre:"RN Cerro Castillo",emoji:"⛰️",entrada:"$5.500 adulto",actividades:"Trekking Cerro Castillo (4d), laguna turquesa, pinturas rupestres",fauna:"Huemul, condor, zorro",temporada:"Nov-Mar",camping:"Si - gratuito en ruta"},
+{nombre:"PN Alerce Andino",emoji:"🌲",entrada:"$4.000 adulto",actividades:"Alerces milenarios (+3000 anos), laguna Sargazo, laguna Fria, trekking",fauna:"Pudu, monito del monte, carpintero negro",temporada:"Nov-Abr",camping:"Si - $5.000/persona"}
+];
+
+const QUICK_COSTS=[
+{dest:"San Pedro 3d",total:250000,desglose:"Vuelo $80k + hostal 3n $60k + tours $80k + comida $30k"},
+{dest:"Torres del Paine 5d",total:350000,desglose:"Bus $50k + refugios 4n $180k + entrada $21k + comida $60k + equipo $40k"},
+{dest:"Pucon 4d",total:140000,desglose:"Bus $25k + hostal 3n $45k + volcan $35k + rafting $20k + comida $15k"},
+{dest:"Chiloe 4d",total:120000,desglose:"Bus $30k + cabana 3n $45k + curanto $10k + paseos $15k + comida $20k"},
+{dest:"Isla de Pascua 5d",total:600000,desglose:"Vuelo $180k + hotel 4n $200k + entrada parque $80k + tours $80k + comida $60k"},
+{dest:"Carretera Austral 7d",total:450000,desglose:"Arriendo auto $200k + bencina $80k + camping 6n $48k + comida $70k + ferries $50k"}
+];
+
+const SAVING_TIPS=[
+"Viaja en temporada baja (Abr-Nov) para precios 30-50% menores en alojamiento",
+"Usa Redbus.cl y Turbus.cl para comparar precios de buses interurbanos",
+"En el sur, las cabanas para 4+ personas salen mas baratas que hostales por persona",
+"Cocina en hostales/camping: un almacen rinde mas que restaurantes todos los dias",
+"Reserva con anticipacion para Torres del Paine, los refugios se agotan meses antes",
+"La CONAF tiene camping economico ($5-8k) en casi todos los parques nacionales",
+"Compra bencina en ciudades grandes, en ruta es $100-200 mas caro por litro",
+"Lleva efectivo a zonas rurales, muchos comercios no aceptan tarjeta",
+"Aprovecha Zona Franca en Iquique y Punta Arenas para electrónica y outdoors",
+"Usa BlaBlaCar o grupos de Facebook para compartir auto en rutas populares"
+];
+
+const CLIMATE_ZONES=[
+{nombre:"Norte Desertico",emoji:"🏜️",desc:"Atacama a Coquimbo. Clima arido, sol casi permanente, amplitud termica extrema (40C dia, 0C noche en desierto). Casi no llueve. San Pedro a 2400m: cuidado con la altura.",meses:"Todo el ano, evitar altiplano Ene-Feb por lluvias"},
+{nombre:"Central Mediterraneo",emoji:"🌞",desc:"Valparaiso a Biobio. Veranos secos y calidos (28-35C), inviernos suaves con lluvia (8-15C). Temporada playa Dic-Mar.",meses:"Sep-Abr para playas y trekking"},
+{nombre:"Sur Lluvioso",emoji:"🌧️",desc:"Araucania a Los Lagos. Lluvia frecuente todo el ano (2000-4000mm). Veranos templados (18-25C) son la mejor ventana. Bosque siempreverde.",meses:"Dic-Mar (aun puede llover!)"},
+{nombre:"Patagonia Extrema",emoji:"💨",desc:"Aysen a Magallanes. Viento constante 60-100km/h, lluvia impredecible, frio incluso en verano (5-15C). Llevar capas y cortaviento siempre.",meses:"Nov-Mar, clima cambiante en minutos"}
+];
+
+const MONTH_BEST={
+"Ene":{norte:"best",centro:"best",sur:"best",patagonia:"best"},
+"Feb":{norte:"best",centro:"best",sur:"best",patagonia:"best"},
+"Mar":{norte:"best",centro:"best",sur:"ok",patagonia:"ok"},
+"Abr":{norte:"best",centro:"ok",sur:"avoid",patagonia:"avoid"},
+"May":{norte:"best",centro:"avoid",sur:"avoid",patagonia:"avoid"},
+"Jun":{norte:"ok",centro:"avoid",sur:"avoid",patagonia:"avoid"},
+"Jul":{norte:"ok",centro:"avoid",sur:"avoid",patagonia:"avoid"},
+"Ago":{norte:"ok",centro:"avoid",sur:"avoid",patagonia:"avoid"},
+"Sep":{norte:"best",centro:"ok",sur:"avoid",patagonia:"avoid"},
+"Oct":{norte:"best",centro:"ok",sur:"ok",patagonia:"ok"},
+"Nov":{norte:"best",centro:"best",sur:"ok",patagonia:"ok"},
+"Dic":{norte:"best",centro:"best",sur:"best",patagonia:"best"}
+};
+
+let trips=[];
+let editingTrip=null;
+let dayCount=0;
+
+function ls(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}}
+function ss(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+
+function init(){
+trips=ls('viajecl_v1',[]);
+if(!trips.length){
+trips=[{
+id:Date.now(),nombre:"Aventura en Pucon",fechaInicio:"2026-04-10",fechaFin:"2026-04-13",origen:"Santiago",presupuesto:200000,personas:2,transporte:"Bus",
+dias:[
+{destino:"Pucon",alojamiento:"Hostal",costoAloj:20000,actividades:"Llegada, paseo costanera lago Villarrica",notas:"Bus nocturno desde Santiago ~$15k pp"},
+{destino:"Pucon - Volcan Villarrica",alojamiento:"Hostal",costoAloj:20000,actividades:"Ascenso volcan Villarrica ($35k pp)",notas:"Reservar tour con anticipacion, llevar protector solar"},
+{destino:"Pucon - Termas y Rafting",alojamiento:"Hostal",costoAloj:20000,actividades:"Termas Geometricas ($20k) + rafting rio Trancura ($18k)",notas:"Las termas cierran a las 20:00"},
+{destino:"Pucon - Regreso",alojamiento:"",costoAloj:0,actividades:"Feria artesanal, almuerzo final, bus de regreso",notas:"Comprar mermeladas y miel en la feria"}
+]
+}];
+ss('viajecl_v1',trips);
+}
+renderDestinos();
+renderParks();
+renderBudgetTab();
+renderClimateTab();
+renderTripList();
+calcBudget();
+}
+
+function switchTab(name){
+document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+document.getElementById('tab-'+name).classList.add('active');
+document.querySelectorAll('nav button').forEach((b,i)=>{
+b.classList.toggle('active',b.textContent.trim().toLowerCase().includes(name.substring(0,4)));
+});
+const tabs=['destinos','planificador','parques','presupuesto','clima'];
+document.querySelectorAll('nav button').forEach((b,i)=>{
+b.classList.toggle('active',tabs[i]===name);
+});
+}
+
+function fmt(n){return n?'$'+Number(n).toLocaleString('es-CL'):'$0'}
+
+// === DESTINOS ===
+function renderDestinos(){
+const regions=[...new Set(DESTINOS.map(d=>d.region))].sort();
+const sel=document.getElementById('dest-region');
+regions.forEach(r=>{const o=document.createElement('option');o.value=r;o.textContent=r;sel.appendChild(o)});
+filterDestinos();
+}
+
+function filterDestinos(){
+const q=document.getElementById('dest-search').value.toLowerCase();
+const tipo=document.getElementById('dest-type').value;
+const region=document.getElementById('dest-region').value;
+const budget=document.getElementById('dest-budget').value;
+const filtered=DESTINOS.filter(d=>{
+if(q&&!d.nombre.toLowerCase().includes(q)&&!d.desc.toLowerCase().includes(q))return false;
+if(tipo&&d.tipo!==tipo)return false;
+if(region&&d.region!==region)return false;
+if(budget&&d.presupuesto!==budget)return false;
+return true;
+});
+const grid=document.getElementById('dest-grid');
+grid.innerHTML=filtered.map((d,i)=>`
+<div class="dest-card" onclick="showDestDetail(${DESTINOS.indexOf(d)})">
+<h3>${d.emoji} ${d.nombre}</h3>
+<div class="meta">${d.region} &bull; ${d.distancia}km desde Santiago &bull; ${d.dias} dias recomendados</div>
+<div style="margin:6px 0">
+<span class="badge badge-${d.tipo.toLowerCase().replace('ñ','n')}">${d.tipo}</span>
+<span class="badge badge-${d.presupuesto.toLowerCase()}">${d.presupuesto}</span>
+</div>
+<div class="desc">${d.desc.substring(0,100)}...</div>
+</div>
+`).join('');
+if(!filtered.length)grid.innerHTML='<div class="empty">No se encontraron destinos con esos filtros</div>';
+}
+
+function showDestDetail(idx){
+const d=DESTINOS[idx];
+const modal=document.getElementById('dest-detail-modal');
+modal.innerHTML=`<div class="inner">
+<button class="close" onclick="closeDetail()">&times;</button>
+<h2>${d.emoji} ${d.nombre}</h2>
+<p style="margin-bottom:16px;font-size:.88rem;line-height:1.5">${d.desc}</p>
+<div class="info-row"><span>Region</span><strong>${d.region}</strong></div>
+<div class="info-row"><span>Tipo</span><span class="badge badge-${d.tipo.toLowerCase().replace('ñ','n')}">${d.tipo}</span></div>
+<div class="info-row"><span>Mejor temporada</span><strong>${d.temporada}</strong></div>
+<div class="info-row"><span>Dias recomendados</span><strong>${d.dias} dias</strong></div>
+<div class="info-row"><span>Presupuesto</span><span class="badge badge-${d.presupuesto.toLowerCase()}">${d.presupuesto}</span></div>
+<div class="info-row"><span>Distancia desde Santiago</span><strong>${d.distancia} km</strong></div>
+<div class="info-row"><span>Bencina estimada (ida)</span><strong>${fmt(Math.round(d.distancia/12*1200))}</strong></div>
+<div style="margin-top:16px"><button class="btn" onclick="addDestToTrip('${d.nombre}');closeDetail()">Agregar a viaje</button></div>
+</div>`;
+modal.classList.remove('hidden');
+}
+
+function closeDetail(){document.getElementById('dest-detail-modal').classList.add('hidden')}
+
+// === PLANIFICADOR ===
+function renderTripList(){
+const list=document.getElementById('trip-list');
+if(!trips.length){list.innerHTML='<div class="empty">No tienes viajes aun. Crea tu primer viaje!</div>';return}
+list.innerHTML=trips.map(t=>{
+const totalDays=t.dias?t.dias.length:0;
+const spent=calcTripSpent(t);
+return`<div class="trip-list-item">
+<div onclick="viewTrip(${t.id})" style="cursor:pointer;flex:1">
+<h4>${t.nombre}</h4>
+<div class="sub">${t.fechaInicio||'Sin fecha'} &bull; ${totalDays} dias &bull; ${t.personas} personas &bull; ${t.transporte}</div>
+<div class="sub">Presupuesto: ${fmt(t.presupuesto)} &bull; Gastado: ${fmt(spent)}</div>
+</div>
+<button class="btn-sm btn-danger" onclick="deleteTrip(${t.id})" title="Eliminar">🗑️</button>
+</div>`}).join('');
+}
+
+function calcTripSpent(t){
+if(!t.dias)return 0;
+return t.dias.reduce((s,d)=>s+(d.costoAloj||0),0)*t.personas;
+}
+
+function showNewTrip(){
+editingTrip=null;dayCount=0;
+document.getElementById('plan-list-view').classList.add('hidden');
+document.getElementById('plan-detail-view').classList.add('hidden');
+document.getElementById('plan-form-view').classList.remove('hidden');
+document.getElementById('trip-name').value='';
+document.getElementById('trip-start').value='';
+document.getElementById('trip-end').value='';
+document.getElementById('trip-origin').value='Santiago';
+document.getElementById('trip-people').value='2';
+document.getElementById('trip-budget').value='';
+document.getElementById('trip-transport').value='Auto';
+document.getElementById('trip-days-container').innerHTML='';
+document.getElementById('trip-budget-summary').classList.add('hidden');
+addTripDay();
+}
+
+function addTripDay(){
+dayCount++;
+const container=document.getElementById('trip-days-container');
+const div=document.createElement('div');
+div.className='day-block';
+div.id='day-'+dayCount;
+div.innerHTML=`
+<h4>Dia ${dayCount} <button class="btn-sm btn-danger" onclick="removeDay(${dayCount})" style="float:right;padding:2px 8px">x</button></h4>
+<label>Destino</label>
+<input type="text" class="day-dest" placeholder="Ej: Pucon, Volcan Villarrica">
+<div class="form-row">
+<div><label>Alojamiento</label>
+<select class="day-aloj" onchange="updateAlojCost(this)">
+<option value="">Sin alojamiento</option>
+<option value="Camping" data-cost="8000">Camping ~$8.000</option>
+<option value="Hostal" data-cost="20000">Hostal ~$20.000</option>
+<option value="Hotel 3*" data-cost="50000">Hotel 3* ~$50.000</option>
+<option value="Hotel 4-5*" data-cost="80000">Hotel 4-5* ~$80.000</option>
+<option value="Cabana" data-cost="35000">Cabana ~$35.000</option>
+</select></div>
+<div><label>Costo alojamiento/noche ($)</label>
+<input type="number" class="day-aloj-cost" value="0" oninput="updateTripBudget()"></div>
+</div>
+<label>Actividades</label>
+<input type="text" class="day-act" placeholder="Ej: Trekking, visita museo...">
+<label>Notas</label>
+<textarea class="day-notes" rows="2" placeholder="Tips, reservas, etc."></textarea>
+`;
+container.appendChild(div);
+updateTripBudget();
+}
+
+function removeDay(n){
+const el=document.getElementById('day-'+n);
+if(el)el.remove();
+updateTripBudget();
+}
+
+function updateAlojCost(sel){
+const cost=sel.selectedOptions[0].dataset.cost||0;
+sel.closest('.day-block').querySelector('.day-aloj-cost').value=cost;
+updateTripBudget();
+}
+
+function updateTripBudget(){
+const budget=parseInt(document.getElementById('trip-budget').value)||0;
+if(!budget){document.getElementById('trip-budget-summary').classList.add('hidden');return}
+const people=parseInt(document.getElementById('trip-people').value)||1;
+const transport=document.getElementById('trip-transport').value;
+let totalAloj=0;
+document.querySelectorAll('.day-aloj-cost').forEach(i=>{totalAloj+=parseInt(i.value)||0});
+totalAloj*=people;
+const summary=document.getElementById('trip-budget-summary');
+summary.classList.remove('hidden');
+const pct=Math.min(100,Math.round(totalAloj/budget*100));
+const color=pct>90?'var(--danger)':pct>70?'var(--warn)':'var(--success)';
+summary.innerHTML=`
+<h3>Resumen de Presupuesto</h3>
+<div class="info-row"><span>Alojamiento total (${people}p)</span><strong>${fmt(totalAloj)}</strong></div>
+<div class="info-row"><span>Presupuesto total</span><strong>${fmt(budget)}</strong></div>
+<div class="info-row"><span>Disponible para transporte + comida + actividades</span><strong style="color:${color}">${fmt(budget-totalAloj)}</strong></div>
+<div class="budget-bar"><div class="fill" style="width:${pct}%;background:${color}"></div></div>
+<div style="font-size:.75rem;color:#64748b;text-align:right">${pct}% del presupuesto en alojamiento</div>
+`;
+}
+
+function saveTrip(){
+const nombre=document.getElementById('trip-name').value.trim();
+if(!nombre){alert('Dale un nombre a tu viaje!');return}
+const dias=[];
+document.querySelectorAll('.day-block').forEach(block=>{
+dias.push({
+destino:block.querySelector('.day-dest').value,
+alojamiento:block.querySelector('.day-aloj').value,
+costoAloj:parseInt(block.querySelector('.day-aloj-cost').value)||0,
+actividades:block.querySelector('.day-act').value,
+notas:block.querySelector('.day-notes').value
+});
+});
+const trip={
+id:editingTrip||Date.now(),
+nombre,
+fechaInicio:document.getElementById('trip-start').value,
+fechaFin:document.getElementById('trip-end').value,
+origen:document.getElementById('trip-origin').value,
+presupuesto:parseInt(document.getElementById('trip-budget').value)||0,
+personas:parseInt(document.getElementById('trip-people').value)||1,
+transporte:document.getElementById('trip-transport').value,
+dias
+};
+if(editingTrip){
+const idx=trips.findIndex(t=>t.id===editingTrip);
+if(idx>=0)trips[idx]=trip;
+}else{
+trips.push(trip);
+}
+ss('viajecl_v1',trips);
+cancelTripForm();
+renderTripList();
+}
+
+function cancelTripForm(){
+document.getElementById('plan-form-view').classList.add('hidden');
+document.getElementById('plan-detail-view').classList.add('hidden');
+document.getElementById('plan-list-view').classList.remove('hidden');
+editingTrip=null;
+}
+
+function viewTrip(id){
+const t=trips.find(x=>x.id===id);
+if(!t)return;
+document.getElementById('plan-list-view').classList.add('hidden');
+document.getElementById('plan-form-view').classList.add('hidden');
+document.getElementById('plan-detail-view').classList.remove('hidden');
+const totalAloj=t.dias.reduce((s,d)=>s+(d.costoAloj||0),0)*t.personas;
+const spent=totalAloj;
+const pct=t.presupuesto?Math.min(100,Math.round(spent/t.presupuesto*100)):0;
+const color=pct>90?'var(--danger)':pct>70?'var(--warn)':'var(--success)';
+const fuelEst=t.transporte==='Auto'?`<div class="tip-box">Estimacion bencina: los km dependen del destino. Calcula distancia x rendimiento (12km/L) x $1.200/L</div>`:'';
+document.getElementById('trip-detail-content').innerHTML=`
+<div class="card">
+<h3>${t.nombre}</h3>
+<div class="info-row"><span>Fechas</span><strong>${t.fechaInicio||'?'} al ${t.fechaFin||'?'}</strong></div>
+<div class="info-row"><span>Origen</span><strong>${t.origen}</strong></div>
+<div class="info-row"><span>Personas</span><strong>${t.personas}</strong></div>
+<div class="info-row"><span>Transporte</span><strong>${t.transporte}</strong></div>
+<div class="info-row"><span>Presupuesto</span><strong>${fmt(t.presupuesto)}</strong></div>
+<div class="info-row"><span>Alojamiento estimado</span><strong>${fmt(totalAloj)}</strong></div>
+<div class="budget-bar"><div class="fill" style="width:${pct}%;background:${color}"></div></div>
+<div style="font-size:.75rem;color:#64748b;text-align:right">${pct}% del presupuesto</div>
+${fuelEst}
+</div>
+<h3 class="section-title">Itinerario dia a dia</h3>
+${t.dias.map((d,i)=>`
+<div class="day-block">
+<h4>Dia ${i+1}: ${d.destino||'Sin destino'}</h4>
+${d.alojamiento?`<div style="font-size:.82rem">🏨 ${d.alojamiento} - ${fmt(d.costoAloj)}/noche</div>`:''}
+${d.actividades?`<div style="font-size:.82rem;margin-top:4px">🎯 ${d.actividades}</div>`:''}
+${d.notas?`<div style="font-size:.78rem;color:#64748b;margin-top:4px;font-style:italic">📝 ${d.notas}</div>`:''}
+</div>
+`).join('')}
+<div style="display:flex;gap:10px;margin-top:16px">
+<button class="btn" onclick="editTrip(${t.id})" style="flex:1">Editar</button>
+<button class="btn btn-danger" onclick="deleteTrip(${t.id})" style="flex:1">Eliminar</button>
+</div>
+`;
+}
+
+function editTrip(id){
+const t=trips.find(x=>x.id===id);
+if(!t)return;
+editingTrip=id;dayCount=0;
+document.getElementById('plan-list-view').classList.add('hidden');
+document.getElementById('plan-detail-view').classList.add('hidden');
+document.getElementById('plan-form-view').classList.remove('hidden');
+document.getElementById('trip-name').value=t.nombre;
+document.getElementById('trip-start').value=t.fechaInicio||'';
+document.getElementById('trip-end').value=t.fechaFin||'';
+document.getElementById('trip-origin').value=t.origen||'Santiago';
+document.getElementById('trip-people').value=t.personas||2;
+document.getElementById('trip-budget').value=t.presupuesto||'';
+document.getElementById('trip-transport').value=t.transporte||'Auto';
+document.getElementById('trip-days-container').innerHTML='';
+(t.dias||[]).forEach(d=>{
+addTripDay();
+const block=document.getElementById('day-'+dayCount);
+block.querySelector('.day-dest').value=d.destino||'';
+block.querySelector('.day-aloj').value=d.alojamiento||'';
+block.querySelector('.day-aloj-cost').value=d.costoAloj||0;
+block.querySelector('.day-act').value=d.actividades||'';
+block.querySelector('.day-notes').value=d.notas||'';
+});
+updateTripBudget();
+}
+
+function deleteTrip(id){
+if(!confirm('Eliminar este viaje?'))return;
+trips=trips.filter(t=>t.id!==id);
+ss('viajecl_v1',trips);
+cancelTripForm();
+renderTripList();
+}
+
+function backToTripList(){cancelTripForm()}
+
+function addDestToTrip(nombre){
+switchTab('planificador');
+showNewTrip();
+document.getElementById('trip-name').value='Viaje a '+nombre;
+const dayBlock=document.querySelector('.day-block');
+if(dayBlock)dayBlock.querySelector('.day-dest').value=nombre;
+}
+
+// === PARQUES ===
+function renderParks(){filterParks()}
+function filterParks(){
+const q=document.getElementById('park-search').value.toLowerCase();
+const filtered=PARQUES.filter(p=>!q||p.nombre.toLowerCase().includes(q)||p.actividades.toLowerCase().includes(q));
+document.getElementById('parks-grid').innerHTML=filtered.map(p=>`
+<div class="park-card">
+<h3>${p.emoji} ${p.nombre}</h3>
+<div class="detail">
+<div>🎫 <strong>Entrada:</strong> ${p.entrada}</div>
+<div>🥾 <strong>Actividades:</strong> ${p.actividades}</div>
+<div>🦎 <strong>Fauna:</strong> ${p.fauna}</div>
+<div>📅 <strong>Temporada:</strong> ${p.temporada}</div>
+<div>⛺ <strong>Camping:</strong> ${p.camping}</div>
+</div>
+</div>
+`).join('');
+if(!filtered.length)document.getElementById('parks-grid').innerHTML='<div class="empty">No se encontraron parques</div>';
+}
+
+// === PRESUPUESTO ===
+function renderBudgetTab(){
+const templates=[
+{emoji:"🎒",nombre:"Mochilero",rango:"$20.000 - $30.000/dia",desc:"Camping o hostal compartido, cocina propia, transporte publico, parques nacionales. Para quienes priorizan experiencias sobre comodidad.",items:["Camping $5-8k o dorm $8-12k","Cocina propia $5-8k","Bus local $3-5k","Actividades $5-10k"]},
+{emoji:"👨‍👩‍👧‍👦",nombre:"Familia",rango:"$40.000 - $60.000/dia pp",desc:"Cabana o hotel 3 estrellas, restaurantes economicos, arriendo auto compartido, actividades familiares.",items:["Cabana/hotel $35-50k (para 4)","Restaurante $10-15k pp","Auto compartido $10-15k pp","Actividades $10-15k pp"]},
+{emoji:"✨",nombre:"Comodo",rango:"$80.000 - $120.000/dia pp",desc:"Hotel 4-5 estrellas, restaurantes buenos, tours privados, transporte aereo. Sin preocupaciones.",items:["Hotel 4-5* $80-120k","Restaurante $20-30k pp","Vuelo/transfer $variable","Tours privados $30-50k pp"]}
+];
+document.getElementById('budget-templates').innerHTML=templates.map(t=>`
+<div class="template-card">
+<h3>${t.emoji} ${t.nombre}</h3>
+<div class="range">${t.rango}</div>
+<p style="font-size:.82rem;color:#475569;margin:8px 0">${t.desc}</p>
+<ul style="font-size:.78rem;color:#64748b;padding-left:20px">${t.items.map(i=>'<li>'+i+'</li>').join('')}</ul>
+</div>
+`).join('');
+
+document.getElementById('quick-costs').innerHTML=`<div class="cost-example" style="grid-template-columns:1fr 1fr;gap:12px">
+${QUICK_COSTS.map(c=>`<div class="cost-card" style="text-align:left;padding:14px">
+<div style="font-weight:700;font-size:.9rem;margin-bottom:4px">${c.dest}</div>
+<div class="amount" style="font-size:1.1rem">${fmt(c.total)}</div>
+<div style="font-size:.72rem;color:#64748b;margin-top:6px;line-height:1.4">${c.desglose}</div>
+</div>`).join('')}
+</div>`;
+
+document.getElementById('saving-tips').innerHTML=SAVING_TIPS.map(t=>`<div class="tip-box">💡 ${t}</div>`).join('');
+}
+
+function calcBudget(){
+const transport=parseInt(document.getElementById('calc-transport').value)||0;
+const nights=parseInt(document.getElementById('calc-nights').value)||0;
+const lodging=parseInt(document.getElementById('calc-lodging').value)||0;
+const days=parseInt(document.getElementById('calc-days').value)||0;
+const food=parseInt(document.getElementById('calc-food').value)||0;
+const activities=parseInt(document.getElementById('calc-activities').value)||0;
+const emergency=document.getElementById('calc-emergency').checked;
+let total=transport+(lodging*nights)+(food*days)+activities;
+const subtotal=total;
+if(emergency)total=Math.round(total*1.1);
+document.getElementById('calc-total').textContent=fmt(total);
+document.getElementById('calc-breakdown').textContent=
+`Transporte ${fmt(transport)} + Alojamiento ${fmt(lodging*nights)} + Comida ${fmt(food*days)} + Actividades ${fmt(activities)}${emergency?' + Emergencia '+fmt(total-subtotal):''}`;
+}
+
+// === CLIMA ===
+function renderClimateTab(){
+document.getElementById('climate-zones').innerHTML=CLIMATE_ZONES.map(z=>`
+<div class="climate-zone">
+<h3>${z.emoji} ${z.nombre}</h3>
+<p style="font-size:.85rem;line-height:1.5;margin:8px 0">${z.desc}</p>
+<div style="font-size:.78rem;color:var(--accent);font-weight:600">Mejor epoca: ${z.meses}</div>
+</div>
+`).join('');
+
+const months=Object.keys(MONTH_BEST);
+const zones=['norte','centro','sur','patagonia'];
+const zoneLabels=['Norte','Centro','Sur','Patagonia'];
+let monthHtml='<table style="width:100%;border-collapse:collapse;font-size:.72rem;text-align:center">';
+monthHtml+='<tr><th style="padding:6px;text-align:left">Zona</th>'+months.map(m=>'<th style="padding:4px">'+m+'</th>').join('')+'</tr>';
+zones.forEach((z,i)=>{
+monthHtml+='<tr><td style="padding:6px;text-align:left;font-weight:600">'+zoneLabels[i]+'</td>';
+months.forEach(m=>{
+const v=MONTH_BEST[m][z];
+const cls=v==='best'?'month-best':v==='ok'?'month-ok':'month-avoid';
+const label=v==='best'?'Ideal':v==='ok'?'OK':'Evitar';
+monthHtml+=`<td><span class="month-cell ${cls}" style="display:inline-block;width:100%;padding:3px">${label}</span></td>`;
+});
+monthHtml+='</tr>';
+});
+monthHtml+='</table>';
+document.getElementById('month-map').innerHTML='<h3 style="margin-bottom:12px">Cuando viajar a cada zona</h3>'+monthHtml;
+
+document.getElementById('altitude-info').innerHTML=`
+<h3>⛰️ Mal de Altura (Soroche)</h3>
+<p style="font-size:.85rem;line-height:1.5;margin:8px 0">Si viajas a San Pedro de Atacama (2.400m), Geiseres del Tatio (4.320m) o al altiplano (3.500-4.500m), toma precauciones:</p>
+<ul style="font-size:.82rem;line-height:1.8;padding-left:20px">
+<li>Llega a San Pedro y descansa 24h antes de subir a mas altura</li>
+<li>Toma mucha agua (3+ litros al dia) y evita el alcohol</li>
+<li>Come liviano, evita comidas pesadas</li>
+<li>Lleva hojas de coca o pastillas para soroche (en farmacias locales)</li>
+<li>Si tienes dolor de cabeza fuerte, nauseas o mareos, baja de altura inmediatamente</li>
+<li>Los Geiseres del Tatio (4.320m) se visitan al amanecer: el frio intenso + altura puede ser peligroso</li>
+</ul>`;
+
+document.getElementById('safety-info').innerHTML=`
+<div class="emergency-box">
+<h4>Numeros de Emergencia</h4>
+<div style="margin:8px 0">
+<span class="emergency-num">133 Carabineros</span>
+<span class="emergency-num">132 Bomberos</span>
+<span class="emergency-num">131 SAMU/Ambulancia</span>
+</div>
+</div>
+<div class="card" style="margin-top:12px">
+<h3>🌎 Protocolo Terremoto/Tsunami</h3>
+<ul style="font-size:.82rem;line-height:1.8;padding-left:20px">
+<li>Chile es zona sismica: los terremotos son frecuentes</li>
+<li>Durante un sismo: ubicate bajo una mesa o en un marco de puerta, lejos de ventanas</li>
+<li>Si estas en la costa y el sismo es fuerte (+30 seg): evacua a zona alta inmediatamente</li>
+<li>No esperes alerta de tsunami, la primera ola puede llegar en minutos</li>
+<li>Sigue las senales de evacuacion (flechas azules hacia cerros)</li>
+<li>Descarga la app "Chile Alerta" para notificaciones de SHOA/ONEMI</li>
+</ul>
+</div>`;
+
+document.getElementById('practical-tips').innerHTML=`
+<div class="tip-box">🚌 <strong>Buses:</strong> Redbus.cl, Turbus.cl, Pullman.cl para comparar. Cama premium es comoda para viajes nocturnos largos.</div>
+<div class="tip-box">🌲 <strong>CONAF:</strong> Reserva entradas y camping en reservas.conaf.cl, especialmente para Torres del Paine en temporada alta.</div>
+<div class="tip-box">💵 <strong>Efectivo:</strong> Lleva cash en zonas rurales (Carretera Austral, Chiloe rural, pueblos altiplano). Muchos no aceptan tarjeta.</div>
+<div class="tip-box">⛽ <strong>Bencina:</strong> En Carretera Austral carga en cada pueblo. Estaciones pueden estar a 200+ km de distancia.</div>
+<div class="tip-box">📱 <strong>Senal:</strong> En zonas rurales no hay senal movil. Baja mapas offline (Google Maps/Maps.me) antes de salir.</div>
+<div class="tip-box">🧥 <strong>Capas:</strong> En el sur y Patagonia siempre lleva cortaviento, polar y primera capa termica. El clima cambia en minutos.</div>
+<div class="tip-box">🚗 <strong>Arriendo auto:</strong> Reserva con anticipacion en verano. Para Carretera Austral necesitas 4x4 o al menos traccion alta.</div>
+<div class="tip-box">🏥 <strong>Salud:</strong> Protector solar SPF 50+ en todo Chile (incluso nublado en el sur). El ozono es fino en el sur.</div>
+<div class="tip-box">🐕 <strong>Perros:</strong> Chile tiene muchos perros callejeros amigables. No los alimentes (CONAF lo prohibe en parques).</div>
+<div class="tip-box">🍷 <strong>Vino:</strong> Valles de Colchagua, Casablanca y Maule ofrecen tours y degustaciones a precios accesibles.</div>
+`;
+}
+
+init();
+</script>
+</body>
+</html>

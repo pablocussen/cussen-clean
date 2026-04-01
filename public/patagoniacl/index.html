@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f1a2e">
+<meta name="description" content="Condiciones en tiempo real para aventura en Patagonia Chilena — hikers, kayakers, escaladores y pescadores">
+<title>PatagoniaCL — Condiciones para Aventura</title>
+<link rel="manifest" href="#" id="manifest-placeholder">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#0f1a2e;--card:#1a2a40;--card2:#1e3050;--border:#2a4060;
+  --accent:#38bdf8;--text:#e2f0ff;--muted:#7ca3c8;
+  --green:#22c55e;--yellow:#f59e0b;--red:#ef4444;--orange:#f97316;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:15px}
+header{background:linear-gradient(90deg,#0c1a2e,#0c4a7a);padding:13px 18px;position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.15rem;letter-spacing:-0.3px}
+.logo-icon{font-size:1.6rem;line-height:1}
+.logo-sub{font-size:0.72rem;font-weight:400;color:var(--accent);display:block;letter-spacing:1px;text-transform:uppercase;margin-top:1px}
+.refresh-btn{background:rgba(56,189,248,0.15);border:1px solid var(--accent);color:var(--accent);padding:7px 14px;border-radius:8px;cursor:pointer;font-size:0.82rem;font-weight:600;transition:all .2s;display:flex;align-items:center;gap:6px}
+.refresh-btn:hover{background:rgba(56,189,248,0.25)}
+.refresh-btn.spinning svg{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+nav{background:#1a2a40;border-bottom:2px solid var(--border);display:flex;overflow-x:auto;position:sticky;top:62px;z-index:40;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+.tab-btn{padding:14px 20px;border:none;background:none;color:var(--muted);cursor:pointer;font-size:0.82rem;font-weight:600;white-space:nowrap;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .2s;letter-spacing:0.3px;text-transform:uppercase;flex-shrink:0}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-btn:hover:not(.active){color:var(--text)}
+.tab-content{display:none;padding:18px;max-width:960px;margin:0 auto}
+.tab-content.active{display:block}
+select{background:var(--card2);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:10px;font-size:16px;width:100%;font-family:'Inter',sans-serif;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%237ca3c8' d='M6 8L0 0h12z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px}
+select:focus{outline:none;border-color:var(--accent)}
+.section-label{font-size:0.7rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px}
+.card2{background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:18px}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:0.72rem;font-weight:700;letter-spacing:0.5px;text-transform:uppercase}
+.badge-go{background:rgba(34,197,94,0.18);color:var(--green);border:1px solid rgba(34,197,94,0.35)}
+.badge-caution{background:rgba(245,158,11,0.18);color:var(--yellow);border:1px solid rgba(245,158,11,0.35)}
+.badge-nogo{background:rgba(239,68,68,0.18);color:var(--red);border:1px solid rgba(239,68,68,0.35)}
+.weather-main{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}
+@media(min-width:520px){.weather-main{grid-template-columns:repeat(3,1fr)}}
+.weather-stat{background:var(--card2);border-radius:12px;padding:14px;text-align:center}
+.weather-stat .val{font-size:1.6rem;font-weight:700;margin-bottom:4px}
+.weather-stat .lbl{font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px}
+.temp-big{font-size:3.5rem;font-weight:800;line-height:1;color:var(--accent)}
+.wmo-icon{font-size:3rem;line-height:1}
+.dest-header{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.dest-icon{font-size:2.2rem}
+.dest-name{font-size:1.4rem;font-weight:700}
+.dest-coords{font-size:0.75rem;color:var(--muted);margin-top:2px}
+.actividades-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.compass-wrap{display:flex;justify-content:center;padding:10px 0}
+.compass{width:70px;height:70px;position:relative}
+.compass-arrow{transform-origin:center center;transition:transform .8s ease}
+.overview-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:18px}
+@media(min-width:600px){.overview-grid{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:900px){.overview-grid{grid-template-columns:repeat(4,1fr)}}
+.ov-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:13px;cursor:pointer;transition:border-color .2s}
+.ov-card:hover{border-color:var(--accent)}
+.ov-card .ov-name{font-size:0.8rem;font-weight:600;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ov-card .ov-icon{font-size:1.5rem;margin-bottom:4px}
+.ov-card .ov-temp{font-size:1.3rem;font-weight:700;color:var(--accent)}
+.ov-card .ov-wind{font-size:0.75rem;color:var(--muted);margin-top:2px}
+.ov-card .ov-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px;vertical-align:middle}
+.ov-card .ov-status{font-size:0.72rem;font-weight:600;margin-top:5px}
+.skeleton{background:linear-gradient(90deg,var(--card) 25%,var(--card2) 50%,var(--card) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:8px;height:18px}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.forecast-list{display:flex;flex-direction:column;gap:10px;margin-top:16px}
+.fc-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:grid;grid-template-columns:90px 50px 1fr auto;align-items:center;gap:12px}
+@media(max-width:480px){.fc-card{grid-template-columns:1fr 1fr;grid-template-rows:auto auto}}
+.fc-day{font-weight:700;font-size:0.9rem}
+.fc-date{font-size:0.72rem;color:var(--muted)}
+.fc-icon{font-size:2rem;text-align:center}
+.fc-details{display:flex;flex-direction:column;gap:3px}
+.fc-temp{font-size:1rem;font-weight:600}
+.fc-temp span{color:var(--muted);font-weight:400}
+.fc-wind-line{font-size:0.78rem;color:var(--muted)}
+.fc-rain{font-size:0.78rem}
+.fc-sun{font-size:0.72rem;color:var(--muted);margin-top:4px}
+.fc-acts{display:flex;flex-wrap:wrap;gap:5px;justify-content:flex-end}
+@media(max-width:480px){.fc-acts{justify-content:flex-start}}
+.act-chip{background:rgba(56,189,248,0.12);border:1px solid rgba(56,189,248,0.25);color:var(--accent);font-size:0.65rem;padding:2px 7px;border-radius:10px;font-weight:600;white-space:nowrap}
+.chart-container{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;margin-top:18px;position:relative;height:260px}
+#map{height:420px;border-radius:14px;border:1px solid var(--border)}
+.map-controls{display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.map-toggle{background:var(--card2);border:1px solid var(--border);color:var(--text);padding:8px 14px;border-radius:8px;cursor:pointer;font-size:0.8rem;font-weight:600;transition:all .2s}
+.map-toggle.active{background:rgba(56,189,248,0.18);border-color:var(--accent);color:var(--accent)}
+.leaflet-popup-content-wrapper{background:var(--card2)!important;border:1px solid var(--border)!important;color:var(--text)!important;border-radius:12px!important;box-shadow:0 8px 24px rgba(0,0,0,.5)!important}
+.leaflet-popup-tip{background:var(--card2)!important}
+.popup-title{font-weight:700;font-size:1rem;margin-bottom:5px}
+.popup-acts{font-size:0.78rem;color:var(--muted);margin-bottom:8px}
+.popup-btn{background:var(--accent);color:#0f1a2e;border:none;padding:6px 14px;border-radius:8px;cursor:pointer;font-size:0.8rem;font-weight:700;width:100%}
+.guide-section{margin-bottom:24px}
+.guide-section h3{font-size:1rem;font-weight:700;margin-bottom:12px;color:var(--accent);display:flex;align-items:center;gap:8px}
+.guide-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(min-width:600px){.guide-grid{grid-template-columns:repeat(3,1fr)}}
+.guide-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px}
+.guide-card h4{font-size:0.85rem;font-weight:700;margin-bottom:8px;color:var(--text)}
+.guide-card ul{list-style:none;padding:0}
+.guide-card ul li{font-size:0.78rem;color:var(--muted);padding:3px 0;display:flex;align-items:flex-start;gap:6px}
+.guide-card ul li::before{content:'→';color:var(--accent);flex-shrink:0;font-size:0.7rem;margin-top:2px}
+.season-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.season-row:last-child{border-bottom:none}
+.season-act{font-size:0.85rem;font-weight:600;width:160px;flex-shrink:0}
+.season-months{display:flex;gap:4px;flex-wrap:wrap}
+.season-chip{font-size:0.7rem;padding:2px 8px;border-radius:6px;font-weight:600}
+.season-good{background:rgba(34,197,94,0.2);color:var(--green);border:1px solid rgba(34,197,94,0.3)}
+.season-ok{background:rgba(245,158,11,0.2);color:var(--yellow);border:1px solid rgba(245,158,11,0.3)}
+.emerg-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(min-width:600px){.emerg-grid{grid-template-columns:repeat(3,1fr)}}
+.emerg-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center}
+.emerg-card .emerg-num{font-size:1.8rem;font-weight:800;color:var(--accent)}
+.emerg-card .emerg-name{font-size:0.75rem;color:var(--muted);margin-top:4px}
+.alert-box{background:rgba(249,115,22,0.12);border:1px solid rgba(249,115,22,0.3);border-radius:12px;padding:14px 16px;margin-bottom:16px;font-size:0.85rem;color:var(--orange)}
+.alert-box strong{display:block;margin-bottom:4px}
+.info-box{background:rgba(56,189,248,0.08);border:1px solid rgba(56,189,248,0.2);border-radius:12px;padding:14px 16px;margin-bottom:16px;font-size:0.85rem;color:var(--muted)}
+.info-box strong{color:var(--accent);display:block;margin-bottom:4px}
+.loading-overlay{display:flex;align-items:center;justify-content:center;gap:10px;padding:30px;color:var(--muted);font-size:0.9rem}
+.spinner{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+.error-msg{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);border-radius:10px;padding:12px 16px;color:var(--red);font-size:0.85rem;margin-top:10px}
+h2.section-title{font-size:1.1rem;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.divider{height:1px;background:var(--border);margin:20px 0}
+.sel-wrap{position:relative;margin-bottom:18px}
+.sel-wrap .sel-icon{position:absolute;right:40px;top:50%;transform:translateY(-50%);font-size:1rem;pointer-events:none}
+.updated-ts{font-size:0.7rem;color:var(--muted);text-align:right;margin-top:6px}
+.wind-dir-label{font-size:0.72rem;color:var(--muted);text-align:center;margin-top:4px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="logo-icon">🏔️</span>
+    <div>
+      PatagoniaCL
+      <span class="logo-sub">Condiciones para Aventura</span>
+    </div>
+  </div>
+  <button class="refresh-btn" id="refreshBtn" onclick="refreshAll()">
+    <svg id="refreshIcon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16M3 21v-5h5"/>
+    </svg>
+    Actualizar
+  </button>
+</header>
+
+<nav>
+  <button class="tab-btn active" onclick="setTab(0)">🌤 Condiciones</button>
+  <button class="tab-btn" onclick="setTab(1)">📅 Pronóstico 7D</button>
+  <button class="tab-btn" onclick="setTab(2)">🗺 Mapa</button>
+  <button class="tab-btn" onclick="setTab(3)">📖 Guía</button>
+</nav>
+
+<!-- TAB 0: CONDICIONES ACTUALES -->
+<div class="tab-content active" id="tab0">
+  <div class="sel-wrap">
+    <span class="sel-icon" id="destIcon0">🏔️</span>
+    <select id="destSelect0" onchange="onDestChange0()">
+    </select>
+  </div>
+
+  <div id="currentWeather">
+    <div class="loading-overlay"><div class="spinner"></div>Cargando condiciones...</div>
+  </div>
+
+  <div class="divider"></div>
+  <h2 class="section-title">⚡ Resumen — Todos los destinos</h2>
+  <div class="overview-grid" id="overviewGrid">
+  </div>
+</div>
+
+<!-- TAB 1: PRONOSTICO 7 DIAS -->
+<div class="tab-content" id="tab1">
+  <div class="sel-wrap">
+    <span class="sel-icon" id="destIcon1">🏔️</span>
+    <select id="destSelect1" onchange="onDestChange1()">
+    </select>
+  </div>
+
+  <div id="forecastContent">
+    <div class="loading-overlay"><div class="spinner"></div>Cargando pronóstico...</div>
+  </div>
+
+  <div class="chart-container" id="chartContainer" style="display:none">
+    <canvas id="forecastChart"></canvas>
+  </div>
+</div>
+
+<!-- TAB 2: MAPA -->
+<div class="tab-content" id="tab2">
+  <div class="map-controls">
+    <button class="map-toggle active" id="toggleMarkers" onclick="toggleMapLayer('markers')">📍 Destinos</button>
+    <button class="map-toggle" id="toggleCarretera" onclick="toggleMapLayer('carretera')">🚵 Carretera Austral</button>
+    <button class="map-toggle" id="toggleTdP" onclick="toggleMapLayer('tdp')">🏔️ Torres del Paine W</button>
+  </div>
+  <div id="map"></div>
+  <p style="font-size:0.75rem;color:var(--muted);margin-top:10px;text-align:center">Haz clic en un marcador para ver las condiciones actuales del destino</p>
+</div>
+
+<!-- TAB 4: GUIA -->
+<div class="tab-content" id="tab3">
+  <div class="alert-box">
+    <strong>⚠️ Viento Patagónico</strong>
+    El viento patagónico puede cambiar en minutos. Planifica siempre con margen de seguridad. La regla de oro: <strong>4 estaciones en un día</strong>.
+  </div>
+
+  <div class="guide-section">
+    <h3>📅 Temporadas recomendadas</h3>
+    <div class="card">
+      <div class="season-row"><span class="season-act">🥾 Trekking/Hiking</span><div class="season-months"><span class="season-chip season-good">Nov</span><span class="season-chip season-good">Dic</span><span class="season-chip season-good">Ene</span><span class="season-chip season-good">Feb</span><span class="season-chip season-good">Mar</span><span class="season-chip season-ok">Oct</span><span class="season-chip season-ok">Abr</span></div></div>
+      <div class="season-row"><span class="season-act">🌊 Kayak/Rafting Futaleufú</span><div class="season-months"><span class="season-chip season-good">Nov</span><span class="season-chip season-good">Dic</span><span class="season-chip season-good">Ene</span><span class="season-chip season-good">Feb</span><span class="season-chip season-good">Mar</span></div></div>
+      <div class="season-row"><span class="season-act">🎣 Pesca con mosca</span><div class="season-months"><span class="season-chip season-good">Sep</span><span class="season-chip season-good">Oct</span><span class="season-chip season-good">Nov</span><span class="season-chip season-good">Dic</span><span class="season-chip season-good">Ene</span><span class="season-chip season-good">Feb</span><span class="season-chip season-good">Mar</span><span class="season-chip season-good">Abr</span><span class="season-chip season-good">May</span></div></div>
+      <div class="season-row"><span class="season-act">⛷️ Ski Villarrica</span><div class="season-months"><span class="season-chip season-good">Jun</span><span class="season-chip season-good">Jul</span><span class="season-chip season-good">Ago</span><span class="season-chip season-good">Sep</span><span class="season-chip season-ok">May</span><span class="season-chip season-ok">Oct</span></div></div>
+      <div class="season-row"><span class="season-act">⛰️ Escalada</span><div class="season-months"><span class="season-chip season-good">Nov</span><span class="season-chip season-good">Dic</span><span class="season-chip season-good">Ene</span><span class="season-chip season-good">Feb</span><span class="season-chip season-ok">Mar</span><span class="season-chip season-ok">Oct</span></div></div>
+      <div class="season-row"><span class="season-act">🚵 Carretera Austral</span><div class="season-months"><span class="season-chip season-good">Nov</span><span class="season-chip season-good">Dic</span><span class="season-chip season-good">Ene</span><span class="season-chip season-good">Feb</span><span class="season-chip season-good">Mar</span><span class="season-chip season-ok">Oct</span><span class="season-chip season-ok">Abr</span></div></div>
+    </div>
+  </div>
+
+  <div class="guide-section">
+    <h3>🎒 Equipo esencial</h3>
+    <div class="guide-grid">
+      <div class="guide-card">
+        <h4>🥾 Trekking / Hiking</h4>
+        <ul>
+          <li>Botas impermeables (Gore-Tex)</li>
+          <li>Chaqueta lluvia + forro polar</li>
+          <li>Pantalón impermeable</li>
+          <li>Capa base merino wool</li>
+          <li>Bastones de trekking</li>
+          <li>Mapa topográfico offline</li>
+          <li>Agua filtro (Sawyer/LifeStraw)</li>
+          <li>Comida extra 1 día</li>
+          <li>Linterna + baterías extra</li>
+          <li>Botiquín básico</li>
+          <li>Repelente + protector solar</li>
+          <li>Registro en CONAF antes de salir</li>
+        </ul>
+      </div>
+      <div class="guide-card">
+        <h4>🌊 Kayak / Rafting</h4>
+        <ul>
+          <li>Traje neopreno 3-5mm</li>
+          <li>Chaleco salvavidas certificado</li>
+          <li>Casco protector</li>
+          <li>Dry bags impermeables</li>
+          <li>Remo de repuesto</li>
+          <li>Silbato de emergencia</li>
+          <li>Luces estroboscópicas</li>
+          <li>Cuerda de rescate</li>
+          <li>Mapa de ríos / cartas náuticas</li>
+          <li>Radio VHF (navegación)</li>
+          <li>Guía local certificado</li>
+        </ul>
+      </div>
+      <div class="guide-card">
+        <h4>⛰️ Escalada / Roca</h4>
+        <ul>
+          <li>Cuerdas dinámicas 60-70m</li>
+          <li>Set completo de seguros</li>
+          <li>Pies de gato técnicos</li>
+          <li>Arnés + casco</li>
+          <li>Asegurador ATC/Gri-Gri</li>
+          <li>Nutrición para 2 días extra</li>
+          <li>Ropa viento/lluvia ligera</li>
+          <li>Linterna frontal</li>
+          <li>Topo de la vía (offline)</li>
+          <li>Compañero experimentado</li>
+          <li>Plan B siempre activo</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="guide-section">
+    <h3>🆘 Emergencias en Patagonia</h3>
+    <div class="emerg-grid">
+      <div class="emerg-card"><div class="emerg-num">131</div><div class="emerg-name">SAMU Salud</div></div>
+      <div class="emerg-card"><div class="emerg-num">132</div><div class="emerg-name">Bomberos</div></div>
+      <div class="emerg-card"><div class="emerg-num">133</div><div class="emerg-name">Carabineros</div></div>
+      <div class="emerg-card"><div class="emerg-num">1424</div><div class="emerg-name">ONEMI</div></div>
+      <div class="emerg-card"><div class="emerg-num">+56 61 236 0860</div><div class="emerg-name">CONAF Punta Arenas</div></div>
+      <div class="emerg-card"><div class="emerg-num">+56 65 223 0193</div><div class="emerg-name">CONAF Puerto Montt</div></div>
+    </div>
+    <div class="info-box" style="margin-top:14px">
+      <strong>⚠️ Siempre registra tu trekking en CONAF antes de salir</strong>
+      Informar tu ruta, número de integrantes y fecha de retorno puede salvar tu vida. Sin registro, el rescate puede tardar días adicionales.
+    </div>
+  </div>
+
+  <div class="guide-section">
+    <h3>🌬️ El clima patagónico</h3>
+    <div class="card">
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="info-box" style="margin:0">
+          <strong>¿Por qué cambia tan rápido?</strong>
+          La Patagonia no tiene barreras montañosas al oeste hasta la Antártida. Los frentes del Pacífico llegan sin obstáculos, generando cambios meteorológicos en minutos. El viento puede pasar de 30 a 120 km/h en horas.
+        </div>
+        <div style="font-size:0.85rem;color:var(--muted);line-height:1.6">
+          <p style="margin-bottom:8px"><strong style="color:var(--text)">Fenómenos característicos:</strong></p>
+          <ul style="list-style:none;display:flex;flex-direction:column;gap:6px">
+            <li>→ <strong style="color:var(--text)">Viento Williwaw:</strong> ráfagas catabáticas de hasta 200+ km/h, sin aviso previo</li>
+            <li>→ <strong style="color:var(--text)">Lluvia horizontal:</strong> la lluvia con viento fuerte no cae, va lateral</li>
+            <li>→ <strong style="color:var(--text)">Cielos caliza:</strong> nubes lenteculares sobre montañas = viento extremo en altura</li>
+            <li>→ <strong style="color:var(--text)">Ventanas de buen tiempo:</strong> aprovecha las pocas horas de calma para avanzar</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="guide-section">
+    <h3>📱 Apps útiles (mapas offline)</h3>
+    <div class="guide-grid">
+      <div class="guide-card">
+        <h4>OruxMaps</h4>
+        <ul><li>Descarga mapas topográficos antes de salir</li><li>Compatible con tracks GPX/KMZ</li><li>Funciona 100% sin internet</li><li>Android gratuito</li></ul>
+      </div>
+      <div class="guide-card">
+        <h4>Maps.me</h4>
+        <ul><li>Mapas OpenStreetMap offline</li><li>Navegación peatonal y ciclista</li><li>Busca campings y refugios</li><li>iOS y Android gratuito</li></ul>
+      </div>
+      <div class="guide-card">
+        <h4>Windy</h4>
+        <ul><li>Pronóstico de viento detallado</li><li>Modelos GFS + ECMWF</li><li>Imprescindible para Patagonia</li><li>Consulta antes de cada salida</li></ul>
+      </div>
+    </div>
+    <div class="info-box" style="margin-top:12px">
+      <strong>💡 Consejo fundamental</strong>
+      Descarga los mapas de toda tu ruta con al menos 24h de anticipación. La cobertura celular en Patagonia es casi nula fuera de ciudades. Sin mapas offline no te aventures.
+    </div>
+  </div>
+</div>
+
+<script>
+const DESTINOS = {
+  'Torres del Paine': {lat:-51.0, lon:-72.9, actividades:['hiking','camping','kayak'], icono:'🏔️'},
+  'Futaleufú':        {lat:-43.18, lon:-71.87, actividades:['kayak','rafting','pesca'], icono:'🌊'},
+  'Cochamó':          {lat:-41.49, lon:-72.32, actividades:['escalada','trekking','camping'], icono:'⛰️'},
+  'Queulat':          {lat:-44.37, lon:-72.46, actividades:['hiking','camping'], icono:'🌿'},
+  'Laguna San Rafael':{lat:-46.65, lon:-73.87, actividades:['navegacion','kayak'], icono:'🏔️'},
+  'Cerro Castillo':   {lat:-46.12, lon:-72.15, actividades:['trekking','camping'], icono:'🏔️'},
+  'Villarrica':       {lat:-39.42, lon:-71.93, actividades:['ski','hiking','kayak'], icono:'🌋'},
+  'Pumalín':          {lat:-43.07, lon:-72.49, actividades:['hiking','camping','navegacion'], icono:'🌿'},
+  'Carretera Austral':{lat:-44.5, lon:-72.5, actividades:['ciclismo','moto','trekking'], icono:'🚵'},
+  'Puyuhuapi':        {lat:-44.33, lon:-72.57, actividades:['kayak','termas','pesca'], icono:'♨️'},
+  'Yelcho':           {lat:-43.48, lon:-72.34, actividades:['pesca','kayak','camping'], icono:'🎣'},
+  'Punta Arenas':     {lat:-53.15, lon:-70.91, actividades:['hiking','navegacion'], icono:'🧭'},
+};
+
+const DESTINO_KEYS = Object.keys(DESTINOS);
+const CACHE_TTL = 10 * 60 * 1000;
+const weatherCache = {};
+let currentTab = 0;
+let forecastChartInst = null;
+let mapInstance = null;
+let mapMarkers = {};
+let mapLayers = {};
+let mapLayersActive = {markers:true, carretera:false, tdp:false};
+
+// WMO weather code to emoji + description
+function wmoInfo(code) {
+  if(code===0) return {icon:'☀️', desc:'Despejado'};
+  if(code<=2) return {icon:'🌤️', desc:'Parcialmente nublado'};
+  if(code===3) return {icon:'☁️', desc:'Nublado'};
+  if(code<=49) return {icon:'🌫️', desc:'Niebla'};
+  if(code<=55) return {icon:'🌦️', desc:'Llovizna'};
+  if(code<=67) return {icon:'🌧️', desc:'Lluvia'};
+  if(code<=77) return {icon:'❄️', desc:'Nieve'};
+  if(code<=82) return {icon:'🌧️', desc:'Chubascos'};
+  if(code<=84) return {icon:'🌨️', desc:'Nieve moderada'};
+  if(code<=99) return {icon:'⛈️', desc:'Tormenta'};
+  return {icon:'🌡️', desc:'Variable'};
+}
+
+function windDirLabel(deg) {
+  const dirs = ['N','NE','E','SE','S','SO','O','NO'];
+  return dirs[Math.round(deg/45)%8];
+}
+
+function formatTime(iso) {
+  if(!iso) return '--';
+  const d = new Date(iso);
+  return d.toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit',hour12:false});
+}
+
+function formatDayName(iso) {
+  const d = new Date(iso+'T12:00:00');
+  return d.toLocaleDateString('es-CL',{weekday:'long'});
+}
+
+function capitalize(s){return s.charAt(0).toUpperCase()+s.slice(1)}
+
+function actGoNogo(act, wind, precip, wcode) {
+  const rain = precip || 0;
+  const isRaining = rain > 0.5 || (wcode >= 51 && wcode <= 99);
+  const heavyRain = rain > 10;
+  act = act.toLowerCase();
+  if(act==='hiking'||act==='trekking') {
+    if(wind>70||heavyRain) return 'nogo';
+    if(wind>40||isRaining) return 'caution';
+    return 'go';
+  }
+  if(act==='kayak'||act==='rafting') {
+    if(wind>50) return 'nogo';
+    if(wind>30) return 'caution';
+    return 'go';
+  }
+  if(act==='escalada'||act==='climbing') {
+    if(isRaining||wind>40) return 'nogo';
+    if(wind>25) return 'caution';
+    return 'go';
+  }
+  if(act==='pesca') {
+    if(wind>50) return 'nogo';
+    if(wind>30) return 'caution';
+    return 'go';
+  }
+  if(act==='ciclismo'||act==='moto') {
+    if(wind>60||heavyRain) return 'nogo';
+    if(wind>40||isRaining) return 'caution';
+    return 'go';
+  }
+  if(act==='camping') {
+    if(wind>80||wcode>=80) return 'nogo';
+    if(wind>50||isRaining) return 'caution';
+    return 'go';
+  }
+  if(act==='ski') {
+    if(wcode>=95) return 'nogo';
+    return 'go';
+  }
+  if(wind>60||heavyRain) return 'nogo';
+  if(wind>35||isRaining) return 'caution';
+  return 'go';
+}
+
+function badgeHtml(status, label) {
+  const cls = status==='go'?'badge-go':status==='caution'?'badge-caution':'badge-nogo';
+  const dot = status==='go'?'🟢':status==='caution'?'🟡':'🔴';
+  return `<span class="badge ${cls}">${dot} ${label}</span>`;
+}
+
+function overallStatus(data) {
+  const wind = data.current?.wind_speed_10m||0;
+  const precip = data.current?.precipitation||0;
+  const wcode = data.current?.weather_code||0;
+  if(wind>70||precip>15||(wcode>=80&&wcode<100)) return 'red';
+  if(wind>40||precip>5||wcode>=51) return 'yellow';
+  return 'green';
+}
+
+async function fetchWeather(name) {
+  const d = DESTINOS[name];
+  const cacheKey = `pw_${name}`;
+  const cached = weatherCache[cacheKey];
+  if(cached && (Date.now()-cached.ts < CACHE_TTL)) return cached.data;
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${d.lat}&longitude=${d.lon}&current=temperature_2m,wind_speed_10m,wind_direction_10m,weather_code,precipitation,relative_humidity_2m,apparent_temperature&hourly=temperature_2m,wind_speed_10m,precipitation_probability,precipitation,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max,wind_gusts_10m_max,weather_code,sunrise,sunset&wind_speed_unit=kmh&timezone=America%2FSantiago&forecast_days=7`;
+  const ctrl = new AbortController();
+  const timer = setTimeout(()=>ctrl.abort(), 10000);
+  try {
+    const resp = await fetch(url, {signal:ctrl.signal});
+    clearTimeout(timer);
+    if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+    weatherCache[cacheKey] = {data, ts:Date.now()};
+    return data;
+  } catch(e) {
+    clearTimeout(timer);
+    if(cached) return cached.data;
+    throw e;
+  }
+}
+
+// ---- POPULATE SELECTS ----
+function populateSelects() {
+  const html = DESTINO_KEYS.map(k=>`<option value="${k}">${DESTINOS[k].icono} ${k}</option>`).join('');
+  document.getElementById('destSelect0').innerHTML = html;
+  document.getElementById('destSelect1').innerHTML = html;
+}
+
+function onDestChange0() {
+  const name = document.getElementById('destSelect0').value;
+  document.getElementById('destIcon0').textContent = DESTINOS[name].icono;
+  loadCurrentWeather(name);
+}
+function onDestChange1() {
+  const name = document.getElementById('destSelect1').value;
+  document.getElementById('destIcon1').textContent = DESTINOS[name].icono;
+  loadForecast(name);
+}
+
+// ---- TAB SWITCHING ----
+const tabBtns = document.querySelectorAll('.tab-btn');
+const tabContents = document.querySelectorAll('.tab-content');
+function setTab(i) {
+  currentTab = i;
+  tabBtns.forEach((b,idx)=>b.classList.toggle('active',idx===i));
+  tabContents.forEach((c,idx)=>c.classList.toggle('active',idx===i));
+  if(i===2 && !mapInstance) initMap();
+  if(i===2 && mapInstance) setTimeout(()=>mapInstance.invalidateSize(),100);
+}
+
+// ---- CURRENT WEATHER ----
+async function loadCurrentWeather(name) {
+  const container = document.getElementById('currentWeather');
+  container.innerHTML = `<div class="loading-overlay"><div class="spinner"></div>Cargando ${name}...</div>`;
+  try {
+    const data = await fetchWeather(name);
+    renderCurrentWeather(name, data, container);
+    updateMapMarker(name, data);
+  } catch(e) {
+    container.innerHTML = `<div class="error-msg">⚠️ Error cargando datos para ${name}. Verifica tu conexión.</div>`;
+  }
+}
+
+function renderCurrentWeather(name, data, container) {
+  const c = data.current;
+  const dest = DESTINOS[name];
+  const wmo = wmoInfo(c.weather_code);
+  const wind = Math.round(c.wind_speed_10m);
+  const precip = c.precipitation;
+  const wcode = c.weather_code;
+  const ts = new Date().toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'});
+
+  const actBadges = dest.actividades.map(act=>{
+    const s = actGoNogo(act, wind, precip, wcode);
+    return badgeHtml(s, capitalize(act));
+  }).join('');
+
+  const dirDeg = c.wind_direction_10m||0;
+  const dirLabel = windDirLabel(dirDeg);
+
+  container.innerHTML = `
+    <div class="card">
+      <div class="dest-header">
+        <span class="dest-icon">${dest.icono}</span>
+        <div>
+          <div class="dest-name">${name}</div>
+          <div class="dest-coords">${dest.lat}°S, ${dest.lon}°O</div>
+        </div>
+        <div style="margin-left:auto;text-align:right">
+          <div class="wmo-icon">${wmo.icon}</div>
+          <div style="font-size:0.8rem;color:var(--muted)">${wmo.desc}</div>
+        </div>
+      </div>
+
+      <div class="weather-main">
+        <div class="weather-stat">
+          <div class="val" style="font-size:2.2rem;color:var(--accent)">${Math.round(c.temperature_2m)}°C</div>
+          <div class="lbl">Temperatura</div>
+          <div style="font-size:0.72rem;color:var(--muted);margin-top:4px">Sensación ${Math.round(c.apparent_temperature)}°C</div>
+        </div>
+        <div class="weather-stat">
+          <div class="compass-wrap">
+            <svg class="compass" viewBox="0 0 70 70">
+              <circle cx="35" cy="35" r="32" fill="none" stroke="var(--border)" stroke-width="2"/>
+              <text x="35" y="12" text-anchor="middle" fill="var(--muted)" font-size="8" font-family="Inter">N</text>
+              <text x="35" y="64" text-anchor="middle" fill="var(--muted)" font-size="8" font-family="Inter">S</text>
+              <text x="8" y="38" text-anchor="middle" fill="var(--muted)" font-size="8" font-family="Inter">O</text>
+              <text x="62" y="38" text-anchor="middle" fill="var(--muted)" font-size="8" font-family="Inter">E</text>
+              <g class="compass-arrow" style="transform:rotate(${dirDeg}deg);transform-origin:35px 35px">
+                <polygon points="35,10 31,38 35,34 39,38" fill="var(--red)" opacity=".9"/>
+                <polygon points="35,60 31,32 35,36 39,32" fill="var(--muted)" opacity=".6"/>
+              </g>
+            </svg>
+          </div>
+          <div class="lbl">${wind} km/h ${dirLabel}</div>
+        </div>
+        <div class="weather-stat">
+          <div class="val">${precip.toFixed(1)}<span style="font-size:1rem;font-weight:400">mm</span></div>
+          <div class="lbl">Precipitación</div>
+        </div>
+        <div class="weather-stat">
+          <div class="val">${c.relative_humidity_2m}<span style="font-size:1rem;font-weight:400">%</span></div>
+          <div class="lbl">Humedad</div>
+        </div>
+      </div>
+
+      <div style="margin-top:16px">
+        <div class="section-label">Condiciones por actividad</div>
+        <div class="actividades-grid">${actBadges}</div>
+      </div>
+      <div class="updated-ts">Actualizado: ${ts}</div>
+    </div>
+  `;
+}
+
+// ---- OVERVIEW GRID ----
+async function loadOverviewGrid() {
+  const grid = document.getElementById('overviewGrid');
+  // Render skeleton cards
+  grid.innerHTML = DESTINO_KEYS.map(name=>`
+    <div class="ov-card" id="ov_${name.replace(/\s/g,'_')}" onclick="selectDest('${name}')">
+      <div class="ov-icon">${DESTINOS[name].icono}</div>
+      <div class="ov-name">${name}</div>
+      <div class="skeleton" style="width:60px;height:28px;margin:4px 0"></div>
+      <div class="skeleton" style="width:80px;height:14px;margin-top:6px"></div>
+    </div>
+  `).join('');
+
+  const promises = DESTINO_KEYS.map(async name=>{
+    try {
+      const data = await fetchWeather(name);
+      updateOvCard(name, data);
+      updateMapMarker(name, data);
+    } catch(e) {
+      const card = document.getElementById('ov_'+name.replace(/\s/g,'_'));
+      if(card) card.innerHTML = `<div class="ov-icon">${DESTINOS[name].icono}</div><div class="ov-name">${name}</div><div style="font-size:0.75rem;color:var(--red)">Sin datos</div>`;
+    }
+  });
+  await Promise.allSettled(promises);
+}
+
+function updateOvCard(name, data) {
+  const card = document.getElementById('ov_'+name.replace(/\s/g,'_'));
+  if(!card) return;
+  const c = data.current;
+  const wind = Math.round(c.wind_speed_10m);
+  const wmo = wmoInfo(c.weather_code);
+  const status = overallStatus(data);
+  const dotColor = status==='green'?'var(--green)':status==='yellow'?'var(--yellow)':'var(--red)';
+  const statusLabel = status==='green'?'Buenas condiciones':status==='yellow'?'Condiciones variables':'Condiciones adversas';
+  card.innerHTML = `
+    <div class="ov-icon">${DESTINOS[name].icono}</div>
+    <div class="ov-name">${name}</div>
+    <div class="ov-temp">${Math.round(c.temperature_2m)}° ${wmo.icon}</div>
+    <div class="ov-wind">💨 ${wind} km/h</div>
+    <div class="ov-status"><span class="ov-dot" style="background:${dotColor}"></span>${statusLabel}</div>
+  `;
+}
+
+function selectDest(name) {
+  document.getElementById('destSelect0').value = name;
+  document.getElementById('destIcon0').textContent = DESTINOS[name].icono;
+  loadCurrentWeather(name);
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+// ---- FORECAST ----
+async function loadForecast(name) {
+  const container = document.getElementById('forecastContent');
+  document.getElementById('chartContainer').style.display = 'none';
+  container.innerHTML = `<div class="loading-overlay"><div class="spinner"></div>Cargando pronóstico...</div>`;
+  try {
+    const data = await fetchWeather(name);
+    renderForecast(name, data, container);
+  } catch(e) {
+    container.innerHTML = `<div class="error-msg">⚠️ Error cargando pronóstico para ${name}.</div>`;
+  }
+}
+
+function renderForecast(name, data, container) {
+  const daily = data.daily;
+  const dest = DESTINOS[name];
+  const days = daily.time.length;
+  const dayNames = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+
+  let html = `<div class="forecast-list">`;
+  for(let i=0;i<days;i++){
+    const d = new Date(daily.time[i]+'T12:00:00');
+    const dayName = capitalize(dayNames[d.getDay()]);
+    const dateStr = d.toLocaleDateString('es-CL',{day:'numeric',month:'short'});
+    const wmo = wmoInfo(daily.weather_code[i]);
+    const tmax = Math.round(daily.temperature_2m_max[i]);
+    const tmin = Math.round(daily.temperature_2m_min[i]);
+    const windMax = Math.round(daily.wind_speed_10m_max[i]);
+    const gusts = Math.round(daily.wind_gusts_10m_max[i]);
+    const precip = daily.precipitation_sum[i];
+    const sunrise = formatTime(daily.sunrise[i]);
+    const sunset = formatTime(daily.sunset[i]);
+
+    const goActs = dest.actividades.filter(act=>{
+      return actGoNogo(act, windMax, precip/24, daily.weather_code[i]) === 'go';
+    });
+    const actChips = goActs.map(a=>`<span class="act-chip">✓ ${capitalize(a)}</span>`).join('');
+    const precipHtml = precip>0.5?`<span style="color:var(--accent)">🌧 ${precip.toFixed(1)}mm</span>`:`<span style="color:var(--green)">☀️ Sin lluvia</span>`;
+
+    html += `
+      <div class="fc-card">
+        <div>
+          <div class="fc-day">${dayName}</div>
+          <div class="fc-date">${dateStr}</div>
+        </div>
+        <div class="fc-icon">${wmo.icon}</div>
+        <div class="fc-details">
+          <div class="fc-temp">${tmax}° <span>/ ${tmin}°</span></div>
+          <div class="fc-wind-line">💨 ${windMax} km/h · ráfagas ${gusts} km/h</div>
+          <div class="fc-rain">${precipHtml}</div>
+          <div class="fc-sun">🌅 ${sunrise} · 🌇 ${sunset}</div>
+          <div style="font-size:0.72rem;color:var(--muted);margin-top:2px">${wmo.desc}</div>
+        </div>
+        <div class="fc-acts">${actChips||'<span style="font-size:0.72rem;color:var(--red)">⚠️ Sin GO</span>'}</div>
+      </div>`;
+  }
+  html += '</div>';
+  container.innerHTML = html;
+
+  // Chart
+  const chartCont = document.getElementById('chartContainer');
+  chartCont.style.display = 'block';
+  if(forecastChartInst) { forecastChartInst.destroy(); forecastChartInst=null; }
+  const ctx = document.getElementById('forecastChart').getContext('2d');
+  const labels = daily.time.map(t=>{
+    const d = new Date(t+'T12:00:00');
+    return capitalize(dayNames[d.getDay()].slice(0,3));
+  });
+  forecastChartInst = new Chart(ctx, {
+    data:{
+      labels,
+      datasets:[
+        {type:'line',label:'Temp Máx (°C)',data:daily.temperature_2m_max,borderColor:'#f97316',backgroundColor:'rgba(249,115,22,.1)',tension:.4,yAxisID:'y',pointRadius:4,borderWidth:2.5},
+        {type:'line',label:'Temp Mín (°C)',data:daily.temperature_2m_min,borderColor:'#38bdf8',backgroundColor:'rgba(56,189,248,.1)',tension:.4,yAxisID:'y',pointRadius:4,borderWidth:2.5},
+        {type:'bar',label:'Precip (mm)',data:daily.precipitation_sum,backgroundColor:'rgba(34,197,94,.35)',borderColor:'rgba(34,197,94,.7)',borderWidth:1,yAxisID:'y2'},
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#7ca3c8',font:{size:11},boxWidth:12}}},
+      scales:{
+        y:{ticks:{color:'#7ca3c8',font:{size:11}},grid:{color:'rgba(42,64,96,.5)'},title:{display:true,text:'°C',color:'#7ca3c8'}},
+        y2:{position:'right',ticks:{color:'#7ca3c8',font:{size:11}},grid:{display:false},title:{display:true,text:'mm',color:'#7ca3c8'}},
+        x:{ticks:{color:'#7ca3c8',font:{size:11}},grid:{color:'rgba(42,64,96,.5)'}},
+      }
+    }
+  });
+}
+
+// ---- MAP ----
+function initMap() {
+  mapInstance = L.map('map',{center:[-45,-72],zoom:6,preferCanvas:true});
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{
+    attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
+    subdomains:'abcd',maxZoom:19
+  }).addTo(mapInstance);
+
+  DESTINO_KEYS.forEach(name=>{
+    const d = DESTINOS[name];
+    const marker = L.circleMarker([d.lat,d.lon],{
+      radius:10,fillColor:'#4b7aa8',color:'#1a2a40',weight:2,opacity:1,fillOpacity:.85
+    }).addTo(mapInstance);
+
+    const actsHtml = d.actividades.map(a=>`<span style="background:rgba(56,189,248,.15);border:1px solid rgba(56,189,248,.3);color:#38bdf8;padding:2px 7px;border-radius:8px;font-size:0.7rem;font-weight:600">${capitalize(a)}</span>`).join(' ');
+    marker.bindPopup(`
+      <div style="min-width:160px">
+        <div class="popup-title">${d.icono} ${name}</div>
+        <div class="popup-acts" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px">${actsHtml}</div>
+        <button class="popup-btn" onclick="selectDestAndSwitch('${name}')">Ver condiciones →</button>
+      </div>
+    `);
+    mapMarkers[name] = marker;
+
+    // If data already cached, color immediately
+    const cached = weatherCache[`pw_${name}`];
+    if(cached) updateMapMarker(name, cached.data);
+  });
+
+  // Carretera Austral approx route
+  const carreteraCoords = [
+    [-41.47,-72.35],[-42.0,-72.5],[-42.5,-72.5],[-43.0,-72.5],[-43.5,-72.5],
+    [-44.0,-72.6],[-44.5,-72.8],[-45.0,-72.8],[-45.5,-72.7],[-46.0,-72.5],
+    [-46.5,-72.3],[-47.0,-72.5],[-47.5,-72.8],[-48.0,-73.0],[-48.5,-73.2],
+    [-49.0,-73.5],[-49.5,-73.5]
+  ];
+  mapLayers.carretera = L.polyline(carreteraCoords,{color:'#f97316',weight:3,opacity:.7,dashArray:'8,4'});
+
+  // Torres del Paine W Circuit approx
+  const tdpCoords = [
+    [-50.98,-73.42],[-51.0,-73.15],[-51.08,-73.0],[-51.12,-72.9],[-51.18,-72.8],
+    [-51.22,-72.72],[-51.1,-72.6],[-51.0,-72.7],[-50.95,-72.85],[-50.98,-73.1],[-50.98,-73.42]
+  ];
+  mapLayers.tdp = L.polyline(tdpCoords,{color:'#38bdf8',weight:2.5,opacity:.75,dashArray:'5,4'});
+}
+
+function updateMapMarker(name, data) {
+  const marker = mapMarkers[name];
+  if(!marker) return;
+  const status = overallStatus(data);
+  const color = status==='green'?'#22c55e':status==='yellow'?'#f59e0b':'#ef4444';
+  marker.setStyle({fillColor:color});
+}
+
+function toggleMapLayer(layer) {
+  if(layer==='markers') return;
+  const btn = document.getElementById('toggle'+layer.charAt(0).toUpperCase()+layer.slice(1));
+  if(!mapInstance) return;
+  if(mapLayersActive[layer]) {
+    mapInstance.removeLayer(mapLayers[layer]);
+    mapLayersActive[layer] = false;
+    btn.classList.remove('active');
+  } else {
+    mapLayers[layer].addTo(mapInstance);
+    mapLayersActive[layer] = true;
+    btn.classList.add('active');
+  }
+}
+
+function selectDestAndSwitch(name) {
+  setTab(0);
+  document.getElementById('destSelect0').value = name;
+  document.getElementById('destIcon0').textContent = DESTINOS[name].icono;
+  loadCurrentWeather(name);
+}
+
+// ---- REFRESH ----
+async function refreshAll() {
+  const btn = document.getElementById('refreshBtn');
+  btn.classList.add('spinning');
+  // Clear cache
+  Object.keys(weatherCache).forEach(k=>delete weatherCache[k]);
+  const promises = [];
+  if(currentTab===0) {
+    const name = document.getElementById('destSelect0').value;
+    promises.push(loadCurrentWeather(name));
+    promises.push(loadOverviewGrid());
+  } else if(currentTab===1) {
+    const name = document.getElementById('destSelect1').value;
+    promises.push(loadForecast(name));
+  } else if(currentTab===2) {
+    promises.push(loadOverviewGrid());
+  }
+  await Promise.allSettled(promises);
+  btn.classList.remove('spinning');
+}
+
+// ---- INIT ----
+async function init() {
+  populateSelects();
+  const firstDest = DESTINO_KEYS[0];
+  document.getElementById('destIcon0').textContent = DESTINOS[firstDest].icono;
+  document.getElementById('destIcon1').textContent = DESTINOS[firstDest].icono;
+
+  // Render overview skeleton immediately
+  const grid = document.getElementById('overviewGrid');
+  grid.innerHTML = DESTINO_KEYS.map(name=>`
+    <div class="ov-card" id="ov_${name.replace(/\s/g,'_')}" onclick="selectDest('${name}')">
+      <div class="ov-icon">${DESTINOS[name].icono}</div>
+      <div class="ov-name">${name}</div>
+      <div class="skeleton" style="width:60px;height:28px;margin:4px 0"></div>
+      <div class="skeleton" style="width:90px;height:14px;margin-top:6px"></div>
+    </div>
+  `).join('');
+
+  // Load current weather for first destination
+  await loadCurrentWeather(firstDest);
+
+  // Load all overview cards in background
+  DESTINO_KEYS.forEach(async name=>{
+    try {
+      const data = await fetchWeather(name);
+      updateOvCard(name, data);
+      updateMapMarker(name, data);
+    } catch(e) {
+      const card = document.getElementById('ov_'+name.replace(/\s/g,'_'));
+      if(card) {
+        card.innerHTML = `<div class="ov-icon">${DESTINOS[name].icono}</div><div class="ov-name">${name}</div><div style="font-size:0.72rem;color:var(--red);margin-top:6px">Sin datos</div>`;
+      }
+    }
+  });
+}
+
+init();
+</script>
+</body>
+</html>

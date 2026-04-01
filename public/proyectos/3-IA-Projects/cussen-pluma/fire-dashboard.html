@@ -1,0 +1,1771 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CUSSEN Fire Monitor v3.0 — Centro de Comando</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+/* ===== CSS RESET & BASE ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg-primary: #0a0a0a;
+  --bg-secondary: #111111;
+  --bg-card: #1a1a1a;
+  --bg-card-hover: #222222;
+  --border: #2a2a2a;
+  --border-accent: #3a3a3a;
+  --text-primary: #f0f0f0;
+  --text-secondary: #a0a0a0;
+  --text-muted: #666666;
+  --fire-500: #ef4444;
+  --fire-600: #dc2626;
+  --fire-900: #7f1d1d;
+  --fire-glow: rgba(239, 68, 68, 0.15);
+  --amber-400: #fbbf24;
+  --amber-500: #f59e0b;
+  --green-400: #4ade80;
+  --green-500: #22c55e;
+  --green-700: #15803d;
+  --blue-400: #60a5fa;
+  --blue-500: #3b82f6;
+  --orange-400: #fb923c;
+  --orange-500: #f97316;
+  --purple-400: #c084fc;
+  --radius: 8px;
+  --radius-lg: 12px;
+  --shadow: 0 2px 8px rgba(0,0,0,0.4);
+  --shadow-lg: 0 4px 16px rgba(0,0,0,0.6);
+  --transition: 0.2s ease;
+}
+html { font-size: 14px; scroll-behavior: smooth; }
+body {
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.5;
+  min-height: 100vh;
+}
+a { color: var(--fire-500); text-decoration: none; }
+a:hover { color: var(--fire-600); text-decoration: underline; }
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  transition: var(--transition);
+}
+input, select {
+  font-family: inherit;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  transition: var(--transition);
+}
+input:focus, select:focus {
+  outline: none;
+  border-color: var(--fire-500);
+  box-shadow: 0 0 0 2px var(--fire-glow);
+}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-secondary); }
+::-webkit-scrollbar-thumb { background: var(--border-accent); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #555; }
+
+/* ===== HEADER ===== */
+.header {
+  background: linear-gradient(135deg, var(--fire-900) 0%, var(--bg-secondary) 60%);
+  border-bottom: 2px solid var(--fire-600);
+  padding: 0.75rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+.header-left { display: flex; align-items: center; gap: 1rem; }
+.header-logo {
+  width: 40px; height: 40px;
+  background: var(--fire-500);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem; font-weight: 900; color: #fff;
+  box-shadow: 0 0 12px var(--fire-glow);
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 12px var(--fire-glow); }
+  50% { box-shadow: 0 0 24px rgba(239, 68, 68, 0.35); }
+}
+.header-title h1 {
+  font-size: 1.1rem; font-weight: 700;
+  background: linear-gradient(90deg, #fff, var(--fire-500));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.header-title p { font-size: 0.72rem; color: var(--text-muted); letter-spacing: 0.5px; text-transform: uppercase; }
+.header-center { display: flex; align-items: center; gap: 1.5rem; }
+.clock {
+  font-size: 1.4rem; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+  text-shadow: 0 0 8px var(--fire-glow);
+}
+.clock-date { font-size: 0.72rem; color: var(--text-muted); text-align: center; }
+.alert-level {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.4rem 1rem;
+  border-radius: 20px;
+  font-weight: 700; font-size: 0.8rem;
+  text-transform: uppercase; letter-spacing: 1px;
+  border: 2px solid transparent;
+}
+.alert-normal { background: rgba(34,197,94,0.15); color: var(--green-400); border-color: var(--green-500); }
+.alert-elevado { background: rgba(251,191,36,0.15); color: var(--amber-400); border-color: var(--amber-500); }
+.alert-critico { background: rgba(239,68,68,0.15); color: var(--fire-500); border-color: var(--fire-500); animation: alert-flash 1s ease-in-out infinite; }
+.alert-emergencia { background: rgba(220,38,38,0.3); color: #fff; border-color: var(--fire-600); animation: alert-flash 0.5s ease-in-out infinite; }
+@keyframes alert-flash {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+.alert-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  display: inline-block;
+}
+.alert-normal .alert-dot { background: var(--green-400); }
+.alert-elevado .alert-dot { background: var(--amber-400); }
+.alert-critico .alert-dot { background: var(--fire-500); }
+.alert-emergencia .alert-dot { background: #fff; }
+.header-right { display: flex; align-items: center; gap: 0.75rem; }
+.header-link {
+  font-size: 0.78rem; color: var(--text-secondary);
+  padding: 0.35rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: var(--transition);
+}
+.header-link:hover { color: #fff; border-color: var(--fire-500); text-decoration: none; background: var(--fire-glow); }
+
+/* ===== MAIN GRID ===== */
+.dashboard {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+/* ===== CARD ===== */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: var(--transition);
+}
+.card:hover { border-color: var(--border-accent); box-shadow: var(--shadow); }
+.card-header {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
+}
+.card-header h2 {
+  font-size: 0.85rem; font-weight: 700;
+  display: flex; align-items: center; gap: 0.5rem;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.card-header .icon {
+  width: 20px; height: 20px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 4px; font-size: 0.7rem;
+}
+.card-body { padding: 1rem; }
+.card-full { grid-column: 1 / -1; }
+.card-span2 { grid-column: span 2; }
+
+/* ===== ZONE PANEL ===== */
+.zones-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0.75rem; }
+.zone-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.85rem;
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+.zone-card:hover { border-color: var(--border-accent); transform: translateY(-1px); }
+.zone-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0;
+  width: 4px; height: 100%;
+}
+.zone-card.normal::before { background: var(--green-500); }
+.zone-card.alerta::before { background: var(--amber-500); }
+.zone-card.critico::before { background: var(--fire-500); }
+.zone-name { font-weight: 700; font-size: 0.9rem; margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between; }
+.zone-badge {
+  font-size: 0.65rem; padding: 0.15rem 0.5rem;
+  border-radius: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.badge-normal { background: rgba(34,197,94,0.15); color: var(--green-400); }
+.badge-alerta { background: rgba(251,191,36,0.15); color: var(--amber-400); }
+.badge-critico { background: rgba(239,68,68,0.15); color: var(--fire-500); }
+.zone-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; margin-top: 0.4rem; }
+.zone-metric { font-size: 0.75rem; }
+.zone-metric-label { color: var(--text-muted); font-size: 0.65rem; text-transform: uppercase; }
+.zone-metric-value { font-weight: 700; font-variant-numeric: tabular-nums; }
+.zone-update { font-size: 0.65rem; color: var(--text-muted); margin-top: 0.5rem; border-top: 1px solid var(--border); padding-top: 0.4rem; }
+
+/* ===== MAP ===== */
+#map { height: 400px; width: 100%; border-radius: var(--radius); }
+.leaflet-popup-content-wrapper {
+  background: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: var(--shadow-lg) !important;
+}
+.leaflet-popup-tip { background: var(--bg-card) !important; }
+.leaflet-popup-content { font-family: system-ui, sans-serif !important; font-size: 0.8rem !important; }
+.popup-title { font-weight: 700; font-size: 0.9rem; margin-bottom: 0.4rem; border-bottom: 1px solid var(--border); padding-bottom: 0.3rem; }
+.popup-row { display: flex; justify-content: space-between; padding: 0.15rem 0; }
+.popup-label { color: var(--text-muted); }
+.popup-value { font-weight: 600; }
+
+/* ===== dNBR PANEL ===== */
+.severity-legend { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1rem; }
+.severity-row {
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 0.4rem 0.6rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius);
+  font-size: 0.78rem;
+}
+.severity-swatch { width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0; }
+.severity-range { color: var(--text-muted); margin-left: auto; font-variant-numeric: tabular-nums; font-size: 0.7rem; }
+.chart-container { position: relative; height: 200px; display: flex; align-items: center; justify-content: center; }
+
+/* ===== CALCULATOR ===== */
+.calc-form { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem; }
+.calc-field label { display: block; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.3rem; }
+.calc-field input { width: 100%; }
+.calc-result {
+  text-align: center; padding: 1rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+.calc-result-value { font-size: 2rem; font-weight: 900; margin: 0.3rem 0; }
+.calc-result-class { font-size: 0.85rem; font-weight: 600; }
+.calc-formula {
+  font-size: 0.7rem; color: var(--text-muted);
+  padding: 0.6rem; margin-top: 0.75rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius);
+  font-family: 'Courier New', monospace;
+  text-align: center;
+  border: 1px dashed var(--border);
+}
+.btn-fire {
+  background: linear-gradient(135deg, var(--fire-500), var(--fire-600));
+  color: #fff; padding: 0.6rem 1.5rem;
+  width: 100%;
+}
+.btn-fire:hover { background: linear-gradient(135deg, var(--fire-600), #b91c1c); transform: translateY(-1px); }
+
+/* ===== TIMELINE CHART ===== */
+.timeline-container { position: relative; height: 280px; }
+
+/* ===== RESOURCES ===== */
+.resources-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.6rem; margin-bottom: 1rem; }
+.resource-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.75rem;
+  text-align: center;
+  cursor: grab;
+  transition: var(--transition);
+  user-select: none;
+}
+.resource-card:hover { border-color: var(--fire-500); transform: translateY(-2px); box-shadow: var(--shadow); }
+.resource-card.dragging { opacity: 0.5; border-style: dashed; }
+.resource-icon { font-size: 1.5rem; margin-bottom: 0.3rem; }
+.resource-name { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; }
+.resource-count { font-size: 1.2rem; font-weight: 900; color: var(--fire-500); }
+.resource-available { font-size: 0.65rem; color: var(--text-muted); }
+.deployment-zones { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.5rem; }
+.deploy-zone {
+  background: var(--bg-secondary);
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 0.6rem;
+  min-height: 60px;
+  transition: var(--transition);
+}
+.deploy-zone.drag-over { border-color: var(--fire-500); background: var(--fire-glow); }
+.deploy-zone-title { font-size: 0.72rem; font-weight: 700; margin-bottom: 0.3rem; }
+.deploy-zone-items { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.deploy-tag {
+  font-size: 0.65rem; padding: 0.15rem 0.45rem;
+  background: var(--fire-glow);
+  border: 1px solid var(--fire-500);
+  border-radius: 10px;
+  color: var(--fire-500);
+  cursor: pointer;
+}
+.deploy-tag:hover { background: rgba(239,68,68,0.3); }
+.resources-total {
+  display: flex; justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius);
+  font-size: 0.78rem;
+  margin-top: 0.75rem;
+  border: 1px solid var(--border);
+}
+.resources-total span { color: var(--text-muted); }
+.resources-total strong { color: var(--fire-500); }
+
+/* ===== WEATHER ===== */
+.weather-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.weather-item {
+  background: var(--bg-secondary);
+  border-radius: var(--radius);
+  padding: 0.75rem;
+  text-align: center;
+}
+.weather-value { font-size: 1.5rem; font-weight: 900; }
+.weather-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; }
+.compass-container {
+  grid-column: span 2;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0.5rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius);
+}
+.compass-svg { width: 140px; height: 140px; }
+.fwi-gauge {
+  grid-column: span 2;
+  background: var(--bg-secondary);
+  border-radius: var(--radius);
+  padding: 0.75rem;
+  text-align: center;
+}
+.fwi-bar {
+  height: 12px;
+  background: linear-gradient(90deg, var(--green-500), var(--amber-500), var(--orange-500), var(--fire-500), #7f1d1d);
+  border-radius: 6px;
+  position: relative;
+  margin: 0.5rem 0;
+}
+.fwi-indicator {
+  position: absolute;
+  top: -4px;
+  width: 20px; height: 20px;
+  background: #fff;
+  border: 3px solid var(--fire-500);
+  border-radius: 50%;
+  transform: translateX(-50%);
+  transition: left 0.5s ease;
+  box-shadow: var(--shadow);
+}
+.fwi-labels { display: flex; justify-content: space-between; font-size: 0.6rem; color: var(--text-muted); }
+
+/* ===== ALERT LOG ===== */
+.alert-log {
+  max-height: 320px;
+  overflow-y: auto;
+  display: flex; flex-direction: column; gap: 0.4rem;
+}
+.alert-entry {
+  display: flex; align-items: flex-start; gap: 0.5rem;
+  padding: 0.5rem 0.6rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius);
+  font-size: 0.78rem;
+  border-left: 3px solid transparent;
+  animation: slide-in 0.3s ease;
+}
+@keyframes slide-in {
+  from { opacity: 0; transform: translateX(-10px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.alert-entry.info { border-left-color: var(--blue-400); }
+.alert-entry.warning { border-left-color: var(--amber-400); }
+.alert-entry.critical { border-left-color: var(--fire-500); }
+.alert-icon { font-size: 0.9rem; flex-shrink: 0; margin-top: 1px; }
+.alert-text { flex: 1; }
+.alert-time { font-size: 0.65rem; color: var(--text-muted); white-space: nowrap; }
+.alert-actions { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+.btn-sm {
+  font-size: 0.7rem; padding: 0.3rem 0.6rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+}
+.btn-sm:hover { border-color: var(--fire-500); color: var(--fire-500); }
+
+/* ===== REPORT ===== */
+.report-preview {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  font-size: 0.78rem;
+  max-height: 300px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  font-family: 'Courier New', monospace;
+  line-height: 1.6;
+  display: none;
+}
+.report-preview.visible { display: block; }
+.btn-report {
+  background: linear-gradient(135deg, var(--fire-500), var(--fire-600));
+  color: #fff; padding: 0.7rem 2rem;
+  font-size: 0.9rem;
+  display: flex; align-items: center; gap: 0.5rem;
+  margin: 0 auto;
+}
+.btn-report:hover { transform: translateY(-2px); box-shadow: 0 4px 12px var(--fire-glow); }
+.btn-print {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  margin: 0.75rem auto 0;
+  display: none;
+}
+.btn-print.visible { display: flex; align-items: center; gap: 0.5rem; }
+.btn-print:hover { border-color: var(--fire-500); color: var(--fire-500); }
+
+/* ===== FOOTER ===== */
+.footer {
+  text-align: center;
+  padding: 1.5rem;
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  margin-top: 1rem;
+}
+.footer a { color: var(--fire-500); }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 1100px) {
+  .dashboard { grid-template-columns: 1fr 1fr; }
+  .card-span2 { grid-column: span 2; }
+  .card-full { grid-column: 1 / -1; }
+  .resources-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 768px) {
+  .dashboard { grid-template-columns: 1fr; padding: 0.75rem; }
+  .card-span2, .card-full { grid-column: span 1; }
+  .header { flex-direction: column; align-items: flex-start; }
+  .header-center { width: 100%; justify-content: space-between; }
+  .zones-grid { grid-template-columns: 1fr; }
+  .resources-grid { grid-template-columns: repeat(2, 1fr); }
+  .calc-form { grid-template-columns: 1fr; }
+  .weather-grid { grid-template-columns: 1fr 1fr; }
+  #map { height: 300px; }
+}
+
+/* ===== PRINT STYLES ===== */
+@media print {
+  body { background: #fff; color: #000; font-size: 11pt; }
+  .header { background: #fff; border-bottom: 2px solid #333; position: static; }
+  .header-title h1 { background: none; -webkit-text-fill-color: #000; color: #000; }
+  .card { border: 1px solid #ccc; break-inside: avoid; box-shadow: none; }
+  .card-header { background: #f5f5f5; }
+  .card-header h2 { color: #000; }
+  .card-body { color: #333; }
+  .dashboard { display: block; }
+  .card { margin-bottom: 1rem; }
+  .footer { color: #666; border-top: 1px solid #ccc; }
+  #map, .alert-actions, .btn-fire, .btn-report, .btn-print, .btn-sm,
+  .resource-card[draggable], .header-right { display: none !important; }
+  .report-preview { display: block !important; background: #fff; color: #000; border: 1px solid #ccc; max-height: none; }
+  .alert-entry { background: #f9f9f9; color: #333; }
+  .zone-card { background: #f9f9f9; color: #333; }
+  .severity-row { background: #f5f5f5; color: #333; }
+  .weather-item { background: #f5f5f5; color: #333; }
+  .weather-value { color: #000; }
+  @page { margin: 1.5cm; }
+  .print-header {
+    display: block !important;
+    text-align: center; margin-bottom: 1rem;
+    border-bottom: 2px solid #333; padding-bottom: 0.5rem;
+  }
+  .print-header h1 { font-size: 16pt; }
+  .print-header p { font-size: 10pt; color: #666; }
+}
+.print-header { display: none; }
+</style>
+</head>
+<body>
+
+<!-- ===== PRINT HEADER ===== -->
+<div class="print-header">
+  <h1>CUSSEN Fire Monitor v3.0 — Reporte de Incendios</h1>
+  <p>Monitoreo Satelital de Incendios Forestales — Region del Bio-Bio, Chile</p>
+  <p id="print-date"></p>
+</div>
+
+<!-- ===== HEADER ===== -->
+<header class="header">
+  <div class="header-left">
+    <div class="header-logo">CF</div>
+    <div class="header-title">
+      <h1>CUSSEN Fire Monitor v3.0</h1>
+      <p>Centro de Comando &mdash; Region Bio-Bio</p>
+    </div>
+  </div>
+  <div class="header-center">
+    <div>
+      <div class="clock" id="clock">--:--:--</div>
+      <div class="clock-date" id="clock-date">---</div>
+    </div>
+    <div class="alert-level alert-elevado" id="alert-level">
+      <span class="alert-dot"></span>
+      <span id="alert-level-text">ELEVADO</span>
+    </div>
+  </div>
+  <div class="header-right">
+    <a href="../index.html" class="header-link">Volver a Proyectos</a>
+    <a href="index.html" class="header-link">CUSSEN Pluma</a>
+  </div>
+</header>
+
+<!-- ===== DASHBOARD GRID ===== -->
+<main class="dashboard">
+
+  <!-- ===== MONITORING ZONES (full width) ===== -->
+  <section class="card card-full">
+    <div class="card-header">
+      <h2><span class="icon" style="background:var(--fire-glow);color:var(--fire-500);">Z</span> Zonas de Monitoreo</h2>
+      <span style="font-size:0.7rem;color:var(--text-muted);">5 estaciones activas</span>
+    </div>
+    <div class="card-body">
+      <div class="zones-grid" id="zones-grid">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== MAP (2 columns) ===== -->
+  <section class="card card-span2">
+    <div class="card-header">
+      <h2><span class="icon" style="background:rgba(59,130,246,0.15);color:var(--blue-400);">M</span> Mapa de Incidentes</h2>
+      <span style="font-size:0.7rem;color:var(--text-muted);">Leaflet + CartoDB Dark</span>
+    </div>
+    <div class="card-body">
+      <div id="map"></div>
+    </div>
+  </section>
+
+  <!-- ===== dNBR PANEL ===== -->
+  <section class="card">
+    <div class="card-header">
+      <h2><span class="icon" style="background:rgba(251,191,36,0.15);color:var(--amber-400);">S</span> Severidad dNBR</h2>
+    </div>
+    <div class="card-body">
+      <div class="severity-legend" id="severity-legend">
+        <!-- Populated by JS -->
+      </div>
+      <div class="chart-container">
+        <canvas id="dnbr-chart"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== INCIDENT TIMELINE (2 columns) ===== -->
+  <section class="card card-span2">
+    <div class="card-header">
+      <h2><span class="icon" style="background:rgba(192,132,252,0.15);color:var(--purple-400);">T</span> Linea Temporal de Incidentes</h2>
+      <span style="font-size:0.7rem;color:var(--text-muted);">Ultimos 14 dias</span>
+    </div>
+    <div class="card-body">
+      <div class="timeline-container">
+        <canvas id="timeline-chart"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== CUSSEN-INCENDIO CALCULATOR ===== -->
+  <section class="card">
+    <div class="card-header">
+      <h2><span class="icon" style="background:var(--fire-glow);color:var(--fire-500);">IC</span> Calculadora CUSSEN-Incendio v2.0</h2>
+    </div>
+    <div class="card-body">
+      <div class="calc-form">
+        <div class="calc-field">
+          <label>NIR (B8) Reflectancia</label>
+          <input type="number" id="calc-nir" step="0.001" min="0" max="1" placeholder="0.35" value="0.35">
+        </div>
+        <div class="calc-field">
+          <label>SWIR2 (B12) Reflectancia</label>
+          <input type="number" id="calc-swir" step="0.001" min="0" max="1" placeholder="0.25" value="0.25">
+        </div>
+        <div class="calc-field">
+          <label>Red (B4) Reflectancia</label>
+          <input type="number" id="calc-red" step="0.001" min="0" max="1" placeholder="0.10" value="0.10">
+        </div>
+      </div>
+      <button class="btn-fire" onclick="calculateIC()">Calcular Indice CUSSEN</button>
+      <div class="calc-result" id="calc-result" style="margin-top:0.75rem;">
+        <div style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;">Indice CUSSEN-Incendio</div>
+        <div class="calc-result-value" id="calc-value">--</div>
+        <div class="calc-result-class" id="calc-class">Ingrese valores para calcular</div>
+      </div>
+      <div class="calc-formula">
+        IC = (1.2*NIR - 1.5*SWIR2 - 0.8*Red) / (1.2*NIR + 1.5*SWIR2 + 0.8*Red)
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== WEATHER PANEL ===== -->
+  <section class="card">
+    <div class="card-header">
+      <h2><span class="icon" style="background:rgba(96,165,250,0.15);color:var(--blue-400);">W</span> Clima y Viento</h2>
+      <span style="font-size:0.7rem;color:var(--text-muted);" id="weather-time">--</span>
+    </div>
+    <div class="card-body">
+      <div class="weather-grid">
+        <div class="weather-item">
+          <div class="weather-value" id="w-temp">28&deg;C</div>
+          <div class="weather-label">Temperatura</div>
+        </div>
+        <div class="weather-item">
+          <div class="weather-value" id="w-humidity">32%</div>
+          <div class="weather-label">Humedad</div>
+        </div>
+        <div class="weather-item">
+          <div class="weather-value" id="w-speed">24 km/h</div>
+          <div class="weather-label">Vel. Viento</div>
+        </div>
+        <div class="weather-item">
+          <div class="weather-value" id="w-gusts">38 km/h</div>
+          <div class="weather-label">Rafagas</div>
+        </div>
+        <div class="compass-container">
+          <svg class="compass-svg" viewBox="0 0 140 140" id="compass-svg">
+            <circle cx="70" cy="70" r="65" fill="none" stroke="#333" stroke-width="1.5"/>
+            <circle cx="70" cy="70" r="45" fill="none" stroke="#222" stroke-width="1" stroke-dasharray="3,3"/>
+            <text x="70" y="16" text-anchor="middle" fill="#aaa" font-size="10" font-weight="700">N</text>
+            <text x="70" y="132" text-anchor="middle" fill="#666" font-size="9">S</text>
+            <text x="130" y="74" text-anchor="middle" fill="#666" font-size="9">E</text>
+            <text x="10" y="74" text-anchor="middle" fill="#666" font-size="9">O</text>
+            <g id="compass-needle" transform="rotate(225, 70, 70)">
+              <polygon points="70,20 64,70 76,70" fill="var(--fire-500)" opacity="0.9"/>
+              <polygon points="70,120 64,70 76,70" fill="#444" opacity="0.6"/>
+              <circle cx="70" cy="70" r="5" fill="#fff" stroke="var(--fire-500)" stroke-width="2"/>
+            </g>
+          </svg>
+          <div style="margin-left:1rem;text-align:center;">
+            <div style="font-size:1.1rem;font-weight:900;color:var(--fire-500);" id="w-dir">SO</div>
+            <div style="font-size:0.65rem;color:var(--text-muted);">DIRECCION</div>
+            <div style="font-size:0.75rem;color:var(--text-secondary);margin-top:0.3rem;" id="w-dir-deg">225&deg;</div>
+          </div>
+        </div>
+        <div class="fwi-gauge">
+          <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Indice de Peligro de Incendio (FWI)</div>
+          <div class="fwi-bar">
+            <div class="fwi-indicator" id="fwi-indicator" style="left:68%;"></div>
+          </div>
+          <div class="fwi-labels">
+            <span>Bajo</span><span>Moderado</span><span>Alto</span><span>Muy Alto</span><span>Extremo</span>
+          </div>
+          <div style="font-size:1.4rem;font-weight:900;color:var(--orange-500);margin-top:0.3rem;" id="fwi-value">27.4</div>
+          <div style="font-size:0.7rem;color:var(--text-muted);">ALTO</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== RESOURCE ALLOCATION (2 columns) ===== -->
+  <section class="card card-span2">
+    <div class="card-header">
+      <h2><span class="icon" style="background:rgba(34,197,94,0.15);color:var(--green-400);">R</span> Asignacion de Recursos</h2>
+      <span style="font-size:0.7rem;color:var(--text-muted);">Arrastre para asignar</span>
+    </div>
+    <div class="card-body">
+      <div class="resources-grid" id="resources-grid">
+        <!-- Populated by JS -->
+      </div>
+      <div style="font-size:0.72rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin-bottom:0.5rem;">Zonas de Despliegue</div>
+      <div class="deployment-zones" id="deployment-zones">
+        <!-- Populated by JS -->
+      </div>
+      <div class="resources-total" id="resources-total">
+        <span>Total desplegados: <strong id="total-deployed">0</strong></span>
+        <span>Total disponibles: <strong id="total-available">0</strong></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== ALERT LOG ===== -->
+  <section class="card">
+    <div class="card-header">
+      <h2><span class="icon" style="background:rgba(251,191,36,0.15);color:var(--amber-400);">!</span> Registro de Alertas</h2>
+      <span style="font-size:0.7rem;color:var(--text-muted);" id="alert-count">0 alertas</span>
+    </div>
+    <div class="card-body">
+      <div class="alert-actions" style="margin-bottom:0.75rem;">
+        <button class="btn-sm" onclick="addSimulatedAlert()">+ Simular Alerta</button>
+        <button class="btn-sm" onclick="clearAlerts()">Limpiar</button>
+      </div>
+      <div class="alert-log" id="alert-log">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== REPORT GENERATOR (full width) ===== -->
+  <section class="card card-full">
+    <div class="card-header">
+      <h2><span class="icon" style="background:rgba(192,132,252,0.15);color:var(--purple-400);">R</span> Generador de Reportes</h2>
+    </div>
+    <div class="card-body" style="text-align:center;">
+      <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:1rem;">
+        Genera un reporte completo con todos los datos actuales del sistema de monitoreo.
+      </p>
+      <button class="btn-report" onclick="generateReport()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        Generar Reporte
+      </button>
+      <button class="btn-print" id="btn-print" onclick="window.print()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Imprimir Reporte
+      </button>
+      <pre class="report-preview" id="report-preview"></pre>
+    </div>
+  </section>
+
+</main>
+
+<!-- ===== FOOTER ===== -->
+<footer class="footer">
+  CUSSEN Framework v3.0 &mdash; Monitoreo Satelital de Incendios &mdash; Pablo Cussen &mdash;
+  <a href="https://cussen.cl" target="_blank">cussen.cl</a>
+</footer>
+
+<!-- ===== SCRIPTS ===== -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// ============================================================
+// DATA MODEL
+// ============================================================
+const ZONES = [
+  {
+    id: 'concepcion',
+    name: 'Concepcion Centro',
+    lat: -36.83, lng: -72.95,
+    status: 'alerta',
+    dnbr: 0.32,
+    ndvi: 0.41,
+    lastUpdate: new Date(Date.now() - 12 * 60000),
+    description: 'Foco activo sector cerro Caracol'
+  },
+  {
+    id: 'tome',
+    name: 'Tome',
+    lat: -36.62, lng: -72.96,
+    status: 'critico',
+    dnbr: 0.58,
+    ndvi: 0.22,
+    lastUpdate: new Date(Date.now() - 3 * 60000),
+    description: 'Incendio forestal en expansion'
+  },
+  {
+    id: 'penco',
+    name: 'Penco',
+    lat: -36.74, lng: -72.99,
+    status: 'normal',
+    dnbr: 0.05,
+    ndvi: 0.68,
+    lastUpdate: new Date(Date.now() - 45 * 60000),
+    description: 'Sin actividad detectada'
+  },
+  {
+    id: 'coronel',
+    name: 'Coronel',
+    lat: -37.03, lng: -73.15,
+    status: 'alerta',
+    dnbr: 0.38,
+    ndvi: 0.35,
+    lastUpdate: new Date(Date.now() - 8 * 60000),
+    description: 'Quema controlada bajo vigilancia'
+  },
+  {
+    id: 'talcahuano',
+    name: 'Talcahuano',
+    lat: -36.72, lng: -73.12,
+    status: 'normal',
+    dnbr: -0.02,
+    ndvi: 0.72,
+    lastUpdate: new Date(Date.now() - 60 * 60000),
+    description: 'Vegetacion saludable'
+  }
+];
+
+const SEVERITY_CLASSES = [
+  { label: 'Rebrote Alto', min: -Infinity, max: -0.1, color: '#166534' },
+  { label: 'Sin Quemar', min: -0.1, max: 0.1, color: '#4ade80' },
+  { label: 'Severidad Baja', min: 0.1, max: 0.27, color: '#fbbf24' },
+  { label: 'Severidad Moderada-Baja', min: 0.27, max: 0.44, color: '#f97316' },
+  { label: 'Severidad Moderada-Alta', min: 0.44, max: 0.66, color: '#ea580c' },
+  { label: 'Severidad Alta', min: 0.66, max: Infinity, color: '#dc2626' }
+];
+
+const RESOURCES = [
+  { id: 'brigadas', name: 'Brigadas', icon: '\u{1F9D1}\u200D\u{1F692}', total: 8, available: 5 },
+  { id: 'helicopteros', name: 'Helicopteros', icon: '\u{1F681}', total: 3, available: 2 },
+  { id: 'camiones', name: 'Camiones', icon: '\u{1F692}', total: 12, available: 7 },
+  { id: 'personal', name: 'Personal', icon: '\u{1F468}\u200D\u{1F692}', total: 120, available: 75 }
+];
+
+const WEATHER = {
+  temp: 28, humidity: 32, speed: 24, gusts: 38,
+  direction: 225, dirLabel: 'SO',
+  fwi: 27.4, fwiLevel: 'ALTO'
+};
+
+let deployments = {};
+let alerts = [];
+
+// ============================================================
+// CLOCK
+// ============================================================
+function updateClock() {
+  const now = new Date();
+  const opts = { timeZone: 'America/Santiago' };
+  const timeStr = now.toLocaleTimeString('es-CL', { ...opts, hour12: false });
+  const dateStr = now.toLocaleDateString('es-CL', {
+    ...opts, weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  });
+  document.getElementById('clock').textContent = timeStr;
+  document.getElementById('clock-date').textContent = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ============================================================
+// ALERT LEVEL
+// ============================================================
+function updateAlertLevel() {
+  const el = document.getElementById('alert-level');
+  const txt = document.getElementById('alert-level-text');
+  const hasCritico = ZONES.some(z => z.status === 'critico');
+  const hasAlerta = ZONES.some(z => z.status === 'alerta');
+  const critCount = ZONES.filter(z => z.status === 'critico').length;
+
+  el.className = 'alert-level';
+  if (critCount >= 2) {
+    el.classList.add('alert-emergencia'); txt.textContent = 'EMERGENCIA';
+  } else if (hasCritico) {
+    el.classList.add('alert-critico'); txt.textContent = 'CRITICO';
+  } else if (hasAlerta) {
+    el.classList.add('alert-elevado'); txt.textContent = 'ELEVADO';
+  } else {
+    el.classList.add('alert-normal'); txt.textContent = 'NORMAL';
+  }
+}
+
+// ============================================================
+// ZONES PANEL
+// ============================================================
+function renderZones() {
+  const grid = document.getElementById('zones-grid');
+  grid.innerHTML = ZONES.map(z => {
+    const badgeClass = z.status === 'normal' ? 'badge-normal' : z.status === 'alerta' ? 'badge-alerta' : 'badge-critico';
+    const statusLabel = z.status.charAt(0).toUpperCase() + z.status.slice(1);
+    const timeAgo = getTimeAgo(z.lastUpdate);
+    return `
+      <div class="zone-card ${z.status}">
+        <div class="zone-name">
+          ${z.name}
+          <span class="zone-badge ${badgeClass}">${statusLabel}</span>
+        </div>
+        <div style="font-size:0.72rem;color:var(--text-secondary);margin-bottom:0.4rem;">${z.description}</div>
+        <div class="zone-metrics">
+          <div class="zone-metric">
+            <div class="zone-metric-label">dNBR</div>
+            <div class="zone-metric-value" style="color:${getDnbrColor(z.dnbr)}">${z.dnbr.toFixed(2)}</div>
+          </div>
+          <div class="zone-metric">
+            <div class="zone-metric-label">NDVI</div>
+            <div class="zone-metric-value" style="color:${getNdviColor(z.ndvi)}">${z.ndvi.toFixed(2)}</div>
+          </div>
+          <div class="zone-metric">
+            <div class="zone-metric-label">Latitud</div>
+            <div class="zone-metric-value">${z.lat.toFixed(2)}</div>
+          </div>
+          <div class="zone-metric">
+            <div class="zone-metric-label">Longitud</div>
+            <div class="zone-metric-value">${z.lng.toFixed(2)}</div>
+          </div>
+        </div>
+        <div class="zone-update">Ultima actualizacion: ${timeAgo}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function getDnbrColor(v) {
+  if (v < -0.1) return '#166534';
+  if (v < 0.1) return '#4ade80';
+  if (v < 0.27) return '#fbbf24';
+  if (v < 0.44) return '#f97316';
+  if (v < 0.66) return '#ea580c';
+  return '#dc2626';
+}
+
+function getNdviColor(v) {
+  if (v > 0.6) return '#4ade80';
+  if (v > 0.4) return '#fbbf24';
+  if (v > 0.2) return '#f97316';
+  return '#dc2626';
+}
+
+function getTimeAgo(date) {
+  const diff = Math.floor((Date.now() - date.getTime()) / 60000);
+  if (diff < 1) return 'Ahora';
+  if (diff < 60) return `Hace ${diff} min`;
+  const hrs = Math.floor(diff / 60);
+  return `Hace ${hrs}h ${diff % 60}min`;
+}
+
+function getSeverityLabel(dnbr) {
+  for (const s of SEVERITY_CLASSES) {
+    if (dnbr >= s.min && dnbr < s.max) return s.label;
+  }
+  return 'Desconocido';
+}
+
+// ============================================================
+// MAP
+// ============================================================
+let map;
+function initMap() {
+  map = L.map('map', {
+    center: [-36.82, -73.05],
+    zoom: 11,
+    zoomControl: true
+  });
+
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
+    subdomains: 'abcd',
+    maxZoom: 19
+  }).addTo(map);
+
+  // Zone markers
+  ZONES.forEach(z => {
+    const color = z.status === 'normal' ? '#22c55e' : z.status === 'alerta' ? '#f59e0b' : '#ef4444';
+    const radius = z.status === 'critico' ? 12 : z.status === 'alerta' ? 10 : 8;
+
+    const marker = L.circleMarker([z.lat, z.lng], {
+      radius: radius,
+      fillColor: color,
+      color: color,
+      weight: 2,
+      opacity: 0.9,
+      fillOpacity: 0.4
+    }).addTo(map);
+
+    marker.bindPopup(`
+      <div class="popup-title">${z.name}</div>
+      <div class="popup-row"><span class="popup-label">Estado:</span><span class="popup-value" style="color:${color}">${z.status.toUpperCase()}</span></div>
+      <div class="popup-row"><span class="popup-label">dNBR:</span><span class="popup-value">${z.dnbr.toFixed(2)}</span></div>
+      <div class="popup-row"><span class="popup-label">NDVI:</span><span class="popup-value">${z.ndvi.toFixed(2)}</span></div>
+      <div class="popup-row"><span class="popup-label">Severidad:</span><span class="popup-value">${getSeverityLabel(z.dnbr)}</span></div>
+      <div class="popup-row"><span class="popup-label">Coord:</span><span class="popup-value">${z.lat.toFixed(4)}, ${z.lng.toFixed(4)}</span></div>
+      <div style="margin-top:0.3rem;font-size:0.7rem;color:#888;">${z.description}</div>
+    `);
+
+    // Pulsing effect for critical zones
+    if (z.status === 'critico') {
+      L.circleMarker([z.lat, z.lng], {
+        radius: radius + 8,
+        fillColor: color,
+        color: color,
+        weight: 1,
+        opacity: 0.3,
+        fillOpacity: 0.1,
+        className: 'pulse-marker'
+      }).addTo(map);
+    }
+  });
+
+  // Fire perimeter polygon (around Tome area)
+  const firePerimeter = L.polygon([
+    [-36.60, -72.98],
+    [-36.59, -72.93],
+    [-36.62, -72.91],
+    [-36.65, -72.93],
+    [-36.64, -72.97],
+    [-36.62, -72.99]
+  ], {
+    color: '#ef4444',
+    weight: 2,
+    fillColor: '#ef4444',
+    fillOpacity: 0.12,
+    dashArray: '8, 4'
+  }).addTo(map);
+  firePerimeter.bindPopup('<div class="popup-title">Perimetro de Incendio</div><div style="font-size:0.8rem;">Area afectada estimada: ~420 ha<br>Estado: En expansion</div>');
+
+  // Secondary perimeter (Coronel)
+  const firePerimeter2 = L.polygon([
+    [-37.01, -73.17],
+    [-37.00, -73.13],
+    [-37.03, -73.12],
+    [-37.05, -73.14],
+    [-37.04, -73.18]
+  ], {
+    color: '#f59e0b',
+    weight: 2,
+    fillColor: '#f59e0b',
+    fillOpacity: 0.08,
+    dashArray: '6, 4'
+  }).addTo(map);
+  firePerimeter2.bindPopup('<div class="popup-title">Perimetro Quema Controlada</div><div style="font-size:0.8rem;">Area: ~85 ha<br>Estado: Bajo vigilancia</div>');
+
+  // Wind direction arrow overlay
+  const windIcon = L.divIcon({
+    html: `<svg width="30" height="30" viewBox="0 0 30 30" style="transform:rotate(${WEATHER.direction}deg)">
+      <polygon points="15,2 10,25 15,20 20,25" fill="#60a5fa" opacity="0.7"/>
+    </svg>`,
+    className: '',
+    iconSize: [30, 30],
+    iconAnchor: [15, 15]
+  });
+  L.marker([-36.78, -73.05], { icon: windIcon }).addTo(map)
+    .bindPopup('<div class="popup-title">Direccion del Viento</div><div style="font-size:0.8rem;">SO 225&deg; | 24 km/h</div>');
+}
+
+// ============================================================
+// dNBR SEVERITY PANEL
+// ============================================================
+function renderSeverityLegend() {
+  const container = document.getElementById('severity-legend');
+  const rangeLabels = ['< -0.1', '-0.1 a 0.1', '0.1 a 0.27', '0.27 a 0.44', '0.44 a 0.66', '> 0.66'];
+  container.innerHTML = SEVERITY_CLASSES.map((s, i) => `
+    <div class="severity-row">
+      <div class="severity-swatch" style="background:${s.color}"></div>
+      <span>${s.label}</span>
+      <span class="severity-range">${rangeLabels[i]}</span>
+    </div>
+  `).join('');
+}
+
+let dnbrChart;
+function initDnbrChart() {
+  const distribution = [5, 15, 25, 30, 18, 7]; // simulated percentages
+  const ctx = document.getElementById('dnbr-chart').getContext('2d');
+  dnbrChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: SEVERITY_CLASSES.map(s => s.label),
+      datasets: [{
+        data: distribution,
+        backgroundColor: SEVERITY_CLASSES.map(s => s.color),
+        borderColor: '#1a1a1a',
+        borderWidth: 2,
+        hoverBorderColor: '#fff',
+        hoverBorderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '55%',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1a1a1a',
+          titleColor: '#f0f0f0',
+          bodyColor: '#a0a0a0',
+          borderColor: '#333',
+          borderWidth: 1,
+          callbacks: {
+            label: function(ctx) {
+              return ` ${ctx.label}: ${ctx.raw}%`;
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+// ============================================================
+// TIMELINE CHART
+// ============================================================
+let timelineChart;
+function initTimelineChart() {
+  const days = [];
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date(Date.now() - i * 86400000);
+    days.push(d.toLocaleDateString('es-CL', { day: '2-digit', month: 'short' }));
+  }
+
+  // Simulated severity progression per zone
+  const datasets = [
+    {
+      label: 'Tome',
+      data: [0.05, 0.08, 0.15, 0.22, 0.31, 0.42, 0.55, 0.61, 0.58, 0.56, 0.58, 0.57, 0.58, 0.58],
+      borderColor: '#ef4444',
+      backgroundColor: 'rgba(239,68,68,0.1)',
+      fill: true,
+      tension: 0.3,
+      pointRadius: 2,
+      pointHoverRadius: 5,
+      borderWidth: 2
+    },
+    {
+      label: 'Concepcion',
+      data: [0.02, 0.03, 0.04, 0.08, 0.12, 0.18, 0.25, 0.30, 0.33, 0.32, 0.32, 0.31, 0.32, 0.32],
+      borderColor: '#f59e0b',
+      backgroundColor: 'rgba(245,158,11,0.05)',
+      fill: true,
+      tension: 0.3,
+      pointRadius: 2,
+      pointHoverRadius: 5,
+      borderWidth: 2
+    },
+    {
+      label: 'Coronel',
+      data: [0.01, 0.02, 0.03, 0.05, 0.10, 0.18, 0.28, 0.35, 0.38, 0.39, 0.38, 0.38, 0.38, 0.38],
+      borderColor: '#fb923c',
+      backgroundColor: 'rgba(251,146,60,0.05)',
+      fill: true,
+      tension: 0.3,
+      pointRadius: 2,
+      pointHoverRadius: 5,
+      borderWidth: 2
+    },
+    {
+      label: 'Penco',
+      data: [0.04, 0.04, 0.05, 0.05, 0.06, 0.06, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05],
+      borderColor: '#4ade80',
+      backgroundColor: 'rgba(74,222,128,0.03)',
+      fill: true,
+      tension: 0.3,
+      pointRadius: 2,
+      pointHoverRadius: 5,
+      borderWidth: 2
+    },
+    {
+      label: 'Talcahuano',
+      data: [-0.02, -0.01, -0.02, -0.01, -0.02, -0.02, -0.01, -0.02, -0.02, -0.02, -0.02, -0.02, -0.02, -0.02],
+      borderColor: '#22c55e',
+      backgroundColor: 'rgba(34,197,94,0.03)',
+      fill: true,
+      tension: 0.3,
+      pointRadius: 2,
+      pointHoverRadius: 5,
+      borderWidth: 2
+    }
+  ];
+
+  const ctx = document.getElementById('timeline-chart').getContext('2d');
+  timelineChart = new Chart(ctx, {
+    type: 'line',
+    data: { labels: days, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      scales: {
+        x: {
+          grid: { color: 'rgba(255,255,255,0.05)' },
+          ticks: { color: '#666', font: { size: 10 } }
+        },
+        y: {
+          grid: { color: 'rgba(255,255,255,0.05)' },
+          ticks: { color: '#666', font: { size: 10 } },
+          title: { display: true, text: 'dNBR', color: '#888', font: { size: 11 } },
+          min: -0.15,
+          max: 0.75
+        }
+      },
+      plugins: {
+        legend: {
+          labels: { color: '#aaa', boxWidth: 12, font: { size: 11 } },
+          position: 'top'
+        },
+        tooltip: {
+          backgroundColor: '#1a1a1a',
+          titleColor: '#f0f0f0',
+          bodyColor: '#a0a0a0',
+          borderColor: '#333',
+          borderWidth: 1
+        },
+        annotation: undefined
+      }
+    },
+    plugins: [{
+      id: 'customAnnotations',
+      afterDraw(chart) {
+        const ctx = chart.ctx;
+        const xScale = chart.scales.x;
+        const yScale = chart.scales.y;
+
+        // Detection annotation (day index 2)
+        drawAnnotation(ctx, xScale, yScale, 2, 0.15, 'Deteccion', '#60a5fa');
+        // Peak annotation (day index 7)
+        drawAnnotation(ctx, xScale, yScale, 7, 0.61, 'Pico', '#ef4444');
+        // Containment annotation (day index 10)
+        drawAnnotation(ctx, xScale, yScale, 10, 0.56, 'Contencion', '#f59e0b');
+      }
+    }]
+  });
+}
+
+function drawAnnotation(ctx, xScale, yScale, xIdx, yVal, label, color) {
+  const x = xScale.getPixelForValue(xIdx);
+  const y = yScale.getPixelForValue(yVal);
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(x, y, 4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#111';
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1;
+  ctx.font = 'bold 9px system-ui';
+  const w = ctx.measureText(label).width + 8;
+  const bx = x - w / 2;
+  const by = y - 22;
+  ctx.fillStyle = '#1a1a1a';
+  ctx.strokeStyle = color;
+  ctx.beginPath();
+  ctx.roundRect(bx, by, w, 16, 3);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = color;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(label, x, by + 8);
+  ctx.restore();
+}
+
+// ============================================================
+// CUSSEN-INCENDIO CALCULATOR
+// ============================================================
+function calculateIC() {
+  const nir = parseFloat(document.getElementById('calc-nir').value);
+  const swir = parseFloat(document.getElementById('calc-swir').value);
+  const red = parseFloat(document.getElementById('calc-red').value);
+
+  if (isNaN(nir) || isNaN(swir) || isNaN(red)) {
+    document.getElementById('calc-value').textContent = 'ERROR';
+    document.getElementById('calc-class').textContent = 'Valores invalidos';
+    document.getElementById('calc-class').style.color = 'var(--fire-500)';
+    return;
+  }
+
+  const wNir = 1.2, wSwir = 1.5, wRed = 0.8;
+  const numerator = wNir * nir - wSwir * swir - wRed * red;
+  const denominator = wNir * nir + wSwir * swir + wRed * red;
+
+  if (denominator === 0) {
+    document.getElementById('calc-value').textContent = 'N/D';
+    document.getElementById('calc-class').textContent = 'Division por cero';
+    document.getElementById('calc-class').style.color = 'var(--fire-500)';
+    return;
+  }
+
+  const ic = numerator / denominator;
+  document.getElementById('calc-value').textContent = ic.toFixed(4);
+
+  let classification, color;
+  if (ic > 0.3) {
+    classification = 'Vegetacion Saludable';
+    color = '#4ade80';
+  } else if (ic > 0.1) {
+    classification = 'Estres Leve';
+    color = '#fbbf24';
+  } else if (ic > -0.1) {
+    classification = 'Zona de Transicion';
+    color = '#f97316';
+  } else if (ic > -0.3) {
+    classification = 'Area Quemada';
+    color = '#ea580c';
+  } else {
+    classification = 'Quemado Severo';
+    color = '#dc2626';
+  }
+
+  document.getElementById('calc-value').style.color = color;
+  document.getElementById('calc-class').textContent = classification;
+  document.getElementById('calc-class').style.color = color;
+
+  addAlert('info', `Calculo IC completado: ${ic.toFixed(4)} (${classification})`);
+}
+
+// ============================================================
+// RESOURCES
+// ============================================================
+let draggedResource = null;
+
+function renderResources() {
+  const grid = document.getElementById('resources-grid');
+  grid.innerHTML = RESOURCES.map(r => `
+    <div class="resource-card" draggable="true"
+         ondragstart="onDragStart(event, '${r.id}')"
+         ondragend="onDragEnd(event)">
+      <div class="resource-icon">${r.icon}</div>
+      <div class="resource-name">${r.name}</div>
+      <div class="resource-count" id="res-avail-${r.id}">${r.available}</div>
+      <div class="resource-available">de ${r.total} disponibles</div>
+    </div>
+  `).join('');
+
+  const zones = document.getElementById('deployment-zones');
+  zones.innerHTML = ZONES.map(z => `
+    <div class="deploy-zone" id="deploy-${z.id}"
+         ondragover="onDragOver(event)"
+         ondragleave="onDragLeave(event)"
+         ondrop="onDrop(event, '${z.id}')">
+      <div class="deploy-zone-title">${z.name}</div>
+      <div class="deploy-zone-items" id="deploy-items-${z.id}"></div>
+    </div>
+  `).join('');
+
+  // Init deployments
+  ZONES.forEach(z => {
+    if (!deployments[z.id]) deployments[z.id] = [];
+  });
+
+  // Pre-deploy some resources for realism
+  if (Object.values(deployments).every(d => d.length === 0)) {
+    deployResource('tome', 'brigadas');
+    deployResource('tome', 'brigadas');
+    deployResource('tome', 'helicopteros');
+    deployResource('tome', 'camiones');
+    deployResource('tome', 'camiones');
+    deployResource('tome', 'personal');
+    deployResource('concepcion', 'brigadas');
+    deployResource('concepcion', 'camiones');
+    deployResource('concepcion', 'camiones');
+    deployResource('concepcion', 'personal');
+    deployResource('coronel', 'camiones');
+    deployResource('coronel', 'personal');
+  }
+
+  renderDeployments();
+}
+
+function deployResource(zoneId, resId) {
+  const res = RESOURCES.find(r => r.id === resId);
+  if (!res || res.available <= 0) return false;
+  res.available--;
+  deployments[zoneId].push(resId);
+  return true;
+}
+
+function undeployResource(zoneId, index) {
+  const resId = deployments[zoneId][index];
+  const res = RESOURCES.find(r => r.id === resId);
+  if (res) res.available++;
+  deployments[zoneId].splice(index, 1);
+  renderDeployments();
+  renderResourceCounts();
+}
+
+function renderDeployments() {
+  ZONES.forEach(z => {
+    const container = document.getElementById(`deploy-items-${z.id}`);
+    if (!container) return;
+    const items = deployments[z.id] || [];
+    container.innerHTML = items.map((resId, i) => {
+      const res = RESOURCES.find(r => r.id === resId);
+      return `<span class="deploy-tag" onclick="undeployResource('${z.id}', ${i})" title="Clic para remover">${res ? res.icon : ''} ${res ? res.name : resId}</span>`;
+    }).join('');
+  });
+  renderResourceCounts();
+  updateResourceTotals();
+}
+
+function renderResourceCounts() {
+  RESOURCES.forEach(r => {
+    const el = document.getElementById(`res-avail-${r.id}`);
+    if (el) el.textContent = r.available;
+  });
+}
+
+function updateResourceTotals() {
+  let totalDeployed = 0;
+  Object.values(deployments).forEach(d => totalDeployed += d.length);
+  const totalAvailable = RESOURCES.reduce((sum, r) => sum + r.available, 0);
+  document.getElementById('total-deployed').textContent = totalDeployed;
+  document.getElementById('total-available').textContent = totalAvailable;
+}
+
+function onDragStart(e, resId) {
+  draggedResource = resId;
+  e.target.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+
+function onDragEnd(e) {
+  e.target.classList.remove('dragging');
+  draggedResource = null;
+}
+
+function onDragOver(e) {
+  e.preventDefault();
+  e.currentTarget.classList.add('drag-over');
+}
+
+function onDragLeave(e) {
+  e.currentTarget.classList.remove('drag-over');
+}
+
+function onDrop(e, zoneId) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if (draggedResource) {
+    const success = deployResource(zoneId, draggedResource);
+    if (success) {
+      const res = RESOURCES.find(r => r.id === draggedResource);
+      const zone = ZONES.find(z => z.id === zoneId);
+      addAlert('info', `${res.name} desplegado en ${zone.name}`);
+    }
+    renderDeployments();
+  }
+}
+
+// ============================================================
+// WEATHER (simulated updates)
+// ============================================================
+function updateWeather() {
+  // Small random fluctuations
+  WEATHER.temp = clamp(WEATHER.temp + (Math.random() - 0.5) * 0.8, 22, 35);
+  WEATHER.humidity = clamp(WEATHER.humidity + (Math.random() - 0.5) * 2, 15, 60);
+  WEATHER.speed = clamp(WEATHER.speed + (Math.random() - 0.5) * 3, 5, 50);
+  WEATHER.gusts = clamp(WEATHER.speed + 8 + Math.random() * 10, WEATHER.speed, 65);
+  WEATHER.direction = (WEATHER.direction + (Math.random() - 0.5) * 8 + 360) % 360;
+  WEATHER.fwi = clamp(WEATHER.fwi + (Math.random() - 0.5) * 1.5, 5, 50);
+
+  const dirs = ['N', 'NE', 'E', 'SE', 'S', 'SO', 'O', 'NO'];
+  WEATHER.dirLabel = dirs[Math.round(WEATHER.direction / 45) % 8];
+
+  document.getElementById('w-temp').innerHTML = `${Math.round(WEATHER.temp)}&deg;C`;
+  document.getElementById('w-humidity').textContent = `${Math.round(WEATHER.humidity)}%`;
+  document.getElementById('w-speed').textContent = `${Math.round(WEATHER.speed)} km/h`;
+  document.getElementById('w-gusts').textContent = `${Math.round(WEATHER.gusts)} km/h`;
+  document.getElementById('w-dir').textContent = WEATHER.dirLabel;
+  document.getElementById('w-dir-deg').innerHTML = `${Math.round(WEATHER.direction)}&deg;`;
+
+  // Compass needle rotation
+  document.getElementById('compass-needle').setAttribute('transform', `rotate(${Math.round(WEATHER.direction)}, 70, 70)`);
+
+  // FWI gauge
+  const fwiPct = clamp((WEATHER.fwi / 50) * 100, 0, 100);
+  document.getElementById('fwi-indicator').style.left = `${fwiPct}%`;
+  document.getElementById('fwi-value').textContent = WEATHER.fwi.toFixed(1);
+
+  let fwiLevel, fwiColor;
+  if (WEATHER.fwi < 10) { fwiLevel = 'BAJO'; fwiColor = 'var(--green-400)'; }
+  else if (WEATHER.fwi < 20) { fwiLevel = 'MODERADO'; fwiColor = 'var(--amber-400)'; }
+  else if (WEATHER.fwi < 30) { fwiLevel = 'ALTO'; fwiColor = 'var(--orange-400)'; }
+  else if (WEATHER.fwi < 40) { fwiLevel = 'MUY ALTO'; fwiColor = 'var(--fire-500)'; }
+  else { fwiLevel = 'EXTREMO'; fwiColor = '#fff'; }
+
+  document.getElementById('fwi-value').style.color = fwiColor;
+  document.getElementById('fwi-value').nextElementSibling.textContent = fwiLevel;
+
+  const now = new Date();
+  document.getElementById('weather-time').textContent = now.toLocaleTimeString('es-CL', { timeZone: 'America/Santiago', hour: '2-digit', minute: '2-digit' });
+}
+
+function clamp(val, min, max) { return Math.min(max, Math.max(min, val)); }
+
+// ============================================================
+// ALERT LOG
+// ============================================================
+function loadAlerts() {
+  try {
+    const stored = localStorage.getItem('cussen-fire-alerts');
+    if (stored) {
+      alerts = JSON.parse(stored);
+      // Convert stored date strings back
+      alerts.forEach(a => a.time = new Date(a.time));
+    }
+  } catch (e) { /* ignore */ }
+}
+
+function saveAlerts() {
+  try {
+    localStorage.setItem('cussen-fire-alerts', JSON.stringify(alerts));
+  } catch (e) { /* ignore */ }
+}
+
+function addAlert(severity, message) {
+  const alert = {
+    severity,
+    message,
+    time: new Date()
+  };
+  alerts.unshift(alert);
+  if (alerts.length > 100) alerts.pop();
+  saveAlerts();
+  renderAlerts();
+}
+
+function clearAlerts() {
+  alerts = [];
+  saveAlerts();
+  renderAlerts();
+}
+
+function renderAlerts() {
+  const container = document.getElementById('alert-log');
+  const icons = {
+    info: '<span class="alert-icon" style="color:var(--blue-400);">&#9432;</span>',
+    warning: '<span class="alert-icon" style="color:var(--amber-400);">&#9888;</span>',
+    critical: '<span class="alert-icon" style="color:var(--fire-500);">&#9888;</span>'
+  };
+
+  container.innerHTML = alerts.slice(0, 50).map(a => {
+    const timeStr = a.time instanceof Date
+      ? a.time.toLocaleTimeString('es-CL', { timeZone: 'America/Santiago', hour: '2-digit', minute: '2-digit', second: '2-digit' })
+      : new Date(a.time).toLocaleTimeString('es-CL', { timeZone: 'America/Santiago', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    return `
+      <div class="alert-entry ${a.severity}">
+        ${icons[a.severity] || icons.info}
+        <span class="alert-text">${a.message}</span>
+        <span class="alert-time">${timeStr}</span>
+      </div>
+    `;
+  }).join('');
+
+  document.getElementById('alert-count').textContent = `${alerts.length} alertas`;
+}
+
+const SIMULATED_ALERTS = [
+  { severity: 'critical', msg: 'Incremento brusco de temperatura en zona Tome (+3.2C en 15 min)' },
+  { severity: 'warning', msg: 'Velocidad del viento supera 35 km/h en sector Coronel' },
+  { severity: 'info', msg: 'Actualizacion de imagen Sentinel-2 recibida (pasada 10:30 UTC)' },
+  { severity: 'critical', msg: 'Nuevo foco detectado: dNBR > 0.5 en cuadrante Tome-Norte' },
+  { severity: 'warning', msg: 'Humedad relativa bajo 25% — riesgo elevado de propagacion' },
+  { severity: 'info', msg: 'Brigada B-03 reporta perimetro estabilizado en sector Sur' },
+  { severity: 'critical', msg: 'Expansion del perimetro detectada: +15 ha en ultima hora' },
+  { severity: 'warning', msg: 'Cambio de direccion del viento: SO a NO — reevaluar rutas de evacuacion' },
+  { severity: 'info', msg: 'Helicoptero H-01 completando descarga de agua en zona critica' },
+  { severity: 'warning', msg: 'NDVI descendio 0.12 en 48h en estacion Concepcion Centro' },
+  { severity: 'info', msg: 'Informe meteorologico actualizado: sin lluvia prevista proximas 72h' },
+  { severity: 'critical', msg: 'Temperatura superficial anomala detectada via banda termica SWIR' }
+];
+
+function addSimulatedAlert() {
+  const a = SIMULATED_ALERTS[Math.floor(Math.random() * SIMULATED_ALERTS.length)];
+  addAlert(a.severity, a.msg);
+}
+
+// ============================================================
+// REPORT GENERATOR
+// ============================================================
+function generateReport() {
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('es-CL', {
+    timeZone: 'America/Santiago',
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  });
+  const timeStr = now.toLocaleTimeString('es-CL', {
+    timeZone: 'America/Santiago', hour12: false
+  });
+
+  let report = `================================================================
+  CUSSEN FIRE MONITOR v3.0 — REPORTE DE SITUACION
+  Monitoreo Satelital de Incendios Forestales
+  Region del Bio-Bio, Chile
+================================================================
+
+Fecha: ${dateStr}
+Hora:  ${timeStr} (Chile/Santiago)
+Generado por: Sistema CUSSEN Fire Monitor
+
+----------------------------------------------------------------
+  NIVEL DE ALERTA GENERAL: ${document.getElementById('alert-level-text').textContent}
+----------------------------------------------------------------
+
+=== ESTADO DE ZONAS DE MONITOREO ===
+`;
+
+  ZONES.forEach(z => {
+    report += `
+  ${z.name.toUpperCase()}
+  ├ Coordenadas: ${z.lat.toFixed(4)}, ${z.lng.toFixed(4)}
+  ├ Estado: ${z.status.toUpperCase()}
+  ├ dNBR: ${z.dnbr.toFixed(2)} (${getSeverityLabel(z.dnbr)})
+  ├ NDVI: ${z.ndvi.toFixed(2)}
+  ├ Descripcion: ${z.description}
+  └ Ultima act.: ${getTimeAgo(z.lastUpdate)}
+`;
+  });
+
+  report += `
+=== CONDICIONES METEOROLOGICAS ===
+
+  Temperatura:      ${Math.round(WEATHER.temp)}C
+  Humedad Relativa: ${Math.round(WEATHER.humidity)}%
+  Viento:           ${Math.round(WEATHER.speed)} km/h (rafagas ${Math.round(WEATHER.gusts)} km/h)
+  Direccion:        ${WEATHER.dirLabel} (${Math.round(WEATHER.direction)})
+  Indice FWI:       ${WEATHER.fwi.toFixed(1)}
+
+=== RECURSOS DESPLEGADOS ===
+`;
+
+  ZONES.forEach(z => {
+    const items = deployments[z.id] || [];
+    if (items.length > 0) {
+      report += `\n  ${z.name}: `;
+      const counts = {};
+      items.forEach(r => { counts[r] = (counts[r] || 0) + 1; });
+      report += Object.entries(counts).map(([id, count]) => {
+        const res = RESOURCES.find(r => r.id === id);
+        return `${res ? res.name : id} x${count}`;
+      }).join(', ');
+    }
+  });
+
+  report += `
+
+=== RESUMEN DE RECURSOS ===
+`;
+  RESOURCES.forEach(r => {
+    const deployed = r.total - r.available;
+    report += `  ${r.name}: ${deployed}/${r.total} desplegados (${r.available} disponibles)\n`;
+  });
+
+  report += `
+=== CLASIFICACION dNBR ACTUAL ===
+
+  Distribucion estimada del area monitoreada:
+  - Rebrote Alto:            5%
+  - Sin Quemar:              15%
+  - Severidad Baja:          25%
+  - Severidad Moderada-Baja: 30%
+  - Severidad Moderada-Alta: 18%
+  - Severidad Alta:          7%
+
+=== ALERTAS RECIENTES (ultimas 10) ===
+`;
+
+  alerts.slice(0, 10).forEach(a => {
+    const t = a.time instanceof Date ? a.time : new Date(a.time);
+    const ts = t.toLocaleTimeString('es-CL', { timeZone: 'America/Santiago', hour: '2-digit', minute: '2-digit' });
+    report += `  [${a.severity.toUpperCase().padEnd(8)}] ${ts} — ${a.message}\n`;
+  });
+
+  report += `
+================================================================
+  FIN DEL REPORTE
+  CUSSEN Framework v3.0 — Pablo Cussen — cussen.cl
+================================================================
+`;
+
+  const preview = document.getElementById('report-preview');
+  preview.textContent = report;
+  preview.classList.add('visible');
+  document.getElementById('btn-print').classList.add('visible');
+  document.getElementById('print-date').textContent = `Generado: ${dateStr} ${timeStr}`;
+
+  addAlert('info', 'Reporte de situacion generado exitosamente');
+}
+
+// ============================================================
+// ZONE STATUS SIMULATION (periodic updates)
+// ============================================================
+function simulateZoneUpdates() {
+  ZONES.forEach(z => {
+    // Small random dNBR fluctuations
+    z.dnbr += (Math.random() - 0.48) * 0.01;
+    z.dnbr = Math.round(z.dnbr * 100) / 100;
+
+    // NDVI inverse correlation
+    z.ndvi += (Math.random() - 0.52) * 0.005;
+    z.ndvi = clamp(Math.round(z.ndvi * 100) / 100, 0.05, 0.85);
+
+    // Status thresholds
+    if (z.dnbr >= 0.44) z.status = 'critico';
+    else if (z.dnbr >= 0.1) z.status = 'alerta';
+    else z.status = 'normal';
+
+    z.lastUpdate = new Date();
+  });
+
+  renderZones();
+  updateAlertLevel();
+
+  // Occasionally generate weather-triggered alerts
+  if (Math.random() < 0.15) {
+    const critZone = ZONES.find(z => z.status === 'critico');
+    if (critZone) {
+      addAlert('warning', `dNBR en ${critZone.name} alcanza ${critZone.dnbr.toFixed(2)} — ${getSeverityLabel(critZone.dnbr)}`);
+    }
+  }
+}
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', function() {
+  loadAlerts();
+
+  // Seed initial alerts if empty
+  if (alerts.length === 0) {
+    const seedAlerts = [
+      { severity: 'critical', message: 'Foco de incendio detectado en Tome — dNBR 0.55' },
+      { severity: 'warning', message: 'Indice FWI supera umbral alto (27.4) en region' },
+      { severity: 'info', message: 'Sistema CUSSEN Fire Monitor v3.0 iniciado' },
+      { severity: 'warning', message: 'Alerta por baja humedad: 32% en estacion Concepcion' },
+      { severity: 'info', message: 'Imagen Sentinel-2 procesada exitosamente (10:15 UTC)' },
+      { severity: 'critical', message: 'Expansion del incendio Tome: perimetro +420 ha estimado' },
+      { severity: 'warning', message: 'Viento SO 24 km/h favorece propagacion hacia zona urbana' },
+      { severity: 'info', message: 'Brigadas B-01 y B-02 desplegadas en Tome' }
+    ];
+    seedAlerts.forEach(a => {
+      const t = new Date(Date.now() - Math.random() * 3600000);
+      alerts.push({ ...a, time: t });
+    });
+    alerts.sort((a, b) => new Date(b.time) - new Date(a.time));
+    saveAlerts();
+  }
+
+  renderZones();
+  updateAlertLevel();
+  renderSeverityLegend();
+  renderResources();
+  renderAlerts();
+  updateWeather();
+
+  initMap();
+  initDnbrChart();
+  initTimelineChart();
+
+  // Periodic updates
+  setInterval(updateWeather, 10000);         // Weather every 10s
+  setInterval(simulateZoneUpdates, 30000);   // Zone data every 30s
+});
+</script>
+</body>
+</html>

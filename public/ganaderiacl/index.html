@@ -1,0 +1,1827 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="GanaderiaCL">
+  <meta name="theme-color" content="#713f12">
+  <meta name="description" content="Sistema profesional de gestión ganadera para criadores chilenos">
+  <title>GanaderiaCL - Gestión Ganadera</title>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <!-- Service Worker Registration for PWA -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('data:text/javascript,self.addEventListener("install",e=>self.skipWaiting());self.addEventListener("activate",e=>e.waitUntil(clients.claim()));').catch(console.error);
+      });
+    }
+  </script>
+
+  <style>
+    /* Reset y Base */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      height: 100%;
+      width: 100%;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f8f6f1;
+      color: #2d2d2d;
+      line-height: 1.6;
+      height: 100vh;
+      width: 100vw;
+      display: flex;
+      flex-direction: column;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Typography */
+    h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #713f12;
+      margin-bottom: 1rem;
+    }
+
+    h2 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #713f12;
+      margin-bottom: 0.75rem;
+    }
+
+    h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #713f12;
+      margin-bottom: 0.5rem;
+    }
+
+    label {
+      font-weight: 500;
+      color: #555;
+      display: block;
+      margin-bottom: 0.4rem;
+      font-size: 0.95rem;
+    }
+
+    /* Input fields - min 16px to prevent iOS zoom */
+    input, select, textarea {
+      font-size: 16px;
+      font-family: 'Inter', sans-serif;
+      padding: 0.75rem;
+      border: 1px solid #d0ccc1;
+      border-radius: 0.5rem;
+      width: 100%;
+      margin-bottom: 1rem;
+      background: white;
+      color: #2d2d2d;
+      transition: border-color 0.2s;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #16a34a;
+      box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.1);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    /* Buttons */
+    button {
+      font-size: 16px;
+      font-family: 'Inter', sans-serif;
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-weight: 600;
+    }
+
+    .btn-primary {
+      background: #713f12;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #5a3210;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(113, 63, 18, 0.2);
+    }
+
+    .btn-secondary {
+      background: #16a34a;
+      color: white;
+    }
+
+    .btn-secondary:hover {
+      background: #15803d;
+    }
+
+    .btn-danger {
+      background: #dc2626;
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #b91c1c;
+    }
+
+    .btn-small {
+      padding: 0.5rem 1rem;
+      font-size: 14px;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    /* Layout */
+    .container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    header {
+      background: linear-gradient(135deg, #713f12 0%, #8b4513 100%);
+      color: white;
+      padding: 1rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    header h1 {
+      color: white;
+      margin: 0;
+      font-size: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .header-subtitle {
+      font-size: 0.85rem;
+      color: rgba(255, 255, 255, 0.9);
+      margin-top: 0.25rem;
+    }
+
+    main {
+      flex: 1;
+      overflow-y: auto;
+      padding-bottom: 60px;
+    }
+
+    .tab-content {
+      display: none;
+      padding: 1.5rem;
+      animation: fadeIn 0.3s ease-in;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Tab Navigation */
+    .tab-nav {
+      display: flex;
+      gap: 0.5rem;
+      overflow-x: auto;
+      background: white;
+      border-bottom: 2px solid #e5dcd2;
+      padding: 0 1rem;
+    }
+
+    .tab-nav::-webkit-scrollbar {
+      height: 2px;
+    }
+
+    .tab-nav::-webkit-scrollbar-thumb {
+      background: #d0ccc1;
+      border-radius: 1px;
+    }
+
+    .tab-btn {
+      padding: 0.75rem 1rem;
+      background: transparent;
+      border: none;
+      color: #888;
+      font-weight: 500;
+      font-size: 14px;
+      cursor: pointer;
+      white-space: nowrap;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .tab-btn.active {
+      color: #713f12;
+      border-bottom-color: #16a34a;
+    }
+
+    .tab-btn:hover {
+      color: #713f12;
+    }
+
+    /* Cards */
+    .card {
+      background: white;
+      border: 1px solid #e5dcd2;
+      border-radius: 0.75rem;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      transition: box-shadow 0.2s;
+    }
+
+    .card:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid #e5dcd2;
+    }
+
+    .card-title {
+      font-weight: 600;
+      color: #713f12;
+    }
+
+    /* Forms */
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    @media (max-width: 640px) {
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Status badges */
+    .badge {
+      display: inline-block;
+      padding: 0.3rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .badge-success {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .badge-warning {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .badge-danger {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .badge-info {
+      background: #dbeafe;
+      color: #0c4a6e;
+    }
+
+    /* Tables */
+    .table-responsive {
+      overflow-x: auto;
+      border-radius: 0.5rem;
+      border: 1px solid #e5dcd2;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+    }
+
+    th {
+      background: #f3f0eb;
+      padding: 0.75rem;
+      text-align: left;
+      font-weight: 600;
+      color: #713f12;
+      border-bottom: 2px solid #e5dcd2;
+    }
+
+    td {
+      padding: 0.75rem;
+      border-bottom: 1px solid #e5dcd2;
+    }
+
+    tr:hover {
+      background: #fafaf8;
+    }
+
+    /* Grid layouts */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 1024px) {
+      .grid-3 {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .grid-2,
+      .grid-3 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Stats */
+    .stat-box {
+      background: white;
+      border: 1px solid #e5dcd2;
+      border-radius: 0.75rem;
+      padding: 1.25rem;
+      text-align: center;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #713f12;
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+      font-size: 0.9rem;
+      color: #888;
+      font-weight: 500;
+    }
+
+    /* Alerts */
+    .alert {
+      padding: 1rem;
+      border-radius: 0.5rem;
+      margin-bottom: 1rem;
+      border-left: 4px solid;
+    }
+
+    .alert-info {
+      background: #dbeafe;
+      border-color: #0284c7;
+      color: #0c4a6e;
+    }
+
+    .alert-success {
+      background: #dcfce7;
+      border-color: #16a34a;
+      color: #166534;
+    }
+
+    .alert-warning {
+      background: #fef3c7;
+      border-color: #eab308;
+      color: #92400e;
+    }
+
+    .alert-danger {
+      background: #fee2e2;
+      border-color: #dc2626;
+      color: #991b1b;
+    }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      justify-content: center;
+      align-items: flex-end;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 1.5rem 1.5rem 0 0;
+      padding: 1.5rem;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #e5dcd2;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #888;
+    }
+
+    @media (min-width: 768px) {
+      .modal {
+        align-items: center;
+      }
+
+      .modal-content {
+        max-width: 500px;
+        border-radius: 0.75rem;
+        max-height: 90vh;
+      }
+    }
+
+    /* Loading states */
+    .spinner {
+      border: 3px solid #e5dcd2;
+      border-top: 3px solid #16a34a;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Footer/Nav */
+    footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      border-top: 1px solid #e5dcd2;
+      padding: 0;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      height: 60px;
+      z-index: 100;
+    }
+
+    .nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.3rem;
+      cursor: pointer;
+      padding: 0.5rem;
+      text-decoration: none;
+      color: #888;
+      font-size: 0.75rem;
+      border: none;
+      background: none;
+      transition: color 0.2s;
+    }
+
+    .nav-item.active {
+      color: #16a34a;
+    }
+
+    .nav-item:hover {
+      color: #713f12;
+    }
+
+    .icon {
+      font-size: 1.5rem;
+    }
+
+    /* Utility classes */
+    .mb-1 { margin-bottom: 0.5rem; }
+    .mb-2 { margin-bottom: 1rem; }
+    .mb-3 { margin-bottom: 1.5rem; }
+    .mt-1 { margin-top: 0.5rem; }
+    .mt-2 { margin-top: 1rem; }
+    .text-center { text-align: center; }
+    .text-muted { color: #888; }
+    .font-bold { font-weight: 700; }
+    .flex { display: flex; }
+    .flex-between { display: flex; justify-content: space-between; align-items: center; }
+    .gap-1 { gap: 0.5rem; }
+    .gap-2 { gap: 1rem; }
+
+    /* Print styles */
+    @media print {
+      .tab-nav,
+      footer,
+      .modal {
+        display: none;
+      }
+
+      body {
+        background: white;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🐄 GanaderiaCL</h1>
+    <div class="header-subtitle">Sistema de gestión ganadera para criadores chilenos</div>
+  </header>
+
+  <div class="container">
+    <nav class="tab-nav">
+      <button class="tab-btn active" data-tab="ganado">Ganado</button>
+      <button class="tab-btn" data-tab="potreros">Potreros</button>
+      <button class="tab-btn" data-tab="sanidad">Sanidad</button>
+      <button class="tab-btn" data-tab="alimentacion">Alimentación</button>
+      <button class="tab-btn" data-tab="finanzas">Finanzas</button>
+      <button class="tab-btn" data-tab="reproduccion">Reproducción</button>
+    </nav>
+
+    <main>
+      <!-- TAB 1: GANADO -->
+      <div id="ganado" class="tab-content active">
+        <h2>Registro de Ganado</h2>
+
+        <div class="grid-3">
+          <div class="stat-box">
+            <div class="stat-value" id="totalAnimals">0</div>
+            <div class="stat-label">Total Animales</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="activeAnimals">0</div>
+            <div class="stat-label">Activos</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="avgWeight">0</div>
+            <div class="stat-label">Peso Promedio (kg)</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Agregar Nuevo Animal</div>
+          </div>
+          <form id="ganadoForm">
+            <div class="form-row">
+              <div class="form-group">
+                <label>DIIO (ID Trazabilidad)</label>
+                <input type="text" id="diio" placeholder="ej. CL-2026-001" required>
+              </div>
+              <div class="form-group">
+                <label>Especie</label>
+                <select id="especie" required>
+                  <option value="">Seleccionar...</option>
+                  <option value="bovino">Bovino</option>
+                  <option value="ovino">Ovino</option>
+                  <option value="caprino">Caprino</option>
+                  <option value="porcino">Porcino</option>
+                  <option value="equino">Equino</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Raza</label>
+                <input type="text" id="raza" placeholder="ej. Angus, Hereford, Charolais" required>
+              </div>
+              <div class="form-group">
+                <label>Sexo</label>
+                <select id="sexo" required>
+                  <option value="">Seleccionar...</option>
+                  <option value="macho">Macho</option>
+                  <option value="hembra">Hembra</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Fecha de Nacimiento</label>
+                <input type="date" id="fechaNacimiento" required>
+              </div>
+              <div class="form-group">
+                <label>Peso Actual (kg)</label>
+                <input type="number" id="peso" placeholder="ej. 450" min="0" step="0.5" required>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Madre (DIIO)</label>
+                <input type="text" id="madre" placeholder="Opcional">
+              </div>
+              <div class="form-group">
+                <label>Padre (DIIO)</label>
+                <input type="text" id="padre" placeholder="Opcional">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Estado</label>
+              <select id="estado" required>
+                <option value="activo">Activo</option>
+                <option value="vendido">Vendido</option>
+                <option value="muerto">Muerto</option>
+                <option value="descarte">Descarte</option>
+              </select>
+            </div>
+
+            <button type="submit" class="btn-primary" style="width: 100%;">Agregar Animal</button>
+          </form>
+        </div>
+
+        <h3 style="margin-top: 2rem; margin-bottom: 1rem;">Animales Registrados</h3>
+        <div id="ganadoList"></div>
+      </div>
+
+      <!-- TAB 2: POTREROS -->
+      <div id="potreros" class="tab-content">
+        <h2>Gestión de Potreros</h2>
+
+        <div class="grid-3">
+          <div class="stat-box">
+            <div class="stat-value" id="totalPotreros">0</div>
+            <div class="stat-label">Total Potreros</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="totalSurface">0</div>
+            <div class="stat-label">Superficie Total (ha)</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="stockingRate">0</div>
+            <div class="stat-label">Carga Animal/ha</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Nuevo Potrero</div>
+          </div>
+          <form id="potrerosForm">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Nombre del Potrero</label>
+                <input type="text" id="nombrePotrero" placeholder="ej. Potrero Norte" required>
+              </div>
+              <div class="form-group">
+                <label>Superficie (ha)</label>
+                <input type="number" id="superficiePotrero" placeholder="ej. 15" min="0.1" step="0.1" required>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Tipo de Pradera</label>
+                <select id="tipoPradera" required>
+                  <option value="">Seleccionar...</option>
+                  <option value="natural">Natural</option>
+                  <option value="mejorada">Mejorada</option>
+                  <option value="alfalfa">Alfalfa</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Capacidad de Carga (UBA)</label>
+                <input type="number" id="capacidadCarga" placeholder="ej. 30" min="0" step="0.1" required>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Rotación (días)</label>
+                <input type="number" id="rotacionDias" placeholder="ej. 30" min="1" required>
+              </div>
+              <div class="form-group">
+                <label>Estado</label>
+                <select id="estadoPotrero" required>
+                  <option value="en uso">En Uso</option>
+                  <option value="descanso">Descanso</option>
+                  <option value="sembrado">Sembrado</option>
+                </select>
+              </div>
+            </div>
+
+            <button type="submit" class="btn-primary" style="width: 100%;">Agregar Potrero</button>
+          </form>
+        </div>
+
+        <h3 style="margin-top: 2rem; margin-bottom: 1rem;">Potreros Registrados</h3>
+        <div id="potrerosList"></div>
+      </div>
+
+      <!-- TAB 3: SANIDAD -->
+      <div id="sanidad" class="tab-content">
+        <h2>Gestión de Sanidad</h2>
+
+        <div class="alert alert-info">
+          📋 Mantenga las vacunaciones al día según protocolos SAG y feria ganadera
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Registrar Vacunación/Tratamiento</div>
+          </div>
+          <form id="sanidadForm">
+            <div class="form-row">
+              <div class="form-group">
+                <label>DIIO Animal</label>
+                <input type="text" id="animalDiioSanidad" placeholder="ej. CL-2026-001" required>
+              </div>
+              <div class="form-group">
+                <label>Tipo de Vacuna/Tratamiento</label>
+                <select id="tipoVacuna" required>
+                  <option value="">Seleccionar...</option>
+                  <option value="aftosa">Aftosa (Obligatoria)</option>
+                  <option value="brucelosis">Brucelosis</option>
+                  <option value="carbunclo">Carbunclo</option>
+                  <option value="desparasitacion">Desparasitación</option>
+                  <option value="antibiotico">Antibiótico</option>
+                  <option value="antiinflamatorio">Antiinflamatorio</option>
+                  <option value="otros">Otros Tratamientos</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Fecha de Aplicación</label>
+                <input type="date" id="fechaSanidad" required>
+              </div>
+              <div class="form-group">
+                <label>Próxima Dosis Requerida</label>
+                <input type="date" id="proximaDosis">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Notas</label>
+              <textarea id="notasSanidad" placeholder="Observaciones clínicas, lote, veterinario, etc."></textarea>
+            </div>
+
+            <button type="submit" class="btn-primary" style="width: 100%;">Registrar Aplicación</button>
+          </form>
+        </div>
+
+        <h3 style="margin-top: 2rem; margin-bottom: 1rem;">Calendario de Vacunaciones</h3>
+        <div id="sanidadList"></div>
+      </div>
+
+      <!-- TAB 4: ALIMENTACIÓN -->
+      <div id="alimentacion" class="tab-content">
+        <h2>Gestión de Alimentación</h2>
+
+        <div class="grid-3">
+          <div class="stat-box">
+            <div class="stat-value" id="totalFeed">0</div>
+            <div class="stat-label">Stock Total (tons)</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="avgCostFeed">0</div>
+            <div class="stat-label">Costo Promedio (CLP/kg)</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="totalFeedCost">0</div>
+            <div class="stat-label">Costo Total (CLP)</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Registrar Alimentación</div>
+          </div>
+          <form id="alimentacionForm">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Tipo de Alimento</label>
+                <select id="tipoAlimento" required>
+                  <option value="">Seleccionar...</option>
+                  <option value="fardo">Fardo (heno/paja)</option>
+                  <option value="silo">Silo (maíz/sorgo)</option>
+                  <option value="concentrado">Concentrado</option>
+                  <option value="sales">Sales Minerales</option>
+                  <option value="suplemento">Suplemento Proteico</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Cantidad (kg)</label>
+                <input type="number" id="cantidadAlimento" placeholder="ej. 5000" min="0" step="50" required>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Consumo Recomendado (kg/animal/día)</label>
+                <input type="number" id="consumoAlimento" placeholder="ej. 12" min="0" step="0.1" required>
+              </div>
+              <div class="form-group">
+                <label>Costo (CLP/kg)</label>
+                <input type="number" id="costoAlimento" placeholder="ej. 250" min="0" step="1" required>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Proveedor</label>
+                <input type="text" id="proveedorAlimento" placeholder="Nombre del proveedor">
+              </div>
+              <div class="form-group">
+                <label>Fecha de Adquisición</label>
+                <input type="date" id="fechaAlimento" required>
+              </div>
+            </div>
+
+            <button type="submit" class="btn-primary" style="width: 100%;">Registrar Alimento</button>
+          </form>
+        </div>
+
+        <h3 style="margin-top: 2rem; margin-bottom: 1rem;">Stock de Alimentos</h3>
+        <div id="alimentacionList"></div>
+      </div>
+
+      <!-- TAB 5: FINANZAS -->
+      <div id="finanzas" class="tab-content">
+        <h2>Gestión Financiera</h2>
+
+        <div class="grid-2">
+          <div class="stat-box">
+            <div class="stat-value" id="totalIngresos">0</div>
+            <div class="stat-label">Ingresos (CLP)</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="totalCostos">0</div>
+            <div class="stat-label">Costos (CLP)</div>
+          </div>
+        </div>
+
+        <div class="stat-box" style="margin-bottom: 1.5rem; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: white;">
+          <div class="stat-value" style="color: white;" id="utilidadNeta">0</div>
+          <div class="stat-label" style="color: rgba(255, 255, 255, 0.9);">Utilidad Neta (CLP)</div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Registrar Venta de Ganado</div>
+          </div>
+          <form id="ventasForm">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Tipo de Venta</label>
+                <select id="tipoVenta" required>
+                  <option value="">Seleccionar...</option>
+                  <option value="kg_vivo">Kg Vivo (Feria)</option>
+                  <option value="faena">Faena (canal)</option>
+                  <option value="cria">Cría/Reproductor</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>DIIO Animal (o cantidad animales)</label>
+                <input type="text" id="animalVenta" placeholder="ej. CL-2026-001 o 5 animales" required>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Cantidad (kg)</label>
+                <input type="number" id="cantidadVenta" placeholder="ej. 450" min="0" step="0.1" required>
+              </div>
+              <div class="form-group">
+                <label>Precio Unitario (CLP/kg)</label>
+                <input type="number" id="precioVenta" placeholder="ej. 2800" min="0" step="1" required>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Fecha de Venta</label>
+                <input type="date" id="fechaVenta" required>
+              </div>
+              <div class="form-group">
+                <label>Comprador</label>
+                <input type="text" id="compradorVenta" placeholder="Nombre del comprador">
+              </div>
+            </div>
+
+            <button type="submit" class="btn-primary" style="width: 100%;">Registrar Venta</button>
+          </form>
+        </div>
+
+        <h3 style="margin-top: 2rem; margin-bottom: 1rem;">Historial de Ventas</h3>
+        <div id="ventasList"></div>
+
+        <h3 style="margin-top: 2rem; margin-bottom: 1rem;">Resumen Mensual</h3>
+        <div style="background: white; border: 1px solid #e5dcd2; border-radius: 0.75rem; padding: 1.25rem;">
+          <canvas id="finanzasChart" style="max-height: 300px;"></canvas>
+        </div>
+      </div>
+
+      <!-- TAB 6: REPRODUCCIÓN -->
+      <div id="reproduccion" class="tab-content">
+        <h2>Gestión de Reproducción</h2>
+
+        <div class="grid-3">
+          <div class="stat-box">
+            <div class="stat-value" id="totalReproductores">0</div>
+            <div class="stat-label">Reproductores</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="tasaPrenez">0</div>
+            <div class="stat-label">Tasa de Preñez (%)</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="terneroNacidos">0</div>
+            <div class="stat-label">Terneros Nacidos</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Registrar Monta/Inseminación</div>
+          </div>
+          <form id="reproduccionForm">
+            <div class="form-row">
+              <div class="form-group">
+                <label>DIIO Hembra</label>
+                <input type="text" id="hembraDiio" placeholder="ej. CL-2026-001" required>
+              </div>
+              <div class="form-group">
+                <label>DIIO Padre/Toro</label>
+                <input type="text" id="padreDiio" placeholder="ej. CL-2026-050" required>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Tipo de Reproducción</label>
+                <select id="tipoReproduccion" required>
+                  <option value="">Seleccionar...</option>
+                  <option value="monta">Monta Natural</option>
+                  <option value="inseminacion">Inseminación Artificial</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Fecha de Monta/IA</label>
+                <input type="date" id="fechaMonta" required>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Fecha Probable de Parto</label>
+                <input type="date" id="fechaPartoEsperada" required>
+              </div>
+              <div class="form-group">
+                <label>Estado</label>
+                <select id="estadoReproduccion" required>
+                  <option value="preñada">Preñada</option>
+                  <option value="parida">Parida</option>
+                  <option value="fallida">Fallida</option>
+                  <option value="destetada">Destetada</option>
+                </select>
+              </div>
+            </div>
+
+            <button type="submit" class="btn-primary" style="width: 100%;">Registrar Evento Reproductivo</button>
+          </form>
+        </div>
+
+        <h3 style="margin-top: 2rem; margin-bottom: 1rem;">Calendario de Pariciones</h3>
+        <div id="reproduccionList"></div>
+      </div>
+    </main>
+  </div>
+
+  <footer>
+    <button class="nav-item active" data-tab="ganado">
+      <div class="icon">🐄</div>
+      <div>Ganado</div>
+    </button>
+    <button class="nav-item" data-tab="potreros">
+      <div class="icon">🌾</div>
+      <div>Potreros</div>
+    </button>
+    <button class="nav-item" data-tab="sanidad">
+      <div class="icon">💉</div>
+      <div>Sanidad</div>
+    </button>
+    <button class="nav-item" data-tab="alimentacion">
+      <div class="icon">🌽</div>
+      <div>Alimento</div>
+    </button>
+    <button class="nav-item" data-tab="finanzas">
+      <div class="icon">💰</div>
+      <div>Finanzas</div>
+    </button>
+    <button class="nav-item" data-tab="reproduccion">
+      <div class="icon">🐥</div>
+      <div>Reproducción</div>
+    </button>
+  </footer>
+
+  <!-- Statistics and Data Management JavaScript -->
+  <script>
+    // Safe localStorage wrapper
+    const storage = {
+      getItem(key) {
+        try {
+          return localStorage.getItem(key);
+        } catch (e) {
+          console.error('localStorage read error:', e);
+          return null;
+        }
+      },
+      setItem(key, value) {
+        try {
+          localStorage.setItem(key, value);
+        } catch (e) {
+          console.error('localStorage write error:', e);
+        }
+      },
+      removeItem(key) {
+        try {
+          localStorage.removeItem(key);
+        } catch (e) {
+          console.error('localStorage remove error:', e);
+        }
+      }
+    };
+
+    // Data models
+    class GanaderiaCLApp {
+      constructor() {
+        this.ganados = JSON.parse(storage.getItem('ganados') || '[]');
+        this.potreros = JSON.parse(storage.getItem('potreros') || '[]');
+        this.sanidad = JSON.parse(storage.getItem('sanidad') || '[]');
+        this.alimentacion = JSON.parse(storage.getItem('alimentacion') || '[]');
+        this.ventas = JSON.parse(storage.getItem('ventas') || '[]');
+        this.reproduccion = JSON.parse(storage.getItem('reproduccion') || '[]');
+
+        this.initEventListeners();
+        this.updateAllStats();
+        this.renderAllLists();
+      }
+
+      save() {
+        storage.setItem('ganados', JSON.stringify(this.ganados));
+        storage.setItem('potreros', JSON.stringify(this.potreros));
+        storage.setItem('sanidad', JSON.stringify(this.sanidad));
+        storage.setItem('alimentacion', JSON.stringify(this.alimentacion));
+        storage.setItem('ventas', JSON.stringify(this.ventas));
+        storage.setItem('reproduccion', JSON.stringify(this.reproduccion));
+      }
+
+      initEventListeners() {
+        // Tab navigation
+        document.querySelectorAll('.tab-btn, .nav-item').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const tabName = btn.dataset.tab;
+            this.switchTab(tabName);
+          });
+        });
+
+        // Form submissions
+        document.getElementById('ganadoForm').addEventListener('submit', (e) => {
+          e.preventDefault();
+          this.addGanado();
+        });
+
+        document.getElementById('potrerosForm').addEventListener('submit', (e) => {
+          e.preventDefault();
+          this.addPotrero();
+        });
+
+        document.getElementById('sanidadForm').addEventListener('submit', (e) => {
+          e.preventDefault();
+          this.addSanidad();
+        });
+
+        document.getElementById('alimentacionForm').addEventListener('submit', (e) => {
+          e.preventDefault();
+          this.addAlimentacion();
+        });
+
+        document.getElementById('ventasForm').addEventListener('submit', (e) => {
+          e.preventDefault();
+          this.addVenta();
+        });
+
+        document.getElementById('reproduccionForm').addEventListener('submit', (e) => {
+          e.preventDefault();
+          this.addReproduccion();
+        });
+      }
+
+      switchTab(tabName) {
+        // Update tab buttons
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+          btn.classList.remove('active');
+          if (btn.dataset.tab === tabName) {
+            btn.classList.add('active');
+          }
+        });
+
+        // Update nav items
+        document.querySelectorAll('.nav-item').forEach(btn => {
+          btn.classList.remove('active');
+          if (btn.dataset.tab === tabName) {
+            btn.classList.add('active');
+          }
+        });
+
+        // Show content
+        document.querySelectorAll('.tab-content').forEach(content => {
+          content.classList.remove('active');
+        });
+        document.getElementById(tabName).classList.add('active');
+      }
+
+      // GANADO MANAGEMENT
+      addGanado() {
+        const ganado = {
+          id: Date.now(),
+          diio: document.getElementById('diio').value,
+          especie: document.getElementById('especie').value,
+          raza: document.getElementById('raza').value,
+          sexo: document.getElementById('sexo').value,
+          fechaNacimiento: document.getElementById('fechaNacimiento').value,
+          peso: parseFloat(document.getElementById('peso').value),
+          madre: document.getElementById('madre').value || null,
+          padre: document.getElementById('padre').value || null,
+          estado: document.getElementById('estado').value,
+          fechaRegistro: new Date().toISOString().split('T')[0],
+          pesajes: [
+            {
+              fecha: new Date().toISOString().split('T')[0],
+              peso: parseFloat(document.getElementById('peso').value)
+            }
+          ]
+        };
+
+        this.ganados.push(ganado);
+        this.save();
+        this.renderGanados();
+        this.updateAllStats();
+        document.getElementById('ganadoForm').reset();
+        alert('Animal registrado correctamente');
+      }
+
+      deleteGanado(id) {
+        if (confirm('¿Eliminar este animal?')) {
+          this.ganados = this.ganados.filter(g => g.id !== id);
+          this.save();
+          this.renderGanados();
+          this.updateAllStats();
+        }
+      }
+
+      renderGanados() {
+        const list = document.getElementById('ganadoList');
+        if (this.ganados.length === 0) {
+          list.innerHTML = '<p class="text-muted">No hay animales registrados</p>';
+          return;
+        }
+
+        list.innerHTML = this.ganados.map(g => `
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">${g.diio} - ${g.especie.toUpperCase()}</div>
+              <span class="badge badge-${g.estado === 'activo' ? 'success' : g.estado === 'vendido' ? 'warning' : 'danger'}">${g.estado}</span>
+            </div>
+            <div class="grid-2">
+              <div>
+                <div class="text-muted">Raza</div>
+                <div class="font-bold">${g.raza}</div>
+              </div>
+              <div>
+                <div class="text-muted">Sexo</div>
+                <div class="font-bold">${g.sexo}</div>
+              </div>
+              <div>
+                <div class="text-muted">Nacimiento</div>
+                <div class="font-bold">${this.calcularEdad(g.fechaNacimiento)} años</div>
+              </div>
+              <div>
+                <div class="text-muted">Peso</div>
+                <div class="font-bold">${g.peso} kg</div>
+              </div>
+              ${g.madre ? `<div><div class="text-muted">Madre</div><div class="font-bold">${g.madre}</div></div>` : ''}
+              ${g.padre ? `<div><div class="text-muted">Padre</div><div class="font-bold">${g.padre}</div></div>` : ''}
+            </div>
+            <button class="btn-danger btn-small" onclick="app.deleteGanado(${g.id})">Eliminar</button>
+          </div>
+        `).join('');
+      }
+
+      calcularEdad(fechaNacimiento) {
+        const today = new Date();
+        const birthDate = new Date(fechaNacimiento);
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+          age--;
+        }
+        return age;
+      }
+
+      // POTREROS MANAGEMENT
+      addPotrero() {
+        const potrero = {
+          id: Date.now(),
+          nombre: document.getElementById('nombrePotrero').value,
+          superficie: parseFloat(document.getElementById('superficiePotrero').value),
+          tipoPradera: document.getElementById('tipoPradera').value,
+          capacidadCarga: parseFloat(document.getElementById('capacidadCarga').value),
+          rotacionDias: parseInt(document.getElementById('rotacionDias').value),
+          estado: document.getElementById('estadoPotrero').value,
+          fechaRegistro: new Date().toISOString().split('T')[0]
+        };
+
+        this.potreros.push(potrero);
+        this.save();
+        this.renderPotreros();
+        this.updateAllStats();
+        document.getElementById('potrerosForm').reset();
+        alert('Potrero registrado correctamente');
+      }
+
+      deletePotrero(id) {
+        if (confirm('¿Eliminar este potrero?')) {
+          this.potreros = this.potreros.filter(p => p.id !== id);
+          this.save();
+          this.renderPotreros();
+          this.updateAllStats();
+        }
+      }
+
+      renderPotreros() {
+        const list = document.getElementById('potrerosList');
+        if (this.potreros.length === 0) {
+          list.innerHTML = '<p class="text-muted">No hay potreros registrados</p>';
+          return;
+        }
+
+        list.innerHTML = this.potreros.map(p => `
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">${p.nombre}</div>
+              <span class="badge badge-${p.estado === 'en uso' ? 'success' : p.estado === 'descanso' ? 'info' : 'warning'}">${p.estado}</span>
+            </div>
+            <div class="grid-2">
+              <div>
+                <div class="text-muted">Superficie</div>
+                <div class="font-bold">${p.superficie} ha</div>
+              </div>
+              <div>
+                <div class="text-muted">Tipo Pradera</div>
+                <div class="font-bold">${p.tipoPradera}</div>
+              </div>
+              <div>
+                <div class="text-muted">Capacidad</div>
+                <div class="font-bold">${p.capacidadCarga} UBA</div>
+              </div>
+              <div>
+                <div class="text-muted">Rotación</div>
+                <div class="font-bold">${p.rotacionDias} días</div>
+              </div>
+            </div>
+            <button class="btn-danger btn-small" onclick="app.deletePotrero(${p.id})">Eliminar</button>
+          </div>
+        `).join('');
+      }
+
+      // SANIDAD MANAGEMENT
+      addSanidad() {
+        const sanidad = {
+          id: Date.now(),
+          animalDiio: document.getElementById('animalDiioSanidad').value,
+          tipoVacuna: document.getElementById('tipoVacuna').value,
+          fechaAplicacion: document.getElementById('fechaSanidad').value,
+          proximaDosis: document.getElementById('proximaDosis').value || null,
+          notas: document.getElementById('notasSanidad').value,
+          fechaRegistro: new Date().toISOString().split('T')[0]
+        };
+
+        this.sanidad.push(sanidad);
+        this.save();
+        this.renderSanidad();
+        this.updateAllStats();
+        document.getElementById('sanidadForm').reset();
+        alert('Aplicación registrada correctamente');
+      }
+
+      deleteSanidad(id) {
+        if (confirm('¿Eliminar este registro?')) {
+          this.sanidad = this.sanidad.filter(s => s.id !== id);
+          this.save();
+          this.renderSanidad();
+          this.updateAllStats();
+        }
+      }
+
+      renderSanidad() {
+        const list = document.getElementById('sanidadList');
+        if (this.sanidad.length === 0) {
+          list.innerHTML = '<p class="text-muted">No hay registros de sanidad</p>';
+          return;
+        }
+
+        // Sort by proximity of next dose
+        const sorted = [...this.sanidad].sort((a, b) => {
+          const aDate = a.proximaDosis ? new Date(a.proximaDosis) : new Date('2099-12-31');
+          const bDate = b.proximaDosis ? new Date(b.proximaDosis) : new Date('2099-12-31');
+          return aDate - bDate;
+        });
+
+        list.innerHTML = sorted.map(s => {
+          const proximaDate = s.proximaDosis ? new Date(s.proximaDosis) : null;
+          const hoy = new Date();
+          const diasFaltantes = proximaDate ? Math.floor((proximaDate - hoy) / (1000 * 60 * 60 * 24)) : null;
+          const alert_type = diasFaltantes === null ? 'info' : diasFaltantes < 0 ? 'danger' : diasFaltantes < 30 ? 'warning' : 'success';
+
+          return `
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">${s.animalDiio} - ${s.tipoVacuna}</div>
+                <span class="badge badge-${alert_type}">
+                  ${diasFaltantes === null ? 'Completada' : diasFaltantes < 0 ? 'VENCIDA' : diasFaltantes + ' días'}
+                </span>
+              </div>
+              <div class="grid-2">
+                <div>
+                  <div class="text-muted">Fecha Aplicación</div>
+                  <div class="font-bold">${s.fechaAplicacion}</div>
+                </div>
+                <div>
+                  <div class="text-muted">Próxima Dosis</div>
+                  <div class="font-bold">${s.proximaDosis || 'N/A'}</div>
+                </div>
+              </div>
+              ${s.notas ? `<div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #e5dcd2;"><small class="text-muted">${s.notas}</small></div>` : ''}
+              <button class="btn-danger btn-small" onclick="app.deleteSanidad(${s.id})">Eliminar</button>
+            </div>
+          `;
+        }).join('');
+      }
+
+      // ALIMENTACIÓN MANAGEMENT
+      addAlimentacion() {
+        const alimentacion = {
+          id: Date.now(),
+          tipoAlimento: document.getElementById('tipoAlimento').value,
+          cantidad: parseFloat(document.getElementById('cantidadAlimento').value),
+          consumoDiario: parseFloat(document.getElementById('consumoAlimento').value),
+          costo: parseFloat(document.getElementById('costoAlimento').value),
+          proveedor: document.getElementById('proveedorAlimento').value,
+          fecha: document.getElementById('fechaAlimento').value,
+          fechaRegistro: new Date().toISOString().split('T')[0]
+        };
+
+        this.alimentacion.push(alimentacion);
+        this.save();
+        this.renderAlimentacion();
+        this.updateAllStats();
+        document.getElementById('alimentacionForm').reset();
+        alert('Alimento registrado correctamente');
+      }
+
+      deleteAlimentacion(id) {
+        if (confirm('¿Eliminar este registro?')) {
+          this.alimentacion = this.alimentacion.filter(a => a.id !== id);
+          this.save();
+          this.renderAlimentacion();
+          this.updateAllStats();
+        }
+      }
+
+      renderAlimentacion() {
+        const list = document.getElementById('alimentacionList');
+        if (this.alimentacion.length === 0) {
+          list.innerHTML = '<p class="text-muted">No hay registros de alimentación</p>';
+          return;
+        }
+
+        list.innerHTML = this.alimentacion.map(a => {
+          const costoTotal = a.cantidad * a.costo;
+          return `
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">${a.tipoAlimento.toUpperCase()}</div>
+                <div class="text-muted">${a.proveedor}</div>
+              </div>
+              <div class="grid-2">
+                <div>
+                  <div class="text-muted">Cantidad</div>
+                  <div class="font-bold">${a.cantidad} kg</div>
+                </div>
+                <div>
+                  <div class="text-muted">Consumo Diario</div>
+                  <div class="font-bold">${a.consumoDiario} kg/animal</div>
+                </div>
+                <div>
+                  <div class="text-muted">Costo Unitario</div>
+                  <div class="font-bold">$${a.costo.toLocaleString('es-CL')}/kg</div>
+                </div>
+                <div>
+                  <div class="text-muted">Costo Total</div>
+                  <div class="font-bold">$${costoTotal.toLocaleString('es-CL')}</div>
+                </div>
+              </div>
+              <button class="btn-danger btn-small" onclick="app.deleteAlimentacion(${a.id})">Eliminar</button>
+            </div>
+          `;
+        }).join('');
+      }
+
+      // VENTAS MANAGEMENT
+      addVenta() {
+        const venta = {
+          id: Date.now(),
+          tipoVenta: document.getElementById('tipoVenta').value,
+          animalInfo: document.getElementById('animalVenta').value,
+          cantidad: parseFloat(document.getElementById('cantidadVenta').value),
+          precio: parseFloat(document.getElementById('precioVenta').value),
+          fecha: document.getElementById('fechaVenta').value,
+          comprador: document.getElementById('compradorVenta').value,
+          fechaRegistro: new Date().toISOString().split('T')[0]
+        };
+
+        this.ventas.push(venta);
+        this.save();
+        this.renderVentas();
+        this.updateAllStats();
+        this.updateFinanzasChart();
+        document.getElementById('ventasForm').reset();
+        alert('Venta registrada correctamente');
+      }
+
+      deleteVenta(id) {
+        if (confirm('¿Eliminar esta venta?')) {
+          this.ventas = this.ventas.filter(v => v.id !== id);
+          this.save();
+          this.renderVentas();
+          this.updateAllStats();
+          this.updateFinanzasChart();
+        }
+      }
+
+      renderVentas() {
+        const list = document.getElementById('ventasList');
+        if (this.ventas.length === 0) {
+          list.innerHTML = '<p class="text-muted">No hay ventas registradas</p>';
+          return;
+        }
+
+        list.innerHTML = this.ventas.map(v => {
+          const total = v.cantidad * v.precio;
+          return `
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">${v.animalInfo} - ${v.tipoVenta}</div>
+                <div class="font-bold" style="color: #16a34a;">$${total.toLocaleString('es-CL')}</div>
+              </div>
+              <div class="grid-2">
+                <div>
+                  <div class="text-muted">Cantidad</div>
+                  <div class="font-bold">${v.cantidad} kg</div>
+                </div>
+                <div>
+                  <div class="text-muted">Precio Unitario</div>
+                  <div class="font-bold">$${v.precio.toLocaleString('es-CL')}/kg</div>
+                </div>
+                <div>
+                  <div class="text-muted">Fecha</div>
+                  <div class="font-bold">${v.fecha}</div>
+                </div>
+                <div>
+                  <div class="text-muted">Comprador</div>
+                  <div class="font-bold">${v.comprador || 'N/A'}</div>
+                </div>
+              </div>
+              <button class="btn-danger btn-small" onclick="app.deleteVenta(${v.id})">Eliminar</button>
+            </div>
+          `;
+        }).join('');
+      }
+
+      // REPRODUCCIÓN MANAGEMENT
+      addReproduccion() {
+        const reproduccion = {
+          id: Date.now(),
+          hembraDiio: document.getElementById('hembraDiio').value,
+          padreDiio: document.getElementById('padreDiio').value,
+          tipoReproduccion: document.getElementById('tipoReproduccion').value,
+          fechaMonta: document.getElementById('fechaMonta').value,
+          fechaPartoEsperada: document.getElementById('fechaPartoEsperada').value,
+          estado: document.getElementById('estadoReproduccion').value,
+          fechaRegistro: new Date().toISOString().split('T')[0]
+        };
+
+        this.reproduccion.push(reproduccion);
+        this.save();
+        this.renderReproduccion();
+        this.updateAllStats();
+        document.getElementById('reproduccionForm').reset();
+        alert('Evento reproductivo registrado correctamente');
+      }
+
+      deleteReproduccion(id) {
+        if (confirm('¿Eliminar este registro?')) {
+          this.reproduccion = this.reproduccion.filter(r => r.id !== id);
+          this.save();
+          this.renderReproduccion();
+          this.updateAllStats();
+        }
+      }
+
+      renderReproduccion() {
+        const list = document.getElementById('reproduccionList');
+        if (this.reproduccion.length === 0) {
+          list.innerHTML = '<p class="text-muted">No hay registros reproductivos</p>';
+          return;
+        }
+
+        // Sort by expected birth date
+        const sorted = [...this.reproduccion].sort((a, b) => {
+          return new Date(a.fechaPartoEsperada) - new Date(b.fechaPartoEsperada);
+        });
+
+        list.innerHTML = sorted.map(r => {
+          const partoDate = new Date(r.fechaPartoEsperada);
+          const hoy = new Date();
+          const diasFaltantes = Math.floor((partoDate - hoy) / (1000 * 60 * 60 * 24));
+          const alert_type = r.estado === 'parida' ? 'success' : diasFaltantes < 0 ? 'danger' : diasFaltantes < 30 ? 'warning' : 'info';
+
+          return `
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">${r.hembraDiio}</div>
+                <span class="badge badge-${alert_type}">${r.estado}</span>
+              </div>
+              <div class="grid-2">
+                <div>
+                  <div class="text-muted">Padre</div>
+                  <div class="font-bold">${r.padreDiio}</div>
+                </div>
+                <div>
+                  <div class="text-muted">Tipo Reproducción</div>
+                  <div class="font-bold">${r.tipoReproduccion}</div>
+                </div>
+                <div>
+                  <div class="text-muted">Fecha Monta</div>
+                  <div class="font-bold">${r.fechaMonta}</div>
+                </div>
+                <div>
+                  <div class="text-muted">Parto Esperado</div>
+                  <div class="font-bold">${r.fechaPartoEsperada}</div>
+                </div>
+              </div>
+              ${r.estado === 'parida' && diasFaltantes > 0 ? `<div class="alert alert-success" style="margin-top: 0.75rem; margin-bottom: 0;">✓ Parto completado</div>` : ''}
+              ${diasFaltantes < 0 && r.estado !== 'parida' ? `<div class="alert alert-danger" style="margin-top: 0.75rem; margin-bottom: 0;">⚠ Parto vencido - verificar estado</div>` : ''}
+              <button class="btn-danger btn-small" onclick="app.deleteReproduccion(${r.id})">Eliminar</button>
+            </div>
+          `;
+        }).join('');
+      }
+
+      // STATS UPDATES
+      updateAllStats() {
+        this.updateGanadoStats();
+        this.updatePotrerosStats();
+        this.updateAlimentacionStats();
+        this.updateFinanzasStats();
+        this.updateReproduccionStats();
+      }
+
+      updateGanadoStats() {
+        document.getElementById('totalAnimals').textContent = this.ganados.length;
+        document.getElementById('activeAnimals').textContent = this.ganados.filter(g => g.estado === 'activo').length;
+
+        if (this.ganados.length > 0) {
+          const avgWeight = this.ganados.reduce((sum, g) => sum + g.peso, 0) / this.ganados.length;
+          document.getElementById('avgWeight').textContent = Math.round(avgWeight);
+        } else {
+          document.getElementById('avgWeight').textContent = '0';
+        }
+      }
+
+      updatePotrerosStats() {
+        document.getElementById('totalPotreros').textContent = this.potreros.length;
+        const totalSurface = this.potreros.reduce((sum, p) => sum + p.superficie, 0);
+        document.getElementById('totalSurface').textContent = totalSurface.toFixed(1);
+
+        // Calculate stocking rate
+        if (this.potreros.length > 0) {
+          const totalCapacity = this.potreros.reduce((sum, p) => sum + p.capacidadCarga, 0);
+          const rate = totalSurface > 0 ? (totalCapacity / totalSurface).toFixed(2) : '0';
+          document.getElementById('stockingRate').textContent = rate;
+        }
+      }
+
+      updateAlimentacionStats() {
+        const totalKgs = this.alimentacion.reduce((sum, a) => sum + a.cantidad, 0);
+        const tons = (totalKgs / 1000).toFixed(2);
+        document.getElementById('totalFeed').textContent = tons;
+
+        if (this.alimentacion.length > 0) {
+          const avgCost = this.alimentacion.reduce((sum, a) => sum + a.costo, 0) / this.alimentacion.length;
+          document.getElementById('avgCostFeed').textContent = Math.round(avgCost);
+
+          const totalCost = this.alimentacion.reduce((sum, a) => sum + (a.cantidad * a.costo), 0);
+          document.getElementById('totalFeedCost').textContent = totalCost.toLocaleString('es-CL');
+        }
+      }
+
+      updateFinanzasStats() {
+        const totalIngresos = this.ventas.reduce((sum, v) => sum + (v.cantidad * v.precio), 0);
+        document.getElementById('totalIngresos').textContent = totalIngresos.toLocaleString('es-CL');
+
+        const costoAlimentacion = this.alimentacion.reduce((sum, a) => sum + (a.cantidad * a.costo), 0);
+        document.getElementById('totalCostos').textContent = costoAlimentacion.toLocaleString('es-CL');
+
+        const utilidad = totalIngresos - costoAlimentacion;
+        document.getElementById('utilidadNeta').textContent = utilidad.toLocaleString('es-CL');
+      }
+
+      updateReproduccionStats() {
+        const hembras = this.ganados.filter(g => g.sexo === 'hembra' && g.estado === 'activo');
+        document.getElementById('totalReproductores').textContent = hembras.length;
+
+        const preñadas = this.reproduccion.filter(r => r.estado === 'preñada' || r.estado === 'parida');
+        const tasaPrenez = hembras.length > 0 ? Math.round((preñadas.length / hembras.length) * 100) : 0;
+        document.getElementById('tasaPrenez').textContent = tasaPrenez;
+
+        const paridas = this.reproduccion.filter(r => r.estado === 'parida');
+        document.getElementById('terneroNacidos').textContent = paridas.length;
+      }
+
+      renderAllLists() {
+        this.renderGanados();
+        this.renderPotreros();
+        this.renderSanidad();
+        this.renderAlimentacion();
+        this.renderVentas();
+        this.renderReproduccion();
+      }
+
+      updateFinanzasChart() {
+        const ctx = document.getElementById('finanzasChart');
+        if (!ctx) return;
+
+        // Group by month
+        const ventasPorMes = {};
+        this.ventas.forEach(v => {
+          const mes = v.fecha.substring(0, 7); // YYYY-MM
+          if (!ventasPorMes[mes]) {
+            ventasPorMes[mes] = 0;
+          }
+          ventasPorMes[mes] += v.cantidad * v.precio;
+        });
+
+        const costosPorMes = {};
+        this.alimentacion.forEach(a => {
+          const mes = a.fecha.substring(0, 7);
+          if (!costosPorMes[mes]) {
+            costosPorMes[mes] = 0;
+          }
+          costosPorMes[mes] += a.cantidad * a.costo;
+        });
+
+        const meses = [...new Set([...Object.keys(ventasPorMes), ...Object.keys(costosPorMes)])].sort();
+
+        if (meses.length === 0) {
+          ctx.style.display = 'none';
+          return;
+        }
+
+        ctx.style.display = 'block';
+
+        const ingresos = meses.map(m => ventasPorMes[m] || 0);
+        const costos = meses.map(m => costosPorMes[m] || 0);
+
+        if (window.finanzasChartInstance) {
+          window.finanzasChartInstance.destroy();
+        }
+
+        window.finanzasChartInstance = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: meses,
+            datasets: [
+              {
+                label: 'Ingresos (CLP)',
+                data: ingresos,
+                backgroundColor: '#16a34a',
+                borderColor: '#15803d',
+                borderWidth: 1
+              },
+              {
+                label: 'Costos (CLP)',
+                data: costos,
+                backgroundColor: '#ef4444',
+                borderColor: '#dc2626',
+                borderWidth: 1
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+              legend: {
+                display: true,
+                position: 'bottom'
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  callback: function(value) {
+                    return '$' + value.toLocaleString('es-CL');
+                  }
+                }
+              }
+            }
+          }
+        });
+      }
+    }
+
+    // Initialize app
+    const app = new GanaderiaCLApp();
+
+    // Update chart when page loads
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        app.updateFinanzasChart();
+      }, 100);
+    });
+  </script>
+</body>
+</html>

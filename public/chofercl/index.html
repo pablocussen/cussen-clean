@@ -1,0 +1,1907 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f172a">
+<meta name="description" content="ChoferCL — Dashboard profesional para conductores de Uber, Cabify, InDriver, DiDi y Rappi en Chile">
+<title>ChoferCL — Dashboard Conductores Chile</title>
+<link rel="manifest" href="#" id="pwa-manifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#0f172a;--card:#1e293b;--card2:#263248;--border:#334155;
+  --accent:#f59e0b;--text:#f1f5f9;--muted:#94a3b8;
+  --green:#22c55e;--yellow:#f59e0b;--red:#ef4444;--blue:#38bdf8;
+  --purple:#a78bfa;--orange:#fb923c;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:15px}
+a{color:var(--accent);text-decoration:none}
+button{cursor:pointer;font-family:'Inter',sans-serif}
+input,select,textarea{font-family:'Inter',sans-serif;font-size:16px}
+
+header{
+  background:linear-gradient(90deg,#0f172a,#1e3a5f);
+  border-bottom:2px solid var(--accent);
+  padding:13px 18px;position:sticky;top:0;z-index:50;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-icon{width:34px;height:34px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;color:#0f172a}
+.logo-text{font-weight:800;font-size:18px;color:white}
+.logo-sub{font-size:11px;color:var(--muted);font-weight:400}
+.header-right{text-align:right}
+.driver-name{font-weight:600;font-size:14px;color:white}
+.driver-status{font-size:11px;color:var(--muted)}
+
+nav{background:#1e293b;border-bottom:2px solid var(--border);display:flex;overflow-x:auto;position:sticky;top:62px;z-index:40;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+.nav-tab{padding:12px 16px;white-space:nowrap;font-size:13px;font-weight:600;color:var(--muted);border-bottom:3px solid transparent;background:none;border-top:none;border-left:none;border-right:none;transition:all .2s;flex-shrink:0}
+.nav-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.nav-tab:hover:not(.active){color:var(--text)}
+
+.tab-content{display:none;padding:16px;max-width:768px;margin:0 auto}
+.tab-content.active{display:block}
+
+/* Cards */
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px}
+.card-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:14px}
+.card-title.accent{color:var(--accent)}
+
+/* Grid */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+
+/* Metric tiles */
+.metric{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:13px}
+.metric-label{font-size:11px;color:var(--muted);margin-bottom:4px;font-weight:500}
+.metric-value{font-size:20px;font-weight:800;color:var(--text)}
+.metric-value.green{color:var(--green)}
+.metric-value.yellow{color:var(--yellow)}
+.metric-value.red{color:var(--red)}
+.metric-value.blue{color:var(--blue)}
+.metric-sub{font-size:11px;color:var(--muted);margin-top:3px}
+
+/* Shift timer */
+.shift-btn{width:100%;padding:18px;border-radius:14px;font-size:18px;font-weight:800;border:none;transition:all .3s;letter-spacing:.3px}
+.shift-btn.start{background:var(--green);color:white}
+.shift-btn.stop{background:var(--red);color:white}
+.shift-timer{text-align:center;margin:12px 0}
+.shift-time{font-size:42px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums}
+.shift-label{font-size:13px;color:var(--muted);margin-top:4px}
+.pulse{display:inline-block;width:8px;height:8px;background:var(--green);border-radius:50%;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.4)}}
+.active-badge{display:inline-flex;align-items:center;gap:6px;background:#14532d;color:var(--green);padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;margin-top:8px}
+
+/* Form elements */
+.form-group{margin-bottom:12px}
+.form-label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px}
+.form-input{width:100%;background:#0f172a;border:1px solid var(--border);border-radius:8px;padding:10px 13px;color:var(--text);font-size:16px;outline:none;transition:border-color .2s}
+.form-input:focus{border-color:var(--accent)}
+select.form-input option{background:#1e293b}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+
+/* Buttons */
+.btn{padding:10px 18px;border-radius:8px;font-weight:600;font-size:14px;border:none;transition:all .2s}
+.btn-primary{background:var(--accent);color:#0f172a}
+.btn-primary:hover{background:#fbbf24}
+.btn-secondary{background:var(--border);color:var(--text)}
+.btn-danger{background:var(--red);color:white}
+.btn-sm{padding:6px 12px;font-size:12px}
+.btn-full{width:100%}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+
+/* Platform badges */
+.badge{display:inline-block;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:700}
+.badge-uber{background:#1a1a1a;color:white;border:1px solid #333}
+.badge-cabify{background:#7c3aed;color:white}
+.badge-inddriver{background:#15803d;color:white}
+.badge-didi{background:#e11d48;color:white}
+.badge-rappi{background:#ff441f;color:white}
+.badge-taxi{background:#ca8a04;color:white}
+.badge-particular{background:#0369a1;color:white}
+.badge-otro{background:#475569;color:white}
+
+/* Trip list */
+.trip-item{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;background:var(--card2);border:1px solid var(--border);border-radius:10px;margin-bottom:8px}
+.trip-left{display:flex;align-items:center;gap:10px}
+.trip-info .trip-amount{font-weight:700;font-size:15px}
+.trip-info .trip-meta{font-size:11px;color:var(--muted);margin-top:2px}
+.trip-right{text-align:right}
+.trip-net{font-weight:700;color:var(--green);font-size:14px}
+.trip-commission{font-size:11px;color:var(--muted)}
+
+/* Tabs period selector */
+.period-selector{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.period-btn{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;border:1px solid var(--border);background:transparent;color:var(--muted);transition:all .2s}
+.period-btn.active{background:var(--accent);color:#0f172a;border-color:var(--accent)}
+
+/* Progress bar */
+.progress-bar{background:#334155;border-radius:20px;height:10px;margin:8px 0}
+.progress-fill{height:100%;border-radius:20px;background:linear-gradient(90deg,var(--accent),var(--green));transition:width .5s}
+
+/* Alert boxes */
+.alert{padding:12px 14px;border-radius:10px;font-size:13px;margin-bottom:12px;border-left:4px solid}
+.alert-warning{background:#431407;border-color:var(--orange);color:#fed7aa}
+.alert-danger{background:#450a0a;border-color:var(--red);color:#fecaca}
+.alert-success{background:#052e16;border-color:var(--green);color:#bbf7d0}
+.alert-info{background:#0c1445;border-color:var(--blue);color:#bae6fd}
+
+/* Info rows */
+.info-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)}
+.info-row:last-child{border-bottom:none}
+.info-row-label{font-size:13px;color:var(--muted)}
+.info-row-value{font-size:13px;font-weight:600;color:var(--text)}
+.info-row-value.green{color:var(--green)}
+.info-row-value.red{color:var(--red)}
+.info-row-value.yellow{color:var(--yellow)}
+
+/* Platform comparison table */
+.platform-table{width:100%;border-collapse:collapse}
+.platform-table th{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:8px 6px;text-align:left;border-bottom:1px solid var(--border)}
+.platform-table td{padding:10px 6px;font-size:13px;border-bottom:1px solid #1e293b;vertical-align:middle}
+.platform-table tr:last-child td{border-bottom:none}
+.rank-1{color:var(--green);font-weight:700}
+.rank-2{color:var(--yellow);font-weight:600}
+.rank-3{color:var(--orange);font-weight:600}
+
+/* Slider */
+input[type=range]{width:100%;accent-color:var(--accent);height:6px}
+
+/* Chart container */
+.chart-wrap{position:relative;height:200px;margin-top:10px}
+.chart-wrap-lg{position:relative;height:260px;margin-top:10px}
+
+/* Tax section */
+.tax-section{margin-bottom:8px}
+.tax-section h4{font-size:13px;font-weight:700;color:var(--accent);margin-bottom:8px}
+.deductible-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+.deductible-item:last-child{border-bottom:none}
+.deductible-icon{width:28px;height:28px;background:var(--card2);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.deductible-text .di-name{font-size:13px;font-weight:600}
+.deductible-text .di-pct{font-size:11px;color:var(--green)}
+
+/* Maintenance log */
+.maint-item{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
+.maint-item:last-child{border-bottom:none}
+.maint-left .maint-type{font-size:13px;font-weight:600}
+.maint-left .maint-date{font-size:11px;color:var(--muted)}
+.maint-right{text-align:right}
+.maint-cost{font-size:13px;font-weight:600;color:var(--yellow)}
+.maint-next{font-size:11px;color:var(--muted)}
+
+/* Tip cards */
+.tip-card{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:13px;margin-bottom:10px}
+.tip-card h4{font-size:13px;font-weight:700;color:var(--accent);margin-bottom:6px}
+.tip-card p,.tip-card li{font-size:13px;color:var(--muted);line-height:1.6}
+.tip-card ul{padding-left:18px}
+
+/* Slider display */
+.slider-display{text-align:center;font-size:22px;font-weight:800;color:var(--accent);margin:10px 0}
+
+/* Summary box */
+.summary-box{background:linear-gradient(135deg,#1e3a5f,#172554);border:1px solid var(--blue);border-radius:12px;padding:16px;margin-bottom:14px}
+.summary-box .sb-label{font-size:11px;color:var(--blue);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px}
+.summary-box .sb-value{font-size:28px;font-weight:800;color:white}
+.summary-box .sb-sub{font-size:12px;color:var(--muted);margin-top:4px}
+
+/* Empty state */
+.empty-state{text-align:center;padding:30px 20px;color:var(--muted)}
+.empty-state .es-icon{font-size:36px;margin-bottom:10px}
+.empty-state p{font-size:14px}
+
+/* Modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;align-items:center;justify-content:center;padding:16px}
+.modal-overlay.active{display:flex}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;width:100%;max-width:420px;max-height:90vh;overflow-y:auto}
+.modal-title{font-size:16px;font-weight:700;margin-bottom:16px;color:var(--accent)}
+.modal-actions{display:flex;gap:10px;margin-top:16px}
+
+/* Toast */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(100px);background:#1e293b;border:1px solid var(--green);color:var(--green);padding:10px 20px;border-radius:20px;font-size:13px;font-weight:600;z-index:200;transition:transform .3s;pointer-events:none}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+/* Number inputs no arrows */
+input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+input[type=number]{-moz-appearance:textfield}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:10px}
+
+@media(max-width:420px){
+  .grid-2{grid-template-columns:1fr 1fr}
+  .grid-3{grid-template-columns:1fr 1fr 1fr}
+  .form-row{grid-template-columns:1fr}
+  .form-row-3{grid-template-columns:1fr 1fr}
+  .metric-value{font-size:17px}
+  .shift-time{font-size:34px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">C</div>
+    <div>
+      <div class="logo-text">ChoferCL</div>
+      <div class="logo-sub">Dashboard Conductores Chile</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="driver-name" id="hdr-name">Carlos M.</div>
+    <div class="driver-status" id="hdr-status">Toyota Yaris 2020</div>
+  </div>
+</header>
+
+<nav id="main-nav">
+  <button class="nav-tab active" data-tab="hoy">HOY</button>
+  <button class="nav-tab" data-tab="rendimiento">RENDIMIENTO</button>
+  <button class="nav-tab" data-tab="costos">COSTOS</button>
+  <button class="nav-tab" data-tab="impuestos">IMPUESTOS</button>
+  <button class="nav-tab" data-tab="comparador">COMPARADOR</button>
+</nav>
+
+<!-- ==================== TAB 1: HOY ==================== -->
+<div id="tab-hoy" class="tab-content active">
+
+  <!-- Shift Timer -->
+  <div class="card">
+    <div class="card-title">TURNO DE HOY</div>
+    <div class="shift-timer">
+      <div class="shift-time" id="shift-display">00:00:00</div>
+      <div class="shift-label" id="shift-label">Sin turno activo</div>
+      <div id="shift-active-badge" style="display:none;justify-content:center;margin-top:8px">
+        <span class="active-badge"><span class="pulse"></span>Turno activo</span>
+      </div>
+    </div>
+    <button class="shift-btn start" id="shift-btn" onclick="toggleShift()">▶ Iniciar Turno</button>
+  </div>
+
+  <!-- Today Metrics -->
+  <div class="card">
+    <div class="card-title">MÉTRICAS DEL DÍA</div>
+    <div class="grid-3" style="margin-bottom:12px">
+      <div class="metric">
+        <div class="metric-label">Viajes</div>
+        <div class="metric-value yellow" id="m-trips">0</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Brutos</div>
+        <div class="metric-value" id="m-gross">$0</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Comisión</div>
+        <div class="metric-value red" id="m-commission">$0</div>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="metric">
+        <div class="metric-label">Neto plataforma</div>
+        <div class="metric-value green" id="m-net">$0</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Combustible</div>
+        <div class="metric-value red" id="m-fuel">$0</div>
+      </div>
+    </div>
+    <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+      <div class="summary-box">
+        <div class="sb-label">Ganancia Real del Día</div>
+        <div class="sb-value" id="m-real">$0</div>
+        <div class="sb-sub" id="m-hourly">— Tarifa hora: $0/hr</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Trip -->
+  <div class="card">
+    <div class="card-title accent">+ REGISTRAR VIAJE</div>
+    <div class="form-row" style="margin-bottom:10px">
+      <div class="form-group">
+        <label class="form-label">Plataforma</label>
+        <select class="form-input" id="trip-platform" onchange="autofillCommission()">
+          <option value="Uber">Uber</option>
+          <option value="Cabify">Cabify</option>
+          <option value="InDriver">InDriver</option>
+          <option value="DiDi">DiDi</option>
+          <option value="Rappi">Rappi</option>
+          <option value="Taxi">Taxi</option>
+          <option value="Particular">Particular</option>
+          <option value="Otro">Otro</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tipo</label>
+        <select class="form-input" id="trip-type">
+          <option value="Pasajero">Pasajero</option>
+          <option value="Delivery">Delivery</option>
+          <option value="Express">Express</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row" style="margin-bottom:10px">
+      <div class="form-group">
+        <label class="form-label">Monto cobrado (CLP)</label>
+        <input type="number" class="form-input" id="trip-amount" placeholder="8500" min="0">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Comisión %</label>
+        <input type="number" class="form-input" id="trip-commission" placeholder="25" min="0" max="50">
+      </div>
+    </div>
+    <div class="form-row" style="margin-bottom:10px">
+      <div class="form-group">
+        <label class="form-label">Duración (min)</label>
+        <input type="number" class="form-input" id="trip-duration" placeholder="20" min="1">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notas (opcional)</label>
+        <input type="text" class="form-input" id="trip-notes" placeholder="Aeropuerto, etc.">
+      </div>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="addTrip()">Registrar Viaje</button>
+  </div>
+
+  <!-- Fuel Today -->
+  <div class="card">
+    <div class="card-title">COMBUSTIBLE HOY</div>
+    <div class="form-row-3">
+      <div class="form-group">
+        <label class="form-label">Litros</label>
+        <input type="number" class="form-input" id="fuel-liters" placeholder="30" step="0.5">
+      </div>
+      <div class="form-group">
+        <label class="form-label">$/litro</label>
+        <input type="number" class="form-input" id="fuel-price" value="1200">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Total</label>
+        <input type="number" class="form-input" id="fuel-total" placeholder="36000" readonly style="background:#1a2744;color:var(--yellow)">
+      </div>
+    </div>
+    <button class="btn btn-secondary btn-sm" onclick="calcFuel()">Calcular</button>
+    <button class="btn btn-primary btn-sm" style="margin-left:8px" onclick="saveFuel()">Guardar</button>
+    <div style="margin-top:8px;font-size:12px;color:var(--muted)">Referencia: Gasolina ~$1,200/L · Diesel ~$1,050/L (2024)</div>
+  </div>
+
+  <!-- Today Trip List -->
+  <div class="card">
+    <div class="card-title" style="display:flex;justify-content:space-between;align-items:center">
+      <span>VIAJES DE HOY</span>
+      <button class="btn btn-ghost btn-sm" onclick="clearTodayTrips()">Limpiar</button>
+    </div>
+    <div id="today-trips-list">
+      <div class="empty-state"><div class="es-icon">🚗</div><p>Sin viajes registrados hoy</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== TAB 2: RENDIMIENTO ==================== -->
+<div id="tab-rendimiento" class="tab-content">
+
+  <div class="period-selector">
+    <button class="period-btn active" data-period="today" onclick="setPeriod('today',this)">Hoy</button>
+    <button class="period-btn" data-period="week" onclick="setPeriod('week',this)">Esta Semana</button>
+    <button class="period-btn" data-period="month" onclick="setPeriod('month',this)">Este Mes</button>
+    <button class="period-btn" data-period="year" onclick="setPeriod('year',this)">Este Año</button>
+  </div>
+
+  <!-- Summary -->
+  <div class="card">
+    <div class="card-title">RESUMEN PERÍODO</div>
+    <div class="grid-2" style="margin-bottom:12px">
+      <div class="metric">
+        <div class="metric-label">Ingresos brutos</div>
+        <div class="metric-value" id="p-gross">$0</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Comisiones pagadas</div>
+        <div class="metric-value red" id="p-commissions">$0</div>
+      </div>
+    </div>
+    <div class="grid-3" style="margin-bottom:12px">
+      <div class="metric">
+        <div class="metric-label">Combustible</div>
+        <div class="metric-value red" id="p-fuel">$0</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Depreciación</div>
+        <div class="metric-value red" id="p-depreciation">$0</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Otros costos</div>
+        <div class="metric-value red" id="p-other">$0</div>
+      </div>
+    </div>
+    <div class="summary-box">
+      <div class="sb-label">GANANCIA REAL</div>
+      <div class="sb-value green" id="p-real">$0</div>
+      <div class="sb-sub" id="p-hourly-rate">Tarifa horaria: calculando...</div>
+    </div>
+  </div>
+
+  <!-- Weekly Chart -->
+  <div class="card">
+    <div class="card-title">ÚLTIMAS 8 SEMANAS</div>
+    <div class="chart-wrap-lg"><canvas id="chart-weekly"></canvas></div>
+  </div>
+
+  <!-- By Day of Week -->
+  <div class="card">
+    <div class="card-title">INGRESOS POR DÍA DE SEMANA</div>
+    <div class="chart-wrap"><canvas id="chart-dow"></canvas></div>
+    <div style="margin-top:10px;font-size:13px;color:var(--muted)" id="best-day-text">Calculando mejor día...</div>
+  </div>
+
+  <!-- By Time Slot -->
+  <div class="card">
+    <div class="card-title">INGRESOS POR FRANJA HORARIA</div>
+    <div class="chart-wrap"><canvas id="chart-hours"></canvas></div>
+    <div style="margin-top:10px;font-size:13px;color:var(--muted)" id="best-hour-text">Calculando mejor franja...</div>
+  </div>
+
+  <!-- Platform Comparison -->
+  <div class="card">
+    <div class="card-title">COMPARATIVA DE PLATAFORMAS</div>
+    <div style="overflow-x:auto">
+    <table class="platform-table">
+      <thead>
+        <tr>
+          <th>Plataforma</th>
+          <th>Viajes</th>
+          <th>Bruto</th>
+          <th>Com.%</th>
+          <th>Neto</th>
+          <th>$/hr</th>
+        </tr>
+      </thead>
+      <tbody id="platform-comparison-table">
+        <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:16px">Sin datos</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <!-- Goal Tracker -->
+  <div class="card">
+    <div class="card-title">META MENSUAL</div>
+    <div class="form-row" style="margin-bottom:10px;align-items:flex-end">
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Meta mensual (CLP)</label>
+        <input type="number" class="form-input" id="monthly-goal" placeholder="1200000">
+      </div>
+      <button class="btn btn-primary" onclick="saveGoal()" style="height:44px">Guardar</button>
+    </div>
+    <div id="goal-display" style="display:none">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+        <span id="goal-progress-label" style="font-size:13px;color:var(--muted)">0% alcanzado</span>
+        <span id="goal-amount-label" style="font-size:13px;font-weight:600">$0 / $0</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="goal-bar" style="width:0%"></div></div>
+      <div id="goal-projection" class="alert alert-info" style="margin-top:10px;font-size:12px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== TAB 3: COSTOS ==================== -->
+<div id="tab-costos" class="tab-content">
+
+  <!-- Vehicle Profile -->
+  <div class="card">
+    <div class="card-title accent">PERFIL DEL VEHÍCULO</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Marca</label>
+        <input type="text" class="form-input" id="v-brand" placeholder="Toyota">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Modelo</label>
+        <input type="text" class="form-input" id="v-model" placeholder="Yaris">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Año</label>
+        <input type="number" class="form-input" id="v-year" placeholder="2020">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tipo combustible</label>
+        <select class="form-input" id="v-fuel-type">
+          <option value="Gasolina">Gasolina</option>
+          <option value="Diesel">Diesel</option>
+          <option value="Gas GLP">Gas GLP</option>
+          <option value="Híbrido">Híbrido</option>
+          <option value="Eléctrico">Eléctrico</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Rendimiento km/L</label>
+        <input type="number" class="form-input" id="v-efficiency" placeholder="14" step="0.1">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Precio compra (CLP)</label>
+        <input type="number" class="form-input" id="v-purchase-price" placeholder="9000000">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Año compra</label>
+        <input type="number" class="form-input" id="v-purchase-year" placeholder="2020">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Valor actual est. (CLP)</label>
+        <input type="number" class="form-input" id="v-current-value" placeholder="7500000">
+      </div>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="saveVehicle()">Guardar Perfil</button>
+  </div>
+
+  <!-- Depreciation -->
+  <div class="card">
+    <div class="card-title">DEPRECIACIÓN DEL VEHÍCULO</div>
+    <div id="depreciation-calc">
+      <div class="alert alert-info">Completa el perfil del vehículo para calcular la depreciación.</div>
+    </div>
+  </div>
+
+  <!-- Fuel Log -->
+  <div class="card">
+    <div class="card-title">REGISTRO DE COMBUSTIBLE</div>
+    <div class="form-row-3" style="margin-bottom:10px">
+      <div class="form-group">
+        <label class="form-label">Litros</label>
+        <input type="number" class="form-input" id="fl-liters" placeholder="30" step="0.5">
+      </div>
+      <div class="form-group">
+        <label class="form-label">CLP/litro</label>
+        <input type="number" class="form-input" id="fl-price" placeholder="1200">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Odómetro km</label>
+        <input type="number" class="form-input" id="fl-km" placeholder="45000">
+      </div>
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="addFuelLog()">+ Agregar carga</button>
+    <div style="margin-top:14px">
+      <div class="info-row">
+        <span class="info-row-label">Consumo real calculado</span>
+        <span class="info-row-value yellow" id="fuel-consumption">-- L/100km</span>
+      </div>
+      <div class="info-row">
+        <span class="info-row-label">Costo por km</span>
+        <span class="info-row-value" id="fuel-cost-km">--</span>
+      </div>
+      <div class="info-row">
+        <span class="info-row-label">Combustible este mes</span>
+        <span class="info-row-value red" id="fuel-monthly">$0</span>
+      </div>
+    </div>
+    <div class="chart-wrap" style="margin-top:10px"><canvas id="chart-fuel"></canvas></div>
+    <div id="fuel-log-list" style="margin-top:12px"></div>
+  </div>
+
+  <!-- Maintenance Log -->
+  <div class="card">
+    <div class="card-title">MANTENCIÓN Y REPARACIONES</div>
+    <div class="form-row" style="margin-bottom:10px">
+      <div class="form-group">
+        <label class="form-label">Tipo</label>
+        <select class="form-input" id="maint-type">
+          <option value="Aceite">Aceite</option>
+          <option value="Neumáticos">Neumáticos</option>
+          <option value="Frenos">Frenos</option>
+          <option value="Rev. Técnica">Rev. Técnica</option>
+          <option value="SOAP">SOAP</option>
+          <option value="Lavado">Lavado</option>
+          <option value="Otro">Otro</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Costo (CLP)</label>
+        <input type="number" class="form-input" id="maint-cost" placeholder="45000">
+      </div>
+    </div>
+    <div class="form-row" style="margin-bottom:10px">
+      <div class="form-group">
+        <label class="form-label">Odómetro (km)</label>
+        <input type="number" class="form-input" id="maint-km" placeholder="45000">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Próximo (km o fecha)</label>
+        <input type="text" class="form-input" id="maint-next" placeholder="50000km o 2024-12">
+      </div>
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="addMaintenance()">+ Registrar servicio</button>
+    <div id="maint-alerts" style="margin-top:12px"></div>
+    <div id="maint-list" style="margin-top:12px"></div>
+    <div class="info-row" style="margin-top:8px;border-top:1px solid var(--border);padding-top:10px">
+      <span class="info-row-label">Mantención total anual</span>
+      <span class="info-row-value yellow" id="maint-annual">$0</span>
+    </div>
+  </div>
+
+  <!-- SOAP & Rev Tecnica -->
+  <div class="card">
+    <div class="card-title">DOCUMENTOS Y VENCIMIENTOS</div>
+    <div class="form-row" style="margin-bottom:10px">
+      <div class="form-group">
+        <label class="form-label">Venc. SOAP</label>
+        <input type="date" class="form-input" id="soap-date">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Venc. Rev. Técnica</label>
+        <input type="date" class="form-input" id="revtec-date">
+      </div>
+    </div>
+    <button class="btn btn-secondary btn-sm" onclick="saveDocs()">Guardar fechas</button>
+    <div id="docs-alerts" style="margin-top:12px"></div>
+  </div>
+
+  <!-- Fixed Monthly Costs -->
+  <div class="card">
+    <div class="card-title">COSTOS FIJOS MENSUALES</div>
+    <div class="form-row" style="margin-bottom:10px">
+      <div class="form-group">
+        <label class="form-label">Patente (mensual)</label>
+        <input type="number" class="form-input" id="cf-patente" placeholder="15000">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Seguro complementario</label>
+        <input type="number" class="form-input" id="cf-seguro" placeholder="25000">
+      </div>
+    </div>
+    <div class="form-row" style="margin-bottom:10px">
+      <div class="form-group">
+        <label class="form-label">Arriendo (si aplica)</label>
+        <input type="number" class="form-input" id="cf-arriendo" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Otros fijos</label>
+        <input type="number" class="form-input" id="cf-otros" placeholder="0">
+      </div>
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="saveFixedCosts()">Guardar</button>
+    <div class="info-row" style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px">
+      <span class="info-row-label">Total costos fijos/mes</span>
+      <span class="info-row-value red" id="total-fixed">$0</span>
+    </div>
+    <div class="info-row">
+      <span class="info-row-label">Costo por km estimado</span>
+      <span class="info-row-value" id="cost-per-km">--</span>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== TAB 4: IMPUESTOS ==================== -->
+<div id="tab-impuestos" class="tab-content">
+
+  <div class="card">
+    <div class="card-title accent">SITUACIÓN TRIBUTARIA DEL CONDUCTOR</div>
+    <div class="tax-section">
+      <h4>¿Cómo tributan los conductores de plataformas en Chile?</h4>
+      <div class="info-row">
+        <span class="info-row-label">Uber Chile (desde 2023)</span>
+        <span class="info-row-value green">Relación laboral</span>
+      </div>
+      <div class="info-row">
+        <span class="info-row-label">Cabify, DiDi, InDriver</span>
+        <span class="info-row-value yellow">Prestador de servicios</span>
+      </div>
+      <div class="info-row">
+        <span class="info-row-label">Taxi amarillo</span>
+        <span class="info-row-value blue">Empresa individual o EIRL</span>
+      </div>
+    </div>
+    <div class="alert alert-info" style="margin-top:10px;font-size:13px">
+      <strong>Importante:</strong> Si recibes liquidación de sueldo de Uber, tus impuestos y AFP ya van descontados. Para las otras plataformas debes declarar tus ingresos como independiente.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">BOLETA DE HONORARIOS — INDEPENDIENTES</div>
+    <div class="info-row">
+      <span class="info-row-label">Retención 2026</span>
+      <span class="info-row-value yellow">13.75%</span>
+    </div>
+    <div class="info-row">
+      <span class="info-row-label">Cotizaciones estimadas</span>
+      <span class="info-row-value">AFP ~11.5% + Salud 7%</span>
+    </div>
+    <div class="info-row">
+      <span class="info-row-label">Formulario anual</span>
+      <span class="info-row-value">F22 (abril cada año)</span>
+    </div>
+    <div class="alert alert-success" style="margin-top:12px;font-size:13px">
+      Guarda <strong>todas</strong> tus boletas de bencina y mantención — son gastos deducibles en tu declaración de renta.
+    </div>
+
+    <!-- PPM Calculator -->
+    <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+      <div class="card-title">CALCULADORA PPM SUGERIDO</div>
+      <div class="form-group">
+        <label class="form-label">Ingreso neto anual estimado (CLP)</label>
+        <input type="number" class="form-input" id="annual-income" placeholder="8400000" oninput="calcPPM()">
+      </div>
+      <div id="ppm-result" style="margin-top:8px"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title accent">GASTOS DEDUCIBLES SII</div>
+    <div class="deductible-item">
+      <div class="deductible-icon">⛽</div>
+      <div class="deductible-text">
+        <div class="di-name">Combustible</div>
+        <div class="di-pct">100% deducible — exige boleta siempre</div>
+      </div>
+    </div>
+    <div class="deductible-item">
+      <div class="deductible-icon">🔧</div>
+      <div class="deductible-text">
+        <div class="di-name">Mantención y reparaciones</div>
+        <div class="di-pct">100% deducible</div>
+      </div>
+    </div>
+    <div class="deductible-item">
+      <div class="deductible-icon">📉</div>
+      <div class="deductible-text">
+        <div class="di-name">Depreciación del vehículo</div>
+        <div class="di-pct">Método acelerado posible (3 años para plataformas)</div>
+      </div>
+    </div>
+    <div class="deductible-item">
+      <div class="deductible-icon">📋</div>
+      <div class="deductible-text">
+        <div class="di-name">SOAP y Revisión Técnica</div>
+        <div class="di-pct">100% deducible</div>
+      </div>
+    </div>
+    <div class="deductible-item">
+      <div class="deductible-icon">🚿</div>
+      <div class="deductible-text">
+        <div class="di-name">Lavados y limpieza</div>
+        <div class="di-pct">100% deducible con boleta</div>
+      </div>
+    </div>
+    <div class="deductible-item">
+      <div class="deductible-icon">📱</div>
+      <div class="deductible-text">
+        <div class="di-name">Accesorios (soporte celular, etc.)</div>
+        <div class="di-pct">100% deducible con boleta</div>
+      </div>
+    </div>
+    <div class="alert alert-warning" style="margin-top:12px;font-size:13px">
+      <strong>Consejo SII:</strong> Pide boleta por TODO. Sin boleta no hay deducción.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">REGISTRO COMO CONDUCTOR</div>
+    <div class="tax-section">
+      <h4>SII — Inicio de Actividades</h4>
+      <div class="info-row">
+        <span class="info-row-label">Código de actividad</span>
+        <span class="info-row-value">492000</span>
+      </div>
+      <div class="info-row">
+        <span class="info-row-label">Descripción</span>
+        <span class="info-row-value" style="font-size:12px">Transporte privado de pasajeros</span>
+      </div>
+      <div class="info-row">
+        <span class="info-row-label">Trámite</span>
+        <span class="info-row-value blue">sii.cl gratuito</span>
+      </div>
+    </div>
+    <div class="tax-section" style="margin-top:12px">
+      <h4>Licencias requeridas en Chile</h4>
+      <div class="info-row">
+        <span class="info-row-label">Uber / Cabify / InDriver / DiDi</span>
+        <span class="info-row-value green">Licencia Clase B</span>
+      </div>
+      <div class="info-row">
+        <span class="info-row-label">Taxi amarillo / Colectivo</span>
+        <span class="info-row-value yellow">Licencia Clase A</span>
+      </div>
+      <div class="info-row">
+        <span class="info-row-label">Plataformas digitales</span>
+        <span class="info-row-value green">Clase B es suficiente</span>
+      </div>
+    </div>
+    <div class="alert alert-info" style="margin-top:12px;font-size:13px">
+      Para taxi amarillo: también se requiere patente comercial municipal y autorización SEREMI de Transportes.
+    </div>
+  </div>
+</div>
+
+<!-- ==================== TAB 5: COMPARADOR ==================== -->
+<div id="tab-comparador" class="tab-content">
+
+  <!-- Platform Calculator -->
+  <div class="card">
+    <div class="card-title accent">CALCULADORA DE COMISIONES</div>
+    <div class="form-group">
+      <label class="form-label">Monto del viaje (CLP)</label>
+      <div class="slider-display" id="calc-amount-display">$10,000</div>
+      <input type="range" id="calc-amount-slider" min="1000" max="50000" step="500" value="10000" oninput="updateCalcSlider()">
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted)">
+        <span>$1,000</span><span>$50,000</span>
+      </div>
+    </div>
+    <div id="platform-calc-results" style="margin-top:14px"></div>
+  </div>
+
+  <!-- Break-even Calculator -->
+  <div class="card">
+    <div class="card-title">CALCULADORA PUNTO DE EQUILIBRIO</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Costos fijos/mes (CLP)</label>
+        <input type="number" class="form-input" id="be-fixed" placeholder="300000" oninput="calcBreakeven()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Ganancia real $/hora</label>
+        <input type="number" class="form-input" id="be-hourly" placeholder="4500" oninput="calcBreakeven()">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Meta ingreso mensual (CLP)</label>
+      <input type="number" class="form-input" id="be-target" placeholder="800000" oninput="calcBreakeven()">
+    </div>
+    <div id="breakeven-result" style="margin-top:10px"></div>
+  </div>
+
+  <!-- Best Time to Work -->
+  <div class="card">
+    <div class="card-title">CUÁNDO CONVIENE TRABAJAR</div>
+    <div id="best-time-section">
+      <div class="alert alert-info" style="font-size:13px">Registra viajes durante varios días para ver tus mejores franjas horarias automáticamente.</div>
+    </div>
+    <div style="margin-top:12px">
+      <div class="card-title" style="margin-bottom:8px">PATRONES GENERALES SANTIAGO</div>
+      <div class="grid-2" style="gap:8px">
+        <div class="tip-card">
+          <h4>Rush Mañana</h4>
+          <p>7:00 – 9:30 am<br>Muy alta demanda. Oficinas y colegios.</p>
+        </div>
+        <div class="tip-card">
+          <h4>Almuerzo</h4>
+          <p>12:00 – 2:00 pm<br>Demanda media-alta. Cortos y rápidos.</p>
+        </div>
+        <div class="tip-card">
+          <h4>Rush Tarde</h4>
+          <p>6:00 – 9:30 pm<br>Mejor franja del día. Máxima demanda.</p>
+        </div>
+        <div class="tip-card">
+          <h4>Noche Viernes/Sáb</h4>
+          <p>10 pm – 2 am<br>Vida nocturna. Viajes más largos y tarifas altas.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Surge & Events -->
+  <div class="card">
+    <div class="card-title">ZONAS Y EVENTOS CLAVE — SANTIAGO</div>
+    <div class="tip-card" style="margin-bottom:8px">
+      <h4>Aeropuerto Arturo Merino Benitez</h4>
+      <ul>
+        <li>Mejores llegadas: 8-9am, 1-3pm, 8-10pm</li>
+        <li>Lunes y viernes: mayor flujo de viajeros de negocios</li>
+        <li>Terminal internacional tiene tarifas más altas</li>
+      </ul>
+    </div>
+    <div class="tip-card" style="margin-bottom:8px">
+      <h4>Eventos Masivos</h4>
+      <ul>
+        <li>MOVISTAR Arena: post-concierto 11pm surge x2-3</li>
+        <li>Estadio Nacional: fútbol, sal 20min antes del final</li>
+        <li>Centro de Eventos Parque O'Higgins</li>
+      </ul>
+    </div>
+    <div class="tip-card" style="margin-bottom:8px">
+      <h4>Zonas de Alta Demanda</h4>
+      <ul>
+        <li>Providencia / Las Condes: ejecutivos, horario oficina</li>
+        <li>Baquedano / Bellas Artes: tarde-noche, jóvenes</li>
+        <li>Mall Costanera Center: todo el día sábado</li>
+        <li>Centro / Estación Central: todo el día</li>
+      </ul>
+    </div>
+    <div class="tip-card">
+      <h4>Tips para Tasa de Aceptación</h4>
+      <ul>
+        <li>Mantén modo online mínimo 80% del tiempo en turno</li>
+        <li>Rechazar viajes baja tu prioridad en el algoritmo</li>
+        <li>Ubícate en zonas de alta demanda, no esperes en casa</li>
+        <li>Rating alto = más viajes en hora punta</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Uber vs Taxi Comparison -->
+  <div class="card">
+    <div class="card-title">PLATAFORMAS vs TAXI AMARILLO</div>
+    <div style="overflow-x:auto">
+    <table class="platform-table">
+      <thead>
+        <tr><th>Aspecto</th><th>Plataformas</th><th>Taxi Amarillo</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="color:var(--muted)">Inversión inicial</td>
+          <td style="color:var(--green)">Baja (auto propio)</td>
+          <td style="color:var(--red)">Alta (patente+letrero)</td>
+        </tr>
+        <tr>
+          <td style="color:var(--muted)">Control de tarifas</td>
+          <td style="color:var(--red)">Algoritmo decide</td>
+          <td style="color:var(--green)">Tarifa propia posible</td>
+        </tr>
+        <tr>
+          <td style="color:var(--muted)">Clientela fija</td>
+          <td style="color:var(--red)">No, algoritmo asigna</td>
+          <td style="color:var(--green)">Sí, con el tiempo</td>
+        </tr>
+        <tr>
+          <td style="color:var(--muted)">Comisión</td>
+          <td style="color:var(--red)">15-25% plataforma</td>
+          <td style="color:var(--green)">0% (gastos propios)</td>
+        </tr>
+        <tr>
+          <td style="color:var(--muted)">Flexibilidad horaria</td>
+          <td style="color:var(--green)">Total</td>
+          <td style="color:var(--green)">Total</td>
+        </tr>
+        <tr>
+          <td style="color:var(--muted)">Licencia requerida</td>
+          <td style="color:var(--green)">Clase B</td>
+          <td style="color:var(--yellow)">Clase A profesional</td>
+        </tr>
+        <tr>
+          <td style="color:var(--muted)">Volumen de viajes</td>
+          <td style="color:var(--green)">Alto (algoritmo)</td>
+          <td style="color:var(--red)">Depende de ubicación</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ===================== DATA LAYER =====================
+const STORAGE_KEY = 'chofercl_v1';
+let data = {
+  driver: { name: 'Carlos M.', vehicleName: 'Toyota Yaris 2020' },
+  vehicle: { brand: 'Toyota', model: 'Yaris', year: 2020, fuelType: 'Gasolina', efficiency: 14, purchasePrice: 9000000, purchaseYear: 2020, currentValue: 7500000 },
+  trips: [],
+  fuelLogs: [],
+  maintenance: [],
+  docs: { soap: '', revtec: '' },
+  fixedCosts: { patente: 15000, seguro: 25000, arriendo: 0, otros: 5000 },
+  goal: 0,
+  shift: { active: false, startTime: null, totalSeconds: 0 },
+};
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) { const d = JSON.parse(raw); data = { ...data, ...d }; }
+  } catch(e) { console.warn('localStorage error', e); }
+}
+
+function saveData() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e) { console.warn('save error', e); }
+}
+
+function formatCLP(n) {
+  if (!n && n !== 0) return '$0';
+  return '$' + Math.round(n).toLocaleString('es-CL');
+}
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+// ===================== DEMO DATA =====================
+function loadDemoData() {
+  if (data.trips.length > 0) return; // already has data
+  const now = new Date();
+  const platforms = ['Uber','Cabify','InDriver','DiDi'];
+  const commissions = { Uber:25, Cabify:20, InDriver:15, DiDi:22 };
+  // Generate 3 days of trips
+  for (let d2 = 2; d2 >= 0; d2--) {
+    const date = new Date(now);
+    date.setDate(date.getDate() - d2);
+    const tripsPerDay = 8 + Math.floor(Math.random() * 6);
+    for (let i = 0; i < tripsPerDay; i++) {
+      const plat = platforms[Math.floor(Math.random() * platforms.length)];
+      const amt = 3500 + Math.floor(Math.random() * 12000);
+      const dur = 10 + Math.floor(Math.random() * 30);
+      const h = 6 + Math.floor(Math.random() * 16);
+      const tripDate = new Date(date);
+      tripDate.setHours(h, Math.floor(Math.random()*60), 0, 0);
+      data.trips.push({
+        id: Date.now() + Math.random(),
+        platform: plat,
+        type: 'Pasajero',
+        amount: amt,
+        commission: commissions[plat],
+        duration: dur,
+        notes: '',
+        timestamp: tripDate.toISOString()
+      });
+    }
+  }
+  // Fuel logs
+  data.fuelLogs = [
+    { date: new Date(now.getTime() - 2*86400000).toISOString().split('T')[0], liters: 28, price: 1190, km: 44850 },
+    { date: new Date(now.getTime() - 1*86400000).toISOString().split('T')[0], liters: 32, price: 1200, km: 45200 },
+  ];
+  data.vehicle = { brand: 'Toyota', model: 'Yaris', year: 2020, fuelType: 'Gasolina', efficiency: 14, purchasePrice: 9000000, purchaseYear: 2020, currentValue: 7500000 };
+  data.maintenance = [
+    { type: 'Aceite', cost: 35000, km: 44000, next: '49000km', date: new Date(now.getTime() - 30*86400000).toISOString().split('T')[0] },
+    { type: 'Neumáticos', cost: 240000, km: 40000, next: '80000km', date: new Date(now.getTime() - 90*86400000).toISOString().split('T')[0] },
+  ];
+  saveData();
+}
+
+// ===================== SHIFT TIMER =====================
+let shiftInterval = null;
+
+function toggleShift() {
+  if (data.shift.active) {
+    // Stop
+    const elapsed = Math.floor((Date.now() - new Date(data.shift.startTime).getTime()) / 1000);
+    data.shift.totalSeconds += elapsed;
+    data.shift.active = false;
+    data.shift.startTime = null;
+    clearInterval(shiftInterval);
+    shiftInterval = null;
+    document.getElementById('shift-btn').className = 'shift-btn start';
+    document.getElementById('shift-btn').textContent = '▶ Iniciar Turno';
+    document.getElementById('shift-label').textContent = 'Turno finalizado';
+    document.getElementById('shift-active-badge').style.display = 'none';
+  } else {
+    // Start
+    data.shift.active = true;
+    data.shift.startTime = new Date().toISOString();
+    document.getElementById('shift-btn').className = 'shift-btn stop';
+    document.getElementById('shift-btn').textContent = '⏹ Finalizar Turno';
+    document.getElementById('shift-label').textContent = 'Tiempo de turno activo';
+    document.getElementById('shift-active-badge').style.display = 'flex';
+    startShiftTimer();
+  }
+  saveData();
+  updateTodayMetrics();
+}
+
+function startShiftTimer() {
+  if (shiftInterval) clearInterval(shiftInterval);
+  shiftInterval = setInterval(() => {
+    let total = data.shift.totalSeconds;
+    if (data.shift.active && data.shift.startTime) {
+      total += Math.floor((Date.now() - new Date(data.shift.startTime).getTime()) / 1000);
+    }
+    const h = Math.floor(total / 3600);
+    const m = Math.floor((total % 3600) / 60);
+    const s = total % 60;
+    document.getElementById('shift-display').textContent =
+      String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+  }, 1000);
+}
+
+function getShiftHours() {
+  let total = data.shift.totalSeconds;
+  if (data.shift.active && data.shift.startTime) {
+    total += Math.floor((Date.now() - new Date(data.shift.startTime).getTime()) / 1000);
+  }
+  return total / 3600;
+}
+
+// ===================== TRIP MANAGEMENT =====================
+const COMMISSIONS = { Uber:25, Cabify:20, InDriver:15, DiDi:22, Rappi:25, Taxi:0, Particular:0, Otro:0 };
+
+function autofillCommission() {
+  const plat = document.getElementById('trip-platform').value;
+  document.getElementById('trip-commission').value = COMMISSIONS[plat] ?? 0;
+}
+
+function addTrip() {
+  const platform = document.getElementById('trip-platform').value;
+  const amount = parseFloat(document.getElementById('trip-amount').value);
+  const commission = parseFloat(document.getElementById('trip-commission').value) || 0;
+  const duration = parseInt(document.getElementById('trip-duration').value) || 0;
+  const type = document.getElementById('trip-type').value;
+  const notes = document.getElementById('trip-notes').value;
+  if (!amount || amount <= 0) { toast('Ingresa un monto válido'); return; }
+  const trip = { id: Date.now(), platform, type, amount, commission, duration, notes, timestamp: new Date().toISOString() };
+  data.trips.push(trip);
+  saveData();
+  document.getElementById('trip-amount').value = '';
+  document.getElementById('trip-duration').value = '';
+  document.getElementById('trip-notes').value = '';
+  updateTodayMetrics();
+  renderTodayTrips();
+  toast('Viaje registrado');
+}
+
+function getTodayTrips() {
+  const today = new Date().toISOString().split('T')[0];
+  return data.trips.filter(t => t.timestamp.startsWith(today));
+}
+
+function getTodayFuel() {
+  const today = new Date().toISOString().split('T')[0];
+  return data.fuelLogs
+    .filter(f => (f.date || '').startsWith(today))
+    .reduce((s, f) => s + (f.liters * f.price), 0);
+}
+
+function getDailyDepreciation() {
+  const v = data.vehicle;
+  if (!v.purchasePrice || !v.purchaseYear) return 0;
+  const residual = v.purchasePrice * 0.1;
+  const annualDepr = (v.purchasePrice - residual) / 10;
+  return annualDepr / 365;
+}
+
+function updateTodayMetrics() {
+  const trips = getTodayTrips();
+  const gross = trips.reduce((s,t) => s + t.amount, 0);
+  const commission = trips.reduce((s,t) => s + (t.amount * t.commission / 100), 0);
+  const net = gross - commission;
+  const fuel = getTodayFuel();
+  const depr = getDailyDepreciation();
+  const real = net - fuel - depr;
+  const hours = getShiftHours();
+  const hourly = hours > 0 ? real / hours : 0;
+
+  document.getElementById('m-trips').textContent = trips.length;
+  document.getElementById('m-gross').textContent = formatCLP(gross);
+  document.getElementById('m-commission').textContent = formatCLP(commission);
+  document.getElementById('m-net').textContent = formatCLP(net);
+  document.getElementById('m-fuel').textContent = formatCLP(fuel);
+  document.getElementById('m-real').textContent = formatCLP(real);
+  document.getElementById('m-hourly').textContent = hours > 0
+    ? `${hours.toFixed(1)}h turno · Tarifa hora: ${formatCLP(hourly)}/hr`
+    : 'Inicia turno para calcular tarifa horaria';
+}
+
+function renderTodayTrips() {
+  const trips = getTodayTrips().slice().reverse();
+  const container = document.getElementById('today-trips-list');
+  if (trips.length === 0) {
+    container.innerHTML = '<div class="empty-state"><div class="es-icon">🚗</div><p>Sin viajes registrados hoy</p></div>';
+    return;
+  }
+  const badgeClass = p => 'badge badge-' + p.toLowerCase().replace(/\s/g,'');
+  container.innerHTML = trips.map(t => {
+    const net = t.amount * (1 - t.commission/100);
+    const time = new Date(t.timestamp).toLocaleTimeString('es-CL', {hour:'2-digit',minute:'2-digit'});
+    return `<div class="trip-item">
+      <div class="trip-left">
+        <span class="${badgeClass(t.platform)}">${t.platform}</span>
+        <div class="trip-info">
+          <div class="trip-amount">${formatCLP(t.amount)}</div>
+          <div class="trip-meta">${time} · ${t.duration}min · ${t.type}</div>
+        </div>
+      </div>
+      <div class="trip-right">
+        <div class="trip-net">${formatCLP(net)}</div>
+        <div class="trip-commission">${t.commission}% com.</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function clearTodayTrips() {
+  if (!confirm('¿Eliminar todos los viajes de hoy?')) return;
+  const today = new Date().toISOString().split('T')[0];
+  data.trips = data.trips.filter(t => !t.timestamp.startsWith(today));
+  saveData();
+  updateTodayMetrics();
+  renderTodayTrips();
+  toast('Viajes eliminados');
+}
+
+// ===================== FUEL =====================
+function calcFuel() {
+  const liters = parseFloat(document.getElementById('fuel-liters').value) || 0;
+  const price = parseFloat(document.getElementById('fuel-price').value) || 0;
+  document.getElementById('fuel-total').value = Math.round(liters * price);
+}
+
+function saveFuel() {
+  const liters = parseFloat(document.getElementById('fuel-liters').value);
+  const price = parseFloat(document.getElementById('fuel-price').value) || 1200;
+  if (!liters || liters <= 0) { toast('Ingresa litros válidos'); return; }
+  const today = new Date().toISOString().split('T')[0];
+  data.fuelLogs.push({ date: today, liters, price, km: null });
+  saveData();
+  updateTodayMetrics();
+  document.getElementById('fuel-liters').value = '';
+  document.getElementById('fuel-total').value = '';
+  toast('Combustible registrado');
+}
+
+// ===================== PERFORMANCE TAB =====================
+let currentPeriod = 'today';
+
+function setPeriod(period, btn) {
+  currentPeriod = period;
+  document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  updatePerformance();
+}
+
+function getTripsForPeriod(period) {
+  const now = new Date();
+  return data.trips.filter(t => {
+    const d = new Date(t.timestamp);
+    if (period === 'today') return d.toDateString() === now.toDateString();
+    if (period === 'week') {
+      const weekAgo = new Date(now); weekAgo.setDate(now.getDate() - 7);
+      return d >= weekAgo;
+    }
+    if (period === 'month') return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    if (period === 'year') return d.getFullYear() === now.getFullYear();
+    return true;
+  });
+}
+
+function getFuelForPeriod(period) {
+  const now = new Date();
+  return data.fuelLogs.filter(f => {
+    const d = new Date(f.date);
+    if (period === 'today') return d.toDateString() === now.toDateString();
+    if (period === 'week') { const w = new Date(now); w.setDate(now.getDate()-7); return d >= w; }
+    if (period === 'month') return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    if (period === 'year') return d.getFullYear() === now.getFullYear();
+    return true;
+  }).reduce((s,f) => s + f.liters * f.price, 0);
+}
+
+function getPeriodDays(period) {
+  if (period === 'today') return 1;
+  if (period === 'week') return 7;
+  if (period === 'month') return 30;
+  if (period === 'year') return 365;
+  return 1;
+}
+
+function updatePerformance() {
+  const trips = getTripsForPeriod(currentPeriod);
+  const gross = trips.reduce((s,t) => s + t.amount, 0);
+  const commissions = trips.reduce((s,t) => s + t.amount * t.commission/100, 0);
+  const fuelCost = getFuelForPeriod(currentPeriod);
+  const days = getPeriodDays(currentPeriod);
+  const depr = getDailyDepreciation() * days;
+  const fc = data.fixedCosts;
+  const otherCosts = (fc.patente + fc.seguro + fc.arriendo + fc.otros) * days / 30;
+  const real = gross - commissions - fuelCost - depr - otherCosts;
+  const totalMins = trips.reduce((s,t) => s + (t.duration || 0), 0);
+  const hours = totalMins / 60;
+  const hourly = hours > 0 ? real / hours : 0;
+
+  document.getElementById('p-gross').textContent = formatCLP(gross);
+  document.getElementById('p-commissions').textContent = formatCLP(commissions);
+  document.getElementById('p-fuel').textContent = formatCLP(fuelCost);
+  document.getElementById('p-depreciation').textContent = formatCLP(depr);
+  document.getElementById('p-other').textContent = formatCLP(otherCosts);
+  document.getElementById('p-real').textContent = formatCLP(real);
+  document.getElementById('p-hourly-rate').textContent = hours > 0
+    ? `Tarifa horaria real: ${formatCLP(hourly)}/hr · ${hours.toFixed(1)}h trabajadas`
+    : 'Sin datos de duración de viajes';
+
+  renderPlatformComparison(trips);
+  updateGoalDisplay(gross);
+  renderBestDayChart(trips);
+  renderBestHourChart(trips);
+}
+
+function renderPlatformComparison(trips) {
+  const byPlatform = {};
+  trips.forEach(t => {
+    if (!byPlatform[t.platform]) byPlatform[t.platform] = { trips:0, gross:0, commTotal:0, mins:0, commPct: t.commission };
+    byPlatform[t.platform].trips++;
+    byPlatform[t.platform].gross += t.amount;
+    byPlatform[t.platform].commTotal += t.amount * t.commission / 100;
+    byPlatform[t.platform].mins += (t.duration || 0);
+  });
+
+  const rows = Object.entries(byPlatform)
+    .map(([name, d]) => {
+      const net = d.gross - d.commTotal;
+      const hrs = d.mins / 60;
+      const netHr = hrs > 0 ? net / hrs : 0;
+      return { name, ...d, net, hrs, netHr };
+    })
+    .sort((a,b) => b.netHr - a.netHr);
+
+  const tbody = document.getElementById('platform-comparison-table');
+  if (rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:16px">Sin datos para el período</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.map((r,i) => `
+    <tr>
+      <td><span class="badge badge-${r.name.toLowerCase().replace(/\s/g,'')}">${r.name}</span></td>
+      <td>${r.trips}</td>
+      <td>${formatCLP(r.gross)}</td>
+      <td style="color:var(--red)">${r.commPct}%</td>
+      <td style="color:var(--green)">${formatCLP(r.net)}</td>
+      <td class="${i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':''}">${formatCLP(r.netHr)}</td>
+    </tr>
+  `).join('');
+}
+
+// ===================== CHARTS =====================
+let chartWeekly, chartDow, chartHours, chartFuel;
+
+const CHART_DEFAULTS = {
+  color: '#94a3b8',
+  plugins: { legend: { labels: { color: '#94a3b8', font: { family: 'Inter', size: 11 } } } },
+  scales: {
+    x: { ticks: { color: '#94a3b8', font: { size: 11 } }, grid: { color: '#334155' } },
+    y: { ticks: { color: '#94a3b8', font: { size: 11 } }, grid: { color: '#334155' } }
+  }
+};
+
+function initWeeklyChart() {
+  const ctx = document.getElementById('chart-weekly').getContext('2d');
+  const weeks = getLast8WeeksData();
+  chartWeekly = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: weeks.labels,
+      datasets: [
+        { label: 'Bruto', data: weeks.gross, backgroundColor: 'rgba(56,189,248,0.5)', borderColor: '#38bdf8', borderWidth: 1 },
+        { label: 'Neto plataforma', data: weeks.net, backgroundColor: 'rgba(34,197,94,0.5)', borderColor: '#22c55e', borderWidth: 1 },
+        { label: 'Ganancia real', data: weeks.real, backgroundColor: 'rgba(245,158,11,0.7)', borderColor: '#f59e0b', borderWidth: 1 },
+      ]
+    },
+    options: { ...CHART_DEFAULTS, responsive: true, maintainAspectRatio: false,
+      plugins: { ...CHART_DEFAULTS.plugins },
+      scales: { ...CHART_DEFAULTS.scales,
+        y: { ...CHART_DEFAULTS.scales.y, ticks: { color:'#94a3b8', callback: v => '$'+v.toLocaleString('es-CL') } }
+      }
+    }
+  });
+}
+
+function getLast8WeeksData() {
+  const labels = [], gross = [], net = [], real = [];
+  const now = new Date();
+  for (let w = 7; w >= 0; w--) {
+    const start = new Date(now); start.setDate(now.getDate() - w*7 - 6);
+    const end = new Date(now); end.setDate(now.getDate() - w*7);
+    const weekTrips = data.trips.filter(t => { const d = new Date(t.timestamp); return d >= start && d <= end; });
+    const g = weekTrips.reduce((s,t) => s + t.amount, 0);
+    const c = weekTrips.reduce((s,t) => s + t.amount*t.commission/100, 0);
+    const n = g - c;
+    const fuelCost = data.fuelLogs
+      .filter(f => { const d = new Date(f.date); return d >= start && d <= end; })
+      .reduce((s,f) => s + f.liters*f.price, 0);
+    const depr = getDailyDepreciation() * 7;
+    labels.push(`S${8-w}`);
+    gross.push(Math.round(g));
+    net.push(Math.round(n));
+    real.push(Math.round(n - fuelCost - depr));
+  }
+  return { labels, gross, net, real };
+}
+
+function renderBestDayChart(trips) {
+  const days = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const totals = Array(7).fill(0);
+  trips.forEach(t => { totals[new Date(t.timestamp).getDay()] += t.amount * (1 - t.commission/100); });
+  const maxIdx = totals.indexOf(Math.max(...totals));
+
+  if (chartDow) chartDow.destroy();
+  const ctx = document.getElementById('chart-dow').getContext('2d');
+  chartDow = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: days,
+      datasets: [{ label: 'Neto promedio', data: totals, backgroundColor: totals.map((_,i) => i===maxIdx?'#f59e0b':'rgba(56,189,248,0.5)'), borderRadius: 4 }]
+    },
+    options: { ...CHART_DEFAULTS, responsive:true, maintainAspectRatio:false,
+      plugins: { legend: { display: false } },
+      scales: { ...CHART_DEFAULTS.scales, y: { ...CHART_DEFAULTS.scales.y, ticks: { color:'#94a3b8', callback: v => '$'+v.toLocaleString('es-CL') } } }
+    }
+  });
+  document.getElementById('best-day-text').textContent = totals[maxIdx] > 0
+    ? `Mejor día: ${days[maxIdx]} con ${formatCLP(totals[maxIdx])} neto`
+    : 'Sin suficientes datos';
+}
+
+function renderBestHourChart(trips) {
+  const slots = ['6-8','8-10','10-12','12-14','14-16','16-18','18-20','20-22','22-0'];
+  const totals = Array(9).fill(0);
+  trips.forEach(t => {
+    const h = new Date(t.timestamp).getHours();
+    const idx = h < 6 ? 8 : Math.min(Math.floor((h-6)/2), 8);
+    totals[idx] += t.amount * (1 - t.commission/100);
+  });
+  const maxIdx = totals.indexOf(Math.max(...totals));
+
+  if (chartHours) chartHours.destroy();
+  const ctx = document.getElementById('chart-hours').getContext('2d');
+  chartHours = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: slots,
+      datasets: [{ label: 'Neto por franja', data: totals, backgroundColor: totals.map((_,i) => i===maxIdx?'#f59e0b':'rgba(167,139,250,0.5)'), borderRadius: 4 }]
+    },
+    options: { ...CHART_DEFAULTS, responsive:true, maintainAspectRatio:false,
+      plugins: { legend: { display: false } },
+      scales: { ...CHART_DEFAULTS.scales, y: { ...CHART_DEFAULTS.scales.y, ticks: { color:'#94a3b8', callback: v => '$'+v.toLocaleString('es-CL') } } }
+    }
+  });
+  document.getElementById('best-hour-text').textContent = totals[maxIdx] > 0
+    ? `Mejor franja: ${slots[maxIdx]}h con ${formatCLP(totals[maxIdx])} neto`
+    : 'Sin suficientes datos';
+}
+
+function renderFuelChart() {
+  if (chartFuel) chartFuel.destroy();
+  const ctx = document.getElementById('chart-fuel').getContext('2d');
+  const logs = data.fuelLogs.slice(-8);
+  chartFuel = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: logs.map(f => f.date ? f.date.slice(5) : '?'),
+      datasets: [{ label: 'Gasto CLP', data: logs.map(f => f.liters*f.price), borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.1)', fill: true, tension: 0.3 }]
+    },
+    options: { ...CHART_DEFAULTS, responsive:true, maintainAspectRatio:false,
+      plugins: { legend: { display: false } },
+      scales: { ...CHART_DEFAULTS.scales, y: { ...CHART_DEFAULTS.scales.y, ticks: { color:'#94a3b8', callback: v => '$'+v.toLocaleString('es-CL') } } }
+    }
+  });
+}
+
+// ===================== GOAL =====================
+function saveGoal() {
+  const g = parseInt(document.getElementById('monthly-goal').value);
+  if (!g || g <= 0) { toast('Meta inválida'); return; }
+  data.goal = g;
+  saveData();
+  updateGoalDisplay();
+  toast('Meta guardada');
+}
+
+function updateGoalDisplay(currentMonthNet) {
+  if (!data.goal) return;
+  document.getElementById('goal-display').style.display = 'block';
+  document.getElementById('monthly-goal').value = data.goal;
+  const now = new Date();
+  const monthTrips = data.trips.filter(t => {
+    const d = new Date(t.timestamp);
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  });
+  const monthNet = monthTrips.reduce((s,t) => s + t.amount*(1-t.commission/100), 0);
+  const pct = Math.min(100, Math.round((monthNet / data.goal) * 100));
+  const dayOfMonth = now.getDate();
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+  const projected = dayOfMonth > 0 ? (monthNet / dayOfMonth) * daysInMonth : 0;
+
+  document.getElementById('goal-progress-label').textContent = `${pct}% alcanzado (día ${dayOfMonth} de ${daysInMonth})`;
+  document.getElementById('goal-amount-label').textContent = `${formatCLP(monthNet)} / ${formatCLP(data.goal)}`;
+  document.getElementById('goal-bar').style.width = pct + '%';
+  document.getElementById('goal-projection').textContent =
+    `A este ritmo llegas a ${formatCLP(projected)} al mes (${projected >= data.goal ? '¡meta alcanzable!' : 'falta ajustar ritmo'})`;
+}
+
+// ===================== VEHICLE & COSTS =====================
+function saveVehicle() {
+  data.vehicle = {
+    brand: document.getElementById('v-brand').value,
+    model: document.getElementById('v-model').value,
+    year: parseInt(document.getElementById('v-year').value),
+    fuelType: document.getElementById('v-fuel-type').value,
+    efficiency: parseFloat(document.getElementById('v-efficiency').value),
+    purchasePrice: parseInt(document.getElementById('v-purchase-price').value),
+    purchaseYear: parseInt(document.getElementById('v-purchase-year').value),
+    currentValue: parseInt(document.getElementById('v-current-value').value),
+  };
+  data.driver.vehicleName = `${data.vehicle.brand} ${data.vehicle.model} ${data.vehicle.year}`;
+  document.getElementById('hdr-status').textContent = data.driver.vehicleName;
+  saveData();
+  updateDepreciationDisplay();
+  updateTodayMetrics();
+  toast('Vehículo guardado');
+}
+
+function updateDepreciationDisplay() {
+  const v = data.vehicle;
+  const el = document.getElementById('depreciation-calc');
+  if (!v.purchasePrice || !v.purchaseYear) {
+    el.innerHTML = '<div class="alert alert-info">Completa el perfil del vehículo para calcular la depreciación.</div>';
+    return;
+  }
+  const residual = v.purchasePrice * 0.1;
+  const annualDepr = (v.purchasePrice - residual) / 10;
+  const dailyDepr = annualDepr / 365;
+  const monthlyDepr = annualDepr / 12;
+  const yearsOwned = new Date().getFullYear() - v.purchaseYear;
+  const totalDeprToDate = Math.min(yearsOwned * annualDepr, v.purchasePrice - residual);
+  const now = new Date();
+  const dayOfYear = Math.floor((now - new Date(now.getFullYear(),0,0)) / 86400000);
+  const deprThisYear = Math.min(dayOfYear * dailyDepr, annualDepr);
+  const dayOfMonth = now.getDate();
+  const deprThisMonth = dayOfMonth * dailyDepr;
+
+  el.innerHTML = `
+    <div class="info-row"><span class="info-row-label">Precio compra</span><span class="info-row-value">${formatCLP(v.purchasePrice)}</span></div>
+    <div class="info-row"><span class="info-row-label">Valor residual (10%)</span><span class="info-row-value">${formatCLP(residual)}</span></div>
+    <div class="info-row"><span class="info-row-label">Depreciación anual</span><span class="info-row-value red">${formatCLP(annualDepr)}/año</span></div>
+    <div class="info-row"><span class="info-row-label">Depreciación mensual</span><span class="info-row-value red">${formatCLP(monthlyDepr)}/mes</span></div>
+    <div class="info-row"><span class="info-row-label">Depreciación diaria</span><span class="info-row-value red">${formatCLP(dailyDepr)}/día</span></div>
+    <div class="info-row"><span class="info-row-label">Depreciado este mes</span><span class="info-row-value yellow">${formatCLP(deprThisMonth)}</span></div>
+    <div class="info-row"><span class="info-row-label">Depreciado este año</span><span class="info-row-value yellow">${formatCLP(deprThisYear)}</span></div>
+    <div class="info-row"><span class="info-row-label">Depreciado total (${yearsOwned} años)</span><span class="info-row-value yellow">${formatCLP(totalDeprToDate)}</span></div>
+    <div class="alert alert-info" style="margin-top:10px;font-size:12px">Método lineal: (precio_compra − 10% residual) ÷ 10 años vida útil (estándar taxi Chile)</div>
+  `;
+}
+
+function addFuelLog() {
+  const liters = parseFloat(document.getElementById('fl-liters').value);
+  const price = parseInt(document.getElementById('fl-price').value);
+  const km = parseInt(document.getElementById('fl-km').value) || null;
+  if (!liters || !price) { toast('Completa litros y precio'); return; }
+  data.fuelLogs.push({ date: new Date().toISOString().split('T')[0], liters, price, km });
+  saveData();
+  updateFuelStats();
+  renderFuelLog();
+  renderFuelChart();
+  toast('Carga de combustible registrada');
+}
+
+function updateFuelStats() {
+  // Calculate L/100km from consecutive fill-ups with km data
+  const logsWithKm = data.fuelLogs.filter(f => f.km).sort((a,b) => a.km - b.km);
+  let consumption = '--';
+  if (logsWithKm.length >= 2) {
+    const last = logsWithKm[logsWithKm.length-1];
+    const prev = logsWithKm[logsWithKm.length-2];
+    const kmDiff = last.km - prev.km;
+    if (kmDiff > 0) {
+      const l100 = (last.liters / kmDiff) * 100;
+      consumption = l100.toFixed(1) + ' L/100km';
+      const costPerKm = (last.liters * last.price) / kmDiff;
+      document.getElementById('fuel-cost-km').textContent = formatCLP(costPerKm) + '/km';
+    }
+  }
+  document.getElementById('fuel-consumption').textContent = consumption;
+
+  const now = new Date();
+  const monthFuel = data.fuelLogs
+    .filter(f => { const d = new Date(f.date); return d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear(); })
+    .reduce((s,f) => s + f.liters*f.price, 0);
+  document.getElementById('fuel-monthly').textContent = formatCLP(monthFuel);
+}
+
+function renderFuelLog() {
+  const el = document.getElementById('fuel-log-list');
+  const logs = data.fuelLogs.slice(-5).reverse();
+  if (logs.length === 0) { el.innerHTML = ''; return; }
+  el.innerHTML = '<div class="card-title" style="margin-top:10px">Últimas cargas</div>' + logs.map(f => `
+    <div class="trip-item">
+      <div>
+        <div style="font-size:13px;font-weight:600">${f.liters}L · ${formatCLP(f.price)}/L</div>
+        <div style="font-size:11px;color:var(--muted)">${f.date}${f.km ? ' · ' + f.km.toLocaleString('es-CL') + 'km' : ''}</div>
+      </div>
+      <div style="font-weight:700;color:var(--yellow)">${formatCLP(f.liters * f.price)}</div>
+    </div>
+  `).join('');
+}
+
+function addMaintenance() {
+  const type = document.getElementById('maint-type').value;
+  const cost = parseInt(document.getElementById('maint-cost').value);
+  const km = parseInt(document.getElementById('maint-km').value) || null;
+  const next = document.getElementById('maint-next').value;
+  if (!cost || cost <= 0) { toast('Ingresa el costo'); return; }
+  data.maintenance.push({ type, cost, km, next, date: new Date().toISOString().split('T')[0] });
+  saveData();
+  renderMaintenanceLog();
+  toast('Servicio registrado');
+}
+
+function renderMaintenanceLog() {
+  const el = document.getElementById('maint-list');
+  const items = data.maintenance.slice(-6).reverse();
+  if (items.length === 0) { el.innerHTML = ''; return; }
+  el.innerHTML = items.map(m => `
+    <div class="maint-item">
+      <div class="maint-left">
+        <div class="maint-type">${m.type}</div>
+        <div class="maint-date">${m.date}${m.km ? ' · ' + m.km.toLocaleString('es-CL') + 'km' : ''}</div>
+      </div>
+      <div class="maint-right">
+        <div class="maint-cost">${formatCLP(m.cost)}</div>
+        ${m.next ? `<div class="maint-next">Prox: ${m.next}</div>` : ''}
+      </div>
+    </div>
+  `).join('');
+
+  const annualTotal = data.maintenance
+    .filter(m => new Date(m.date).getFullYear() === new Date().getFullYear())
+    .reduce((s,m) => s + m.cost, 0);
+  document.getElementById('maint-annual').textContent = formatCLP(annualTotal);
+}
+
+function saveDocs() {
+  data.docs.soap = document.getElementById('soap-date').value;
+  data.docs.revtec = document.getElementById('revtec-date').value;
+  saveData();
+  checkDocAlerts();
+  toast('Fechas guardadas');
+}
+
+function checkDocAlerts() {
+  const el = document.getElementById('docs-alerts');
+  const today = new Date();
+  let html = '';
+  ['soap','revtec'].forEach(key => {
+    const label = key === 'soap' ? 'SOAP' : 'Revisión Técnica';
+    if (!data.docs[key]) return;
+    const exp = new Date(data.docs[key]);
+    const days = Math.ceil((exp - today) / 86400000);
+    if (days < 0) html += `<div class="alert alert-danger">${label} VENCIDO hace ${Math.abs(days)} días</div>`;
+    else if (days <= 30) html += `<div class="alert alert-warning">${label} vence en ${days} días (${data.docs[key]})</div>`;
+    else html += `<div class="alert alert-success">${label} vigente — vence ${data.docs[key]} (${days} días)</div>`;
+  });
+  el.innerHTML = html;
+}
+
+function saveFixedCosts() {
+  data.fixedCosts = {
+    patente: parseInt(document.getElementById('cf-patente').value) || 0,
+    seguro: parseInt(document.getElementById('cf-seguro').value) || 0,
+    arriendo: parseInt(document.getElementById('cf-arriendo').value) || 0,
+    otros: parseInt(document.getElementById('cf-otros').value) || 0,
+  };
+  saveData();
+  const total = Object.values(data.fixedCosts).reduce((s,v) => s+v, 0);
+  document.getElementById('total-fixed').textContent = formatCLP(total);
+  updateCostPerKm();
+  toast('Costos fijos guardados');
+}
+
+function updateCostPerKm() {
+  const now = new Date();
+  const monthFuel = data.fuelLogs
+    .filter(f => { const d = new Date(f.date); return d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear(); })
+    .reduce((s,f) => s + f.liters*f.price, 0);
+  const monthMaint = data.maintenance
+    .filter(m => { const d = new Date(m.date); return d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear(); })
+    .reduce((s,m) => s + m.cost, 0) / 12; // annualize monthly
+  const fixed = Object.values(data.fixedCosts).reduce((s,v) => s+v, 0);
+  const depr = getDailyDepreciation() * 30;
+  const totalMonthCost = fixed + monthFuel + monthMaint + depr;
+
+  // estimate monthly km from trip durations + vehicle efficiency
+  const monthTrips = data.trips.filter(t => { const d = new Date(t.timestamp); return d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear(); });
+  const totalMins = monthTrips.reduce((s,t) => s + (t.duration||0), 0);
+  // rough: assume 30km/h average for rideshare
+  const estKm = totalMins / 60 * 30;
+
+  if (estKm > 0) {
+    document.getElementById('cost-per-km').textContent = formatCLP(totalMonthCost / estKm) + '/km';
+  } else {
+    document.getElementById('cost-per-km').textContent = 'Sin datos de km';
+  }
+}
+
+// ===================== IMPUESTOS =====================
+function calcPPM() {
+  const income = parseInt(document.getElementById('annual-income').value);
+  const el = document.getElementById('ppm-result');
+  if (!income || income <= 0) { el.innerHTML = ''; return; }
+  // Chile 2026: impuesto 2da categoría simplified
+  let tax = 0;
+  const monthly = income / 12;
+  // Simplified brackets (2024 UTM approx)
+  if (income > 2000000) tax = income * 0.08;
+  else if (income > 1000000) tax = income * 0.04;
+  else tax = 0;
+  const ppm = Math.ceil(tax / 12);
+  el.innerHTML = `
+    <div class="info-row"><span class="info-row-label">Ingreso mensual estimado</span><span class="info-row-value">${formatCLP(monthly)}</span></div>
+    <div class="info-row"><span class="info-row-label">Impuesto anual estimado</span><span class="info-row-value red">${formatCLP(tax)}</span></div>
+    <div class="info-row"><span class="info-row-label">PPM mensual sugerido</span><span class="info-row-value yellow">${formatCLP(ppm)}</span></div>
+    <div class="alert alert-info" style="margin-top:8px;font-size:12px">Este es un estimado simplificado. Consulta a un contador para cálculo exacto según tramos UTM vigentes.</div>
+  `;
+}
+
+// ===================== COMPARADOR =====================
+const PLATFORM_COMMISSIONS = [
+  { name: 'Uber', pct: 25, color: '#ffffff', bg: '#1a1a1a' },
+  { name: 'Cabify', pct: 20, color: '#ffffff', bg: '#7c3aed' },
+  { name: 'InDriver', pct: 15, color: '#ffffff', bg: '#15803d' },
+  { name: 'DiDi', pct: 22, color: '#ffffff', bg: '#e11d48' },
+  { name: 'Rappi', pct: 25, color: '#ffffff', bg: '#ff441f' },
+];
+
+function updateCalcSlider() {
+  const val = parseInt(document.getElementById('calc-amount-slider').value);
+  document.getElementById('calc-amount-display').textContent = formatCLP(val);
+  renderPlatformCalc(val);
+}
+
+function renderPlatformCalc(amount) {
+  const sorted = [...PLATFORM_COMMISSIONS].sort((a,b) => a.pct - b.pct);
+  const best = sorted[0].pct;
+  const el = document.getElementById('platform-calc-results');
+  el.innerHTML = sorted.map((p, i) => {
+    const net = amount * (1 - p.pct/100);
+    const diff = net - amount*(1-best/100);
+    const isRankOne = i === 0;
+    return `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:${isRankOne?'rgba(34,197,94,0.1)':'var(--card2)'};border:1px solid ${isRankOne?'var(--green)':'var(--border)'};border-radius:10px;margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="badge badge-${p.name.toLowerCase()}">${p.name}</span>
+          <span style="color:var(--muted);font-size:12px">${p.pct}% comisión</span>
+        </div>
+        <div style="text-align:right">
+          <div style="font-weight:700;font-size:16px;color:${isRankOne?'var(--green)':'var(--text)'}">${formatCLP(net)}</div>
+          ${!isRankOne ? `<div style="font-size:11px;color:var(--red)">-${formatCLP(diff)} vs InDriver</div>` : '<div style="font-size:11px;color:var(--green)">Mejor opción</div>'}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function calcBreakeven() {
+  const fixed = parseInt(document.getElementById('be-fixed').value) || 0;
+  const hourly = parseInt(document.getElementById('be-hourly').value) || 0;
+  const target = parseInt(document.getElementById('be-target').value) || 0;
+  const el = document.getElementById('breakeven-result');
+  if (!fixed && !target) { el.innerHTML = ''; return; }
+
+  let html = '';
+  if (fixed > 0 && hourly > 0) {
+    const breakEvenHours = Math.ceil(fixed / hourly);
+    html += `<div class="alert alert-warning">Para cubrir solo costos fijos necesitas trabajar <strong>${breakEvenHours} horas/mes</strong> (${Math.ceil(breakEvenHours/22)} hrs/día hábil).</div>`;
+  }
+  if (target > 0 && hourly > 0) {
+    const totalNeeded = target + fixed;
+    const hoursNeeded = Math.ceil(totalNeeded / hourly);
+    html += `<div class="alert alert-info">Para ganar <strong>${formatCLP(target)}/mes</strong> necesitas <strong>${hoursNeeded} horas/mes</strong> de turno (${Math.ceil(hoursNeeded/22)} hrs/día hábil).</div>`;
+  }
+  if (!hourly && (fixed > 0 || target > 0)) {
+    html = '<div class="alert alert-warning">Ingresa tu ganancia real por hora para calcular.</div>';
+  }
+  el.innerHTML = html;
+}
+
+// ===================== TAB NAVIGATION =====================
+function showTab(tabName) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + tabName).classList.add('active');
+  document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+
+  // lazy init charts
+  if (tabName === 'rendimiento') {
+    updatePerformance();
+    if (!chartWeekly) setTimeout(initWeeklyChart, 50);
+  }
+  if (tabName === 'costos') {
+    updateDepreciationDisplay();
+    updateFuelStats();
+    renderFuelLog();
+    renderMaintenanceLog();
+    checkDocAlerts();
+    setTimeout(renderFuelChart, 50);
+    loadVehicleForm();
+    loadFixedCostsForm();
+  }
+}
+
+function loadVehicleForm() {
+  const v = data.vehicle;
+  if (v.brand) document.getElementById('v-brand').value = v.brand;
+  if (v.model) document.getElementById('v-model').value = v.model;
+  if (v.year) document.getElementById('v-year').value = v.year;
+  if (v.fuelType) document.getElementById('v-fuel-type').value = v.fuelType;
+  if (v.efficiency) document.getElementById('v-efficiency').value = v.efficiency;
+  if (v.purchasePrice) document.getElementById('v-purchase-price').value = v.purchasePrice;
+  if (v.purchaseYear) document.getElementById('v-purchase-year').value = v.purchaseYear;
+  if (v.currentValue) document.getElementById('v-current-value').value = v.currentValue;
+  if (data.docs.soap) document.getElementById('soap-date').value = data.docs.soap;
+  if (data.docs.revtec) document.getElementById('revtec-date').value = data.docs.revtec;
+}
+
+function loadFixedCostsForm() {
+  const fc = data.fixedCosts;
+  document.getElementById('cf-patente').value = fc.patente || '';
+  document.getElementById('cf-seguro').value = fc.seguro || '';
+  document.getElementById('cf-arriendo').value = fc.arriendo || '';
+  document.getElementById('cf-otros').value = fc.otros || '';
+  const total = Object.values(fc).reduce((s,v) => s+v, 0);
+  document.getElementById('total-fixed').textContent = formatCLP(total);
+}
+
+// ===================== INIT =====================
+document.querySelectorAll('.nav-tab').forEach(btn => {
+  btn.addEventListener('click', () => showTab(btn.dataset.tab));
+});
+
+function init() {
+  loadData();
+  loadDemoData();
+  autofillCommission();
+  updateTodayMetrics();
+  renderTodayTrips();
+  updateGoalDisplay();
+
+  // Restore shift state
+  if (data.shift.active && data.shift.startTime) {
+    document.getElementById('shift-btn').className = 'shift-btn stop';
+    document.getElementById('shift-btn').textContent = '⏹ Finalizar Turno';
+    document.getElementById('shift-label').textContent = 'Tiempo de turno activo';
+    document.getElementById('shift-active-badge').style.display = 'flex';
+    startShiftTimer();
+  } else {
+    // Display stored time
+    const h = Math.floor(data.shift.totalSeconds/3600);
+    const m = Math.floor((data.shift.totalSeconds%3600)/60);
+    const s = data.shift.totalSeconds % 60;
+    document.getElementById('shift-display').textContent =
+      String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+  }
+
+  // Init comparador
+  renderPlatformCalc(10000);
+
+  // Header
+  if (data.driver.name) document.getElementById('hdr-name').textContent = data.driver.name;
+  if (data.driver.vehicleName) document.getElementById('hdr-status').textContent = data.driver.vehicleName;
+}
+
+// Service Worker for PWA
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    const sw = `
+      const CACHE = 'chofercl-v1';
+      self.addEventListener('install', e => e.waitUntil(caches.open(CACHE)));
+      self.addEventListener('fetch', e => e.respondWith(
+        caches.match(e.request).then(r => r || fetch(e.request).then(res => {
+          if(res && res.status === 200) {
+            const clone = res.clone();
+            caches.open(CACHE).then(c => c.put(e.request, clone));
+          }
+          return res;
+        }))
+      ));
+    `;
+    const blob = new Blob([sw], { type: 'application/javascript' });
+    const swUrl = URL.createObjectURL(blob);
+    navigator.serviceWorker.register(swUrl).catch(() => {});
+  });
+}
+
+init();
+</script>
+</body>
+</html>

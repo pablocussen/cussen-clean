@@ -1,0 +1,1264 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="theme-color" content="#14532d"/>
+<meta name="description" content="Calculadora de Huella de Carbono para Chile — CO2Chile"/>
+<title>CO2Chile — Huella de Carbono</title>
+<link rel="manifest" href="manifest.json"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#f0fdf4;--card:#ffffff;--card2:#dcfce7;--border:#86efac;
+  --accent:#166534;--accent2:#15803d;--text:#14532d;--muted:#6b7280;
+  --yellow:#d97706;--red:#dc2626;--blue:#0369a1;
+  --orange:#ea580c;--green-light:#bbf7d0;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-text-size-adjust:100%}
+header{background:linear-gradient(90deg,#14532d,#166534);padding:13px 18px;position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;color:white;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+header h1{font-size:1.15rem;font-weight:800;letter-spacing:-.02em;display:flex;align-items:center;gap:8px}
+header span.sub{font-size:.7rem;font-weight:400;opacity:.8;display:block;margin-top:1px}
+nav{background:#fff;border-bottom:2px solid var(--border);display:flex;overflow-x:auto;position:sticky;top:62px;z-index:40;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+nav button{flex:0 0 auto;padding:11px 14px;font-size:.78rem;font-weight:600;color:var(--muted);border:none;background:transparent;cursor:pointer;white-space:nowrap;border-bottom:3px solid transparent;transition:all .2s;font-family:'Inter',sans-serif}
+nav button.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab{display:none;padding:16px;max-width:700px;margin:0 auto}
+.tab.active{display:block}
+.card{background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px}
+.card2{background:var(--card2);border:1.5px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px}
+.section-title{font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:.82rem;font-weight:500;color:var(--text);margin-bottom:4px}
+.field .helper{font-size:.72rem;color:var(--muted);margin-bottom:4px}
+.field input[type=number],.field input[type=text],.field select{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:1rem;font-family:'Inter',sans-serif;color:var(--text);background:#fff;transition:border-color .2s;-webkit-appearance:none}
+.field input[type=number]:focus,.field select:focus{outline:none;border-color:var(--accent)}
+.field .row{display:flex;gap:8px;align-items:center}
+.field .unit{font-size:.8rem;color:var(--muted);white-space:nowrap}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0}
+.toggle-row label{font-size:.85rem;font-weight:500}
+.toggle{position:relative;width:44px;height:24px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.slider{position:absolute;inset:0;background:#d1d5db;border-radius:12px;cursor:pointer;transition:.3s}
+.slider:before{content:'';position:absolute;width:18px;height:18px;left:3px;bottom:3px;background:white;border-radius:50%;transition:.3s}
+.toggle input:checked+.slider{background:var(--accent2)}
+.toggle input:checked+.slider:before{transform:translateX(20px)}
+.resultado-box{border-radius:16px;padding:20px;margin-bottom:14px;text-align:center;transition:background .4s,border-color .4s}
+.resultado-box.verde{background:linear-gradient(135deg,#dcfce7,#bbf7d0);border:2px solid #4ade80}
+.resultado-box.amarillo{background:linear-gradient(135deg,#fef9c3,#fde68a);border:2px solid #fbbf24}
+.resultado-box.naranja{background:linear-gradient(135deg,#ffedd5,#fed7aa);border:2px solid #fb923c}
+.resultado-box.rojo{background:linear-gradient(135deg,#fee2e2,#fecaca);border:2px solid #f87171}
+.resultado-box .label{font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;opacity:.7;margin-bottom:4px}
+.resultado-box .valor{font-size:3rem;font-weight:800;line-height:1;margin:4px 0}
+.resultado-box .unit2{font-size:.9rem;font-weight:500;opacity:.7}
+.barra-wrap{background:rgba(255,255,255,.4);border-radius:8px;height:12px;margin:12px 0 4px;overflow:hidden}
+.barra-fill{height:100%;border-radius:8px;transition:width .5s ease}
+.barra-labels{display:flex;justify-content:space-between;font-size:.7rem;opacity:.6;margin-bottom:8px}
+.compare-line{font-size:.82rem;font-weight:500;margin:4px 0}
+.eq-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.eq-item{background:rgba(255,255,255,.5);border-radius:10px;padding:8px 10px;font-size:.78rem;text-align:center}
+.eq-item .eq-val{font-size:1.2rem;font-weight:800;display:block;margin-bottom:2px}
+.chart-wrap{position:relative;height:220px;margin:10px 0}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:10px;font-size:.85rem;font-weight:600;cursor:pointer;border:none;font-family:'Inter',sans-serif;transition:all .2s}
+.btn-primary{background:var(--accent);color:white}
+.btn-primary:hover{background:var(--accent2)}
+.btn-secondary{background:var(--card2);color:var(--accent);border:1.5px solid var(--border)}
+.btn-secondary:hover{background:var(--border)}
+.btn-full{width:100%;justify-content:center}
+.btn-green{background:#22c55e;color:white}
+.btn-green:hover{background:#16a34a}
+.tip-item{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border)}
+.tip-item:last-child{border-bottom:none}
+.tip-icon{font-size:1.2rem;flex-shrink:0;margin-top:1px}
+.tip-text{font-size:.83rem;line-height:1.5}
+.tip-text strong{display:block;font-size:.85rem;margin-bottom:2px}
+.offset-card{background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.offset-card .info{flex:1}
+.offset-card .name{font-weight:600;font-size:.88rem;margin-bottom:2px}
+.offset-card .desc{font-size:.75rem;color:var(--muted)}
+.offset-card .price{font-weight:700;color:var(--accent);font-size:.95rem;white-space:nowrap;text-align:right}
+.offset-card .price span{display:block;font-size:.72rem;font-weight:400;color:var(--muted)}
+.offset-total{background:linear-gradient(135deg,#dcfce7,#bbf7d0);border:2px solid #4ade80;border-radius:12px;padding:16px;margin:14px 0;text-align:center}
+.offset-total .ot-label{font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);margin-bottom:4px}
+.offset-total .ot-val{font-size:1.8rem;font-weight:800;color:var(--accent)}
+.hist-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:.83rem}
+.hist-item:last-child{border-bottom:none}
+.hist-item .date{color:var(--muted);font-size:.76rem}
+.hist-item .val{font-weight:700;font-size:1rem}
+.hist-item .badge{font-size:.72rem;padding:2px 7px;border-radius:20px;font-weight:600}
+.badge-verde{background:#dcfce7;color:#166534}
+.badge-amarillo{background:#fef9c3;color:#92400e}
+.badge-naranja{background:#ffedd5;color:#9a3412}
+.badge-rojo{background:#fee2e2;color:#991b1b}
+.hist-delta{font-size:.75rem;margin-top:2px}
+.delta-down{color:#16a34a}
+.delta-up{color:#dc2626}
+.disclaimer{background:#fff7ed;border:1.5px solid #fed7aa;border-radius:10px;padding:12px;font-size:.78rem;color:#92400e;line-height:1.5}
+.ahorro-box{background:var(--card2);border:1.5px solid var(--border);border-radius:12px;padding:14px;margin-top:12px}
+.ahorro-box .ah-label{font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);margin-bottom:6px}
+.ahorro-val{font-size:1.5rem;font-weight:800;color:var(--accent)}
+.ahorro-desc{font-size:.78rem;color:var(--muted);margin-top:2px}
+.empty-state{text-align:center;padding:40px 20px;color:var(--muted)}
+.empty-state .em-icon{font-size:3rem;margin-bottom:10px}
+.empty-state p{font-size:.85rem;line-height:1.6}
+.share-btn{background:#25D366;color:white;border:none;border-radius:10px;padding:11px 18px;font-size:.88rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;display:flex;align-items:center;gap:8px;width:100%;justify-content:center;margin-top:12px;transition:background .2s}
+.share-btn:hover{background:#1faf56}
+.save-fab{position:fixed;bottom:20px;right:20px;z-index:100;background:var(--accent);color:white;border:none;border-radius:50px;padding:12px 20px;font-size:.88rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;box-shadow:0 4px 16px rgba(22,101,52,.4);display:flex;align-items:center;gap:8px;transition:all .2s}
+.save-fab:hover{background:var(--accent2);transform:scale(1.04)}
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#14532d;color:white;padding:10px 20px;border-radius:30px;font-size:.83rem;font-weight:600;z-index:200;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+.catbar{display:flex;align-items:center;gap:8px;margin-bottom:4px;font-size:.8rem}
+.catbar .catname{width:80px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.catbar .cattrack{flex:1;background:#e5e7eb;border-radius:4px;height:8px;overflow:hidden}
+.catbar .catfill{height:100%;border-radius:4px;transition:width .5s}
+.catbar .catval{width:60px;text-align:right;font-size:.75rem;color:var(--muted)}
+.section-divider{height:1px;background:var(--border);margin:14px 0}
+@media(min-width:600px){
+  .eq-grid{grid-template-columns:repeat(3,1fr)}
+  .tab{padding:20px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>🌍 CO2Chile
+      <span class="sub">Calculadora de Huella de Carbono</span>
+    </h1>
+  </div>
+  <div style="font-size:.75rem;opacity:.7;text-align:right;line-height:1.4">
+    Factores<br>CDEC-SIC 2023
+  </div>
+</header>
+
+<nav id="nav">
+  <button class="active" onclick="showTab(0)">🌱 Mi Huella</button>
+  <button onclick="showTab(1)">💡 Cómo Reducir</button>
+  <button onclick="showTab(2)">🌿 Compensar</button>
+  <button onclick="showTab(3)">📊 Historial</button>
+</nav>
+
+<!-- TAB 0: MI HUELLA -->
+<div class="tab active" id="tab0">
+
+  <!-- RESULTADO -->
+  <div id="resultado-box" class="resultado-box verde">
+    <div class="label">Tu Huella Anual</div>
+    <div class="valor" id="total-val">0.0</div>
+    <div class="unit2">tCO2e / año</div>
+    <div class="barra-wrap">
+      <div class="barra-fill" id="barra-fill" style="width:0%;background:#22c55e"></div>
+    </div>
+    <div class="barra-labels">
+      <span>0t</span><span>Meta 2030: 2t</span><span>Prom. Chile: 4.8t</span><span>10t+</span>
+    </div>
+    <div class="compare-line" id="compare-line">Completa el formulario para ver tu huella 👇</div>
+  </div>
+
+  <!-- EQUIVALENCIAS -->
+  <div class="card2" id="eq-card" style="display:none">
+    <div class="section-title">📐 Equivalencias</div>
+    <div class="eq-grid">
+      <div class="eq-item">
+        <span class="eq-val" id="eq-arboles">—</span>
+        🌲 árboles<br>1 año
+      </div>
+      <div class="eq-item">
+        <span class="eq-val" id="eq-viajes">—</span>
+        🚗 viajes<br>Stgo→Temuco
+      </div>
+      <div class="eq-item">
+        <span class="eq-val" id="eq-meses">—</span>
+        💡 meses elect.<br>hogar chileno
+      </div>
+      <div class="eq-item">
+        <span class="eq-val" id="eq-vuelos">—</span>
+        ✈️ vuelos<br>Stgo→Lima
+      </div>
+    </div>
+  </div>
+
+  <!-- BREAKDOWN -->
+  <div class="card" id="breakdown-card" style="display:none">
+    <div class="section-title">📊 Desglose por Categoría</div>
+    <div class="chart-wrap">
+      <canvas id="donutChart"></canvas>
+    </div>
+    <div id="cat-bars" style="margin-top:8px"></div>
+  </div>
+
+  <!-- HOGAR -->
+  <div class="card">
+    <div class="section-title">🏠 Hogar</div>
+
+    <div class="field">
+      <label>Electricidad</label>
+      <div class="helper">Revisa tu boleta Enel/CGE — kWh consumidos al mes</div>
+      <div class="row">
+        <input type="number" id="elec" min="0" max="10000" value="200" oninput="calcular()"/>
+        <span class="unit">kWh/mes</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Gas natural</label>
+      <div class="helper">Metros cúbicos al mes (ver boleta Metrogas/GasValpo)</div>
+      <div class="row">
+        <input type="number" id="gas_nat" min="0" max="1000" value="0" oninput="calcular()"/>
+        <span class="unit">m³/mes</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Gas licuado (GLP)</label>
+      <div class="helper">Cilindros de 15 kg al mes</div>
+      <div class="row">
+        <input type="number" id="gas_lic_cil" min="0" max="100" value="0" step="0.5" oninput="calcular()"/>
+        <span class="unit">cilindros/mes</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Leña</label>
+      <div class="row">
+        <input type="number" id="lena" min="0" max="10000" value="0" oninput="calcular()"/>
+        <span class="unit">kg/año</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Personas en el hogar</label>
+      <div class="helper">Para dividir los gastos compartidos del hogar</div>
+      <div class="row">
+        <input type="number" id="personas" min="1" max="20" value="3" oninput="calcular()"/>
+        <span class="unit">personas</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- TRANSPORTE -->
+  <div class="card">
+    <div class="section-title">🚗 Transporte</div>
+    <div class="helper" style="margin-bottom:10px;font-size:.78rem;color:var(--muted)">Kilómetros por semana (se extrapolan al año × 52)</div>
+
+    <div class="field">
+      <label>Auto a bencina</label>
+      <div class="row">
+        <input type="number" id="auto_ben" min="0" max="5000" value="0" oninput="calcular()"/>
+        <span class="unit">km/semana</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Auto a diesel</label>
+      <div class="row">
+        <input type="number" id="auto_die" min="0" max="5000" value="0" oninput="calcular()"/>
+        <span class="unit">km/semana</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Moto</label>
+      <div class="row">
+        <input type="number" id="moto" min="0" max="2000" value="0" oninput="calcular()"/>
+        <span class="unit">km/semana</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Micro / Metro / Bus</label>
+      <div class="row">
+        <input type="number" id="transporte_pub" min="0" max="2000" value="0" oninput="calcular()"/>
+        <span class="unit">km/semana</span>
+      </div>
+    </div>
+
+    <div class="section-divider"></div>
+
+    <div class="field">
+      <label>Vuelos nacionales este año</label>
+      <div class="helper">N° de vuelos (Stgo-Pto Montt aprox. 1.000 km c/u)</div>
+      <div class="row">
+        <input type="number" id="vuelos_nac" min="0" max="100" value="0" oninput="calcular()"/>
+        <span class="unit">vuelos</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Vuelos internacionales</label>
+      <div class="helper">N° de vuelos (promedio 10.000 km c/u, largo radio)</div>
+      <div class="row">
+        <input type="number" id="vuelos_int" min="0" max="100" value="0" oninput="calcular()"/>
+        <span class="unit">vuelos</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ALIMENTACION -->
+  <div class="card">
+    <div class="section-title">🍽️ Alimentación</div>
+
+    <div class="toggle-row">
+      <label>🌿 Soy vegetariano / vegano</label>
+      <label class="toggle">
+        <input type="checkbox" id="vegano" onchange="calcular(); toggleVegano()"/>
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div id="carne-section">
+      <div class="field" style="margin-top:10px">
+        <label>Carne de vacuno 🐄</label>
+        <select id="frec_vacuno" onchange="calcular()">
+          <option value="365">Diario (365 días)</option>
+          <option value="156">3 × semana (~156 días)</option>
+          <option value="52" selected>1 × semana (52 días)</option>
+          <option value="12">Rara vez (~12 días/año)</option>
+          <option value="0">Nunca</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Carne de cerdo 🐷</label>
+        <select id="frec_cerdo" onchange="calcular()">
+          <option value="365">Diario</option>
+          <option value="156">3 × semana</option>
+          <option value="52" selected>1 × semana</option>
+          <option value="12">Rara vez</option>
+          <option value="0">Nunca</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Pollo / Aves 🐔</label>
+        <select id="frec_pollo" onchange="calcular()">
+          <option value="365">Diario</option>
+          <option value="156">3 × semana</option>
+          <option value="52" selected>1 × semana</option>
+          <option value="12">Rara vez</option>
+          <option value="0">Nunca</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Pescado / Mariscos 🐟</label>
+        <select id="frec_pescado" onchange="calcular()">
+          <option value="365">Diario</option>
+          <option value="156">3 × semana</option>
+          <option value="52" selected>1 × semana</option>
+          <option value="12">Rara vez</option>
+          <option value="0">Nunca</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field" style="margin-top:6px">
+      <label>Lácteos (leche, queso, yogurt) 🥛</label>
+      <select id="frec_lacteos" onchange="calcular()">
+        <option value="365">Diario (consumo habitual)</option>
+        <option value="156" selected>Moderado</option>
+        <option value="52">Poco</option>
+        <option value="0">No consumo</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- RESIDUOS -->
+  <div class="card">
+    <div class="section-title">🗑️ Residuos</div>
+
+    <div class="field">
+      <label>Bolsas de basura por semana</label>
+      <div class="helper">Estimado ~8 kg por bolsa grande</div>
+      <div class="row">
+        <input type="number" id="bolsas" min="0" max="50" value="2" oninput="calcular()"/>
+        <span class="unit">bolsas/semana</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>¿Reciclas?</label>
+      <select id="recicla" onchange="calcular()">
+        <option value="0.8">Sí, siempre (-20%)</option>
+        <option value="0.9" selected>A veces (-10%)</option>
+        <option value="1.0">No reciclo</option>
+      </select>
+    </div>
+  </div>
+
+</div><!-- /tab0 -->
+
+<!-- TAB 1: COMO REDUCIR -->
+<div class="tab" id="tab1">
+
+  <div class="ahorro-box" id="ahorro-box-total" style="margin-bottom:14px">
+    <div class="ah-label">Tu huella actual</div>
+    <div class="ahorro-val" id="ahorro-total-val">— tCO2e</div>
+    <div class="ahorro-desc">Calcula tu huella en la pestaña "Mi Huella" primero</div>
+  </div>
+
+  <!-- HOGAR -->
+  <div class="card">
+    <div class="section-title">🏠 Reducir en el Hogar</div>
+    <div class="tip-item">
+      <span class="tip-icon">💡</span>
+      <div class="tip-text">
+        <strong>Cambia a ampolletas LED</strong>
+        Reduce hasta 80% el consumo de iluminación. Una casa de 3 personas ahorra ~0.15 tCO2e/año.
+      </div>
+    </div>
+    <div class="tip-item">
+      <span class="tip-icon">🌞</span>
+      <div class="tip-text">
+        <strong>Panel solar o calentador solar de agua</strong>
+        El agua caliente es el 20–30% del consumo eléctrico del hogar. CORFO subsidia hasta el 30% del costo.
+      </div>
+    </div>
+    <div class="tip-item">
+      <span class="tip-icon">🏚️</span>
+      <div class="tip-text">
+        <strong>Aísla tu techo y ventanas</strong>
+        En ciudades como Temuco o Valdivia, una buena aislación reduce el consumo de calefacción hasta 50%.
+      </div>
+    </div>
+    <div class="tip-item">
+      <span class="tip-icon">⏰</span>
+      <div class="tip-text">
+        <strong>Consume electricidad en horario no-punta</strong>
+        21:00–07:00 en Chile. La red usa menos termoeléctricas; tu factura baja hasta 30% con tarifa BT1.
+      </div>
+    </div>
+    <div class="tip-item">
+      <span class="tip-icon">🔌</span>
+      <div class="tip-text">
+        <strong>Desenchufa aparatos en standby</strong>
+        El "fantasma eléctrico" puede representar el 10% de tu cuenta de luz al mes.
+      </div>
+    </div>
+    <div class="tip-item">
+      <span class="tip-icon">🌿</span>
+      <div class="tip-text">
+        <strong>Sustituye leña por pellets certificados</strong>
+        Los pellets tienen 60% menos emisiones que la leña tradicional y menos partículas MP2.5.
+      </div>
+    </div>
+  </div>
+
+  <!-- TRANSPORTE -->
+  <div class="card">
+    <div class="section-title">🚗 Reducir en Transporte</div>
+    <div class="tip-item">
+      <span class="tip-icon">🚲</span>
+      <div class="tip-text">
+        <strong>Bicicleta para menos de 5 km = 0 emisiones</strong>
+        Santiago tiene +330 km de ciclovías. Bike Santiago, Santiago en Bici y Tembici cubren la ciudad.
+      </div>
+    </div>
+    <div class="tip-item">
+      <span class="tip-icon">🏠</span>
+      <div class="tip-text">
+        <strong>Teletrabajo 1 día/semana</strong>
+        Si manejas 30 km/día, teletrabajar 1 día reduce ~0.33 tCO2e al año (20% de tu huella de transporte).
+      </div>
+    </div>
+    <div class="tip-item">
+      <span class="tip-icon">🚌</span>
+      <div class="tip-text">
+        <strong>Transporte público reduce 5× las emisiones</strong>
+        Metro y buses eléctricos Red tienen factor de emisión 5 veces menor que auto propio.
+      </div>
+    </div>
+    <div class="tip-item">
+      <span class="tip-icon">🤝</span>
+      <div class="tip-text">
+        <strong>Carpooling y combinación de viajes</strong>
+        Compartir el auto con 1 persona más reduce tu huella de transporte a la mitad.
+      </div>
+    </div>
+    <div class="tip-item">
+      <span class="tip-icon">⚡</span>
+      <div class="tip-text">
+        <strong>Auto eléctrico en Chile = 68% menos CO2</strong>
+        Con la matriz eléctrica actual de Chile (30% ERNC), un EV emite 0.07 kg CO2/km vs 0.21 del auto a bencina.
+      </div>
+    </div>
+    <div class="tip-item">
+      <span class="tip-icon">✈️</span>
+      <div class="tip-text">
+        <strong>Compensa tus vuelos con SAF</strong>
+        Los combustibles de aviación sostenible (SAF) reducen 80% las emisiones. LATAM ofrece opción de compensación en compra.
+      </div>
+    </div>
+  </div>
+
+  <!-- ALIMENTACION -->
+  <div class="card">
+    <div class="section-title">🍽️ Reducir en Alimentación</div>
+    <div class="tip-item">
+      <span class="tip-icon">🥦</span>
+      <div class="tip-text">
+        <strong>1 día sin carne a la semana</strong>
+        "Lunes sin carne" ahorra ~0.28 tCO2e/año por persona. Es el cambio individual de más impacto.
+      </div>
+    </div>
+    <div class="tip-item">
+      <span class="tip-icon">🐟</span>
+      <div class="tip-text">
+        <strong>Reemplaza vacuno por pescado o pollo</strong>
+        La carne de vacuno emite 4× más que el pollo y 9× más que las legumbres.
+      </div>
+    </div>
+    <div class="tip-item">
+      <span class="tip-icon">🛒</span>
+      <div class="tip-text">
+        <strong>Compra local y de temporada</strong>
+        Frutas y verduras locales tienen 50–80% menos huella de transporte que las importadas. Ferias libres = opción ideal.
+      </div>
+    </div>
+    <div class="tip-item">
+      <span class="tip-icon">🌱</span>
+      <div class="tip-text">
+        <strong>Reduce el desperdicio alimentario</strong>
+        Chile bota 3,7 millones de toneladas de alimentos al año. Planificar las compras puede ahorrar hasta 0.2 tCO2e/persona/año.
+      </div>
+    </div>
+  </div>
+
+  <!-- CALCULADORA AHORRO -->
+  <div class="card">
+    <div class="section-title">🧮 Calculadora de Ahorro</div>
+    <div class="helper" style="margin-bottom:12px;font-size:.8rem;color:var(--muted)">Simula cuánto bajaría tu huella si adoptas estos cambios:</div>
+
+    <div class="toggle-row">
+      <label>💡 Cambio a LED completo</label>
+      <label class="toggle"><input type="checkbox" id="s_led" onchange="calcAhorro()"/><span class="slider"></span></label>
+    </div>
+    <div class="toggle-row">
+      <label>🏠 Teletrabajo 1 día/semana</label>
+      <label class="toggle"><input type="checkbox" id="s_tele" onchange="calcAhorro()"/><span class="slider"></span></label>
+    </div>
+    <div class="toggle-row">
+      <label>🥦 Lunes sin carne</label>
+      <label class="toggle"><input type="checkbox" id="s_carne" onchange="calcAhorro()"/><span class="slider"></span></label>
+    </div>
+    <div class="toggle-row">
+      <label>♻️ Reciclar siempre</label>
+      <label class="toggle"><input type="checkbox" id="s_rec" onchange="calcAhorro()"/><span class="slider"></span></label>
+    </div>
+    <div class="toggle-row">
+      <label>🚲 Bici para viajes cortos (-20% transp.)</label>
+      <label class="toggle"><input type="checkbox" id="s_bici" onchange="calcAhorro()"/><span class="slider"></span></label>
+    </div>
+
+    <div class="ahorro-box" id="ahorro-result">
+      <div class="ah-label">Con estos cambios tu huella bajaría a</div>
+      <div class="ahorro-val" id="ahorro-nueva-val">— tCO2e</div>
+      <div class="ahorro-desc" id="ahorro-desc-txt">Activa algún cambio para ver el resultado</div>
+    </div>
+  </div>
+
+</div><!-- /tab1 -->
+
+<!-- TAB 2: COMPENSAR -->
+<div class="tab" id="tab2">
+
+  <div class="card2">
+    <div class="section-title">🌿 ¿Qué es la compensación de carbono?</div>
+    <p style="font-size:.84rem;line-height:1.6;margin-bottom:8px">
+      Compensar tu huella significa financiar proyectos que absorben o evitan emisiones de CO2 equivalentes a las tuyas. Es como "equilibrar la balanza" cuando no puedes reducir más.
+    </p>
+    <p style="font-size:.84rem;line-height:1.6">
+      En Chile existen proyectos de bosque nativo, energía renovable y gestión de residuos que emiten créditos de carbono certificados.
+    </p>
+  </div>
+
+  <div class="disclaimer">
+    ⚠️ <strong>Importante:</strong> La mejor compensación es la reducción. Compensa únicamente lo que no puedes evitar. La compensación no es una licencia para emitir más.
+  </div>
+
+  <div class="offset-total" id="offset-total-box" style="margin-top:14px">
+    <div class="ot-label">Tu huella a compensar</div>
+    <div class="ot-val" id="offset-total-val">— tCO2e</div>
+    <div style="font-size:.75rem;color:var(--accent);margin-top:2px">Calcula tu huella en "Mi Huella" primero</div>
+  </div>
+
+  <!-- PROYECTOS -->
+  <div style="margin-bottom:10px">
+    <div class="section-title" style="padding:0 0 6px">🏔️ Proyectos en Chile</div>
+
+    <div class="offset-card">
+      <div class="info">
+        <div class="name">🌲 Bosque Nativo</div>
+        <div class="desc">Restauración de bosque nativo en La Araucanía y Los Ríos. Programa CONAF Chile — Ley 20.283</div>
+      </div>
+      <div class="price">
+        $15.000<br>
+        <span>/tCO2e</span>
+        <div id="costo-bosque" style="font-size:.7rem;color:var(--accent);font-weight:700;margin-top:2px">— CLP total</div>
+      </div>
+    </div>
+
+    <div class="offset-card">
+      <div class="info">
+        <div class="name">☀️ Energía Solar Comunitaria</div>
+        <div class="desc">Paneles solares en comunidades rurales del norte de Chile, sustituyendo generadores diésel.</div>
+      </div>
+      <div class="price">
+        $20.000<br>
+        <span>/tCO2e</span>
+        <div id="costo-solar" style="font-size:.7rem;color:var(--accent);font-weight:700;margin-top:2px">— CLP total</div>
+      </div>
+    </div>
+
+    <div class="offset-card">
+      <div class="info">
+        <div class="name">🐄 Captura de Metano Ganadero</div>
+        <div class="desc">Biodigestores en granjas del sur de Chile. Convierte CH4 en energía eléctrica para comunidades locales.</div>
+      </div>
+      <div class="price">
+        $12.000<br>
+        <span>/tCO2e</span>
+        <div id="costo-metano" style="font-size:.7rem;color:var(--accent);font-weight:700;margin-top:2px">— CLP total</div>
+      </div>
+    </div>
+
+    <div class="offset-card">
+      <div class="info">
+        <div class="name">🌊 Restauración de Humedales Costeros</div>
+        <div class="desc">Restauración de humedales en Chiloé y la costa de Valdivia. Los humedales capturan hasta 10× más carbono que un bosque.</div>
+      </div>
+      <div class="price">
+        $25.000<br>
+        <span>/tCO2e</span>
+        <div id="costo-humedal" style="font-size:.7rem;color:var(--accent);font-weight:700;margin-top:2px">— CLP total</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">🔗 Dónde Actuar</div>
+    <div class="tip-item">
+      <span class="tip-icon">🌲</span>
+      <div class="tip-text">
+        <strong>CONAF Chile — Programa de Compensación de Carbono</strong>
+        Compra créditos de carbono certificados de bosques nativos protegidos. Busca "CONAF mercado de carbono Chile".
+      </div>
+    </div>
+    <div class="tip-item">
+      <span class="tip-icon">📈</span>
+      <div class="tip-text">
+        <strong>Mercado de Carbono Chile (CMC)</strong>
+        Plataforma del Ministerio de Hacienda para transacciones de créditos de carbono en Chile. Busca "CMC Ministerio Hacienda Chile".
+      </div>
+    </div>
+    <div class="tip-item">
+      <span class="tip-icon">🏭</span>
+      <div class="tip-text">
+        <strong>Impuesto al CO2 (Ley 20.936)</strong>
+        Chile aplica un impuesto de USD 5/tCO2 a fuentes fijas. Empresas pueden compensar con proyectos certificados para reducir su carga tributaria.
+      </div>
+    </div>
+    <div class="tip-item">
+      <span class="tip-icon">🌍</span>
+      <div class="tip-text">
+        <strong>Compromisos NDC Chile 2030</strong>
+        Chile se comprometió a reducir 45% de emisiones al 2030 vs 2016. Tu acción individual suma a este objetivo nacional.
+      </div>
+    </div>
+  </div>
+
+</div><!-- /tab2 -->
+
+<!-- TAB 3: HISTORIAL -->
+<div class="tab" id="tab3">
+
+  <div class="card">
+    <div class="section-title">📅 Evolución de tu Huella</div>
+    <div class="chart-wrap" id="hist-chart-wrap" style="display:none">
+      <canvas id="lineChart"></canvas>
+    </div>
+    <div class="empty-state" id="hist-empty" style="display:none">
+      <div class="em-icon">📊</div>
+      <p>Necesitas al menos 2 mediciones para ver la evolución.<br>Guarda tu cálculo actual arriba.</p>
+    </div>
+    <div id="hist-compare" style="display:none;margin-top:8px;font-size:.83rem;padding:8px 0;border-top:1px solid var(--border)"></div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">📋 Mediciones Guardadas</div>
+    <div id="hist-list">
+      <div class="empty-state" id="hist-empty2">
+        <div class="em-icon">🌱</div>
+        <p>No hay mediciones guardadas aún.<br>Completa el formulario y presiona<br><strong>"Guardar medición"</strong></p>
+      </div>
+    </div>
+  </div>
+
+  <button class="share-btn" id="share-btn" onclick="compartirWhatsApp()" style="display:none">
+    💬 Compartir por WhatsApp
+  </button>
+
+  <div class="card" style="margin-top:14px">
+    <div class="section-title" style="margin-bottom:8px">⚙️ Datos</div>
+    <button class="btn btn-secondary" onclick="clearHistorial()" style="font-size:.8rem;padding:8px 14px">
+      🗑️ Borrar historial
+    </button>
+  </div>
+
+</div><!-- /tab3 -->
+
+<!-- FAB GUARDAR -->
+<button class="save-fab" id="save-fab" onclick="guardarMedicion()">
+  💾 Guardar medición
+</button>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// FACTORES DE EMISIÓN (tCO2e)
+// ═══════════════════════════════════════════════════════════
+const F = {
+  electricidad:        0.000322, // tCO2/kWh (Factor CDEC-SIC Chile 2023)
+  auto_bencina:        0.00021,  // tCO2/km
+  auto_diesel:         0.00024,  // tCO2/km
+  moto:                0.00011,  // tCO2/km
+  micro_metro:         0.00004,  // tCO2/km pasajero
+  avion_nacional:      0.000255, // tCO2/km pasajero
+  avion_internacional: 0.000195, // tCO2/km pasajero
+  carne_vacuno:        0.027,    // tCO2/kg alimento
+  carne_cerdo:         0.0121,
+  pollo:               0.0069,
+  pescado:             0.003,
+  lacteos:             0.0032,
+  vegetales:           0.002,
+  gas_natural:         0.00204,  // tCO2/m³
+  gas_licuado:         0.003,    // tCO2/kg GLP
+  lena:                0.0018,   // tCO2/kg
+  residuos:            0.0005,   // tCO2/kg
+};
+
+// Consumo kg por "día comido" por tipo de alimento
+const KG_POR_DIA = {
+  vacuno: 0.15,  cerdo: 0.15,  pollo: 0.15,  pescado: 0.12
+};
+
+// Promedios comparación (tCO2e)
+const AVG_CHL = 4.8;
+const AVG_MUN = 4.7;
+const META_2030 = 2.0;
+const META_2050 = 0.5;
+
+// Estado global
+let resultados = { hogar:0, transporte:0, alimentacion:0, residuos:0, total:0 };
+let donutChartObj = null;
+let lineChartObj  = null;
+
+// ═══════════════════════════════════════════════════════════
+// CALCULAR
+// ═══════════════════════════════════════════════════════════
+function v(id){ const el=document.getElementById(id); if(!el)return 0; const n=parseFloat(el.value)||0; return n<0?0:n; }
+function vSel(id){ const el=document.getElementById(id); if(!el)return 0; return parseFloat(el.value)||0; }
+
+function calcular(){
+  const personas = Math.max(1, v('personas'));
+
+  // HOGAR
+  const elec   = v('elec')        * 12 * F.electricidad / personas;
+  const gasNat  = v('gas_nat')    * 12 * F.gas_natural  / personas;
+  const gasLic  = v('gas_lic_cil')* 12 * 15 * F.gas_licuado / personas;
+  const lena    = v('lena')       * F.lena                / personas;
+  const hogar   = elec + gasNat + gasLic + lena;
+
+  // TRANSPORTE (semanal × 52)
+  const autoBen  = v('auto_ben')       * 52 * F.auto_bencina;
+  const autoDie  = v('auto_die')       * 52 * F.auto_diesel;
+  const moto     = v('moto')           * 52 * F.moto;
+  const pubTp    = v('transporte_pub') * 52 * F.micro_metro;
+  const vNac     = v('vuelos_nac')     * 1000 * F.avion_nacional;
+  const vInt     = v('vuelos_int')     * 10000 * F.avion_internacional;
+  const transp   = autoBen + autoDie + moto + pubTp + vNac + vInt;
+
+  // ALIMENTACION
+  const esVegano = document.getElementById('vegano').checked;
+  let alim = 0;
+  if(!esVegano){
+    alim += vSel('frec_vacuno') * KG_POR_DIA.vacuno * F.carne_vacuno;
+    alim += vSel('frec_cerdo') * KG_POR_DIA.cerdo  * F.carne_cerdo;
+    alim += vSel('frec_pollo') * KG_POR_DIA.pollo  * F.pollo;
+    alim += vSel('frec_pescado') * KG_POR_DIA.pescado * F.pescado;
+  } else {
+    alim += 0.05; // base lácteos/vegetal si vegano
+  }
+  alim += vSel('frec_lacteos') * 0.1 * F.lacteos;
+  alim += 365 * 0.2 * F.vegetales;
+
+  // RESIDUOS
+  const reciclaMult = vSel('recicla') || 1.0;
+  const residuos = v('bolsas') * 52 * 8 * F.residuos * reciclaMult;
+
+  const total = hogar + transp + alim + residuos;
+  resultados = { hogar, transporte:transp, alimentacion:alim, residuos, total };
+
+  actualizarUI();
+  calcAhorro();
+  actualizarOffset();
+}
+
+function actualizarUI(){
+  const t = resultados.total;
+  const box = document.getElementById('resultado-box');
+  const fill = document.getElementById('barra-fill');
+  const txt  = document.getElementById('total-val');
+  const cmp  = document.getElementById('compare-line');
+
+  txt.textContent = t.toFixed(2);
+
+  // Color
+  let color, cls;
+  if(t < 2)      { cls='verde';    color='#22c55e'; }
+  else if(t < 5) { cls='amarillo'; color='#eab308'; }
+  else if(t < 10){ cls='naranja';  color='#f97316'; }
+  else           { cls='rojo';     color='#ef4444'; }
+
+  box.className = 'resultado-box ' + cls;
+  fill.style.background = color;
+
+  // Barra: 0–10t range, capped at 100%
+  const pct = Math.min(100, (t / 10) * 100);
+  fill.style.width = pct + '%';
+
+  // Compare text
+  if(t === 0){
+    cmp.textContent = 'Completa el formulario para ver tu huella 👇';
+  } else {
+    const diffChl = ((AVG_CHL - t) / AVG_CHL * 100);
+    const vs2030  = t <= META_2030 ? '✅ Ya cumples la meta Paris 2030' : `📍 Meta 2030 (2t): te faltan ${(t - META_2030).toFixed(2)} tCO2e`;
+    if(diffChl > 0){
+      cmp.textContent = `✅ Estás ${diffChl.toFixed(0)}% bajo el promedio chileno (${AVG_CHL}t). ${vs2030}`;
+    } else {
+      cmp.textContent = `📍 Estás ${Math.abs(diffChl).toFixed(0)}% sobre el promedio chileno (${AVG_CHL}t). ${vs2030}`;
+    }
+  }
+
+  // Equivalencias
+  const eqCard = document.getElementById('eq-card');
+  if(t > 0){
+    eqCard.style.display='block';
+    document.getElementById('eq-arboles').textContent = Math.round(t / 0.022);
+    document.getElementById('eq-viajes').textContent  = Math.round(t / (680 * 0.00021));
+    document.getElementById('eq-meses').textContent   = Math.round(t / (200*12*0.000322));
+    document.getElementById('eq-vuelos').textContent  = Math.round(t / (3600*0.000255));
+  } else {
+    eqCard.style.display='none';
+  }
+
+  // Breakdown
+  const bkCard = document.getElementById('breakdown-card');
+  if(t > 0){
+    bkCard.style.display='block';
+    actualizarDonut();
+    actualizarCatBars();
+  } else {
+    bkCard.style.display='none';
+  }
+
+  // Tab1 total display
+  const at = document.getElementById('ahorro-total-val');
+  if(at) at.textContent = t.toFixed(2) + ' tCO2e';
+
+  // Guardar inputs en localStorage
+  saveInputs();
+}
+
+function actualizarDonut(){
+  const { hogar, transporte, alimentacion, residuos } = resultados;
+  const data = [hogar, transporte, alimentacion, residuos].map(x=>parseFloat(x.toFixed(3)));
+
+  if(!donutChartObj){
+    const ctx = document.getElementById('donutChart').getContext('2d');
+    donutChartObj = new Chart(ctx, {
+      type:'doughnut',
+      data:{
+        labels:['🏠 Hogar','🚗 Transporte','🍽️ Alimentación','🗑️ Residuos'],
+        datasets:[{
+          data,
+          backgroundColor:['#166534','#15803d','#22c55e','#86efac'],
+          borderWidth:2,
+          borderColor:'#fff'
+        }]
+      },
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        plugins:{
+          legend:{
+            position:'bottom',
+            labels:{font:{family:'Inter',size:11},padding:12,color:'#14532d'}
+          },
+          tooltip:{
+            callbacks:{
+              label:(ctx)=>{
+                const val = ctx.parsed;
+                const pct = resultados.total>0?(val/resultados.total*100).toFixed(1):'0';
+                return ` ${val.toFixed(3)} tCO2e (${pct}%)`;
+              }
+            }
+          }
+        },
+        cutout:'55%'
+      }
+    });
+  } else {
+    donutChartObj.data.datasets[0].data = data;
+    donutChartObj.update();
+  }
+}
+
+function actualizarCatBars(){
+  const cats = [
+    {name:'🏠 Hogar',  val:resultados.hogar,       color:'#166534'},
+    {name:'🚗 Transp.',val:resultados.transporte,   color:'#15803d'},
+    {name:'🍽️ Alim.',  val:resultados.alimentacion, color:'#22c55e'},
+    {name:'🗑️ Resid.', val:resultados.residuos,     color:'#86efac'},
+  ];
+  const max = Math.max(...cats.map(c=>c.val), 0.001);
+  const html = cats.map(c=>{
+    const pct = Math.min(100,(c.val/max)*100).toFixed(1);
+    return `<div class="catbar">
+      <span class="catname">${c.name}</span>
+      <div class="cattrack"><div class="catfill" style="width:${pct}%;background:${c.color}"></div></div>
+      <span class="catval">${c.val.toFixed(3)}t</span>
+    </div>`;
+  }).join('');
+  document.getElementById('cat-bars').innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════════════
+// CALCULADORA DE AHORRO
+// ═══════════════════════════════════════════════════════════
+function calcAhorro(){
+  const t = resultados.total;
+  let ahorro = 0;
+
+  if(document.getElementById('s_led')?.checked)  ahorro += Math.min(resultados.hogar * 0.15, 0.3);
+  if(document.getElementById('s_tele')?.checked) ahorro += resultados.transporte * 0.2;
+  if(document.getElementById('s_carne')?.checked) ahorro += 0.28;
+  if(document.getElementById('s_rec')?.checked)  ahorro += resultados.residuos * 0.2;
+  if(document.getElementById('s_bici')?.checked) ahorro += resultados.transporte * 0.2;
+
+  const nueva = Math.max(0, t - ahorro);
+  const nvEl = document.getElementById('ahorro-nueva-val');
+  const descEl = document.getElementById('ahorro-desc-txt');
+  if(nvEl) nvEl.textContent = nueva.toFixed(2) + ' tCO2e';
+  if(descEl){
+    if(ahorro > 0){
+      const pct = t > 0 ? (ahorro/t*100).toFixed(0) : 0;
+      descEl.textContent = `Reducción: −${ahorro.toFixed(2)} tCO2e (${pct}% menos)`;
+    } else {
+      descEl.textContent = 'Activa algún cambio para ver el resultado';
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// OFFSET
+// ═══════════════════════════════════════════════════════════
+const OFFSET_PRICES = { bosque:15000, solar:20000, metano:12000, humedal:25000 };
+
+function actualizarOffset(){
+  const t = resultados.total;
+  const el = document.getElementById('offset-total-val');
+  if(el) el.textContent = t > 0 ? t.toFixed(2) + ' tCO2e' : '— tCO2e';
+
+  const fmtCLP = (n) => '$' + Math.round(n).toLocaleString('es-CL') + ' CLP';
+  const ids = ['bosque','solar','metano','humedal'];
+  ids.forEach(id=>{
+    const cel = document.getElementById('costo-' + id);
+    if(cel) cel.textContent = t > 0 ? fmtCLP(t * OFFSET_PRICES[id]) : '— CLP total';
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+// HISTORIAL
+// ═══════════════════════════════════════════════════════════
+function getHistorial(){
+  try{ return JSON.parse(localStorage.getItem('co2_history')||'[]'); }
+  catch(e){ return []; }
+}
+function setHistorial(h){
+  try{ localStorage.setItem('co2_history', JSON.stringify(h)); } catch(e){}
+}
+
+function guardarMedicion(){
+  const t = resultados.total;
+  if(t <= 0){ showToast('Primero completa el formulario 👆'); return; }
+  const h = getHistorial();
+  const entry = {
+    fecha: new Date().toLocaleDateString('es-CL',{day:'2-digit',month:'short',year:'numeric'}),
+    ts: Date.now(),
+    total: parseFloat(t.toFixed(3)),
+    hogar: parseFloat(resultados.hogar.toFixed(3)),
+    transporte: parseFloat(resultados.transporte.toFixed(3)),
+    alimentacion: parseFloat(resultados.alimentacion.toFixed(3)),
+    residuos: parseFloat(resultados.residuos.toFixed(3))
+  };
+  h.push(entry);
+  setHistorial(h);
+  renderHistorial();
+  showToast('✅ Medición guardada');
+}
+
+function getColor(t){
+  if(t<2) return 'verde';
+  if(t<5) return 'amarillo';
+  if(t<10) return 'naranja';
+  return 'rojo';
+}
+
+function renderHistorial(){
+  const h = getHistorial();
+  const listEl = document.getElementById('hist-list');
+  const emptyEl = document.getElementById('hist-empty2');
+  const shareBtn = document.getElementById('share-btn');
+  const cmpEl = document.getElementById('hist-compare');
+  const chartWrap = document.getElementById('hist-chart-wrap');
+  const emptyChart = document.getElementById('hist-empty');
+
+  if(h.length === 0){
+    if(emptyEl) emptyEl.style.display='block';
+    if(shareBtn) shareBtn.style.display='none';
+    if(cmpEl) cmpEl.style.display='none';
+    if(chartWrap) chartWrap.style.display='none';
+    if(emptyChart) emptyChart.style.display='none';
+    listEl.innerHTML = '';
+    listEl.appendChild(emptyEl);
+    return;
+  }
+
+  if(emptyEl) emptyEl.style.display='none';
+  if(shareBtn) shareBtn.style.display='flex';
+
+  // Lista
+  const sorted = [...h].sort((a,b)=>b.ts-a.ts);
+  let html = '';
+  sorted.forEach((e,i)=>{
+    const cls = getColor(e.total);
+    let deltaHtml = '';
+    if(i < sorted.length-1){
+      const prev = sorted[i+1].total;
+      const diff = e.total - prev;
+      if(diff < 0){
+        deltaHtml = `<div class="hist-delta delta-down">↓ ${Math.abs(diff).toFixed(3)}t vs anterior</div>`;
+      } else if(diff > 0){
+        deltaHtml = `<div class="hist-delta delta-up">↑ ${diff.toFixed(3)}t vs anterior</div>`;
+      }
+    }
+    html += `<div class="hist-item">
+      <div>
+        <div style="font-weight:600">${e.fecha}</div>
+        <div class="date">Hogar ${e.hogar}t · Transp. ${e.transporte}t · Alim. ${e.alimentacion}t</div>
+        ${deltaHtml}
+      </div>
+      <div style="text-align:right">
+        <div class="val">${e.total.toFixed(2)}t</div>
+        <span class="badge badge-${cls}">${cls.charAt(0).toUpperCase()+cls.slice(1)}</span>
+      </div>
+    </div>`;
+  });
+  listEl.innerHTML = html;
+
+  // Comparación últimas dos
+  if(sorted.length >= 2 && cmpEl){
+    cmpEl.style.display='block';
+    const last = sorted[0].total;
+    const prev = sorted[1].total;
+    const diff = last - prev;
+    const pct  = prev > 0 ? Math.abs(diff/prev*100).toFixed(1) : '—';
+    if(diff < 0){
+      cmpEl.innerHTML = `<span class="delta-down">↓ Esta medición vs anterior: −${Math.abs(diff).toFixed(3)} tCO2e (${pct}% menos)</span>`;
+    } else if(diff > 0){
+      cmpEl.innerHTML = `<span class="delta-up">↑ Esta medición vs anterior: +${diff.toFixed(3)} tCO2e (${pct}% más)</span>`;
+    } else {
+      cmpEl.innerHTML = `Sin cambio vs medición anterior`;
+    }
+  } else if(cmpEl){
+    cmpEl.style.display='none';
+  }
+
+  // Gráfico de línea
+  if(h.length >= 2){
+    if(chartWrap) chartWrap.style.display='block';
+    if(emptyChart) emptyChart.style.display='none';
+    renderLineChart(h);
+  } else {
+    if(chartWrap) chartWrap.style.display='none';
+    if(emptyChart) emptyChart.style.display='block';
+  }
+}
+
+function renderLineChart(h){
+  const sorted = [...h].sort((a,b)=>a.ts-b.ts);
+  const labels = sorted.map(e=>e.fecha);
+  const vals   = sorted.map(e=>e.total);
+
+  if(!lineChartObj){
+    const ctx = document.getElementById('lineChart').getContext('2d');
+    lineChartObj = new Chart(ctx,{
+      type:'line',
+      data:{
+        labels,
+        datasets:[{
+          label:'tCO2e',
+          data:vals,
+          borderColor:'#166534',
+          backgroundColor:'rgba(22,101,52,.1)',
+          fill:true,
+          tension:.35,
+          pointBackgroundColor:'#166534',
+          pointRadius:5,
+          pointHoverRadius:7
+        },{
+          label:'Meta 2030 (2t)',
+          data:Array(labels.length).fill(2),
+          borderColor:'#22c55e',
+          borderDash:[6,4],
+          borderWidth:2,
+          pointRadius:0,
+          fill:false
+        },{
+          label:'Prom. Chile (4.8t)',
+          data:Array(labels.length).fill(4.8),
+          borderColor:'#d97706',
+          borderDash:[4,3],
+          borderWidth:1.5,
+          pointRadius:0,
+          fill:false
+        }]
+      },
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        plugins:{
+          legend:{
+            labels:{font:{family:'Inter',size:10},color:'#14532d',padding:10}
+          }
+        },
+        scales:{
+          x:{ticks:{font:{family:'Inter',size:10},color:'#6b7280'},grid:{display:false}},
+          y:{
+            ticks:{font:{family:'Inter',size:10},color:'#6b7280',callback:v=>v+'t'},
+            grid:{color:'#e5e7eb'}
+          }
+        }
+      }
+    });
+  } else {
+    lineChartObj.data.labels = labels;
+    lineChartObj.data.datasets[0].data = vals;
+    lineChartObj.data.datasets[1].data = Array(labels.length).fill(2);
+    lineChartObj.data.datasets[2].data = Array(labels.length).fill(4.8);
+    lineChartObj.update();
+  }
+}
+
+function clearHistorial(){
+  if(!confirm('¿Borrar todo el historial?')) return;
+  try{ localStorage.removeItem('co2_history'); } catch(e){}
+  renderHistorial();
+  showToast('Historial borrado');
+}
+
+function compartirWhatsApp(){
+  const h = getHistorial();
+  if(h.length===0){ showToast('No hay mediciones guardadas'); return; }
+  const last = h[h.length-1];
+  const t = last.total.toFixed(2);
+  const color = getColor(last.total);
+  const emojis = {verde:'🟢',amarillo:'🟡',naranja:'🟠',rojo:'🔴'};
+  const msg = `${emojis[color]} Mi Huella de Carbono 2024 🌍\n`+
+    `📊 Total: *${t} tCO2e/año*\n`+
+    `🏠 Hogar: ${last.hogar}t | 🚗 Transp: ${last.transporte}t\n`+
+    `🍽️ Alim: ${last.alimentacion}t | 🗑️ Resid: ${last.residuos}t\n`+
+    `🌱 Promedio chileno: 4.8t | Meta Paris 2030: 2.0t\n`+
+    `Calculado con CO2Chile 🇨🇱`;
+  window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+}
+
+// ═══════════════════════════════════════════════════════════
+// NAVEGACIÓN
+// ═══════════════════════════════════════════════════════════
+function showTab(n){
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',i===n));
+  document.querySelectorAll('#nav button').forEach((b,i)=>b.classList.toggle('active',i===n));
+  if(n===3) renderHistorial();
+}
+
+function toggleVegano(){
+  const es = document.getElementById('vegano').checked;
+  const sec = document.getElementById('carne-section');
+  if(sec) sec.style.display = es ? 'none' : 'block';
+}
+
+// ═══════════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════════
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2800);
+}
+
+// ═══════════════════════════════════════════════════════════
+// PERSISTENCIA DE INPUTS
+// ═══════════════════════════════════════════════════════════
+const INPUT_IDS = ['elec','gas_nat','gas_lic_cil','lena','personas',
+  'auto_ben','auto_die','moto','transporte_pub','vuelos_nac','vuelos_int',
+  'frec_vacuno','frec_cerdo','frec_pollo','frec_pescado','frec_lacteos',
+  'bolsas','recicla'];
+
+function saveInputs(){
+  try{
+    const data={};
+    INPUT_IDS.forEach(id=>{
+      const el=document.getElementById(id);
+      if(el) data[id]=el.value;
+    });
+    data['vegano']=document.getElementById('vegano')?.checked?'1':'0';
+    localStorage.setItem('co2_inputs',JSON.stringify(data));
+  }catch(e){}
+}
+
+function loadInputs(){
+  try{
+    const raw=localStorage.getItem('co2_inputs');
+    if(!raw) return;
+    const data=JSON.parse(raw);
+    INPUT_IDS.forEach(id=>{
+      const el=document.getElementById(id);
+      if(el&&data[id]!==undefined) el.value=data[id];
+    });
+    const vegEl=document.getElementById('vegano');
+    if(vegEl&&data['vegano']) vegEl.checked=(data['vegano']==='1');
+    toggleVegano();
+  }catch(e){}
+}
+
+// ═══════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded',()=>{
+  loadInputs();
+  calcular();
+  renderHistorial();
+});
+</script>
+
+</body>
+</html>

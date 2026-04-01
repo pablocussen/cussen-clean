@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Calculadora tributaria para independientes y trabajadores a honorarios en Chile. Boleta de honorarios, cotizaciones, impuesto global complementario.">
+<title>TributosCL — Calculadora Tributaria Independientes</title>
+<link rel="manifest" href="data:application/json,{}">
+<meta name="theme-color" content="#0369a1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f0f6ff;--card:#ffffff;--card2:#e8f2ff;--border:#b8d4f0;
+  --accent:#0369a1;--text:#1e3a5f;--muted:#6b8fa5;
+  --green:#16a34a;--yellow:#d97706;--red:#dc2626;
+  --radius:10px;--shadow:0 2px 8px rgba(3,105,161,.10);
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:15px}
+header{background:linear-gradient(90deg,#0c4a7a,#0369a1);padding:13px 18px;position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;color:white;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+.logo{font-size:1.18rem;font-weight:800;letter-spacing:-.3px}
+.logo span{opacity:.7;font-weight:400;font-size:.88rem;margin-left:6px}
+nav{background:#fff;border-bottom:2px solid var(--border);display:flex;overflow-x:auto;position:sticky;top:62px;z-index:40;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+.tab-btn{flex:none;padding:11px 18px;font-size:.83rem;font-weight:600;color:var(--muted);border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;transition:color .2s,border-color .2s;font-family:'Inter',sans-serif}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-btn:hover:not(.active){color:var(--text)}
+.container{max-width:760px;margin:0 auto;padding:16px}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:14px;box-shadow:var(--shadow)}
+.card-title{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:14px}
+label{display:block;font-size:.83rem;font-weight:600;color:var(--text);margin-bottom:5px;margin-top:12px}
+label:first-child{margin-top:0}
+input[type=number],input[type=text],select{
+  width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;
+  font-size:16px;font-family:'Inter',sans-serif;color:var(--text);background:#fff;
+  transition:border-color .2s;-webkit-appearance:none;
+}
+input[type=number]:focus,input[type=text]:focus,select:focus{outline:none;border-color:var(--accent)}
+.toggle-row{display:flex;align-items:center;gap:10px;margin-top:12px}
+.toggle-label{font-size:.83rem;font-weight:600;color:var(--text)}
+.toggle{position:relative;width:46px;height:26px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;inset:0;background:#ccd8e8;border-radius:13px;cursor:pointer;transition:.25s}
+.toggle-slider:before{content:'';position:absolute;width:20px;height:20px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.25s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.toggle input:checked+.toggle-slider{background:var(--accent)}
+.toggle input:checked+.toggle-slider:before{transform:translateX(20px)}
+.result-box{background:var(--card2);border:1.5px solid var(--border);border-radius:var(--radius);padding:16px;margin-top:14px}
+.result-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:.9rem}
+.result-row:last-child{border-bottom:none}
+.result-row.total{font-weight:700;font-size:1.05rem;padding-top:10px;margin-top:4px}
+.result-row .label{color:var(--text)}
+.result-row .val{font-weight:600;color:var(--text);text-align:right}
+.result-row .val.red{color:var(--red)}
+.result-row .val.green{color:var(--green)}
+.liquid-big{text-align:center;margin-top:16px;padding:18px;background:#ecfdf5;border:2px solid #86efac;border-radius:var(--radius)}
+.liquid-big .lbl{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--green)}
+.liquid-big .amount{font-size:2.1rem;font-weight:800;color:var(--green);margin-top:4px}
+.liquid-big .rate{font-size:.82rem;color:var(--muted);margin-top:4px}
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:.76rem;font-weight:600}
+.badge-yellow{background:#fef3c7;color:#92400e}
+.badge-green{background:#dcfce7;color:#166534}
+.badge-blue{background:#dbeafe;color:#1e40af}
+.badge-red{background:#fee2e2;color:#991b1b}
+.note{font-size:.8rem;color:var(--muted);background:var(--card2);border-left:3px solid var(--accent);padding:8px 12px;border-radius:0 6px 6px 0;margin-top:10px}
+.section-title{font-size:1rem;font-weight:700;color:var(--text);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:480px){.grid2{grid-template-columns:1fr}}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 20px;border-radius:8px;font-size:.88rem;font-weight:600;cursor:pointer;border:none;font-family:'Inter',sans-serif;transition:background .2s,transform .1s}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:#025a8a}
+.btn-outline{background:#fff;color:var(--accent);border:1.5px solid var(--accent)}
+.btn-outline:hover{background:var(--card2)}
+.btn-sm{padding:6px 12px;font-size:.8rem}
+.btn-red{background:var(--red);color:#fff}
+.btn-red:hover{background:#b91c1c}
+.tramo-row{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:7px;font-size:.84rem;margin-bottom:4px}
+.tramo-row.active-tramo{background:#dbeafe;font-weight:700}
+.chart-wrap{position:relative;height:220px;margin-top:10px}
+.month-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+@media(max-width:500px){.month-grid{grid-template-columns:repeat(2,1fr)}}
+.month-cell{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:8px}
+.month-cell label{font-size:.72rem;margin:0 0 4px 0;color:var(--muted)}
+.month-cell input{padding:6px 8px;font-size:14px}
+.guide-section{margin-bottom:14px}
+.guide-section summary{cursor:pointer;font-weight:700;font-size:.93rem;padding:12px 14px;background:var(--card2);border:1px solid var(--border);border-radius:var(--radius);list-style:none;display:flex;justify-content:space-between;align-items:center;color:var(--text)}
+.guide-section summary::-webkit-details-marker{display:none}
+.guide-section summary::after{content:'▾';font-size:.8rem;color:var(--muted)}
+.guide-section[open] summary::after{content:'▴'}
+.guide-body{padding:14px;background:#fff;border:1px solid var(--border);border-top:none;border-radius:0 0 var(--radius) var(--radius);font-size:.88rem;line-height:1.65}
+.guide-body ol,.guide-body ul{padding-left:18px;margin:6px 0}
+.guide-body li{margin-bottom:4px}
+.guide-body a{color:var(--accent);text-decoration:none;font-weight:600}
+.guide-body a:hover{text-decoration:underline}
+.step-list{counter-reset:steps}
+.step-list li{counter-increment:steps;padding:6px 0 6px 28px;position:relative}
+.step-list li::before{content:counter(steps);position:absolute;left:0;top:5px;width:20px;height:20px;background:var(--accent);color:#fff;border-radius:50%;font-size:.72rem;font-weight:700;display:flex;align-items:center;justify-content:center}
+.strategy-card{border-left:4px solid var(--accent);background:var(--card2);border-radius:0 var(--radius) var(--radius) 0;padding:12px 14px;margin-bottom:10px}
+.strategy-card .sc-title{font-weight:700;font-size:.9rem;margin-bottom:4px}
+.strategy-card .sc-body{font-size:.83rem;color:var(--muted);line-height:1.55}
+.strategy-card.green{border-left-color:var(--green)}
+.strategy-card.yellow{border-left-color:var(--yellow)}
+.income-extra-row{display:flex;gap:8px;align-items:flex-end;margin-bottom:8px}
+.income-extra-row input{flex:1}
+.income-extra-row select{flex:1}
+.running-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:14px}
+.stat-box{background:var(--card);border:1.5px solid var(--border);border-radius:var(--radius);padding:12px;text-align:center}
+.stat-box .s-val{font-size:1.25rem;font-weight:800;color:var(--accent)}
+.stat-box .s-lbl{font-size:.75rem;color:var(--muted);margin-top:2px}
+.divider{border:none;border-top:1px solid var(--border);margin:14px 0}
+.reverse-box{background:#fffbeb;border:1.5px solid #fde68a;border-radius:var(--radius);padding:14px;margin-top:12px}
+.reverse-box .r-title{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#92400e;margin-bottom:10px}
+.prog-bar-wrap{height:8px;background:#e0ecf8;border-radius:4px;margin-top:4px;overflow:hidden}
+.prog-bar{height:100%;border-radius:4px;background:var(--accent);transition:width .5s}
+.footer-note{text-align:center;font-size:.76rem;color:var(--muted);padding:20px 16px;line-height:1.5}
+.afp-info{font-size:.76rem;color:var(--muted);margin-top:4px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">TributosCL <span>v2025</span></div>
+  <div style="font-size:.78rem;opacity:.8">Para independientes 🇨🇱</div>
+</header>
+
+<nav id="navBar">
+  <button class="tab-btn active" onclick="showTab('boleta',this)">Boleta</button>
+  <button class="tab-btn" onclick="showTab('anual',this)">Anual IGC</button>
+  <button class="tab-btn" onclick="showTab('planif',this)">Planificación</button>
+  <button class="tab-btn" onclick="showTab('guia',this)">Guía Práctica</button>
+</nav>
+
+<!-- ===== TAB 1: BOLETA ===== -->
+<div class="container">
+<div id="tab-boleta" class="tab-panel active">
+
+  <div class="card">
+    <div class="card-title">Honorarios</div>
+
+    <label>Monto bruto a cobrar (CLP)</label>
+    <input type="number" id="bruto" placeholder="Ej: 1500000" min="0" oninput="calcBoleta()">
+
+    <div class="toggle-row" style="margin-top:14px">
+      <label class="toggle">
+        <input type="checkbox" id="retencion" checked onchange="calcBoleta()">
+        <span class="toggle-slider"></span>
+      </label>
+      <span class="toggle-label">El pagador retiene el 12.25%</span>
+    </div>
+    <div class="note" id="retencionNota">Cuando la empresa retiene, no necesitas pagar tú directamente al SII.</div>
+
+    <div class="toggle-row" style="margin-top:10px">
+      <label class="toggle">
+        <input type="checkbox" id="esMujer" onchange="calcBoleta()">
+        <span class="toggle-slider"></span>
+      </label>
+      <span class="toggle-label">Soy mujer (exenta del SIS)</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Cotizaciones</div>
+    <div class="grid2">
+      <div>
+        <label>AFP</label>
+        <select id="afpSel" onchange="calcBoleta()">
+          <option value="11.44">AFP Capital (11.44%)</option>
+          <option value="11.49" selected>AFP Cuprum (11.49%)</option>
+          <option value="10.58">AFP Habitat (10.58%)</option>
+          <option value="10.65">AFP Modelo (10.65%)</option>
+          <option value="10.68">AFP One (10.68%)</option>
+          <option value="11.45">AFP Planvital (11.45%)</option>
+          <option value="10.58">AFP Provida (10.58%)</option>
+        </select>
+        <div class="afp-info" id="afpInfo">Sobre renta imponible (80% del bruto)</div>
+      </div>
+      <div>
+        <label>Salud</label>
+        <select id="saludTipo" onchange="toggleIsapre()">
+          <option value="fonasa">FONASA (7%)</option>
+          <option value="isapre">ISAPRE (% personalizado)</option>
+        </select>
+      </div>
+    </div>
+    <div id="isapreInput" style="display:none;margin-top:8px">
+      <label>% ISAPRE</label>
+      <input type="number" id="isaprePct" placeholder="Ej: 8.5" min="0" max="30" step="0.1" oninput="calcBoleta()">
+    </div>
+    <div class="toggle-row" style="margin-top:12px">
+      <label class="toggle">
+        <input type="checkbox" id="segCesantia" onchange="calcBoleta()">
+        <span class="toggle-slider"></span>
+      </label>
+      <span class="toggle-label">Seguro de cesantía (AFC 0.6% — Ley 21.122)</span>
+    </div>
+  </div>
+
+  <div id="resultBoleta" style="display:none">
+    <div class="result-box">
+      <div class="card-title" style="margin-bottom:10px">Desglose de descuentos</div>
+      <div class="result-row"><span class="label">Monto bruto</span><span class="val" id="r-bruto">-</span></div>
+      <div class="result-row"><span class="label" id="r-ret-lbl">(-) Retención SII 12.25%</span><span class="val red" id="r-ret">-</span></div>
+      <div class="result-row"><span class="label" id="r-afp-lbl">(-) Cotización AFP</span><span class="val red" id="r-afp">-</span></div>
+      <div class="result-row"><span class="label" id="r-sal-lbl">(-) Cotización Salud</span><span class="val red" id="r-sal">-</span></div>
+      <div class="result-row"><span class="label">(-) SIS + Mutual <span id="r-sis-detail"></span></span><span class="val red" id="r-sis">-</span></div>
+      <div class="result-row" id="r-afc-row" style="display:none"><span class="label">(-) Seguro Cesantía AFC 0.6%</span><span class="val red" id="r-afc">-</span></div>
+    </div>
+
+    <div class="liquid-big">
+      <div class="lbl">Monto líquido estimado</div>
+      <div class="amount" id="r-liquido">$0</div>
+      <div class="rate">Tasa efectiva de descuentos: <strong id="r-tasa">0%</strong></div>
+    </div>
+
+    <div class="note" id="r-nota-mujer" style="display:none">Estás exenta del SIS (Seguro Invalidez y Sobrevivencia). El cálculo ya lo refleja.</div>
+  </div>
+
+  <div class="card" style="margin-top:14px">
+    <div class="card-title">Calculadora inversa</div>
+    <div class="reverse-box">
+      <div class="r-title">¿Cuánto cobrar para recibir un neto deseado?</div>
+      <label>Quiero recibir (líquido)</label>
+      <input type="number" id="netoDeseado" placeholder="Ej: 1200000" min="0" oninput="calcInversa()">
+      <div id="resultInversa" style="margin-top:12px;display:none">
+        <div class="result-row"><span class="label">Debes cobrar (bruto)</span><span class="val green" id="ri-bruto">-</span></div>
+        <div class="result-row"><span class="label">Retención que pagará la empresa</span><span class="val red" id="ri-ret">-</span></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end tab-boleta -->
+
+<!-- ===== TAB 2: ANUAL IGC ===== -->
+<div id="tab-anual" class="tab-panel">
+
+  <div class="card">
+    <div class="card-title">Ingresos del año</div>
+    <div class="grid2">
+      <div>
+        <label>Honorarios brutos anuales (CLP)</label>
+        <input type="number" id="a-hon" placeholder="Ej: 18000000" oninput="calcAnual()">
+      </div>
+      <div>
+        <label>Renta de trabajo dependiente (líquida)</label>
+        <input type="number" id="a-dep" placeholder="Ej: 0" oninput="calcAnual()">
+      </div>
+    </div>
+    <label>Otros ingresos (hasta 5 fuentes adicionales)</label>
+    <div id="extraIncomes"></div>
+    <button class="btn btn-outline btn-sm" style="margin-top:8px" onclick="addIncome()">+ Agregar fuente</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Deducciones</div>
+    <div class="grid2">
+      <div>
+        <label>APV (ahorro previsional voluntario)</label>
+        <input type="number" id="a-apv" placeholder="Ej: 600000" oninput="calcAnual()">
+      </div>
+      <div>
+        <label>Intereses crédito hipotecario DFL2</label>
+        <input type="number" id="a-dfl2" placeholder="Ej: 0" oninput="calcAnual()">
+      </div>
+      <div>
+        <label>Intereses crédito educacional</label>
+        <input type="number" id="a-educ" placeholder="Ej: 0" oninput="calcAnual()">
+      </div>
+      <div>
+        <label>Donaciones (Art. 7 Ley 19.885)</label>
+        <input type="number" id="a-don" placeholder="Ej: 0" oninput="calcAnual()">
+      </div>
+    </div>
+    <div style="margin-top:12px">
+      <label>AFP selector (para crédito cotizaciones)</label>
+      <select id="a-afp" onchange="calcAnual()">
+        <option value="11.44">AFP Capital (11.44%)</option>
+        <option value="11.49" selected>AFP Cuprum (11.49%)</option>
+        <option value="10.58">AFP Habitat (10.58%)</option>
+        <option value="10.65">AFP Modelo (10.65%)</option>
+        <option value="10.68">AFP One (10.68%)</option>
+        <option value="11.45">AFP Planvital (11.45%)</option>
+        <option value="10.58">AFP Provida (10.58%)</option>
+      </select>
+    </div>
+  </div>
+
+  <div id="resultAnual" style="display:none">
+    <div class="result-box">
+      <div class="card-title" style="margin-bottom:10px">Resumen Impuesto Global Complementario</div>
+      <div class="result-row"><span class="label">Renta bruta anual total</span><span class="val" id="a-r-total">-</span></div>
+      <div class="result-row"><span class="label">(-) Deducciones</span><span class="val red" id="a-r-ded">-</span></div>
+      <div class="result-row"><span class="label">Base imponible IGC</span><span class="val" id="a-r-base">-</span></div>
+      <div class="result-row"><span class="label">Tramo aplicable</span><span class="val" id="a-r-tramo">-</span></div>
+      <div class="result-row"><span class="label">Impuesto determinado</span><span class="val red" id="a-r-imp">-</span></div>
+      <div class="result-row"><span class="label">(-) Crédito retenciones pagadas</span><span class="val green" id="a-r-cred-ret">-</span></div>
+      <div class="result-row"><span class="label">(-) Crédito cotizaciones</span><span class="val green" id="a-r-cred-cot">-</span></div>
+      <div class="result-row total">
+        <span class="label" id="a-r-res-lbl">Impuesto a pagar</span>
+        <span class="val" id="a-r-resultado">-</span>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <div class="card-title">Tramos IGC 2024 — Global Complementario</div>
+      <div id="tramosView"></div>
+      <div class="note" style="margin-top:10px">UTA = 12 UTM. UTM Marzo 2025: $67.294 → UTA: $807.528. Tramos calculados sobre renta neta imponible.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Distribución de ingresos</div>
+      <div class="chart-wrap">
+        <canvas id="pieChart"></canvas>
+      </div>
+    </div>
+
+    <div id="a-recom" class="strategy-card green" style="margin-top:6px">
+      <div class="sc-title">Recomendación APV</div>
+      <div class="sc-body" id="a-recom-body">Calcula tus ingresos para ver la recomendación.</div>
+    </div>
+  </div>
+
+</div><!-- end tab-anual -->
+
+<!-- ===== TAB 3: PLANIFICACIÓN ===== -->
+<div id="tab-planif" class="tab-panel">
+
+  <div class="card">
+    <div class="card-title">Honorarios mensuales <span id="p-year">2025</span></div>
+    <div class="month-grid" id="monthGrid"></div>
+  </div>
+
+  <div class="running-stats" id="runningStats" style="display:none">
+    <div class="stat-box"><div class="s-val" id="p-total-hon">$0</div><div class="s-lbl">Honorarios YTD</div></div>
+    <div class="stat-box"><div class="s-val" id="p-total-ret">$0</div><div class="s-lbl">Retenciones YTD</div></div>
+    <div class="stat-box"><div class="s-val" id="p-total-cot">$0</div><div class="s-lbl">Cotizaciones YTD</div></div>
+    <div class="stat-box"><div class="s-val" id="p-est-igc">$0</div><div class="s-lbl">IGC estimado</div></div>
+  </div>
+
+  <div class="card" style="margin-top:14px">
+    <div class="card-title">Honorarios vs Retención mensual</div>
+    <div class="chart-wrap" style="height:240px">
+      <canvas id="barChart"></canvas>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:14px">
+    <div class="card-title">Estrategias de optimización</div>
+
+    <div class="strategy-card green">
+      <div class="sc-title">APV — Ahorro Previsional Voluntario</div>
+      <div class="sc-body" id="p-apv-tip">Cada $100.000 en APV (Régimen A) reduce tu base imponible en $100.000. Si estás en tramo 13.5%, ahorras $13.500 en impuestos por cada $100k invertido.</div>
+    </div>
+
+    <div class="strategy-card yellow">
+      <div class="sc-title">Gastos necesarios — Presunción 30%</div>
+      <div class="sc-body">El SII permite deducir un 30% de los honorarios como "gastos presuntos" en el F22, con tope de 15 UTA (~$12.1M). No necesitas facturas — es automático.</div>
+    </div>
+
+    <div class="strategy-card">
+      <div class="sc-title">Timing de ingresos</div>
+      <div class="sc-body" id="p-timing-tip">Si estás cerca del límite de un tramo, considera diferir boletas al siguiente año tributario (enero en adelante). El IGC se declara en abril por el año anterior.</div>
+    </div>
+
+    <div class="strategy-card" style="border-left-color:var(--red)">
+      <div class="sc-title">Alerta: Cotizaciones obligatorias</div>
+      <div class="sc-body">Desde 2024 (Ley 21.010 y reforma), los independientes con boletas deben cotizar obligatoriamente AFP + salud. El no pago genera deuda previsional y multas. Usa Previred para automatizar.</div>
+    </div>
+  </div>
+
+</div><!-- end tab-planif -->
+
+<!-- ===== TAB 4: GUÍA ===== -->
+<div id="tab-guia" class="tab-panel">
+
+  <details class="guide-section" open>
+    <summary>1. Cómo emitir boleta de honorarios</summary>
+    <div class="guide-body">
+      <ol class="step-list">
+        <li>Ingresa a <a href="https://www.sii.cl" target="_blank">sii.cl</a> con tu RUT y ClaveÚnica o contraseña SII.</li>
+        <li>Ve a <strong>Servicios online → Registro de Compras y Ventas → Honorarios</strong>.</li>
+        <li>Selecciona <em>Emitir boleta de honorarios electrónica</em>.</li>
+        <li>Ingresa el RUT del pagador (empresa o persona), el monto bruto y concepto del servicio.</li>
+        <li>Indica si el pagador <strong>retiene</strong> (empresa → sí) o no (persona natural o entidad sin obligación → no).</li>
+        <li>Revisa y emite. El SII enviará el documento al pagador automáticamente.</li>
+        <li>Descarga el PDF y envíalo a tu cliente si es necesario.</li>
+      </ol>
+      <div class="note">Si trabajas solo para personas naturales, debes pagar tú la retención en el F29 mensual o el F50 trimestral.</div>
+    </div>
+  </details>
+
+  <details class="guide-section">
+    <summary>2. Pago de cotizaciones previsionales</summary>
+    <div class="guide-body">
+      <p><strong>Plataforma recomendada:</strong> <a href="https://www.previred.com" target="_blank">previred.com</a> (previredpyme también disponible).</p>
+      <ol class="step-list" style="margin-top:10px">
+        <li>Crea cuenta en Previred o ingresa con tu RUT.</li>
+        <li>Selecciona <em>Pago independiente</em> e ingresa tu renta imponible (80% de tus honorarios brutos del mes).</li>
+        <li>El sistema calcula automáticamente AFP + Salud + SIS.</li>
+        <li>Paga antes del <strong>día 15 del mes siguiente</strong> al período que declaras.</li>
+        <li>Guarda el comprobante para el F22 de abril.</li>
+      </ol>
+      <ul style="margin-top:8px">
+        <li>AFP: pago directo a tu AFP o por Previred</li>
+        <li>FONASA: se paga por Previred o en la tesorería</li>
+        <li>ISAPRE: pago directo a tu isapre (algunos también por Previred)</li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="guide-section">
+    <summary>3. Declaración de renta (F22) — Operación Renta</summary>
+    <div class="guide-body">
+      <p><strong>Fecha límite:</strong> 30 de abril de cada año (por los ingresos del año anterior).</p>
+      <ol class="step-list" style="margin-top:10px">
+        <li>Ingresa a sii.cl en <strong>abril</strong> con tu ClaveÚnica.</li>
+        <li>Ve a <em>Servicios online → Operación Renta → Presentar declaración F22</em>.</li>
+        <li>El SII propone una declaración prellenada con tus honorarios y retenciones.</li>
+        <li>Revisa y agrega deducciones: APV, intereses DFL2, gastos educacionales, donaciones.</li>
+        <li>Confirma o corrige y envía.</li>
+        <li>Si hay devolución, el SII la deposita en tu cuenta bancaria registrada (Cuenta RUT o bancaria).</li>
+      </ol>
+      <div class="note">Si tienes devolución, registra tu cuenta bancaria en sii.cl antes de declarar para recibirla más rápido (hasta junio normalmente).</div>
+    </div>
+  </details>
+
+  <details class="guide-section">
+    <summary>4. ¿Cuándo conviene constituir empresa (SpA/SRL)?</summary>
+    <div class="guide-body">
+      <p>Constituir una empresa tiene sentido cuando:</p>
+      <ul style="margin-top:8px">
+        <li><strong>Ingresos anuales &gt; $60–80M CLP</strong>: La tasa del Impuesto Primera Categoría (27%) puede ser menor al tramo IGC del 35–40%.</li>
+        <li>Tienes <strong>varios clientes o proyectos</strong> y quieres separar el riesgo legal.</li>
+        <li>Necesitas emitir <strong>facturas</strong> (no solo boletas), lo que requiere ser empresa.</li>
+        <li>Tienes <strong>empleados</strong> a cargo — la empresa simplifica la relación laboral.</li>
+        <li>Quieres deducir <strong>gastos reales</strong> (arriendo oficina, computadores, etc.) con IVA crédito fiscal.</li>
+      </ul>
+      <div class="note" style="margin-top:10px">Costo estimado de constitución SpA: $0 en tuempresa.cl (registro en línea) + $30.000–$80.000 en contador mensual. Evalúa si el ahorro tributario supera ese costo.</div>
+    </div>
+  </details>
+
+  <details class="guide-section">
+    <summary>5. Registros recomendados para independientes</summary>
+    <div class="guide-body">
+      <ul>
+        <li><strong>Libro de honorarios</strong>: El SII lleva registro automático de tus boletas electrónicas. Descárgalo trimestralmente.</li>
+        <li><strong>Comprobantes de cotizaciones</strong>: Guarda todos los comprobantes de Previred / AFP / isapre del año.</li>
+        <li><strong>Gastos de trabajo</strong>: Si optas por gastos efectivos en lugar de presuntos (30%), guarda todas las boletas/facturas de gastos relacionados con tu actividad.</li>
+        <li><strong>APV</strong>: Guarda el certificado anual de tu institución APV.</li>
+        <li><strong>Autoevaluación trimestral</strong>: Revisa en enero, abril, julio y octubre si tus retenciones cubren tu IGC proyectado.</li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="guide-section">
+    <summary>6. Links útiles</summary>
+    <div class="guide-body">
+      <ul style="list-style:none;padding:0">
+        <li style="padding:6px 0;border-bottom:1px solid var(--border)"><a href="https://www.sii.cl" target="_blank">sii.cl</a> — Servicio de Impuestos Internos (emitir boletas, F22, RUT)</li>
+        <li style="padding:6px 0;border-bottom:1px solid var(--border)"><a href="https://www.previred.com" target="_blank">previred.com</a> — Pago de cotizaciones previsionales</li>
+        <li style="padding:6px 0;border-bottom:1px solid var(--border)"><a href="https://www.spensiones.cl" target="_blank">spensiones.cl</a> — Superintendencia de Pensiones (comparador AFP)</li>
+        <li style="padding:6px 0;border-bottom:1px solid var(--border)"><a href="https://www.superintendenciadesalud.cl" target="_blank">superintendenciadesalud.cl</a> — Comparador ISAPRE vs FONASA</li>
+        <li style="padding:6px 0;border-bottom:1px solid var(--border)"><a href="https://www.tuempresa.cl" target="_blank">tuempresa.cl</a> — Constitución empresa en línea gratuita</li>
+        <li style="padding:6px 0;border-bottom:1px solid var(--border)"><a href="https://www.cmfchile.cl" target="_blank">cmfchile.cl</a> — Regulador financiero (APV, instrumentos)</li>
+        <li style="padding:6px 0"><a href="https://www.bcchile.cl" target="_blank">bcentral.cl</a> — Banco Central (UF, UTM actualizados)</li>
+      </ul>
+    </div>
+  </details>
+
+  <div class="card" style="margin-top:14px">
+    <div class="card-title">Constantes tributarias 2025</div>
+    <div class="result-row"><span class="label">IMM (Ingreso Mínimo Mensual)</span><span class="val">$528.000</span></div>
+    <div class="result-row"><span class="label">UTM Marzo 2025</span><span class="val">$67.294</span></div>
+    <div class="result-row"><span class="label">UTA (12 × UTM)</span><span class="val">$807.528</span></div>
+    <div class="result-row"><span class="label">UF (aprox. 2025)</span><span class="val">$38.500</span></div>
+    <div class="result-row"><span class="label">Retención independientes</span><span class="val">12.25%</span></div>
+    <div class="result-row"><span class="label">Renta imponible base</span><span class="val">80% del bruto</span></div>
+    <div class="result-row"><span class="label">SIS (Seg. Invalidez) hombre</span><span class="val">1.49%</span></div>
+    <div class="result-row"><span class="label">Mutual (Accidentes trabajo)</span><span class="val">0.90%</span></div>
+    <div class="result-row"><span class="label">AFC Cesantía (opcional ind.)</span><span class="val">0.60%</span></div>
+    <div class="result-row" style="border-bottom:none"><span class="label">Gastos presuntos (F22)</span><span class="val">30% (tope 15 UTA)</span></div>
+  </div>
+
+</div><!-- end tab-guia -->
+
+</div><!-- end container -->
+
+<div class="footer-note">
+  TributosCL es una herramienta informativa. Los cálculos son aproximados y no reemplazan asesoría tributaria profesional.<br>
+  Datos basados en legislación chilena vigente al año tributario 2025. UTM, UF y tasas AFP pueden variar mensualmente.
+</div>
+
+<script>
+// ============================================================
+// CONSTANTS
+// ============================================================
+const UTM = 67294;
+const UTA = UTM * 12;
+const RET_PCT = 0.1225;
+const RI_FACTOR = 0.80; // renta imponible = 80% bruto
+
+const TRAMOS = [
+  { min: 0,   max: 13.5, rate: 0,    rebaja: 0 },
+  { min: 13.5, max: 30,  rate: 0.04, rebaja: 0.04 * 13.5 * UTA },
+  { min: 30,  max: 50,   rate: 0.08, rebaja: 0.04 * 13.5 * UTA + 0.04 * 16.5 * UTA },
+  { min: 50,  max: 70,   rate: 0.135,rebaja: 0 },
+  { min: 70,  max: 90,   rate: 0.23, rebaja: 0 },
+  { min: 90,  max: 120,  rate: 0.304,rebaja: 0 },
+  { min: 120, max: 150,  rate: 0.35, rebaja: 0 },
+  { min: 150, max: Infinity, rate: 0.40, rebaja: 0 }
+];
+// Compute rebajas for all tramos properly
+(function(){
+  let acum = 0;
+  for(let i=0;i<TRAMOS.length;i++){
+    TRAMOS[i].rebaja = acum;
+    if(isFinite(TRAMOS[i].max)){
+      acum += (TRAMOS[i].max - TRAMOS[i].min) * UTA * TRAMOS[i].rate;
+    }
+  }
+  // recalc using standard formula: Impuesto = base * rate - factor
+  // factor[i] = Impuesto en limite inf del tramo
+  // We'll just use marginal calculation below
+})();
+
+function calcTramos(base){
+  let tax = 0;
+  for(let t of TRAMOS){
+    const lo = t.min * UTA;
+    const hi = t.max === Infinity ? Infinity : t.max * UTA;
+    if(base <= lo) break;
+    const chunk = Math.min(base, hi) - lo;
+    tax += chunk * t.rate;
+  }
+  return tax;
+}
+
+function getTramoIdx(base){
+  for(let i=0;i<TRAMOS.length;i++){
+    const lo = TRAMOS[i].min * UTA;
+    const hi = TRAMOS[i].max === Infinity ? Infinity : TRAMOS[i].max * UTA;
+    if(base >= lo && base < hi) return i;
+  }
+  return TRAMOS.length - 1;
+}
+
+// ============================================================
+// STORAGE
+// ============================================================
+function saveState(){
+  try{
+    const s = {
+      bruto: V('bruto'), retencion: G('retencion'), esMujer: G('esMujer'),
+      afpSel: VS('afpSel'), saludTipo: VS('saludTipo'), isaprePct: V('isaprePct'),
+      segCesantia: G('segCesantia'), netoDeseado: V('netoDeseado'),
+      aHon: V('a-hon'), aDep: V('a-dep'), aApv: V('a-apv'),
+      aDfl2: V('a-dfl2'), aEduc: V('a-educ'), aDon: V('a-don'),
+      aAfp: VS('a-afp'),
+      months: getMonthValues()
+    };
+    localStorage.setItem('tributoscl_v1', JSON.stringify(s));
+  }catch(e){}
+}
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem('tributoscl_v1');
+    if(!raw) return;
+    const s = JSON.parse(raw);
+    if(s.bruto) SV('bruto', s.bruto);
+    if(s.retencion !== undefined) GS('retencion', s.retencion);
+    if(s.esMujer !== undefined) GS('esMujer', s.esMujer);
+    if(s.afpSel) SVS('afpSel', s.afpSel);
+    if(s.saludTipo) SVS('saludTipo', s.saludTipo);
+    if(s.isaprePct) SV('isaprePct', s.isaprePct);
+    if(s.segCesantia !== undefined) GS('segCesantia', s.segCesantia);
+    if(s.netoDeseado) SV('netoDeseado', s.netoDeseado);
+    if(s.aHon) SV('a-hon', s.aHon);
+    if(s.aDep) SV('a-dep', s.aDep);
+    if(s.aApv) SV('a-apv', s.aApv);
+    if(s.aDfl2) SV('a-dfl2', s.aDfl2);
+    if(s.aEduc) SV('a-educ', s.aEduc);
+    if(s.aDon) SV('a-don', s.aDon);
+    if(s.aAfp) SVS('a-afp', s.aAfp);
+    if(s.months) setMonthValues(s.months);
+    toggleIsapre();
+    calcBoleta(); calcInversa(); calcAnual(); calcPlanif();
+  }catch(e){}
+}
+
+function V(id){ const el=document.getElementById(id); return el ? (parseFloat(el.value)||0) : 0; }
+function VS(id){ const el=document.getElementById(id); return el ? el.value : ''; }
+function G(id){ const el=document.getElementById(id); return el ? el.checked : false; }
+function SV(id,v){ const el=document.getElementById(id); if(el) el.value=v; }
+function SVS(id,v){ const el=document.getElementById(id); if(el) el.value=v; }
+function GS(id,v){ const el=document.getElementById(id); if(el) el.checked=v; }
+function T(id,v){ const el=document.getElementById(id); if(el) el.textContent=v; }
+function D(id,v){ const el=document.getElementById(id); if(el) el.style.display=v; }
+
+function fmt(n){ return '$' + Math.round(n).toLocaleString('es-CL'); }
+function fmtPct(n){ return (n*100).toFixed(1)+'%'; }
+
+// ============================================================
+// TAB SWITCHING
+// ============================================================
+function showTab(name, btn){
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  btn.classList.add('active');
+  if(name==='planif') { buildMonthGrid(); calcPlanif(); }
+  if(name==='anual') calcAnual();
+}
+
+// ============================================================
+// TAB 1: BOLETA
+// ============================================================
+function toggleIsapre(){
+  const tipo = VS('saludTipo');
+  D('isapreInput', tipo==='isapre' ? 'block' : 'none');
+  calcBoleta();
+}
+
+function calcBoleta(){
+  const bruto = V('bruto');
+  if(bruto <= 0){ D('resultBoleta','none'); saveState(); return; }
+
+  const retieneEmpresa = G('retencion');
+  const esMujer = G('esMujer');
+  const afpPct = parseFloat(VS('afpSel'))/100 || 0.1149;
+  const saludPct = VS('saludTipo')==='isapre' ? (V('isaprePct')/100 || 0.07) : 0.07;
+  const afcPct = G('segCesantia') ? 0.006 : 0;
+
+  const ri = bruto * RI_FACTOR;
+  const retSII = retieneEmpresa ? bruto * RET_PCT : 0;
+  const cotAFP = ri * afpPct;
+  const cotSalud = ri * saludPct;
+  const sisPct = esMujer ? 0 : 0.0149;
+  const mutualPct = 0.009;
+  const cotSIS = ri * (sisPct + mutualPct);
+  const cotAFC = ri * afcPct;
+
+  const totalDesc = retSII + cotAFP + cotSalud + cotSIS + cotAFC;
+  const liquido = bruto - totalDesc;
+  const tasa = bruto > 0 ? totalDesc/bruto : 0;
+
+  T('r-bruto', fmt(bruto));
+  T('r-ret-lbl', retieneEmpresa ? '(-) Retención SII 12.25% (pagada por empresa)' : '(-) Retención SII 12.25% (debes pagar tú)');
+  T('r-ret', retieneEmpresa ? fmt(retSII) : '$0');
+  T('r-afp-lbl', `(-) AFP ${(afpPct*100).toFixed(2)}% × 80% renta`);
+  T('r-afp', fmt(cotAFP));
+  T('r-sal-lbl', `(-) Salud ${(saludPct*100).toFixed(1)}% × 80% renta`);
+  T('r-sal', fmt(cotSalud));
+  T('r-sis-detail', esMujer ? '(exenta SIS, solo Mutual 0.9%)' : '(1.49% SIS + 0.9% Mutual)');
+  T('r-sis', fmt(cotSIS));
+
+  if(G('segCesantia')){
+    D('r-afc-row','flex');
+    T('r-afc', fmt(cotAFC));
+  } else {
+    D('r-afc-row','none');
+  }
+
+  T('r-liquido', fmt(liquido));
+  T('r-tasa', fmtPct(tasa));
+  D('resultBoleta','block');
+  D('r-nota-mujer', esMujer ? 'block' : 'none');
+
+  const nota = retieneEmpresa
+    ? 'Cuando la empresa retiene, no necesitas pagar tú directamente al SII.'
+    : 'Deberás declarar y pagar esta retención en el F29 mensual o F50 trimestral en sii.cl.';
+  T('retencionNota', nota);
+
+  saveState();
+}
+
+function calcInversa(){
+  const netoDeseado = V('netoDeseado');
+  if(netoDeseado <= 0){ D('resultInversa','none'); saveState(); return; }
+
+  const afpPct = parseFloat(VS('afpSel'))/100 || 0.1149;
+  const saludPct = VS('saludTipo')==='isapre' ? (V('isaprePct')/100 || 0.07) : 0.07;
+  const esMujer = G('esMujer');
+  const afcPct = G('segCesantia') ? 0.006 : 0;
+  const sisPct = esMujer ? 0 : 0.0149;
+  const mutualPct = 0.009;
+
+  // bruto - ret(bruto) - afp(bruto*0.8) - salud(bruto*0.8) - sis(bruto*0.8) - afc(bruto*0.8) = neto
+  // bruto * [1 - 0.1225 - 0.8*(afpPct+saludPct+sisPct+mutualPct+afcPct)] = neto
+  const retieneEmpresa = G('retencion');
+  const retCoef = retieneEmpresa ? RET_PCT : 0;
+  const cotCoef = RI_FACTOR * (afpPct + saludPct + sisPct + mutualPct + afcPct);
+  const factor = 1 - retCoef - cotCoef;
+
+  const brutoNecesario = factor > 0 ? netoDeseado / factor : 0;
+  const retCalc = retieneEmpresa ? brutoNecesario * RET_PCT : 0;
+
+  T('ri-bruto', fmt(brutoNecesario));
+  T('ri-ret', retieneEmpresa ? fmt(retCalc) : '$0 (te toca declararlo tú)');
+  D('resultInversa','block');
+  saveState();
+}
+
+// ============================================================
+// TAB 2: ANUAL IGC
+// ============================================================
+let pieChartInst = null;
+let extraIncomeCount = 0;
+const extraIncomes = [];
+
+function addIncome(){
+  if(extraIncomes.length >= 5) return;
+  const idx = extraIncomeCount++;
+  extraIncomes.push(idx);
+  const div = document.createElement('div');
+  div.className = 'income-extra-row';
+  div.id = 'ei-row-'+idx;
+  div.innerHTML = `
+    <input type="number" id="ei-val-${idx}" placeholder="Monto ($)" min="0" oninput="calcAnual()" style="flex:1.5">
+    <select id="ei-tipo-${idx}" onchange="calcAnual()" style="flex:1">
+      <option value="liquid">Renta líquida</option>
+      <option value="honor">Honorarios brutos</option>
+    </select>
+    <button class="btn btn-red btn-sm" onclick="removeIncome(${idx})">×</button>
+  `;
+  document.getElementById('extraIncomes').appendChild(div);
+}
+
+function removeIncome(idx){
+  const el = document.getElementById('ei-row-'+idx);
+  if(el) el.remove();
+  const i = extraIncomes.indexOf(idx);
+  if(i>-1) extraIncomes.splice(i,1);
+  calcAnual();
+}
+
+function calcAnual(){
+  const honAnual = V('a-hon');
+  const depAnual = V('a-dep');
+
+  let extraTotal = 0;
+  for(const idx of extraIncomes){
+    const val = V('ei-val-'+idx);
+    const tipo = VS('ei-tipo-'+idx);
+    extraTotal += tipo === 'honor' ? val * (1 - RET_PCT) : val;
+  }
+
+  const apv = V('a-apv');
+  const dfl2 = V('a-dfl2');
+  const educ = V('a-educ');
+  const don = V('a-don');
+  const afpPct = parseFloat(VS('a-afp'))/100 || 0.1149;
+
+  const rentaTotal = honAnual + depAnual + extraTotal;
+  if(rentaTotal <= 0){ D('resultAnual','none'); saveState(); return; }
+
+  // Cotizaciones anuales (crédito)
+  const ri = honAnual * RI_FACTOR;
+  const cotAFP = ri * afpPct;
+  const cotSalud = ri * 0.07;
+  const cotSIS = ri * (0.0149 + 0.009);
+  const totalCot = cotAFP + cotSalud + cotSIS;
+
+  // Retención pagada
+  const retAnual = honAnual * RET_PCT;
+
+  const dedTotal = Math.min(apv, 17 * UTA) + dfl2 + educ + don;
+  const baseImp = Math.max(0, rentaTotal - dedTotal);
+  const impDet = calcTramos(baseImp);
+  const impPagar = Math.max(0, impDet - retAnual - totalCot);
+  const devolucion = Math.max(0, retAnual + totalCot - impDet);
+
+  T('a-r-total', fmt(rentaTotal));
+  T('a-r-ded', dedTotal > 0 ? fmt(dedTotal) : '$0');
+  T('a-r-base', fmt(baseImp));
+
+  const ti = getTramoIdx(baseImp);
+  T('a-r-tramo', `Tramo ${ti+1}: ${(TRAMOS[ti].rate*100).toFixed(1)}% (${TRAMOS[ti].min}–${TRAMOS[ti].max===Infinity?'∞':TRAMOS[ti].max} UTA)`);
+  T('a-r-imp', fmt(impDet));
+  T('a-r-cred-ret', fmt(retAnual));
+  T('a-r-cred-cot', fmt(totalCot));
+
+  if(impPagar > 0){
+    T('a-r-res-lbl','Impuesto a pagar (F22 abril)');
+    const el = document.getElementById('a-r-resultado');
+    if(el){ el.textContent = fmt(impPagar); el.className='val red'; }
+  } else {
+    T('a-r-res-lbl','Devolución esperada');
+    const el = document.getElementById('a-r-resultado');
+    if(el){ el.textContent = fmt(devolucion); el.className='val green'; }
+  }
+
+  // Tramos table
+  renderTramosView(baseImp, ti);
+
+  // APV recommendation
+  const apvRecom = document.getElementById('a-recom-body');
+  if(apvRecom){
+    if(TRAMOS[ti].rate > 0){
+      const ahorroPor100k = 100000 * TRAMOS[ti].rate;
+      apvRecom.textContent = `Estás en el tramo ${(TRAMOS[ti].rate*100).toFixed(1)}%. Cada $100.000 en APV (Régimen A) reduce tu impuesto en ${fmt(ahorroPor100k)}. ${impPagar > 0 ? `Para eliminar tu deuda de ${fmt(impPagar)} necesitas invertir ${fmt(impPagar/TRAMOS[ti].rate)} en APV.` : 'Ya estás bien cubierto este año.'}`;
+    } else {
+      apvRecom.textContent = 'Tu renta está en el tramo exento (0%). APV beneficia más si tus ingresos suben de las 13.5 UTA (' + fmt(13.5*UTA) + ' al año).';
+    }
+  }
+
+  // Pie chart
+  buildPieChart(honAnual, depAnual, extraTotal);
+
+  D('resultAnual','block');
+  saveState();
+}
+
+function renderTramosView(base, activeIdx){
+  const c = document.getElementById('tramosView');
+  if(!c) return;
+  const names = ['0%','4%','8%','13.5%','23%','30.4%','35%','40%'];
+  let html = '';
+  for(let i=0;i<TRAMOS.length;i++){
+    const t = TRAMOS[i];
+    const active = i===activeIdx ? ' active-tramo' : '';
+    const maxStr = t.max===Infinity ? '∞' : t.max;
+    const lo = fmt(t.min*UTA).replace('$','');
+    const hi = t.max===Infinity ? '∞' : fmt(t.max*UTA).replace('$','');
+    html += `<div class="tramo-row${active}">
+      <span style="min-width:32px;font-weight:700;color:var(--accent)">${names[i]}</span>
+      <span style="flex:1;color:var(--muted);font-size:.8rem">${t.min}–${maxStr} UTA ($${lo}–$${hi})</span>
+      ${active ? '<span class="badge badge-blue">Tu tramo</span>' : ''}
+    </div>`;
+  }
+  c.innerHTML = html;
+}
+
+function buildPieChart(hon, dep, extra){
+  const ctx = document.getElementById('pieChart');
+  if(!ctx) return;
+  const data = [hon,dep,extra].filter(v=>v>0);
+  const labels = ['Honorarios','Renta dependiente','Otros ingresos'].filter((_,i)=>[hon,dep,extra][i]>0);
+  if(pieChartInst){ pieChartInst.destroy(); pieChartInst=null; }
+  if(data.length===0) return;
+  pieChartInst = new Chart(ctx, {
+    type:'pie',
+    data:{
+      labels,
+      datasets:[{data, backgroundColor:['#0369a1','#16a34a','#d97706'], borderWidth:2, borderColor:'#fff'}]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{position:'bottom', labels:{font:{family:'Inter',size:12}, padding:12}},
+        tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${fmt(ctx.raw)}`}}
+      }
+    }
+  });
+}
+
+// ============================================================
+// TAB 3: PLANIFICACIÓN
+// ============================================================
+let barChartInst = null;
+const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+function buildMonthGrid(){
+  const grid = document.getElementById('monthGrid');
+  if(!grid || grid.children.length > 0) return;
+  for(let i=0;i<12;i++){
+    const cell = document.createElement('div');
+    cell.className = 'month-cell';
+    cell.innerHTML = `<label>${MONTHS[i].substring(0,3)}</label><input type="number" id="m-${i}" placeholder="0" min="0" oninput="calcPlanif()" value="0">`;
+    grid.appendChild(cell);
+  }
+}
+
+function getMonthValues(){ return Array.from({length:12},(_,i)=>V('m-'+i)); }
+function setMonthValues(arr){ arr.forEach((v,i)=>{const el=document.getElementById('m-'+i);if(el)el.value=v||0;}); }
+
+function calcPlanif(){
+  const vals = getMonthValues();
+  const totalHon = vals.reduce((a,b)=>a+b,0);
+  if(totalHon <= 0){
+    D('runningStats','none');
+    renderBarChart(vals);
+    saveState();
+    return;
+  }
+
+  const totalRet = totalHon * RET_PCT;
+  const afpPct = 0.1149;
+  const ri = totalHon * RI_FACTOR;
+  const totalCot = ri * (afpPct + 0.07 + 0.0149 + 0.009);
+  const estIGC = Math.max(0, calcTramos(totalHon) - totalRet - totalCot);
+
+  T('p-total-hon', fmt(totalHon));
+  T('p-total-ret', fmt(totalRet));
+  T('p-total-cot', fmt(totalCot));
+  T('p-est-igc', fmt(estIGC));
+  D('runningStats','flex');
+
+  // APV tip update
+  const ti = getTramoIdx(totalHon);
+  const tip = document.getElementById('p-apv-tip');
+  if(tip){
+    const rate = TRAMOS[ti].rate;
+    if(rate > 0){
+      tip.textContent = `Estás proyectando tramo ${(rate*100).toFixed(1)}%. Cada $100.000 en APV ahorra ${fmt(100000*rate)} en IGC. Con ${fmt(totalHon)} proyectado al año, considera invertir al menos ${fmt(Math.min(totalHon*0.1, 17*UTA))} en APV.`;
+    } else {
+      tip.textContent = 'Tus ingresos actuales están en tramo exento. El APV conviene si proyectas superar los $' + (13.5*UTA).toLocaleString('es-CL') + ' anuales.';
+    }
+  }
+
+  renderBarChart(vals);
+  saveState();
+}
+
+function renderBarChart(vals){
+  const ctx = document.getElementById('barChart');
+  if(!ctx) return;
+  if(barChartInst){ barChartInst.destroy(); barChartInst=null; }
+  const retVals = vals.map(v=>Math.round(v*RET_PCT));
+  barChartInst = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels: MONTHS.map(m=>m.substring(0,3)),
+      datasets:[
+        {label:'Honorarios',data:vals,backgroundColor:'rgba(3,105,161,.7)',borderRadius:4,order:2},
+        {label:'Retención 12.25%',data:retVals,type:'line',borderColor:'#dc2626',backgroundColor:'rgba(220,38,38,.15)',fill:true,tension:.4,pointRadius:4,order:1}
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{position:'bottom', labels:{font:{family:'Inter',size:12}}},
+        tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${fmt(ctx.raw)}`}}
+      },
+      scales:{
+        y:{ticks:{callback:v=>v>=1000000?'$'+(v/1000000).toFixed(1)+'M':v>=1000?'$'+(v/1000).toFixed(0)+'k':'$'+v,font:{family:'Inter',size:11}},grid:{color:'rgba(184,212,240,.4)'}},
+        x:{ticks:{font:{family:'Inter',size:11}},grid:{display:false}}
+      }
+    }
+  });
+}
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', ()=>{
+  document.getElementById('p-year').textContent = new Date().getFullYear();
+  buildMonthGrid();
+  loadState();
+  if(!V('bruto')) calcBoleta();
+});
+
+// Autosave on input
+document.addEventListener('input', ()=>{ setTimeout(saveState, 300); });
+</script>
+</body>
+</html>

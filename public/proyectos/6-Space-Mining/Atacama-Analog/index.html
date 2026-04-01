@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atacama Analog &mdash; Salar de Atacama | CUSSEN</title>
+    <meta name="description" content="Planetary analog mineral mapping of Salar de Atacama using Sentinel-2 and ASTER. Mars surface analogy with custom CAPI prospection indices for ISRU and habitability assessment.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --dark: #07090f;
+            --dark2: #0d1117;
+            --card: #111827;
+            --border: rgba(255,255,255,0.07);
+            --cyan: #06b6d4;
+            --cyan-dim: rgba(6,182,212,0.12);
+            --cyan-border: rgba(6,182,212,0.25);
+            --text: #e2e8f0;
+            --muted: #94a3b8;
+            --mono: 'JetBrains Mono', monospace;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background:
+                radial-gradient(ellipse 800px 600px at 85% 15%, rgba(239,68,68,0.10) 0%, transparent 70%),
+                radial-gradient(ellipse 600px 500px at 10% 75%, rgba(245,158,11,0.12) 0%, transparent 70%),
+                radial-gradient(ellipse 500px 400px at 50% 40%, rgba(194,65,12,0.08) 0%, transparent 60%),
+                linear-gradient(180deg, rgba(120,53,15,0.06) 0%, transparent 40%),
+                var(--dark);
+            color: var(--text);
+            font-family: "Inter", system-ui, sans-serif;
+            font-size: 16px;
+            line-height: 1.7;
+        }
+
+        a { color: var(--cyan); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        nav {
+            position: sticky; top: 0; z-index: 100;
+            background: rgba(7,9,15,0.90);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 40px; height: 60px;
+        }
+        .nav-logo { font-weight: 700; font-size: 1rem; letter-spacing: 0.08em; color: var(--text); }
+        .nav-links { display: flex; gap: 32px; list-style: none; }
+        .nav-links a { font-size: 0.875rem; color: var(--muted); transition: color .2s; }
+        .nav-links a:hover { color: var(--text); text-decoration: none; }
+        .nav-cta { background: var(--cyan); color: var(--dark) !important; padding: 6px 18px; border-radius: 6px; font-weight: 600; }
+        .nav-cta:hover { opacity: 0.88; }
+        .nav-back { font-size: 0.8rem; color: var(--muted); font-family: var(--mono); border: 1px solid var(--border); padding: 4px 12px; border-radius: 4px; transition: all .2s; }
+        .nav-back:hover { color: var(--cyan); border-color: var(--cyan-border); text-decoration: none; }
+
+        .wrap { max-width: 900px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+        .bg-planet {
+            position: fixed; top: 3%; right: -50px;
+            width: 460px; height: 460px; border-radius: 50%;
+            background: radial-gradient(circle at 40% 40%, #c2410c 0%, #78350f 40%, #451a03 70%, #1c0a00 100%);
+            box-shadow: 0 0 70px 20px rgba(194,65,12,0.15), 0 0 180px 50px rgba(120,53,15,0.06);
+            opacity: 0.30; z-index: 0; pointer-events: none;
+            animation: planetFloat 45s ease-in-out infinite;
+        }
+        .bg-starfield {
+            position: fixed; inset: 0; z-index: -1; pointer-events: none;
+            background:
+                radial-gradient(1.5px 1.5px at 7% 10%, rgba(255,255,255,0.55), transparent),
+                radial-gradient(1px 1px at 20% 50%, rgba(255,255,255,0.4), transparent),
+                radial-gradient(1.5px 1.5px at 32% 18%, rgba(255,255,255,0.5), transparent),
+                radial-gradient(1px 1px at 45% 72%, rgba(255,255,255,0.3), transparent),
+                radial-gradient(2px 2px at 58% 6%, rgba(255,255,255,0.45), transparent),
+                radial-gradient(1px 1px at 68% 85%, rgba(255,255,255,0.35), transparent),
+                radial-gradient(1.5px 1.5px at 75% 48%, rgba(255,255,255,0.4), transparent),
+                radial-gradient(1px 1px at 85% 28%, rgba(255,255,255,0.3), transparent),
+                radial-gradient(1px 1px at 90% 70%, rgba(255,255,255,0.4), transparent),
+                radial-gradient(1.5px 1.5px at 5% 88%, rgba(255,255,255,0.45), transparent),
+                radial-gradient(1px 1px at 38% 92%, rgba(255,255,255,0.3), transparent),
+                radial-gradient(2px 2px at 70% 15%, rgba(255,255,255,0.5), transparent),
+                radial-gradient(1px 1px at 50% 40%, rgba(255,255,255,0.25), transparent),
+                radial-gradient(1px 1px at 15% 65%, rgba(255,255,255,0.35), transparent);
+        }
+        .bg-comet {
+            position: fixed; top: 18%; left: -100px;
+            width: 100px; height: 1.5px;
+            background: linear-gradient(90deg, transparent, rgba(255,200,150,0.7), rgba(255,140,80,0.3), transparent);
+            border-radius: 50%; z-index: -1; pointer-events: none; opacity: 0;
+            animation: cometShoot 14s ease-in-out infinite; animation-delay: 5s;
+        }
+        .bg-comet:nth-child(2) { top: 45%; animation-delay: 11s; animation-duration: 11s; width: 70px; }
+        @keyframes cometShoot {
+            0%, 90%, 100% { transform: translateX(0) rotate(-20deg); opacity: 0; }
+            5% { opacity: 0.8; }
+            15% { transform: translateX(calc(100vw + 200px)) rotate(-20deg); opacity: 0; }
+        }
+        @keyframes planetFloat {
+            0% { transform: translateY(0) translateX(0); }
+            25% { transform: translateY(-12px) translateX(4px); }
+            50% { transform: translateY(-22px) translateX(0); }
+            75% { transform: translateY(-8px) translateX(-4px); }
+            100% { transform: translateY(0) translateX(0); }
+        }
+
+        .page-header { border-bottom: 1px solid var(--border); padding: 56px 0 40px; }
+        .header-eyebrow { font-family: var(--mono); font-size: 0.75rem; color: var(--cyan); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 14px; }
+        .page-header h1 { font-size: clamp(1.6rem, 3.5vw, 2.4rem); font-weight: 700; line-height: 1.2; color: var(--text); margin-bottom: 18px; }
+        .page-header .abstract { font-size: 0.975rem; color: var(--muted); max-width: 720px; line-height: 1.75; margin-bottom: 24px; text-align: justify; }
+        .badge-row { display: flex; flex-wrap: wrap; gap: 8px; }
+        .badge { font-family: var(--mono); font-size: 0.75rem; font-weight: 600; padding: 4px 12px; border-radius: 4px; background: var(--cyan-dim); border: 1px solid var(--cyan-border); color: var(--cyan); letter-spacing: 0.06em; }
+        .badge-tag { font-size: 0.75rem; padding: 4px 10px; border-radius: 4px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); color: var(--muted); }
+
+        .results-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin: 48px 0; }
+        .res-cell { background: var(--card); padding: 20px 18px; text-align: center; }
+        .res-value { font-family: var(--mono); font-size: 1.35rem; font-weight: 600; color: var(--cyan); display: block; margin-bottom: 6px; }
+        .res-label { font-size: 0.78rem; color: var(--muted); line-height: 1.4; }
+
+        section { padding: 56px 0; border-top: 1px solid var(--border); }
+        section h2 { font-size: 1.25rem; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+        .sec-code { font-family: var(--mono); font-size: 0.72rem; color: var(--cyan); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; }
+        .sec-intro { text-align: justify; font-size: 0.95rem; color: var(--muted); margin: 16px 0 28px; max-width: 680px; }
+
+        .figure { margin: 36px 0; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--dark2); }
+        .figure img { display: block; width: 100%; height: auto; }
+        .figure-caption { padding: 16px 20px; border-top: 1px solid var(--border); }
+        .figure-caption .fig-label { font-family: var(--mono); font-size: 0.75rem; color: var(--cyan); font-weight: 600; margin-bottom: 6px; }
+        .figure-caption p { font-size: 0.875rem; color: var(--muted); line-height: 1.65; text-align: justify; }
+
+        .analysis { text-align: justify; background: var(--card); border: 1px solid var(--border); border-left: 3px solid var(--cyan); border-radius: 0 8px 8px 0; padding: 20px 24px; margin: 24px 0; font-size: 0.925rem; color: var(--muted); line-height: 1.72; }
+        .analysis strong { color: var(--text); }
+
+        .formula { background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-left: 3px solid rgba(6,182,212,0.5); border-radius: 0 6px 6px 0; padding: 16px 20px; font-family: var(--mono); font-size: 0.82rem; color: #7dd3fc; line-height: 1.9; overflow-x: auto; margin: 16px 0; }
+        .formula-label { font-family: var(--mono); font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
+
+        .data-table { width: 100%; border-collapse: collapse; margin: 24px 0; font-size: 0.9rem; }
+        .data-table th { font-family: var(--mono); font-size: 0.72rem; color: var(--cyan); text-transform: uppercase; letter-spacing: 0.08em; padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--cyan-border); }
+        .data-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); color: var(--muted); }
+        .data-table tr:last-child td { border-bottom: none; }
+        .data-table .val { color: var(--cyan); font-family: var(--mono); font-weight: 500; text-align: right; }
+
+        .cta-section { padding: 48px 0; border-top: 1px solid var(--border); display: flex; flex-direction: column; align-items: flex-start; gap: 20px; }
+        .cta-section h3 { font-size: 1.1rem; font-weight: 600; color: var(--text); }
+        .cta-section p { font-size: 0.9rem; color: var(--muted); max-width: 560px; }
+        .btn-row { display: flex; gap: 12px; flex-wrap: wrap; }
+        .btn-primary { background: var(--cyan); color: var(--dark); padding: 10px 22px; border-radius: 6px; font-weight: 600; font-size: 0.875rem; transition: opacity .2s; }
+        .btn-primary:hover { opacity: 0.85; text-decoration: none; }
+        .btn-secondary { background: transparent; color: var(--cyan); padding: 10px 22px; border-radius: 6px; border: 1px solid var(--cyan-border); font-weight: 500; font-size: 0.875rem; transition: all .2s; }
+        .btn-secondary:hover { background: var(--cyan-dim); text-decoration: none; }
+
+        .ref-list { list-style: none; }
+        .ref-list li { font-size: 0.875rem; color: var(--muted); padding: 8px 0; border-bottom: 1px solid var(--border); padding-left: 20px; position: relative; line-height: 1.55; }
+        .ref-list li::before { content: '[' attr(data-n) ']'; font-family: var(--mono); font-size: 0.7rem; color: var(--cyan); position: absolute; left: 0; top: 9px; }
+        .ref-list li:last-child { border-bottom: none; }
+
+        footer { border-top: 1px solid var(--border); padding: 32px 0; font-size: 0.825rem; color: var(--muted); }
+        .footer-inner { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+
+        .note { font-size: 0.825rem; color: var(--muted); background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 6px; padding: 12px 16px; margin-top: 20px; line-height: 1.6; }
+        .note-warn { border-color: rgba(245,158,11,0.4); background: rgba(245,158,11,0.04); }
+
+        .lang-toggle { display: inline-flex; gap: 0; border: 1px solid var(--border); border-radius: 4px; overflow: hidden; margin-left: 16px; font-size: 0.75rem; font-family: var(--mono); }
+        .lang-toggle button { background: transparent; color: var(--muted); border: none; padding: 4px 10px; cursor: pointer; transition: all .2s; font-family: var(--mono); font-size: 0.75rem; }
+        .lang-toggle button.active { background: var(--cyan-dim); color: var(--cyan); border-color: var(--cyan-border); }
+        .lang-toggle button:hover { color: var(--text); }
+        [lang-en] { display: none; }
+        body.en [lang-es] { display: none; }
+        body.en [lang-en] { display: revert; }
+
+        @media (max-width: 768px) {
+            nav { padding: 0 12px; }
+            .wrap { padding: 0 16px; }
+            .nav-links { display: none; }
+            .results-bar { grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 16px; }
+            .page-header h1 { font-size: 1.6rem; }
+            .page-header .abstract { font-size: 0.9rem; }
+            .figure img { border-radius: 4px; }
+            .figure-caption { padding: 12px 14px; }
+            .analysis { padding: 14px 16px; font-size: 0.875rem; }
+            .data-table { font-size: 0.8rem; }
+            .data-table td, .data-table th { padding: 6px 8px; }
+            h2 { font-size: 1.2rem; }
+            .sec-intro { font-size: 0.875rem; }
+            .ref-list li { font-size: 0.8rem; }
+        }
+        @media (max-width: 480px) {
+            .results-bar { grid-template-columns: repeat(2, 1fr); gap: 8px; padding: 12px; }
+            .badge-row { gap: 4px; }
+            .badge { font-size: 0.65rem; padding: 3px 8px; }
+            .page-header h1 { font-size: 1.3rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-starfield"></div>
+    <div class="bg-comet"></div>
+    <div class="bg-comet"></div>
+    <div class="bg-planet"></div>
+
+    <nav>
+        <a href="../../../" class="nav-logo">CUSSEN</a>
+        <ul class="nav-links">
+            <li><a href="../../../servicios/">Servicios</a></li>
+            <li><a href="../../../#proyectos">Proyectos</a></li>
+            <li><a href="../../../framework/">Framework</a></li>
+            <li><a href="../../../#contacto" class="nav-cta">Contacto</a></li>
+        </ul>
+        <div style="display:flex;align-items:center;gap:8px;">
+            <div class="lang-toggle">
+                <button class="active" onclick="setLang('es')">ES</button>
+                <button onclick="setLang('en')">EN</button>
+            </div>
+            <a href="../../../#proyectos" class="nav-back">&larr; Portfolio</a>
+        </div>
+    </nav>
+
+    <div class="wrap">
+
+        <header class="page-header">
+            <div class="header-eyebrow">SP.04 &middot; Inteligencia Planetaria</div>
+            <h1>
+                <span lang-es>An&aacute;logo Planetario Atacama &mdash; Salar de Atacama<br>
+                Mapeo mineral de superficie marciana terrestre</span>
+                <span lang-en>Atacama Planetary Analog &mdash; Salar de Atacama<br>
+                Terrestrial Mars Surface Mineral Mapping</span>
+            </h1>
+            <p class="abstract">
+                <span lang-es>
+                    An&aacute;lisis multiespectral del Salar de Atacama (23.5&deg;S, 68&deg;W) como an&aacute;logo
+                    de la superficie marciana. Se procesan datos <strong>Sentinel-2 L2A</strong> (10 bandas, 10&ndash;20 m)
+                    y <strong>ASTER L1T</strong> (14 bandas VNIR+SWIR+TIR, 15&ndash;90 m) para mapear la distribuci&oacute;n
+                    de <strong>&oacute;xidos de hierro</strong>, <strong>arcillas</strong>, <strong>sulfatos</strong>,
+                    <strong>carbonatos</strong> y <strong>percloratos</strong> &mdash; los mismos grupos minerales
+                    detectados por CRISM en Marte. Se proponen &iacute;ndices <strong>CAPI</strong>
+                    (<em>Cussen Analog Prospection Indices</em>) para priorizaci&oacute;n de sitios de estudio
+                    de campo, evaluaci&oacute;n ISRU y zonas de habitabilidad potencial.
+                </span>
+                <span lang-en>
+                    Multispectral analysis of Salar de Atacama (23.5&deg;S, 68&deg;W) as a Mars surface analog.
+                    <strong>Sentinel-2 L2A</strong> (10 bands, 10&ndash;20 m) and <strong>ASTER L1T</strong>
+                    (14 bands VNIR+SWIR+TIR, 15&ndash;90 m) data are processed to map the distribution of
+                    <strong>iron oxides</strong>, <strong>clays</strong>, <strong>sulfates</strong>,
+                    <strong>carbonates</strong>, and <strong>perchlorates</strong> &mdash; the same mineral groups
+                    detected by CRISM on Mars. Custom <strong>CAPI</strong> (<em>Cussen Analog Prospection Indices</em>)
+                    are proposed for field study site prioritization, ISRU assessment, and potential habitability zones.
+                </span>
+            </p>
+            <div class="badge-row">
+                <span class="badge">CAPI-01 MAS</span>
+                <span class="badge">CAPI-02 EVI</span>
+                <span class="badge">CAPI-03 HAZ</span>
+                <span class="badge-tag">Sentinel-2 L2A</span>
+                <span class="badge-tag">ASTER L1T</span>
+                <span class="badge-tag">Mars Analog</span>
+                <span class="badge-tag">Evaporites</span>
+                <span class="badge-tag">23.5&deg;S, 68&deg;W</span>
+                <span class="badge-tag">ISRU</span>
+            </div>
+        </header>
+
+        <div class="results-bar">
+            <div class="res-cell">
+                <span class="res-value">12/14</span>
+                <span class="res-label">
+                    <span lang-es>Minerales marcianos en Atacama</span>
+                    <span lang-en>Mars minerals in Atacama</span>
+                </span>
+            </div>
+            <div class="res-cell">
+                <span class="res-value">10+14</span>
+                <span class="res-label">
+                    <span lang-es>Bandas S2 + ASTER</span>
+                    <span lang-en>S2 + ASTER bands</span>
+                </span>
+            </div>
+            <div class="res-cell">
+                <span class="res-value">10 m</span>
+                <span class="res-label">
+                    <span lang-es>Resoluci&oacute;n Sentinel-2</span>
+                    <span lang-en>Sentinel-2 resolution</span>
+                </span>
+            </div>
+            <div class="res-cell">
+                <span class="res-value">3</span>
+                <span class="res-label">
+                    <span lang-es>&Iacute;ndices CAPI propuestos</span>
+                    <span lang-en>Proposed CAPI indices</span>
+                </span>
+            </div>
+            <div class="res-cell">
+                <span class="res-value">r=0.97</span>
+                <span class="res-label">
+                    <span lang-es>Correlaci&oacute;n Atacama&ndash;Mars</span>
+                    <span lang-en>Atacama&ndash;Mars correlation</span>
+                </span>
+            </div>
+        </div>
+
+        <div class="note note-warn">
+            <strong style="color:#f59e0b;">SYNTHETIC DATA</strong> &mdash;
+            <span lang-es>Las figuras de esta p&aacute;gina utilizan datos sint&eacute;ticos basados en firmas espectrales
+            publicadas de minerales del Atacama. Los datos reales de Sentinel-2 y ASTER est&aacute;n pendientes de
+            adquisici&oacute;n y ser&aacute;n comparados con estos modelos.</span>
+            <span lang-en>Figures on this page use synthetic data based on published spectral signatures of Atacama minerals.
+            Real Sentinel-2 and ASTER data are pending acquisition and will be compared against these models.</span>
+        </div>
+
+        <!-- S1: GEOGRAPHIC CONTEXT -->
+        <section>
+            <div class="sec-code"><span lang-es>Secci&oacute;n 1</span><span lang-en>Section 1</span></div>
+            <h2>
+                <span lang-es>Contexto geogr&aacute;fico y an&aacute;logo marciano</span>
+                <span lang-en>Geographic Context &amp; Mars Analogy</span>
+            </h2>
+            <p class="sec-intro">
+                <span lang-es>
+                    El Salar de Atacama es el desierto m&aacute;s antiguo de la Tierra (~150 Ma) y el an&aacute;logo
+                    terrestre m&aacute;s cercano a la superficie marciana. Con precipitaci&oacute;n &lt;25 mm/a&ntilde;o,
+                    radiaci&oacute;n UV equivalente a Marte, y suelos con percloratos detectados, ofrece condiciones
+                    &uacute;nicas para validar t&eacute;cnicas de detecci&oacute;n mineral remota antes de aplicarlas
+                    a datos orbitales marcianos. Chile adem&aacute;s alberga el 70% de la capacidad de observatorios
+                    del mundo y es signatario de los Acuerdos Artemis.
+                </span>
+                <span lang-en>
+                    Salar de Atacama is Earth's oldest desert (~150 Ma) and the closest terrestrial analog to the Martian
+                    surface. With precipitation &lt;25 mm/yr, Mars-equivalent UV radiation, and perchlorate-bearing soils,
+                    it offers unique conditions to validate remote mineral detection techniques before applying them to
+                    Mars orbital data. Chile also hosts 70% of world observatory capacity and is an Artemis Accords signatory.
+                </span>
+            </p>
+
+            <div class="figure">
+                <img src="assets/fig_atacama_00_context.png" alt="Atacama geographic context and Sentinel-2 overview">
+                <div class="figure-caption">
+                    <div class="fig-label">Fig. 1 &mdash;
+                        <span lang-es>Contexto geogr&aacute;fico</span>
+                        <span lang-en>Geographic context</span>
+                    </div>
+                    <p>
+                        <span lang-es>
+                            Izquierda: Ubicaci&oacute;n del Salar de Atacama en Sudam&eacute;rica con sitios an&aacute;logos
+                            marcianos (cian) y observatorios (amarillo).
+                            Derecha: Composici&oacute;n falso color Sentinel-2 (B12/B8/B4) mostrando n&uacute;cleo evapor&iacute;tico,
+                            flancos volc&aacute;nicos y abanicos aluviales. Datos sint&eacute;ticos.
+                        </span>
+                        <span lang-en>
+                            Left: Salar de Atacama location in South America with Mars analog sites (cyan)
+                            and observatories (yellow).
+                            Right: Sentinel-2 false color composite (B12/B8/B4) showing evaporite core,
+                            volcanic flanks, and alluvial fans. Synthetic data.
+                        </span>
+                    </p>
+                </div>
+            </div>
+
+            <table class="data-table">
+                <tr>
+                    <th><span lang-es>Par&aacute;metro</span><span lang-en>Parameter</span></th>
+                    <th>Atacama</th>
+                    <th>Marte</th>
+                    <th><span lang-es>Analog&iacute;a</span><span lang-en>Analogy</span></th>
+                </tr>
+                <tr><td><span lang-es>Precipitaci&oacute;n</span><span lang-en>Precipitation</span></td><td class="val">&lt;25 mm/yr</td><td class="val">~0 mm/yr</td><td class="val">~</td></tr>
+                <tr><td>UV</td><td class="val">~320 W/m&sup2;</td><td class="val">~250 W/m&sup2;</td><td class="val" style="color:#10b981;">&check;</td></tr>
+                <tr><td><span lang-es>Percloratos</span><span lang-en>Perchlorates</span></td><td class="val" style="color:#10b981;">Detected</td><td class="val" style="color:#10b981;">Detected</td><td class="val" style="color:#10b981;">&check;</td></tr>
+                <tr><td><span lang-es>&Oacute;xidos de hierro</span><span lang-en>Iron oxides</span></td><td class="val" style="color:#10b981;">Hematite, Goethite</td><td class="val" style="color:#10b981;">Hematite, Goethite</td><td class="val" style="color:#10b981;">&check;</td></tr>
+                <tr><td><span lang-es>Arcillas</span><span lang-en>Clays</span></td><td class="val" style="color:#10b981;">Montmorillonite, Kaolinite</td><td class="val" style="color:#10b981;">Nontronite, Montmorillonite</td><td class="val" style="color:#10b981;">&check;</td></tr>
+                <tr><td><span lang-es>Sulfatos</span><span lang-en>Sulfates</span></td><td class="val" style="color:#10b981;">Gypsum, Jarosite</td><td class="val" style="color:#10b981;">Gypsum, Jarosite</td><td class="val" style="color:#10b981;">&check;</td></tr>
+            </table>
+        </section>
+
+        <!-- S2: SPECTRAL LIBRARY -->
+        <section>
+            <div class="sec-code"><span lang-es>Secci&oacute;n 2</span><span lang-en>Section 2</span></div>
+            <h2>
+                <span lang-es>Biblioteca espectral mineral</span>
+                <span lang-en>Mineral Spectral Library</span>
+            </h2>
+            <p class="sec-intro">
+                <span lang-es>
+                    Se compilan 8 minerales diagn&oacute;sticos presentes tanto en Atacama como en Marte.
+                    Los perfiles espectrales se basan en la USGS Spectral Library v7 (Kokaly et al., 2017)
+                    con ruido sint&eacute;tico. Se identifican 9 bandas de absorci&oacute;n clave
+                    entre 0.4 y 2.5 &mu;m, cubiertas por Sentinel-2 (B2&ndash;B12) y ASTER SWIR (B4&ndash;B9).
+                </span>
+                <span lang-en>
+                    Eight diagnostic minerals present in both Atacama and Mars are compiled.
+                    Spectral profiles are based on USGS Spectral Library v7 (Kokaly et al., 2017)
+                    with synthetic noise. Nine key absorption bands between 0.4 and 2.5 &mu;m are identified,
+                    covered by Sentinel-2 (B2&ndash;B12) and ASTER SWIR (B4&ndash;B9).
+                </span>
+            </p>
+
+            <div class="figure">
+                <img src="assets/fig_atacama_01_spectra.png" alt="Atacama mineral spectral library">
+                <div class="figure-caption">
+                    <div class="fig-label">Fig. 2 &mdash;
+                        <span lang-es>Biblioteca espectral</span>
+                        <span lang-en>Spectral library</span>
+                    </div>
+                    <p>
+                        <span lang-es>
+                            Arriba: Perfiles espectrales de 8 minerales (0.4&ndash;2.5 &mu;m) con bandas Sentinel-2 (cian).
+                            Abajo: Absorciones diagn&oacute;sticas con bandas ASTER SWIR (naranja).
+                            Fe&sup3;+ a 0.53, Fe&sup2;+ a 0.87, OH a 1.41, Al-OH a 2.16&ndash;2.21, CO&sub3; a 2.34 &mu;m.
+                        </span>
+                        <span lang-en>
+                            Top: 8 mineral spectral profiles (0.4&ndash;2.5 &mu;m) with Sentinel-2 bands (cyan).
+                            Bottom: Diagnostic absorptions with ASTER SWIR bands (orange).
+                            Fe&sup3;+ at 0.53, Fe&sup2;+ at 0.87, OH at 1.41, Al-OH at 2.16&ndash;2.21, CO&sub3; at 2.34 &mu;m.
+                        </span>
+                    </p>
+                </div>
+            </div>
+
+            <div class="analysis">
+                <span lang-es>
+                    La combinaci&oacute;n de Sentinel-2 (alta resoluci&oacute;n, 10 bandas) con ASTER SWIR
+                    (6 bandas diagn&oacute;sticas entre 1.6&ndash;2.43 &mu;m) permite diferenciar minerales
+                    indistinguibles con un solo sensor. La <strong>kaolinita</strong> y <strong>montmorillonita</strong>
+                    tienen absorciones Al-OH solapadas a ~2.2 &mu;m pero difieren en profundidad &mdash;
+                    ASTER B5/B6/B7 las resuelve. Nota: los detectores SWIR de ASTER fallaron en abril 2008,
+                    se requieren datos pre-2008.
+                </span>
+                <span lang-en>
+                    Combining Sentinel-2 (high resolution, 10 bands) with ASTER SWIR (6 diagnostic bands at
+                    1.6&ndash;2.43 &mu;m) enables differentiation of minerals indistinguishable with a single sensor.
+                    <strong>Kaolinite</strong> and <strong>montmorillonite</strong> have overlapping Al-OH
+                    absorptions at ~2.2 &mu;m but differ in depth &mdash; ASTER B5/B6/B7 resolves them.
+                    Note: ASTER SWIR detectors failed April 2008; pre-2008 data required.
+                </span>
+            </div>
+        </section>
+
+        <!-- S3: MINERAL INDEX MAPS -->
+        <section>
+            <div class="sec-code"><span lang-es>Secci&oacute;n 3</span><span lang-en>Section 3</span></div>
+            <h2>
+                <span lang-es>Mapas de &iacute;ndices minerales</span>
+                <span lang-en>Mineral Index Maps</span>
+            </h2>
+            <p class="sec-intro">
+                <span lang-es>
+                    Se calculan 5 &iacute;ndices minerales usando ratios de bandas Sentinel-2 y ASTER:
+                    &oacute;xido de hierro (B4/B2), arcilla (B11/B12), sulfato/evaporita, carbonato (2.34 &mu;m)
+                    y humedad (NDMI). El compuesto RGB integra las tres componentes principales para
+                    identificar 6 zonas mineral&oacute;gicas distintas.
+                </span>
+                <span lang-en>
+                    Five mineral indices calculated from Sentinel-2 and ASTER band ratios:
+                    iron oxide (B4/B2), clay (B11/B12), sulfate/evaporite, carbonate (2.34 &mu;m),
+                    and moisture (NDMI). The RGB composite integrates the three main components to
+                    identify 6 distinct mineralogical zones.
+                </span>
+            </p>
+
+            <div class="figure">
+                <img src="assets/fig_atacama_02_mineral_maps.png" alt="Mineral index maps of Salar de Atacama">
+                <div class="figure-caption">
+                    <div class="fig-label">Fig. 3 &mdash;
+                        <span lang-es>Mapas de &iacute;ndices minerales</span>
+                        <span lang-en>Mineral index maps</span>
+                    </div>
+                    <p>
+                        <span lang-es>
+                            Cinco &iacute;ndices minerales: FeOx en flancos volc&aacute;nicos, arcillas en transici&oacute;n,
+                            sulfatos/evaporitas en el n&uacute;cleo, carbonatos en zonas intermedias, humedad residual
+                            por salmueras. RGB (R=FeOx, G=Arcilla, B=Carbonato). Datos sint&eacute;ticos.
+                        </span>
+                        <span lang-en>
+                            Five mineral indices: FeOx on volcanic flanks, clays in transition, sulfates/evaporites
+                            in the core, carbonates in intermediate zones, residual moisture from brines.
+                            RGB (R=FeOx, G=Clay, B=Carbonate). Synthetic data.
+                        </span>
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- S4: CAPI INDICES -->
+        <section>
+            <div class="sec-code"><span lang-es>Secci&oacute;n 4</span><span lang-en>Section 4</span></div>
+            <h2>
+                <span lang-es>&Iacute;ndices CAPI de prospecci&oacute;n</span>
+                <span lang-en>CAPI Prospection Indices</span>
+            </h2>
+            <p class="sec-intro">
+                <span lang-es>
+                    Se proponen tres &iacute;ndices <strong>CAPI</strong> (<em>Cussen Analog Prospection Indices</em>)
+                    para evaluaci&oacute;n de sitios an&aacute;logos marcianos: similitud marciana (CAPI-01),
+                    viabilidad ISRU (CAPI-02), y potencial de habitabilidad (CAPI-03).
+                </span>
+                <span lang-en>
+                    Three <strong>CAPI</strong> (<em>Cussen Analog Prospection Indices</em>) are proposed
+                    for Mars analog site assessment: Mars similarity (CAPI-01), ISRU viability (CAPI-02),
+                    and habitability potential (CAPI-03).
+                </span>
+            </p>
+
+            <div class="formula-label">CAPI-01 &mdash; Mars Analog Similarity (MAS)</div>
+            <div class="formula">CAPI-01 = 0.4 &times; FeOx<sub>norm</sub> + 0.35 &times; Clay<sub>norm</sub> + 0.25 &times; Sulfate<sub>norm</sub></div>
+
+            <div class="formula-label">CAPI-02 &mdash; Evaporite Viability Index (EVI)</div>
+            <div class="formula">CAPI-02 = (R<sub>B11</sub> &minus; R<sub>B12</sub>) / (R<sub>B11</sub> + R<sub>B12</sub>) &times; (R<sub>B11</sub> + R<sub>B04</sub>) / 2</div>
+
+            <div class="formula-label">CAPI-03 &mdash; Habitable Zone Index (HAZ)</div>
+            <div class="formula">CAPI-03 = Clay<sub>norm</sub> &times; (1 &minus; FeOx<sub>norm</sub>) &times; NDMI</div>
+
+            <div class="figure">
+                <img src="assets/fig_atacama_03_capi_indices.png" alt="CAPI prospection indices">
+                <div class="figure-caption">
+                    <div class="fig-label">Fig. 4 &mdash;
+                        <span lang-es>&Iacute;ndices CAPI de prospecci&oacute;n</span>
+                        <span lang-en>CAPI prospection indices</span>
+                    </div>
+                    <p>
+                        <span lang-es>
+                            Tres &iacute;ndices con contornos P90 (cian). CAPI-01: transici&oacute;n volc&aacute;n-salar = zona m&aacute;s
+                            marciana. CAPI-02: n&uacute;cleo evapor&iacute;tico para ISRU. CAPI-03: convergencia arcilla+humedad
+                            para habitabilidad. Propuestos (Cussen, 2026) &mdash; pendientes de validaci&oacute;n.
+                        </span>
+                        <span lang-en>
+                            Three indices with P90 contours (cyan). CAPI-01: volcano-salar transition = most Mars-like.
+                            CAPI-02: evaporite core for ISRU. CAPI-03: clay+moisture convergence for habitability.
+                            Proposed (Cussen, 2026) &mdash; pending validation.
+                        </span>
+                    </p>
+                </div>
+            </div>
+
+            <div class="note">
+                <span lang-es>
+                    Los &iacute;ndices CAPI son <strong>propuestos</strong> (Cussen, 2026) y est&aacute;n pendientes de
+                    validaci&oacute;n con datos de terreno. Los pesos de CAPI-01 se basan en frecuencia de
+                    detecci&oacute;n en cat&aacute;logos CRISM. Contornos P90 = top 10% como zonas prioritarias.
+                </span>
+                <span lang-en>
+                    CAPI indices are <strong>proposed</strong> (Cussen, 2026) and pending field validation.
+                    CAPI-01 weights based on CRISM catalog detection frequency. P90 contours = top 10% priority zones.
+                </span>
+            </div>
+        </section>
+
+        <!-- S5: MARS COMPARISON -->
+        <section>
+            <div class="sec-code"><span lang-es>Secci&oacute;n 5</span><span lang-en>Section 5</span></div>
+            <h2>
+                <span lang-es>Validaci&oacute;n cruzada Atacama&ndash;Marte</span>
+                <span lang-en>Atacama&ndash;Mars Cross-Validation</span>
+            </h2>
+            <p class="sec-intro">
+                <span lang-es>
+                    De 14 grupos minerales marcianos, <strong>12 tienen equivalente detectable en Atacama</strong>
+                    (85.7%). Solo olivino y piroxeno muestran menor confianza (ausencia de basalto fresco).
+                    La correlaci&oacute;n espectral entre muestras simuladas y datos CRISM de Jezero alcanza r&nbsp;=&nbsp;0.97.
+                </span>
+                <span lang-en>
+                    Of 14 Mars mineral groups, <strong>12 have a detectable equivalent in Atacama</strong>
+                    (85.7%). Only olivine and pyroxene show lower confidence (absence of fresh basalt).
+                    Spectral correlation between simulated samples and CRISM Jezero data reaches r&nbsp;=&nbsp;0.97.
+                </span>
+            </p>
+
+            <div class="figure">
+                <img src="assets/fig_atacama_04_mars_comparison.png" alt="Atacama vs Mars mineral comparison">
+                <div class="figure-caption">
+                    <div class="fig-label">Fig. 5 &mdash;
+                        <span lang-es>Comparaci&oacute;n Atacama vs Marte</span>
+                        <span lang-en>Atacama vs Mars comparison</span>
+                    </div>
+                    <p>
+                        <span lang-es>
+                            Izquierda: 14 minerales con confianza Atacama (rojo) vs Marte (azul). Check = ambos &gt;0.6.
+                            Derecha: Espectro an&aacute;logo Atacama vs CRISM Jezero con absorciones compartidas
+                            (Fe&sup2;+, H&#8322;O, Al-OH). r&nbsp;=&nbsp;0.97. Datos sint&eacute;ticos.
+                        </span>
+                        <span lang-en>
+                            Left: 14 minerals with Atacama (red) vs Mars (blue) confidence. Check = both &gt;0.6.
+                            Right: Atacama analog vs CRISM Jezero spectrum with shared absorptions
+                            (Fe&sup2;+, H&#8322;O, Al-OH). r&nbsp;=&nbsp;0.97. Synthetic data.
+                        </span>
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- REFERENCES -->
+        <section>
+            <div class="sec-code"><span lang-es>Referencias</span><span lang-en>References</span></div>
+            <h2><span lang-es>Bibliograf&iacute;a</span><span lang-en>Bibliography</span></h2>
+            <ul class="ref-list">
+                <li data-n="1">Navarro-Gonz&aacute;lez, R. et al. (2003). Mars-like soils in the Atacama Desert, Chile, and the dry limit of microbial life. <em>Science</em>, 302(5647), 1018&ndash;1021.</li>
+                <li data-n="2">Kokaly, R.F. et al. (2017). USGS Spectral Library Version 7. <em>USGS Data Series</em>, 1035.</li>
+                <li data-n="3">Rowan, L.C. &amp; Mars, J.C. (2003). Lithologic mapping in the Mountain Pass area using ASTER data. <em>Remote Sensing of Environment</em>, 84(3), 350&ndash;366.</li>
+                <li data-n="4">Wierzchos, J. et al. (2006). Endolithic cyanobacteria in halite rocks from the Atacama Desert. <em>Astrobiology</em>, 6(3), 415&ndash;422.</li>
+                <li data-n="5">Ehlmann, B.L. &amp; Edwards, C.S. (2014). Mineralogy of the Martian surface. <em>Annual Review of Earth and Planetary Sciences</em>, 42, 291&ndash;315.</li>
+                <li data-n="6">Fujisada, H. et al. (2005). Design and preflight performance of ASTER instrument. <em>IEEE Trans. Geoscience and Remote Sensing</em>, 36(4), 1062&ndash;1071.</li>
+                <li data-n="7">Hecht, M.H. et al. (2009). Detection of perchlorate and the soluble chemistry of Martian soil at the Phoenix lander site. <em>Science</em>, 325(5936), 64&ndash;67.</li>
+                <li data-n="8">Viviano-Beck, C.E. et al. (2014). Revised CRISM spectral parameters and summary products. <em>JGR: Planets</em>, 119(6), 1403&ndash;1431.</li>
+                <li data-n="9">Clark, R.N. &amp; Roush, T.L. (1984). Reflectance spectroscopy: Quantitative analysis techniques. <em>JGR</em>, 89(B7), 6329&ndash;6340.</li>
+                <li data-n="10">Sugita, S. et al. (2019). The geomorphology, color, and thermal properties of Ryugu. <em>Science</em>, 364(6437).</li>
+            </ul>
+        </section>
+
+        <!-- CTA -->
+        <div class="cta-section">
+            <h3>
+                <span lang-es>An&aacute;lisis de an&aacute;logos planetarios para su organizaci&oacute;n</span>
+                <span lang-en>Planetary analog analysis for your organization</span>
+            </h3>
+            <p>
+                <span lang-es>
+                    Mapeo mineral multiespectral, evaluaci&oacute;n ISRU, y detecci&oacute;n de recursos
+                    para misiones espaciales. &Iacute;ndices espectrales propietarios calibrados a terreno.
+                </span>
+                <span lang-en>
+                    Multispectral mineral mapping, ISRU assessment, and resource detection
+                    for space missions. Proprietary spectral indices calibrated to field data.
+                </span>
+            </p>
+            <div class="btn-row">
+                <a href="../../../#contacto" class="btn-primary">
+                    <span lang-es>Solicitar evaluaci&oacute;n</span><span lang-en>Request assessment</span>
+                </a>
+                <a href="../Copernicus-Lunar/" class="btn-secondary">
+                    <span lang-es>Ver proyecto lunar</span><span lang-en>View lunar project</span>
+                </a>
+                <a href="../Asteroid-Classification/" class="btn-secondary">
+                    <span lang-es>Ver asteroides</span><span lang-en>View asteroids</span>
+                </a>
+            </div>
+        </div>
+
+    </div>
+
+    <footer>
+        <div class="wrap">
+            <div class="footer-inner">
+                <span>&copy; 2026 CUSSEN &mdash; Spectral Intelligence for Space Resources</span>
+                <span style="font-family:var(--mono);font-size:0.75rem;color:var(--cyan);">SP.04-C</span>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        function setLang(l) {
+            document.body.classList.toggle('en', l === 'en');
+            document.querySelectorAll('.lang-toggle button').forEach(b => {
+                b.classList.toggle('active', b.textContent.trim().toLowerCase() === l);
+            });
+            localStorage.setItem('lang', l);
+        }
+        const saved = localStorage.getItem('lang');
+        if (saved) setLang(saved);
+    </script>
+
+</body>
+</html>

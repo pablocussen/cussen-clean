@@ -1,0 +1,119 @@
+// ======================================================================================
+// SCRIPT GEE: MONITOREO DE NO2 EN SANTIAGO (FINAL Y OPERACIONAL)
+// Incluye la lógica de exportación para generar el informe.
+// ======================================================================================
+
+// --------------------------------------------------------------------------------------
+// 1. CONFIGURACIÓN INICIAL Y ÁREA DE ESTUDIO
+// --------------------------------------------------------------------------------------
+
+var santiago_aoi = ee.Geometry.Rectangle([-70.9, -33.6, -70.4, -33.2]);
+var start_date = '2021-01-01';
+var end_date = '2024-01-01'; 
+
+Map.centerObject(santiago_aoi, 10);
+Map.addLayer(santiago_aoi, {color: 'red'}, 'Área de Estudio (Santiago)');
+
+// --------------------------------------------------------------------------------------
+// 2. RECOPILACIÓN Y PREPROCESAMIENTO DE DATOS
+// --------------------------------------------------------------------------------------
+
+// Datos de NO2 (Sentinel-5P TROPOMI - OFFLINE)
+var no2_collection = ee.ImageCollection('COPERNICUS/S5P/OFFL/L3_NO2')
+    .filterDate(start_date, end_date)
+    .filterBounds(santiago_aoi)
+    .select('tropospheric_NO2_column_number_density');
+
+var no2Viz = {
+  min: 0.00000,
+  max: 0.0002,
+  palette: ['#000004', '#2C105C', '#7B1873', '#BB3754', '#EC682B', '#FB9F0C', '#FEF730']
+};
+
+// Datos de Población (GPWv4)
+var population = ee.ImageCollection('CIESIN/GPWv411/GPW_Population_Density')
+    .first()
+    .select('population_density')
+    .clip(santiago_aoi);
+
+var popViz = {
+  min: 0,
+  max: 10000,
+  palette: ['white', 'yellow', 'orange', 'red', 'purple']
+};
+
+// --------------------------------------------------------------------------------------
+// 3. ANÁLISIS Y VISUALIZACIÓN
+// --------------------------------------------------------------------------------------
+
+// Promedio anual de NO2
+var no2_mean_annual = no2_collection.mean().clip(santiago_aoi);
+Map.addLayer(no2_mean_annual, no2Viz, 'NO2 Promedio Anual (Impactante)');
+
+// Crea una colección de NO2 con promedios mensuales para el gráfico
+var no2_monthly = ee.ImageCollection.fromImages(
+  ee.List.sequence(0, ee.Date(end_date).difference(ee.Date(start_date), 'month').subtract(1)).map(function(n) {
+    var month_start = ee.Date(start_date).advance(n, 'month');
+    var month_end = month_start.advance(1, 'month');
+    var monthly_image = no2_collection.filterDate(month_start, month_end).mean();
+    return monthly_image.set('system:time_start', month_start.millis());
+  })
+);
+
+// Crea el gráfico de series de tiempo a partir de la colección mensual
+var no2_chart = ui.Chart.image.seriesByRegion(
+    no2_monthly, 
+    santiago_aoi, 
+    ee.Reducer.mean(), 
+    'tropospheric_NO2_column_number_density', 
+    1000, 
+    'system:time_start'
+).setOptions({
+  title: 'Concentración de NO2 en Santiago de Chile (Media Mensual)',
+  vAxis: {title: 'NO2 (mol/m^2)'},
+  hAxis: {title: 'Fecha'},
+  colors: ['#EF8A62']
+});
+print(no2_chart);
+
+// Mostrar otros datos de contexto
+Map.addLayer(population, popViz, 'Densidad de Población (Contexto)', false);
+
+// --------------------------------------------------------------------------------------
+// 4. EXPORTACIÓN DE IMÁGENES Y DATOS PARA EL INFORME
+// --------------------------------------------------------------------------------------
+
+// --- A. Exportación de Imágenes ---
+// Estas tareas se crean en el panel 'Tasks'. Haz clic en 'Run' para ejecutarlas.
+Export.image.toDrive({
+  image: no2_mean_annual.visualize(no2Viz),
+  description: 'NO2_Santiago_Anual_Mapa',
+  folder: 'GEE_Export_Informe',
+  scale: 100, // Ajusta para la resolución deseada
+  region: santiago_aoi.bounds(),
+  fileFormat: 'GEOTIFF' // Formato GeoTIFF
+});
+
+Export.image.toDrive({
+  image: population.visualize(popViz),
+  description: 'Densidad_Poblacion_Santiago_Mapa',
+  folder: 'GEE_Export_Informe',
+  scale: 100,
+  region: santiago_aoi.bounds(),
+  fileFormat: 'GEOTIFF' // Formato GeoTIFF
+});
+
+// --- B. Exportación de Datos del Gráfico (CSV) ---
+// Esto exportará los valores mensuales de NO2 a un archivo CSV.
+Export.table.toDrive({
+  collection: ee.FeatureCollection(no2_monthly.select('tropospheric_NO2_column_number_density')
+    .map(function(image) {
+      var date = ee.Date(image.get('system:time_start')).format('YYYY-MM-dd');
+      var value = image.reduceRegion(ee.Reducer.mean(), santiago_aoi, 1000).get('tropospheric_NO2_column_number_density');
+      return ee.Feature(null, {'date': date, 'no2_value': value});
+    })),
+  description: 'NO2_Santiago_Series_Tiempo_Datos',
+  folder: 'GEE_Export_Informe',
+  fileNamePrefix: 'NO2_Santiago_Datos',
+  fileFormat: 'CSV'
+});

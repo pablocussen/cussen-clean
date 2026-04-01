@@ -1,0 +1,1220 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0369a1">
+<title>VetScore — Gestión Clínica Veterinaria</title>
+<link rel="manifest" href="data:application/json,{}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{--bg:#f0f6ff;--card:#ffffff;--card2:#e8f2ff;--border:#b8d4f0;--accent:#0369a1;--text:#1e3a5f;--muted:#6b8fa5;--green:#16a34a;--yellow:#d97706;--red:#dc2626;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:15px}
+header{background:linear-gradient(90deg,#0c4a7a,#0369a1);padding:13px 18px;position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;color:white}
+header h1{font-size:1.1rem;font-weight:700;letter-spacing:-0.3px}
+header span{font-size:0.75rem;opacity:0.8}
+nav{background:#fff;border-bottom:2px solid var(--border);display:flex;overflow-x:auto;position:sticky;top:62px;z-index:40;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+.nav-btn{flex:none;padding:11px 14px;font-size:0.78rem;font-weight:600;color:var(--muted);border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;transition:all .2s;white-space:nowrap}
+.nav-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab{display:none;padding:16px;max-width:700px;margin:0 auto}
+.tab.active{display:block}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px}
+.card2{background:var(--card2)}
+.row{display:flex;gap:10px;align-items:center}
+.row.wrap{flex-wrap:wrap}
+.col{flex:1}
+label{font-size:0.8rem;font-weight:600;color:var(--muted);display:block;margin-bottom:4px}
+input,select,textarea{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:16px;font-family:'Inter',sans-serif;color:var(--text);background:#fff;transition:border .2s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
+textarea{resize:vertical;min-height:72px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:8px;font-size:0.88rem;font-weight:600;cursor:pointer;border:none;transition:all .2s}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:#0c4a7a}
+.btn-success{background:var(--green);color:#fff}
+.btn-danger{background:var(--red);color:#fff}
+.btn-outline{background:#fff;color:var(--accent);border:1.5px solid var(--accent)}
+.btn-sm{padding:6px 12px;font-size:0.78rem}
+.btn-ghost{background:transparent;color:var(--muted);border:1.5px solid var(--border)}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:0.72rem;font-weight:700}
+.badge-green{background:#dcfce7;color:#15803d}
+.badge-yellow{background:#fef3c7;color:#92400e}
+.badge-red{background:#fee2e2;color:#991b1b}
+.badge-blue{background:#dbeafe;color:#1e40af}
+.badge-gray{background:#f3f4f6;color:#4b5563}
+h2{font-size:1.05rem;font-weight:700;color:var(--text);margin-bottom:14px}
+h3{font-size:0.92rem;font-weight:700;color:var(--text);margin-bottom:10px}
+.stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center}
+.stat-card .num{font-size:1.8rem;font-weight:700;color:var(--accent)}
+.stat-card .lbl{font-size:0.7rem;color:var(--muted);margin-top:2px;font-weight:500}
+.patient-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;cursor:pointer;transition:all .2s}
+.patient-card:hover{border-color:var(--accent);box-shadow:0 2px 8px rgba(3,105,161,.15)}
+.patient-card .top{display:flex;align-items:flex-start;gap:10px}
+.patient-avatar{width:48px;height:48px;border-radius:10px;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:1.6rem;flex-shrink:0}
+.patient-info{flex:1}
+.patient-name{font-weight:700;font-size:0.97rem}
+.patient-sub{font-size:0.78rem;color:var(--muted);margin-top:2px}
+.alert-dot{width:10px;height:10px;border-radius:50%;background:var(--red);display:inline-block;margin-left:6px}
+.search-bar{position:relative;margin-bottom:12px}
+.search-bar input{padding-left:36px}
+.search-bar .icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:1rem}
+.filter-row{display:flex;gap:8px;overflow-x:auto;margin-bottom:14px;scrollbar-width:none;padding-bottom:2px}
+.filter-row::-webkit-scrollbar{display:none}
+.filter-btn{flex:none;padding:6px 14px;border-radius:20px;font-size:0.78rem;font-weight:600;border:1.5px solid var(--border);background:#fff;color:var(--muted);cursor:pointer;transition:all .2s}
+.filter-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;overflow-y:auto;padding:20px 12px}
+.modal-overlay.open{display:flex;align-items:flex-start;justify-content:center}
+.modal{background:#fff;border-radius:16px;width:100%;max-width:620px;padding:20px;position:relative}
+.modal-close{position:absolute;top:14px;right:14px;width:30px;height:30px;border-radius:50%;background:var(--card2);border:none;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;color:var(--muted)}
+.section-title{font-size:0.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 8px}
+.chip-group{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.chip{padding:5px 12px;border-radius:20px;font-size:0.78rem;font-weight:600;border:1.5px solid var(--border);background:#fff;color:var(--text);cursor:pointer;transition:all .2s}
+.chip.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.chip.red-chip{border-color:#fca5a5;background:#fee2e2;color:#991b1b}
+.chip.green-chip{border-color:#86efac;background:#dcfce7;color:#15803d}
+.toggle-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.toggle-item{display:flex;align-items:center;gap:6px}
+.toggle-item input[type=checkbox]{width:auto;accent-color:var(--accent)}
+.vitals-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.exam-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.exam-item{display:flex;align-items:center;justify-content:space-between;background:var(--card2);border-radius:8px;padding:8px 12px;font-size:0.82rem;font-weight:600}
+.exam-toggle{display:flex;gap:4px}
+.exam-toggle button{padding:3px 10px;border-radius:6px;border:1.5px solid var(--border);font-size:0.72rem;font-weight:700;cursor:pointer;background:#fff;color:var(--muted);transition:all .2s}
+.exam-toggle button.ok{background:#dcfce7;color:#15803d;border-color:#86efac}
+.exam-toggle button.alt{background:#fee2e2;color:#991b1b;border-color:#fca5a5}
+.timeline-item{display:flex;gap:12px;margin-bottom:16px}
+.timeline-dot{width:12px;height:12px;border-radius:50%;background:var(--accent);flex-shrink:0;margin-top:4px}
+.timeline-line{width:2px;background:var(--border);flex-shrink:0;margin-left:5px}
+.timeline-content{flex:1}
+.treatment-row{display:flex;gap:8px;align-items:flex-end;margin-bottom:8px}
+.treatment-row .btn-ghost{padding:9px 12px;flex-shrink:0}
+.vax-table{width:100%;border-collapse:collapse;font-size:0.82rem}
+.vax-table th{background:var(--card2);padding:8px 10px;text-align:left;font-size:0.72rem;font-weight:700;color:var(--muted);text-transform:uppercase}
+.vax-table td{padding:9px 10px;border-bottom:1px solid var(--border)}
+.vax-table tr:last-child td{border-bottom:none}
+.chart-wrap{position:relative;height:240px;margin-bottom:16px}
+.print-section{display:none}
+@media print{
+  body>*:not(.print-section){display:none}
+  .print-section{display:block}
+  .print-carnet{padding:20px;font-family:'Inter',sans-serif}
+}
+.fab{position:fixed;bottom:20px;right:20px;width:54px;height:54px;border-radius:50%;background:var(--accent);color:#fff;border:none;font-size:1.5rem;cursor:pointer;box-shadow:0 4px 14px rgba(3,105,161,.4);z-index:45;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.fab:hover{background:#0c4a7a;transform:scale(1.05)}
+.empty-state{text-align:center;padding:40px 20px;color:var(--muted)}
+.empty-state .icon{font-size:3rem;margin-bottom:10px}
+.empty-state p{font-size:0.9rem}
+.select-patient-card{background:var(--card2);border:1.5px dashed var(--border);border-radius:10px;padding:12px;margin-bottom:12px;font-size:0.85rem;color:var(--muted);text-align:center}
+.alergia-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:#fee2e2;color:#991b1b;border-radius:20px;font-size:0.75rem;font-weight:600;margin:2px}
+.alergia-chip button{background:none;border:none;cursor:pointer;color:#991b1b;font-size:0.8rem;padding:0;line-height:1}
+.med-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:#dbeafe;color:#1e40af;border-radius:20px;font-size:0.75rem;font-weight:600;margin:2px}
+.med-chip button{background:none;border:none;cursor:pointer;color:#1e40af;font-size:0.8rem;padding:0;line-height:1}
+.divider{border:none;border-top:1.5px solid var(--border);margin:16px 0}
+.bold{font-weight:700}
+.text-muted{color:var(--muted);font-size:0.82rem}
+.text-sm{font-size:0.82rem}
+.mt-2{margin-top:8px}
+.mb-2{margin-bottom:8px}
+.gap-8{gap:8px}
+.status-matrix{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+.status-card{border-radius:8px;padding:10px;font-size:0.78rem;font-weight:600;text-align:center;border:1.5px solid transparent}
+.status-card.done{background:#dcfce7;color:#15803d;border-color:#86efac}
+.status-card.soon{background:#fef3c7;color:#92400e;border-color:#fde68a}
+.status-card.overdue{background:#fee2e2;color:#991b1b;border-color:#fca5a5}
+.status-card.none{background:#f3f4f6;color:#6b7280;border-color:#e5e7eb}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🐾 VetScore</h1>
+  <span>Gestión Clínica Veterinaria</span>
+</header>
+
+<nav id="mainNav">
+  <button class="nav-btn active" onclick="showTab('pacientes')">🐾 Pacientes</button>
+  <button class="nav-btn" onclick="showTab('ficha')">🩺 Ficha</button>
+  <button class="nav-btn" onclick="showTab('consultas')">📋 Consultas</button>
+  <button class="nav-btn" onclick="showTab('vacunas')">💉 Vacunas</button>
+  <button class="nav-btn" onclick="showTab('evolucion')">📈 Evolución</button>
+</nav>
+
+<!-- TAB 1: PACIENTES -->
+<div class="tab active" id="tab-pacientes">
+  <div class="stat-grid" id="statsGrid"></div>
+  <div class="search-bar">
+    <span class="icon">🔍</span>
+    <input type="text" id="searchInput" placeholder="Buscar paciente o propietario..." oninput="renderPatients()" style="font-size:16px">
+  </div>
+  <div class="filter-row" id="filterRow">
+    <button class="filter-btn active" data-filter="all" onclick="setFilter('all',this)">Todos</button>
+    <button class="filter-btn" data-filter="Perro" onclick="setFilter('Perro',this)">🐶 Perros</button>
+    <button class="filter-btn" data-filter="Gato" onclick="setFilter('Gato',this)">🐱 Gatos</button>
+    <button class="filter-btn" data-filter="Ave" onclick="setFilter('Ave',this)">🐦 Aves</button>
+    <button class="filter-btn" data-filter="Otro" onclick="setFilter('Otro',this)">🐰 Otros</button>
+  </div>
+  <div id="patientList"></div>
+  <button class="fab" onclick="newPatient()" title="Nuevo paciente">+</button>
+</div>
+
+<!-- TAB 2: FICHA -->
+<div class="tab" id="tab-ficha">
+  <div class="card">
+    <h2>🩺 Ficha del Paciente</h2>
+    <input type="hidden" id="fichaId">
+    <div class="section-title">Datos del Animal</div>
+    <div class="row" style="margin-bottom:10px">
+      <div class="col">
+        <label>Nombre *</label>
+        <input type="text" id="fichaName" placeholder="ej. Rex">
+      </div>
+      <div class="col">
+        <label>Especie *</label>
+        <select id="fichaEspecie" onchange="updateEspecieEmoji()">
+          <option>Perro</option>
+          <option>Gato</option>
+          <option>Ave</option>
+          <option>Conejo</option>
+          <option>Hámster</option>
+          <option>Cobayo</option>
+          <option>Otro</option>
+        </select>
+      </div>
+    </div>
+    <div class="row" style="margin-bottom:10px">
+      <div class="col">
+        <label>Raza</label>
+        <input type="text" id="fichaRaza" placeholder="ej. Golden Retriever">
+      </div>
+      <div class="col">
+        <label>Fecha de Nacimiento</label>
+        <input type="date" id="fichaNacimiento">
+      </div>
+    </div>
+    <div class="row" style="margin-bottom:10px">
+      <div class="col">
+        <label>Sexo</label>
+        <select id="fichaSexo">
+          <option value="M">Macho</option>
+          <option value="F">Hembra</option>
+        </select>
+      </div>
+      <div class="col" style="padding-top:24px">
+        <div class="toggle-item">
+          <input type="checkbox" id="fichaCastrado">
+          <label for="fichaCastrado" style="margin:0;font-size:0.88rem">Castrado/Esterilizado</label>
+        </div>
+      </div>
+    </div>
+    <div class="row" style="margin-bottom:10px">
+      <div class="col">
+        <label>Color / Pelaje</label>
+        <input type="text" id="fichaColor" placeholder="ej. Dorado">
+      </div>
+      <div class="col">
+        <label>N° Microchip</label>
+        <input type="text" id="fichaMicrochip" placeholder="123456789012345">
+      </div>
+    </div>
+    <div class="section-title">Datos del Propietario</div>
+    <div class="row" style="margin-bottom:10px">
+      <div class="col">
+        <label>Nombre Propietario *</label>
+        <input type="text" id="fichaOwner" placeholder="ej. María González">
+      </div>
+      <div class="col">
+        <label>Teléfono</label>
+        <input type="tel" id="fichaTel" placeholder="+56 9 1234 5678">
+      </div>
+    </div>
+    <div class="row" style="margin-bottom:10px">
+      <div class="col">
+        <label>RUT Propietario</label>
+        <input type="text" id="fichaRut" placeholder="12.345.678-9">
+      </div>
+    </div>
+    <div class="section-title">Peso y Condición</div>
+    <div class="row" style="margin-bottom:10px">
+      <div class="col">
+        <label>Peso Actual (kg)</label>
+        <input type="number" id="fichaPeso" placeholder="0.0" step="0.1" min="0">
+      </div>
+      <div class="col">
+        <label>Peso Ideal (kg)</label>
+        <input type="number" id="fichaPesoIdeal" placeholder="0.0" step="0.1" min="0">
+      </div>
+    </div>
+    <div class="section-title">Alergias Conocidas</div>
+    <div id="alergiaChips" class="mb-2"></div>
+    <div class="row" style="margin-bottom:10px">
+      <input type="text" id="alergiaInput" placeholder="Escribir alergia y presionar Agregar" style="font-size:16px">
+      <button class="btn btn-outline btn-sm" onclick="addAlergia()" style="white-space:nowrap">+ Agregar</button>
+    </div>
+    <div class="section-title">Medicamentos Actuales</div>
+    <div id="medChips" class="mb-2"></div>
+    <div class="row" style="margin-bottom:10px">
+      <input type="text" id="medInput" placeholder="Escribir medicamento y presionar Agregar" style="font-size:16px">
+      <button class="btn btn-outline btn-sm" onclick="addMed()" style="white-space:nowrap">+ Agregar</button>
+    </div>
+    <div class="section-title">Antecedentes</div>
+    <div style="margin-bottom:10px">
+      <label>Cirugías Previas</label>
+      <textarea id="fichaCirugias" placeholder="Describir cirugías previas..."></textarea>
+    </div>
+    <div style="margin-bottom:16px">
+      <label>Observaciones Crónicas</label>
+      <textarea id="fichaObs" placeholder="Patologías crónicas, observaciones importantes..."></textarea>
+    </div>
+    <div class="row gap-8">
+      <button class="btn btn-primary" onclick="savePatient()" style="flex:1">💾 Guardar Ficha</button>
+      <button class="btn btn-danger btn-sm" id="deleteBtn" onclick="deletePatient()" style="display:none">🗑️ Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 3: CONSULTAS -->
+<div class="tab" id="tab-consultas">
+  <div class="card">
+    <h2>📋 Nueva Consulta</h2>
+    <div style="margin-bottom:10px">
+      <label>Paciente *</label>
+      <select id="consultaPaciente" onchange="loadConsultaPatient()">
+        <option value="">— Seleccionar paciente —</option>
+      </select>
+    </div>
+    <div class="row" style="margin-bottom:10px">
+      <div class="col">
+        <label>Fecha</label>
+        <input type="date" id="consultaFecha">
+      </div>
+      <div class="col" id="consultaPesoConsulta">
+        <label>Peso en consulta (kg)</label>
+        <input type="number" id="consultaPeso" placeholder="0.0" step="0.1" min="0" style="font-size:16px">
+      </div>
+    </div>
+    <div class="section-title">Motivo de Consulta</div>
+    <div class="chip-group" id="motivoChips">
+      <button class="chip" onclick="toggleChip(this,'motivo')">Control rutinario</button>
+      <button class="chip" onclick="toggleChip(this,'motivo')">Vacunación</button>
+      <button class="chip" onclick="toggleChip(this,'motivo')">Malestar general</button>
+      <button class="chip" onclick="toggleChip(this,'motivo')">Vómitos/Diarrea</button>
+      <button class="chip" onclick="toggleChip(this,'motivo')">Problema dermatológico</button>
+      <button class="chip" onclick="toggleChip(this,'motivo')">Trauma/Herida</button>
+      <button class="chip" onclick="toggleChip(this,'motivo')">Control post-cirugía</button>
+      <button class="chip" onclick="toggleChip(this,'motivo')">Otro</button>
+    </div>
+    <div class="section-title">Signos Vitales</div>
+    <div class="vitals-grid" style="margin-bottom:10px">
+      <div>
+        <label>Temperatura (°C)</label>
+        <input type="number" id="consultaTemp" placeholder="38.5" step="0.1" style="font-size:16px">
+      </div>
+      <div>
+        <label>Frec. Cardíaca (lpm)</label>
+        <input type="number" id="consultaFC" placeholder="80" style="font-size:16px">
+      </div>
+      <div>
+        <label>Frec. Respiratoria (rpm)</label>
+        <input type="number" id="consultaFR" placeholder="20" style="font-size:16px">
+      </div>
+    </div>
+    <div class="section-title">Examen Físico</div>
+    <div class="exam-grid" style="margin-bottom:10px" id="examGrid">
+      <div class="exam-item"><span>👁️ Ojos</span><div class="exam-toggle"><button onclick="setExam(this,'ojos','ok')" data-field="ojos" data-val="ok">Ok</button><button onclick="setExam(this,'ojos','alt')" data-field="ojos" data-val="alt">Alterado</button></div></div>
+      <div class="exam-item"><span>👂 Oídos</span><div class="exam-toggle"><button onclick="setExam(this,'oidos','ok')" data-field="oidos" data-val="ok">Ok</button><button onclick="setExam(this,'oidos','alt')" data-field="oidos" data-val="alt">Alterado</button></div></div>
+      <div class="exam-item"><span>🦷 Boca/Dientes</span><div class="exam-toggle"><button onclick="setExam(this,'boca','ok')" data-field="boca" data-val="ok">Ok</button><button onclick="setExam(this,'boca','alt')" data-field="boca" data-val="alt">Alterado</button></div></div>
+      <div class="exam-item"><span>🐾 Piel/Pelo</span><div class="exam-toggle"><button onclick="setExam(this,'piel','ok')" data-field="piel" data-val="ok">Ok</button><button onclick="setExam(this,'piel','alt')" data-field="piel" data-val="alt">Alterado</button></div></div>
+      <div class="exam-item"><span>🫀 Abdomen</span><div class="exam-toggle"><button onclick="setExam(this,'abdomen','ok')" data-field="abdomen" data-val="ok">Ok</button><button onclick="setExam(this,'abdomen','alt')" data-field="abdomen" data-val="alt">Alterado</button></div></div>
+      <div class="exam-item"><span>🦴 Locomoción</span><div class="exam-toggle"><button onclick="setExam(this,'locomo','ok')" data-field="locomo" data-val="ok">Ok</button><button onclick="setExam(this,'locomo','alt')" data-field="locomo" data-val="alt">Alterado</button></div></div>
+    </div>
+    <div style="margin-bottom:10px">
+      <label>Diagnóstico</label>
+      <textarea id="consultaDiag" placeholder="Diagnóstico del veterinario..."></textarea>
+    </div>
+    <div class="section-title">Tratamiento Prescrito</div>
+    <div id="tratamientoList"></div>
+    <button class="btn btn-ghost btn-sm mb-2" onclick="addTratamiento()">+ Agregar medicamento</button>
+    <div style="margin-bottom:16px">
+      <label>Próximo Control</label>
+      <input type="date" id="consultaProximo" style="font-size:16px">
+    </div>
+    <button class="btn btn-primary" onclick="saveConsulta()" style="width:100%">💾 Guardar Consulta</button>
+  </div>
+  <div class="card mt-2" id="consultasHistorial" style="display:none">
+    <h3>Consultas Recientes</h3>
+    <div id="consultasHistorialList"></div>
+  </div>
+</div>
+
+<!-- TAB 4: VACUNAS -->
+<div class="tab" id="tab-vacunas">
+  <div class="card">
+    <h2>💉 Vacunas y Desparasitación</h2>
+    <div style="margin-bottom:12px">
+      <label>Paciente</label>
+      <select id="vacunaPaciente" onchange="loadVacunaSection()">
+        <option value="">— Seleccionar paciente —</option>
+      </select>
+    </div>
+    <div id="vacunaContent">
+      <div class="select-patient-card">Selecciona un paciente para ver su historial de vacunas y desparasitación</div>
+    </div>
+    <div id="addVacunaSection" style="display:none">
+      <hr class="divider">
+      <h3>➕ Registrar Vacuna</h3>
+      <div class="row" style="margin-bottom:8px">
+        <div class="col">
+          <label>Vacuna</label>
+          <input type="text" id="vaxNombre" placeholder="ej. Sextuple" style="font-size:16px">
+        </div>
+        <div class="col">
+          <label>Fecha Aplicación</label>
+          <input type="date" id="vaxFecha" style="font-size:16px">
+        </div>
+      </div>
+      <div class="row" style="margin-bottom:8px">
+        <div class="col">
+          <label>Producto / Laboratorio</label>
+          <input type="text" id="vaxProducto" placeholder="ej. Nobivac" style="font-size:16px">
+        </div>
+        <div class="col">
+          <label>N° Lote</label>
+          <input type="text" id="vaxLote" placeholder="L-12345" style="font-size:16px">
+        </div>
+      </div>
+      <div class="row" style="margin-bottom:12px">
+        <div class="col">
+          <label>Próxima Dosis</label>
+          <input type="date" id="vaxProxima" style="font-size:16px">
+        </div>
+      </div>
+      <button class="btn btn-success btn-sm" onclick="saveVacuna()" style="width:100%">💉 Registrar Vacuna</button>
+      <hr class="divider">
+      <h3>🐛 Registrar Desparasitación</h3>
+      <div class="row" style="margin-bottom:8px">
+        <div class="col">
+          <label>Tipo</label>
+          <select id="despTipo" style="font-size:16px">
+            <option value="interna">Interna</option>
+            <option value="externa">Externa</option>
+          </select>
+        </div>
+        <div class="col">
+          <label>Fecha</label>
+          <input type="date" id="despFecha" style="font-size:16px">
+        </div>
+      </div>
+      <div class="row" style="margin-bottom:8px">
+        <div class="col">
+          <label>Producto</label>
+          <input type="text" id="despProducto" placeholder="ej. Drontal, Nexgard" style="font-size:16px">
+        </div>
+        <div class="col">
+          <label>Dosis</label>
+          <input type="text" id="despDosis" placeholder="ej. 1 comprimido" style="font-size:16px">
+        </div>
+      </div>
+      <div class="row" style="margin-bottom:12px">
+        <div class="col">
+          <label>Próxima Desparasitación</label>
+          <input type="date" id="despProxima" style="font-size:16px">
+        </div>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="saveDesp()" style="width:100%">🐛 Registrar Desparasitación</button>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 5: EVOLUCIÓN -->
+<div class="tab" id="tab-evolucion">
+  <div class="card">
+    <h2>📈 Evolución del Paciente</h2>
+    <div style="margin-bottom:12px">
+      <label>Paciente</label>
+      <select id="evoPaciente" onchange="loadEvoSection()">
+        <option value="">— Seleccionar paciente —</option>
+      </select>
+    </div>
+    <div id="evoContent">
+      <div class="select-patient-card">Selecciona un paciente para ver su evolución</div>
+    </div>
+  </div>
+</div>
+
+<!-- PATIENT DETAIL MODAL -->
+<div class="modal-overlay" id="patientModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('patientModal')">✕</button>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<!-- PRINT SECTION -->
+<div class="print-section" id="printSection"></div>
+
+<script>
+// ===== DATA LAYER =====
+const DB_KEY = 'vetscore_db';
+let db = {patients:[], consultations:[], vaccinations:[], dewormings:[]};
+let currentFilter = 'all';
+let examState = {ojos:'',oidos:'',boca:'',piel:'',abdomen:'',locomo:''};
+let alergias = [], meds = [], tratamientos = [];
+let weightChart = null;
+
+function loadDB(){
+  try{
+    const raw = localStorage.getItem(DB_KEY);
+    if(raw) db = JSON.parse(raw);
+    if(!db.patients) db.patients=[];
+    if(!db.consultations) db.consultations=[];
+    if(!db.vaccinations) db.vaccinations=[];
+    if(!db.dewormings) db.dewormings=[];
+  }catch(e){console.warn('Error loading DB',e)}
+}
+function saveDB(){
+  try{localStorage.setItem(DB_KEY,JSON.stringify(db))}catch(e){console.warn('Error saving DB',e)}
+}
+function genId(){return 'id_'+Date.now()+'_'+Math.random().toString(36).slice(2,7)}
+function today(){return new Date().toISOString().split('T')[0]}
+
+// Species emoji map
+function speciesEmoji(s){
+  const m={Perro:'🐶',Gato:'🐱',Ave:'🐦',Conejo:'🐰',Hámster:'🐹',Cobayo:'🐾',Otro:'🐾'};
+  return m[s]||'🐾';
+}
+
+// Age from birthdate
+function calcAge(birth){
+  if(!birth) return '';
+  const b=new Date(birth), n=new Date();
+  let y=n.getFullYear()-b.getFullYear(), mo=n.getMonth()-b.getMonth();
+  if(mo<0){y--;mo+=12}
+  if(y>0) return y+'a '+(mo>0?mo+'m':'');
+  return mo+'m';
+}
+
+// Check if date overdue
+function isOverdue(dateStr){
+  if(!dateStr) return false;
+  return new Date(dateStr)<new Date();
+}
+function isDueSoon(dateStr){
+  if(!dateStr) return false;
+  const d=new Date(dateStr), n=new Date();
+  const diff=(d-n)/(1000*60*60*24);
+  return diff>=0 && diff<=30;
+}
+
+// ===== DEMO DATA =====
+function seedDemoData(){
+  if(db.patients.length>0) return;
+  const rex = {id:'demo_rex',nombre:'Rex',especie:'Perro',raza:'Golden Retriever',nacimiento:'2021-03-15',sexo:'M',castrado:false,color:'Dorado',microchip:'985141001234567',owner:'Carlos Muñoz',tel:'+56 9 8765 4321',rut:'12.345.678-9',peso:28.5,pesoIdeal:30,alergias:['Pollo'],medicamentos:[],cirugias:'',observaciones:'Propenso a infecciones de oído',createdAt:today()};
+  const luna = {id:'demo_luna',nombre:'Luna',especie:'Gato',raza:'Siamesa',nacimiento:'2022-06-20',sexo:'F',castrado:true,color:'Crema con puntos café',microchip:'982000123456789',owner:'Ana Pérez',tel:'+56 9 2345 6789',rut:'9.876.543-2',peso:3.8,pesoIdeal:4.0,alergias:[],medicamentos:['Prednisolona 5mg'],cirugias:'Esterilización (2023-01)',observaciones:'Control alérgico semestral',createdAt:today()};
+  const pipo = {id:'demo_pipo',nombre:'Pipo',especie:'Ave',raza:'Canario',nacimiento:'2023-09-01',sexo:'M',castrado:false,color:'Amarillo',microchip:'',owner:'Sofía Torres',tel:'+56 9 1111 2222',rut:'',peso:0.025,pesoIdeal:0.025,alergias:[],medicamentos:[],cirugias:'',observaciones:'',createdAt:today()};
+  db.patients=[rex,luna,pipo];
+
+  // Consultations for Rex
+  db.consultations=[
+    {id:genId(),patientId:'demo_rex',fecha:'2024-11-10',motivo:'Control rutinario',peso:27.0,temp:38.5,fc:80,fr:20,examen:{ojos:'ok',oidos:'alt',boca:'ok',piel:'ok',abdomen:'ok',locomo:'ok'},diagnostico:'Otitis leve oído derecho',tratamiento:[{med:'Otomax gotas',dosis:'5 gotas',frecuencia:'2 veces al día',duracion:'7 días'}],proximo:'2025-02-10'},
+    {id:genId(),patientId:'demo_rex',fecha:'2025-02-12',motivo:'Control rutinario',peso:28.0,temp:38.3,fc:75,fr:18,examen:{ojos:'ok',oidos:'ok',boca:'ok',piel:'ok',abdomen:'ok',locomo:'ok'},diagnostico:'Paciente en buen estado general',tratamiento:[],proximo:'2025-08-12'},
+    {id:genId(),patientId:'demo_luna',fecha:'2025-01-05',motivo:'Control rutinario',peso:3.7,temp:38.8,fc:130,fr:25,examen:{ojos:'ok',oidos:'ok',boca:'alt',boca:'ok',piel:'ok',abdomen:'ok',locomo:'ok'},diagnostico:'Control postesterilización OK',tratamiento:[],proximo:'2025-07-05'},
+    {id:genId(),patientId:'demo_pipo',fecha:'2025-03-01',motivo:'Malestar general',peso:0.024,temp:0,fc:0,fr:0,examen:{},diagnostico:'Posible estrés por cambio de ambiente. Reposo y dieta balanceada',tratamiento:[{med:'Vitaminas Aviar',dosis:'3 gotas',frecuencia:'Diario',duracion:'14 días'}],proximo:'2025-04-01'},
+  ];
+
+  // Vaccinations - Rex has OVERDUE vaccine
+  const lastYear = new Date(); lastYear.setFullYear(lastYear.getFullYear()-1); lastYear.setDate(lastYear.getDate()-45);
+  const lastYearStr = lastYear.toISOString().split('T')[0];
+  const overdueDate = new Date(); overdueDate.setDate(overdueDate.getDate()-14);
+  const overdueDateStr = overdueDate.toISOString().split('T')[0];
+
+  db.vaccinations=[
+    {id:genId(),patientId:'demo_rex',vacuna:'Sextuple',fecha:'2024-03-15',producto:'Nobivac DHPPi+L4',lote:'NB-2024-001',proxima:overdueDateStr},
+    {id:genId(),patientId:'demo_rex',vacuna:'Rabia',fecha:'2024-03-15',producto:'Defensor 3',lote:'DF-2024-115',proxima:'2025-03-15'},
+    {id:genId(),patientId:'demo_luna',vacuna:'Triple Felina',fecha:'2025-01-10',producto:'Purevax RCP',lote:'PU-2025-008',proxima:'2026-01-10'},
+    {id:genId(),patientId:'demo_luna',vacuna:'Rabia',fecha:'2025-01-10',producto:'Rabisin',lote:'RB-2025-042',proxima:'2026-01-10'},
+  ];
+
+  // Dewormings
+  db.dewormings=[
+    {id:genId(),patientId:'demo_rex',tipo:'interna',fecha:'2025-01-15',producto:'Drontal Plus',dosis:'1 comprimido (por 10kg)',proxima:'2025-04-15'},
+    {id:genId(),patientId:'demo_rex',tipo:'externa',fecha:'2025-01-15',producto:'Nexgard',dosis:'1 tableta masticable',proxima:'2025-02-15'},
+    {id:genId(),patientId:'demo_luna',tipo:'interna',fecha:'2025-01-05',producto:'Milbemax Gatos',dosis:'1 comprimido',proxima:'2025-04-05'},
+  ];
+
+  // Weight history for charts (stored in consultations peso)
+  saveDB();
+}
+
+// ===== NAVIGATION =====
+function showTab(name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  const btns = document.querySelectorAll('.nav-btn');
+  const map = {pacientes:0,ficha:1,consultas:2,vacunas:3,evolucion:4};
+  btns[map[name]].classList.add('active');
+  if(name==='pacientes') renderPatients();
+  if(name==='ficha') renderFichaSelects();
+  if(name==='consultas'){populateConsultaSelect(); setConsultaDefaults();}
+  if(name==='vacunas') populateVacunaSelect();
+  if(name==='evolucion') populateEvoSelect();
+}
+
+// ===== TAB 1: PACIENTES =====
+function calcStats(){
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const consultasMes = db.consultations.filter(c=>{const d=new Date(c.fecha);return d>=monthStart}).length;
+  let vencidas=0, despProximas=0;
+  db.vaccinations.forEach(v=>{if(isOverdue(v.proxima)) vencidas++;});
+  db.dewormings.forEach(d=>{if(isDueSoon(d.proxima)||isOverdue(d.proxima)) despProximas++;});
+  return {total:db.patients.length, consultasMes, vencidas, despProximas};
+}
+
+function renderStats(){
+  const s = calcStats();
+  document.getElementById('statsGrid').innerHTML=`
+    <div class="stat-card"><div class="num">${s.total}</div><div class="lbl">🐾 Total Mascotas</div></div>
+    <div class="stat-card"><div class="num">${s.consultasMes}</div><div class="lbl">📋 Consultas este mes</div></div>
+    <div class="stat-card"><div class="num" style="color:var(--yellow)">${s.despProximas}</div><div class="lbl">🐛 Desparasitaciones</div></div>
+    <div class="stat-card"><div class="num" style="color:var(--red)">${s.vencidas}</div><div class="lbl">💉 Vacunas vencidas</div></div>
+  `;
+}
+
+function setFilter(f, btn){
+  currentFilter=f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderPatients();
+}
+
+function hasAlert(p){
+  const vax = db.vaccinations.filter(v=>v.patientId===p.id);
+  if(vax.some(v=>isOverdue(v.proxima))) return true;
+  const dep = db.dewormings.filter(d=>d.patientId===p.id);
+  if(dep.some(d=>isOverdue(d.proxima))) return true;
+  return false;
+}
+
+function getLastVisit(p){
+  const cs = db.consultations.filter(c=>c.patientId===p.id).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  return cs.length>0?cs[0].fecha:null;
+}
+
+function renderPatients(){
+  renderStats();
+  const q=(document.getElementById('searchInput').value||'').toLowerCase();
+  let list = db.patients.filter(p=>{
+    if(currentFilter!=='all'){
+      if(currentFilter==='Otro' && !['Conejo','Hámster','Cobayo','Otro'].includes(p.especie)) return false;
+      if(currentFilter!=='Otro' && p.especie!==currentFilter) return false;
+    }
+    if(q && !p.nombre.toLowerCase().includes(q) && !p.owner.toLowerCase().includes(q) && !(p.raza||'').toLowerCase().includes(q)) return false;
+    return true;
+  });
+  const container = document.getElementById('patientList');
+  if(list.length===0){
+    container.innerHTML='<div class="empty-state"><div class="icon">🐾</div><p>No se encontraron pacientes</p><p class="text-sm">Usa el botón + para agregar uno</p></div>';
+    return;
+  }
+  container.innerHTML = list.map(p=>{
+    const alert = hasAlert(p);
+    const lastVisit = getLastVisit(p);
+    const age = calcAge(p.nacimiento);
+    const lastVisitBadge = lastVisit?`<span class="badge badge-blue">${formatDate(lastVisit)}</span>`:'' ;
+    return `<div class="patient-card" onclick="openPatientModal('${p.id}')">
+      <div class="top">
+        <div class="patient-avatar">${speciesEmoji(p.especie)}</div>
+        <div class="patient-info">
+          <div class="patient-name">${p.nombre}${alert?'<span class="alert-dot" title="Requiere atención"></span>':''}</div>
+          <div class="patient-sub">${p.raza||p.especie} · ${age?age+' · ':''} ${p.owner}</div>
+          <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+            ${p.peso?`<span class="badge badge-gray">${p.peso} kg</span>`:''}
+            ${lastVisitBadge}
+            ${alert?'<span class="badge badge-red">⚠️ Alerta</span>':''}
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function formatDate(d){
+  if(!d) return '';
+  const [y,m,dd]=d.split('-');
+  return `${dd}/${m}/${y}`;
+}
+function formatDateShort(d){
+  if(!d) return '—';
+  const [y,m,dd]=d.split('-');
+  const months=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  return `${dd} ${months[parseInt(m)-1]} ${y}`;
+}
+
+function newPatient(){
+  clearFicha();
+  document.getElementById('deleteBtn').style.display='none';
+  showTab('ficha');
+}
+
+// ===== PATIENT MODAL =====
+function openPatientModal(pid){
+  const p = db.patients.find(x=>x.id===pid);
+  if(!p) return;
+  const vax = db.vaccinations.filter(v=>v.patientId===pid);
+  const dep = db.dewormings.filter(d=>d.patientId===pid);
+  const cs = db.consultations.filter(c=>c.patientId===pid).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  const age = calcAge(p.nacimiento);
+  let alertHtml='';
+  vax.filter(v=>isOverdue(v.proxima)).forEach(v=>{alertHtml+=`<div class="badge badge-red" style="margin:2px">⚠️ Vacuna ${v.vacuna} vencida</div>`;});
+  dep.filter(d=>isOverdue(d.proxima)).forEach(d=>{alertHtml+=`<div class="badge badge-yellow" style="margin:2px">🐛 Desparasitación ${d.tipo} vencida</div>`;});
+  document.getElementById('modalContent').innerHTML=`
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <div style="font-size:3rem">${speciesEmoji(p.especie)}</div>
+      <div>
+        <div style="font-size:1.3rem;font-weight:700">${p.nombre}</div>
+        <div class="text-muted">${p.especie} · ${p.raza||''} · ${age||'—'}</div>
+        <div class="text-muted">Prop: ${p.owner} · ${p.tel||'—'}</div>
+      </div>
+    </div>
+    ${alertHtml?`<div style="margin-bottom:12px">${alertHtml}</div>`:''}
+    <div class="row gap-8" style="margin-bottom:12px;flex-wrap:wrap">
+      <span class="badge badge-gray">💊 ${p.peso||'?'} kg actual</span>
+      <span class="badge badge-gray">🎯 ${p.pesoIdeal||'?'} kg ideal</span>
+      <span class="badge badge-gray">${p.sexo==='M'?'♂ Macho':'♀ Hembra'}${p.castrado?' · Castrado':''}</span>
+    </div>
+    ${p.alergias&&p.alergias.length?`<div style="margin-bottom:10px"><span class="bold text-sm">Alergias:</span> ${p.alergias.map(a=>`<span class="alergia-chip">${a}</span>`).join('')}</div>`:''}
+    ${p.medicamentos&&p.medicamentos.length?`<div style="margin-bottom:10px"><span class="bold text-sm">Medicamentos actuales:</span> ${p.medicamentos.map(m=>`<span class="med-chip">${m}</span>`).join('')}</div>`:''}
+    <div style="margin-bottom:10px">
+      <div class="section-title">Última consulta</div>
+      ${cs.length?`<div class="text-sm"><strong>${formatDateShort(cs[0].fecha)}</strong> — ${cs[0].motivo||'—'}<br>${cs[0].diagnostico?'<span class="text-muted">'+cs[0].diagnostico.slice(0,80)+'...</span>':''}</div>`:'<div class="text-muted text-sm">Sin consultas registradas</div>'}
+    </div>
+    <div class="row gap-8" style="flex-wrap:wrap">
+      <button class="btn btn-outline btn-sm" onclick="editPatient('${p.id}')">✏️ Editar ficha</button>
+      <button class="btn btn-primary btn-sm" onclick="goConsulta('${p.id}')">📋 Nueva consulta</button>
+      <button class="btn btn-success btn-sm" onclick="goVacuna('${p.id}')">💉 Vacunas</button>
+    </div>
+  `;
+  document.getElementById('patientModal').classList.add('open');
+}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+function editPatient(pid){
+  closeModal('patientModal');
+  loadFicha(pid);
+  showTab('ficha');
+}
+function goConsulta(pid){
+  closeModal('patientModal');
+  showTab('consultas');
+  setTimeout(()=>{
+    const sel = document.getElementById('consultaPaciente');
+    sel.value=pid;
+    loadConsultaPatient();
+  },100);
+}
+function goVacuna(pid){
+  closeModal('patientModal');
+  showTab('vacunas');
+  setTimeout(()=>{
+    const sel = document.getElementById('vacunaPaciente');
+    sel.value=pid;
+    loadVacunaSection();
+  },100);
+}
+
+// ===== TAB 2: FICHA =====
+function clearFicha(){
+  ['fichaId','fichaName','fichaRaza','fichaNacimiento','fichaMicrochip','fichaColor','fichaTel','fichaRut','fichaPeso','fichaPesoIdeal','fichaCirugias','fichaObs','fichaOwner'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.value='';
+  });
+  document.getElementById('fichaEspecie').value='Perro';
+  document.getElementById('fichaSexo').value='M';
+  document.getElementById('fichaCastrado').checked=false;
+  alergias=[]; meds=[];
+  renderAlergiaChips(); renderMedChips();
+  document.getElementById('deleteBtn').style.display='none';
+}
+
+function loadFicha(pid){
+  const p = db.patients.find(x=>x.id===pid);
+  if(!p) return;
+  document.getElementById('fichaId').value=p.id;
+  document.getElementById('fichaName').value=p.nombre||'';
+  document.getElementById('fichaEspecie').value=p.especie||'Perro';
+  document.getElementById('fichaRaza').value=p.raza||'';
+  document.getElementById('fichaNacimiento').value=p.nacimiento||'';
+  document.getElementById('fichaSexo').value=p.sexo||'M';
+  document.getElementById('fichaCastrado').checked=!!p.castrado;
+  document.getElementById('fichaColor').value=p.color||'';
+  document.getElementById('fichaMicrochip').value=p.microchip||'';
+  document.getElementById('fichaOwner').value=p.owner||'';
+  document.getElementById('fichaTel').value=p.tel||'';
+  document.getElementById('fichaRut').value=p.rut||'';
+  document.getElementById('fichaPeso').value=p.peso||'';
+  document.getElementById('fichaPesoIdeal').value=p.pesoIdeal||'';
+  document.getElementById('fichaCirugias').value=p.cirugias||'';
+  document.getElementById('fichaObs').value=p.observaciones||'';
+  alergias=[...(p.alergias||[])];
+  meds=[...(p.medicamentos||[])];
+  renderAlergiaChips(); renderMedChips();
+  document.getElementById('deleteBtn').style.display='inline-flex';
+}
+
+function renderFichaSelects(){}
+
+function updateEspecieEmoji(){}
+
+function addAlergia(){
+  const inp=document.getElementById('alergiaInput');
+  const v=inp.value.trim();
+  if(!v) return;
+  alergias.push(v); inp.value='';
+  renderAlergiaChips();
+}
+function removeAlergia(i){alergias.splice(i,1); renderAlergiaChips();}
+function renderAlergiaChips(){
+  document.getElementById('alergiaChips').innerHTML=alergias.map((a,i)=>`<span class="alergia-chip">${a}<button onclick="removeAlergia(${i})">✕</button></span>`).join('');
+}
+function addMed(){
+  const inp=document.getElementById('medInput');
+  const v=inp.value.trim();
+  if(!v) return;
+  meds.push(v); inp.value='';
+  renderMedChips();
+}
+function removeMed(i){meds.splice(i,1); renderMedChips();}
+function renderMedChips(){
+  document.getElementById('medChips').innerHTML=meds.map((m,i)=>`<span class="med-chip">${m}<button onclick="removeMed(${i})">✕</button></span>`).join('');
+}
+
+function savePatient(){
+  const name=document.getElementById('fichaName').value.trim();
+  const owner=document.getElementById('fichaOwner').value.trim();
+  if(!name){alert('El nombre del paciente es obligatorio');return;}
+  if(!owner){alert('El nombre del propietario es obligatorio');return;}
+  const pid=document.getElementById('fichaId').value;
+  const data={
+    id:pid||genId(),
+    nombre:name,
+    especie:document.getElementById('fichaEspecie').value,
+    raza:document.getElementById('fichaRaza').value,
+    nacimiento:document.getElementById('fichaNacimiento').value,
+    sexo:document.getElementById('fichaSexo').value,
+    castrado:document.getElementById('fichaCastrado').checked,
+    color:document.getElementById('fichaColor').value,
+    microchip:document.getElementById('fichaMicrochip').value,
+    owner,
+    tel:document.getElementById('fichaTel').value,
+    rut:document.getElementById('fichaRut').value,
+    peso:parseFloat(document.getElementById('fichaPeso').value)||0,
+    pesoIdeal:parseFloat(document.getElementById('fichaPesoIdeal').value)||0,
+    alergias:[...alergias],
+    medicamentos:[...meds],
+    cirugias:document.getElementById('fichaCirugias').value,
+    observaciones:document.getElementById('fichaObs').value,
+    createdAt:today()
+  };
+  if(pid){
+    const idx=db.patients.findIndex(x=>x.id===pid);
+    if(idx>=0) db.patients[idx]=data;
+  } else {
+    db.patients.push(data);
+  }
+  saveDB();
+  alert('✅ Ficha guardada correctamente');
+  document.getElementById('fichaId').value=data.id;
+  document.getElementById('deleteBtn').style.display='inline-flex';
+}
+
+function deletePatient(){
+  const pid=document.getElementById('fichaId').value;
+  if(!pid) return;
+  if(!confirm('¿Eliminar este paciente y todos sus registros? Esta acción no se puede deshacer.')) return;
+  db.patients=db.patients.filter(x=>x.id!==pid);
+  db.consultations=db.consultations.filter(x=>x.patientId!==pid);
+  db.vaccinations=db.vaccinations.filter(x=>x.patientId!==pid);
+  db.dewormings=db.dewormings.filter(x=>x.patientId!==pid);
+  saveDB();
+  clearFicha();
+  alert('🗑️ Paciente eliminado');
+}
+
+// ===== TAB 3: CONSULTAS =====
+function populateConsultaSelect(){
+  const sel=document.getElementById('consultaPaciente');
+  const cur=sel.value;
+  sel.innerHTML='<option value="">— Seleccionar paciente —</option>'+db.patients.map(p=>`<option value="${p.id}">${speciesEmoji(p.especie)} ${p.nombre} (${p.owner})</option>`).join('');
+  if(cur) sel.value=cur;
+}
+
+function setConsultaDefaults(){
+  document.getElementById('consultaFecha').value=today();
+}
+
+function toggleChip(btn, group){
+  // For motivo, allow only one active
+  if(group==='motivo'){
+    document.querySelectorAll('#motivoChips .chip').forEach(c=>c.classList.remove('active'));
+    btn.classList.add('active');
+  }
+}
+
+function setExam(btn, field, val){
+  examState[field]=val;
+  const pair = btn.parentElement.querySelectorAll('button');
+  pair.forEach(b=>b.className='');
+  btn.className=val==='ok'?'ok':'alt';
+}
+
+tratamientos=[];
+function addTratamiento(){
+  tratamientos.push({med:'',dosis:'',frecuencia:'',duracion:''});
+  renderTratamientos();
+}
+function removeTratamiento(i){tratamientos.splice(i,1); renderTratamientos();}
+function renderTratamientos(){
+  const container=document.getElementById('tratamientoList');
+  container.innerHTML=tratamientos.map((t,i)=>`
+    <div class="card card2" style="margin-bottom:8px;padding:12px">
+      <div class="row" style="margin-bottom:6px">
+        <div class="col"><label>Medicamento</label><input type="text" value="${t.med}" oninput="tratamientos[${i}].med=this.value" placeholder="ej. Amoxicilina" style="font-size:16px"></div>
+        <div class="col"><label>Dosis</label><input type="text" value="${t.dosis}" oninput="tratamientos[${i}].dosis=this.value" placeholder="ej. 250mg" style="font-size:16px"></div>
+      </div>
+      <div class="row">
+        <div class="col"><label>Frecuencia</label><input type="text" value="${t.frecuencia}" oninput="tratamientos[${i}].frecuencia=this.value" placeholder="ej. Cada 8 hrs" style="font-size:16px"></div>
+        <div class="col"><label>Duración</label><input type="text" value="${t.duracion}" oninput="tratamientos[${i}].duracion=this.value" placeholder="ej. 7 días" style="font-size:16px"></div>
+        <button class="btn btn-ghost btn-sm" onclick="removeTratamiento(${i})" style="align-self:flex-end">✕</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function loadConsultaPatient(){
+  const pid=document.getElementById('consultaPaciente').value;
+  if(!pid){document.getElementById('consultasHistorial').style.display='none';return;}
+  const cs=db.consultations.filter(c=>c.patientId===pid).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  const hist=document.getElementById('consultasHistorial');
+  if(cs.length===0){hist.style.display='none';return;}
+  hist.style.display='block';
+  document.getElementById('consultasHistorialList').innerHTML=cs.map(c=>`
+    <div class="card card2" style="margin-bottom:8px;padding:12px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+        <strong>${formatDateShort(c.fecha)}</strong>
+        ${c.peso?`<span class="badge badge-gray">${c.peso} kg</span>`:''}
+      </div>
+      <div class="text-sm text-muted">${c.motivo||'—'}</div>
+      ${c.diagnostico?`<div class="text-sm" style="margin-top:4px">${c.diagnostico}</div>`:''}
+      ${c.tratamiento&&c.tratamiento.length?`<div class="text-sm text-muted" style="margin-top:4px">💊 ${c.tratamiento.map(t=>t.med).join(', ')}</div>`:''}
+    </div>
+  `).join('');
+}
+
+function saveConsulta(){
+  const pid=document.getElementById('consultaPaciente').value;
+  if(!pid){alert('Selecciona un paciente');return;}
+  const fecha=document.getElementById('consultaFecha').value;
+  if(!fecha){alert('Selecciona la fecha de consulta');return;}
+  const motivoBtn=document.querySelector('#motivoChips .chip.active');
+  const motivo=motivoBtn?motivoBtn.textContent:'';
+  const peso=parseFloat(document.getElementById('consultaPeso').value)||0;
+  const temp=parseFloat(document.getElementById('consultaTemp').value)||0;
+  const fc=parseInt(document.getElementById('consultaFC').value)||0;
+  const fr=parseInt(document.getElementById('consultaFR').value)||0;
+  const diag=document.getElementById('consultaDiag').value;
+  const proximo=document.getElementById('consultaProximo').value;
+  const consulta={
+    id:genId(),patientId:pid,fecha,motivo,peso,temp,fc,fr,
+    examen:{...examState},
+    diagnostico:diag,
+    tratamiento:tratamientos.filter(t=>t.med),
+    proximo
+  };
+  // Update patient weight if provided
+  if(peso>0){
+    const idx=db.patients.findIndex(x=>x.id===pid);
+    if(idx>=0) db.patients[idx].peso=peso;
+  }
+  db.consultations.push(consulta);
+  saveDB();
+  alert('✅ Consulta guardada');
+  // Reset form
+  document.querySelectorAll('#motivoChips .chip').forEach(c=>c.classList.remove('active'));
+  ['consultaPeso','consultaTemp','consultaFC','consultaFR','consultaDiag','consultaProximo'].forEach(id=>document.getElementById(id).value='');
+  examState={ojos:'',oidos:'',boca:'',piel:'',abdomen:'',locomo:''};
+  document.querySelectorAll('.exam-toggle button').forEach(b=>b.className='');
+  tratamientos=[]; renderTratamientos();
+  document.getElementById('consultaFecha').value=today();
+  loadConsultaPatient();
+}
+
+// ===== TAB 4: VACUNAS =====
+function populateVacunaSelect(){
+  const sel=document.getElementById('vacunaPaciente');
+  const cur=sel.value;
+  sel.innerHTML='<option value="">— Seleccionar paciente —</option>'+db.patients.map(p=>`<option value="${p.id}">${speciesEmoji(p.especie)} ${p.nombre} (${p.owner})</option>`).join('');
+  if(cur) sel.value=cur;
+}
+
+function loadVacunaSection(){
+  const pid=document.getElementById('vacunaPaciente').value;
+  const content=document.getElementById('vacunaContent');
+  const addSection=document.getElementById('addVacunaSection');
+  if(!pid){
+    content.innerHTML='<div class="select-patient-card">Selecciona un paciente para ver su historial de vacunas y desparasitación</div>';
+    addSection.style.display='none';
+    return;
+  }
+  addSection.style.display='block';
+  const today2=new Date();
+  // Set defaults for add forms
+  document.getElementById('vaxFecha').value=today();
+  document.getElementById('despFecha').value=today();
+
+  const vax=db.vaccinations.filter(v=>v.patientId===pid).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  const dep=db.dewormings.filter(d=>d.patientId===pid).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+
+  let html=`<h3>💉 Historial de Vacunas</h3>`;
+  if(vax.length===0){html+='<div class="text-muted text-sm mb-2">Sin vacunas registradas</div>';}
+  else{
+    html+='<table class="vax-table" style="margin-bottom:12px"><thead><tr><th>Vacuna</th><th>Fecha</th><th>Próxima</th><th>Estado</th><th></th></tr></thead><tbody>';
+    vax.forEach(v=>{
+      const over=isOverdue(v.proxima);
+      const soon=isDueSoon(v.proxima);
+      const badge=over?'<span class="badge badge-red">Vencida</span>':soon?'<span class="badge badge-yellow">Pronto</span>':'<span class="badge badge-green">OK</span>';
+      html+=`<tr><td><strong>${v.vacuna}</strong><br><span class="text-muted">${v.producto||''}</span></td><td>${formatDate(v.fecha)}</td><td>${v.proxima?formatDate(v.proxima):'—'}</td><td>${badge}</td><td><button class="btn btn-ghost btn-sm" onclick="deleteVax('${v.id}')">🗑️</button></td></tr>`;
+    });
+    html+='</tbody></table>';
+  }
+  html+=`<h3>🐛 Historial de Desparasitación</h3>`;
+  if(dep.length===0){html+='<div class="text-muted text-sm">Sin desparasitaciones registradas</div>';}
+  else{
+    html+='<table class="vax-table"><thead><tr><th>Tipo</th><th>Producto</th><th>Fecha</th><th>Próxima</th><th>Estado</th><th></th></tr></thead><tbody>';
+    dep.forEach(d=>{
+      const over=isOverdue(d.proxima);
+      const soon=isDueSoon(d.proxima);
+      const badge=over?'<span class="badge badge-red">Vencida</span>':soon?'<span class="badge badge-yellow">Pronto</span>':'<span class="badge badge-green">OK</span>';
+      const tipo=d.tipo==='interna'?'Interna':'Externa';
+      html+=`<tr><td>${tipo}</td><td>${d.producto||'—'}<br><span class="text-muted">${d.dosis||''}</span></td><td>${formatDate(d.fecha)}</td><td>${d.proxima?formatDate(d.proxima):'—'}</td><td>${badge}</td><td><button class="btn btn-ghost btn-sm" onclick="deleteDesp('${d.id}')">🗑️</button></td></tr>`;
+    });
+    html+='</tbody></table>';
+  }
+  content.innerHTML=html;
+}
+
+function saveVacuna(){
+  const pid=document.getElementById('vacunaPaciente').value;
+  if(!pid){alert('Selecciona un paciente');return;}
+  const nombre=document.getElementById('vaxNombre').value.trim();
+  if(!nombre){alert('Ingresa el nombre de la vacuna');return;}
+  const vax={
+    id:genId(),patientId:pid,
+    vacuna:nombre,
+    fecha:document.getElementById('vaxFecha').value,
+    producto:document.getElementById('vaxProducto').value,
+    lote:document.getElementById('vaxLote').value,
+    proxima:document.getElementById('vaxProxima').value
+  };
+  db.vaccinations.push(vax);
+  saveDB();
+  ['vaxNombre','vaxProducto','vaxLote','vaxProxima'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('vaxFecha').value=today();
+  loadVacunaSection();
+  alert('✅ Vacuna registrada');
+}
+
+function saveDesp(){
+  const pid=document.getElementById('vacunaPaciente').value;
+  if(!pid){alert('Selecciona un paciente');return;}
+  const prod=document.getElementById('despProducto').value.trim();
+  if(!prod){alert('Ingresa el nombre del producto');return;}
+  const desp={
+    id:genId(),patientId:pid,
+    tipo:document.getElementById('despTipo').value,
+    fecha:document.getElementById('despFecha').value,
+    producto:prod,
+    dosis:document.getElementById('despDosis').value,
+    proxima:document.getElementById('despProxima').value
+  };
+  db.dewormings.push(desp);
+  saveDB();
+  ['despProducto','despDosis','despProxima'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('despFecha').value=today();
+  loadVacunaSection();
+  alert('✅ Desparasitación registrada');
+}
+
+function deleteVax(id){
+  if(!confirm('¿Eliminar este registro de vacuna?')) return;
+  db.vaccinations=db.vaccinations.filter(x=>x.id!==id);
+  saveDB();
+  loadVacunaSection();
+}
+function deleteDesp(id){
+  if(!confirm('¿Eliminar este registro de desparasitación?')) return;
+  db.dewormings=db.dewormings.filter(x=>x.id!==id);
+  saveDB();
+  loadVacunaSection();
+}
+
+// ===== TAB 5: EVOLUCIÓN =====
+function populateEvoSelect(){
+  const sel=document.getElementById('evoPaciente');
+  const cur=sel.value;
+  sel.innerHTML='<option value="">— Seleccionar paciente —</option>'+db.patients.map(p=>`<option value="${p.id}">${speciesEmoji(p.especie)} ${p.nombre} (${p.owner})</option>`).join('');
+  if(cur) sel.value=cur;
+}
+
+function loadEvoSection(){
+  const pid=document.getElementById('evoPaciente').value;
+  const content=document.getElementById('evoContent');
+  if(!pid){content.innerHTML='<div class="select-patient-card">Selecciona un paciente para ver su evolución</div>';return;}
+  const p=db.patients.find(x=>x.id===pid);
+  if(!p){return;}
+  const cs=db.consultations.filter(c=>c.patientId===pid).sort((a,b)=>a.fecha.localeCompare(b.fecha));
+  const vax=db.vaccinations.filter(v=>v.patientId===pid);
+  // Weight data
+  const weightData=cs.filter(c=>c.peso>0).map(c=>({fecha:c.fecha,peso:c.peso}));
+  // Build content
+  let html=`<h3>📊 Evolución de Peso</h3><div class="chart-wrap"><canvas id="weightChart"></canvas></div>`;
+  html+=`<h3>📋 Historial de Consultas</h3>`;
+  if(cs.length===0){html+='<div class="text-muted text-sm mb-2">Sin consultas registradas</div>';}
+  else{
+    const csDesc=[...cs].reverse();
+    html+=csDesc.map(c=>`
+      <div class="card card2" style="margin-bottom:8px;padding:12px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <strong>${formatDateShort(c.fecha)}</strong>
+          <div style="display:flex;gap:4px">
+            ${c.peso?`<span class="badge badge-gray">${c.peso} kg</span>`:''}
+            ${c.temp?`<span class="badge badge-blue">${c.temp}°C</span>`:''}
+          </div>
+        </div>
+        <div class="text-sm text-muted" style="margin-top:4px">${c.motivo||'—'}</div>
+        ${c.diagnostico?`<div class="text-sm" style="margin-top:4px">${c.diagnostico}</div>`:''}
+        ${c.tratamiento&&c.tratamiento.length?`<div class="text-sm text-muted" style="margin-top:4px">💊 ${c.tratamiento.map(t=>t.med+(t.dosis?' '+t.dosis:'')).join(' · ')}</div>`:''}
+        ${c.proximo?`<div class="text-sm text-muted" style="margin-top:4px">🗓️ Próximo: ${formatDateShort(c.proximo)}</div>`:''}
+      </div>
+    `).join('');
+  }
+  html+=`<h3 style="margin-top:16px">💉 Estado Vacunación</h3><div class="status-matrix" style="margin-bottom:16px">`;
+  if(vax.length===0){html+='<div class="text-muted text-sm">Sin vacunas registradas</div>';}
+  else{
+    vax.forEach(v=>{
+      const over=isOverdue(v.proxima);
+      const soon=isDueSoon(v.proxima);
+      const cls=over?'overdue':soon?'soon':'done';
+      const icon=over?'⛔':soon?'⚠️':'✅';
+      html+=`<div class="status-card ${cls}">${icon} ${v.vacuna}<br><small>${v.proxima?formatDate(v.proxima):'—'}</small></div>`;
+    });
+  }
+  html+=`</div>`;
+  html+=`<div class="row gap-8" style="flex-wrap:wrap">
+    <button class="btn btn-outline btn-sm" onclick="printCarnet('${pid}')">🖨️ Imprimir Carnet</button>
+    <button class="btn btn-success btn-sm" onclick="shareWhatsApp('${pid}')">📱 Compartir WhatsApp</button>
+  </div>`;
+  content.innerHTML=html;
+  // Render chart
+  if(weightData.length>0){
+    const ctx=document.getElementById('weightChart');
+    if(ctx){
+      if(weightChart) weightChart.destroy();
+      weightChart=new Chart(ctx,{
+        type:'line',
+        data:{
+          labels:weightData.map(w=>formatDate(w.fecha)),
+          datasets:[
+            {label:'Peso real (kg)',data:weightData.map(w=>w.peso),borderColor:'#0369a1',backgroundColor:'rgba(3,105,161,0.1)',tension:0.3,pointRadius:5,fill:true},
+            {label:'Peso ideal (kg)',data:weightData.map(()=>p.pesoIdeal||null),borderColor:'#16a34a',borderDash:[6,3],borderWidth:2,pointRadius:0,fill:false}
+          ]
+        },
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{family:'Inter',size:11}}}},scales:{y:{beginAtZero:false,title:{display:true,text:'kg',font:{family:'Inter'}}}}}
+      });
+    }
+  } else {
+    const ctx=document.getElementById('weightChart');
+    if(ctx) ctx.parentElement.innerHTML='<div class="text-muted text-sm" style="text-align:center;padding:20px">Sin datos de peso en consultas</div>';
+  }
+}
+
+function printCarnet(pid){
+  const p=db.patients.find(x=>x.id===pid);
+  if(!p) return;
+  const vax=db.vaccinations.filter(v=>v.patientId===pid).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  const dep=db.dewormings.filter(d=>d.patientId===pid).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  const age=calcAge(p.nacimiento);
+  const printDiv=document.getElementById('printSection');
+  printDiv.innerHTML=`<div class="print-carnet">
+    <h1 style="text-align:center;color:#0369a1">🐾 CARNET DE VACUNAS — VetScore</h1>
+    <hr style="margin:12px 0">
+    <table style="width:100%;font-size:14px;margin-bottom:16px">
+      <tr><td><strong>Nombre:</strong> ${p.nombre}</td><td><strong>Especie:</strong> ${p.especie}</td></tr>
+      <tr><td><strong>Raza:</strong> ${p.raza||'—'}</td><td><strong>Edad:</strong> ${age||'—'}</td></tr>
+      <tr><td><strong>Sexo:</strong> ${p.sexo==='M'?'Macho':'Hembra'}${p.castrado?' (castrado)':''}</td><td><strong>Microchip:</strong> ${p.microchip||'—'}</td></tr>
+      <tr><td><strong>Propietario:</strong> ${p.owner}</td><td><strong>Tel:</strong> ${p.tel||'—'}</td></tr>
+    </table>
+    <h3>Vacunas</h3>
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead><tr style="background:#e8f2ff"><th style="padding:6px;text-align:left">Vacuna</th><th style="padding:6px">Fecha</th><th style="padding:6px">Producto</th><th style="padding:6px">Lote</th><th style="padding:6px">Próxima</th></tr></thead>
+      <tbody>${vax.map(v=>`<tr><td style="padding:6px;border-bottom:1px solid #e5e7eb">${v.vacuna}</td><td style="padding:6px;border-bottom:1px solid #e5e7eb;text-align:center">${formatDate(v.fecha)}</td><td style="padding:6px;border-bottom:1px solid #e5e7eb">${v.producto||'—'}</td><td style="padding:6px;border-bottom:1px solid #e5e7eb">${v.lote||'—'}</td><td style="padding:6px;border-bottom:1px solid #e5e7eb;text-align:center">${v.proxima?formatDate(v.proxima):'—'}</td></tr>`).join('')}</tbody>
+    </table>
+    <h3 style="margin-top:16px">Desparasitación</h3>
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead><tr style="background:#e8f2ff"><th style="padding:6px;text-align:left">Tipo</th><th style="padding:6px;text-align:left">Producto</th><th style="padding:6px">Fecha</th><th style="padding:6px">Próxima</th></tr></thead>
+      <tbody>${dep.map(d=>`<tr><td style="padding:6px;border-bottom:1px solid #e5e7eb">${d.tipo==='interna'?'Interna':'Externa'}</td><td style="padding:6px;border-bottom:1px solid #e5e7eb">${d.producto||'—'}</td><td style="padding:6px;border-bottom:1px solid #e5e7eb;text-align:center">${formatDate(d.fecha)}</td><td style="padding:6px;border-bottom:1px solid #e5e7eb;text-align:center">${d.proxima?formatDate(d.proxima):'—'}</td></tr>`).join('')}</tbody>
+    </table>
+    <p style="margin-top:20px;font-size:11px;color:#6b7280;text-align:center">Generado por VetScore — ${formatDate(today())}</p>
+  </div>`;
+  window.print();
+}
+
+function shareWhatsApp(pid){
+  const p=db.patients.find(x=>x.id===pid);
+  if(!p) return;
+  const age=calcAge(p.nacimiento);
+  const cs=db.consultations.filter(c=>c.patientId===pid).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  const vax=db.vaccinations.filter(v=>v.patientId===pid);
+  const lastVisit=cs.length?`Última visita: ${formatDate(cs[0].fecha)} — ${cs[0].motivo||'—'}`:'Sin consultas';
+  const vaxAlert=vax.filter(v=>isOverdue(v.proxima));
+  let msg=`🐾 *Resumen VetScore*\n\n`;
+  msg+=`*Paciente:* ${p.nombre} (${p.especie})\n`;
+  msg+=`*Raza:* ${p.raza||'—'} · ${age||'—'}\n`;
+  msg+=`*Peso:* ${p.peso||'?'} kg\n`;
+  msg+=`*Propietario:* ${p.owner}\n\n`;
+  msg+=`📋 ${lastVisit}\n`;
+  if(vaxAlert.length) msg+=`\n⚠️ *Vacunas vencidas:* ${vaxAlert.map(v=>v.vacuna).join(', ')}\n`;
+  const url=`https://wa.me/?text=${encodeURIComponent(msg)}`;
+  window.open(url,'_blank');
+}
+
+// ===== INIT =====
+loadDB();
+seedDemoData();
+renderPatients();
+
+// Handle clicks outside modals
+document.querySelectorAll('.modal-overlay').forEach(o=>{
+  o.addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
+});
+
+// Enter key on alergia/med inputs
+document.getElementById('alergiaInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addAlergia();}});
+document.getElementById('medInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addMed();}});
+
+// PWA service worker (inline)
+if('serviceWorker' in navigator){
+  const sw=`
+    const CACHE='vetscore-v1';
+    self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(['.']))));
+    self.addEventListener('fetch',e=>e.respondWith(fetch(e.request).catch(()=>caches.match(e.request))));
+  `;
+  const blob=new Blob([sw],{type:'application/javascript'});
+  navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(()=>{});
+}
+</script>
+</body>
+</html>

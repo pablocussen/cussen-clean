@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>SBAP Monitor — Monitoreo Satelital Áreas Protegidas</title>
+  <meta name="description" content="Monitoreo satelital de áreas protegidas. NASA GIBS · MODIS Terra · CUSSEN-CSI. SBAP Región de Los Lagos.">
+  <meta name="theme-color" content="#060b14">
+  <meta name="robots" content="noindex, nofollow">
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="SBAP Monitor">
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <!-- App styles -->
+  <link rel="stylesheet" href="style.css?v=48">
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛰</text></svg>">
+</head>
+<body>
+<canvas id="copihue-bg"></canvas>
+
+<!-- Loading screen -->
+<div id="loading-screen">
+  <div class="loading-logo"><span>SBAP</span> Monitor · CUSSEN</div>
+  <div class="loading-bar"><div class="loading-bar-fill"></div></div>
+</div>
+
+<!-- Notification toast -->
+<div id="notification" role="alert" aria-live="assertive"></div>
+<!-- Chart tooltip -->
+<div id="ts-tooltip"></div>
+
+<!-- ── Nav ─────────────────────────────────────────────────── -->
+<nav id="nav">
+  <div class="nav-brand">
+    <div class="dot"></div>
+    <div>
+      <span style="color:var(--accent)">SBAP</span> Monitor
+      <span class="sub">· CUSSEN</span>
+    </div>
+  </div>
+
+  <div class="nav-tabs">
+    <button class="nav-tab active" data-tab="dashboard">
+      <span data-es="Dashboard" data-en="Dashboard">Dashboard</span>
+    </button>
+    <button class="nav-tab" data-tab="monitor">
+      <span data-es="Monitoreo" data-en="Monitoring">Monitoreo</span>
+    </button>
+    <button class="nav-tab" data-tab="changes">
+      <span data-es="Cambios" data-en="Changes">Cambios</span>
+    </button>
+    <button class="nav-tab" data-tab="sites">
+      <span data-es="Sitios" data-en="Sites">Sitios</span>
+    </button>
+  </div>
+
+  <div class="nav-right">
+    <div class="gee-status" id="gee-status">
+      <div class="status-dot"></div>
+      <span id="gee-status-text">MODIS · Demo</span>
+    </div>
+    <button class="btn-connect" id="btn-connect" data-es="Verificar API" data-en="Verify API">Verificar API</button>
+  </div>
+</nav>
+
+<!-- ── App ─────────────────────────────────────────────────── -->
+<div id="app">
+
+  <!-- ── DASHBOARD ──────────────────────────────────────────── -->
+  <div class="tab-panel active" id="tab-dashboard">
+    <div id="dashboard-content">
+      <div class="dashboard-header">
+        <div>
+          <h1 class="dashboard-title" data-es="Estado de Áreas Protegidas" data-en="Protected Areas Status">Estado de Áreas Protegidas</h1>
+          <p class="dashboard-subtitle" id="dashboard-subtitle">SBAP Dirección Regional Los Lagos · MODIS 250m · Demo</p>
+        </div>
+        <div class="last-update" id="dashboard-update"></div>
+      </div>
+
+      <!-- Score cards -->
+      <div id="site-cards"></div>
+
+      <!-- Overview map -->
+      <div class="dashboard-map-wrap">
+        <div class="map-label" data-es="Vista regional · Los Lagos" data-en="Regional view · Los Lagos">Vista regional · Los Lagos</div>
+        <div id="overview-map" style="height:340px"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MONITOREO ──────────────────────────────────────────── -->
+  <div class="tab-panel" id="tab-monitor">
+    <div class="panel-layout">
+
+      <!-- Sidebar toggle (mobile only) -->
+      <button class="sidebar-toggle" id="mon-sidebar-toggle" aria-expanded="false" aria-controls="mon-sidebar">
+        <span data-es="⚙ Configurar análisis" data-en="⚙ Configure analysis">⚙ Configurar análisis</span>
+        <span class="toggle-arrow">▾</span>
+      </button>
+
+      <!-- Sidebar -->
+      <div class="sidebar" id="mon-sidebar">
+        <div class="sidebar-section">
+          <div class="form-group">
+            <label class="form-label" data-es="Área protegida" data-en="Protected area">Área protegida</label>
+            <select id="mon-site"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" data-es="Índice espectral" data-en="Spectral index">Índice espectral</label>
+            <select id="mon-index">
+              <option value="NDVI" data-es="NDVI — Vigor vegetal" data-en="NDVI — Vegetation vigor">NDVI — Vigor vegetal</option>
+              <option value="NDMI" data-es="NDMI — Humedad vegetal" data-en="NDMI — Vegetation moisture">NDMI — Humedad vegetal</option>
+              <option value="NBR" data-es="NBR — Quemas / perturbaciones" data-en="NBR — Burns / disturbances">NBR — Quemas / perturbaciones</option>
+              <option value="NDWI" data-es="NDWI — Agua superficial" data-en="NDWI — Surface water">NDWI — Agua superficial</option>
+              <option value="EVI" data-es="EVI — Vegetación densa" data-en="EVI — Dense vegetation">EVI — Vegetación densa</option>
+              <option value="PAI" data-es="PAI — Presión Antrópica (CUSSEN)" data-en="PAI — Anthropic Pressure (CUSSEN)">PAI — Presión Antrópica (CUSSEN)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" data-es="Período" data-en="Period">Período</label>
+            <div class="date-row">
+              <input type="date" id="mon-start" value="2020-01-01">
+              <input type="date" id="mon-end">
+            </div>
+            <div class="period-presets">
+              <button class="btn-preset" data-years="1" data-es="1 año" data-en="1 year">1 año</button>
+              <button class="btn-preset" data-years="3" data-es="3 años" data-en="3 years">3 años</button>
+              <button class="btn-preset" data-years="5" data-es="5 años" data-en="5 years">5 años</button>
+              <button class="btn-preset" data-years="0" data-es="Máx" data-en="Max">Máx</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" data-es='Nubosidad máx. <span id="cloud-val">30</span>%' data-en='Max cloudiness <span id="cloud-val">30</span>%'>Nubosidad máx. <span id="cloud-val">30</span>%</label>
+            <input type="range" id="mon-cloud" min="10" max="80" step="10" value="30">
+          </div>
+          <div class="form-group">
+            <label class="form-label" data-es="Capa de mapa" data-en="Map layer">Capa de mapa</label>
+            <select id="mon-layer">
+              <option value="RGB" data-es="Color Natural (RGB)" data-en="Natural Color (RGB)">Color Natural (RGB)</option>
+              <option value="NDVI">NDVI</option>
+              <option value="NDMI">NDMI</option>
+              <option value="NBR">NBR</option>
+              <option value="NDWI">NDWI</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" data-es='Opacidad capa <span id="opacity-val">92</span>%' data-en='Layer opacity <span id="opacity-val">92</span>%'>Opacidad capa <span id="opacity-val">92</span>%</label>
+            <input type="range" id="mon-opacity" min="20" max="100" step="5" value="92">
+          </div>
+          <button class="btn-primary" id="btn-analyze">
+            <span class="spinner"></span>
+            <span class="btn-label" data-es="🛰 Analizar" data-en="🛰 Analyze">🛰 Analizar</span>
+          </button>
+        </div>
+
+        <div class="sidebar-divider"></div>
+
+        <!-- ROI Draw Tool -->
+        <div class="roi-section">
+          <div class="form-label" style="margin-bottom:.4rem" data-es="📐 Área de análisis (ROI)" data-en="📐 Analysis area (ROI)">📐 Área de análisis (ROI)</div>
+          <div class="roi-btn-row">
+            <button class="btn-roi" id="btn-draw-roi" data-es="✎ Dibujar ROI" data-en="✎ Draw ROI">✎ Dibujar ROI</button>
+            <button class="btn-sm" id="btn-clear-roi" style="display:none" data-es="✕ Limpiar" data-en="✕ Clear">✕ Limpiar</button>
+          </div>
+          <div id="roi-info" style="display:none"></div>
+          <div class="roi-hint" data-es="Dibuja sobre el mapa para<br>enfocar el análisis al píxel" data-en="Draw on the map to<br>focus the analysis per pixel">Dibuja sobre el mapa para<br>enfocar el análisis al píxel</div>
+        </div>
+
+        <div class="sidebar-divider"></div>
+        <div id="mon-site-info"></div>
+
+        <div class="sidebar-footer">
+          <div class="sidebar-meta" id="mon-sidebar-source" data-es='<strong>Fuente:</strong> NASA GIBS · MODIS Terra<br><strong>Resolución:</strong> 250m · compuesto 8 días<br><strong>Plataforma:</strong> Demo · simulación realista<br><strong>Umbral CSI:</strong> ≥80 Óptimo · ≥65 Bueno · ≥50 Moderado · &lt;50 Degradado' data-en='<strong>Source:</strong> NASA GIBS · MODIS Terra<br><strong>Resolution:</strong> 250m · 8-day composite<br><strong>Platform:</strong> Demo · realistic simulation<br><strong>CSI Threshold:</strong> ≥80 Optimal · ≥65 Good · ≥50 Moderate · &lt;50 Degraded'>
+            <strong>Fuente:</strong> NASA GIBS · MODIS Terra<br>
+            <strong>Resolución:</strong> 250m · compuesto 8 días<br>
+            <strong>Plataforma:</strong> Demo · simulación realista<br>
+            <strong>Umbral CSI:</strong> ≥80 Óptimo · ≥65 Bueno · ≥50 Moderado · &lt;50 Degradado
+          </div>
+        </div>
+      </div>
+
+      <!-- Main view -->
+      <div class="main-col">
+        <div class="map-wrap" id="mon-map-wrap">
+          <div id="monitor-map" style="height:100%;min-height:360px"></div>
+          <div class="map-overlay-top" id="mon-map-overlay">
+            <div class="map-chip" id="mon-chip-site"></div>
+            <div class="map-chip" id="mon-chip-index"></div>
+          </div>
+          <div class="demo-badge" id="mon-demo-badge" data-es="DEMO — datos de ejemplo" data-en="DEMO — sample data">DEMO — datos de ejemplo</div>
+        </div>
+
+        <div class="stats-strip" id="mon-stats">
+          <div class="stat-box">
+            <div class="stat-label" data-es="Último valor" data-en="Last value">Último valor</div>
+            <div class="stat-value" id="stat-last">—</div>
+            <div class="stat-sub" id="stat-last-date"></div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label" data-es="Tendencia anual" data-en="Annual trend">Tendencia anual</div>
+            <div class="stat-value" id="stat-trend">—</div>
+            <div class="stat-sub" id="stat-trend-desc"></div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label" data-es="Vs línea base 2017–18" data-en="Vs baseline 2017–18">Vs línea base 2017–18</div>
+            <div class="stat-value" id="stat-vs-base">—</div>
+            <div class="stat-sub" data-es="Δ respecto al período inicial" data-en="Δ relative to initial period">Δ respecto al período inicial</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label" data-es="Imágenes analizadas" data-en="Images analyzed">Imágenes analizadas</div>
+            <div class="stat-value" id="stat-n">—</div>
+            <div class="stat-sub" id="stat-period"></div>
+          </div>
+        </div>
+
+        <div class="chart-area">
+          <div class="chart-header">
+            <div class="chart-title" data-es='Serie temporal — <span id="chart-index-label">NDVI</span><span id="chart-trend-badge"></span>' data-en='Time series — <span id="chart-index-label">NDVI</span><span id="chart-trend-badge"></span>'>Serie temporal — <span id="chart-index-label">NDVI</span><span id="chart-trend-badge"></span></div>
+            <div class="chart-actions">
+              <button class="btn-sm" id="btn-export-csv">↓ CSV</button>
+              <button class="btn-sm" id="btn-export-png">↓ PNG</button>
+              <button class="btn-sm" id="btn-share" title="Copiar enlace a este análisis">🔗</button>
+            </div>
+          </div>
+          <div class="chart-canvas-wrap"><canvas id="ts-canvas" height="160" role="img" aria-label="Serie temporal del índice espectral seleccionado"></canvas><div id="chart-crosshair"></div></div>
+          <div class="chart-footer" id="chart-footer" data-es="MODIS Terra · NASA GIBS · presiona Analizar para cargar datos" data-en="MODIS Terra · NASA GIBS · press Analyze to load data">MODIS Terra · NASA GIBS · presiona Analizar para cargar datos</div>
+        </div>
+
+        <!-- CUSSEN-CSI panel -->
+        <div class="csi-panel" id="csi-panel">
+          <div class="csi-main">
+            <div>
+              <div class="csi-score-num score-optimal" id="csi-score">—</div>
+              <div class="csi-score-label" id="csi-label">CUSSEN-CSI</div>
+              <div class="csi-score-sub">Conservation State Index</div>
+            </div>
+          </div>
+          <div class="csi-breakdown" id="csi-breakdown"></div>
+          <div id="csi-recos" class="csi-recos"></div>
+          <div class="csi-methodology" data-es='CUSSEN-CSI v1.0 · derivado de<br><a href="https://cussen.cl/framework/" target="_blank" rel="noopener noreferrer">CUSSEN-MonitoreoForestal v2.0</a>' data-en='CUSSEN-CSI v1.0 · derived from<br><a href="https://cussen.cl/framework/" target="_blank" rel="noopener noreferrer">CUSSEN-MonitoreoForestal v2.0</a>'>
+            CUSSEN-CSI v1.0 · derivado de<br>
+            <a href="https://cussen.cl/framework/" target="_blank" rel="noopener noreferrer">CUSSEN-MonitoreoForestal v2.0</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CAMBIOS ────────────────────────────────────────────── -->
+  <div class="tab-panel" id="tab-changes">
+    <div class="panel-layout">
+
+      <!-- Sidebar toggle (mobile only) -->
+      <button class="sidebar-toggle" id="ch-sidebar-toggle" aria-expanded="false" aria-controls="ch-sidebar">
+        <span data-es="⚙ Configurar detección" data-en="⚙ Configure detection">⚙ Configurar detección</span>
+        <span class="toggle-arrow">▾</span>
+      </button>
+
+      <div class="sidebar" id="ch-sidebar">
+        <div class="sidebar-section">
+          <div class="form-group">
+            <label class="form-label" data-es="Área protegida" data-en="Protected area">Área protegida</label>
+            <select id="ch-site"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" data-es="Índice de cambio" data-en="Change index">Índice de cambio</label>
+            <select id="ch-index">
+              <option value="NDVI">NDVI</option>
+              <option value="NBR">NBR</option>
+              <option value="NDMI">NDMI</option>
+              <option value="NDWI">NDWI</option>
+            </select>
+          </div>
+          <div class="form-group" style="border:1px solid rgba(245,158,11,.2);border-radius:8px;padding:.7rem;background:rgba(245,158,11,.04)">
+            <label class="form-label" style="color:var(--amber)" data-es="📅 Período base" data-en="📅 Base period">📅 Período base</label>
+            <div class="date-row">
+              <input type="date" id="ch-b-start" value="2019-01-01">
+              <input type="date" id="ch-b-end"   value="2019-12-31">
+            </div>
+          </div>
+          <div class="form-group" style="border:1px solid rgba(16,185,129,.2);border-radius:8px;padding:.7rem;background:rgba(16,185,129,.04)">
+            <label class="form-label" style="color:var(--accent)" data-es="📅 Período actual" data-en="📅 Current period">📅 Período actual</label>
+            <div class="date-row">
+              <input type="date" id="ch-a-start">
+              <input type="date" id="ch-a-end">
+            </div>
+          </div>
+          <button class="btn-primary" id="btn-detect">
+            <span class="spinner"></span>
+            <span class="btn-label" data-es="🔍 Detectar cambios" data-en="🔍 Detect changes">🔍 Detectar cambios</span>
+          </button>
+        </div>
+        <div class="sidebar-divider"></div>
+
+        <!-- ROI Draw Tool -->
+        <div class="roi-section">
+          <div class="form-label" style="margin-bottom:.4rem" data-es="📐 Área de análisis (ROI)" data-en="📐 Analysis area (ROI)">📐 Área de análisis (ROI)</div>
+          <div class="roi-btn-row">
+            <button class="btn-roi" id="btn-draw-roi-ch" data-es="✎ Dibujar ROI" data-en="✎ Draw ROI">✎ Dibujar ROI</button>
+            <button class="btn-sm" id="btn-clear-roi-ch" style="display:none" data-es="✕ Limpiar" data-en="✕ Clear">✕ Limpiar</button>
+          </div>
+          <div id="roi-info-ch" style="display:none"></div>
+          <div class="roi-hint" data-es="Dibuja sobre el mapa base para<br>enfocar el comparativo al píxel" data-en="Draw on the base map to<br>focus the comparison per pixel">Dibuja sobre el mapa base para<br>enfocar el comparativo al píxel</div>
+        </div>
+
+        <div class="sidebar-divider"></div>
+        <div id="change-interpretation" style="font-size:.78rem;color:var(--text2);line-height:1.65"></div>
+        <div class="sidebar-footer">
+          <div class="sidebar-meta" data-es="Rojo = pérdida · Verde = ganancia · Neutro = sin cambio<br>Umbral: ±0.1 unidades de índice" data-en="Red = loss · Green = gain · Neutral = no change<br>Threshold: ±0.1 index units">
+            Rojo = pérdida · Verde = ganancia · Neutro = sin cambio<br>
+            Umbral: ±0.1 unidades de índice
+          </div>
+        </div>
+      </div>
+
+      <div class="main-col">
+        <div class="maps-compare" id="maps-compare">
+          <div class="map-compare-wrap">
+            <div id="before-map" style="height:100%;width:100%" role="img" aria-label="Mapa satelital del período base"></div>
+            <div class="map-compare-label before" data-es="Período base" data-en="Base period">Período base</div>
+            <div class="demo-badge" id="ch-before-demo">DEMO</div>
+          </div>
+          <div class="map-compare-wrap">
+            <div id="after-map" style="height:100%;width:100%" role="img" aria-label="Mapa satelital del período actual"></div>
+            <div class="map-compare-label after" data-es="Período actual" data-en="Current period">Período actual</div>
+          </div>
+        </div>
+        <div class="change-stats-bar" id="change-stats-bar">
+          <div class="change-stat">
+            <div class="change-stat-label" data-es="Δ Promedio" data-en="Δ Average">Δ Promedio</div>
+            <div class="change-stat-val neutral" id="cs-delta">—</div>
+          </div>
+          <div class="change-stat">
+            <div class="change-stat-label" data-es="Áreas perdidas" data-en="Areas lost">Áreas perdidas</div>
+            <div class="change-stat-val loss" id="cs-loss">—</div>
+          </div>
+          <div class="change-stat">
+            <div class="change-stat-label" data-es="Áreas ganadas" data-en="Areas gained">Áreas ganadas</div>
+            <div class="change-stat-val gain" id="cs-gain">—</div>
+          </div>
+          <div class="change-stat">
+            <div class="change-stat-label" data-es="Sin cambio" data-en="No change">Sin cambio</div>
+            <div class="change-stat-val neutral" id="cs-stable">—</div>
+          </div>
+          <div class="change-stat">
+            <div class="change-stat-label" id="cs-pixels-label" data-es="Píxeles" data-en="Pixels">Píxeles</div>
+            <div class="change-stat-val neutral" id="cs-pixels">—</div>
+          </div>
+          <div class="change-legend">
+            <span data-es='<span class="legend-dot" style="background:var(--red)"></span> Pérdida' data-en='<span class="legend-dot" style="background:var(--red)"></span> Loss'><span class="legend-dot" style="background:var(--red)"></span> Pérdida</span>
+            <span data-es='<span class="legend-dot" style="background:var(--accent)"></span> Ganancia' data-en='<span class="legend-dot" style="background:var(--accent)"></span> Gain'><span class="legend-dot" style="background:var(--accent)"></span> Ganancia</span>
+            <span data-es='<span class="legend-dot" style="background:var(--text3)"></span> Estable' data-en='<span class="legend-dot" style="background:var(--text3)"></span> Stable'><span class="legend-dot" style="background:var(--text3)"></span> Estable</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SITIOS ─────────────────────────────────────────────── -->
+  <div class="tab-panel" id="tab-sites">
+    <div style="padding:1.25rem;max-width:1100px;margin:0 auto">
+      <div style="margin-bottom:1.25rem">
+        <div style="font-size:1.15rem;font-weight:700;margin-bottom:.2rem" data-es="Sitios Prioritarios — SBAP Los Lagos" data-en="Priority Sites — SBAP Los Lagos">Sitios Prioritarios — SBAP Los Lagos</div>
+        <div style="font-size:.82rem;color:var(--text3)" data-es="Tres Santuarios de la Naturaleza bajo monitoreo satelital continuo · NASA GIBS · MODIS Terra 250m." data-en="Three Nature Sanctuaries under continuous satellite monitoring · NASA GIBS · MODIS Terra 250m.">
+          Tres Santuarios de la Naturaleza bajo monitoreo satelital continuo · NASA GIBS · MODIS Terra 250m.
+        </div>
+      </div>
+      <div class="sites-grid" id="sites-grid"></div>
+    </div>
+  </div>
+
+</div><!-- #app -->
+
+<!-- Sidebar backdrop (mobile overlay) -->
+<div id="sidebar-backdrop"></div>
+
+<!-- Mobile bottom navigation -->
+<nav id="mobile-nav" aria-label="Navegación principal">
+  <button class="mobile-nav-btn active" data-tab="dashboard" aria-label="Dashboard">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+      <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+    </svg>
+    <span data-es="Dashboard" data-en="Dashboard">Dashboard</span>
+  </button>
+  <button class="mobile-nav-btn" data-tab="monitor" aria-label="Monitoreo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="3"/><path d="M20.188 10.934a8 8 0 1 0-.21 2.104"/>
+      <path d="M2 12h2M20 12h2M12 2v2M12 20v2"/>
+    </svg>
+    <span data-es="Monitor" data-en="Monitor">Monitor</span>
+  </button>
+  <button class="mobile-nav-btn" data-tab="changes" aria-label="Detección de cambios">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M12 20V10M18 20V4M6 20v-4"/>
+    </svg>
+    <span data-es="Cambios" data-en="Changes">Cambios</span>
+  </button>
+  <button class="mobile-nav-btn" data-tab="sites" aria-label="Sitios protegidos">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+    </svg>
+    <span data-es="Sitios" data-en="Sites">Sitios</span>
+  </button>
+</nav>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- App -->
+<script src="app.js?v=48"></script>
+
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(e => console.warn('SW:', e.message));
+  }
+</script>
+<!-- Copihue (Lapageria rosea) — subtle background decoration -->
+<script>
+(function(){
+  var c = document.getElementById('copihue-bg');
+  if(!c) return;
+  var ctx = c.getContext('2d');
+  var W, H, time = 0;
+  var PI = Math.PI, sin = Math.sin, cos = Math.cos, rand = Math.random;
+  var abs = Math.abs, min = Math.min, max = Math.max, floor = Math.floor;
+
+  function resize(){ W = c.width = window.innerWidth; H = c.height = window.innerHeight; }
+  resize();
+  window.addEventListener('resize', resize);
+
+  /* ── Wind ── */
+  var wind = {x:0, gust:0};
+  function updateWind(t){
+    var bx = sin(t*0.18)*0.3 + sin(t*0.08)*0.12;
+    var gust = max(0, sin(t*0.06)*sin(t*0.27))*0.8;
+    wind.x = bx + gust*sin(t*0.45);
+    wind.gust = gust;
+  }
+
+  /* ── Branch ── */
+  function Branch(x,y,angle,depth){
+    this.pts = [{x:x,y:y}];
+    this.angle = angle;
+    this.depth = depth;
+    this.speed = depth===0 ? 0.4+rand()*0.2 : 0.3+rand()*0.15;
+    this.maxLen = depth===0 ? 350+rand()*300 : depth===1 ? 140+rand()*120 : 50+rand()*40;
+    this.len = 0;
+    this.done = false;
+    this.side = rand()>0.5?1:-1;
+    this.nodes = [];
+    this.children = [];
+    this.nextNode = 20+rand()*14;
+    this.nextBranch = depth===0 ? 70+rand()*50 : 55+rand()*40;
+    this.flowerCount = 0;
+    this.maxFlowers = depth===0 ? 2+floor(rand()*2) : 1+floor(rand()*2);
+    this.twineFreq = 0.009+rand()*0.004;
+    this.twineAmp = 0.04+rand()*0.03;
+    this.thickness = depth===0 ? 1.3 : depth===1 ? 0.8 : 0.45;
+    this.childrenSpawned = 0;
+    this.maxChildren = depth===0 ? 2+floor(rand()*2) : depth===1 ? 1+floor(rand()*2) : 0;
+  }
+
+  Branch.prototype.grow = function(){
+    if(this.done) return;
+    // Strong gravity → always down
+    this.angle += (PI*0.5 - this.angle)*0.04;
+    if(this.angle < PI*0.42) this.angle = PI*0.42;
+    if(this.angle > PI*0.58) this.angle = PI*0.58;
+    var twine = sin(this.len*this.twineFreq)*this.twineAmp;
+    var a = this.angle + twine;
+    var last = this.pts[this.pts.length-1];
+    var x = last.x + cos(a)*this.speed;
+    var y = last.y + sin(a)*this.speed;
+    this.pts.push({x:x,y:y,a:a});
+    this.len += this.speed;
+
+    this.nextNode -= this.speed;
+    if(this.nextNode <= 0 && this.pts.length > 4){
+      this.side *= -1;
+      var hf = false;
+      if(this.flowerCount < this.maxFlowers && this.len > this.maxLen*0.3){
+        if(rand()<0.3){ hf=true; this.flowerCount++; }
+      }
+      this.nodes.push({
+        x:x, y:y, sa:a, side:this.side,
+        ls:0, lm:8+rand()*5, lr:0.04+rand()*0.02, lp:rand()*PI*2,
+        hf:hf, fs:0, fm:16+rand()*8, fr:0.02+rand()*0.01,
+        fh:348+rand()*14, fSwing:0, fSwingV:0
+      });
+      this.nextNode = 20+rand()*14;
+    }
+
+    this.nextBranch -= this.speed;
+    if(this.nextBranch <= 0 && this.childrenSpawned < this.maxChildren && this.depth < 2){
+      this.side *= -1;
+      var bA = PI*0.5 + this.side*(0.08+rand()*0.12);
+      this.children.push(new Branch(x,y,bA,this.depth+1));
+      this.childrenSpawned++;
+      this.nextBranch = this.depth===0 ? 80+rand()*60 : 55+rand()*40;
+    }
+    if(this.len >= this.maxLen) this.done = true;
+  };
+
+  Branch.prototype.isDone = function(){
+    if(!this.done) return false;
+    for(var i=0;i<this.children.length;i++) if(!this.children[i].isDone()) return false;
+    return true;
+  };
+
+  Branch.prototype.draw = function(ctx,t,w,a){
+    if(a<0.01||this.pts.length<2) return;
+    var pL = this.pts.length;
+
+    /* Stem */
+    ctx.beginPath();
+    ctx.moveTo(this.pts[0].x, this.pts[0].y);
+    for(var i=1;i<pL;i++){
+      var p=this.pts[i], wf=(i/pL)*2;
+      ctx.lineTo(p.x + w.x*wf*sin(t*0.3+i*0.02), p.y + w.x*wf*0.08);
+    }
+    // Glow
+    ctx.strokeStyle='rgba(16,185,129,'+(a*0.08)+')';
+    ctx.lineWidth=this.thickness*3;
+    ctx.stroke();
+    // Brown core
+    ctx.strokeStyle='rgba(120,95,55,'+(a*0.3)+')';
+    ctx.lineWidth=this.thickness;
+    ctx.stroke();
+    // Green tint
+    ctx.strokeStyle='rgba(34,197,145,'+(a*0.18)+')';
+    ctx.lineWidth=this.thickness*0.5;
+    ctx.stroke();
+
+    /* Nodes */
+    for(var n=0;n<this.nodes.length;n++){
+      var nd=this.nodes[n];
+      var nI=min(pL-1,Math.round((n/max(1,this.nodes.length))*pL));
+      var nw=w.x*(nI/pL)*2*sin(t*0.3+nI*0.02);
+      var nx=nd.x+nw, ny=nd.y+w.x*(nI/pL)*0.16;
+
+      /* Leaf */
+      if(nd.ls<nd.lm) nd.ls+=nd.lr;
+      var s=nd.ls;
+      if(s>0.5){
+        var drp = nd.sa + nd.side*0.5;
+        drp += (PI*0.5-drp)*0.4;
+        drp += sin(t*0.4+nd.lp)*0.06 + w.x*0.1;
+        ctx.save();
+        ctx.translate(nx,ny);
+        ctx.rotate(drp);
+        // Petiole
+        ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(s*0.3,0);
+        ctx.strokeStyle='rgba(40,150,75,'+(a*0.4)+')'; ctx.lineWidth=0.6; ctx.stroke();
+        // Blade
+        var lw=s*0.35, ll=s*2;
+        ctx.beginPath();
+        ctx.moveTo(s*0.3,0);
+        ctx.quadraticCurveTo(s*0.25,-lw*0.5,s*0.45,-lw*0.35);
+        ctx.bezierCurveTo(s*0.6,-lw,s*1.1,-lw*0.85,s*0.3+ll,0);
+        ctx.bezierCurveTo(s*1.1,lw*0.85,s*0.6,lw,s*0.45,lw*0.35);
+        ctx.quadraticCurveTo(s*0.25,lw*0.5,s*0.3,0);
+        ctx.fillStyle='rgba(22,145,78,'+(a*0.35)+')';
+        ctx.fill();
+        // Midrib
+        ctx.beginPath(); ctx.moveTo(s*0.35,0); ctx.lineTo(s*0.3+ll*0.9,0);
+        ctx.strokeStyle='rgba(35,160,85,'+(a*0.18)+')'; ctx.lineWidth=0.4; ctx.stroke();
+        ctx.restore();
+      }
+
+      /* Flower — hangs straight DOWN */
+      if(!nd.hf) continue;
+      if(nd.fs<nd.fm) nd.fs+=nd.fr;
+      var fs=nd.fs, bloom=min(1,fs/nd.fm);
+      if(fs<1) continue;
+
+      // Pendulum
+      var wF=w.x*0.04*(1+w.gust*0.2);
+      nd.fSwingV += -nd.fSwing*0.03 - nd.fSwingV*0.06 + wF*0.016;
+      nd.fSwing += nd.fSwingV;
+      if(abs(nd.fSwing)>0.15) { nd.fSwing=nd.fSwing>0?0.15:-0.15; nd.fSwingV*=-0.3; }
+
+      var fA = PI*0.5 + nd.fSwing; // ALWAYS down
+
+      ctx.save();
+      ctx.translate(nx,ny);
+      ctx.rotate(fA);
+
+      // Pedicel
+      var ped=9+fs*0.3;
+      ctx.beginPath(); ctx.moveTo(0,0); ctx.quadraticCurveTo(nd.fSwing*2,ped*0.5,0,ped);
+      ctx.strokeStyle='rgba(65,120,50,'+(a*0.45)+')'; ctx.lineWidth=0.8; ctx.stroke();
+
+      // Bracts
+      ctx.fillStyle='rgba(45,110,40,'+(a*0.22)+')';
+      ctx.beginPath(); ctx.ellipse(-1.8,3,1.2,2.5,-0.3,0,PI*2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(1.8,3,1.2,2.5,0.3,0,PI*2); ctx.fill();
+
+      // Bell — hangs down, flares open at tips
+      var by=ped, bw=fs*0.45*bloom, bh=fs*1.8*bloom, fl=bw*1.15;
+
+      // Calyx
+      ctx.fillStyle='rgba(40,105,40,'+(a*0.28*bloom)+')';
+      ctx.beginPath(); ctx.ellipse(0,by+1,bw*0.28,2,0,0,PI*2); ctx.fill();
+
+      // Bell silhouette
+      ctx.beginPath();
+      ctx.moveTo(0,by);
+      ctx.bezierCurveTo(-bw*0.3,by+bh*0.05,-bw*0.6,by+bh*0.2,-bw*0.65,by+bh*0.45);
+      ctx.bezierCurveTo(-bw*0.7,by+bh*0.65,-fl*0.85,by+bh*0.85,-fl,by+bh);
+      ctx.bezierCurveTo(-fl*1.08,by+bh*1.05,-fl*0.7,by+bh*1.07,-fl*0.4,by+bh*1.01);
+      ctx.lineTo(0,by+bh*0.94);
+      ctx.lineTo(fl*0.4,by+bh*1.01);
+      ctx.bezierCurveTo(fl*0.7,by+bh*1.07,fl*1.08,by+bh*1.05,fl,by+bh);
+      ctx.bezierCurveTo(fl*0.85,by+bh*0.85,bw*0.7,by+bh*0.65,bw*0.65,by+bh*0.45);
+      ctx.bezierCurveTo(bw*0.6,by+bh*0.2,bw*0.3,by+bh*0.05,0,by);
+
+      var bg=ctx.createLinearGradient(0,by,0,by+bh*1.07);
+      bg.addColorStop(0,'hsla('+nd.fh+',68%,28%,'+(a*0.55*bloom)+')');
+      bg.addColorStop(0.4,'hsla('+nd.fh+',72%,35%,'+(a*0.6*bloom)+')');
+      bg.addColorStop(0.75,'hsla('+nd.fh+',76%,42%,'+(a*0.55*bloom)+')');
+      bg.addColorStop(1,'hsla('+nd.fh+',70%,50%,'+(a*0.3*bloom)+')');
+      ctx.fillStyle=bg; ctx.fill();
+      ctx.strokeStyle='hsla('+nd.fh+',55%,55%,'+(a*0.1*bloom)+')';
+      ctx.lineWidth=0.3; ctx.stroke();
+
+      // Sheen
+      ctx.beginPath();
+      ctx.moveTo(-bw*0.08,by+bh*0.1);
+      ctx.bezierCurveTo(-bw*0.12,by+bh*0.4,-bw*0.06,by+bh*0.7,-bw*0.15,by+bh*0.95);
+      ctx.strokeStyle='hsla('+nd.fh+',80%,65%,'+(a*0.1*bloom)+')';
+      ctx.lineWidth=0.7; ctx.stroke();
+
+      // Glow
+      if(bloom>0.4){
+        var gr=ctx.createRadialGradient(0,by+bh*0.55,0,0,by+bh*0.55,bh*0.25);
+        gr.addColorStop(0,'hsla('+nd.fh+',80%,55%,'+(a*0.1*bloom)+')');
+        gr.addColorStop(1,'hsla('+nd.fh+',60%,40%,0)');
+        ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(0,by+bh*0.55,bh*0.2,0,PI*2); ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    /* Children */
+    for(var ci=0;ci<this.children.length;ci++) this.children[ci].draw(ctx,t,w,a);
+  };
+
+  /* ── Vine ── */
+  function Vine(x,y,angle){
+    this.root = new Branch(x,y,angle,0);
+    this.opacity = 0;
+    this.fadeOut = false;
+    this.stayTimer = 0;
+  }
+  Vine.prototype.grow = function(){ this._g(this.root); };
+  Vine.prototype._g = function(b){ if(!b.done) b.grow(); for(var i=0;i<b.children.length;i++) this._g(b.children[i]); };
+  Vine.prototype.isDone = function(){ return this.root.isDone(); };
+  Vine.prototype.draw = function(ctx,t,w){ this.root.draw(ctx,t,w,this.opacity); };
+
+  /* ── Lifecycle ── */
+  var vines = [], MAX = 2, delay = 40;
+
+  function spawn(){
+    var x = W*0.05 + rand()*W*0.9;
+    var y = -5;
+    var a = PI*0.5 + (rand()-0.5)*0.1;
+    vines.push(new Vine(x,y,a));
+  }
+  spawn();
+
+  function animate(){
+    ctx.clearRect(0,0,W,H);
+    time += 0.016;
+    updateWind(time);
+    for(var i=vines.length-1;i>=0;i--){
+      var v=vines[i];
+      if(!v.fadeOut && v.opacity<1) v.opacity=min(1,v.opacity+0.005);
+      v.grow();
+      if(v.isDone()&&!v.fadeOut){ v.stayTimer++; if(v.stayTimer>1500) v.fadeOut=true; }
+      if(v.fadeOut){ v.opacity-=0.003; if(v.opacity<=0){vines.splice(i,1);continue;} }
+      v.draw(ctx,time,wind);
+    }
+    if(vines.length<MAX){ delay--; if(delay<=0){ spawn(); delay=500+floor(rand()*400); } }
+    requestAnimationFrame(animate);
+  }
+  animate();
+})();
+</script>
+</body>
+</html>

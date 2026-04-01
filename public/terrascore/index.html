@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>TerraScore v2.0 — Tu Huella Ambiental Personal</title>
+    <meta name="description" content="Calcula tu huella de carbono, huella hídrica y gestión de residuos. Dashboard ambiental personal con puntaje compuesto TerraScore.">
+    <meta property="og:title" content="TerraScore v2.0 — Tu Huella Ambiental Personal">
+    <meta property="og:description" content="Evaluación de impacto ambiental personal. Carbono, agua, residuos — todo en un solo dashboard.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://cussen.cl/terrascore/">
+    <meta property="og:site_name" content="TerraScore">
+    <meta property="og:locale" content="es_CL">
+    <meta name="robots" content="index, follow">
+    <meta name="author" content="CUSSEN">
+    <link rel="canonical" href="https://cussen.cl/terrascore/">
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"TerraScore","description":"Dashboard de evaluación de impacto ambiental personal.","url":"https://cussen.cl/terrascore/","applicationCategory":"UtilitiesApplication","operatingSystem":"All","offers":{"@type":"Offer","price":"0","priceCurrency":"CLP"},"author":{"@type":"Organization","name":"CUSSEN","url":"https://cussen.cl"}}</script>
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0a0e1a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="TerraScore">
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
+    <link rel="apple-touch-icon" href="icon.svg">
+    <!-- Google Analytics 4 -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-TQPW4D67YE"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-TQPW4D67YE', { send_page_view: true, cookie_flags: 'SameSite=None;Secure' });
+    </script>
+    <!-- Fonts & Libs -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="style.css?v=2.0">
+</head>
+<body>
+    <canvas id="particles"></canvas>
+
+    <!-- ============ NAV ============ -->
+    <nav class="top-nav">
+        <div class="nav-brand">
+            <span class="brand-terra">TERRA</span><span class="brand-score">SCORE</span>
+            <span class="nav-version">v2.0</span>
+        </div>
+        <div class="nav-tabs" id="navTabs">
+            <button class="nav-tab active" data-section="resumen">Resumen</button>
+            <button class="nav-tab" data-section="carbono">Carbono</button>
+            <button class="nav-tab" data-section="agua">Agua</button>
+            <button class="nav-tab" data-section="residuos">Residuos</button>
+            <button class="nav-tab" data-section="desafíos">Desafíos</button>
+            <button class="nav-tab" data-section="impacto">Impacto</button>
+        </div>
+    </nav>
+
+    <!-- ============ MAIN ============ -->
+    <main id="appMain">
+
+        <!-- ======== RESUMEN (Overview / TerraScore Index) ======== -->
+        <section id="sec-resumen" class="app-section active">
+            <div class="section-header">
+                <h2>Tu TerraScore</h2>
+                <p class="section-sub">Índice compuesto de impacto ambiental personal (0-100)</p>
+            </div>
+
+            <!-- Animated Gauge -->
+            <div class="gauge-container">
+                <svg class="gauge-svg" viewBox="0 0 300 180">
+                    <defs>
+                        <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#ef4444"/>
+                            <stop offset="25%" stop-color="#f97316"/>
+                            <stop offset="50%" stop-color="#fbbf24"/>
+                            <stop offset="75%" stop-color="#a3e635"/>
+                            <stop offset="100%" stop-color="#00ff88"/>
+                        </linearGradient>
+                    </defs>
+                    <path class="gauge-bg" d="M 30 160 A 120 120 0 0 1 270 160" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="20" stroke-linecap="round"/>
+                    <path class="gauge-fill" id="gaugeFill" d="M 30 160 A 120 120 0 0 1 270 160" fill="none" stroke="url(#gaugeGrad)" stroke-width="20" stroke-linecap="round" stroke-dasharray="0 377"/>
+                    <circle id="gaugeNeedle" cx="150" cy="160" r="6" fill="var(--accent)"/>
+                </svg>
+                <div class="gauge-value">
+                    <span class="gauge-number" id="gaugeNumber">--</span>
+                    <span class="gauge-max">/100</span>
+                </div>
+                <div class="gauge-label" id="gaugeLabel">Calculando...</div>
+            </div>
+
+            <!-- Score Breakdown -->
+            <div class="score-breakdown">
+                <div class="breakdown-item">
+                    <div class="breakdown-icon carbon-icon">CO2</div>
+                    <div class="breakdown-info">
+                        <span class="breakdown-name">Carbono</span>
+                        <span class="breakdown-weight">40%</span>
+                    </div>
+                    <div class="breakdown-bar"><div class="breakdown-bar-fill" id="carbonBar"></div></div>
+                    <span class="breakdown-score" id="carbonScoreDisplay">--</span>
+                </div>
+                <div class="breakdown-item">
+                    <div class="breakdown-icon water-icon">H2O</div>
+                    <div class="breakdown-info">
+                        <span class="breakdown-name">Agua</span>
+                        <span class="breakdown-weight">30%</span>
+                    </div>
+                    <div class="breakdown-bar"><div class="breakdown-bar-fill water" id="waterBar"></div></div>
+                    <span class="breakdown-score" id="waterScoreDisplay">--</span>
+                </div>
+                <div class="breakdown-item">
+                    <div class="breakdown-icon waste-icon">REC</div>
+                    <div class="breakdown-info">
+                        <span class="breakdown-name">Residuos</span>
+                        <span class="breakdown-weight">30%</span>
+                    </div>
+                    <div class="breakdown-bar"><div class="breakdown-bar-fill waste" id="wasteBar"></div></div>
+                    <span class="breakdown-score" id="wasteScoreDisplay">--</span>
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="quick-stats">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalCO2">--</div>
+                    <div class="stat-label">ton CO2e/año</div>
+                    <div class="stat-compare" id="co2Compare"></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalWater">--</div>
+                    <div class="stat-label">L agua/día</div>
+                    <div class="stat-compare" id="waterCompare"></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="recycleRate">--</div>
+                    <div class="stat-label">% reciclaje</div>
+                    <div class="stat-compare" id="recycleCompare"></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="challengePoints">0</div>
+                    <div class="stat-label">puntos eco</div>
+                    <div class="stat-compare">Desafíos completados</div>
+                </div>
+            </div>
+
+            <!-- Trend Chart -->
+            <div class="chart-section">
+                <h3>Evolución de tu TerraScore</h3>
+                <div class="chart-wrap"><canvas id="scoreHistoryChart"></canvas></div>
+            </div>
+        </section>
+
+        <!-- ======== CARBONO (Carbon Footprint Calculator) ======== -->
+        <section id="sec-carbono" class="app-section">
+            <div class="section-header">
+                <h2>Huella de Carbono</h2>
+                <p class="section-sub">Calcula tus emisiones anuales de CO2 equivalente</p>
+            </div>
+
+            <!-- Transport -->
+            <div class="calc-card">
+                <div class="calc-card-header">
+                    <span class="calc-icon">&#128663;</span>
+                    <h3>Transporte</h3>
+                </div>
+                <div class="calc-fields">
+                    <div class="field-group">
+                        <label for="kmWeek">Km conducidos por semana</label>
+                        <input type="number" id="kmWeek" min="0" max="5000" value="0" step="10">
+                    </div>
+                    <div class="field-group">
+                        <label for="carType">Tipo de vehículo</label>
+                        <select id="carType">
+                            <option value="none">No tengo auto</option>
+                            <option value="gasoline">Gasolina</option>
+                            <option value="diesel">Diesel</option>
+                            <option value="hybrid">Híbrido</option>
+                            <option value="electric">Eléctrico</option>
+                        </select>
+                    </div>
+                    <div class="field-group">
+                        <label for="flightsYear">Vuelos por año (ida y vuelta)</label>
+                        <input type="number" id="flightsYear" min="0" max="100" value="0">
+                    </div>
+                    <div class="field-group">
+                        <label for="publicTransport">Uso transporte público (días/semana)</label>
+                        <input type="number" id="publicTransport" min="0" max="7" value="0">
+                    </div>
+                </div>
+                <div class="calc-result">
+                    <span class="result-label">Emisión transporte:</span>
+                    <span class="result-value" id="transportCO2">0.00 ton CO2e/año</span>
+                </div>
+            </div>
+
+            <!-- Home Energy -->
+            <div class="calc-card">
+                <div class="calc-card-header">
+                    <span class="calc-icon">&#127968;</span>
+                    <h3>Hogar y Energía</h3>
+                </div>
+                <div class="calc-fields">
+                    <div class="field-group">
+                        <label for="electricityKwh">Electricidad (kWh/mes)</label>
+                        <input type="number" id="electricityKwh" min="0" max="10000" value="0" step="10">
+                    </div>
+                    <div class="field-group">
+                        <label for="gasM3">Gas natural (m3/mes)</label>
+                        <input type="number" id="gasM3" min="0" max="1000" value="0" step="1">
+                    </div>
+                    <div class="field-group">
+                        <label for="heatingType">Tipo de calefacción</label>
+                        <select id="heatingType">
+                            <option value="none">Sin calefacción</option>
+                            <option value="electric">Eléctrica</option>
+                            <option value="gas">Gas</option>
+                            <option value="wood">Leña</option>
+                            <option value="kerosene">Parafina/Kerosene</option>
+                            <option value="pellet">Pellet</option>
+                        </select>
+                    </div>
+                    <div class="field-group">
+                        <label for="heatingMonths">Meses de uso calefacción</label>
+                        <input type="number" id="heatingMonths" min="0" max="12" value="0">
+                    </div>
+                </div>
+                <div class="calc-result">
+                    <span class="result-label">Emisión hogar:</span>
+                    <span class="result-value" id="homeCO2">0.00 ton CO2e/año</span>
+                </div>
+            </div>
+
+            <!-- Food -->
+            <div class="calc-card">
+                <div class="calc-card-header">
+                    <span class="calc-icon">&#127869;</span>
+                    <h3>Alimentación</h3>
+                </div>
+                <div class="calc-fields">
+                    <div class="field-group">
+                        <label for="dietType">Tipo de dieta</label>
+                        <select id="dietType">
+                            <option value="omnivore">Omnívora (incluye carne roja)</option>
+                            <option value="lowmeat">Baja en carne (pollo/pescado)</option>
+                            <option value="vegetarian">Vegetariana</option>
+                            <option value="vegan">Vegana</option>
+                        </select>
+                    </div>
+                    <div class="field-group">
+                        <label for="foodWaste">Desperdicio de alimentos (%)</label>
+                        <input type="range" id="foodWaste" min="0" max="50" value="15">
+                        <span class="range-value" id="foodWasteVal">15%</span>
+                    </div>
+                    <div class="field-group">
+                        <label for="localFood">Compras en ferias/locales (%)</label>
+                        <input type="range" id="localFood" min="0" max="100" value="30">
+                        <span class="range-value" id="localFoodVal">30%</span>
+                    </div>
+                </div>
+                <div class="calc-result">
+                    <span class="result-label">Emisión alimentación:</span>
+                    <span class="result-value" id="foodCO2">0.00 ton CO2e/año</span>
+                </div>
+            </div>
+
+            <!-- Carbon Summary -->
+            <div class="summary-card carbon-summary">
+                <h3>Resumen de Huella de Carbono</h3>
+                <div class="summary-total">
+                    <span class="summary-number" id="totalCarbonSummary">0.00</span>
+                    <span class="summary-unit">ton CO2e / año</span>
+                </div>
+                <div class="comparison-bars">
+                    <div class="comp-bar-row">
+                        <span class="comp-label">Tu huella</span>
+                        <div class="comp-bar-track"><div class="comp-bar-value yours" id="yourCarbonBar"></div></div>
+                        <span class="comp-val" id="yourCarbonVal">0.0</span>
+                    </div>
+                    <div class="comp-bar-row">
+                        <span class="comp-label">Promedio Chile</span>
+                        <div class="comp-bar-track"><div class="comp-bar-value chile" id="chileCarbonBar"></div></div>
+                        <span class="comp-val">4.7</span>
+                    </div>
+                    <div class="comp-bar-row">
+                        <span class="comp-label">Promedio mundial</span>
+                        <div class="comp-bar-track"><div class="comp-bar-value world" id="worldCarbonBar"></div></div>
+                        <span class="comp-val">4.8</span>
+                    </div>
+                </div>
+                <div class="chart-wrap"><canvas id="carbonBreakdownChart"></canvas></div>
+            </div>
+        </section>
+
+        <!-- ======== AGUA (Water Footprint) ======== -->
+        <section id="sec-agua" class="app-section">
+            <div class="section-header">
+                <h2>Huella Hídrica</h2>
+                <p class="section-sub">Estima tu consumo diario de agua y compáralo con el promedio chileno</p>
+            </div>
+
+            <div class="calc-card">
+                <div class="calc-card-header">
+                    <span class="calc-icon">&#128703;</span>
+                    <h3>Uso Diario de Agua</h3>
+                </div>
+                <div class="calc-fields">
+                    <div class="field-group">
+                        <label for="showerMin">Duración ducha (minutos)</label>
+                        <input type="number" id="showerMin" min="0" max="60" value="8">
+                    </div>
+                    <div class="field-group">
+                        <label for="showersDay">Duchas por día</label>
+                        <input type="number" id="showersDay" min="0" max="5" value="1">
+                    </div>
+                    <div class="field-group">
+                        <label for="laundryWeek">Lavados de ropa por semana</label>
+                        <input type="number" id="laundryWeek" min="0" max="20" value="3">
+                    </div>
+                    <div class="field-group">
+                        <label for="dishwashing">Lavados de loza al día</label>
+                        <select id="dishwashing">
+                            <option value="hand-low">A mano, poco</option>
+                            <option value="hand-high">A mano, mucho</option>
+                            <option value="machine">Lavavajillas</option>
+                        </select>
+                    </div>
+                    <div class="field-group">
+                        <label for="gardenMin">Riego jardín (minutos/día)</label>
+                        <input type="number" id="gardenMin" min="0" max="120" value="0">
+                    </div>
+                    <div class="field-group">
+                        <label for="toiletFlushes">Descargas WC por día</label>
+                        <input type="number" id="toiletFlushes" min="0" max="20" value="5">
+                    </div>
+                    <div class="field-group">
+                        <label for="toiletType">Tipo de WC</label>
+                        <select id="toiletType">
+                            <option value="old">Antiguo (12 L)</option>
+                            <option value="standard">Estándar (6 L)</option>
+                            <option value="dual">Doble descarga (3/6 L)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Water Summary -->
+            <div class="summary-card water-summary">
+                <h3>Consumo Diario Estimado</h3>
+                <div class="summary-total">
+                    <span class="summary-number" id="totalWaterSummary">0</span>
+                    <span class="summary-unit">litros / día</span>
+                </div>
+                <div class="comparison-bars">
+                    <div class="comp-bar-row">
+                        <span class="comp-label">Tu consumo</span>
+                        <div class="comp-bar-track"><div class="comp-bar-value yours" id="yourWaterBar"></div></div>
+                        <span class="comp-val" id="yourWaterVal">0</span>
+                    </div>
+                    <div class="comp-bar-row">
+                        <span class="comp-label">Promedio Chile</span>
+                        <div class="comp-bar-track"><div class="comp-bar-value chile" id="chileWaterBar"></div></div>
+                        <span class="comp-val">170</span>
+                    </div>
+                </div>
+                <div class="chart-wrap"><canvas id="waterBreakdownChart"></canvas></div>
+            </div>
+
+            <!-- Monthly Water Trend -->
+            <div class="chart-section">
+                <h3>Tendencia Mensual de Agua</h3>
+                <div class="chart-wrap"><canvas id="waterTrendChart"></canvas></div>
+                <button class="btn-secondary" id="logWaterBtn">Registrar consumo de hoy</button>
+            </div>
+        </section>
+
+        <!-- ======== RESIDUOS (Waste Management Tracker) ======== -->
+        <section id="sec-residuos" class="app-section">
+            <div class="section-header">
+                <h2>Gestión de Residuos</h2>
+                <p class="section-sub">Registra tus residuos semanales y mejora tu tasa de reciclaje</p>
+            </div>
+
+            <div class="calc-card">
+                <div class="calc-card-header">
+                    <span class="calc-icon">&#9851;</span>
+                    <h3>Registro Semanal</h3>
+                </div>
+                <div class="calc-fields">
+                    <div class="field-group">
+                        <label for="wasteRecycling">Reciclaje (kg/semana)</label>
+                        <input type="number" id="wasteRecycling" min="0" max="100" value="0" step="0.5">
+                    </div>
+                    <div class="field-group">
+                        <label for="wasteOrganic">Orgánico/compost (kg/semana)</label>
+                        <input type="number" id="wasteOrganic" min="0" max="100" value="0" step="0.5">
+                    </div>
+                    <div class="field-group">
+                        <label for="wasteGeneral">Basura general (kg/semana)</label>
+                        <input type="number" id="wasteGeneral" min="0" max="100" value="0" step="0.5">
+                    </div>
+                </div>
+                <button class="btn-primary" id="logWasteBtn">Registrar semana</button>
+            </div>
+
+            <!-- Waste Summary -->
+            <div class="summary-card waste-summary">
+                <h3>Tasa de Reciclaje</h3>
+                <div class="recycle-gauge">
+                    <svg viewBox="0 0 200 200" class="recycle-ring">
+                        <circle cx="100" cy="100" r="80" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="16"/>
+                        <circle cx="100" cy="100" r="80" fill="none" stroke="var(--green)" stroke-width="16" stroke-dasharray="0 502.65" stroke-linecap="round" id="recycleRing" transform="rotate(-90 100 100)"/>
+                    </svg>
+                    <div class="recycle-center">
+                        <span id="recyclePercent">0%</span>
+                    </div>
+                </div>
+                <div class="waste-breakdown-labels">
+                    <span class="waste-label recycling-label">Reciclaje: <b id="wasteRecyclingTotal">0</b> kg</span>
+                    <span class="waste-label organic-label">Orgánico: <b id="wasteOrganicTotal">0</b> kg</span>
+                    <span class="waste-label general-label">General: <b id="wasteGeneralTotal">0</b> kg</span>
+                </div>
+            </div>
+
+            <!-- Monthly Waste Chart -->
+            <div class="chart-section">
+                <h3>Historial Mensual de Residuos</h3>
+                <div class="chart-wrap"><canvas id="wasteHistoryChart"></canvas></div>
+            </div>
+        </section>
+
+        <!-- ======== DESAFÍOS (Eco-Challenges) ======== -->
+        <section id="sec-desafíos" class="app-section">
+            <div class="section-header">
+                <h2>Eco-Desafíos</h2>
+                <p class="section-sub">Completa desafíos mensuales y gana puntos por un planeta mejor</p>
+            </div>
+
+            <div class="points-banner">
+                <div class="points-display">
+                    <span class="points-number" id="totalPoints">0</span>
+                    <span class="points-label">puntos acumulados</span>
+                </div>
+                <div class="points-level" id="ecoLevel">Nivel: Semilla</div>
+            </div>
+
+            <div class="challenges-grid" id="challengesGrid">
+                <!-- Generated by JS -->
+            </div>
+
+            <div class="challenges-history">
+                <h3>Historial de Puntos</h3>
+                <div class="chart-wrap"><canvas id="pointsChart"></canvas></div>
+            </div>
+        </section>
+
+        <!-- ======== IMPACTO (Impact Comparison) ======== -->
+        <section id="sec-impacto" class="app-section">
+            <div class="section-header">
+                <h2>Tu Impacto Multiplicado</h2>
+                <p class="section-sub">Si todos en Chile hicieran lo que tú...</p>
+            </div>
+
+            <div class="impact-cards" id="impactCards">
+                <!-- Generated by JS -->
+            </div>
+
+            <div class="equivalences-section">
+                <h3>Equivalencias de tu huella</h3>
+                <div class="equiv-grid" id="equivGrid">
+                    <!-- Generated by JS -->
+                </div>
+            </div>
+
+            <div class="tips-section">
+                <h3>Consejos para mejorar tu TerraScore</h3>
+                <div class="tips-list" id="tipsList">
+                    <!-- Generated by JS -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Toast -->
+    <div id="toast" class="toast hidden"></div>
+
+    <!-- Install prompt -->
+    <div class="install-prompt hidden" id="installPrompt">
+        <button id="installBtn" class="install-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Instalar App
+        </button>
+    </div>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        <p class="footer-main">TerraScore v2.0 &mdash; Tu Huella Ambiental Personal &mdash; <a href="https://cussen.cl" target="_blank">cussen.cl</a></p>
+        <p class="footer-sub">Datos basados en factores de emisión del Ministerio de Medio Ambiente de Chile, IPCC y OMS.</p>
+        <a href="https://cussen.cl" class="footer-link">Ver todos los proyectos CUSSEN &rarr;</a>
+    </footer>
+
+    <script src="app.js?v=2.0"></script>
+</body>
+</html>

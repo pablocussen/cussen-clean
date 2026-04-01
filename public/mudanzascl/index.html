@@ -1,0 +1,2245 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#3730a3">
+    <meta name="description" content="MudanzasCL - Gestión profesional de mudanzas residenciales en Chile">
+    <title>MudanzasCL - Sistema de Mudanzas</title>
+    <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22MudanzasCL%22,%22short_name%22:%22MudanzasCL%22,%22start_url%22:%22/%22,%22display%22:%22standalone%22,%22theme_color%22:%22%233730a3%22,%22background_color%22:%22%23ffffff%22}">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%233730a3' width='192' height='192'/><text x='50%' y='50%' font-size='120' font-weight='bold' fill='%23fff' text-anchor='middle' dominant-baseline='middle'>M</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #3730a3;
+            --primary-light: #4f46e5;
+            --primary-lighter: #818cf8;
+            --sky: #e0f2fe;
+            --sky-dark: #0284c7;
+            --success: #16a34a;
+            --warning: #ea580c;
+            --danger: #dc2626;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+        }
+
+        html, body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: #ffffff;
+            color: var(--gray-800);
+            height: 100%;
+            width: 100%;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            font-size: 16px;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            padding: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        header h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        header p {
+            font-size: 0.875rem;
+            opacity: 0.9;
+            margin-top: 0.25rem;
+        }
+
+        main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            overflow-x: auto;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--gray-200);
+        }
+
+        .tab-btn {
+            padding: 0.75rem 1.25rem;
+            border: none;
+            background: transparent;
+            color: var(--gray-600);
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.95rem;
+            white-space: nowrap;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .tab-btn:hover {
+            color: var(--primary);
+        }
+
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--gray-700);
+            font-size: 0.95rem;
+        }
+
+        input, textarea, select {
+            padding: 0.75rem;
+            border: 2px solid var(--gray-200);
+            border-radius: 0.5rem;
+            font-family: 'Inter', system-ui, sans-serif;
+            font-size: 16px;
+            transition: border-color 0.2s ease;
+            background: white;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(55, 48, 163, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-light);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(55, 48, 163, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--gray-200);
+            color: var(--gray-800);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-300);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #15803d;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+
+        .btn-small {
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid var(--gray-100);
+            padding-bottom: 1rem;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+
+        .card-subtitle {
+            font-size: 0.875rem;
+            color: var(--gray-500);
+            margin-top: 0.25rem;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.375rem 0.75rem;
+            border-radius: 0.375rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .badge-primary {
+            background: rgba(55, 48, 163, 0.1);
+            color: var(--primary);
+        }
+
+        .badge-success {
+            background: rgba(22, 163, 74, 0.1);
+            color: var(--success);
+        }
+
+        .badge-warning {
+            background: rgba(234, 88, 12, 0.1);
+            color: var(--warning);
+        }
+
+        .badge-danger {
+            background: rgba(220, 38, 38, 0.1);
+            color: var(--danger);
+        }
+
+        .text-small {
+            font-size: 0.85rem;
+            color: var(--gray-500);
+        }
+
+        .mt-1 { margin-top: 0.5rem; }
+        .mt-2 { margin-top: 1rem; }
+        .mb-1 { margin-bottom: 0.5rem; }
+        .mb-2 { margin-bottom: 1rem; }
+        .p-1 { padding: 0.5rem; }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .stat-box {
+            background: linear-gradient(135deg, var(--sky) 0%, rgba(224, 242, 254, 0.5) 100%);
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            border-left: 4px solid var(--primary);
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--gray-600);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .divider {
+            height: 1px;
+            background: var(--gray-200);
+            margin: 1.5rem 0;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid var(--gray-100);
+            padding-bottom: 1rem;
+        }
+
+        .modal-header h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--gray-500);
+        }
+
+        .modal-close:hover {
+            color: var(--gray-800);
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .alert-success {
+            background: rgba(22, 163, 74, 0.1);
+            color: var(--success);
+            border: 1px solid rgba(22, 163, 74, 0.2);
+        }
+
+        .alert-danger {
+            background: rgba(220, 38, 38, 0.1);
+            color: var(--danger);
+            border: 1px solid rgba(220, 38, 38, 0.2);
+        }
+
+        .alert-info {
+            background: rgba(55, 48, 163, 0.1);
+            color: var(--primary);
+            border: 1px solid rgba(55, 48, 163, 0.2);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 2rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--gray-500);
+        }
+
+        .empty-state h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+            color: var(--gray-700);
+        }
+
+        .inventory-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+
+        .inventory-item {
+            background: var(--gray-50);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border-left: 4px solid var(--primary);
+        }
+
+        .inventory-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .inventory-item-name {
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+        .inventory-item-qty {
+            background: var(--primary);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.375rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .inventory-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+        }
+
+        .team-member {
+            background: var(--gray-50);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .team-member-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .team-member-name {
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+        .team-member-role {
+            font-size: 0.85rem;
+            color: var(--gray-500);
+        }
+
+        .rating {
+            display: flex;
+            gap: 0.25rem;
+            margin-top: 0.5rem;
+        }
+
+        .star {
+            color: #fbbf24;
+            font-size: 1rem;
+        }
+
+        .star.empty {
+            color: var(--gray-300);
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            margin-bottom: 1rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: var(--gray-100);
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--gray-700);
+            border-bottom: 2px solid var(--gray-200);
+        }
+
+        td {
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        tr:hover {
+            background: var(--gray-50);
+        }
+
+        .footer {
+            padding: 1.5rem;
+            text-align: center;
+            color: var(--gray-500);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--gray-200);
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.5rem;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-content {
+                padding: 1.5rem;
+                width: 95%;
+            }
+
+            main {
+                padding: 0.75rem;
+            }
+
+            .card {
+                padding: 1rem;
+            }
+
+            .tabs {
+                gap: 0.25rem;
+                margin-bottom: 1rem;
+            }
+
+            .tab-btn {
+                padding: 0.625rem 0.875rem;
+                font-size: 0.85rem;
+            }
+        }
+
+        .search-box {
+            margin-bottom: 1.5rem;
+        }
+
+        .search-box input {
+            width: 100%;
+        }
+
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            border: 1px solid var(--gray-200);
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .list-item:hover {
+            background: var(--gray-50);
+            border-color: var(--primary);
+        }
+
+        .list-item-content {
+            flex: 1;
+        }
+
+        .list-item-title {
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+        .list-item-subtitle {
+            font-size: 0.85rem;
+            color: var(--gray-500);
+            margin-top: 0.25rem;
+        }
+
+        .list-item-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .row-rooms {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .room-card {
+            background: var(--sky);
+            border: 2px solid var(--primary);
+            border-radius: 0.5rem;
+            padding: 1rem;
+        }
+
+        .room-card-title {
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 0.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .room-items {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .room-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            background: white;
+            border-radius: 0.375rem;
+            font-size: 0.9rem;
+        }
+
+        .room-item-qty {
+            background: var(--primary);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .help-text {
+            font-size: 0.8rem;
+            color: var(--gray-500);
+            margin-top: 0.25rem;
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        input[type="checkbox"] {
+            width: 1.25rem;
+            height: 1.25rem;
+            cursor: pointer;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--gray-800);
+            margin: 1.5rem 0 1rem 0;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 0.5rem;
+        }
+
+        .success-message {
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>📦 MudanzasCL</h1>
+        <p>Sistema de Gestión de Mudanzas Residenciales</p>
+    </header>
+
+    <main>
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="mudanzas">Mudanzas</button>
+            <button class="tab-btn" data-tab="cotizador">Cotizador</button>
+            <button class="tab-btn" data-tab="embalaje">Embalaje</button>
+            <button class="tab-btn" data-tab="equipo">Equipo</button>
+            <button class="tab-btn" data-tab="finanzas">Finanzas</button>
+            <button class="tab-btn" data-tab="clientes">Clientes</button>
+        </div>
+
+        <!-- TAB 1: MUDANZAS -->
+        <div id="mudanzas" class="tab-content active">
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="openMudanzaModal()">+ Nueva Mudanza</button>
+                <button class="btn btn-secondary" onclick="exportMudanzasCSV()">Descargar CSV</button>
+            </div>
+
+            <div class="search-box">
+                <input type="text" id="mudanzasSearch" placeholder="Buscar por cliente, origen o destino...">
+            </div>
+
+            <div id="mudanzasList"></div>
+
+            <div id="mudanzasEmpty" class="empty-state" style="display: none;">
+                <h3>📦 Sin mudanzas registradas</h3>
+                <p>Comienza creando una nueva mudanza</p>
+            </div>
+        </div>
+
+        <!-- TAB 2: COTIZADOR -->
+        <div id="cotizador" class="tab-content">
+            <div class="card">
+                <h2 class="card-title">Cotizador de Mudanzas</h2>
+                <p class="card-subtitle">Calcula el precio estimado de una mudanza</p>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Ciudad Origen</label>
+                        <select id="cotCiudadOrigen">
+                            <option value="">Selecciona ciudad...</option>
+                            <option>Santiago</option>
+                            <option>Valparaíso</option>
+                            <option>Viña del Mar</option>
+                            <option>Concepción</option>
+                            <option>Temuco</option>
+                            <option>Puerto Montt</option>
+                            <option>La Serena</option>
+                            <option>Coquimbo</option>
+                            <option>Vallenar</option>
+                            <option>Copiapó</option>
+                            <option>Ovalle</option>
+                            <option>Curicó</option>
+                            <option>Talca</option>
+                            <option>Linares</option>
+                            <option>Chillan</option>
+                            <option>Los Ángeles</option>
+                            <option>Osorno</option>
+                            <option>Puerto Varas</option>
+                            <option>Punta Arenas</option>
+                            <option>Coyhaique</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Ciudad Destino</label>
+                        <select id="cotCiudadDestino">
+                            <option value="">Selecciona ciudad...</option>
+                            <option>Santiago</option>
+                            <option>Valparaíso</option>
+                            <option>Viña del Mar</option>
+                            <option>Concepción</option>
+                            <option>Temuco</option>
+                            <option>Puerto Montt</option>
+                            <option>La Serena</option>
+                            <option>Coquimbo</option>
+                            <option>Vallenar</option>
+                            <option>Copiapó</option>
+                            <option>Ovalle</option>
+                            <option>Curicó</option>
+                            <option>Talca</option>
+                            <option>Linares</option>
+                            <option>Chillan</option>
+                            <option>Los Ángeles</option>
+                            <option>Osorno</option>
+                            <option>Puerto Varas</option>
+                            <option>Punta Arenas</option>
+                            <option>Coyhaique</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Volumen Estimado (m³)</label>
+                        <input type="number" id="cotVolumen" min="1" max="100" value="10" step="0.5">
+                        <div class="help-text">Estima: 1-5m³ apartamento, 5-15m³ casa, 15-30m³ casa grande</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Acceso a Destino</label>
+                        <select id="cotAcceso">
+                            <option value="escaleras">Escaleras</option>
+                            <option value="ascensor" selected>Ascensor</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Cantidad de Ayudantes</label>
+                        <input type="number" id="cotAyudantes" min="2" max="6" value="2">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Piso/Altura Origen</label>
+                        <input type="number" id="cotPisoOrigen" min="0" max="30" value="0">
+                    </div>
+                </div>
+
+                <div class="checkbox-group">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="cotFragil">
+                        <label for="cotFragil">Incluye artículos frágiles (+15%)</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="cotSeguro">
+                        <label for="cotSeguro">Incluye seguro (+5%)</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="cotEmbalaje">
+                        <label for="cotEmbalaje">Servicio de embalaje completo (+30%)</label>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="calcularCotizacion()" style="margin-top: 1.5rem; width: 100%;">Calcular Cotización</button>
+
+                <div id="cotizacionResultado"></div>
+            </div>
+        </div>
+
+        <!-- TAB 3: EMBALAJE -->
+        <div id="embalaje" class="tab-content">
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="openEmbalaje()">+ Registrar Material</button>
+            </div>
+
+            <div class="inventory-grid" id="embalajeList"></div>
+
+            <div id="embalajeEmpty" class="empty-state" style="display: none;">
+                <h3>📦 Sin materiales registrados</h3>
+                <p>Comienza agregando materiales de embalaje</p>
+            </div>
+        </div>
+
+        <!-- TAB 4: EQUIPO -->
+        <div id="equipo" class="tab-content">
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="openEquipoModal()">+ Agregar Miembro</button>
+            </div>
+
+            <div id="equipoList"></div>
+
+            <div id="equipoEmpty" class="empty-state" style="display: none;">
+                <h3>👥 Sin miembros del equipo</h3>
+                <p>Comienza agregando trabajadores</p>
+            </div>
+        </div>
+
+        <!-- TAB 5: FINANZAS -->
+        <div id="finanzas" class="tab-content">
+            <div class="grid-2">
+                <div class="stat-box">
+                    <div class="stat-label">Ingresos Totales</div>
+                    <div class="stat-value" id="totalIngresos">$0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Costos Totales</div>
+                    <div class="stat-value" id="totalCostos">$0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Margen Total</div>
+                    <div class="stat-value" id="margenTotal">$0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Margen %</div>
+                    <div class="stat-value" id="margenPorcentaje">0%</div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <canvas id="chartIngresos"></canvas>
+            </div>
+
+            <div class="card">
+                <h2 class="card-title">Detalle por Mudanza</h2>
+                <div class="table-responsive">
+                    <table id="tablaMudanzasFinanzas">
+                        <thead>
+                            <tr>
+                                <th>Cliente</th>
+                                <th>Ingresos</th>
+                                <th>Costos</th>
+                                <th>Margen</th>
+                                <th>%</th>
+                            </tr>
+                        </thead>
+                        <tbody id="finanzasTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 6: CLIENTES -->
+        <div id="clientes" class="tab-content">
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="openClienteModal()">+ Nuevo Cliente</button>
+            </div>
+
+            <div class="search-box">
+                <input type="text" id="clientesSearch" placeholder="Buscar cliente...">
+            </div>
+
+            <div id="clientesList"></div>
+
+            <div id="clientesEmpty" class="empty-state" style="display: none;">
+                <h3>👤 Sin clientes registrados</h3>
+                <p>Comienza agregando nuevos clientes</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODALES -->
+    <div id="mudanzaModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="mudanzaModalTitle">Nueva Mudanza</h2>
+                <button class="modal-close" onclick="closeMudanzaModal()">&times;</button>
+            </div>
+            <div id="mudanzaModalAlert"></div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Cliente</label>
+                    <input type="text" id="mudClienteNombre" placeholder="Nombre del cliente">
+                </div>
+                <div class="form-group">
+                    <label>Teléfono</label>
+                    <input type="tel" id="mudTelefono" placeholder="Ej: +56912345678">
+                </div>
+                <div class="form-group">
+                    <label>Correo</label>
+                    <input type="email" id="mudCorreo" placeholder="cliente@email.com">
+                </div>
+                <div class="form-group">
+                    <label>Tipo de Vivienda Origen</label>
+                    <select id="mudTipoOrigen">
+                        <option value="casa">Casa</option>
+                        <option value="depto">Departamento</option>
+                        <option value="piso">Piso</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Dirección Origen</label>
+                    <input type="text" id="mudDirOrigen" placeholder="Calle y número">
+                </div>
+                <div class="form-group">
+                    <label>Ciudad Origen</label>
+                    <input type="text" id="mudCiudadOrigen" placeholder="Ciudad">
+                </div>
+                <div class="form-group">
+                    <label>Tipo de Vivienda Destino</label>
+                    <select id="mudTipoDestino">
+                        <option value="casa">Casa</option>
+                        <option value="depto">Departamento</option>
+                        <option value="piso">Piso</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Dirección Destino</label>
+                    <input type="text" id="mudDirDestino" placeholder="Calle y número">
+                </div>
+                <div class="form-group">
+                    <label>Ciudad Destino</label>
+                    <input type="text" id="mudCiudadDestino" placeholder="Ciudad">
+                </div>
+                <div class="form-group">
+                    <label>Fecha de Mudanza</label>
+                    <input type="date" id="mudFecha">
+                </div>
+                <div class="form-group">
+                    <label>Volumen Estimado (m³)</label>
+                    <input type="number" id="mudVolumen" min="1" max="100" value="10" step="0.5">
+                </div>
+                <div class="form-group">
+                    <label>Precio Cotizado ($)</label>
+                    <input type="number" id="mudPrecio" min="0" value="0">
+                </div>
+            </div>
+
+            <div class="section-title">Inventario por Habitación</div>
+
+            <div class="row-rooms">
+                <div class="room-card">
+                    <div class="room-card-title">
+                        Livingcomedor
+                        <span class="room-item-qty" id="livingCount">0</span>
+                    </div>
+                    <div class="room-items">
+                        <div class="room-item">
+                            <span>Sofá</span>
+                            <input type="number" class="livingQty" data-item="sofá" min="0" value="0" style="width: 60px; padding: 0.25rem;">
+                        </div>
+                        <div class="room-item">
+                            <span>Mesa</span>
+                            <input type="number" class="livingQty" data-item="mesa" min="0" value="0" style="width: 60px; padding: 0.25rem;">
+                        </div>
+                        <div class="room-item">
+                            <span>Sillas</span>
+                            <input type="number" class="livingQty" data-item="sillas" min="0" value="0" style="width: 60px; padding: 0.25rem;">
+                        </div>
+                        <div class="room-item">
+                            <span>TV</span>
+                            <input type="number" class="livingQty" data-item="tv" min="0" value="0" style="width: 60px; padding: 0.25rem;">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="room-card">
+                    <div class="room-card-title">
+                        Dormitorio
+                        <span class="room-item-qty" id="dormCount">0</span>
+                    </div>
+                    <div class="room-items">
+                        <div class="room-item">
+                            <span>Cama</span>
+                            <input type="number" class="dormQty" data-item="cama" min="0" value="0" style="width: 60px; padding: 0.25rem;">
+                        </div>
+                        <div class="room-item">
+                            <span>Escritorio</span>
+                            <input type="number" class="dormQty" data-item="escritorio" min="0" value="0" style="width: 60px; padding: 0.25rem;">
+                        </div>
+                        <div class="room-item">
+                            <span>Closet</span>
+                            <input type="number" class="dormQty" data-item="closet" min="0" value="0" style="width: 60px; padding: 0.25rem;">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="room-card">
+                    <div class="room-card-title">
+                        Cocina
+                        <span class="room-item-qty" id="cocCount">0</span>
+                    </div>
+                    <div class="room-items">
+                        <div class="room-item">
+                            <span>Refrigerador</span>
+                            <input type="number" class="cocQty" data-item="refrigerador" min="0" value="0" style="width: 60px; padding: 0.25rem;">
+                        </div>
+                        <div class="room-item">
+                            <span>Lavadora</span>
+                            <input type="number" class="cocQty" data-item="lavadora" min="0" value="0" style="width: 60px; padding: 0.25rem;">
+                        </div>
+                        <div class="room-item">
+                            <span>Muebles</span>
+                            <input type="number" class="cocQty" data-item="muebles" min="0" value="0" style="width: 60px; padding: 0.25rem;">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="room-card">
+                    <div class="room-card-title">
+                        Baño
+                        <span class="room-item-qty" id="banoCount">0</span>
+                    </div>
+                    <div class="room-items">
+                        <div class="room-item">
+                            <span>Muebles</span>
+                            <input type="number" class="banoQty" data-item="muebles" min="0" value="0" style="width: 60px; padding: 0.25rem;">
+                        </div>
+                        <div class="room-item">
+                            <span>Espejo</span>
+                            <input type="number" class="banoQty" data-item="espejo" min="0" value="0" style="width: 60px; padding: 0.25rem;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-title">Artículos Especiales</div>
+            <div class="checkbox-group">
+                <div class="checkbox-item">
+                    <input type="checkbox" id="mudPiano">
+                    <label for="mudPiano">Piano</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="mudCajaFuerte">
+                    <label for="mudCajaFuerte">Caja fuerte</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="mudObraArte">
+                    <label for="mudObraArte">Obra de arte/Cuadros</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="mudSeguro">
+                    <label for="mudSeguro">Requiere seguro</label>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 1.5rem;">
+                <label>Notas Adicionales</label>
+                <textarea id="mudNotas" placeholder="Acceso restringido, escaleras estrechas, etc."></textarea>
+            </div>
+
+            <div class="btn-group" style="margin-top: 1.5rem;">
+                <button class="btn btn-primary" onclick="guardarMudanza()" style="flex: 1;">Guardar Mudanza</button>
+                <button class="btn btn-secondary" onclick="closeMudanzaModal()" style="flex: 1;">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="embalajeModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Registrar Material de Embalaje</h2>
+                <button class="modal-close" onclick="closeEmbalajeModal()">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>Tipo de Material</label>
+                <select id="embMaterial">
+                    <option value="caja-chica">Cajas Chicas</option>
+                    <option value="caja-mediana">Cajas Medianas</option>
+                    <option value="caja-grande">Cajas Grandes</option>
+                    <option value="papel-kraft">Papel Kraft</option>
+                    <option value="plastico-burbuja">Plástico Burbuja</option>
+                    <option value="cinta">Cinta de Embalaje</option>
+                    <option value="film-stretch">Film Stretch</option>
+                    <option value="mantas-protectoras">Mantas Protectoras</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Stock Disponible</label>
+                <input type="number" id="embStock" min="0" value="0">
+            </div>
+            <div class="form-group">
+                <label>Costo Unitario ($)</label>
+                <input type="number" id="embCosto" min="0" value="0">
+            </div>
+            <div class="form-group">
+                <label>Notas</label>
+                <textarea id="embNotas" placeholder="Proveedor, lote, etc."></textarea>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="guardarEmbalaje()" style="flex: 1;">Guardar</button>
+                <button class="btn btn-secondary" onclick="closeEmbalajeModal()" style="flex: 1;">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="equipoModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Agregar Miembro del Equipo</h2>
+                <button class="modal-close" onclick="closeEquipoModal()">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>Nombre</label>
+                <input type="text" id="equipoNombre" placeholder="Nombre completo">
+            </div>
+            <div class="form-group">
+                <label>Rol/Puesto</label>
+                <select id="equipoRol">
+                    <option value="cargador">Cargador</option>
+                    <option value="conductor">Conductor</option>
+                    <option value="embalador">Embalador</option>
+                    <option value="supervisor">Supervisor</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Teléfono</label>
+                <input type="tel" id="equipoTelefono" placeholder="+56912345678">
+            </div>
+            <div class="form-group">
+                <label>Disponibilidad (días de la semana)</label>
+                <div class="checkbox-group">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="equipoLun" checked>
+                        <label for="equipoLun">Lunes</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="equipoMar" checked>
+                        <label for="equipoMar">Martes</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="equipoMie" checked>
+                        <label for="equipoMie">Miércoles</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="equipoJue" checked>
+                        <label for="equipoJue">Jueves</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="equipoVie" checked>
+                        <label for="equipoVie">Viernes</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="equipoSab" checked>
+                        <label for="equipoSab">Sábado</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="equipoDom">
+                        <label for="equipoDom">Domingo</label>
+                    </div>
+                </div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="guardarEquipo()" style="flex: 1;">Guardar</button>
+                <button class="btn btn-secondary" onclick="closeEquipoModal()" style="flex: 1;">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="clienteModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="clienteModalTitle">Nuevo Cliente</h2>
+                <button class="modal-close" onclick="closeClienteModal()">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>Nombre</label>
+                <input type="text" id="clienteNombre" placeholder="Nombre completo">
+            </div>
+            <div class="form-group">
+                <label>Teléfono</label>
+                <input type="tel" id="clienteTelefono" placeholder="+56912345678">
+            </div>
+            <div class="form-group">
+                <label>Correo</label>
+                <input type="email" id="clienteCorreo" placeholder="cliente@email.com">
+            </div>
+            <div class="form-group">
+                <label>Ciudad Actual</label>
+                <input type="text" id="clienteCiudad" placeholder="Santiago">
+            </div>
+            <div class="form-group">
+                <label>Dirección</label>
+                <input type="text" id="clienteDireccion" placeholder="Calle y número">
+            </div>
+            <div class="form-group">
+                <label>Notas</label>
+                <textarea id="clienteNotas" placeholder="Información adicional..."></textarea>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="guardarCliente()" style="flex: 1;">Guardar</button>
+                <button class="btn btn-secondary" onclick="closeClienteModal()" style="flex: 1;">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>© 2026 MudanzasCL - Sistema de Gestión de Mudanzas | Datos sincronizados localmente</p>
+    </footer>
+
+    <script>
+        // ===== STORAGE & INIT =====
+        const STORAGE_KEYS = {
+            mudanzas: 'mudanzascl_mudanzas',
+            embalaje: 'mudanzascl_embalaje',
+            equipo: 'mudanzascl_equipo',
+            clientes: 'mudanzascl_clientes',
+        };
+
+        function safeStorage(action, key, data = null) {
+            try {
+                if (action === 'get') {
+                    const stored = localStorage.getItem(key);
+                    return stored ? JSON.parse(stored) : [];
+                }
+                if (action === 'set') {
+                    localStorage.setItem(key, JSON.stringify(data));
+                    return true;
+                }
+            } catch (e) {
+                console.warn('Storage error:', e);
+                return action === 'get' ? [] : false;
+            }
+        }
+
+        let mudanzas = safeStorage('get', STORAGE_KEYS.mudanzas);
+        let embalaje = safeStorage('get', STORAGE_KEYS.embalaje);
+        let equipo = safeStorage('get', STORAGE_KEYS.equipo);
+        let clientes = safeStorage('get', STORAGE_KEYS.clientes);
+
+        // ===== TAB SWITCHING =====
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tabName = btn.dataset.tab;
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById(tabName).classList.add('active');
+
+                if (tabName === 'finanzas') {
+                    setTimeout(() => renderFinanzas(), 100);
+                }
+            });
+        });
+
+        // ===== MUDANZAS TAB =====
+        function openMudanzaModal() {
+            document.getElementById('mudanzaModalTitle').textContent = 'Nueva Mudanza';
+            document.getElementById('mudanzaModal').classList.add('active');
+            clearMudanzaForm();
+            editingMudanzaId = null;
+        }
+
+        function closeMudanzaModal() {
+            document.getElementById('mudanzaModal').classList.remove('active');
+        }
+
+        function clearMudanzaForm() {
+            document.getElementById('mudClienteNombre').value = '';
+            document.getElementById('mudTelefono').value = '';
+            document.getElementById('mudCorreo').value = '';
+            document.getElementById('mudTipoOrigen').value = 'casa';
+            document.getElementById('mudDirOrigen').value = '';
+            document.getElementById('mudCiudadOrigen').value = '';
+            document.getElementById('mudTipoDestino').value = 'casa';
+            document.getElementById('mudDirDestino').value = '';
+            document.getElementById('mudCiudadDestino').value = '';
+            document.getElementById('mudFecha').value = '';
+            document.getElementById('mudVolumen').value = 10;
+            document.getElementById('mudPrecio').value = 0;
+            document.getElementById('mudPiano').checked = false;
+            document.getElementById('mudCajaFuerte').checked = false;
+            document.getElementById('mudObraArte').checked = false;
+            document.getElementById('mudSeguro').checked = false;
+            document.getElementById('mudNotas').value = '';
+            document.querySelectorAll('[class$="Qty"]').forEach(input => input.value = 0);
+            updateRoomCounts();
+        }
+
+        function updateRoomCounts() {
+            const livingCount = ['sofá', 'mesa', 'sillas', 'tv'].reduce((sum, item) => {
+                const val = document.querySelector(`.livingQty[data-item="${item}"]`)?.value || 0;
+                return sum + parseInt(val);
+            }, 0);
+            document.getElementById('livingCount').textContent = livingCount;
+
+            const dormCount = ['cama', 'escritorio', 'closet'].reduce((sum, item) => {
+                const val = document.querySelector(`.dormQty[data-item="${item}"]`)?.value || 0;
+                return sum + parseInt(val);
+            }, 0);
+            document.getElementById('dormCount').textContent = dormCount;
+
+            const cocCount = ['refrigerador', 'lavadora', 'muebles'].reduce((sum, item) => {
+                const val = document.querySelector(`.cocQty[data-item="${item}"]`)?.value || 0;
+                return sum + parseInt(val);
+            }, 0);
+            document.getElementById('cocCount').textContent = cocCount;
+
+            const banoCount = ['muebles', 'espejo'].reduce((sum, item) => {
+                const val = document.querySelector(`.banoQty[data-item="${item}"]`)?.value || 0;
+                return sum + parseInt(val);
+            }, 0);
+            document.getElementById('banoCount').textContent = banoCount;
+        }
+
+        document.addEventListener('change', (e) => {
+            if (e.target.classList.contains('livingQty') ||
+                e.target.classList.contains('dormQty') ||
+                e.target.classList.contains('cocQty') ||
+                e.target.classList.contains('banoQty')) {
+                updateRoomCounts();
+            }
+        });
+
+        let editingMudanzaId = null;
+
+        function guardarMudanza() {
+            const nombre = document.getElementById('mudClienteNombre').value.trim();
+            const telefono = document.getElementById('mudTelefono').value.trim();
+            const fecha = document.getElementById('mudFecha').value;
+
+            if (!nombre || !telefono || !fecha) {
+                showAlert('mudanzaModalAlert', 'Por favor completa los campos obligatorios', 'danger');
+                return;
+            }
+
+            const inventory = {
+                living: {
+                    sofá: parseInt(document.querySelector('.livingQty[data-item="sofá"]').value) || 0,
+                    mesa: parseInt(document.querySelector('.livingQty[data-item="mesa"]').value) || 0,
+                    sillas: parseInt(document.querySelector('.livingQty[data-item="sillas"]').value) || 0,
+                    tv: parseInt(document.querySelector('.livingQty[data-item="tv"]').value) || 0,
+                },
+                dormitorio: {
+                    cama: parseInt(document.querySelector('.dormQty[data-item="cama"]').value) || 0,
+                    escritorio: parseInt(document.querySelector('.dormQty[data-item="escritorio"]').value) || 0,
+                    closet: parseInt(document.querySelector('.dormQty[data-item="closet"]').value) || 0,
+                },
+                cocina: {
+                    refrigerador: parseInt(document.querySelector('.cocQty[data-item="refrigerador"]').value) || 0,
+                    lavadora: parseInt(document.querySelector('.cocQty[data-item="lavadora"]').value) || 0,
+                    muebles: parseInt(document.querySelector('.cocQty[data-item="muebles"]').value) || 0,
+                },
+                baño: {
+                    muebles: parseInt(document.querySelector('.banoQty[data-item="muebles"]').value) || 0,
+                    espejo: parseInt(document.querySelector('.banoQty[data-item="espejo"]').value) || 0,
+                }
+            };
+
+            const mudanza = {
+                id: editingMudanzaId || Date.now(),
+                cliente: nombre,
+                telefono,
+                correo: document.getElementById('mudCorreo').value,
+                origen: {
+                    tipo: document.getElementById('mudTipoOrigen').value,
+                    direccion: document.getElementById('mudDirOrigen').value,
+                    ciudad: document.getElementById('mudCiudadOrigen').value,
+                },
+                destino: {
+                    tipo: document.getElementById('mudTipoDestino').value,
+                    direccion: document.getElementById('mudDirDestino').value,
+                    ciudad: document.getElementById('mudCiudadDestino').value,
+                },
+                fecha,
+                volumen: parseFloat(document.getElementById('mudVolumen').value) || 0,
+                precio: parseFloat(document.getElementById('mudPrecio').value) || 0,
+                inventory,
+                especiales: {
+                    piano: document.getElementById('mudPiano').checked,
+                    cajaFuerte: document.getElementById('mudCajaFuerte').checked,
+                    obraArte: document.getElementById('mudObraArte').checked,
+                    seguro: document.getElementById('mudSeguro').checked,
+                },
+                notas: document.getElementById('mudNotas').value,
+                createdAt: editingMudanzaId ? mudanzas.find(m => m.id === editingMudanzaId)?.createdAt || new Date().toISOString() : new Date().toISOString(),
+                status: 'programada',
+                costos: {
+                    combustible: 0,
+                    peajes: 0,
+                    personal: 0,
+                    materiales: 0,
+                }
+            };
+
+            if (editingMudanzaId) {
+                mudanzas = mudanzas.map(m => m.id === editingMudanzaId ? mudanza : m);
+            } else {
+                mudanzas.push(mudanza);
+            }
+
+            safeStorage('set', STORAGE_KEYS.mudanzas, mudanzas);
+            showAlert('mudanzaModalAlert', 'Mudanza guardada exitosamente', 'success');
+            setTimeout(() => {
+                closeMudanzaModal();
+                renderMudanzas();
+            }, 1000);
+        }
+
+        function renderMudanzas() {
+            const list = document.getElementById('mudanzasList');
+            const search = document.getElementById('mudanzasSearch')?.value.toLowerCase() || '';
+
+            const filtered = mudanzas.filter(m =>
+                m.cliente.toLowerCase().includes(search) ||
+                m.origen.ciudad.toLowerCase().includes(search) ||
+                m.destino.ciudad.toLowerCase().includes(search)
+            ).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+            if (filtered.length === 0) {
+                list.innerHTML = '';
+                document.getElementById('mudanzasEmpty').style.display = 'block';
+                return;
+            }
+
+            document.getElementById('mudanzasEmpty').style.display = 'none';
+            list.innerHTML = filtered.map(m => `
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">${m.cliente}</div>
+                            <div class="card-subtitle">
+                                ${m.origen.ciudad} → ${m.destino.ciudad} | ${formatDate(m.fecha)}
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <span class="badge badge-primary">${m.status}</span>
+                        </div>
+                    </div>
+                    <div class="grid-2">
+                        <div>
+                            <div class="text-small" style="color: var(--gray-600); font-weight: 600;">Origen</div>
+                            <div class="text-small">${m.origen.tipo} - ${m.origen.direccion}</div>
+                        </div>
+                        <div>
+                            <div class="text-small" style="color: var(--gray-600); font-weight: 600;">Destino</div>
+                            <div class="text-small">${m.destino.tipo} - ${m.destino.direccion}</div>
+                        </div>
+                        <div>
+                            <div class="text-small" style="color: var(--gray-600); font-weight: 600;">Volumen</div>
+                            <div class="text-small">${m.volumen}m³</div>
+                        </div>
+                        <div>
+                            <div class="text-small" style="color: var(--gray-600); font-weight: 600;">Cotización</div>
+                            <div class="text-small">${formatCurrency(m.precio)}</div>
+                        </div>
+                    </div>
+                    <div class="divider"></div>
+                    <div style="margin-bottom: 1rem;">
+                        <div class="text-small" style="color: var(--gray-600); font-weight: 600; margin-bottom: 0.5rem;">Contacto</div>
+                        <div class="text-small">${m.telefono} | ${m.correo}</div>
+                    </div>
+                    ${m.especiales.piano || m.especiales.cajaFuerte || m.especiales.obraArte || m.especiales.seguro ? `
+                    <div style="margin-bottom: 1rem;">
+                        <div class="text-small" style="color: var(--gray-600); font-weight: 600; margin-bottom: 0.5rem;">Artículos Especiales</div>
+                        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                            ${m.especiales.piano ? '<span class="badge badge-warning">Piano</span>' : ''}
+                            ${m.especiales.cajaFuerte ? '<span class="badge badge-warning">Caja Fuerte</span>' : ''}
+                            ${m.especiales.obraArte ? '<span class="badge badge-warning">Obra de Arte</span>' : ''}
+                            ${m.especiales.seguro ? '<span class="badge badge-danger">Requiere Seguro</span>' : ''}
+                        </div>
+                    </div>
+                    ` : ''}
+                    <div class="btn-group">
+                        <button class="btn btn-primary btn-small" onclick="editarMudanza(${m.id})">Editar</button>
+                        <button class="btn btn-danger btn-small" onclick="eliminarMudanza(${m.id})">Eliminar</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function editarMudanza(id) {
+            const mudanza = mudanzas.find(m => m.id === id);
+            if (!mudanza) return;
+
+            editingMudanzaId = id;
+            document.getElementById('mudanzaModalTitle').textContent = 'Editar Mudanza';
+            document.getElementById('mudClienteNombre').value = mudanza.cliente;
+            document.getElementById('mudTelefono').value = mudanza.telefono;
+            document.getElementById('mudCorreo').value = mudanza.correo;
+            document.getElementById('mudTipoOrigen').value = mudanza.origen.tipo;
+            document.getElementById('mudDirOrigen').value = mudanza.origen.direccion;
+            document.getElementById('mudCiudadOrigen').value = mudanza.origen.ciudad;
+            document.getElementById('mudTipoDestino').value = mudanza.destino.tipo;
+            document.getElementById('mudDirDestino').value = mudanza.destino.direccion;
+            document.getElementById('mudCiudadDestino').value = mudanza.destino.ciudad;
+            document.getElementById('mudFecha').value = mudanza.fecha;
+            document.getElementById('mudVolumen').value = mudanza.volumen;
+            document.getElementById('mudPrecio').value = mudanza.precio;
+            document.getElementById('mudPiano').checked = mudanza.especiales.piano;
+            document.getElementById('mudCajaFuerte').checked = mudanza.especiales.cajaFuerte;
+            document.getElementById('mudObraArte').checked = mudanza.especiales.obraArte;
+            document.getElementById('mudSeguro').checked = mudanza.especiales.seguro;
+            document.getElementById('mudNotas').value = mudanza.notas;
+
+            document.querySelector('.livingQty[data-item="sofá"]').value = mudanza.inventory.living.sofá;
+            document.querySelector('.livingQty[data-item="mesa"]').value = mudanza.inventory.living.mesa;
+            document.querySelector('.livingQty[data-item="sillas"]').value = mudanza.inventory.living.sillas;
+            document.querySelector('.livingQty[data-item="tv"]').value = mudanza.inventory.living.tv;
+            document.querySelector('.dormQty[data-item="cama"]').value = mudanza.inventory.dormitorio.cama;
+            document.querySelector('.dormQty[data-item="escritorio"]').value = mudanza.inventory.dormitorio.escritorio;
+            document.querySelector('.dormQty[data-item="closet"]').value = mudanza.inventory.dormitorio.closet;
+            document.querySelector('.cocQty[data-item="refrigerador"]').value = mudanza.inventory.cocina.refrigerador;
+            document.querySelector('.cocQty[data-item="lavadora"]').value = mudanza.inventory.cocina.lavadora;
+            document.querySelector('.cocQty[data-item="muebles"]').value = mudanza.inventory.cocina.muebles;
+            document.querySelector('.banoQty[data-item="muebles"]').value = mudanza.inventory.baño.muebles;
+            document.querySelector('.banoQty[data-item="espejo"]').value = mudanza.inventory.baño.espejo;
+
+            updateRoomCounts();
+            document.getElementById('mudanzaModal').classList.add('active');
+        }
+
+        function eliminarMudanza(id) {
+            if (!confirm('¿Estás seguro de que deseas eliminar esta mudanza?')) return;
+            mudanzas = mudanzas.filter(m => m.id !== id);
+            safeStorage('set', STORAGE_KEYS.mudanzas, mudanzas);
+            renderMudanzas();
+        }
+
+        document.getElementById('mudanzasSearch')?.addEventListener('input', renderMudanzas);
+
+        function exportMudanzasCSV() {
+            if (mudanzas.length === 0) {
+                alert('No hay mudanzas para exportar');
+                return;
+            }
+
+            let csv = 'Cliente,Teléfono,Correo,Origen,Destino,Fecha,Volumen (m³),Precio,Estado\n';
+            mudanzas.forEach(m => {
+                csv += `"${m.cliente}","${m.telefono}","${m.correo}","${m.origen.ciudad}","${m.destino.ciudad}","${m.fecha}","${m.volumen}","${m.precio}","${m.status}"\n`;
+            });
+
+            downloadCSV(csv, 'mudanzas.csv');
+        }
+
+        // ===== COTIZADOR =====
+        const CHILE_DISTANCES = {
+            'Santiago-Valparaíso': 120,
+            'Santiago-Viña del Mar': 140,
+            'Santiago-Concepción': 520,
+            'Santiago-Temuco': 670,
+            'Santiago-Puerto Montt': 1050,
+            'Santiago-La Serena': 480,
+            'Valparaíso-Viña del Mar': 20,
+            'Concepción-Temuco': 400,
+        };
+
+        function getDistance(origen, destino) {
+            if (origen === destino) return 0;
+            const key1 = `${origen}-${destino}`;
+            const key2 = `${destino}-${origen}`;
+            return CHILE_DISTANCES[key1] || CHILE_DISTANCES[key2] || 200;
+        }
+
+        function calcularCotizacion() {
+            const origen = document.getElementById('cotCiudadOrigen').value;
+            const destino = document.getElementById('cotCiudadDestino').value;
+            const volumen = parseFloat(document.getElementById('cotVolumen').value) || 0;
+            const acceso = document.getElementById('cotAcceso').value;
+            const ayudantes = parseInt(document.getElementById('cotAyudantes').value) || 2;
+            const pisoOrigen = parseInt(document.getElementById('cotPisoOrigen').value) || 0;
+
+            if (!origen || !destino) {
+                document.getElementById('cotizacionResultado').innerHTML = '<div class="alert alert-danger">Por favor selecciona origen y destino</div>';
+                return;
+            }
+
+            const distancia = getDistance(origen, destino);
+            let basePrice = 80000;
+
+            // Costo por distancia
+            const costoPorKm = Math.max(100, 200 - (volumen * 5));
+            const costoDist = distancia * costoPorKm;
+
+            // Costo por volumen
+            const costoVolumen = volumen * 15000;
+
+            // Costo por ayudantes
+            const costoAyudantes = ayudantes * 25000;
+
+            // Recargo por escaleras
+            let recargoEscaleras = acceso === 'escaleras' ? costoVolumen * 0.20 : 0;
+
+            // Recargo piso origen
+            recargoEscaleras += pisoOrigen > 3 ? (pisoOrigen * 5000) : 0;
+
+            // Subtotal
+            let subtotal = basePrice + costoDist + costoVolumen + costoAyudantes + recargoEscaleras;
+
+            // Recargos adicionales
+            const recargFragil = document.getElementById('cotFragil').checked ? subtotal * 0.15 : 0;
+            const recargSeguro = document.getElementById('cotSeguro').checked ? subtotal * 0.05 : 0;
+            const recargEmbalaje = document.getElementById('cotEmbalaje').checked ? subtotal * 0.30 : 0;
+
+            const total = subtotal + recargFragil + recargSeguro + recargEmbalaje;
+
+            const html = `
+                <div class="divider" style="margin-top: 2rem; margin-bottom: 1rem;"></div>
+                <div class="alert alert-success">
+                    <div style="font-weight: 700; font-size: 1.25rem;">Cotización: ${formatCurrency(total)}</div>
+                </div>
+                <div class="grid-2">
+                    <div>
+                        <div class="text-small" style="color: var(--gray-600); font-weight: 600;">Precio Base</div>
+                        <div>${formatCurrency(basePrice)}</div>
+                    </div>
+                    <div>
+                        <div class="text-small" style="color: var(--gray-600); font-weight: 600;">Costo Distancia (${distancia}km)</div>
+                        <div>${formatCurrency(costoDist)}</div>
+                    </div>
+                    <div>
+                        <div class="text-small" style="color: var(--gray-600); font-weight: 600;">Costo Volumen (${volumen}m³)</div>
+                        <div>${formatCurrency(costoVolumen)}</div>
+                    </div>
+                    <div>
+                        <div class="text-small" style="color: var(--gray-600); font-weight: 600;">Costo Personal (${ayudantes} personas)</div>
+                        <div>${formatCurrency(costoAyudantes)}</div>
+                    </div>
+                    ${acceso === 'escaleras' || pisoOrigen > 3 ? `
+                    <div>
+                        <div class="text-small" style="color: var(--gray-600); font-weight: 600;">Recargo Acceso</div>
+                        <div>${formatCurrency(recargoEscaleras)}</div>
+                    </div>
+                    ` : ''}
+                    ${document.getElementById('cotFragil').checked ? `
+                    <div>
+                        <div class="text-small" style="color: var(--gray-600); font-weight: 600;">Recargo Frágiles</div>
+                        <div>${formatCurrency(recargFragil)}</div>
+                    </div>
+                    ` : ''}
+                    ${document.getElementById('cotSeguro').checked ? `
+                    <div>
+                        <div class="text-small" style="color: var(--gray-600); font-weight: 600;">Seguro</div>
+                        <div>${formatCurrency(recargSeguro)}</div>
+                    </div>
+                    ` : ''}
+                    ${document.getElementById('cotEmbalaje').checked ? `
+                    <div>
+                        <div class="text-small" style="color: var(--gray-600); font-weight: 600;">Embalaje Completo</div>
+                        <div>${formatCurrency(recargEmbalaje)}</div>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+
+            document.getElementById('cotizacionResultado').innerHTML = html;
+        }
+
+        // ===== EMBALAJE TAB =====
+        function openEmbalaje() {
+            document.getElementById('embalajeModal').classList.add('active');
+            document.getElementById('embMaterial').value = 'caja-chica';
+            document.getElementById('embStock').value = 0;
+            document.getElementById('embCosto').value = 0;
+            document.getElementById('embNotas').value = '';
+        }
+
+        function closeEmbalajeModal() {
+            document.getElementById('embalajeModal').classList.remove('active');
+        }
+
+        function guardarEmbalaje() {
+            const material = document.getElementById('embMaterial').value;
+            const stock = parseInt(document.getElementById('embStock').value) || 0;
+            const costo = parseFloat(document.getElementById('embCosto').value) || 0;
+            const notas = document.getElementById('embNotas').value;
+
+            if (!material || stock < 0) {
+                alert('Por favor completa los campos requeridos');
+                return;
+            }
+
+            const exists = embalaje.find(e => e.material === material);
+            if (exists) {
+                exists.stock = stock;
+                exists.costo = costo;
+                exists.notas = notas;
+            } else {
+                embalaje.push({
+                    id: Date.now(),
+                    material,
+                    stock,
+                    costo,
+                    notas,
+                    createdAt: new Date().toISOString(),
+                });
+            }
+
+            safeStorage('set', STORAGE_KEYS.embalaje, embalaje);
+            closeEmbalajeModal();
+            renderEmbalaje();
+        }
+
+        function renderEmbalaje() {
+            const list = document.getElementById('embalajeList');
+
+            if (embalaje.length === 0) {
+                list.innerHTML = '';
+                document.getElementById('embalajeEmpty').style.display = 'block';
+                return;
+            }
+
+            document.getElementById('embalajeEmpty').style.display = 'none';
+            list.innerHTML = embalaje.map(e => {
+                const costTotal = e.stock * e.costo;
+                return `
+                    <div class="inventory-item">
+                        <div class="inventory-item-header">
+                            <div class="inventory-item-name">${getMaterialName(e.material)}</div>
+                            <div class="inventory-item-qty">${e.stock} ud</div>
+                        </div>
+                        <div class="text-small">Costo unitario: ${formatCurrency(e.costo)}</div>
+                        <div class="text-small" style="margin-top: 0.5rem; font-weight: 600;">Costo total: ${formatCurrency(costTotal)}</div>
+                        ${e.notas ? `<div class="text-small" style="margin-top: 0.5rem; color: var(--gray-600);">📝 ${e.notas}</div>` : ''}
+                        <div class="inventory-actions">
+                            <button class="btn btn-secondary btn-small" onclick="editarEmbalaje(${e.id})">Editar</button>
+                            <button class="btn btn-danger btn-small" onclick="eliminarEmbalaje(${e.id})">Eliminar</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getMaterialName(material) {
+            const names = {
+                'caja-chica': 'Cajas Chicas',
+                'caja-mediana': 'Cajas Medianas',
+                'caja-grande': 'Cajas Grandes',
+                'papel-kraft': 'Papel Kraft',
+                'plastico-burbuja': 'Plástico Burbuja',
+                'cinta': 'Cinta de Embalaje',
+                'film-stretch': 'Film Stretch',
+                'mantas-protectoras': 'Mantas Protectoras',
+            };
+            return names[material] || material;
+        }
+
+        function editarEmbalaje(id) {
+            const item = embalaje.find(e => e.id === id);
+            if (!item) return;
+
+            document.getElementById('embMaterial').value = item.material;
+            document.getElementById('embStock').value = item.stock;
+            document.getElementById('embCosto').value = item.costo;
+            document.getElementById('embNotas').value = item.notas;
+
+            embalaje = embalaje.filter(e => e.id !== id);
+            safeStorage('set', STORAGE_KEYS.embalaje, embalaje);
+
+            document.getElementById('embalajeModal').classList.add('active');
+        }
+
+        function eliminarEmbalaje(id) {
+            embalaje = embalaje.filter(e => e.id !== id);
+            safeStorage('set', STORAGE_KEYS.embalaje, embalaje);
+            renderEmbalaje();
+        }
+
+        // ===== EQUIPO TAB =====
+        function openEquipoModal() {
+            document.getElementById('equipoModal').classList.add('active');
+            document.getElementById('equipoNombre').value = '';
+            document.getElementById('equipoRol').value = 'cargador';
+            document.getElementById('equipoTelefono').value = '';
+            document.getElementById('equipoLun').checked = true;
+            document.getElementById('equipoMar').checked = true;
+            document.getElementById('equipoMie').checked = true;
+            document.getElementById('equipoJue').checked = true;
+            document.getElementById('equipoVie').checked = true;
+            document.getElementById('equipoSab').checked = true;
+            document.getElementById('equipoDom').checked = false;
+        }
+
+        function closeEquipoModal() {
+            document.getElementById('equipoModal').classList.remove('active');
+        }
+
+        function guardarEquipo() {
+            const nombre = document.getElementById('equipoNombre').value.trim();
+            const rol = document.getElementById('equipoRol').value;
+            const telefono = document.getElementById('equipoTelefono').value.trim();
+
+            if (!nombre || !telefono) {
+                alert('Por favor completa los campos requeridos');
+                return;
+            }
+
+            const disponibilidad = {
+                lun: document.getElementById('equipoLun').checked,
+                mar: document.getElementById('equipoMar').checked,
+                mie: document.getElementById('equipoMie').checked,
+                jue: document.getElementById('equipoJue').checked,
+                vie: document.getElementById('equipoVie').checked,
+                sab: document.getElementById('equipoSab').checked,
+                dom: document.getElementById('equipoDom').checked,
+            };
+
+            equipo.push({
+                id: Date.now(),
+                nombre,
+                rol,
+                telefono,
+                disponibilidad,
+                rating: 5,
+                mudanzasCompletadas: 0,
+                createdAt: new Date().toISOString(),
+            });
+
+            safeStorage('set', STORAGE_KEYS.equipo, equipo);
+            closeEquipoModal();
+            renderEquipo();
+        }
+
+        function renderEquipo() {
+            const list = document.getElementById('equipoList');
+
+            if (equipo.length === 0) {
+                list.innerHTML = '';
+                document.getElementById('equipoEmpty').style.display = 'block';
+                return;
+            }
+
+            document.getElementById('equipoEmpty').style.display = 'none';
+            list.innerHTML = equipo.map(e => {
+                const diasDisp = Object.values(e.disponibilidad).filter(Boolean).length;
+                return `
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <div class="card-title">${e.nombre}</div>
+                                <div class="card-subtitle">${getRolName(e.rol)}</div>
+                            </div>
+                            <div class="rating">
+                                ${Array(5).fill(0).map((_, i) => `<span class="star ${i < e.rating ? '' : 'empty'}">★</span>`).join('')}
+                            </div>
+                        </div>
+                        <div class="grid-2">
+                            <div>
+                                <div class="text-small" style="color: var(--gray-600); font-weight: 600;">Teléfono</div>
+                                <div class="text-small">${e.telefono}</div>
+                            </div>
+                            <div>
+                                <div class="text-small" style="color: var(--gray-600); font-weight: 600;">Disponibilidad</div>
+                                <div class="text-small">${diasDisp}/7 días</div>
+                            </div>
+                            <div>
+                                <div class="text-small" style="color: var(--gray-600); font-weight: 600;">Mudanzas Completadas</div>
+                                <div class="text-small">${e.mudanzasCompletadas}</div>
+                            </div>
+                        </div>
+                        <div class="divider"></div>
+                        <div class="text-small" style="margin-bottom: 0.75rem;">
+                            <strong>Disponible:</strong>
+                            ${['lun', 'mar', 'mie', 'jue', 'vie', 'sab', 'dom'].map(d =>
+                                e.disponibilidad[d] ? getDayName(d) : null
+                            ).filter(Boolean).join(', ')}
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn btn-danger btn-small" onclick="eliminarEquipo(${e.id})">Eliminar</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getRolName(rol) {
+            const roles = {
+                'cargador': 'Cargador',
+                'conductor': 'Conductor',
+                'embalador': 'Embalador',
+                'supervisor': 'Supervisor',
+            };
+            return roles[rol] || rol;
+        }
+
+        function getDayName(day) {
+            const days = {
+                'lun': 'Lun',
+                'mar': 'Mar',
+                'mie': 'Mié',
+                'jue': 'Jue',
+                'vie': 'Vie',
+                'sab': 'Sáb',
+                'dom': 'Dom',
+            };
+            return days[day] || day;
+        }
+
+        function eliminarEquipo(id) {
+            equipo = equipo.filter(e => e.id !== id);
+            safeStorage('set', STORAGE_KEYS.equipo, equipo);
+            renderEquipo();
+        }
+
+        // ===== FINANZAS TAB =====
+        function renderFinanzas() {
+            let totalIngresos = 0;
+            let totalCostos = 0;
+
+            const financiasData = mudanzas.map(m => {
+                const ingresos = m.precio;
+                const costos = (m.costos?.combustible || 0) + (m.costos?.peajes || 0) + (m.costos?.personal || 0) + (m.costos?.materiales || 0);
+                const margen = ingresos - costos;
+                const porcentaje = ingresos > 0 ? ((margen / ingresos) * 100).toFixed(1) : 0;
+
+                totalIngresos += ingresos;
+                totalCostos += costos;
+
+                return { cliente: m.cliente, ingresos, costos, margen, porcentaje };
+            });
+
+            const margenTotal = totalIngresos - totalCostos;
+            const margenPorcentaje = totalIngresos > 0 ? ((margenTotal / totalIngresos) * 100).toFixed(1) : 0;
+
+            document.getElementById('totalIngresos').textContent = formatCurrency(totalIngresos);
+            document.getElementById('totalCostos').textContent = formatCurrency(totalCostos);
+            document.getElementById('margenTotal').textContent = formatCurrency(margenTotal);
+            document.getElementById('margenPorcentaje').textContent = margenPorcentaje + '%';
+
+            const tbody = document.getElementById('finanzasTableBody');
+            tbody.innerHTML = financiasData.map(d => `
+                <tr>
+                    <td>${d.cliente}</td>
+                    <td>${formatCurrency(d.ingresos)}</td>
+                    <td>${formatCurrency(d.costos)}</td>
+                    <td>${formatCurrency(d.margen)}</td>
+                    <td>${d.porcentaje}%</td>
+                </tr>
+            `).join('');
+
+            // Chart
+            const ctx = document.getElementById('chartIngresos');
+            if (ctx && mudanzas.length > 0) {
+                const labels = mudanzas.slice(0, 12).map(m => m.cliente);
+                const ingressData = mudanzas.slice(0, 12).map(m => m.precio);
+                const costData = mudanzas.slice(0, 12).map(m => (m.costos?.combustible || 0) + (m.costos?.peajes || 0) + (m.costos?.personal || 0) + (m.costos?.materiales || 0));
+
+                if (window.ingresosChart) {
+                    window.ingresosChart.destroy();
+                }
+
+                window.ingresosChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels,
+                        datasets: [
+                            {
+                                label: 'Ingresos',
+                                data: ingressData,
+                                backgroundColor: '#3730a3',
+                                borderColor: '#3730a3',
+                                borderWidth: 1,
+                            },
+                            {
+                                label: 'Costos',
+                                data: costData,
+                                backgroundColor: '#dc2626',
+                                borderColor: '#dc2626',
+                                borderWidth: 1,
+                            },
+                        ],
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: true, position: 'top' },
+                        },
+                        scales: {
+                            y: { beginAtZero: true },
+                        },
+                    },
+                });
+            }
+        }
+
+        // ===== CLIENTES TAB =====
+        function openClienteModal() {
+            document.getElementById('clienteModalTitle').textContent = 'Nuevo Cliente';
+            document.getElementById('clienteModal').classList.add('active');
+            clearClienteForm();
+        }
+
+        function closeClienteModal() {
+            document.getElementById('clienteModal').classList.remove('active');
+        }
+
+        function clearClienteForm() {
+            document.getElementById('clienteNombre').value = '';
+            document.getElementById('clienteTelefono').value = '';
+            document.getElementById('clienteCorreo').value = '';
+            document.getElementById('clienteCiudad').value = '';
+            document.getElementById('clienteDireccion').value = '';
+            document.getElementById('clienteNotas').value = '';
+        }
+
+        function guardarCliente() {
+            const nombre = document.getElementById('clienteNombre').value.trim();
+            const telefono = document.getElementById('clienteTelefono').value.trim();
+            const ciudad = document.getElementById('clienteCiudad').value.trim();
+
+            if (!nombre || !telefono || !ciudad) {
+                alert('Por favor completa los campos obligatorios');
+                return;
+            }
+
+            clientes.push({
+                id: Date.now(),
+                nombre,
+                telefono,
+                correo: document.getElementById('clienteCorreo').value,
+                ciudad,
+                direccion: document.getElementById('clienteDireccion').value,
+                notas: document.getElementById('clienteNotas').value,
+                rating: 5,
+                mudanzasRealizadas: 0,
+                montoTotalGastado: 0,
+                createdAt: new Date().toISOString(),
+            });
+
+            safeStorage('set', STORAGE_KEYS.clientes, clientes);
+            closeClienteModal();
+            renderClientes();
+        }
+
+        function renderClientes() {
+            const list = document.getElementById('clientesList');
+            const search = document.getElementById('clientesSearch')?.value.toLowerCase() || '';
+
+            const filtered = clientes.filter(c =>
+                c.nombre.toLowerCase().includes(search) ||
+                c.ciudad.toLowerCase().includes(search) ||
+                c.telefono.includes(search)
+            ).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+            if (filtered.length === 0) {
+                list.innerHTML = '';
+                document.getElementById('clientesEmpty').style.display = 'block';
+                return;
+            }
+
+            document.getElementById('clientesEmpty').style.display = 'none';
+            list.innerHTML = filtered.map(c => {
+                const clienteMudanzas = mudanzas.filter(m => m.cliente === c.nombre);
+                const montoTotal = clienteMudanzas.reduce((sum, m) => sum + m.precio, 0);
+
+                return `
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <div class="card-title">${c.nombre}</div>
+                                <div class="card-subtitle">${c.ciudad}</div>
+                            </div>
+                            <div class="rating">
+                                ${Array(5).fill(0).map((_, i) => `<span class="star ${i < c.rating ? '' : 'empty'}">★</span>`).join('')}
+                            </div>
+                        </div>
+                        <div class="grid-2">
+                            <div>
+                                <div class="text-small" style="color: var(--gray-600); font-weight: 600;">Teléfono</div>
+                                <div class="text-small">${c.telefono}</div>
+                            </div>
+                            <div>
+                                <div class="text-small" style="color: var(--gray-600); font-weight: 600;">Correo</div>
+                                <div class="text-small">${c.correo || '-'}</div>
+                            </div>
+                            <div>
+                                <div class="text-small" style="color: var(--gray-600); font-weight: 600;">Dirección</div>
+                                <div class="text-small">${c.direccion || '-'}</div>
+                            </div>
+                            <div>
+                                <div class="text-small" style="color: var(--gray-600); font-weight: 600;">Mudanzas</div>
+                                <div class="text-small">${clienteMudanzas.length}</div>
+                            </div>
+                            <div>
+                                <div class="text-small" style="color: var(--gray-600); font-weight: 600;">Monto Total</div>
+                                <div class="text-small">${formatCurrency(montoTotal)}</div>
+                            </div>
+                        </div>
+                        ${c.notas ? `
+                        <div class="divider"></div>
+                        <div class="text-small">📝 ${c.notas}</div>
+                        ` : ''}
+                        <div class="btn-group">
+                            <button class="btn btn-danger btn-small" onclick="eliminarCliente(${c.id})">Eliminar</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function eliminarCliente(id) {
+            if (!confirm('¿Eliminar este cliente?')) return;
+            clientes = clientes.filter(c => c.id !== id);
+            safeStorage('set', STORAGE_KEYS.clientes, clientes);
+            renderClientes();
+        }
+
+        document.getElementById('clientesSearch')?.addEventListener('input', renderClientes);
+
+        // ===== UTILITIES =====
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('es-CL', {
+                style: 'currency',
+                currency: 'CLP',
+                minimumFractionDigits: 0,
+            }).format(value || 0);
+        }
+
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        }
+
+        function showAlert(elementId, message, type) {
+            const element = document.getElementById(elementId);
+            if (!element) return;
+
+            element.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            setTimeout(() => {
+                element.innerHTML = '';
+            }, 3000);
+        }
+
+        function downloadCSV(csv, filename) {
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // ===== INIT =====
+        renderMudanzas();
+        renderEmbalaje();
+        renderEquipo();
+        renderClientes();
+    </script>
+</body>
+</html>

@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Omnix + Cussen | Centros Logísticos Chile</title>
+    <meta name="description" content="Levantamiento satelital de centros logísticos de Chile. Proyecto colaborativo Omnix Corp + Asesorías Cussen.">
+    <meta property="og:title" content="Omnix + Cussen | Centros Logísticos Chile">
+    <meta property="og:description" content="Plataforma de identificación satelital y análisis geoespacial de centros logísticos en Chile.">
+    <meta property="og:type" content="website">
+    <link rel="icon" href="https://cdn.prod.website-files.com/654e7a32bbad160eec118020/6557e855ddfb9207763f7a3a_icono-omnizx-blanco.png" type="image/png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+        :root{
+            --cyan:#06b6d4;--blue:#3b82f6;--green:#10b981;--orange:#f59e0b;--red:#ef4444;--purple:#8b5cf6;
+            --dark:#07090f;--darker:#040609;
+            --card:rgba(255,255,255,0.025);--card-border:rgba(255,255,255,0.06);
+            --text:#e2e8f0;--text-dim:#64748b;
+            --mono:'JetBrains Mono',monospace;
+        }
+        html{scroll-behavior:smooth;}
+        body{background:var(--dark);color:var(--text);font-family:'Inter',sans-serif;font-weight:300;line-height:1.7;overflow-x:hidden;height:100vh;}
+        a{color:var(--cyan);text-decoration:none;transition:color .3s;}
+        a:hover{color:#22d3ee;}
+        ::selection{background:rgba(6,182,212,.3);color:#fff;}
+
+        /* NAV */
+        .nav{position:fixed;top:0;left:0;right:0;z-index:1000;padding:8px 0;background:rgba(7,9,15,.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--card-border);}
+        .nav-inner{max-width:100%;margin:0 auto;padding:0 24px;display:flex;align-items:center;justify-content:space-between;}
+        .nav-left{display:flex;align-items:center;gap:12px;}
+        .nav-logo{height:28px;opacity:.9;transition:opacity .3s;}
+        .nav-logo:hover{opacity:1;}
+        .nav-sep{color:var(--text-dim);font-weight:300;font-size:24px;opacity:.3;}
+        .nav-title{font-size:13px;color:var(--text-dim);font-weight:400;margin-left:12px;padding-left:12px;border-left:1px solid var(--card-border);}
+        .nav-status{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--green);}
+        .nav-status::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse-dot 2s ease-in-out infinite;}
+        @keyframes pulse-dot{0%,100%{opacity:1;}50%{opacity:.4;}}
+        .nav-right{display:flex;align-items:center;gap:16px;}
+        .nav-plan-btn{font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:6px 16px;border-radius:6px;border:1px solid rgba(6,182,212,.3);background:rgba(6,182,212,.08);color:var(--cyan);cursor:pointer;transition:all .2s;text-decoration:none;}
+        .nav-plan-btn:hover{background:rgba(6,182,212,.18);border-color:var(--cyan);color:#22d3ee;box-shadow:0 0 16px rgba(6,182,212,.15);}
+
+        /* LAYOUT */
+        .app{display:flex;height:calc(100vh - 45px);margin-top:45px;}
+
+        /* SIDEBAR */
+        .sidebar{width:380px;min-width:380px;height:100%;overflow-y:auto;background:rgba(4,6,9,.95);border-right:1px solid var(--card-border);display:flex;flex-direction:column;}
+        .sidebar::-webkit-scrollbar{width:4px;}
+        .sidebar::-webkit-scrollbar-track{background:transparent;}
+        .sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px;}
+
+        .sidebar-header{padding:24px 20px 16px;border-bottom:1px solid var(--card-border);}
+        .sidebar-header h2{font-size:18px;font-weight:700;letter-spacing:-.5px;margin-bottom:4px;}
+        .sidebar-header p{font-size:12px;color:var(--text-dim);}
+
+        /* STATS */
+        .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--card-border);border-bottom:1px solid var(--card-border);}
+        .stat{background:var(--darker);padding:14px 16px;text-align:center;}
+        .stat-val{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--text);}
+        .stat-val .unit{font-size:.5em;color:var(--cyan);margin-left:2px;}
+        .stat-label{font-family:var(--mono);font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);margin-top:2px;}
+
+        /* CARDS */
+        .info-card{background:var(--card);border:1px solid var(--card-border);border-radius:10px;padding:16px;margin-bottom:12px;transition:all .3s;}
+        .info-card:hover{border-color:rgba(6,182,212,.2);}
+        .info-card h3{font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.5px;color:var(--cyan);margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+        .info-card p{font-size:12px;color:var(--text-dim);line-height:1.6;}
+        .info-card ul{list-style:none;padding:0;}
+        .info-card ul li{font-size:12px;color:var(--text-dim);line-height:1.6;padding:3px 0;padding-left:14px;position:relative;}
+        .info-card ul li::before{content:'>';font-family:var(--mono);color:var(--cyan);position:absolute;left:0;font-size:10px;}
+
+        .sidebar-content{padding:20px;flex:1;overflow-y:auto;}
+
+        /* PLAN CTA */
+        .plan-cta{display:block;margin-top:8px;padding:14px 16px;background:linear-gradient(135deg,rgba(6,182,212,.08),rgba(139,92,246,.08));border:1px solid rgba(6,182,212,.2);border-radius:10px;text-align:center;text-decoration:none;transition:all .3s;}
+        .plan-cta:hover{border-color:var(--cyan);background:linear-gradient(135deg,rgba(6,182,212,.15),rgba(139,92,246,.15));transform:translateY(-1px);box-shadow:0 8px 24px rgba(6,182,212,.1);}
+        .plan-cta .cta-label{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--cyan);display:block;margin-bottom:4px;}
+        .plan-cta .cta-sub{font-size:11px;color:var(--text-dim);}
+
+        /* CO-BRAND FOOTER */
+        .sidebar-footer{padding:16px 20px;border-top:1px solid var(--card-border);background:rgba(0,0,0,.3);margin-top:auto;}
+        .sidebar-footer .cobrand{display:flex;align-items:center;justify-content:center;gap:12px;}
+        .cobrand-logo{height:20px;opacity:.7;filter:brightness(1.2);}
+        .cobrand-dot{width:4px;height:4px;border-radius:50%;background:var(--cyan);}
+        .cobrand-text{font-family:var(--mono);font-size:9px;letter-spacing:1px;color:var(--text-dim);text-transform:uppercase;}
+
+        /* MAP */
+        .map-container{flex:1;position:relative;}
+        #map{width:100%;height:100%;background:var(--darker);}
+
+        /* Leaflet dark theme overrides */
+        .leaflet-container{background:var(--darker) !important;}
+        .leaflet-control-zoom a{background:rgba(7,9,15,.9) !important;color:var(--text) !important;border-color:var(--card-border) !important;}
+        .leaflet-control-zoom a:hover{background:rgba(6,182,212,.15) !important;color:var(--cyan) !important;}
+        .leaflet-control-attribution{background:rgba(7,9,15,.7) !important;color:var(--text-dim) !important;font-size:9px !important;}
+        .leaflet-control-attribution a{color:var(--cyan) !important;}
+
+        /* Custom popup */
+        .leaflet-popup-content-wrapper{background:rgba(7,9,15,.95) !important;border:1px solid rgba(6,182,212,.2) !important;border-radius:10px !important;box-shadow:0 20px 40px rgba(0,0,0,.5) !important;}
+        .leaflet-popup-content{margin:14px 16px !important;color:var(--text) !important;font-family:'Inter',sans-serif !important;min-width:200px !important;}
+        .leaflet-popup-tip{background:rgba(7,9,15,.95) !important;border:1px solid rgba(6,182,212,.2) !important;box-shadow:none !important;}
+        .leaflet-popup-close-button{color:var(--text-dim) !important;font-size:18px !important;padding:4px 8px !important;}
+        .popup-name{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--cyan);margin-bottom:6px;}
+        .popup-type{font-family:var(--mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+        .popup-type::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--type-color, var(--cyan));display:inline-block;}
+        .popup-row{display:flex;justify-content:space-between;font-size:11px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.04);}
+        .popup-row:last-child{border:none;}
+        .popup-key{color:var(--text-dim);}
+        .popup-val{color:var(--text);font-weight:500;font-family:var(--mono);font-size:10px;}
+
+        /* MAP OVERLAY CONTROLS */
+        .map-overlay{position:absolute;top:16px;right:16px;z-index:800;display:flex;flex-direction:column;gap:8px;}
+        .map-legend{background:rgba(7,9,15,.9);border:1px solid var(--card-border);border-radius:10px;padding:14px 16px;backdrop-filter:blur(10px);}
+        .map-legend h4{font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px;}
+        .legend-item{display:flex;align-items:center;gap:8px;padding:4px 6px;margin:0 -6px;font-size:11px;color:var(--text-dim);cursor:pointer;transition:all .2s;user-select:none;border-radius:4px;}
+        .legend-item:hover{color:var(--text);background:rgba(255,255,255,.04);}
+        .legend-item.off{opacity:.35;text-decoration:line-through;}
+        .legend-dot{width:10px;height:10px;border-radius:50%;border:2px solid;}
+        .legend-dot.cd{background:rgba(6,182,212,.3);border-color:var(--cyan);}
+        .legend-dot.bodega{background:rgba(59,130,246,.3);border-color:var(--blue);}
+        .legend-dot.frigorifico{background:rgba(16,185,129,.3);border-color:var(--green);}
+        .legend-dot.crossdock{background:rgba(245,158,11,.3);border-color:var(--orange);}
+        .legend-dot.puerto{background:rgba(239,68,68,.3);border-color:var(--red);}
+        .legend-dot.propuesta{background:rgba(139,92,246,.3);border-color:var(--purple);animation:pulse-legend 2s infinite;}
+        .legend-dot.zona{background:rgba(16,185,129,.3);border-color:var(--green);border-radius:3px;width:12px;height:8px;}
+        @keyframes pulse-legend{0%,100%{box-shadow:0 0 0 0 rgba(139,92,246,.4);}50%{box-shadow:0 0 0 6px rgba(139,92,246,0);}}
+
+        /* SCORING POPUP */
+        .score-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+        .score-title{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--green);}
+        .score-badge{font-family:var(--mono);font-size:18px;font-weight:800;color:var(--green);background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);padding:2px 10px;border-radius:6px;}
+        .score-subtitle{font-family:var(--mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+        .score-subtitle::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--green);display:inline-block;animation:pulse-dot 2s infinite;}
+        .score-row{display:flex;align-items:center;gap:8px;padding:4px 0;}
+        .score-label{font-family:var(--mono);font-size:9px;color:var(--text-dim);width:80px;flex-shrink:0;letter-spacing:.3px;}
+        .score-bar-track{flex:1;height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden;}
+        .score-bar-fill{height:100%;border-radius:3px;transition:width 1s ease;}
+        .score-val{font-family:var(--mono);font-size:10px;font-weight:600;width:28px;text-align:right;}
+        .score-insight{margin-top:10px;padding:8px 10px;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.15);border-radius:6px;font-size:10px;color:var(--text-dim);line-height:1.5;}
+        .score-insight strong{color:var(--green);}
+
+        /* MOTOR CARD */
+        .motor-card{background:linear-gradient(135deg,rgba(16,185,129,.05),rgba(139,92,246,.05));border:1px solid rgba(16,185,129,.2);border-radius:10px;padding:16px;margin-bottom:12px;}
+        .motor-card h3{font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.5px;color:var(--green);margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+        .motor-layers{display:grid;grid-template-columns:1fr 1fr;gap:4px;}
+        .motor-layer{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--text-dim);padding:4px 6px;border-radius:4px;background:rgba(0,0,0,.2);}
+        .motor-layer-dot{width:4px;height:4px;border-radius:50%;flex-shrink:0;}
+        .motor-zones{display:flex;align-items:center;gap:8px;margin-top:10px;padding:10px;background:rgba(16,185,129,.06);border-radius:6px;border:1px solid rgba(16,185,129,.1);}
+        .motor-zones-num{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--green);}
+        .motor-zones-label{font-family:var(--mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);line-height:1.4;}
+
+        /* MAP STYLE TOGGLE */
+        .map-style-toggle{background:rgba(7,9,15,.9);border:1px solid var(--card-border);border-radius:8px;padding:0;backdrop-filter:blur(10px);display:flex;overflow:hidden;}
+        .map-style-btn{font-family:var(--mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;padding:8px 12px;border:none;background:transparent;color:var(--text-dim);cursor:pointer;transition:all .2s;}
+        .map-style-btn.active{background:rgba(6,182,212,.15);color:var(--cyan);}
+        .map-style-btn:hover:not(.active){background:rgba(255,255,255,.03);color:var(--text);}
+
+        .map-counter{position:absolute;bottom:32px;left:16px;z-index:800;background:rgba(7,9,15,.9);border:1px solid var(--card-border);border-radius:10px;padding:12px 16px;backdrop-filter:blur(10px);display:flex;align-items:center;gap:12px;}
+        .counter-num{font-family:var(--mono);font-size:28px;font-weight:700;color:var(--cyan);}
+        .counter-label{font-family:var(--mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);line-height:1.4;}
+
+        /* Pulse for proposal markers */
+        @keyframes pulse-marker{0%,100%{box-shadow:0 0 0 0 rgba(139,92,246,.5);}50%{box-shadow:0 0 0 8px rgba(139,92,246,0);}}
+
+        /* ═══ CHAT PANEL ═══ */
+        .chat-panel{width:380px;min-width:380px;height:100%;background:rgba(4,6,9,.98);border-left:1px solid var(--card-border);display:flex;flex-direction:column;}
+        .chat-header{padding:14px 18px;border-bottom:1px solid var(--card-border);display:flex;align-items:center;justify-content:space-between;}
+        .chat-header-left{display:flex;align-items:center;gap:10px;}
+        .chat-ai-badge{font-family:var(--mono);font-size:9px;letter-spacing:1.5px;text-transform:uppercase;padding:3px 10px;border-radius:4px;background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.25);color:var(--purple);font-weight:600;}
+        .chat-header h3{font-size:14px;font-weight:600;letter-spacing:-.3px;}
+        .chat-header-sub{font-size:10px;color:var(--text-dim);font-family:var(--mono);}
+
+        .chat-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;}
+        .chat-messages::-webkit-scrollbar{width:4px;}
+        .chat-messages::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px;}
+
+        .chat-msg{max-width:92%;padding:10px 14px;border-radius:10px;font-size:12px;line-height:1.6;animation:msg-in .3s ease;}
+        @keyframes msg-in{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+        .chat-msg.user{align-self:flex-end;background:rgba(6,182,212,.12);border:1px solid rgba(6,182,212,.2);color:var(--text);}
+        .chat-msg.ai{align-self:flex-start;background:var(--card);border:1px solid var(--card-border);color:var(--text-dim);}
+        .chat-msg.ai .ai-tag{font-family:var(--mono);font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:var(--purple);margin-bottom:6px;display:flex;align-items:center;gap:5px;}
+        .chat-msg.ai .ai-tag::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--purple);animation:pulse-dot 2s infinite;}
+        .chat-msg.ai code{font-family:var(--mono);font-size:10px;background:rgba(0,0,0,.3);padding:1px 5px;border-radius:3px;color:var(--cyan);}
+        .chat-msg.ai strong{color:var(--text);font-weight:600;}
+        .chat-msg.ai .data-table{width:100%;border-collapse:collapse;margin:8px 0;font-family:var(--mono);font-size:10px;}
+        .chat-msg.ai .data-table th{text-align:left;color:var(--cyan);font-weight:600;padding:3px 6px;border-bottom:1px solid var(--card-border);font-size:9px;letter-spacing:.5px;}
+        .chat-msg.ai .data-table td{padding:3px 6px;border-bottom:1px solid rgba(255,255,255,.03);color:var(--text-dim);}
+
+        .chat-typing{align-self:flex-start;padding:10px 14px;display:none;gap:4px;align-items:center;}
+        .chat-typing.visible{display:flex;}
+        .typing-dot{width:6px;height:6px;border-radius:50%;background:var(--purple);opacity:.4;animation:typing .8s ease-in-out infinite;}
+        .typing-dot:nth-child(2){animation-delay:.15s;}
+        .typing-dot:nth-child(3){animation-delay:.3s;}
+        @keyframes typing{0%,100%{opacity:.4;transform:scale(1);}50%{opacity:1;transform:scale(1.2);}}
+
+        .chat-input-area{padding:12px 16px;border-top:1px solid var(--card-border);background:rgba(0,0,0,.3);}
+        .chat-suggestions{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+        .chat-suggestion{font-family:var(--mono);font-size:9px;padding:5px 10px;border-radius:6px;border:1px solid var(--card-border);background:transparent;color:var(--text-dim);cursor:pointer;transition:all .2s;letter-spacing:.3px;}
+        .chat-suggestion:hover{border-color:var(--purple);color:var(--purple);background:rgba(139,92,246,.05);}
+        .chat-input-row{display:flex;gap:8px;}
+        .chat-input{flex:1;background:rgba(255,255,255,.03);border:1px solid var(--card-border);border-radius:8px;padding:10px 14px;color:var(--text);font-family:'Inter',sans-serif;font-size:12px;outline:none;transition:border-color .3s;}
+        .chat-input:focus{border-color:rgba(139,92,246,.4);}
+        .chat-input::placeholder{color:var(--text-dim);}
+        .chat-send{width:38px;height:38px;border-radius:8px;border:1px solid rgba(139,92,246,.3);background:rgba(139,92,246,.1);color:var(--purple);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;font-size:14px;}
+        .chat-send:hover{background:rgba(139,92,246,.2);border-color:var(--purple);}
+
+        /* ═══ MOBILE PANEL TOGGLE ═══ */
+        .mobile-toggles{display:none;gap:4px;align-items:center;}
+        .mobile-toggle{font-family:var(--mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;padding:5px 14px;border-radius:20px;border:1px solid var(--card-border);background:transparent;color:var(--text-dim);cursor:pointer;transition:all .2s;white-space:nowrap;}
+        .mobile-toggle.active{border-color:var(--cyan);color:var(--cyan);background:rgba(6,182,212,.1);box-shadow:0 0 12px rgba(6,182,212,.15);}
+
+        /* ═══ RESPONSIVE - TABLET ═══ */
+        @media(max-width:1200px){
+            .chat-panel{width:320px;min-width:320px;}
+            .sidebar{width:340px;min-width:340px;}
+        }
+
+        /* ═══ RESPONSIVE - MOBILE ═══ */
+        @media(max-width:900px){
+            .nav-inner{padding:0 12px;}
+            .nav-title{display:none;}
+            .nav-logo{height:22px !important;}
+            .nav-sep{font-size:18px;}
+            .nav-status{font-size:8px;letter-spacing:1px;}
+            .nav-plan-btn{font-size:8px;padding:4px 10px;}
+            .mobile-toggles{display:flex;gap:6px;}
+
+            .app{flex-direction:column;height:calc(100vh - 45px);overflow:hidden;}
+
+            .sidebar{width:100%;min-width:100%;height:100%;max-height:none;border-right:none;border-bottom:1px solid var(--card-border);overflow-y:auto;}
+            .sidebar.hidden{display:none;}
+            .sidebar-header{padding:16px 14px 12px;}
+            .sidebar-header h2{font-size:16px;}
+
+            .stats-row{grid-template-columns:repeat(3,1fr);}
+            .stat{padding:10px 8px;}
+            .stat-val{font-size:18px;}
+            .stat-label{font-size:7px;}
+
+            .sidebar-content{padding:14px;}
+            .info-card{padding:12px;}
+            .info-card h3{font-size:11px;}
+            .info-card p,.info-card ul li{font-size:11px;}
+
+            .map-container{width:100%;height:100%;min-height:300px;}
+
+            .map-overlay{top:8px;right:8px;}
+            .map-legend{padding:10px 12px;}
+            .map-legend h4{font-size:8px;margin-bottom:6px;}
+            .legend-item{font-size:10px;padding:2px 0;}
+            .legend-dot{width:8px;height:8px;}
+            .map-counter{bottom:16px;left:8px;padding:8px 12px;gap:8px;}
+            .counter-num{font-size:22px;}
+            .counter-label{font-size:8px;}
+
+            .chat-panel{width:100%;min-width:100%;height:100%;min-height:300px;max-height:none;border-left:none;border-top:none;}
+            .chat-panel.hidden{display:none;}
+            .chat-header{padding:10px 14px;}
+            .chat-header h3{font-size:13px;}
+            .chat-messages{padding:12px;gap:8px;max-height:none;flex:1;}
+            .chat-msg{padding:8px 12px;font-size:11px;max-width:95%;}
+            .chat-suggestions{gap:4px;margin-bottom:8px;}
+            .chat-suggestion{font-size:8px;padding:4px 8px;}
+            .chat-input-area{padding:10px 12px;}
+            .chat-input{padding:8px 12px;font-size:12px;}
+            .chat-send{width:36px;height:36px;}
+
+            .sidebar-footer{padding:10px 14px;}
+            .cobrand-text{font-size:8px;}
+
+            .leaflet-popup-content{min-width:160px !important;margin:10px 12px !important;}
+            .popup-name{font-size:12px;}
+            .popup-row{font-size:10px;}
+            .popup-val{font-size:9px;}
+        }
+
+        /* ═══ RESPONSIVE - SMALL PHONE ═══ */
+        @media(max-width:400px){
+            .nav-inner{padding:0 8px;}
+            .stat-val{font-size:16px;}
+            .map-legend{display:none;}
+            .mobile-toggle{font-size:8px;padding:4px 10px;}
+            .nav-plan-btn{display:none;}
+        }
+    </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+    <div class="nav-inner">
+        <div class="nav-left">
+            <a href="https://omnixcorp.com" target="_blank">
+                <img src="https://cdn.prod.website-files.com/654e7a32bbad160eec118020/654ea51d18ebf4dd2907f332_pagina-web-Omnix.png" alt="Omnix" class="nav-logo" style="height:26px;">
+            </a>
+            <span class="nav-sep">+</span>
+            <a href="https://cussen.cl" target="_blank" class="nav-logo" style="font-family:var(--mono);font-size:18px;font-weight:700;color:var(--text);letter-spacing:2px;text-decoration:none;height:auto;">CUSSEN</a>
+            <span class="nav-title">Centros Logísticos Chile</span>
+        </div>
+        <div class="mobile-toggles">
+            <button class="mobile-toggle" data-panel="info" onclick="mobileSwitch('info')">Info</button>
+            <button class="mobile-toggle active" data-panel="map" onclick="mobileSwitch('map')">Mapa</button>
+            <button class="mobile-toggle" data-panel="chat" onclick="mobileSwitch('chat')">Chat</button>
+        </div>
+        <div class="nav-right">
+            <a href="/omnix/plan/" class="nav-plan-btn">Ver Plan &rarr;</a>
+            <span class="nav-status">Proyecto Activo</span>
+        </div>
+    </div>
+</nav>
+
+<!-- APP -->
+<div class="app">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2>Centros Logísticos Chile</h2>
+            <p>Levantamiento satelital + análisis geoespacial de infraestructura logística</p>
+        </div>
+
+        <!-- STATS -->
+        <div class="stats-row">
+            <div class="stat">
+                <div class="stat-val" id="centrosCount">0</div>
+                <div class="stat-label">Centros</div>
+            </div>
+            <div class="stat">
+                <div class="stat-val">16<span class="unit">reg</span></div>
+                <div class="stat-label">Regiones</div>
+            </div>
+            <div class="stat">
+                <div class="stat-val">3<span class="unit">fases</span></div>
+                <div class="stat-label">Proyecto</div>
+            </div>
+        </div>
+
+        <div class="sidebar-content">
+            <div class="info-card">
+                <h3>Objetivo</h3>
+                <p>Construir la base de datos georreferenciada más completa de centros logísticos en Chile mediante detección satelital, y desarrollar un motor de análisis para proponer ubicaciones óptimas de nuevos centros.</p>
+            </div>
+            <div class="info-card">
+                <h3>Qué mapeamos</h3>
+                <ul>
+                    <li>Centros de distribución (CD)</li>
+                    <li>Bodegas industriales</li>
+                    <li>Almacenes frigoríficos</li>
+                    <li>Terminales cross-docking</li>
+                    <li>Terminales portuarias de carga</li>
+                    <li>Zonas francas y puertos secos</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>Metodología</h3>
+                <ul>
+                    <li>Sentinel-2 + imágenes comerciales de alta resolución</li>
+                    <li>Detección de techos industriales > 5,000 m2</li>
+                    <li>Análisis de patios de maniobra y estacionamiento</li>
+                    <li>Proximidad a ejes viales y ferroviarios</li>
+                    <li>Validación cruzada con datos públicos (SII, catastro)</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>Seleccione un centro en el mapa</h3>
+                <p id="selected-info" style="font-family:var(--mono);font-size:11px;">Haga clic en cualquier marcador para ver su información detallada.</p>
+            </div>
+
+            <div class="motor-card">
+                <h3>&#9881; Motor de Análisis Multi-Variable</h3>
+                <div class="motor-layers">
+                    <div class="motor-layer"><span class="motor-layer-dot" style="background:var(--cyan);"></span>Red vial</div>
+                    <div class="motor-layer"><span class="motor-layer-dot" style="background:var(--blue);"></span>Población</div>
+                    <div class="motor-layer"><span class="motor-layer-dot" style="background:var(--green);"></span>Plan regulador</div>
+                    <div class="motor-layer"><span class="motor-layer-dot" style="background:var(--orange);"></span>Suelo industrial</div>
+                    <div class="motor-layer"><span class="motor-layer-dot" style="background:var(--red);"></span>Riesgos naturales</div>
+                    <div class="motor-layer"><span class="motor-layer-dot" style="background:var(--purple);"></span>Competencia</div>
+                    <div class="motor-layer"><span class="motor-layer-dot" style="background:#06b6d4;"></span>Puertos/ferrovía</div>
+                    <div class="motor-layer"><span class="motor-layer-dot" style="background:#22d3ee;"></span>Flujos de carga</div>
+                    <div class="motor-layer"><span class="motor-layer-dot" style="background:#f472b6;"></span>Servicios básicos</div>
+                    <div class="motor-layer"><span class="motor-layer-dot" style="background:#a78bfa;"></span>Actividad económica</div>
+                    <div class="motor-layer"><span class="motor-layer-dot" style="background:#fbbf24;"></span>Aduanas/comercio</div>
+                    <div class="motor-layer"><span class="motor-layer-dot" style="background:#34d399;"></span>Centros existentes</div>
+                </div>
+                <div class="motor-zones">
+                    <div class="motor-zones-num">3</div>
+                    <div class="motor-zones-label">Zonas de<br>oportunidad<br>identificadas</div>
+                </div>
+            </div>
+
+            <a href="/omnix/plan/" class="plan-cta">
+                <span class="cta-label">Plan de Ejecución &rarr;</span>
+                <span class="cta-sub">Fases, recursos, infraestructura y costos</span>
+            </a>
+        </div>
+
+        <!-- FOOTER -->
+        <div class="sidebar-footer">
+            <div class="cobrand">
+                <img src="https://cdn.prod.website-files.com/654e7a32bbad160eec118020/6557e855ddfb9207763f7a3a_icono-omnizx-blanco.png" alt="Omnix" class="cobrand-logo" style="height:22px;">
+                <span class="cobrand-text">Omnix Corp</span>
+                <span class="cobrand-dot"></span>
+                <span class="cobrand-text">Asesorías Cussen</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAP -->
+    <div class="map-container">
+        <div id="map"></div>
+
+        <div class="map-overlay">
+            <div class="map-style-toggle">
+                <button class="map-style-btn active" onclick="switchMapStyle('silver')">Gris</button>
+                <button class="map-style-btn" onclick="switchMapStyle('satellite')">Satélite</button>
+            </div>
+            <div class="map-legend">
+                <h4>Tipos de Centro <span style="font-weight:400;opacity:.5;font-size:8px;letter-spacing:0;">(click para filtrar)</span></h4>
+                <div class="legend-item" data-type="Centro de Distribución" onclick="toggleLayer(this)"><span class="legend-dot cd"></span>Centro de Distribución</div>
+                <div class="legend-item" data-type="Bodega Industrial" onclick="toggleLayer(this)"><span class="legend-dot bodega"></span>Bodega Industrial</div>
+                <div class="legend-item" data-type="Almacén Frigorífico" onclick="toggleLayer(this)"><span class="legend-dot frigorifico"></span>Almacén Frigorífico</div>
+                <div class="legend-item" data-type="Cross-Docking" onclick="toggleLayer(this)"><span class="legend-dot crossdock"></span>Cross-Docking</div>
+                <div class="legend-item" data-type="Terminal Portuaria" onclick="toggleLayer(this)"><span class="legend-dot puerto"></span>Terminal Portuaria</div>
+                <div class="legend-item" data-type="Propuesta Fase 3" onclick="toggleLayer(this)"><span class="legend-dot propuesta"></span>Propuesta Fase 3</div>
+                <div class="legend-item" data-type="Zona de Oportunidad" onclick="toggleLayer(this)"><span class="legend-dot zona"></span>Zona de Oportunidad</div>
+            </div>
+        </div>
+
+        <div class="map-counter">
+            <div class="counter-num" id="visibleCount">0</div>
+            <div class="counter-label">Centros<br>visibles</div>
+        </div>
+    </div>
+
+    <!-- CHAT PANEL -->
+    <aside class="chat-panel">
+        <div class="chat-header">
+            <div>
+                <div class="chat-header-left">
+                    <span class="chat-ai-badge">AI</span>
+                    <h3>Asistente Logístico</h3>
+                </div>
+                <div class="chat-header-sub">Consultas sobre datos, rutas, ubicaciones y análisis</div>
+            </div>
+        </div>
+
+        <div class="chat-messages" id="chatMessages">
+            <div class="chat-msg ai">
+                <div class="ai-tag">Omnix AI</div>
+                Hola, soy el asistente de análisis logístico. Puedo ayudarte con:
+                <br><br>
+                <strong>&#8226; Datos de centros:</strong> ubicaciones, superficies, tipos<br>
+                <strong>&#8226; Análisis espacial:</strong> cobertura, distancias, zonas desatendidas<br>
+                <strong>&#8226; Rutas y accesos:</strong> conectividad vial, tiempos de transporte<br>
+                <strong>&#8226; Recomendaciones:</strong> dónde ubicar nuevos centros<br>
+                <br>
+                Pregúntame lo que necesites sobre la red logística de Chile.
+            </div>
+        </div>
+
+        <div class="chat-typing" id="chatTyping">
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+        </div>
+
+        <div class="chat-input-area">
+            <div class="chat-suggestions">
+                <button class="chat-suggestion" onclick="askQuestion(this.textContent)">Centros en Región Metropolitana</button>
+                <button class="chat-suggestion" onclick="askQuestion(this.textContent)">¿Dónde falta cobertura?</button>
+                <button class="chat-suggestion" onclick="askQuestion(this.textContent)">Puertos principales</button>
+                <button class="chat-suggestion" onclick="askQuestion(this.textContent)">Mejor zona para nuevo CD</button>
+            </div>
+            <div class="chat-input-row">
+                <input type="text" class="chat-input" id="chatInput" placeholder="Pregunta sobre centros logísticos..." onkeydown="if(event.key==='Enter')sendChat()">
+                <button class="chat-send" onclick="sendChat()">&#9654;</button>
+            </div>
+        </div>
+    </aside>
+</div>
+
+<script>
+// ═══ DATA: Sample logistics centers ═══
+const centrosLogisticos = [
+    // REGION METROPOLITANA
+    {name:"CD Falabella Quilicura",type:"Centro de Distribución",lat:-33.3550,lng:-70.7350,superficie:"45,000 m2",comuna:"Quilicura",region:"Metropolitana",actividad:"Retail / E-commerce",color:"#06b6d4"},
+    {name:"Bodega Cencosud Pudahuel",type:"Bodega Industrial",lat:-33.4380,lng:-70.8120,superficie:"32,000 m2",comuna:"Pudahuel",region:"Metropolitana",actividad:"Retail / Supermercados",color:"#3b82f6"},
+    {name:"CD Mercado Libre Lo Espejo",type:"Centro de Distribución",lat:-33.5150,lng:-70.6900,superficie:"28,000 m2",comuna:"Lo Espejo",region:"Metropolitana",actividad:"E-commerce",color:"#06b6d4"},
+    {name:"Frigorífico Agrosuper Renca",type:"Almacén Frigorífico",lat:-33.3900,lng:-70.7250,superficie:"18,000 m2",comuna:"Renca",region:"Metropolitana",actividad:"Alimentos / Carnes",color:"#10b981"},
+    {name:"Cross-dock DHL San Bernardo",type:"Cross-Docking",lat:-33.5920,lng:-70.7100,superficie:"12,000 m2",comuna:"San Bernardo",region:"Metropolitana",actividad:"Logística 3PL",color:"#f59e0b"},
+    {name:"CD Ripley Lampa",type:"Centro de Distribución",lat:-33.2850,lng:-70.8780,superficie:"38,000 m2",comuna:"Lampa",region:"Metropolitana",actividad:"Retail",color:"#06b6d4"},
+    {name:"Bodega Sodimac Maipú",type:"Bodega Industrial",lat:-33.5100,lng:-70.7600,superficie:"25,000 m2",comuna:"Maipú",region:"Metropolitana",actividad:"Construcción / Hogar",color:"#3b82f6"},
+    {name:"CD Amazon Santiago",type:"Centro de Distribución",lat:-33.4000,lng:-70.5700,superficie:"55,000 m2",comuna:"Macul",region:"Metropolitana",actividad:"E-commerce",color:"#06b6d4"},
+    {name:"Frigorífico Watts San Joaquín",type:"Almacén Frigorífico",lat:-33.4900,lng:-70.6300,superficie:"15,000 m2",comuna:"San Joaquín",region:"Metropolitana",actividad:"Alimentos / Lácteos",color:"#10b981"},
+    {name:"Bodega Industrial Enea",type:"Bodega Industrial",lat:-33.3650,lng:-70.6800,superficie:"20,000 m2",comuna:"Huechuraba",region:"Metropolitana",actividad:"Almacenamiento general",color:"#3b82f6"},
+    {name:"CD Paris Colina",type:"Centro de Distribución",lat:-33.2000,lng:-70.6700,superficie:"22,000 m2",comuna:"Colina",region:"Metropolitana",actividad:"Retail",color:"#06b6d4"},
+    {name:"Cross-dock Fedex Cerrillos",type:"Cross-Docking",lat:-33.4970,lng:-70.7200,superficie:"8,000 m2",comuna:"Cerrillos",region:"Metropolitana",actividad:"Courier / Express",color:"#f59e0b"},
+    // VALPARAISO
+    {name:"Puerto San Antonio - TPC",type:"Terminal Portuaria",lat:-33.5950,lng:-71.6100,superficie:"65,000 m2",comuna:"San Antonio",region:"Valparaíso",actividad:"Carga contenedorizada",color:"#ef4444"},
+    {name:"Puerto Valparaíso - TPS",type:"Terminal Portuaria",lat:-33.0370,lng:-71.6350,superficie:"42,000 m2",comuna:"Valparaíso",region:"Valparaíso",actividad:"Carga general + contenedores",color:"#ef4444"},
+    {name:"ZEAL San Antonio",type:"Bodega Industrial",lat:-33.5800,lng:-71.5800,superficie:"30,000 m2",comuna:"San Antonio",region:"Valparaíso",actividad:"Zona extraportuaria",color:"#3b82f6"},
+    {name:"Bodega Agunsa Casablanca",type:"Bodega Industrial",lat:-33.3200,lng:-71.4100,superficie:"14,000 m2",comuna:"Casablanca",region:"Valparaíso",actividad:"Logística portuaria",color:"#3b82f6"},
+    // BIOBIO
+    {name:"Puerto Coronel - PUCV",type:"Terminal Portuaria",lat:-37.0290,lng:-73.1530,superficie:"38,000 m2",comuna:"Coronel",region:"Biobío",actividad:"Carga forestal + general",color:"#ef4444"},
+    {name:"CD CMPC Nacimiento",type:"Centro de Distribución",lat:-37.5020,lng:-72.6740,superficie:"20,000 m2",comuna:"Nacimiento",region:"Biobío",actividad:"Forestal / Celulosa",color:"#06b6d4"},
+    {name:"Bodega CAP Talcahuano",type:"Bodega Industrial",lat:-36.7250,lng:-73.1170,superficie:"35,000 m2",comuna:"Talcahuano",region:"Biobío",actividad:"Siderurgia / Acero",color:"#3b82f6"},
+    {name:"Puerto Lirquén",type:"Terminal Portuaria",lat:-36.7130,lng:-72.9750,superficie:"28,000 m2",comuna:"Penco",region:"Biobío",actividad:"Carga forestal",color:"#ef4444"},
+    // ANTOFAGASTA
+    {name:"Puerto Antofagasta",type:"Terminal Portuaria",lat:-23.6500,lng:-70.4000,superficie:"48,000 m2",comuna:"Antofagasta",region:"Antofagasta",actividad:"Carga minera + contenedores",color:"#ef4444"},
+    {name:"Bodega Logística Minera MEL",type:"Bodega Industrial",lat:-23.5800,lng:-70.3900,superficie:"22,000 m2",comuna:"Antofagasta",region:"Antofagasta",actividad:"Suministros mineros",color:"#3b82f6"},
+    {name:"Puerto Mejillones",type:"Terminal Portuaria",lat:-23.0990,lng:-70.4520,superficie:"55,000 m2",comuna:"Mejillones",region:"Antofagasta",actividad:"Graneles + contenedores",color:"#ef4444"},
+    // ARAUCANIA
+    {name:"Bodega Copec Temuco",type:"Bodega Industrial",lat:-38.7350,lng:-72.6000,superficie:"16,000 m2",comuna:"Temuco",region:"Araucanía",actividad:"Combustibles / Distribución",color:"#3b82f6"},
+    {name:"CD CorpBanca Temuco",type:"Centro de Distribución",lat:-38.7500,lng:-72.6300,superficie:"10,000 m2",comuna:"Temuco",region:"Araucanía",actividad:"Retail regional",color:"#06b6d4"},
+    // LOS LAGOS
+    {name:"Puerto Montt - Portuaria Austral",type:"Terminal Portuaria",lat:-41.4700,lng:-72.9400,superficie:"20,000 m2",comuna:"Puerto Montt",region:"Los Lagos",actividad:"Salmón + carga general",color:"#ef4444"},
+    {name:"Frigorífico AquaChile",type:"Almacén Frigorífico",lat:-41.4600,lng:-72.9300,superficie:"12,000 m2",comuna:"Puerto Montt",region:"Los Lagos",actividad:"Salmón / Acuicultura",color:"#10b981"},
+    // COQUIMBO
+    {name:"Puerto Coquimbo",type:"Terminal Portuaria",lat:-29.9550,lng:-71.3430,superficie:"18,000 m2",comuna:"Coquimbo",region:"Coquimbo",actividad:"Carga general + fruta",color:"#ef4444"},
+    {name:"Frigorífico Frutícola Vicuña",type:"Almacén Frigorífico",lat:-30.0350,lng:-70.7150,superficie:"8,000 m2",comuna:"Vicuña",region:"Coquimbo",actividad:"Fruta de exportación",color:"#10b981"},
+    // MAULE
+    {name:"CD Iansa Linares",type:"Centro de Distribución",lat:-35.8500,lng:-71.5900,superficie:"14,000 m2",comuna:"Linares",region:"Maule",actividad:"Agroindustria / Azúcar",color:"#06b6d4"},
+    {name:"Bodega Vinos VSPT Molina",type:"Bodega Industrial",lat:-35.1150,lng:-71.2800,superficie:"10,000 m2",comuna:"Molina",region:"Maule",actividad:"Vitivinícola",color:"#3b82f6"},
+    // PROPUESTAS FASE 3
+    {name:"Propuesta: Hub Logístico Ruta 5 Rancagua",type:"Propuesta Fase 3",lat:-34.0950,lng:-70.7750,superficie:"Estimado 30,000 m2",comuna:"Rancagua",region:"O'Higgins",actividad:"Hub intermodal propuesto",color:"#8b5cf6",propuesta:true},
+    {name:"Propuesta: CD Regional Los Ángeles",type:"Propuesta Fase 3",lat:-37.4700,lng:-72.3500,superficie:"Estimado 20,000 m2",comuna:"Los Ángeles",region:"Biobío",actividad:"Distribución zona sur",color:"#8b5cf6",propuesta:true},
+    {name:"Propuesta: Frigorífico Chiloé",type:"Propuesta Fase 3",lat:-42.4800,lng:-73.7700,superficie:"Estimado 15,000 m2",comuna:"Castro",region:"Los Lagos",actividad:"Acuicultura / Salmón",color:"#8b5cf6",propuesta:true},
+];
+
+// ═══ LEAFLET MAP ═══
+const map = L.map('map', {
+    center: [-33.75, -70.65],
+    zoom: 6,
+    zoomControl: true
+});
+
+// Base layers
+const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    attribution: 'Tiles: Esri World Imagery',
+    maxZoom: 18
+});
+
+const darkLabels = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png', {
+    attribution: '',
+    maxZoom: 18,
+    opacity: 0.7
+});
+
+const silver = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
+    attribution: 'Tiles: CartoDB Positron',
+    maxZoom: 18
+});
+
+const silverLabels = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png', {
+    attribution: '',
+    maxZoom: 18,
+    opacity: 0.6
+});
+
+// Default: silver/dark
+silver.addTo(map);
+silverLabels.addTo(map);
+
+let currentBase = 'silver';
+
+const layersByType = {};
+
+centrosLogisticos.forEach(centro => {
+    const radius = centro.propuesta ? 8 : 6;
+    const marker = L.circleMarker([centro.lat, centro.lng], {
+        radius: radius,
+        fillColor: centro.color,
+        color: centro.color,
+        weight: 2,
+        opacity: 1,
+        fillOpacity: 0.3,
+        className: centro.propuesta ? 'pulse-marker' : ''
+    }).addTo(map);
+
+    const popupContent = `
+        <div class="popup-name">${centro.name}</div>
+        <div class="popup-type" style="--type-color:${centro.color}">${centro.type}</div>
+        <div class="popup-row"><span class="popup-key">Superficie</span><span class="popup-val">${centro.superficie}</span></div>
+        <div class="popup-row"><span class="popup-key">Comuna</span><span class="popup-val">${centro.comuna}</span></div>
+        <div class="popup-row"><span class="popup-key">Región</span><span class="popup-val">${centro.region}</span></div>
+        <div class="popup-row"><span class="popup-key">Actividad</span><span class="popup-val">${centro.actividad}</span></div>
+        ${centro.propuesta ? '<div style="margin-top:8px;padding:4px 8px;background:rgba(139,92,246,.15);border:1px solid rgba(139,92,246,.3);border-radius:4px;font-family:var(--mono);font-size:9px;color:#8b5cf6;text-align:center;letter-spacing:1px;">UBICACIÓN PROPUESTA — FASE 3</div>' : ''}
+    `;
+
+    marker.bindPopup(popupContent, {maxWidth: 260, className: 'dark-popup'});
+
+    marker.on('mouseover', function() {
+        this.setRadius(radius * 2);
+        this.setStyle({fillOpacity: 0.6, weight: 3});
+    });
+    marker.on('mouseout', function() {
+        this.setRadius(radius);
+        this.setStyle({fillOpacity: 0.3, weight: 2});
+    });
+    marker.on('click', function() {
+        const info = document.getElementById('selected-info');
+        if (info) info.innerHTML = `<strong style="color:${centro.color}">${centro.name}</strong><br>${centro.type} — ${centro.comuna}, ${centro.region}<br>Superficie: ${centro.superficie}`;
+    });
+
+    if (!layersByType[centro.type]) layersByType[centro.type] = [];
+    layersByType[centro.type].push(marker);
+});
+
+// ═══ OPPORTUNITY ZONES (Fase 3 preview) ═══
+const zonasOportunidad = [
+    {
+        name: "Zona Rancagua - Ruta 5 Sur",
+        score: 92,
+        center: [-34.095, -70.775],
+        bounds: [[-34.02, -70.85], [-34.02, -70.70], [-34.17, -70.70], [-34.17, -70.85]],
+        insight: "Nodo intermodal estratégico: conecta zona agrícola de O'Higgins con RM y puerto San Antonio.",
+        variables: [
+            {name:"Acceso vial", val:95, color:"#06b6d4"},
+            {name:"Población", val:82, color:"#3b82f6"},
+            {name:"Plan regulador", val:88, color:"#10b981"},
+            {name:"Suelo indust.", val:78, color:"#f59e0b"},
+            {name:"Riesgos", val:91, color:"#ef4444"},
+            {name:"Competencia", val:94, color:"#8b5cf6"},
+            {name:"Puertos", val:76, color:"#06b6d4"},
+            {name:"Flujos carga", val:89, color:"#22d3ee"},
+        ]
+    },
+    {
+        name: "Zona Los Ángeles - Biobío Interior",
+        score: 85,
+        center: [-37.47, -72.35],
+        bounds: [[-37.30, -72.55], [-37.30, -72.15], [-37.64, -72.15], [-37.64, -72.55]],
+        insight: "Cierra brecha de 180 km sin CD entre Concepción y Temuco. Zona forestal y agrícola con crecimiento sostenido.",
+        variables: [
+            {name:"Acceso vial", val:88, color:"#06b6d4"},
+            {name:"Población", val:72, color:"#3b82f6"},
+            {name:"Plan regulador", val:90, color:"#10b981"},
+            {name:"Suelo indust.", val:85, color:"#f59e0b"},
+            {name:"Riesgos", val:82, color:"#ef4444"},
+            {name:"Competencia", val:92, color:"#8b5cf6"},
+            {name:"Puertos", val:68, color:"#06b6d4"},
+            {name:"Flujos carga", val:80, color:"#22d3ee"},
+        ]
+    },
+    {
+        name: "Zona Castro - Chiloé",
+        score: 78,
+        center: [-42.48, -73.77],
+        bounds: [[-42.32, -73.95], [-42.32, -73.59], [-42.64, -73.59], [-42.64, -73.95]],
+        insight: "Frigorífico para industria salmonera. Reduce dependencia de Puerto Montt (-4 hrs transporte). Demanda creciente.",
+        variables: [
+            {name:"Acceso vial", val:62, color:"#06b6d4"},
+            {name:"Población", val:55, color:"#3b82f6"},
+            {name:"Plan regulador", val:85, color:"#10b981"},
+            {name:"Suelo indust.", val:80, color:"#f59e0b"},
+            {name:"Riesgos", val:70, color:"#ef4444"},
+            {name:"Competencia", val:96, color:"#8b5cf6"},
+            {name:"Puertos", val:72, color:"#06b6d4"},
+            {name:"Flujos carga", val:75, color:"#22d3ee"},
+        ]
+    }
+];
+
+zonasOportunidad.forEach(zona => {
+    // Draw polygon
+    const polygon = L.polygon(zona.bounds, {
+        color: '#10b981',
+        weight: 2,
+        opacity: 0.6,
+        fillColor: '#10b981',
+        fillOpacity: 0.08,
+        dashArray: '8, 6',
+    }).addTo(map);
+
+    // Animated inner glow polygon
+    const glowPolygon = L.polygon(zona.bounds, {
+        color: 'transparent',
+        weight: 0,
+        fillColor: '#10b981',
+        fillOpacity: 0.04,
+        interactive: false,
+    }).addTo(map);
+
+    // Score popup for polygon
+    let scoreRows = zona.variables.map(v =>
+        `<div class="score-row">
+            <span class="score-label">${v.name}</span>
+            <div class="score-bar-track"><div class="score-bar-fill" style="width:${v.val}%;background:${v.color};"></div></div>
+            <span class="score-val" style="color:${v.color};">${v.val}</span>
+        </div>`
+    ).join('');
+
+    const scoreColor = zona.score >= 90 ? '#10b981' : zona.score >= 80 ? '#06b6d4' : '#f59e0b';
+
+    const popupHtml = `
+        <div class="score-header">
+            <div class="score-title">${zona.name}</div>
+            <div class="score-badge" style="color:${scoreColor};border-color:${scoreColor}40;background:${scoreColor}18;">${zona.score}</div>
+        </div>
+        <div class="score-subtitle">Score Multi-Variable</div>
+        ${scoreRows}
+        <div class="score-insight"><strong>Insight:</strong> ${zona.insight}</div>
+    `;
+
+    polygon.bindPopup(popupHtml, {maxWidth: 320, className: 'dark-popup'});
+
+    // Pulse animation for polygon opacity
+    let increasing = true;
+    let currentOpacity = 0.04;
+    setInterval(() => {
+        if (increasing) { currentOpacity += 0.005; if (currentOpacity >= 0.12) increasing = false; }
+        else { currentOpacity -= 0.005; if (currentOpacity <= 0.04) increasing = true; }
+        glowPolygon.setStyle({fillOpacity: currentOpacity});
+    }, 80);
+
+    if (!layersByType['Zona de Oportunidad']) layersByType['Zona de Oportunidad'] = [];
+    layersByType['Zona de Oportunidad'].push(polygon, glowPolygon);
+});
+
+animateCounter('centrosCount', centrosLogisticos.filter(c => !c.propuesta).length);
+updateVisibleCount();
+map.on('moveend', updateVisibleCount);
+
+function updateVisibleCount() {
+    const bounds = map.getBounds();
+    let count = 0;
+    const hiddenTypes = new Set();
+    document.querySelectorAll('.legend-item.off').forEach(el => hiddenTypes.add(el.dataset.type));
+    centrosLogisticos.forEach(c => {
+        if (!c.propuesta && bounds.contains([c.lat, c.lng]) && !hiddenTypes.has(c.type)) count++;
+    });
+    document.getElementById('visibleCount').textContent = count;
+}
+
+function toggleLayer(el) {
+    el.classList.toggle('off');
+    const type = el.dataset.type;
+    const layers = layersByType[type] || [];
+    const visible = !el.classList.contains('off');
+    layers.forEach(layer => {
+        if (visible) map.addLayer(layer);
+        else map.removeLayer(layer);
+    });
+    updateVisibleCount();
+}
+
+function animateCounter(id, target) {
+    const el = document.getElementById(id);
+    let current = 0;
+    const step = Math.ceil(target / 30);
+    const interval = setInterval(() => {
+        current += step;
+        if (current >= target) { current = target; clearInterval(interval); }
+        el.textContent = current;
+    }, 40);
+}
+
+// ═══ CHAT / AI ASSISTANT ═══
+function sendChat() {
+    const input = document.getElementById('chatInput');
+    const msg = input.value.trim();
+    if (!msg) return;
+    input.value = '';
+    askQuestion(msg);
+}
+
+function askQuestion(question) {
+    addMessage(question, 'user');
+    const suggestions = document.querySelector('.chat-suggestions');
+    if (suggestions) suggestions.style.display = 'none';
+    showTyping();
+    const delay = 800 + Math.random() * 1200;
+    setTimeout(() => {
+        hideTyping();
+        const response = generateResponse(question);
+        addMessage(response, 'ai');
+    }, delay);
+}
+
+function addMessage(text, type) {
+    const container = document.getElementById('chatMessages');
+    const div = document.createElement('div');
+    div.className = 'chat-msg ' + type;
+    if (type === 'ai') {
+        div.innerHTML = '<div class="ai-tag">Omnix AI</div>' + text;
+    } else {
+        div.textContent = text;
+    }
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+}
+
+function showTyping() { document.getElementById('chatTyping').classList.add('visible'); }
+function hideTyping() { document.getElementById('chatTyping').classList.remove('visible'); }
+
+function generateResponse(q) {
+    const ql = q.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+
+    if (ql.includes('metropolitana') || ql.includes('santiago') || ql.includes('rm')) {
+        const rm = centrosLogisticos.filter(c => c.region === 'Metropolitana');
+        let table = '<table class="data-table"><tr><th>Centro</th><th>Tipo</th><th>Comuna</th></tr>';
+        rm.forEach(c => { table += `<tr><td>${c.name}</td><td>${c.type}</td><td>${c.comuna}</td></tr>`; });
+        table += '</table>';
+        return `La <strong>Región Metropolitana</strong> concentra <code>${rm.length}</code> centros logísticos, siendo el principal hub del país.<br><br>${table}<br>Los ejes logísticos principales son <strong>Quilicura-Lampa</strong> (zona norte) y <strong>San Bernardo-Maipú</strong> (zona sur), ambos con acceso directo a Ruta 5 y Autopista Central.`;
+    }
+
+    if (ql.includes('cobertura') || ql.includes('falta') || ql.includes('desatendid')) {
+        return `Analizando la distribución actual, identifico <strong>3 zonas con déficit de cobertura</strong>:<br><br>
+        <strong>1. O'Higgins - Maule</strong><br>
+        Solo <code>2</code> centros entre Rancagua y Talca. Alta producción agrícola sin infraestructura de almacenamiento suficiente. Distancia promedio al CD más cercano: <code>87 km</code>.<br><br>
+        <strong>2. Los Ángeles - Temuco</strong><br>
+        Brecha de <code>180 km</code> sin centros logísticos. Zona forestal y agrícola con demanda creciente.<br><br>
+        <strong>3. Chiloé - Aysén</strong><br>
+        Sin infraestructura logística. Industria salmonera depende de Puerto Montt como único hub. Tiempo de transporte: <code>+4 hrs</code> desde Castro.<br><br>
+        Estas zonas coinciden con las <strong>3 propuestas de Fase 3</strong> marcadas en el mapa (puntos morados).`;
+    }
+
+    if (ql.includes('puerto') || ql.includes('portuari') || ql.includes('port')) {
+        const puertos = centrosLogisticos.filter(c => c.type === 'Terminal Portuaria');
+        let table = '<table class="data-table"><tr><th>Puerto</th><th>Superficie</th><th>Actividad</th></tr>';
+        puertos.forEach(c => { table += `<tr><td>${c.name}</td><td>${c.superficie}</td><td>${c.actividad}</td></tr>`; });
+        table += '</table>';
+        return `Chile cuenta con <code>${puertos.length}</code> terminales portuarias principales en nuestra base de datos:<br><br>${table}<br>Los puertos de <strong>San Antonio</strong> y <strong>Valparaíso</strong> manejan el ~75% de la carga contenedorizada del país. <strong>Mejillones</strong> es clave para la minería del norte. <strong>Coronel/Lirquén</strong> son estratégicos para la industria forestal del sur.`;
+    }
+
+    if (ql.includes('nuevo') || ql.includes('mejor zona') || ql.includes('recomen') || ql.includes('donde') || ql.includes('propuesta')) {
+        return `Basándome en el análisis de la red actual, recomiendo <strong>3 ubicaciones prioritarias</strong>:<br><br>
+        <strong>1. Rancagua / Ruta 5 Sur km 80</strong> <span style="color:var(--purple);">&#9679; Score: 92/100</span><br>
+        <table class="data-table">
+        <tr><th>Factor</th><th>Valor</th></tr>
+        <tr><td>Distancia a RM</td><td>80 km (45 min)</td></tr>
+        <tr><td>Acceso vial</td><td>Ruta 5 + Ruta 66</td></tr>
+        <tr><td>Cobertura nueva</td><td>+35% región O'Higgins</td></tr>
+        <tr><td>Costo suelo estimado</td><td>3.5 UF/m2</td></tr>
+        </table><br>
+        <strong>2. Los Ángeles</strong> <span style="color:var(--purple);">&#9679; Score: 85/100</span><br>
+        Hub natural entre Concepción y Temuco. Conecta zona forestal con puertos de Biobío. Brecha actual de 180 km sin CD.<br><br>
+        <strong>3. Castro, Chiloé</strong> <span style="color:var(--purple);">&#9679; Score: 78/100</span><br>
+        Frigorífico para industria salmonera. Reduce dependencia de Puerto Montt y tiempos de transporte en 4+ horas.<br><br>
+        <em style="color:var(--text-dim);font-size:11px;">Scoring multi-variable: conectividad vial, plan regulador, demanda poblacional, distancia a centros existentes, costo de suelo, proximidad a puertos/ferrocarril, riesgos naturales, servicios básicos y actividad económica.</em>`;
+    }
+
+    if (ql.includes('superficie') || ql.includes('grande') || ql.includes('mayor') || ql.includes('tama')) {
+        const sorted = [...centrosLogisticos].filter(c => !c.propuesta).sort((a,b) => parseInt(b.superficie.replace(/\D/g,'')) - parseInt(a.superficie.replace(/\D/g,'')));
+        const top5 = sorted.slice(0, 5);
+        let table = '<table class="data-table"><tr><th>#</th><th>Centro</th><th>Superficie</th><th>Región</th></tr>';
+        top5.forEach((c,i) => { table += `<tr><td>${i+1}</td><td>${c.name}</td><td>${c.superficie}</td><td>${c.region}</td></tr>`; });
+        table += '</table>';
+        const totalM2 = sorted.reduce((sum,c) => sum + parseInt(c.superficie.replace(/\D/g,'')), 0);
+        return `<strong>Top 5 centros por superficie:</strong><br><br>${table}<br>Superficie total registrada: <code>${totalM2.toLocaleString()} m2</code><br>Promedio por centro: <code>${Math.round(totalM2/sorted.length).toLocaleString()} m2</code>`;
+    }
+
+    if (ql.includes('ruta') || ql.includes('acceso') || ql.includes('transporte') || ql.includes('vial') || ql.includes('conectividad')) {
+        return `<strong>Principales ejes logísticos de Chile:</strong><br><br>
+        <strong>Ruta 5 (Panamericana)</strong><br>
+        Columna vertebral norte-sur. Conecta <code>85%</code> de los centros logísticos registrados. Los CD más importantes están a menos de <code>5 km</code> de esta ruta.<br><br>
+        <strong>Ruta 68 (Santiago-Valparaíso)</strong><br>
+        Conecta RM con los puertos de San Antonio y Valparaíso. Corredor crítico para exportaciones.<br><br>
+        <strong>Ruta 78 (Autopista del Sol)</strong><br>
+        Acceso directo al Puerto de San Antonio (65,000 m2), el más grande del país.<br><br>
+        <strong>Ruta 60-CH (Los Libertadores)</strong><br>
+        Conexión con Argentina. Relevante para cross-docking y logística internacional.<br><br>
+        <em style="color:var(--text-dim);font-size:11px;">En Fase 3, cruzaremos estos datos con volúmenes de carga reales de Omnix para optimizar ubicaciones por tiempo de acceso, no solo distancia.</em>`;
+    }
+
+    if (ql.includes('frigorif') || ql.includes('frio') || ql.includes('alimento') || ql.includes('cadena')) {
+        const frios = centrosLogisticos.filter(c => c.type === 'Almacén Frigorífico');
+        let table = '<table class="data-table"><tr><th>Centro</th><th>Superficie</th><th>Actividad</th></tr>';
+        frios.forEach(c => { table += `<tr><td>${c.name}</td><td>${c.superficie}</td><td>${c.actividad}</td></tr>`; });
+        table += '</table>';
+        return `Registramos <code>${frios.length}</code> almacenes frigoríficos:<br><br>${table}<br>La cadena de frío está concentrada en <strong>RM</strong> (carnes, lácteos) y <strong>Los Lagos</strong> (salmón). Hay un déficit importante en la zona central agrícola (O'Higgins, Maule) donde se produce fruta de exportación sin capacidad de frío cercana.`;
+    }
+
+    if (ql.includes('estadist') || ql.includes('resumen') || ql.includes('cuantos') || ql.includes('total')) {
+        const tipos = {};
+        const regiones = {};
+        centrosLogisticos.filter(c => !c.propuesta).forEach(c => {
+            tipos[c.type] = (tipos[c.type] || 0) + 1;
+            regiones[c.region] = (regiones[c.region] || 0) + 1;
+        });
+        let tTable = '<table class="data-table"><tr><th>Tipo</th><th>Cantidad</th></tr>';
+        Object.entries(tipos).forEach(([k,v]) => { tTable += `<tr><td>${k}</td><td>${v}</td></tr>`; });
+        tTable += '</table>';
+        let rTable = '<table class="data-table"><tr><th>Región</th><th>Centros</th></tr>';
+        Object.entries(regiones).sort((a,b) => b[1]-a[1]).forEach(([k,v]) => { rTable += `<tr><td>${k}</td><td>${v}</td></tr>`; });
+        rTable += '</table>';
+        return `<strong>Resumen de la base de datos:</strong><br><br><strong>Por tipo:</strong>${tTable}<br><strong>Por región:</strong>${rTable}<br>Total: <code>${centrosLogisticos.filter(c=>!c.propuesta).length}</code> centros + <code>${centrosLogisticos.filter(c=>c.propuesta).length}</code> propuestas Fase 3.`;
+    }
+
+    const safeQ = q.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return `Entiendo tu consulta sobre "<em>${safeQ}</em>". Para darte un análisis preciso, puedo ayudarte con:<br><br>
+    <strong>&#8226;</strong> Datos por región o comuna específica<br>
+    <strong>&#8226;</strong> Análisis de cobertura y zonas desatendidas<br>
+    <strong>&#8226;</strong> Conectividad vial y acceso a rutas<br>
+    <strong>&#8226;</strong> Estadísticas y comparativas<br>
+    <strong>&#8226;</strong> Recomendaciones de nuevas ubicaciones<br><br>
+    <em style="font-size:11px;color:var(--text-dim);">En producción, este asistente estará conectado directamente a PostGIS via API, pudiendo ejecutar consultas espaciales en tiempo real sobre toda la base de datos.</em>`;
+}
+
+// ═══ MAP STYLE SWITCHING ═══
+function switchMapStyle(style) {
+    document.querySelectorAll('.map-style-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector(`.map-style-btn[onclick*="${style}"]`).classList.add('active');
+
+    if (style === 'satellite' && currentBase !== 'satellite') {
+        map.removeLayer(silver);
+        map.removeLayer(silverLabels);
+        satellite.addTo(map);
+        darkLabels.addTo(map);
+        currentBase = 'satellite';
+    } else if (style === 'silver' && currentBase !== 'silver') {
+        map.removeLayer(satellite);
+        map.removeLayer(darkLabels);
+        silver.addTo(map);
+        silverLabels.addTo(map);
+        currentBase = 'silver';
+    }
+}
+
+// ═══ MOBILE PANEL SWITCHING ═══
+function mobileSwitch(panel) {
+    const sidebar = document.querySelector('.sidebar');
+    const mapContainer = document.querySelector('.map-container');
+    const chatPanel = document.querySelector('.chat-panel');
+    const toggles = document.querySelectorAll('.mobile-toggle');
+
+    toggles.forEach(t => t.classList.remove('active'));
+    document.querySelector(`.mobile-toggle[data-panel="${panel}"]`).classList.add('active');
+
+    if (panel === 'info') {
+        sidebar.classList.remove('hidden');
+        mapContainer.style.display = 'none';
+        chatPanel.classList.add('hidden');
+        sidebar.style.height = 'calc(100vh - 45px)';
+        sidebar.style.overflowY = 'auto';
+    } else if (panel === 'map') {
+        sidebar.classList.add('hidden');
+        mapContainer.style.display = 'block';
+        chatPanel.classList.add('hidden');
+        mapContainer.style.height = 'calc(100vh - 45px)';
+        setTimeout(() => map.invalidateSize(), 100);
+    } else if (panel === 'chat') {
+        sidebar.classList.add('hidden');
+        mapContainer.style.display = 'none';
+        chatPanel.classList.remove('hidden');
+        chatPanel.style.height = 'calc(100vh - 45px)';
+        chatPanel.style.maxHeight = 'none';
+    }
+}
+
+// Init mobile state
+if (window.innerWidth <= 900) { mobileSwitch('map'); }
+
+// Reset on resize (back to desktop)
+window.addEventListener('resize', () => {
+    if (window.innerWidth > 900) {
+        const sidebar = document.querySelector('.sidebar');
+        const mapContainer = document.querySelector('.map-container');
+        const chatPanel = document.querySelector('.chat-panel');
+        sidebar.classList.remove('hidden');
+        sidebar.style.height = '';
+        sidebar.style.overflowY = '';
+        mapContainer.style.display = '';
+        mapContainer.style.height = '';
+        chatPanel.classList.remove('hidden');
+        chatPanel.style.height = '';
+        chatPanel.style.maxHeight = '';
+        map.invalidateSize();
+    }
+});
+</script>
+</body>
+</html>

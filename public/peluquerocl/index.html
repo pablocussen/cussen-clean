@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5">
+<title>PeluqueroCL - Gestion Profesional de Peluqueria</title>
+<meta name="description" content="Herramienta profesional de gestion para peluquerias y barberias en Chile">
+<meta name="theme-color" content="#7c3aed">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💇</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--primary:#7c3aed;--primary-light:#a855f7;--primary-dark:#6d28d9;--rose:#ec4899;--rose-light:#f9a8d4;--bg:#faf5ff;--bg-card:#fff;--text:#1e1b4b;--text-muted:#6b7280;--border:#e9d5ff;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--shadow:0 1px 3px rgba(124,58,237,.1),0 1px 2px rgba(124,58,237,.06);--shadow-lg:0 10px 25px rgba(124,58,237,.12);--radius:12px;--radius-sm:8px}
+html{font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:16px;background:var(--bg);color:var(--text);-webkit-text-size-adjust:100%}
+body{min-height:100vh;padding-bottom:80px}
+input,select,textarea,button{font-family:inherit;font-size:16px}
+input,select,textarea{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:#fff;color:var(--text);transition:border-color .2s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--primary-light);box-shadow:0 0 0 3px rgba(168,85,247,.15)}
+textarea{resize:vertical;min-height:60px}
+button{cursor:pointer;border:none;border-radius:var(--radius-sm);font-weight:600;transition:all .15s}
+.btn{padding:10px 20px;background:var(--primary);color:#fff;border-radius:var(--radius-sm);font-size:.9rem}
+.btn:active{transform:scale(.97);background:var(--primary-dark)}
+.btn-sm{padding:6px 14px;font-size:.8rem}
+.btn-outline{background:transparent;color:var(--primary);border:1.5px solid var(--primary)}
+.btn-outline:active{background:var(--primary);color:#fff}
+.btn-rose{background:var(--rose);color:#fff}
+.btn-rose:active{background:#db2777}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-success{background:var(--success);color:#fff}
+.btn-ghost{background:transparent;color:var(--text-muted);padding:6px 10px}
+
+header{background:linear-gradient(135deg,var(--primary),var(--primary-light));color:#fff;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:var(--shadow-lg)}
+header h1{font-size:1.2rem;font-weight:700;letter-spacing:-.5px}
+header .subtitle{font-size:.7rem;opacity:.8;font-weight:300}
+
+nav{position:fixed;bottom:0;left:0;right:0;background:#fff;display:flex;border-top:1px solid var(--border);z-index:100;box-shadow:0 -2px 10px rgba(0,0,0,.05);padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;padding:8px 4px 10px;background:none;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--text-muted);font-size:.65rem;font-weight:500;border-radius:0;transition:color .2s}
+nav button.active{color:var(--primary)}
+nav button .icon{font-size:1.3rem}
+nav button.active .icon{transform:scale(1.1)}
+
+.tab{display:none;padding:16px;max-width:800px;margin:0 auto}
+.tab.active{display:block}
+
+.card{background:var(--bg-card);border-radius:var(--radius);padding:16px;margin-bottom:12px;box-shadow:var(--shadow);border:1px solid rgba(233,213,255,.5)}
+.card-title{font-size:.95rem;font-weight:700;color:var(--primary-dark);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+
+.form-group{margin-bottom:12px}
+.form-group label{display:block;font-size:.8rem;font-weight:600;color:var(--text-muted);margin-bottom:4px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.7rem;font-weight:600}
+.badge-purple{background:#ede9fe;color:var(--primary)}
+.badge-rose{background:#fce7f3;color:var(--rose)}
+.badge-green{background:#d1fae5;color:#059669}
+.badge-yellow{background:#fef3c7;color:#d97706}
+.badge-red{background:#fee2e2;color:var(--danger)}
+
+.list-item{display:flex;align-items:center;justify-content:space-between;padding:12px;border-bottom:1px solid var(--border);gap:10px}
+.list-item:last-child{border-bottom:none}
+.list-item-info{flex:1;min-width:0}
+.list-item-info h4{font-size:.9rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.list-item-info p{font-size:.75rem;color:var(--text-muted)}
+
+.chip-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.chip{padding:5px 12px;border-radius:20px;font-size:.75rem;font-weight:500;background:#ede9fe;color:var(--primary);cursor:pointer;border:1.5px solid transparent;transition:all .15s}
+.chip.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.stat-card{background:linear-gradient(135deg,var(--primary),var(--primary-light));color:#fff;border-radius:var(--radius);padding:14px;text-align:center}
+.stat-card.rose{background:linear-gradient(135deg,var(--rose),#f472b6)}
+.stat-card.green{background:linear-gradient(135deg,#059669,var(--success))}
+.stat-card.amber{background:linear-gradient(135deg,#d97706,var(--warning))}
+.stat-card .stat-val{font-size:1.4rem;font-weight:700}
+.stat-card .stat-label{font-size:.7rem;opacity:.85;margin-top:2px}
+
+.alert{padding:10px 14px;border-radius:var(--radius-sm);font-size:.8rem;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.alert-warning{background:#fef3c7;color:#92400e;border:1px solid #fde68a}
+.alert-info{background:#ede9fe;color:#5b21b6;border:1px solid #c4b5fd}
+.alert-danger{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5}
+
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;justify-content:center;align-items:flex-end;padding:0}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:20px 20px 0 0;padding:24px 20px;width:100%;max-width:500px;max-height:85vh;overflow-y:auto;animation:slideUp .25s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.modal-header h3{font-size:1.05rem;font-weight:700;color:var(--primary-dark)}
+
+.search-box{position:relative;margin-bottom:12px}
+.search-box input{padding-left:36px}
+.search-box::before{content:"🔍";position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:.9rem}
+
+.empty-state{text-align:center;padding:40px 20px;color:var(--text-muted)}
+.empty-state .empty-icon{font-size:3rem;margin-bottom:10px}
+.empty-state p{font-size:.85rem}
+
+.time-slot{display:flex;align-items:stretch;min-height:48px;border-bottom:1px solid #f3e8ff;position:relative}
+.time-label{width:55px;font-size:.7rem;color:var(--text-muted);padding:4px 6px 0 0;text-align:right;flex-shrink:0;font-weight:500}
+.time-content{flex:1;padding:3px 0;min-height:48px;position:relative;cursor:pointer;border-left:2px solid #f3e8ff}
+.time-content:hover{background:rgba(124,58,237,.03)}
+.appt-block{padding:5px 10px;border-radius:6px;font-size:.75rem;margin:1px 4px;cursor:pointer;color:#fff;font-weight:500;line-height:1.3;position:relative}
+.appt-block .appt-client{font-weight:600}
+.appt-block .appt-service{opacity:.9;font-size:.7rem}
+.svc-corte{background:var(--primary)}
+.svc-color{background:var(--rose)}
+.svc-tratamiento{background:var(--success)}
+.svc-peinado{background:#8b5cf6}
+.svc-barba{background:#0ea5e9}
+.svc-manicure{background:#f59e0b}
+.svc-depilacion{background:#6366f1}
+
+.day-nav{display:flex;align-items:center;justify-content:space-between;padding:6px 0;margin-bottom:8px}
+.day-nav h3{font-size:.95rem;font-weight:600}
+.day-nav button{background:none;color:var(--primary);font-size:1.2rem;padding:6px 12px}
+
+.vip-star{color:#f59e0b;margin-left:4px}
+.low-stock{animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+.chart-container{position:relative;height:200px;margin:10px 0}
+
+.print-only{display:none}
+@media print{body *{visibility:hidden}.print-only,.print-only *{visibility:visible;display:block}.print-only{position:absolute;left:0;top:0;width:100%}nav,header,.no-print{display:none!important}}
+@media(min-width:600px){.stats-grid{grid-template-columns:repeat(4,1fr)}.form-row{grid-template-columns:1fr 1fr 1fr}.modal{border-radius:20px;margin:auto;max-height:80vh}}
+</style>
+</head>
+<body>
+<header>
+<div><h1>PeluqueroCL</h1><div class="subtitle">Gestion Profesional de Peluqueria</div></div>
+<div style="display:flex;gap:8px;align-items:center">
+<button class="btn btn-sm" onclick="printDailySchedule()" title="Imprimir agenda" style="background:rgba(255,255,255,.2);font-size:.8rem">🖨️</button>
+<button class="btn btn-sm" onclick="exportDailySales()" title="Exportar ventas" style="background:rgba(255,255,255,.2);font-size:.8rem">📤</button>
+</div>
+</header>
+
+<div id="tabAgenda" class="tab active"></div>
+<div id="tabClientes" class="tab"></div>
+<div id="tabServicios" class="tab"></div>
+<div id="tabCaja" class="tab"></div>
+<div id="tabInventario" class="tab"></div>
+
+<nav>
+<button class="active" onclick="switchTab('Agenda',this)"><span class="icon">📅</span>Agenda</button>
+<button onclick="switchTab('Clientes',this)"><span class="icon">👥</span>Clientes</button>
+<button onclick="switchTab('Servicios',this)"><span class="icon">💇</span>Servicios</button>
+<button onclick="switchTab('Caja',this)"><span class="icon">💰</span>Caja</button>
+<button onclick="switchTab('Inventario',this)"><span class="icon">📦</span>Inventario</button>
+</nav>
+
+<div id="modalOverlay" class="modal-overlay" onclick="if(event.target===this)closeModal()">
+<div class="modal" id="modalContent"></div>
+</div>
+
+<div class="print-only" id="printArea"></div>
+
+<script>
+/* === Storage helpers === */
+function LS(k,v){try{if(v===undefined)return JSON.parse(localStorage.getItem('plcl_'+k));localStorage.setItem('plcl_'+k,JSON.stringify(v))}catch(e){return v===undefined?null:void 0}}
+function genId(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+function clp(n){return '$'+Number(n||0).toLocaleString('es-CL')}
+function fmtDate(d){const o=new Date(d);return o.toLocaleDateString('es-CL',{day:'2-digit',month:'short',year:'numeric'})}
+function fmtTime(h,m){return String(h).padStart(2,'0')+':'+String(m||0).padStart(2,'0')}
+function dayStr(d){return d.toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}
+function dayKey(d){return d.toISOString().slice(0,10)}
+function daysAgo(dateStr){if(!dateStr)return 999;return Math.floor((Date.now()-new Date(dateStr).getTime())/(86400000))}
+
+/* === Data init === */
+let appointments=LS('appointments')||[];
+let clients=LS('clients')||[];
+let services=LS('services')||defaultServices();
+let sales=LS('sales')||[];
+let inventory=LS('inventory')||defaultInventory();
+let currentDate=new Date();
+currentDate.setHours(0,0,0,0);
+let activeTab='Agenda';
+
+function defaultServices(){
+const s=[
+{id:genId(),name:'Corte Mujer',cat:'Corte',dur:45,price:15000,desc:'Corte personalizado con lavado y secado'},
+{id:genId(),name:'Corte Hombre',cat:'Corte',dur:30,price:8000,desc:'Corte clasico o moderno con maquina y tijera'},
+{id:genId(),name:'Corte Nino',cat:'Corte',dur:20,price:6000,desc:'Corte infantil (hasta 12 anos)'},
+{id:genId(),name:'Flequillo',cat:'Corte',dur:10,price:3000,desc:'Recorte de flequillo'},
+{id:genId(),name:'Tinte Completo',cat:'Color',dur:90,price:35000,desc:'Coloracion completa raiz a punta'},
+{id:genId(),name:'Raices',cat:'Color',dur:60,price:22000,desc:'Retoque de raices (hasta 3cm)'},
+{id:genId(),name:'Mechas',cat:'Color',dur:120,price:45000,desc:'Mechas con gorro o papel'},
+{id:genId(),name:'Balayage',cat:'Color',dur:150,price:65000,desc:'Tecnica balayage a mano alzada'},
+{id:genId(),name:'Decoloracion',cat:'Color',dur:90,price:40000,desc:'Decoloracion completa'},
+{id:genId(),name:'Keratina',cat:'Tratamiento',dur:120,price:50000,desc:'Alisado con keratina brasilena'},
+{id:genId(),name:'Botox Capilar',cat:'Tratamiento',dur:90,price:35000,desc:'Tratamiento botox reparador'},
+{id:genId(),name:'Hidratacion Profunda',cat:'Tratamiento',dur:45,price:18000,desc:'Mascarilla nutritiva profunda'},
+{id:genId(),name:'Cauterizacion',cat:'Tratamiento',dur:60,price:25000,desc:'Sellado de puntas y reparacion'},
+{id:genId(),name:'Brushing',cat:'Peinado',dur:30,price:12000,desc:'Secado con cepillo redondo'},
+{id:genId(),name:'Planchado',cat:'Peinado',dur:30,price:10000,desc:'Alisado con plancha'},
+{id:genId(),name:'Peinado Evento',cat:'Peinado',dur:60,price:30000,desc:'Peinado para eventos especiales'},
+{id:genId(),name:'Recorte Barba',cat:'Barba',dur:20,price:5000,desc:'Perfilado y recorte de barba'},
+{id:genId(),name:'Afeitado Clasico',cat:'Barba',dur:30,price:8000,desc:'Afeitado con navaja y toalla caliente'},
+{id:genId(),name:'Diseno Barba',cat:'Barba',dur:25,price:7000,desc:'Diseno y definicion de barba'},
+{id:genId(),name:'Manicure Simple',cat:'Manicure',dur:30,price:8000,desc:'Limado, cuticula y esmalte'},
+{id:genId(),name:'Manicure Gel',cat:'Manicure',dur:45,price:15000,desc:'Esmaltado semipermanente gel'},
+{id:genId(),name:'Unas Acrilicas',cat:'Manicure',dur:90,price:25000,desc:'Aplicacion unas acrilicas'},
+{id:genId(),name:'Depilacion Cejas',cat:'Depilacion',dur:15,price:4000,desc:'Diseno y depilacion de cejas'},
+{id:genId(),name:'Depilacion Bozo',cat:'Depilacion',dur:10,price:3000,desc:'Depilacion con cera facial'},
+];
+LS('services',s);return s;
+}
+
+function defaultInventory(){
+const inv=[
+{id:genId(),name:'Tinte Wella Koleston 60ml',cat:'Coloracion',qty:24,min:5,cost:4500,price:0,brand:'Wella'},
+{id:genId(),name:'Oxidante Wella 20vol 1L',cat:'Coloracion',qty:8,min:3,cost:6000,price:0,brand:'Wella'},
+{id:genId(),name:'Polvo Decolorante Schwarzkopf 500g',cat:'Coloracion',qty:6,min:2,cost:12000,price:0,brand:'Schwarzkopf'},
+{id:genId(),name:'Shampoo L\'Oreal Pro 1500ml',cat:'Cuidado Capilar',qty:5,min:2,cost:18000,price:25000,brand:'L\'Oreal Pro'},
+{id:genId(),name:'Acondicionador Alfaparf 1000ml',cat:'Cuidado Capilar',qty:4,min:2,cost:15000,price:22000,brand:'Alfaparf'},
+{id:genId(),name:'Mascarilla Framesi 500ml',cat:'Cuidado Capilar',qty:3,min:2,cost:12000,price:18000,brand:'Framesi'},
+{id:genId(),name:'Keratina Brasilena 1L',cat:'Tratamiento',qty:2,min:1,cost:45000,price:0,brand:'Generic'},
+{id:genId(),name:'Cera Modeladora 100ml',cat:'Styling',qty:10,min:3,cost:3500,price:6000,brand:'Schwarzkopf'},
+{id:genId(),name:'Spray Fijador 400ml',cat:'Styling',qty:7,min:3,cost:5000,price:8000,brand:'L\'Oreal Pro'},
+{id:genId(),name:'Tijera Profesional 6"',cat:'Herramientas',qty:3,min:1,cost:35000,price:0,brand:'Jaguar'},
+{id:genId(),name:'Maquina Cortapelo Wahl',cat:'Herramientas',qty:2,min:1,cost:55000,price:0,brand:'Wahl'},
+{id:genId(),name:'Shampoo Retail 300ml',cat:'Retail',qty:12,min:4,cost:5000,price:9000,brand:'Wella'},
+];
+LS('inventory',inv);return inv;
+}
+
+function save(){LS('appointments',appointments);LS('clients',clients);LS('services',services);LS('sales',sales);LS('inventory',inventory)}
+
+/* === Tab switching === */
+function switchTab(name,btn){
+activeTab=name;
+document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+document.getElementById('tab'+name).classList.add('active');
+if(btn)btn.classList.add('active');
+render();
+}
+
+function render(){
+const fn={Agenda:renderAgenda,Clientes:renderClientes,Servicios:renderServicios,Caja:renderCaja,Inventario:renderInventario};
+fn[activeTab]();
+}
+
+/* === MODAL === */
+function openModal(html){document.getElementById('modalContent').innerHTML=html;document.getElementById('modalOverlay').classList.add('open')}
+function closeModal(){document.getElementById('modalOverlay').classList.remove('open')}
+
+/* ======================= TAB 1: AGENDA ======================= */
+function renderAgenda(){
+const dk=dayKey(currentDate);
+const todayAppts=appointments.filter(a=>a.date===dk).sort((a,b)=>a.hour-b.hour||(a.min||0)-(b.min||0));
+const totalRev=todayAppts.reduce((s,a)=>{const sv=services.find(x=>x.id===a.serviceId);return s+(sv?sv.price:0)},0);
+
+let html=`<div class="day-nav">
+<button onclick="navDay(-1)">◀</button>
+<h3>${dayStr(currentDate)}</h3>
+<button onclick="navDay(1)">▶</button>
+</div>
+<div class="stats-grid">
+<div class="stat-card"><div class="stat-val">${todayAppts.length}</div><div class="stat-label">Citas hoy</div></div>
+<div class="stat-card rose"><div class="stat-val">${clp(totalRev)}</div><div class="stat-label">Estimado</div></div>
+</div>`;
+
+/* Birthday alerts */
+const today=new Date();
+const thisWeekBdays=clients.filter(c=>{
+if(!c.birthday)return false;
+const bd=new Date(c.birthday);bd.setFullYear(today.getFullYear());
+const diff=(bd-today)/(86400000);
+return diff>=0&&diff<=7;
+});
+if(thisWeekBdays.length){
+html+=`<div class="alert alert-info">🎂 Cumpleanos esta semana: ${thisWeekBdays.map(c=>c.name).join(', ')}</div>`;
+}
+
+html+=`<div style="display:flex;gap:8px;margin-bottom:12px">
+<button class="btn" onclick="openNewAppt()">+ Nueva Cita</button>
+<button class="btn btn-outline" onclick="openWalkIn()">Walk-in</button>
+<button class="btn-ghost" onclick="navDay(0)" style="font-size:.8rem">Hoy</button>
+</div>`;
+
+/* Time slots 9-21 */
+html+=`<div class="card" style="padding:0;overflow:hidden">`;
+for(let h=9;h<=20;h++){
+for(let m=0;m<60;m+=30){
+const slotAppts=todayAppts.filter(a=>a.hour===h&&(a.min||0)===m);
+html+=`<div class="time-slot">
+<div class="time-label">${fmtTime(h,m)}</div>
+<div class="time-content" onclick="openNewAppt(${h},${m})">`;
+slotAppts.forEach(a=>{
+const sv=services.find(s=>s.id===a.serviceId);
+const cat=(sv?sv.cat:'Corte').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+const blocks=Math.max(1,Math.ceil((a.duration||30)/30));
+const height=blocks*48-4;
+html+=`<div class="appt-block svc-${cat}" style="min-height:${height}px" onclick="event.stopPropagation();viewAppt('${a.id}')">
+<div class="appt-client">${a.clientName}</div>
+<div class="appt-service">${sv?sv.name:'Servicio'} - ${a.stylist||'Sin asignar'}</div>
+</div>`;
+});
+html+=`</div></div>`;
+}
+}
+html+=`</div>`;
+document.getElementById('tabAgenda').innerHTML=html;
+}
+
+function navDay(d){
+if(d===0)currentDate=new Date();
+else currentDate.setDate(currentDate.getDate()+d);
+currentDate.setHours(0,0,0,0);
+renderAgenda();
+}
+
+function openNewAppt(h,m){
+const dk=dayKey(currentDate);
+const svcOpts=services.map(s=>`<option value="${s.id}">${s.name} (${s.dur}min - ${clp(s.price)})</option>`).join('');
+const clientOpts=clients.map(c=>`<option value="${c.name}">${c.name}</option>`).join('');
+openModal(`<div class="modal-header"><h3>Nueva Cita</h3><button class="btn-ghost" onclick="closeModal()">✕</button></div>
+<div class="form-group"><label>Cliente</label><input list="clList" id="aClient" placeholder="Nombre del cliente"><datalist id="clList">${clientOpts}</datalist></div>
+<div class="form-row">
+<div class="form-group"><label>Hora</label><select id="aHour">${Array.from({length:12},(_, i)=>`<option value="${9+i}" ${9+i===h?'selected':''}>${fmtTime(9+i,0)}</option>`).join('')}</select></div>
+<div class="form-group"><label>Min</label><select id="aMin"><option value="0" ${(m||0)===0?'selected':''}>00</option><option value="30" ${m===30?'selected':''}>30</option></select></div>
+</div>
+<div class="form-group"><label>Servicio</label><select id="aService">${svcOpts}</select></div>
+<div class="form-group"><label>Estilista</label><input id="aStylist" placeholder="Nombre estilista"></div>
+<div class="form-group"><label>Notas</label><textarea id="aNotes" rows="2" placeholder="Notas adicionales..."></textarea></div>
+<button class="btn" style="width:100%;margin-top:8px" onclick="saveAppt()">Guardar Cita</button>`);
+}
+
+function saveAppt(){
+const sv=services.find(s=>s.id===document.getElementById('aService').value);
+const appt={id:genId(),date:dayKey(currentDate),clientName:document.getElementById('aClient').value.trim(),
+hour:+document.getElementById('aHour').value,min:+document.getElementById('aMin').value,
+serviceId:sv?sv.id:'',duration:sv?sv.dur:30,stylist:document.getElementById('aStylist').value.trim(),
+notes:document.getElementById('aNotes').value.trim()};
+if(!appt.clientName){alert('Ingresa el nombre del cliente');return}
+appointments.push(appt);save();closeModal();renderAgenda();
+}
+
+function openWalkIn(){
+const svcOpts=services.map(s=>`<option value="${s.id}">${s.name} (${clp(s.price)})</option>`).join('');
+const now=new Date();
+openModal(`<div class="modal-header"><h3>Walk-in Rapido</h3><button class="btn-ghost" onclick="closeModal()">✕</button></div>
+<div class="form-group"><label>Cliente</label><input id="wiClient" placeholder="Nombre (o 'Walk-in')"></div>
+<div class="form-group"><label>Servicio</label><select id="wiService">${svcOpts}</select></div>
+<button class="btn btn-rose" style="width:100%;margin-top:8px" onclick="saveWalkIn()">Agendar Ahora</button>`);
+}
+
+function saveWalkIn(){
+const sv=services.find(s=>s.id===document.getElementById('wiService').value);
+const now=new Date();
+const appt={id:genId(),date:dayKey(now),clientName:document.getElementById('wiClient').value.trim()||'Walk-in',
+hour:now.getHours(),min:now.getMinutes()<30?0:30,serviceId:sv?sv.id:'',duration:sv?sv.dur:30,stylist:'',notes:'Walk-in',walkin:true};
+appointments.push(appt);save();closeModal();currentDate=new Date();currentDate.setHours(0,0,0,0);renderAgenda();
+}
+
+function viewAppt(id){
+const a=appointments.find(x=>x.id===id);if(!a)return;
+const sv=services.find(s=>s.id===a.serviceId);
+const client=clients.find(c=>c.name===a.clientName);
+const phoneForWa=client&&client.phone?client.phone.replace(/[^0-9]/g,''):'';
+const waMsg=encodeURIComponent(`Hola ${a.clientName}! Te recordamos tu cita en la peluqueria el ${fmtDate(a.date)} a las ${fmtTime(a.hour,a.min)}. Servicio: ${sv?sv.name:''}. Te esperamos! 💇`);
+openModal(`<div class="modal-header"><h3>Cita</h3><button class="btn-ghost" onclick="closeModal()">✕</button></div>
+<div class="card"><p><strong>${a.clientName}</strong></p>
+<p>${fmtDate(a.date)} a las ${fmtTime(a.hour,a.min)}</p>
+<p>Servicio: ${sv?sv.name:'N/A'} (${a.duration||30}min)</p>
+<p>Estilista: ${a.stylist||'Sin asignar'}</p>
+${a.notes?`<p>Notas: ${a.notes}</p>`:''}
+${sv?`<p style="margin-top:8px;font-weight:600">Precio: ${clp(sv.price)}</p>`:''}
+</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap">
+${phoneForWa?`<a href="https://wa.me/${phoneForWa}?text=${waMsg}" target="_blank" class="btn btn-success btn-sm" style="text-decoration:none">📱 Recordatorio WA</a>`:''}
+<button class="btn btn-danger btn-sm" onclick="deleteAppt('${a.id}')">Eliminar</button>
+<button class="btn btn-outline btn-sm" onclick="completeApptToSale('${a.id}')">Completar y Cobrar</button>
+</div>`);
+}
+
+function deleteAppt(id){
+appointments=appointments.filter(a=>a.id!==id);save();closeModal();renderAgenda();
+}
+
+function completeApptToSale(id){
+const a=appointments.find(x=>x.id===id);if(!a)return;
+const sv=services.find(s=>s.id===a.serviceId);
+closeModal();
+switchTab('Caja',document.querySelectorAll('nav button')[3]);
+setTimeout(()=>openNewSale(a.clientName,sv?sv.id:'',sv?sv.price:0),100);
+}
+
+/* ======================= TAB 2: CLIENTES ======================= */
+function renderClientes(){
+let html=`<div class="search-box"><input id="clientSearch" placeholder="Buscar por nombre o telefono..." oninput="renderClientes()"></div>
+<button class="btn" style="margin-bottom:12px" onclick="openNewClient()">+ Nuevo Cliente</button>`;
+
+const q=(document.getElementById('clientSearch')?document.getElementById('clientSearch').value:'').toLowerCase();
+const filtered=clients.filter(c=>c.name.toLowerCase().includes(q)||(c.phone||'').includes(q));
+
+/* Inactive alerts */
+const inactive=clients.filter(c=>daysAgo(c.lastVisit)>60&&daysAgo(c.lastVisit)<999);
+if(inactive.length&&!q){
+html+=`<div class="alert alert-warning">⚠️ ${inactive.length} cliente(s) sin visitar hace mas de 60 dias</div>`;
+}
+
+if(!filtered.length){html+=`<div class="empty-state"><div class="empty-icon">👥</div><p>No hay clientes${q?' con esa busqueda':''}. Agrega el primero!</p></div>`}
+else{
+html+=`<div class="card" style="padding:0">`;
+filtered.sort((a,b)=>a.name.localeCompare(b.name)).forEach(c=>{
+const da=daysAgo(c.lastVisit);
+const daLabel=da<999?`Hace ${da} dias`:'Sin visitas';
+const inactive=da>60&&da<999;
+html+=`<div class="list-item" onclick="viewClient('${c.id}')" style="cursor:pointer">
+<div class="list-item-info">
+<h4>${c.name}${c.vip?'<span class="vip-star">★</span>':''}${inactive?' <span class="badge badge-yellow">Inactivo</span>':''}</h4>
+<p>${c.phone||'Sin telefono'} | ${daLabel}</p>
+</div>
+<span style="color:var(--text-muted);font-size:.8rem">→</span>
+</div>`;
+});
+html+=`</div>`;
+}
+document.getElementById('tabClientes').innerHTML=html;
+}
+
+function openNewClient(){
+openModal(`<div class="modal-header"><h3>Nuevo Cliente</h3><button class="btn-ghost" onclick="closeModal()">✕</button></div>
+<div class="form-group"><label>Nombre completo</label><input id="cName"></div>
+<div class="form-row">
+<div class="form-group"><label>Telefono</label><input id="cPhone" type="tel" placeholder="+56 9 ..."></div>
+<div class="form-group"><label>Email</label><input id="cEmail" type="email"></div>
+</div>
+<div class="form-group"><label>Cumpleanos</label><input id="cBday" type="date"></div>
+<div class="form-group"><label>Tipo de cabello</label><select id="cHairType">
+<option value="">--</option><option value="Liso">Liso</option><option value="Ondulado">Ondulado</option><option value="Rizado">Rizado</option><option value="Afro">Afro</option></select></div>
+<div class="form-group"><label>Estilista preferido</label><input id="cStylist" placeholder="Nombre estilista"></div>
+<div class="form-group"><label>Alergias / Sensibilidades</label><textarea id="cAllergies" rows="2" placeholder="Ej: sensibilidad al amoniaco..."></textarea></div>
+<div class="form-group"><label><input type="checkbox" id="cVip"> Cliente VIP</label></div>
+<button class="btn" style="width:100%;margin-top:8px" onclick="saveClient()">Guardar Cliente</button>`);
+}
+
+function saveClient(){
+const c={id:genId(),name:document.getElementById('cName').value.trim(),phone:document.getElementById('cPhone').value.trim(),
+email:document.getElementById('cEmail').value.trim(),birthday:document.getElementById('cBday').value,
+hairType:document.getElementById('cHairType').value,preferredStylist:document.getElementById('cStylist').value.trim(),
+allergies:document.getElementById('cAllergies').value.trim(),vip:document.getElementById('cVip').checked,
+colorHistory:[],formulas:[],lastVisit:null,notes:''};
+if(!c.name){alert('Ingresa el nombre');return}
+clients.push(c);save();closeModal();renderClientes();
+}
+
+function viewClient(id){
+const c=clients.find(x=>x.id===id);if(!c)return;
+const history=appointments.filter(a=>a.clientName===c.name).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,10);
+const da=daysAgo(c.lastVisit);
+const phoneForWa=c.phone?c.phone.replace(/[^0-9]/g,''):'';
+
+let histHtml=history.length?history.map(a=>{const sv=services.find(s=>s.id===a.serviceId);return`<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:.8rem"><strong>${fmtDate(a.date)}</strong> ${fmtTime(a.hour,a.min)} - ${sv?sv.name:'?'} ${a.notes?'('+a.notes+')':''}</div>`}).join(''):'<p style="font-size:.8rem;color:var(--text-muted)">Sin historial</p>';
+let formulaHtml=(c.formulas||[]).map((f,i)=>`<div style="padding:4px 0;font-size:.8rem;border-bottom:1px solid var(--border)">${f} <button class="btn-ghost" onclick="removeFormula('${c.id}',${i})" style="font-size:.7rem;color:var(--danger)">✕</button></div>`).join('')||'<p style="font-size:.8rem;color:var(--text-muted)">Sin formulas</p>';
+
+openModal(`<div class="modal-header"><h3>${c.name}${c.vip?' ★':''}</h3><button class="btn-ghost" onclick="closeModal()">✕</button></div>
+<div class="card">
+<p style="font-size:.85rem">${c.phone||''} ${c.email?' | '+c.email:''}</p>
+${c.birthday?`<p style="font-size:.8rem">🎂 ${fmtDate(c.birthday)}</p>`:''}
+${c.hairType?`<p style="font-size:.8rem">Cabello: ${c.hairType}</p>`:''}
+${c.preferredStylist?`<p style="font-size:.8rem">Estilista: ${c.preferredStylist}</p>`:''}
+${c.allergies?`<div class="alert alert-danger" style="margin-top:6px">⚠️ ${c.allergies}</div>`:''}
+<p style="font-size:.8rem;margin-top:4px">${da<999?`Ultima visita: hace ${da} dias`:'Sin visitas registradas'}</p>
+</div>
+<div class="card"><div class="card-title">📋 Historial de Servicios</div>${histHtml}</div>
+<div class="card"><div class="card-title">🧪 Formulas</div>${formulaHtml}
+<div style="display:flex;gap:6px;margin-top:8px"><input id="newFormula" placeholder="Ej: Wella 7/1 + 6% 30min" style="flex:1">
+<button class="btn btn-sm" onclick="addFormula('${c.id}')">+</button></div></div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+${phoneForWa?`<a href="https://wa.me/${phoneForWa}" target="_blank" class="btn btn-success btn-sm" style="text-decoration:none">📱 WhatsApp</a>`:''}
+<button class="btn btn-sm btn-outline" onclick="toggleVip('${c.id}')">${c.vip?'Quitar VIP':'Marcar VIP'}</button>
+<button class="btn btn-danger btn-sm" onclick="if(confirm('Eliminar cliente?')){deleteClient('${c.id}')}">Eliminar</button>
+</div>`);
+}
+
+function addFormula(cid){
+const c=clients.find(x=>x.id===cid);if(!c)return;
+const f=document.getElementById('newFormula').value.trim();if(!f)return;
+if(!c.formulas)c.formulas=[];c.formulas.push(f);save();viewClient(cid);
+}
+function removeFormula(cid,i){const c=clients.find(x=>x.id===cid);if(!c)return;c.formulas.splice(i,1);save();viewClient(cid)}
+function toggleVip(cid){const c=clients.find(x=>x.id===cid);if(!c)return;c.vip=!c.vip;save();viewClient(cid)}
+function deleteClient(id){clients=clients.filter(c=>c.id!==id);save();closeModal();renderClientes()}
+
+/* ======================= TAB 3: SERVICIOS ======================= */
+function renderServicios(){
+const cats=['Corte','Color','Tratamiento','Peinado','Barba','Manicure','Depilacion'];
+const popularIds=getMostPopularServices(3);
+let html=`<button class="btn" style="margin-bottom:12px" onclick="openNewService()">+ Nuevo Servicio</button>`;
+
+cats.forEach(cat=>{
+const catSvcs=services.filter(s=>s.cat===cat);
+if(!catSvcs.length)return;
+const catEmoji={Corte:'✂️',Color:'🎨',Tratamiento:'💆',Peinado:'💁',Barba:'🧔',Manicure:'💅',Depilacion:'🌸'}[cat]||'💇';
+html+=`<div class="card"><div class="card-title">${catEmoji} ${cat}</div>`;
+catSvcs.forEach(s=>{
+const pop=popularIds.includes(s.id);
+html+=`<div class="list-item" onclick="editService('${s.id}')" style="cursor:pointer">
+<div class="list-item-info"><h4>${s.name}${pop?' <span class="badge badge-rose">Popular</span>':''}</h4>
+<p>${s.dur}min | ${s.desc||''}</p></div>
+<strong style="color:var(--primary);white-space:nowrap">${clp(s.price)}</strong></div>`;
+});
+html+=`</div>`;
+});
+document.getElementById('tabServicios').innerHTML=html;
+}
+
+function getMostPopularServices(n){
+const count={};
+appointments.forEach(a=>{count[a.serviceId]=(count[a.serviceId]||0)+1});
+return Object.entries(count).sort((a,b)=>b[1]-a[1]).slice(0,n).map(e=>e[0]);
+}
+
+function openNewService(){
+openModal(`<div class="modal-header"><h3>Nuevo Servicio</h3><button class="btn-ghost" onclick="closeModal()">✕</button></div>
+<div class="form-group"><label>Nombre</label><input id="sName"></div>
+<div class="form-group"><label>Categoria</label><select id="sCat">
+<option value="Corte">Corte</option><option value="Color">Color</option><option value="Tratamiento">Tratamiento</option>
+<option value="Peinado">Peinado</option><option value="Barba">Barba</option><option value="Manicure">Manicure/Pedicure</option><option value="Depilacion">Depilacion</option></select></div>
+<div class="form-row">
+<div class="form-group"><label>Duracion (min)</label><input id="sDur" type="number" value="30"></div>
+<div class="form-group"><label>Precio (CLP)</label><input id="sPrice" type="number" value="10000"></div>
+</div>
+<div class="form-group"><label>Descripcion</label><textarea id="sDesc" rows="2"></textarea></div>
+<button class="btn" style="width:100%;margin-top:8px" onclick="saveService()">Guardar</button>`);
+}
+
+function saveService(){
+const s={id:genId(),name:document.getElementById('sName').value.trim(),cat:document.getElementById('sCat').value,
+dur:+document.getElementById('sDur').value||30,price:+document.getElementById('sPrice').value||0,
+desc:document.getElementById('sDesc').value.trim()};
+if(!s.name){alert('Ingresa el nombre');return}
+services.push(s);save();closeModal();renderServicios();
+}
+
+function editService(id){
+const s=services.find(x=>x.id===id);if(!s)return;
+openModal(`<div class="modal-header"><h3>Editar Servicio</h3><button class="btn-ghost" onclick="closeModal()">✕</button></div>
+<div class="form-group"><label>Nombre</label><input id="sName" value="${s.name}"></div>
+<div class="form-group"><label>Categoria</label><select id="sCat">
+${['Corte','Color','Tratamiento','Peinado','Barba','Manicure','Depilacion'].map(c=>`<option value="${c}" ${c===s.cat?'selected':''}>${c}</option>`).join('')}</select></div>
+<div class="form-row">
+<div class="form-group"><label>Duracion (min)</label><input id="sDur" type="number" value="${s.dur}"></div>
+<div class="form-group"><label>Precio (CLP)</label><input id="sPrice" type="number" value="${s.price}"></div>
+</div>
+<div class="form-group"><label>Descripcion</label><textarea id="sDesc" rows="2">${s.desc||''}</textarea></div>
+<div style="display:flex;gap:8px;margin-top:8px">
+<button class="btn" style="flex:1" onclick="updateService('${s.id}')">Guardar</button>
+<button class="btn btn-danger" onclick="deleteService('${s.id}')">Eliminar</button></div>`);
+}
+
+function updateService(id){
+const s=services.find(x=>x.id===id);if(!s)return;
+s.name=document.getElementById('sName').value.trim();s.cat=document.getElementById('sCat').value;
+s.dur=+document.getElementById('sDur').value||30;s.price=+document.getElementById('sPrice').value||0;
+s.desc=document.getElementById('sDesc').value.trim();save();closeModal();renderServicios();
+}
+function deleteService(id){services=services.filter(s=>s.id!==id);save();closeModal();renderServicios()}
+
+/* ======================= TAB 4: CAJA ======================= */
+let revenueChart=null;
+function renderCaja(){
+const todayK=dayKey(new Date());
+const todaySales=sales.filter(s=>s.date===todayK);
+const totalSales=todaySales.reduce((s,x)=>s+x.total,0);
+const totalTips=todaySales.reduce((s,x)=>s+(x.tip||0),0);
+const methods={};todaySales.forEach(s=>{methods[s.method]=(methods[s.method]||0)+s.total});
+
+let html=`<div class="stats-grid">
+<div class="stat-card"><div class="stat-val">${clp(totalSales)}</div><div class="stat-label">Ventas hoy</div></div>
+<div class="stat-card rose"><div class="stat-val">${todaySales.length}</div><div class="stat-label">Transacciones</div></div>
+<div class="stat-card green"><div class="stat-val">${clp(totalTips)}</div><div class="stat-label">Propinas</div></div>
+<div class="stat-card amber"><div class="stat-val">${clp(totalSales+totalTips)}</div><div class="stat-label">Total + Propinas</div></div>
+</div>`;
+
+html+=`<button class="btn" style="margin-bottom:12px" onclick="openNewSale()">+ Nueva Venta</button>
+<button class="btn btn-outline" style="margin-bottom:12px;margin-left:8px" onclick="openTipCalc()">Calc. Propina</button>`;
+
+/* Payment method breakdown */
+if(Object.keys(methods).length){
+html+=`<div class="card"><div class="card-title">💳 Metodos de Pago</div>`;
+Object.entries(methods).forEach(([m,v])=>{
+html+=`<div class="list-item"><div class="list-item-info"><h4>${m}</h4></div><strong>${clp(v)}</strong></div>`;
+});
+html+=`</div>`;
+}
+
+/* Chart */
+html+=`<div class="card"><div class="card-title">📊 Ingresos Ultimos 7 Dias</div><div class="chart-container"><canvas id="revenueChart"></canvas></div></div>`;
+
+/* Today's sales list */
+html+=`<div class="card"><div class="card-title">🧾 Ventas de Hoy</div>`;
+if(!todaySales.length)html+=`<p style="font-size:.85rem;color:var(--text-muted)">Sin ventas registradas</p>`;
+else todaySales.sort((a,b)=>b.timestamp-a.timestamp).forEach(s=>{
+html+=`<div class="list-item">
+<div class="list-item-info"><h4>${s.clientName||'Walk-in'}</h4>
+<p>${s.serviceName||'Productos'} | ${s.method}${s.boleta?' | Boleta':''}</p></div>
+<div style="text-align:right"><strong style="color:var(--primary)">${clp(s.total)}</strong>
+${s.tip?`<br><span style="font-size:.7rem;color:var(--success)">+${clp(s.tip)} propina</span>`:''}
+${s.discount?`<br><span style="font-size:.7rem;color:var(--rose)">-${s.discount}% desc</span>`:''}
+</div></div>`;
+});
+html+=`</div>`;
+document.getElementById('tabCaja').innerHTML=html;
+
+/* Render chart */
+setTimeout(()=>{
+const ctx=document.getElementById('revenueChart');
+if(!ctx)return;
+if(revenueChart)revenueChart.destroy();
+const labels=[];const data=[];
+for(let i=6;i>=0;i--){
+const d=new Date();d.setDate(d.getDate()-i);
+const dk=dayKey(d);
+labels.push(d.toLocaleDateString('es-CL',{weekday:'short',day:'numeric'}));
+data.push(sales.filter(s=>s.date===dk).reduce((sum,x)=>sum+x.total,0));
+}
+revenueChart=new Chart(ctx,{type:'bar',data:{labels,datasets:[{label:'Ingresos (CLP)',data,backgroundColor:'rgba(124,58,237,.6)',borderColor:'#7c3aed',borderWidth:1,borderRadius:6}]},
+options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{callback:v=>clp(v)}}}}});
+},50);
+}
+
+function openNewSale(prefillClient,prefillSvcId,prefillPrice){
+const svcOpts=services.map(s=>`<option value="${s.id}" ${s.id===prefillSvcId?'selected':''}>${s.name} - ${clp(s.price)}</option>`).join('');
+const clientOpts=clients.map(c=>`<option value="${c.name}">${c.name}</option>`).join('');
+openModal(`<div class="modal-header"><h3>Nueva Venta</h3><button class="btn-ghost" onclick="closeModal()">✕</button></div>
+<div class="form-group"><label>Cliente</label><input list="slClList" id="slClient" value="${prefillClient||''}" placeholder="Nombre"><datalist id="slClList">${clientOpts}</datalist></div>
+<div class="form-group"><label>Servicio</label><select id="slService" onchange="updateSaleTotal()">${svcOpts}</select></div>
+<div class="form-row">
+<div class="form-group"><label>Precio Manual (CLP)</label><input id="slPrice" type="number" value="${prefillPrice||''}" placeholder="Dejar vacio para usar precio servicio" oninput="updateSaleTotal()"></div>
+<div class="form-group"><label>Descuento (%)</label><input id="slDiscount" type="number" value="0" min="0" max="100" oninput="updateSaleTotal()"></div>
+</div>
+<div class="form-group"><label>Metodo de Pago</label><select id="slMethod">
+<option value="Efectivo">Efectivo</option><option value="Debito">Debito</option><option value="Credito">Credito</option><option value="Transferencia">Transferencia</option></select></div>
+<div class="form-row">
+<div class="form-group"><label>Propina (CLP)</label><input id="slTip" type="number" value="0"></div>
+<div class="form-group"><label>Documento</label><select id="slBoleta"><option value="boleta">Boleta</option><option value="factura">Factura</option><option value="">Sin documento</option></select></div>
+</div>
+<div class="form-group"><label>Productos vendidos</label><textarea id="slProducts" rows="2" placeholder="Ej: Shampoo Wella x1..."></textarea></div>
+<div id="saleTotalPreview" style="text-align:center;font-size:1.2rem;font-weight:700;color:var(--primary);margin:12px 0"></div>
+<button class="btn" style="width:100%" onclick="saveSale()">Registrar Venta</button>`);
+setTimeout(updateSaleTotal,50);
+}
+
+function updateSaleTotal(){
+const sv=services.find(s=>s.id===(document.getElementById('slService')?document.getElementById('slService').value:''));
+let price=+document.getElementById('slPrice').value||(sv?sv.price:0);
+const disc=+document.getElementById('slDiscount').value||0;
+const total=Math.round(price*(1-disc/100));
+const el=document.getElementById('saleTotalPreview');
+if(el)el.textContent='Total: '+clp(total);
+}
+
+function saveSale(){
+const sv=services.find(s=>s.id===document.getElementById('slService').value);
+let price=+document.getElementById('slPrice').value||(sv?sv.price:0);
+const disc=+document.getElementById('slDiscount').value||0;
+const total=Math.round(price*(1-disc/100));
+const sale={id:genId(),date:dayKey(new Date()),timestamp:Date.now(),
+clientName:document.getElementById('slClient').value.trim(),
+serviceId:sv?sv.id:'',serviceName:sv?sv.name:'Productos',
+total,discount:disc,tip:+document.getElementById('slTip').value||0,
+method:document.getElementById('slMethod').value,
+boleta:document.getElementById('slBoleta').value==='boleta',
+factura:document.getElementById('slBoleta').value==='factura',
+products:document.getElementById('slProducts').value.trim()};
+sales.push(sale);
+/* Update client lastVisit */
+const cl=clients.find(c=>c.name===sale.clientName);
+if(cl){cl.lastVisit=sale.date;save()}
+else{save()}
+closeModal();renderCaja();
+}
+
+function openTipCalc(){
+openModal(`<div class="modal-header"><h3>Calculadora de Propina</h3><button class="btn-ghost" onclick="closeModal()">✕</button></div>
+<div class="form-group"><label>Monto Total (CLP)</label><input id="tipAmount" type="number" oninput="calcTip()"></div>
+<div class="chip-row" style="margin-top:8px">
+<span class="chip active" onclick="setTipPct(10,this)">10%</span>
+<span class="chip" onclick="setTipPct(15,this)">15%</span>
+<span class="chip" onclick="setTipPct(20,this)">20%</span>
+<span class="chip" onclick="setTipPct(25,this)">25%</span>
+</div>
+<input type="hidden" id="tipPct" value="10">
+<div id="tipResult" style="text-align:center;margin-top:16px;font-size:1.3rem;font-weight:700;color:var(--primary)"></div>
+<div id="tipTotal" style="text-align:center;font-size:.9rem;color:var(--text-muted)"></div>`);
+}
+
+function setTipPct(p,el){
+document.getElementById('tipPct').value=p;
+document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+el.classList.add('active');calcTip();
+}
+
+function calcTip(){
+const amt=+document.getElementById('tipAmount').value||0;
+const pct=+document.getElementById('tipPct').value||10;
+const tip=Math.round(amt*pct/100);
+document.getElementById('tipResult').textContent='Propina: '+clp(tip);
+document.getElementById('tipTotal').textContent='Total con propina: '+clp(amt+tip);
+}
+
+/* ======================= TAB 5: INVENTARIO ======================= */
+function renderInventario(){
+const cats=['Coloracion','Cuidado Capilar','Tratamiento','Styling','Herramientas','Retail'];
+const lowStock=inventory.filter(p=>p.qty<=p.min);
+
+let html=`<button class="btn" style="margin-bottom:12px" onclick="openNewProduct()">+ Nuevo Producto</button>`;
+if(lowStock.length){
+html+=`<div class="alert alert-danger low-stock">⚠️ ${lowStock.length} producto(s) con stock bajo: ${lowStock.map(p=>p.name).join(', ')}</div>`;
+html+=`<button class="btn btn-outline btn-sm" style="margin-bottom:12px" onclick="showReorderList()">📋 Lista de Reposicion</button>`;
+}
+
+/* Stats */
+const totalItems=inventory.reduce((s,p)=>s+p.qty,0);
+const totalCost=inventory.reduce((s,p)=>s+p.qty*p.cost,0);
+const retailVal=inventory.filter(p=>p.price>0).reduce((s,p)=>s+p.qty*p.price,0);
+html+=`<div class="stats-grid">
+<div class="stat-card"><div class="stat-val">${totalItems}</div><div class="stat-label">Items totales</div></div>
+<div class="stat-card rose"><div class="stat-val">${clp(totalCost)}</div><div class="stat-label">Costo inventario</div></div>
+<div class="stat-card green"><div class="stat-val">${clp(retailVal)}</div><div class="stat-label">Valor retail</div></div>
+<div class="stat-card amber"><div class="stat-val">${clp(retailVal-totalCost)}</div><div class="stat-label">Margen potencial</div></div>
+</div>`;
+
+cats.forEach(cat=>{
+const catItems=inventory.filter(p=>p.cat===cat);
+if(!catItems.length)return;
+html+=`<div class="card"><div class="card-title">${cat}</div>`;
+catItems.forEach(p=>{
+const isLow=p.qty<=p.min;
+const margin=p.price>0?Math.round((p.price-p.cost)/p.price*100):0;
+html+=`<div class="list-item" onclick="editProduct('${p.id}')" style="cursor:pointer">
+<div class="list-item-info"><h4>${isLow?'🔴 ':''}${p.name}</h4>
+<p>${p.brand} | Costo: ${clp(p.cost)}${p.price?' | Venta: '+clp(p.price)+' ('+margin+'% margen)':''}</p></div>
+<div style="text-align:right"><span class="badge ${isLow?'badge-red':'badge-green'}">${p.qty} uds</span>
+<div style="font-size:.65rem;color:var(--text-muted)">min: ${p.min}</div></div></div>`;
+});
+html+=`</div>`;
+});
+document.getElementById('tabInventario').innerHTML=html;
+}
+
+function openNewProduct(){
+openModal(`<div class="modal-header"><h3>Nuevo Producto</h3><button class="btn-ghost" onclick="closeModal()">✕</button></div>
+<div class="form-group"><label>Nombre</label><input id="pName"></div>
+<div class="form-row">
+<div class="form-group"><label>Categoria</label><select id="pCat">
+<option>Coloracion</option><option>Cuidado Capilar</option><option>Tratamiento</option><option>Styling</option><option>Herramientas</option><option>Retail</option></select></div>
+<div class="form-group"><label>Marca</label><input id="pBrand" placeholder="Ej: Wella, L'Oreal..." list="brandList">
+<datalist id="brandList"><option value="Wella"><option value="Schwarzkopf"><option value="L'Oreal Pro"><option value="Alfaparf"><option value="Framesi"><option value="Wahl"><option value="Jaguar"></datalist></div>
+</div>
+<div class="form-row">
+<div class="form-group"><label>Stock actual</label><input id="pQty" type="number" value="1"></div>
+<div class="form-group"><label>Stock minimo</label><input id="pMin" type="number" value="2"></div>
+</div>
+<div class="form-row">
+<div class="form-group"><label>Costo (CLP)</label><input id="pCost" type="number" value="0"></div>
+<div class="form-group"><label>Precio Venta (CLP)</label><input id="pPrice" type="number" value="0" placeholder="0 = uso interno"></div>
+</div>
+<button class="btn" style="width:100%;margin-top:8px" onclick="saveProduct()">Guardar</button>`);
+}
+
+function saveProduct(){
+const p={id:genId(),name:document.getElementById('pName').value.trim(),cat:document.getElementById('pCat').value,
+brand:document.getElementById('pBrand').value.trim(),qty:+document.getElementById('pQty').value||0,
+min:+document.getElementById('pMin').value||1,cost:+document.getElementById('pCost').value||0,
+price:+document.getElementById('pPrice').value||0};
+if(!p.name){alert('Ingresa nombre del producto');return}
+inventory.push(p);save();closeModal();renderInventario();
+}
+
+function editProduct(id){
+const p=inventory.find(x=>x.id===id);if(!p)return;
+const margin=p.price>0?Math.round((p.price-p.cost)/p.price*100):0;
+openModal(`<div class="modal-header"><h3>Editar Producto</h3><button class="btn-ghost" onclick="closeModal()">✕</button></div>
+<div class="form-group"><label>Nombre</label><input id="pName" value="${p.name}"></div>
+<div class="form-row">
+<div class="form-group"><label>Categoria</label><select id="pCat">
+${['Coloracion','Cuidado Capilar','Tratamiento','Styling','Herramientas','Retail'].map(c=>`<option ${c===p.cat?'selected':''}>${c}</option>`).join('')}</select></div>
+<div class="form-group"><label>Marca</label><input id="pBrand" value="${p.brand||''}"></div>
+</div>
+<div class="form-row">
+<div class="form-group"><label>Stock actual</label><input id="pQty" type="number" value="${p.qty}"></div>
+<div class="form-group"><label>Stock minimo</label><input id="pMin" type="number" value="${p.min}"></div>
+</div>
+<div class="form-row">
+<div class="form-group"><label>Costo (CLP)</label><input id="pCost" type="number" value="${p.cost}"></div>
+<div class="form-group"><label>Precio Venta (CLP)</label><input id="pPrice" type="number" value="${p.price}"></div>
+</div>
+${p.price>0?`<div class="alert alert-info">Margen actual: ${margin}% (${clp(p.price-p.cost)} por unidad)</div>`:''}
+<div style="display:flex;gap:8px;margin-top:8px">
+<button class="btn" style="flex:1" onclick="updateProduct('${p.id}')">Guardar</button>
+<button class="btn btn-success btn-sm" onclick="adjustStock('${p.id}',1)">+1</button>
+<button class="btn btn-danger btn-sm" onclick="adjustStock('${p.id}',-1)">-1</button>
+<button class="btn btn-danger" onclick="deleteProduct('${p.id}')">Eliminar</button></div>`);
+}
+
+function updateProduct(id){
+const p=inventory.find(x=>x.id===id);if(!p)return;
+p.name=document.getElementById('pName').value.trim();p.cat=document.getElementById('pCat').value;
+p.brand=document.getElementById('pBrand').value.trim();p.qty=+document.getElementById('pQty').value||0;
+p.min=+document.getElementById('pMin').value||1;p.cost=+document.getElementById('pCost').value||0;
+p.price=+document.getElementById('pPrice').value||0;save();closeModal();renderInventario();
+}
+
+function adjustStock(id,delta){
+const p=inventory.find(x=>x.id===id);if(!p)return;
+p.qty=Math.max(0,p.qty+delta);save();editProduct(id);
+}
+function deleteProduct(id){inventory=inventory.filter(p=>p.id!==id);save();closeModal();renderInventario()}
+
+function showReorderList(){
+const low=inventory.filter(p=>p.qty<=p.min);
+let html=`<div class="modal-header"><h3>Lista de Reposicion</h3><button class="btn-ghost" onclick="closeModal()">✕</button></div>`;
+low.forEach(p=>{
+const needed=p.min*2-p.qty;
+html+=`<div class="list-item"><div class="list-item-info"><h4>${p.name}</h4>
+<p>${p.brand} | Stock: ${p.qty} | Min: ${p.min}</p></div>
+<span class="badge badge-red">Pedir ${needed}+</span></div>`;
+});
+html+=`<button class="btn btn-outline" style="width:100%;margin-top:12px" onclick="copyReorderList()">📋 Copiar Lista</button>`;
+openModal(html);
+}
+
+function copyReorderList(){
+const low=inventory.filter(p=>p.qty<=p.min);
+const text='LISTA DE REPOSICION - PeluqueroCL\n'+new Date().toLocaleDateString('es-CL')+'\n\n'+
+low.map(p=>`- ${p.name} (${p.brand}): Stock ${p.qty}, Pedir ${p.min*2-p.qty}+ unidades`).join('\n');
+navigator.clipboard.writeText(text).then(()=>alert('Lista copiada al portapapeles!')).catch(()=>alert(text));
+}
+
+/* ======================= PRINT / EXPORT ======================= */
+function printDailySchedule(){
+const dk=dayKey(currentDate);
+const todayAppts=appointments.filter(a=>a.date===dk).sort((a,b)=>a.hour-b.hour||(a.min||0)-(b.min||0));
+let html=`<h2 style="font-family:Inter,sans-serif;margin-bottom:10px">Agenda - ${dayStr(currentDate)}</h2>
+<table style="width:100%;border-collapse:collapse;font-family:Inter,sans-serif;font-size:14px">
+<tr style="background:#7c3aed;color:#fff"><th style="padding:8px;text-align:left">Hora</th><th style="padding:8px;text-align:left">Cliente</th><th style="padding:8px;text-align:left">Servicio</th><th style="padding:8px;text-align:left">Estilista</th><th style="padding:8px;text-align:left">Notas</th></tr>`;
+todayAppts.forEach((a,i)=>{
+const sv=services.find(s=>s.id===a.serviceId);
+html+=`<tr style="background:${i%2?'#faf5ff':'#fff'}"><td style="padding:6px 8px">${fmtTime(a.hour,a.min)}</td>
+<td style="padding:6px 8px">${a.clientName}</td><td style="padding:6px 8px">${sv?sv.name:'-'}</td>
+<td style="padding:6px 8px">${a.stylist||'-'}</td><td style="padding:6px 8px">${a.notes||'-'}</td></tr>`;
+});
+html+=`</table><p style="margin-top:10px;font-size:12px;color:#666">Total citas: ${todayAppts.length} | Generado por PeluqueroCL</p>`;
+document.getElementById('printArea').innerHTML=html;
+window.print();
+}
+
+function exportDailySales(){
+const todayK=dayKey(new Date());
+const todaySales=sales.filter(s=>s.date===todayK);
+const total=todaySales.reduce((s,x)=>s+x.total,0);
+const tips=todaySales.reduce((s,x)=>s+(x.tip||0),0);
+let csv='Hora,Cliente,Servicio,Total,Propina,Metodo,Documento\n';
+todaySales.forEach(s=>{
+csv+=`${new Date(s.timestamp).toLocaleTimeString('es-CL')},${s.clientName||'Walk-in'},${s.serviceName||''},${s.total},${s.tip||0},${s.method},${s.boleta?'Boleta':s.factura?'Factura':'Sin doc'}\n`;
+});
+csv+=`\nTOTAL,,,${ total},${tips},,\n`;
+const blob=new Blob([csv],{type:'text/csv'});
+const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`ventas_${todayK}.csv`;a.click();
+}
+
+/* === Init === */
+render();
+
+/* === PWA Service Worker Registration === */
+if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}
+</script>
+</body>
+</html>

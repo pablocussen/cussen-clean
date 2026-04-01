@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<title>KinesiologoCL — Herramienta Profesional para Kinesiologos</title>
+<meta name="description" content="Toolkit profesional para kinesiologos en Chile. Gestion de pacientes, sesiones, ejercicios, evaluaciones y agenda.">
+<meta name="theme-color" content="#0f766e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect rx='20' width='100' height='100' fill='%230f766e'/><text x='50' y='68' text-anchor='middle' font-size='50' fill='white'>K</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--pri:#0f766e;--pri-l:#0d9488;--pri-xl:#14b8a6;--bg:#f0fdfa;--card:#fff;--text:#1e293b;--text-m:#475569;--text-l:#94a3b8;--border:#e2e8f0;--danger:#ef4444;--warn:#f59e0b;--success:#10b981;--radius:12px;--shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.06)}
+html{font-family:'Inter',system-ui,sans-serif;font-size:16px;-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--text);min-height:100dvh;padding-bottom:72px;-webkit-font-smoothing:antialiased}
+input,select,textarea,button{font-family:inherit;font-size:16px}
+input,select,textarea{border:1.5px solid var(--border);border-radius:8px;padding:10px 12px;width:100%;background:var(--card);color:var(--text);transition:border-color .2s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--pri)}
+textarea{resize:vertical;min-height:80px}
+button{cursor:pointer;border:none;border-radius:8px;font-weight:600;transition:all .15s}
+.btn{background:var(--pri);color:#fff;padding:10px 20px;font-size:15px}
+.btn:hover{background:var(--pri-l)}
+.btn-s{background:var(--pri);color:#fff;padding:6px 14px;font-size:13px}
+.btn-o{background:transparent;color:var(--pri);border:1.5px solid var(--pri);padding:8px 16px;font-size:14px}
+.btn-o:hover{background:var(--pri);color:#fff}
+.btn-d{background:var(--danger);color:#fff;padding:6px 14px;font-size:13px}
+.btn-icon{background:none;color:var(--pri);padding:6px;font-size:18px}
+header{background:linear-gradient(135deg,var(--pri),var(--pri-l));color:#fff;padding:16px 20px 12px;position:sticky;top:0;z-index:100}
+header h1{font-size:20px;font-weight:700;letter-spacing:-.3px}
+header p{font-size:12px;opacity:.85;margin-top:2px}
+.tabs{display:flex;background:var(--card);border-bottom:1px solid var(--border);overflow-x:auto;position:sticky;top:56px;z-index:99;-webkit-overflow-scrolling:touch}
+.tabs button{flex:none;padding:10px 14px;font-size:11px;font-weight:600;color:var(--text-m);background:none;border-bottom:2.5px solid transparent;white-space:nowrap;letter-spacing:.3px;min-width:0}
+.tabs button.active{color:var(--pri);border-bottom-color:var(--pri)}
+.tab-content{display:none;padding:16px;max-width:800px;margin:0 auto}
+.tab-content.active{display:block}
+.card{background:var(--card);border-radius:var(--radius);padding:16px;margin-bottom:12px;box-shadow:var(--shadow)}
+.card h3{font-size:15px;font-weight:600;margin-bottom:8px}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row>*{flex:1;min-width:120px}
+.form-g{margin-bottom:12px}
+.form-g label{display:block;font-size:13px;font-weight:600;color:var(--text-m);margin-bottom:4px}
+.badge{display:inline-block;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600}
+.b-activo{background:#d1fae5;color:#065f46}
+.b-alta{background:#dbeafe;color:#1e40af}
+.b-pausado{background:#fef3c7;color:#92400e}
+.b-derivado{background:#f3e8ff;color:#6b21a8}
+.stat-row{display:flex;gap:10px;margin-bottom:14px}
+.stat-box{flex:1;background:linear-gradient(135deg,var(--pri),var(--pri-l));color:#fff;border-radius:var(--radius);padding:14px;text-align:center}
+.stat-box .num{font-size:28px;font-weight:700}
+.stat-box .lbl{font-size:11px;opacity:.85;margin-top:2px}
+.search-bar{position:relative;margin-bottom:14px}
+.search-bar input{padding-left:36px}
+.search-bar::before{content:"\\1F50D";position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:14px}
+.patient-card{border-left:4px solid var(--pri);cursor:pointer;transition:transform .1s}
+.patient-card:active{transform:scale(.99)}
+.patient-card .pc-top{display:flex;justify-content:space-between;align-items:flex-start}
+.patient-card .pc-info{font-size:13px;color:var(--text-m);margin-top:4px}
+.patient-card .pc-diag{font-size:13px;font-weight:500;margin-top:6px}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:flex-end;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{background:var(--card);border-radius:16px 16px 0 0;width:100%;max-width:600px;max-height:88vh;overflow-y:auto;padding:20px;animation:slideUp .25s ease-out}
+@keyframes slideUp{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal h2{font-size:18px;font-weight:700;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center}
+.modal h2 button{font-size:22px;color:var(--text-l);background:none;padding:4px}
+.eva-slider{width:100%;accent-color:var(--pri)}
+.eva-val{text-align:center;font-size:28px;font-weight:700}
+.body-svg{width:100%;max-width:240px;margin:0 auto;display:block}
+.body-svg .region{fill:#d1fae5;stroke:var(--pri);stroke-width:1;cursor:pointer;transition:fill .15s}
+.body-svg .region:hover,.body-svg .region.selected{fill:var(--pri-xl)}
+.exercise-card{border-left:4px solid var(--pri-xl)}
+.exercise-card .diff{display:flex;gap:3px;margin-top:4px}
+.exercise-card .diff span{width:18px;height:6px;border-radius:3px;background:var(--border)}
+.exercise-card .diff span.filled{background:var(--pri)}
+.calendar-grid{display:grid;grid-template-columns:60px repeat(7,1fr);gap:1px;background:var(--border);border-radius:var(--radius);overflow:hidden;font-size:12px}
+.cal-header{background:var(--pri);color:#fff;padding:8px 4px;text-align:center;font-weight:600}
+.cal-time{background:var(--card);padding:6px 4px;text-align:center;color:var(--text-m);font-size:11px}
+.cal-slot{background:var(--card);padding:4px;min-height:32px;cursor:pointer;transition:background .1s}
+.cal-slot:hover{background:var(--bg)}
+.cal-slot .appt{background:var(--pri);color:#fff;border-radius:4px;padding:2px 4px;font-size:10px;margin-bottom:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.eval-card{background:var(--card);border-radius:var(--radius);padding:14px;margin-bottom:10px;cursor:pointer;box-shadow:var(--shadow);border-left:4px solid var(--pri-l);transition:transform .1s}
+.eval-card:active{transform:scale(.99)}
+.eval-card h4{font-size:14px;font-weight:600}
+.eval-card p{font-size:12px;color:var(--text-m);margin-top:3px}
+.chip-group{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.chip{padding:5px 12px;border-radius:99px;font-size:12px;font-weight:500;border:1.5px solid var(--border);background:var(--card);cursor:pointer;transition:all .15s}
+.chip.selected{background:var(--pri);color:#fff;border-color:var(--pri)}
+.soap-section{margin-bottom:10px}
+.soap-section label{font-weight:700;color:var(--pri);font-size:13px}
+.empty-state{text-align:center;padding:40px 20px;color:var(--text-l)}
+.empty-state .icon{font-size:48px;margin-bottom:10px}
+.print-only{display:none}
+@media print{.print-only{display:block}header,.tabs,nav,.no-print{display:none!important}.tab-content{display:block!important;padding:0}}
+@media(min-width:768px){.modal{border-radius:16px;margin:auto;max-height:80vh}}
+</style>
+</head>
+<body>
+<header>
+<h1>KinesiologoCL</h1>
+<p>Herramienta profesional para kinesiologos</p>
+</header>
+
+<div class="tabs" id="tabs">
+<button class="active" onclick="switchTab(0)">PACIENTES</button>
+<button onclick="switchTab(1)">SESIONES</button>
+<button onclick="switchTab(2)">EJERCICIOS</button>
+<button onclick="switchTab(3)">EVALUACIONES</button>
+<button onclick="switchTab(4)">AGENDA</button>
+</div>
+
+<!-- TAB 0: PACIENTES -->
+<div class="tab-content active" id="tab0">
+<div class="stat-row">
+<div class="stat-box"><div class="num" id="statActive">0</div><div class="lbl">Pacientes activos</div></div>
+<div class="stat-box"><div class="num" id="statWeekSessions">0</div><div class="lbl">Sesiones esta semana</div></div>
+</div>
+<div class="search-bar"><input type="text" id="patSearch" placeholder="Buscar por nombre o RUT..." oninput="renderPatients()"></div>
+<button class="btn" style="width:100%;margin-bottom:14px" onclick="openPatientModal()">+ Nuevo Paciente</button>
+<div id="patientList"></div>
+</div>
+
+<!-- TAB 1: SESIONES -->
+<div class="tab-content" id="tab1">
+<div class="form-g"><label>Paciente</label><select id="sesPatient" onchange="renderSessionHistory()"><option value="">Seleccionar paciente...</option></select></div>
+<button class="btn" style="width:100%;margin-bottom:14px" onclick="openSessionModal()">+ Nueva Sesion</button>
+<div class="card" id="painChartCard" style="display:none"><h3>Tendencia del Dolor (EVA)</h3><canvas id="painChart" height="180"></canvas></div>
+<div id="sessionList"></div>
+</div>
+
+<!-- TAB 2: EJERCICIOS -->
+<div class="tab-content" id="tab2">
+<div class="form-g"><label>Region corporal</label>
+<select id="exRegion" onchange="renderExercises()">
+<option value="">Todas las regiones</option>
+<option value="cervical">Columna cervical</option>
+<option value="hombro">Hombro</option>
+<option value="lumbar">Columna lumbar</option>
+<option value="rodilla">Rodilla</option>
+<option value="tobillo">Tobillo/pie</option>
+<option value="cadera">Cadera</option>
+<option value="muneca">Muneca/mano</option>
+</select></div>
+<div class="row" style="margin-bottom:14px">
+<button class="btn-o" onclick="openPlanModal()">Crear Plan</button>
+<button class="btn-o" onclick="sharePlanWA()">Compartir Plan</button>
+</div>
+<div id="exerciseList"></div>
+</div>
+
+<!-- TAB 3: EVALUACIONES -->
+<div class="tab-content" id="tab3">
+<div class="form-g"><label>Paciente</label><select id="evalPatient"><option value="">Seleccionar paciente...</option></select></div>
+<div id="evalTools">
+<div class="eval-card" onclick="openEvalModal('eva')"><h4>EVA — Escala Visual Analogica</h4><p>Evaluacion del dolor 0-10</p></div>
+<div class="eval-card" onclick="openEvalModal('barthel')"><h4>Indice de Barthel</h4><p>Independencia funcional — 10 items, 0-100</p></div>
+<div class="eval-card" onclick="openEvalModal('tinetti')"><h4>Escala de Tinetti</h4><p>Equilibrio y marcha — 28 puntos</p></div>
+<div class="eval-card" onclick="openEvalModal('daniels')"><h4>Escala de Daniels</h4><p>Fuerza muscular — grados 0 a 5</p></div>
+<div class="eval-card" onclick="openEvalModal('goniometry')"><h4>Goniometria</h4><p>Rangos articulares de referencia</p></div>
+<div class="eval-card" onclick="openEvalModal('berg')"><h4>Escala de Berg</h4><p>Equilibrio — 14 items, 56 puntos</p></div>
+</div>
+<div class="card" style="margin-top:14px"><h3>Evaluaciones Guardadas</h3><div id="savedEvals"></div></div>
+</div>
+
+<!-- TAB 4: AGENDA -->
+<div class="tab-content" id="tab4">
+<div class="stat-row">
+<div class="stat-box"><div class="num" id="statToday">0</div><div class="lbl">Citas hoy</div></div>
+<div class="stat-box"><div class="num" id="statWeek">0</div><div class="lbl">Citas esta semana</div></div>
+</div>
+<div class="row" style="margin-bottom:14px;align-items:center">
+<button class="btn-o" onclick="changeWeek(-1)">&larr; Semana</button>
+<strong id="weekLabel" style="text-align:center;font-size:14px"></strong>
+<button class="btn-o" onclick="changeWeek(1)">Semana &rarr;</button>
+</div>
+<button class="btn" style="width:100%;margin-bottom:14px" onclick="openApptModal()">+ Nueva Cita</button>
+<div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><div class="calendar-grid" id="calGrid"></div></div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+<div class="modal" id="modalContent"></div>
+</div>
+
+<script>
+// === STORAGE HELPERS ===
+function LS(k,v){try{if(v===undefined)return JSON.parse(localStorage.getItem(k));localStorage.setItem(k,JSON.stringify(v))}catch(e){return v===undefined?null:undefined}}
+function genId(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+
+// === STATE ===
+let patients=LS('kcl_patients')||[];
+let sessions=LS('kcl_sessions')||[];
+let plans=LS('kcl_plans')||[];
+let evaluations=LS('kcl_evals')||[];
+let appointments=LS('kcl_appts')||[];
+let currentWeekStart=getMonday(new Date());
+let painChartInstance=null;
+let selectedExercises=[];
+
+function save(){LS('kcl_patients',patients);LS('kcl_sessions',sessions);LS('kcl_plans',plans);LS('kcl_evals',evaluations);LS('kcl_appts',appointments)}
+
+// === TAB SWITCHING ===
+function switchTab(i){
+document.querySelectorAll('.tab-content').forEach((t,idx)=>t.classList.toggle('active',idx===i));
+document.querySelectorAll('.tabs button').forEach((b,idx)=>b.classList.toggle('active',idx===i));
+if(i===1||i===3)populatePatientSelects();
+if(i===1)renderSessionHistory();
+if(i===2)renderExercises();
+if(i===4)renderCalendar();
+updateStats();
+}
+
+// === UTILITIES ===
+function fmtDate(d){return new Date(d).toLocaleDateString('es-CL',{day:'2-digit',month:'short',year:'numeric'})}
+function fmtRut(r){return r||''}
+function getMonday(d){d=new Date(d);const day=d.getDay(),diff=d.getDate()-day+(day===0?-6:1);d.setDate(diff);d.setHours(0,0,0,0);return d}
+function addDays(d,n){const r=new Date(d);r.setDate(r.getDate()+n);return r}
+function isSameDay(a,b){return new Date(a).toDateString()===new Date(b).toDateString()}
+function statusBadge(s){const m={Activo:'b-activo',Alta:'b-alta',Pausado:'b-pausado',Derivado:'b-derivado'};return`<span class="badge ${m[s]||'b-activo'}">${s}</span>`}
+function evaColor(v){if(v<=3)return'var(--success)';if(v<=6)return'var(--warn)';return'var(--danger)'}
+
+function updateStats(){
+document.getElementById('statActive').textContent=patients.filter(p=>p.status==='Activo').length;
+const now=new Date();const mon=getMonday(now);const sun=addDays(mon,6);
+document.getElementById('statWeekSessions').textContent=sessions.filter(s=>{const d=new Date(s.date);return d>=mon&&d<=sun}).length;
+}
+
+function populatePatientSelects(){
+const opts=patients.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+const ph='<option value="">Seleccionar paciente...</option>';
+['sesPatient','evalPatient'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=ph+opts});
+}
+
+// === MODAL ===
+function openModal(html){document.getElementById('modalContent').innerHTML=html;document.getElementById('modalOverlay').classList.add('show')}
+function closeModal(){document.getElementById('modalOverlay').classList.remove('show')}
+
+// === PATIENTS ===
+function renderPatients(){
+const q=(document.getElementById('patSearch').value||'').toLowerCase();
+const filtered=patients.filter(p=>p.name.toLowerCase().includes(q)||fmtRut(p.rut).toLowerCase().includes(q));
+if(!filtered.length){document.getElementById('patientList').innerHTML='<div class="empty-state"><div class="icon">&#128203;</div><p>No hay pacientes registrados</p></div>';return}
+document.getElementById('patientList').innerHTML=filtered.map(p=>{
+const sc=sessions.filter(s=>s.patientId===p.id).length;
+return`<div class="card patient-card" onclick="openPatientDetail('${p.id}')">
+<div class="pc-top"><div><strong>${p.name}</strong>${statusBadge(p.status)}</div><span style="font-size:12px;color:var(--text-l)">${sc} sesiones</span></div>
+<div class="pc-info">${p.rut?'RUT: '+p.rut+' | ':''}${p.age?p.age+' anios | ':''}${p.phone||''}</div>
+${p.diagnosis?'<div class="pc-diag">'+p.diagnosis+'</div>':''}
+</div>`}).join('');
+updateStats();
+}
+
+function openPatientModal(editId){
+const p=editId?patients.find(x=>x.id===editId):{};
+openModal(`<h2>${editId?'Editar':'Nuevo'} Paciente <button onclick="closeModal()">&times;</button></h2>
+<div class="form-g"><label>Nombre completo *</label><input id="pName" value="${p.name||''}"></div>
+<div class="row"><div class="form-g"><label>RUT</label><input id="pRut" placeholder="12.345.678-9" value="${p.rut||''}"></div>
+<div class="form-g"><label>Edad</label><input type="number" id="pAge" value="${p.age||''}"></div></div>
+<div class="row"><div class="form-g"><label>Telefono</label><input id="pPhone" placeholder="+56 9..." value="${p.phone||''}"></div>
+<div class="form-g"><label>Estado</label><select id="pStatus"><option ${p.status==='Activo'?'selected':''}>Activo</option><option ${p.status==='Alta'?'selected':''}>Alta</option><option ${p.status==='Pausado'?'selected':''}>Pausado</option><option ${p.status==='Derivado'?'selected':''}>Derivado</option></select></div></div>
+<div class="form-g"><label>Diagnostico</label><input id="pDiag" value="${p.diagnosis||''}"></div>
+<div class="form-g"><label>Medico derivante</label><input id="pDoctor" value="${p.doctor||''}"></div>
+<div class="form-g"><label>Sesiones autorizadas (prevision)</label><input type="number" id="pMaxSes" value="${p.maxSessions||''}"></div>
+<div class="form-g"><label>Historia clinica / notas</label><textarea id="pHistory" rows="3">${p.history||''}</textarea></div>
+<div class="form-g"><label>Medicamentos</label><input id="pMeds" value="${p.meds||''}"></div>
+<div class="form-g"><label>Fechas de cirugia</label><input id="pSurgery" value="${p.surgery||''}"></div>
+<button class="btn" style="width:100%" onclick="savePatient('${editId||''}')">${editId?'Guardar Cambios':'Registrar Paciente'}</button>
+${editId?'<button class="btn-d" style="width:100%;margin-top:8px" onclick="deletePatient(\''+editId+'\')">Eliminar Paciente</button>':''}`);
+}
+
+function savePatient(editId){
+const d={name:document.getElementById('pName').value.trim(),rut:document.getElementById('pRut').value.trim(),age:document.getElementById('pAge').value,phone:document.getElementById('pPhone').value.trim(),status:document.getElementById('pStatus').value,diagnosis:document.getElementById('pDiag').value.trim(),doctor:document.getElementById('pDoctor').value.trim(),maxSessions:document.getElementById('pMaxSes').value,history:document.getElementById('pHistory').value.trim(),meds:document.getElementById('pMeds').value.trim(),surgery:document.getElementById('pSurgery').value.trim()};
+if(!d.name){alert('El nombre es obligatorio');return}
+if(editId){const i=patients.findIndex(p=>p.id===editId);if(i>=0)patients[i]={...patients[i],...d}}
+else{patients.push({id:genId(),...d,createdAt:new Date().toISOString()})}
+save();closeModal();renderPatients();
+}
+
+function deletePatient(id){if(confirm('Eliminar este paciente y todas sus sesiones?')){patients=patients.filter(p=>p.id!==id);sessions=sessions.filter(s=>s.patientId!==id);evaluations=evaluations.filter(e=>e.patientId!==id);save();closeModal();renderPatients()}}
+
+function openPatientDetail(id){
+const p=patients.find(x=>x.id===id);if(!p)return;
+const ss=sessions.filter(s=>s.patientId===id);
+const remaining=p.maxSessions?Math.max(0,p.maxSessions-ss.length):'N/A';
+openModal(`<h2>${p.name} <button onclick="closeModal()">&times;</button></h2>
+<div style="margin-bottom:12px">${statusBadge(p.status)} ${p.rut?'<span style="font-size:13px;color:var(--text-m);margin-left:8px">RUT: '+p.rut+'</span>':''}</div>
+<div class="row" style="margin-bottom:12px">
+<div class="card" style="text-align:center;margin:0"><div style="font-size:24px;font-weight:700">${ss.length}</div><div style="font-size:11px;color:var(--text-m)">Sesiones totales</div></div>
+<div class="card" style="text-align:center;margin:0"><div style="font-size:24px;font-weight:700">${remaining}</div><div style="font-size:11px;color:var(--text-m)">Sesiones restantes</div></div>
+</div>
+${p.diagnosis?'<p style="font-size:14px;margin-bottom:6px"><strong>Dx:</strong> '+p.diagnosis+'</p>':''}
+${p.doctor?'<p style="font-size:14px;margin-bottom:6px"><strong>Derivante:</strong> '+p.doctor+'</p>':''}
+${p.phone?'<p style="font-size:14px;margin-bottom:6px"><strong>Tel:</strong> '+p.phone+'</p>':''}
+${p.meds?'<p style="font-size:14px;margin-bottom:6px"><strong>Medicamentos:</strong> '+p.meds+'</p>':''}
+${p.surgery?'<p style="font-size:14px;margin-bottom:6px"><strong>Cirugias:</strong> '+p.surgery+'</p>':''}
+${p.history?'<p style="font-size:14px;margin-bottom:6px"><strong>Historia:</strong> '+p.history+'</p>':''}
+<div class="row" style="margin-top:12px">
+<button class="btn-o" onclick="closeModal();openPatientModal('${id}')">Editar</button>
+<button class="btn-o" onclick="sharePatientWA('${id}')">WhatsApp</button>
+</div>`);
+}
+
+function sharePatientWA(id){
+const p=patients.find(x=>x.id===id);if(!p)return;
+const ss=sessions.filter(s=>s.patientId===id);
+let t=`*Resumen Paciente — KinesiologoCL*\n\nNombre: ${p.name}\n`;
+if(p.rut)t+=`RUT: ${p.rut}\n`;
+if(p.diagnosis)t+=`Diagnostico: ${p.diagnosis}\n`;
+t+=`Estado: ${p.status}\nSesiones: ${ss.length}`;
+if(p.maxSessions)t+=`/${p.maxSessions}`;
+window.open('https://wa.me/?text='+encodeURIComponent(t),'_blank');
+}
+
+// === SESSIONS ===
+function openSessionModal(){
+const pid=document.getElementById('sesPatient').value;
+if(!pid){alert('Seleccione un paciente primero');return}
+const treatments=['Terapia Manual','Electroterapia (TENS)','Electroterapia (EMS)','Ultrasonido','Laser','Ejercicio Terapeutico','Crioterapia','Termoterapia','Hidroterapia','Kinesiotaping','Puncion Seca'];
+const tChips=treatments.map(t=>`<span class="chip" onclick="this.classList.toggle('selected')">${t}</span>`).join('');
+openModal(`<h2>Nueva Sesion <button onclick="closeModal()">&times;</button></h2>
+<div class="row"><div class="form-g"><label>Fecha</label><input type="date" id="sDate" value="${new Date().toISOString().slice(0,10)}"></div>
+<div class="form-g"><label>Duracion (min)</label><input type="number" id="sDur" value="45"></div></div>
+<div class="form-g"><label>Tratamientos aplicados</label><div class="chip-group" id="sTreatments">${tChips}</div></div>
+<div class="row"><div class="form-g"><label>EVA inicio (0-10)</label><input type="range" class="eva-slider" id="sEvaStart" min="0" max="10" value="5" oninput="document.getElementById('evsL').textContent=this.value"><div class="eva-val" id="evsL" style="font-size:20px">5</div></div>
+<div class="form-g"><label>EVA final (0-10)</label><input type="range" class="eva-slider" id="sEvaEnd" min="0" max="10" value="3" oninput="document.getElementById('eveL').textContent=this.value"><div class="eva-val" id="eveL" style="font-size:20px">3</div></div></div>
+<div class="form-g"><label>Zona afectada</label>
+<div class="chip-group" id="sBodyParts">
+${['Cervical','Hombro D','Hombro I','Codo D','Codo I','Muneca D','Muneca I','Lumbar','Dorsal','Cadera D','Cadera I','Rodilla D','Rodilla I','Tobillo D','Tobillo I','Pie D','Pie I'].map(z=>`<span class="chip" onclick="this.classList.toggle('selected')">${z}</span>`).join('')}
+</div></div>
+<h3 style="margin:12px 0 8px">Notas SOAP</h3>
+<div class="soap-section"><label>S — Subjetivo</label><textarea id="soapS" rows="2" placeholder="Lo que refiere el paciente..."></textarea></div>
+<div class="soap-section"><label>O — Objetivo</label><textarea id="soapO" rows="2" placeholder="Hallazgos clinicos..."></textarea></div>
+<div class="soap-section"><label>A — Evaluacion</label><textarea id="soapA" rows="2" placeholder="Interpretacion..."></textarea></div>
+<div class="soap-section"><label>P — Plan</label><textarea id="soapP" rows="2" placeholder="Plan para proxima sesion..."></textarea></div>
+<button class="btn" style="width:100%" onclick="saveSession()">Guardar Sesion</button>`);
+}
+
+function saveSession(){
+const pid=document.getElementById('sesPatient').value;
+const treats=[...document.querySelectorAll('#sTreatments .chip.selected')].map(c=>c.textContent);
+const bodyParts=[...document.querySelectorAll('#sBodyParts .chip.selected')].map(c=>c.textContent);
+sessions.push({id:genId(),patientId:pid,date:document.getElementById('sDate').value,duration:+document.getElementById('sDur').value,treatments:treats,evaStart:+document.getElementById('sEvaStart').value,evaEnd:+document.getElementById('sEvaEnd').value,bodyParts:bodyParts,soap:{s:document.getElementById('soapS').value,o:document.getElementById('soapO').value,a:document.getElementById('soapA').value,p:document.getElementById('soapP').value},createdAt:new Date().toISOString()});
+save();closeModal();renderSessionHistory();updateStats();
+}
+
+function renderSessionHistory(){
+const pid=document.getElementById('sesPatient').value;
+const sl=document.getElementById('sessionList');
+const cc=document.getElementById('painChartCard');
+if(!pid){sl.innerHTML='<div class="empty-state"><p>Seleccione un paciente para ver sus sesiones</p></div>';cc.style.display='none';return}
+const ss=sessions.filter(s=>s.patientId===pid).sort((a,b)=>new Date(b.date)-new Date(a.date));
+if(!ss.length){sl.innerHTML='<div class="empty-state"><div class="icon">&#128196;</div><p>Sin sesiones registradas</p></div>';cc.style.display='none';return}
+cc.style.display='block';
+sl.innerHTML=ss.map(s=>`<div class="card">
+<div style="display:flex;justify-content:space-between"><strong>${fmtDate(s.date)}</strong><span style="font-size:13px;color:var(--text-m)">${s.duration} min</span></div>
+${s.treatments.length?'<div style="margin-top:6px">'+s.treatments.map(t=>'<span class="badge b-activo" style="margin:2px">'+t+'</span>').join('')+'</div>':''}
+<div style="margin-top:8px;display:flex;gap:16px;font-size:13px">
+<span>EVA inicio: <strong style="color:${evaColor(s.evaStart)}">${s.evaStart}</strong></span>
+<span>EVA final: <strong style="color:${evaColor(s.evaEnd)}">${s.evaEnd}</strong></span>
+</div>
+${s.bodyParts&&s.bodyParts.length?'<div style="font-size:12px;color:var(--text-m);margin-top:4px">Zona: '+s.bodyParts.join(', ')+'</div>':''}
+${s.soap&&(s.soap.s||s.soap.o||s.soap.a||s.soap.p)?`<details style="margin-top:8px"><summary style="font-size:13px;cursor:pointer;color:var(--pri);font-weight:600">Notas SOAP</summary>
+<div style="font-size:13px;margin-top:6px;line-height:1.5">
+${s.soap.s?'<p><strong>S:</strong> '+s.soap.s+'</p>':''}
+${s.soap.o?'<p><strong>O:</strong> '+s.soap.o+'</p>':''}
+${s.soap.a?'<p><strong>A:</strong> '+s.soap.a+'</p>':''}
+${s.soap.p?'<p><strong>P:</strong> '+s.soap.p+'</p>':''}
+</div></details>`:''}</div>`).join('');
+renderPainChart(ss.reverse());
+}
+
+function renderPainChart(ss){
+const ctx=document.getElementById('painChart');
+if(painChartInstance)painChartInstance.destroy();
+painChartInstance=new Chart(ctx,{type:'line',data:{labels:ss.map(s=>fmtDate(s.date)),datasets:[
+{label:'EVA Inicio',data:ss.map(s=>s.evaStart),borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,.1)',tension:.3,fill:true},
+{label:'EVA Final',data:ss.map(s=>s.evaEnd),borderColor:'#10b981',backgroundColor:'rgba(16,185,129,.1)',tension:.3,fill:true}
+]},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{size:11}}}},scales:{y:{min:0,max:10,title:{display:true,text:'Dolor (EVA)',font:{size:11}}}}}});
+}
+
+// === EXERCISE LIBRARY ===
+const EXERCISES=[
+// CERVICAL
+{region:'cervical',name:'Flexion cervical activa',desc:'Llevar el menton hacia el pecho lentamente, mantener 5s y volver.',sets:'3x10',diff:1,contra:'Hernia cervical aguda, vertigo severo'},
+{region:'cervical',name:'Extension cervical',desc:'Inclinar la cabeza hacia atras suavemente mirando al techo.',sets:'3x8',diff:1,contra:'Estenosis cervical, mareo'},
+{region:'cervical',name:'Rotaciones cervicales',desc:'Girar la cabeza lentamente de un lado a otro hasta sentir estiramiento.',sets:'3x10/lado',diff:1,contra:'Inestabilidad atlantoaxial'},
+{region:'cervical',name:'Inclinaciones laterales',desc:'Llevar la oreja hacia el hombro sin elevar el hombro.',sets:'3x10/lado',diff:1,contra:'Hernia cervical lateral aguda'},
+{region:'cervical',name:'Retraccion cervical (chin tuck)',desc:'Llevar la barbilla hacia atras haciendo doble menton. Mantener 5s.',sets:'3x12',diff:1,contra:'Ninguna significativa'},
+{region:'cervical',name:'Estiramiento trapecio superior',desc:'Inclinar cabeza lateral y presionar suavemente con mano contraria. 30s.',sets:'3x30s/lado',diff:1,contra:'Cervicalgia aguda severa'},
+{region:'cervical',name:'Estiramiento ECOM',desc:'Rotar cabeza al lado contrario e inclinar ligeramente. Mantener 30s.',sets:'3x30s/lado',diff:1,contra:'Torticolis agudo'},
+{region:'cervical',name:'Isometricos cervicales',desc:'Presionar frente/lateral contra la mano opuesta sin mover la cabeza.',sets:'4x6s/dir',diff:2,contra:'Cefalea intensa activa'},
+{region:'cervical',name:'Movilidad cervicodorsal (gato-camello)',desc:'En 4 puntos, flexionar y extender columna cervical y dorsal.',sets:'3x10',diff:2,contra:'Lesion medular'},
+{region:'cervical',name:'Estabilizacion cervical profunda',desc:'Activar flexores profundos con biofeedback (toalla enrollada bajo cuello).',sets:'3x10x10s',diff:3,contra:'Fractura cervical reciente'},
+// HOMBRO
+{region:'hombro',name:'Pendulares de Codman',desc:'Inclinado hacia adelante, dejar colgar brazo y hacer circulos pequenos.',sets:'3x1min',diff:1,contra:'Fractura humeral no consolidada'},
+{region:'hombro',name:'Flexion de hombro asistida',desc:'Con baston, elevar ambos brazos al frente hasta donde tolere.',sets:'3x10',diff:1,contra:'Luxacion aguda'},
+{region:'hombro',name:'Rotacion externa con codo pegado',desc:'Codo a 90 grados, rotar antebrazo hacia afuera con banda elastica.',sets:'3x12',diff:2,contra:'Reparacion de manguito reciente (<6sem)'},
+{region:'hombro',name:'Rotacion interna con banda',desc:'Codo a 90 grados, rotar antebrazo hacia adentro contra resistencia.',sets:'3x12',diff:2,contra:'Inestabilidad posterior'},
+{region:'hombro',name:'Abduccion activa',desc:'Elevar brazo lateralmente hasta 90 grados, controlar el descenso.',sets:'3x10',diff:2,contra:'Pinzamiento subacromial agudo'},
+{region:'hombro',name:'Estiramiento capsula posterior',desc:'Cruzar brazo por delante del pecho, presionar con mano contraria. 30s.',sets:'3x30s/lado',diff:1,contra:'Inestabilidad multidireccional'},
+{region:'hombro',name:'Ejercicio del reloj en pared',desc:'Con pelota en pared, deslizar en patron de reloj para movilidad.',sets:'3x5 circulos',diff:2,contra:'Capsulitis adhesiva severa'},
+{region:'hombro',name:'Elevacion escapular con retraccion',desc:'Elevar y retraer escapulas, mantener 5s, descender controladamente.',sets:'3x12',diff:1,contra:'Fractura de escapula'},
+{region:'hombro',name:'Push-up plus',desc:'Desde plancha, protruir escapulas empujando el suelo al maximo.',sets:'3x10',diff:3,contra:'Lesion de serrato anterior'},
+{region:'hombro',name:'Diagonal D2 flexion (PNF)',desc:'Desde cadera opuesta, elevar diagonalmente con rotacion externa.',sets:'3x10/lado',diff:3,contra:'Hombro inestable'},
+// LUMBAR
+{region:'lumbar',name:'Basculacion pelvica',desc:'Acostado, aplanar espalda baja contra colchoneta contrayendo abdomen.',sets:'3x12',diff:1,contra:'Ninguna significativa'},
+{region:'lumbar',name:'Rodillas al pecho bilateral',desc:'Llevar ambas rodillas al pecho, abrazar y mantener 20s.',sets:'3x20s',diff:1,contra:'Hernia discal aguda con ciatica severa'},
+{region:'lumbar',name:'Puente gluteo',desc:'Acostado con rodillas flectadas, elevar pelvis contrayendo gluteos.',sets:'3x15',diff:1,contra:'Cirugia lumbar reciente (<4sem)'},
+{region:'lumbar',name:'Gato-camello',desc:'En 4 puntos, alternar flexion y extension de columna lumbar.',sets:'3x10',diff:1,contra:'Espondilolistesis grado III+'},
+{region:'lumbar',name:'Bird-dog',desc:'En 4 puntos, extender brazo y pierna opuestos manteniendo pelvis estable.',sets:'3x8/lado',diff:2,contra:'Dolor radicular severo'},
+{region:'lumbar',name:'Plancha frontal',desc:'Apoyado en antebrazos y pies, mantener cuerpo recto.',sets:'3x20-30s',diff:2,contra:'HTA no controlada'},
+{region:'lumbar',name:'Extension lumbar prono (McKenzie)',desc:'Boca abajo, apoyar manos y extender codos elevando tronco.',sets:'3x10',diff:2,contra:'Estenosis lumbar, espondilolistesis'},
+{region:'lumbar',name:'Estiramiento piriforme',desc:'Cruzar tobillo sobre rodilla opuesta, llevar ambas piernas al pecho.',sets:'3x30s/lado',diff:1,contra:'Protesis de cadera reciente'},
+{region:'lumbar',name:'Side plank (plancha lateral)',desc:'Apoyado en antebrazo lateral, mantener cuerpo alineado.',sets:'3x15s/lado',diff:3,contra:'Escoliosis severa dolorosa'},
+{region:'lumbar',name:'Dead bug',desc:'Supino, extender brazo y pierna opuestos manteniendo lumbar pegada.',sets:'3x8/lado',diff:2,contra:'Diastasis abdominal severa'},
+// RODILLA
+{region:'rodilla',name:'Cuadriceps isometrico',desc:'Sentado con pierna extendida, apretar rodilla contra colchoneta 6s.',sets:'4x10x6s',diff:1,contra:'Derrame articular severo'},
+{region:'rodilla',name:'SLR (elevacion pierna recta)',desc:'Acostado, elevar pierna extendida a 45 grados, mantener 3s.',sets:'3x12',diff:1,contra:'Fractura no consolidada'},
+{region:'rodilla',name:'Sentadilla parcial (wall sit)',desc:'Apoyado en pared, descender hasta 45 grados de flexion.',sets:'3x20s',diff:2,contra:'Lesion meniscal aguda'},
+{region:'rodilla',name:'Step-up lateral',desc:'Subir cajon lateral de 15cm con pierna afectada, controlar bajada.',sets:'3x10/pierna',diff:2,contra:'Inestabilidad ligamentaria severa'},
+{region:'rodilla',name:'Extension de rodilla terminal (15-0)',desc:'Con banda en hueco popliteo, extender rodilla desde 15 a 0 grados.',sets:'3x12',diff:2,contra:'Post-LCA (<6sem)'},
+{region:'rodilla',name:'Flexion de rodilla prono',desc:'Boca abajo, flexionar rodilla llevando talon hacia gluteo.',sets:'3x12',diff:1,contra:'Derrame agudo'},
+{region:'rodilla',name:'Mini sentadilla unipodal',desc:'Descender 30 grados en una pierna, controlar alineacion de rodilla.',sets:'3x8/pierna',diff:3,contra:'Condromalacia grado IV'},
+{region:'rodilla',name:'Abduccion de cadera lateral',desc:'De lado, elevar pierna extendida para fortalecer gluteo medio.',sets:'3x15/lado',diff:1,contra:'Bursitis trocanterica aguda'},
+{region:'rodilla',name:'Estiramiento isquiotibiales',desc:'Pierna extendida sobre superficie, inclinar tronco hacia adelante.',sets:'3x30s/pierna',diff:1,contra:'Rotura muscular aguda'},
+{region:'rodilla',name:'Equilibrio unipodal',desc:'Mantenerse en una pierna 30s, progresar con ojos cerrados.',sets:'3x30s/pierna',diff:2,contra:'Vertigo'},
+// TOBILLO
+{region:'tobillo',name:'Dorsiflexion activa',desc:'Llevar punta del pie hacia arriba, mantener 3s.',sets:'3x15',diff:1,contra:'Fractura maleolar reciente'},
+{region:'tobillo',name:'Plantiflexion contra banda',desc:'Con banda elastica en antepie, empujar pie hacia abajo.',sets:'3x15',diff:1,contra:'Rotura tendon Aquiles'},
+{region:'tobillo',name:'Alfabeto con pie',desc:'Dibujar letras del abecedario con la punta del pie.',sets:'2 series ABC',diff:1,contra:'Ninguna significativa'},
+{region:'tobillo',name:'Inversion/Eversion con banda',desc:'Girar pie hacia adentro/afuera contra resistencia elastica.',sets:'3x12/dir',diff:2,contra:'Esguince grado III agudo'},
+{region:'tobillo',name:'Elevacion de talones bipodal',desc:'De pie, elevar ambos talones lentamente, descender controlado.',sets:'3x15',diff:1,contra:'Fasciitis plantar aguda'},
+{region:'tobillo',name:'Elevacion de talones unipodal',desc:'De pie en una pierna, elevar talon, descender lento.',sets:'3x10/pie',diff:2,contra:'Tendinopatia aquiliana severa'},
+{region:'tobillo',name:'Propiocepcion en superficie inestable',desc:'Mantenerse de pie sobre cojin o bosu, progresar a ojos cerrados.',sets:'3x30s',diff:2,contra:'Fractura no consolidada'},
+{region:'tobillo',name:'Estiramiento gastrocnemio en pared',desc:'Pie atras, rodilla extendida, inclinar hacia pared. 30s.',sets:'3x30s/pierna',diff:1,contra:'Rotura muscular posterior'},
+// CADERA
+{region:'cadera',name:'Clam shell (almeja)',desc:'De lado con rodillas flectadas, abrir rodilla superior sin mover pelvis.',sets:'3x15/lado',diff:1,contra:'Protesis de cadera (<6sem)'},
+{region:'cadera',name:'Puente gluteo unipodal',desc:'Elevar pelvis apoyado en un solo pie, mantener 3s.',sets:'3x10/lado',diff:2,contra:'Fractura de femur reciente'},
+{region:'cadera',name:'Hip hinge (bisagra de cadera)',desc:'De pie, inclinar tronco empujando cadera hacia atras, rodillas semi.',sets:'3x12',diff:2,contra:'Hernia discal aguda'},
+{region:'cadera',name:'Abduccion de cadera de pie',desc:'De pie, elevar pierna lateralmente contra banda elastica.',sets:'3x12/pierna',diff:2,contra:'Bursitis trocanterica aguda'},
+{region:'cadera',name:'Flexion de cadera activa supino',desc:'Acostado, llevar rodilla al pecho activamente.',sets:'3x10/pierna',diff:1,contra:'Pinzamiento femoroacetabular severo'},
+{region:'cadera',name:'Extension de cadera prono',desc:'Boca abajo, elevar pierna extendida contrayendo gluteo.',sets:'3x12/pierna',diff:1,contra:'Estenosis lumbar'},
+{region:'cadera',name:'Estiramiento flexores cadera',desc:'Posicion de caballero, empujar cadera hacia adelante. 30s.',sets:'3x30s/lado',diff:1,contra:'Protesis de cadera posterior'},
+{region:'cadera',name:'Monster walk con banda',desc:'Banda en tobillos, caminar lateral en semi-sentadilla.',sets:'3x10 pasos/lado',diff:3,contra:'Gonartrosis severa'},
+// MUNECA
+{region:'muneca',name:'Flexion/extension muneca activa',desc:'Apoyar antebrazo, mover muneca arriba y abajo lentamente.',sets:'3x12/dir',diff:1,contra:'Fractura Colles reciente'},
+{region:'muneca',name:'Desviacion radial/cubital',desc:'Con mancuerna liviana, mover muneca lateralmente.',sets:'3x10/dir',diff:1,contra:'Luxacion radiocubital aguda'},
+{region:'muneca',name:'Pronacion/Supinacion con martillo',desc:'Sujetar martillo por mango, rotar antebrazo lentamente.',sets:'3x10/dir',diff:2,contra:'Fractura de radio proximal'},
+{region:'muneca',name:'Flexion dedos con pelota',desc:'Apretar pelota de goma, mantener 5s, soltar.',sets:'3x15',diff:1,contra:'Artritis reumatoide activa severa'},
+{region:'muneca',name:'Extension dedos con banda',desc:'Banda elastica alrededor de dedos, abrir contra resistencia.',sets:'3x12',diff:1,contra:'Fractura metacarpiana'},
+{region:'muneca',name:'Estiramiento flexor muneca',desc:'Brazo extendido, con otra mano empujar dedos hacia atras. 30s.',sets:'3x30s/mano',diff:1,contra:'Sindrome tunel carpiano agudo'},
+];
+
+function renderExercises(){
+const region=document.getElementById('exRegion').value;
+const filtered=region?EXERCISES.filter(e=>e.region===region):EXERCISES;
+document.getElementById('exerciseList').innerHTML=filtered.map((e,i)=>{
+const idx=EXERCISES.indexOf(e);
+const sel=selectedExercises.includes(idx);
+return`<div class="card exercise-card" style="border-left-color:${sel?'var(--success)':'var(--pri-xl)'}">
+<div style="display:flex;justify-content:space-between;align-items:flex-start">
+<div><strong>${e.name}</strong><div class="diff">${[1,2,3].map(d=>`<span${d<=e.diff?' class="filled"':''} title="Dificultad ${e.diff}/3"></span>`).join('')}</div></div>
+<button class="btn-s" style="background:${sel?'var(--success)':'var(--pri)'}" onclick="toggleExercise(${idx})">${sel?'En plan':'+ Plan'}</button>
+</div>
+<p style="font-size:13px;color:var(--text-m);margin-top:6px">${e.desc}</p>
+<div style="font-size:12px;margin-top:6px"><strong>Dosis:</strong> ${e.sets}</div>
+<div style="font-size:12px;color:var(--danger);margin-top:3px"><strong>Contraindicaciones:</strong> ${e.contra}</div>
+</div>`}).join('');
+}
+
+function toggleExercise(idx){
+const i=selectedExercises.indexOf(idx);
+if(i>=0)selectedExercises.splice(i,1);else selectedExercises.push(idx);
+renderExercises();
+}
+
+function openPlanModal(){
+if(!selectedExercises.length){alert('Seleccione ejercicios primero');return}
+const patOpts=patients.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+openModal(`<h2>Crear Plan de Ejercicios <button onclick="closeModal()">&times;</button></h2>
+<div class="form-g"><label>Paciente</label><select id="planPatient"><option value="">Seleccionar...</option>${patOpts}</select></div>
+<div class="form-g"><label>Nombre del plan</label><input id="planName" value="Plan de ejercicios"></div>
+<div class="form-g"><label>Notas adicionales</label><textarea id="planNotes" rows="2"></textarea></div>
+<h3 style="margin:10px 0">Ejercicios seleccionados (${selectedExercises.length}):</h3>
+${selectedExercises.map(i=>{const e=EXERCISES[i];return`<div class="card" style="padding:10px"><strong>${e.name}</strong> — ${e.sets}<br><span style="font-size:12px;color:var(--text-m)">${e.desc}</span></div>`}).join('')}
+<button class="btn" style="width:100%;margin-top:12px" onclick="savePlan()">Guardar Plan</button>`);
+}
+
+function savePlan(){
+const pid=document.getElementById('planPatient').value;
+plans.push({id:genId(),patientId:pid,name:document.getElementById('planName').value,notes:document.getElementById('planNotes').value,exercises:selectedExercises.map(i=>EXERCISES[i]),createdAt:new Date().toISOString()});
+save();selectedExercises=[];closeModal();renderExercises();alert('Plan guardado correctamente');
+}
+
+function sharePlanWA(){
+if(!selectedExercises.length){alert('Seleccione ejercicios para compartir');return}
+let t=`*Plan de Ejercicios — KinesiologoCL*\n\n`;
+selectedExercises.forEach((idx,n)=>{const e=EXERCISES[idx];t+=`${n+1}. *${e.name}*\n   ${e.desc}\n   Dosis: ${e.sets}\n\n`});
+t+=`Recuerde: realizar los ejercicios sin dolor. Ante cualquier molestia, suspender y consultar.`;
+window.open('https://wa.me/?text='+encodeURIComponent(t),'_blank');
+}
+
+// === EVALUATIONS ===
+const EVAL_DEFS={
+eva:{name:'EVA',items:[{label:'Nivel de dolor percibido',min:0,max:10}]},
+barthel:{name:'Barthel',items:[
+{label:'Alimentacion',opts:['Independiente (10)','Necesita ayuda (5)','Dependiente (0)'],vals:[10,5,0]},
+{label:'Banio',opts:['Independiente (5)','Dependiente (0)'],vals:[5,0]},
+{label:'Aseo personal',opts:['Independiente (5)','Dependiente (0)'],vals:[5,0]},
+{label:'Vestirse',opts:['Independiente (10)','Necesita ayuda (5)','Dependiente (0)'],vals:[10,5,0]},
+{label:'Control intestinal',opts:['Continente (10)','Accidente ocasional (5)','Incontinente (0)'],vals:[10,5,0]},
+{label:'Control vesical',opts:['Continente (10)','Accidente ocasional (5)','Incontinente (0)'],vals:[10,5,0]},
+{label:'Uso del WC',opts:['Independiente (10)','Necesita ayuda (5)','Dependiente (0)'],vals:[10,5,0]},
+{label:'Transferencias',opts:['Independiente (15)','Minima ayuda (10)','Gran ayuda (5)','Dependiente (0)'],vals:[15,10,5,0]},
+{label:'Deambulacion',opts:['Independiente (15)','Necesita ayuda (10)','Silla de ruedas (5)','Dependiente (0)'],vals:[15,10,5,0]},
+{label:'Subir escaleras',opts:['Independiente (10)','Necesita ayuda (5)','Dependiente (0)'],vals:[10,5,0]}
+]},
+tinetti:{name:'Tinetti',items:[
+{label:'Equilibrio sentado',opts:['Normal (1)','Compensa (0)'],vals:[1,0]},
+{label:'Levantarse',opts:['Normal (2)','Con ayuda (1)','No puede (0)'],vals:[2,1,0]},
+{label:'Intentos levantarse',opts:['Normal (2)','Necesita >1 intento (1)','No puede (0)'],vals:[2,1,0]},
+{label:'Equilibrio inmediato',opts:['Estable (3)','Inestable necesita apoyo (2)','Tiende a caer (1)','Se cae (0)'],vals:[3,2,1,0]},
+{label:'Equilibrio de pie',opts:['Estable (3)','Inestable necesita apoyo (2)','Base amplia (1)','Se cae (0)'],vals:[3,2,1,0]},
+{label:'Equilibrio ojos cerrados',opts:['Estable (1)','Inestable (0)'],vals:[1,0]},
+{label:'Giro 360 grados',opts:['Normal (2)','Pasos discontinuos (1)','Inestable (0)'],vals:[2,1,0]},
+{label:'Sentarse',opts:['Normal (2)','Deja caer o mide mal (1)','Inseguro (0)'],vals:[2,1,0]},
+{label:'Inicio marcha',opts:['Normal (1)','Vacila (0)'],vals:[1,0]},
+{label:'Longitud paso D',opts:['Sobrepasa pie I (1)','No sobrepasa (0)'],vals:[1,0]},
+{label:'Longitud paso I',opts:['Sobrepasa pie D (1)','No sobrepasa (0)'],vals:[1,0]},
+{label:'Simetria marcha',opts:['Simetrica (1)','Asimetrica (0)'],vals:[1,0]},
+{label:'Continuidad marcha',opts:['Continua (1)','Discontinua (0)'],vals:[1,0]},
+{label:'Trayectoria',opts:['Recta (2)','Desviacion leve (1)','Desviacion marcada (0)'],vals:[2,1,0]},
+{label:'Tronco',opts:['Sin balanceo (2)','Balanceo leve (1)','Balanceo marcado (0)'],vals:[2,1,0]},
+{label:'Base de sustentacion',opts:['Talones juntos (1)','Base amplia (0)'],vals:[1,0]}
+]},
+daniels:{name:'Daniels',items:[{label:'Grupo muscular evaluado',text:true},{label:'Grado de fuerza',opts:['Grado 5 — Normal (contraccion contra resistencia maxima)','Grado 4 — Bueno (contra resistencia moderada)','Grado 3 — Regular (contra gravedad, sin resistencia)','Grado 2 — Mal (movimiento sin gravedad)','Grado 1 — Vestigios (contraccion palpable, sin movimiento)','Grado 0 — Nulo (sin contraccion)'],vals:[5,4,3,2,1,0]}]},
+goniometry:{name:'Goniometria',info:`<div class="card"><h3>Valores de Referencia — Rangos Articulares Normales</h3>
+<table style="width:100%;font-size:12px;border-collapse:collapse;margin-top:8px">
+<tr style="background:var(--bg)"><th style="padding:6px;text-align:left">Articulacion</th><th>Movimiento</th><th>Rango normal</th></tr>
+<tr><td style="padding:4px 6px">Hombro</td><td>Flexion</td><td>0-180</td></tr>
+<tr style="background:var(--bg)"><td style="padding:4px 6px">Hombro</td><td>Extension</td><td>0-60</td></tr>
+<tr><td style="padding:4px 6px">Hombro</td><td>Abduccion</td><td>0-180</td></tr>
+<tr style="background:var(--bg)"><td style="padding:4px 6px">Hombro</td><td>RE/RI</td><td>0-90/0-70</td></tr>
+<tr><td style="padding:4px 6px">Codo</td><td>Flexion</td><td>0-150</td></tr>
+<tr style="background:var(--bg)"><td style="padding:4px 6px">Codo</td><td>Pron/Sup</td><td>0-80/0-80</td></tr>
+<tr><td style="padding:4px 6px">Muneca</td><td>Flex/Ext</td><td>0-80/0-70</td></tr>
+<tr style="background:var(--bg)"><td style="padding:4px 6px">Cadera</td><td>Flexion</td><td>0-125</td></tr>
+<tr><td style="padding:4px 6px">Cadera</td><td>Extension</td><td>0-30</td></tr>
+<tr style="background:var(--bg)"><td style="padding:4px 6px">Cadera</td><td>Abd/Add</td><td>0-45/0-30</td></tr>
+<tr><td style="padding:4px 6px">Cadera</td><td>RE/RI</td><td>0-45/0-45</td></tr>
+<tr style="background:var(--bg)"><td style="padding:4px 6px">Rodilla</td><td>Flexion</td><td>0-135</td></tr>
+<tr><td style="padding:4px 6px">Tobillo</td><td>Dorsiflexion</td><td>0-20</td></tr>
+<tr style="background:var(--bg)"><td style="padding:4px 6px">Tobillo</td><td>Plantiflexion</td><td>0-50</td></tr>
+<tr><td style="padding:4px 6px">Cervical</td><td>Flex/Ext</td><td>0-50/0-60</td></tr>
+<tr style="background:var(--bg)"><td style="padding:4px 6px">Cervical</td><td>Rot/Incl</td><td>0-80/0-45</td></tr>
+<tr><td style="padding:4px 6px">Lumbar</td><td>Flex/Ext</td><td>0-80/0-30</td></tr>
+</table></div>
+<div class="form-g" style="margin-top:12px"><label>Articulacion evaluada</label><input id="goniJoint"></div>
+<div class="form-g"><label>Movimiento</label><input id="goniMove"></div>
+<div class="row"><div class="form-g"><label>Rango activo (grados)</label><input type="number" id="goniActive"></div>
+<div class="form-g"><label>Rango pasivo (grados)</label><input type="number" id="goniPassive"></div></div>
+<div class="form-g"><label>Notas</label><textarea id="goniNotes" rows="2"></textarea></div>`},
+berg:{name:'Berg',items:[
+{label:'Sentado a de pie',opts:['Sin manos (4)','Con manos (3)','Varios intentos (2)','Minima ayuda (1)','Moderada-maxima ayuda (0)'],vals:[4,3,2,1,0]},
+{label:'De pie sin apoyo',opts:['>2min seguro (4)','2min con supervision (3)','30s sin apoyo (2)','Necesita varios intentos (1)','No puede (0)'],vals:[4,3,2,1,0]},
+{label:'Sentado sin apoyo',opts:['>2min seguro (4)','2min con supervision (3)','30s (2)','10s (1)','No puede (0)'],vals:[4,3,2,1,0]},
+{label:'De pie a sentado',opts:['Seguro, minimo uso manos (4)','Controla con manos (3)','Pantorrillas contra silla (2)','Se sienta independiente no controla (1)','Necesita ayuda (0)'],vals:[4,3,2,1,0]},
+{label:'Transferencias',opts:['Seguro, minimo uso manos (4)','Con manos seguro (3)','Con indicaciones verbales (2)','Necesita 1 persona (1)','Necesita 2 personas (0)'],vals:[4,3,2,1,0]},
+{label:'De pie ojos cerrados',opts:['10s seguro (4)','10s con supervision (3)','3s (2)','No puede cerrar ojos 3s pero estable (1)','Necesita ayuda (0)'],vals:[4,3,2,1,0]},
+{label:'De pie pies juntos',opts:['Pies juntos >1min (4)','Con supervision (3)','No puede pero 15s pies juntos (2)','Necesita ayuda posicion, 15s (1)','Necesita ayuda, no mantiene (0)'],vals:[4,3,2,1,0]},
+{label:'Alcance frontal brazos extendidos',opts:['>25cm (4)','12-25cm (3)','5-12cm (2)','Si alcanza pero con supervision (1)','Pierde equilibrio (0)'],vals:[4,3,2,1,0]},
+{label:'Recoger objeto del suelo',opts:['Facilmente (4)','Con supervision (3)','No puede, 2-5cm del objeto (2)','No puede, necesita supervision (1)','No puede (0)'],vals:[4,3,2,1,0]},
+{label:'Girar para mirar atras',opts:['Ambos lados, buen cambio peso (4)','Un solo lado (3)','Solo lateralmente (2)','Necesita supervision (1)','Necesita ayuda (0)'],vals:[4,3,2,1,0]},
+{label:'Giro 360 grados',opts:['Seguro en <4s ambos lados (4)','Seguro un solo lado <4s (3)','Seguro pero lento (2)','Necesita supervision (1)','Necesita ayuda (0)'],vals:[4,3,2,1,0]},
+{label:'Pie alterno en escalon',opts:['8 pasos 20s independiente (4)','8 pasos >20s (3)','4 pasos sin ayuda con supervision (2)','>2 pasos con minima ayuda (1)','Necesita ayuda (0)'],vals:[4,3,2,1,0]},
+{label:'Tandem de pie',opts:['Tandem independiente 30s (4)','Paso largo 30s (3)','Paso corto 30s (2)','Necesita ayuda paso, 15s (1)','Pierde equilibrio (0)'],vals:[4,3,2,1,0]},
+{label:'Apoyo unipodal',opts:['>10s (4)','5-10s (3)','3-5s (2)','Intenta >3s (1)','No puede o necesita ayuda (0)'],vals:[4,3,2,1,0]}
+]}
+};
+
+function openEvalModal(type){
+const pid=document.getElementById('evalPatient').value;
+if(!pid&&type!=='goniometry'){alert('Seleccione un paciente primero');return}
+const def=EVAL_DEFS[type];
+if(type==='goniometry'){
+openModal(`<h2>Goniometria <button onclick="closeModal()">&times;</button></h2>${def.info}
+<button class="btn" style="width:100%;margin-top:12px" onclick="saveGoniometry('${pid}')">Guardar Medicion</button>`);
+return}
+if(type==='eva'){
+openModal(`<h2>EVA — Escala Visual Analogica <button onclick="closeModal()">&times;</button></h2>
+<div class="form-g"><label>Nivel de dolor (0 = sin dolor, 10 = peor dolor imaginable)</label>
+<input type="range" class="eva-slider" id="evaVal" min="0" max="10" value="5" oninput="document.getElementById('evaDisplay').textContent=this.value;document.getElementById('evaDisplay').style.color=evaColor(+this.value)">
+<div class="eva-val" id="evaDisplay" style="color:var(--warn)">5</div></div>
+<div class="form-g"><label>Localizacion del dolor</label><input id="evaLoc" placeholder="Ej: Hombro derecho, lumbar..."></div>
+<div class="form-g"><label>Notas</label><textarea id="evaNotes" rows="2"></textarea></div>
+<button class="btn" style="width:100%" onclick="saveEva('${pid}')">Guardar Evaluacion</button>`);
+return}
+// Generic scale (Barthel, Tinetti, Daniels, Berg)
+let html=`<h2>${def.name} <button onclick="closeModal()">&times;</button></h2>`;
+def.items.forEach((item,i)=>{
+if(item.text){html+=`<div class="form-g"><label>${item.label}</label><input id="eval_${i}"></div>`}
+else if(item.opts){html+=`<div class="form-g"><label>${item.label}</label><select id="eval_${i}">${item.opts.map((o,j)=>`<option value="${item.vals[j]}">${o}</option>`).join('')}</select></div>`}
+});
+html+=`<div class="form-g"><label>Notas clinicas</label><textarea id="evalNotes" rows="2"></textarea></div>`;
+html+=`<button class="btn" style="width:100%" onclick="saveGenericEval('${type}','${pid}')">Calcular y Guardar</button>`;
+openModal(html);
+}
+
+function saveEva(pid){
+evaluations.push({id:genId(),type:'eva',patientId:pid,score:+document.getElementById('evaVal').value,location:document.getElementById('evaLoc').value,notes:document.getElementById('evaNotes').value,date:new Date().toISOString()});
+save();closeModal();renderSavedEvals();alert('EVA guardada: '+document.getElementById('evaVal').value+'/10');
+}
+
+function saveGoniometry(pid){
+if(!pid){alert('Seleccione un paciente');return}
+evaluations.push({id:genId(),type:'goniometry',patientId:pid,joint:document.getElementById('goniJoint').value,movement:document.getElementById('goniMove').value,active:document.getElementById('goniActive').value,passive:document.getElementById('goniPassive').value,notes:document.getElementById('goniNotes').value,date:new Date().toISOString()});
+save();closeModal();renderSavedEvals();alert('Goniometria guardada');
+}
+
+function saveGenericEval(type,pid){
+const def=EVAL_DEFS[type];
+let score=0;let details=[];
+def.items.forEach((item,i)=>{
+const el=document.getElementById('eval_'+i);
+if(item.text){details.push({label:item.label,value:el.value})}
+else{const v=+el.value;score+=v;details.push({label:item.label,value:v})}
+});
+const notes=document.getElementById('evalNotes').value;
+evaluations.push({id:genId(),type,patientId:pid,score,details,notes,date:new Date().toISOString()});
+save();closeModal();renderSavedEvals();
+let interpretation='';
+if(type==='barthel'){
+if(score>=95)interpretation='Independiente';else if(score>=60)interpretation='Dependencia leve-moderada';else if(score>=20)interpretation='Dependencia severa';else interpretation='Dependencia total';
+}else if(type==='tinetti'){
+if(score>=24)interpretation='Bajo riesgo de caida';else if(score>=19)interpretation='Riesgo moderado';else interpretation='Alto riesgo de caida';
+}else if(type==='berg'){
+if(score>=41)interpretation='Bajo riesgo de caida';else if(score>=21)interpretation='Riesgo moderado';else interpretation='Alto riesgo de caida';
+}
+alert(`${def.name}: ${score} puntos${interpretation?' — '+interpretation:''}`);
+}
+
+function renderSavedEvals(){
+const pid=document.getElementById('evalPatient').value;
+const el=document.getElementById('savedEvals');
+const evs=evaluations.filter(e=>!pid||e.patientId===pid).sort((a,b)=>new Date(b.date)-new Date(a.date));
+if(!evs.length){el.innerHTML='<div class="empty-state"><p>Sin evaluaciones guardadas</p></div>';return}
+el.innerHTML=evs.map(e=>{
+const pName=patients.find(p=>p.id===e.patientId);
+return`<div class="card" style="padding:10px">
+<div style="display:flex;justify-content:space-between"><strong>${EVAL_DEFS[e.type]?.name||e.type}</strong><span style="font-size:12px;color:var(--text-m)">${fmtDate(e.date)}</span></div>
+<div style="font-size:13px;margin-top:4px">${pName?pName.name+' — ':''}Puntaje: <strong>${e.score!==undefined?e.score:'N/A'}</strong></div>
+${e.notes?'<div style="font-size:12px;color:var(--text-m);margin-top:3px">'+e.notes+'</div>':''}
+<button class="btn-d" style="margin-top:6px" onclick="deleteEval('${e.id}')">Eliminar</button>
+</div>`}).join('');
+}
+
+function deleteEval(id){evaluations=evaluations.filter(e=>e.id!==id);save();renderSavedEvals()}
+
+// === AGENDA / CALENDAR ===
+function changeWeek(dir){currentWeekStart=addDays(currentWeekStart,dir*7);renderCalendar()}
+
+function renderCalendar(){
+const days=['Lun','Mar','Mie','Jue','Vie','Sab','Dom'];
+const hours=[];for(let h=8;h<20;h++)hours.push(h+':00',h+':30');
+let weekDates=[];for(let i=0;i<7;i++)weekDates.push(addDays(currentWeekStart,i));
+const m0=weekDates[0],m6=weekDates[6];
+document.getElementById('weekLabel').textContent=`${m0.getDate()}/${m0.getMonth()+1} — ${m6.getDate()}/${m6.getMonth()+1}/${m6.getFullYear()}`;
+
+let g='<div class="cal-header"></div>';
+weekDates.forEach((d,i)=>{
+const isToday=isSameDay(d,new Date());
+g+=`<div class="cal-header" style="${isToday?'background:var(--success)':''}">${days[i]}<br>${d.getDate()}</div>`;
+});
+
+hours.forEach(time=>{
+g+=`<div class="cal-time">${time}</div>`;
+weekDates.forEach(d=>{
+const dateStr=d.toISOString().slice(0,10);
+const slotAppts=appointments.filter(a=>a.date===dateStr&&a.time===time);
+const apptHtml=slotAppts.map(a=>{
+const p=patients.find(x=>x.id===a.patientId);
+return`<div class="appt" title="${p?p.name:''} — ${a.treatment||''}" onclick="event.stopPropagation();viewAppt('${a.id}')">${p?p.name.split(' ')[0]:a.note||'Bloqueado'}</div>`;
+}).join('');
+g+=`<div class="cal-slot" onclick="openApptModal('${dateStr}','${time}')">${apptHtml}</div>`;
+});
+});
+document.getElementById('calGrid').innerHTML=g;
+
+// Stats
+const today=new Date().toISOString().slice(0,10);
+document.getElementById('statToday').textContent=appointments.filter(a=>a.date===today).length;
+const wStart=currentWeekStart.toISOString().slice(0,10);
+const wEnd=addDays(currentWeekStart,6).toISOString().slice(0,10);
+document.getElementById('statWeek').textContent=appointments.filter(a=>a.date>=wStart&&a.date<=wEnd).length;
+}
+
+function openApptModal(date,time){
+const patOpts=patients.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+const treats=['Terapia Manual','Electroterapia','Ultrasonido','Laser','Ejercicio Terapeutico','Crioterapia','Termoterapia','Hidroterapia','Kinesiotaping','Puncion Seca','Evaluacion','Control'];
+const tOpts=treats.map(t=>`<option>${t}</option>`).join('');
+openModal(`<h2>Nueva Cita <button onclick="closeModal()">&times;</button></h2>
+<div class="row"><div class="form-g"><label>Fecha</label><input type="date" id="aDate" value="${date||new Date().toISOString().slice(0,10)}"></div>
+<div class="form-g"><label>Hora</label><select id="aTime">${(()=>{let o='';for(let h=8;h<20;h++){o+=`<option value="${h}:00" ${time===h+':00'?'selected':''}>${h}:00</option>`;o+=`<option value="${h}:30" ${time===h+':30'?'selected':''}>${h}:30</option>`}return o})()}</select></div></div>
+<div class="form-g"><label>Paciente</label><select id="aPatient"><option value="">Bloqueo / Personal</option>${patOpts}</select></div>
+<div class="form-g"><label>Tipo de tratamiento</label><select id="aTreat">${tOpts}</select></div>
+<div class="form-g"><label>Nota</label><input id="aNote" placeholder="Nota adicional..."></div>
+<button class="btn" style="width:100%" onclick="saveAppt()">Guardar Cita</button>`);
+}
+
+function saveAppt(){
+appointments.push({id:genId(),date:document.getElementById('aDate').value,time:document.getElementById('aTime').value,patientId:document.getElementById('aPatient').value,treatment:document.getElementById('aTreat').value,note:document.getElementById('aNote').value});
+save();closeModal();renderCalendar();
+if('Notification' in window&&Notification.permission==='default')Notification.requestPermission();
+}
+
+function viewAppt(id){
+const a=appointments.find(x=>x.id===id);if(!a)return;
+const p=patients.find(x=>x.id===a.patientId);
+openModal(`<h2>Detalle Cita <button onclick="closeModal()">&times;</button></h2>
+<div class="card">
+<p><strong>Fecha:</strong> ${fmtDate(a.date)} a las ${a.time}</p>
+${p?'<p><strong>Paciente:</strong> '+p.name+'</p>':''}
+${a.treatment?'<p><strong>Tratamiento:</strong> '+a.treatment+'</p>':''}
+${a.note?'<p><strong>Nota:</strong> '+a.note+'</p>':''}
+</div>
+<div class="row">
+<button class="btn-d" onclick="deleteAppt('${id}')">Eliminar Cita</button>
+</div>`);
+}
+
+function deleteAppt(id){appointments=appointments.filter(a=>a.id!==id);save();closeModal();renderCalendar()}
+
+// === SERVICE WORKER ===
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').catch(()=>{})}
+
+// === INIT ===
+renderPatients();
+updateStats();
+</script>
+</body>
+</html>

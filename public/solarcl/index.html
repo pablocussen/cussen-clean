@@ -1,0 +1,1504 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#ea580c">
+    <meta name="description" content="SolarCL - Gestión profesional de instalaciones solares en Chile">
+    <title>SolarCL - Gestión Solar</title>
+    <link rel="manifest" href="data:application/json,{\"name\":\"SolarCL\",\"short_name\":\"SolarCL\",\"icons\":[{\"src\":\"/solarcl/icon-192.png\",\"sizes\":\"192x192\",\"type\":\"image/png\"},{\"src\":\"/solarcl/icon-512.png\",\"sizes\":\"512x512\",\"type\":\"image/png\"}],\"theme_color\":\"#ea580c\",\"background_color\":\"#ffffff\",\"display\":\"standalone\"}">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%23ea580c' width='192' height='192'/><path fill='%23fff' d='M96,40 L140,100 L130,100 L130,140 L90,140 L90,100 L60,100 Z'/></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: #f8f9fa;
+            color: #1a1a1a;
+            line-height: 1.5;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background: linear-gradient(135deg, #ea580c 0%, #d64a08 100%);
+            color: white;
+            padding: 1rem;
+            box-shadow: 0 2px 8px rgba(234, 88, 12, 0.15);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: white;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: #ea580c;
+        }
+
+        .sync-status {
+            font-size: 0.85rem;
+            padding: 0.25rem 0.75rem;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+        }
+
+        .sync-status.syncing {
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        main {
+            flex: 1;
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid #e5e7eb;
+            overflow-x: auto;
+            padding-bottom: 0;
+            scroll-behavior: smooth;
+        }
+
+        .tabs::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .tabs::-webkit-scrollbar-track {
+            background: #f0f0f0;
+        }
+
+        .tabs::-webkit-scrollbar-thumb {
+            background: #ea580c;
+            border-radius: 2px;
+        }
+
+        .tab-btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            background: transparent;
+            color: #666;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            position: relative;
+            white-space: nowrap;
+            transition: color 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .tab-btn:hover {
+            color: #ea580c;
+        }
+
+        .tab-btn.active {
+            color: #ea580c;
+        }
+
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #ea580c;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e5e7eb;
+            transition: all 0.2s;
+        }
+
+        .card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1rem;
+        }
+
+        .card-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+
+        .card-badge {
+            display: inline-block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            text-transform: uppercase;
+        }
+
+        .badge-evaluacion {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-aprobado {
+            background: #dbeafe;
+            color: #0c4a6e;
+        }
+
+        .badge-instalacion {
+            background: #fecaca;
+            color: #7f1d1d;
+        }
+
+        .badge-conectado {
+            background: #c7d2fe;
+            color: #312e81;
+        }
+
+        .badge-operando {
+            background: #bbf7d0;
+            color: #065f46;
+        }
+
+        .card-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .card-meta-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.95rem;
+            color: #666;
+        }
+
+        .card-meta-item strong {
+            color: #1a1a1a;
+            font-weight: 600;
+        }
+
+        .form-section {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+
+        .form-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: #1a1a1a;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-size: 0.95rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="email"],
+        input[type="tel"],
+        input[type="date"],
+        input[type="month"],
+        select,
+        textarea {
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        input[type="email"]:focus,
+        input[type="tel"]:focus,
+        input[type="date"]:focus,
+        input[type="month"]:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #ea580c;
+            box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 1.5rem;
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #ea580c 0%, #d64a08 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(234, 88, 12, 0.3);
+        }
+
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #1a1a1a;
+            border: 1px solid #d1d5db;
+        }
+
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #f9fafb;
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            border-left: 4px solid #ea580c;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #1a1a1a;
+        }
+
+        .stat-change {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 0.5rem;
+        }
+
+        .stat-change.positive {
+            color: #059669;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+
+        .chart-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: #1a1a1a;
+        }
+
+        canvas {
+            max-height: 400px;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .alert-success {
+            background: #ecfdf5;
+            color: #065f46;
+            border-left: 4px solid #10b981;
+        }
+
+        .alert-error {
+            background: #fef2f2;
+            color: #7f1d1d;
+            border-left: 4px solid #ef4444;
+        }
+
+        .alert-info {
+            background: #eff6ff;
+            color: #0c4a6e;
+            border-left: 4px solid #0284c7;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #666;
+        }
+
+        .install-prompt {
+            position: fixed;
+            bottom: 1rem;
+            right: 1rem;
+            background: white;
+            border-radius: 12px;
+            padding: 1rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 999;
+            display: none;
+            flex-direction: column;
+            gap: 1rem;
+            max-width: 300px;
+        }
+
+        .install-prompt.show {
+            display: flex;
+        }
+
+        .install-prompt-text {
+            font-size: 0.95rem;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .install-prompt-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .install-prompt-buttons button {
+            flex: 1;
+            padding: 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            main {
+                padding: 0.75rem;
+            }
+
+            .form-section {
+                padding: 1.5rem;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .tab-btn {
+                padding: 0.75rem 1rem;
+            }
+
+            table {
+                font-size: 0.9rem;
+            }
+
+            th, td {
+                padding: 0.75rem;
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">☀️</div>
+                <span>SolarCL</span>
+            </div>
+            <div class="sync-status" id="syncStatus">Sincronizando...</div>
+        </div>
+    </header>
+
+    <main>
+        <div class="tabs" role="tablist">
+            <button class="tab-btn active" data-tab="proyectos" role="tab">📊 Proyectos</button>
+            <button class="tab-btn" data-tab="paneles" role="tab">📦 Paneles</button>
+            <button class="tab-btn" data-tab="cotizaciones" role="tab">💰 Cotizaciones</button>
+            <button class="tab-btn" data-tab="generacion" role="tab">⚡ Generación</button>
+            <button class="tab-btn" data-tab="finanzas" role="tab">💵 Finanzas</button>
+            <button class="tab-btn" data-tab="clientes" role="tab">👥 Clientes</button>
+        </div>
+
+        <div id="proyectos" class="tab-content active">
+            <div class="form-section">
+                <h2 class="form-title">Nuevo Proyecto</h2>
+                <div class="form-grid">
+                    <div class="form-group"><label>Cliente</label><input type="text" id="proyClientName" placeholder="Nombre cliente" required></div>
+                    <div class="form-group"><label>Dirección</label><input type="text" id="proyAddress" placeholder="Dirección instalación" required></div>
+                    <div class="form-group"><label>Tipo</label><select id="proyType" required><option value="">Seleccionar tipo</option><option value="residencial">Residencial</option><option value="comercial">Comercial</option><option value="industrial">Industrial</option><option value="PMGD">PMGD</option></select></div>
+                    <div class="form-group"><label>Capacidad (kWp)</label><input type="number" id="proyCapacity" placeholder="p.ej. 5.5" step="0.1" required></div>
+                    <div class="form-group"><label>Cantidad Paneles</label><input type="number" id="proyPanelCount" placeholder="p.ej. 12" required></div>
+                    <div class="form-group"><label>Marca Inversor</label><select id="proyInverterBrand" required><option value="">Seleccionar marca</option><option value="Huawei">Huawei</option><option value="Fronius">Fronius</option><option value="SMA">SMA</option><option value="GoodWe">GoodWe</option></select></div>
+                    <div class="form-group"><label>Estado</label><select id="proyStatus" required><option value="evaluación">Evaluación</option><option value="aprobado">Aprobado</option><option value="instalación">En Instalación</option><option value="conectado">Conectado</option><option value="operando">Operando</option></select></div>
+                    <div class="form-group"><label>Fecha Inicio</label><input type="date" id="proyStartDate" required></div>
+                </div>
+                <div class="btn-group"><button class="btn-primary" onclick="app.addProject()">Agregar Proyecto</button></div>
+            </div>
+            <div id="proyectosList" class="cards-grid"></div>
+        </div>
+
+        <div id="paneles" class="tab-content">
+            <div class="form-section">
+                <h2 class="form-title">Inventario de Paneles</h2>
+                <div class="form-grid">
+                    <div class="form-group"><label>Tipo de Item</label><select id="panelType" onchange="app.updatePanelForm()"><option value="panel">Panel Solar</option><option value="inversor">Inversor</option></select></div>
+                    <div class="form-group" id="panelBrandGroup"><label>Marca</label><select id="panelBrand"><option value="">Seleccionar marca</option><option value="Trina">Trina</option><option value="JA Solar">JA Solar</option><option value="Longi">Longi</option><option value="Canadian Solar">Canadian Solar</option><option value="Huawei">Huawei</option><option value="Fronius">Fronius</option><option value="SMA">SMA</option><option value="GoodWe">GoodWe</option></select></div>
+                    <div class="form-group" id="panelModelGroup"><label>Modelo</label><input type="text" id="panelModel" placeholder="p.ej. TSM-400"></div>
+                    <div class="form-group" id="panelWattsGroup"><label>Watts por Panel</label><input type="number" id="panelWatts" placeholder="p.ej. 400" step="10"></div>
+                    <div class="form-group"><label>Cantidad</label><input type="number" id="panelQty" placeholder="Cantidad en stock" required></div>
+                    <div class="form-group"><label>Costo CLP (unitario)</label><input type="number" id="panelCostCLP" placeholder="Precio CLP" required></div>
+                </div>
+                <div class="btn-group"><button class="btn-primary" onclick="app.addInventoryItem()">Agregar a Inventario</button></div>
+            </div>
+            <div class="table-container">
+                <table><thead><tr><th>Tipo</th><th>Marca</th><th>Modelo</th><th>Cantidad</th><th>Costo Unitario CLP</th><th>Stock Total CLP</th><th>Acciones</th></tr></thead><tbody id="inventoryTable"></tbody></table>
+            </div>
+        </div>
+
+        <div id="cotizaciones" class="tab-content">
+            <div class="form-section">
+                <h2 class="form-title">Generador de Cotización</h2>
+                <div class="form-grid">
+                    <div class="form-group"><label>Cliente</label><input type="text" id="quoteClient" placeholder="Nombre cliente" required></div>
+                    <div class="form-group"><label>kWp Requeridos</label><input type="number" id="quoteKwp" placeholder="p.ej. 5.5" step="0.1" required></div>
+                    <div class="form-group"><label>Cantidad Paneles</label><input type="number" id="quotePanelCount" placeholder="Auto-calculado" readonly></div>
+                    <div class="form-group"><label>Watts por Panel</label><input type="number" id="quotePanelWatts" placeholder="p.ej. 400" step="10" required></div>
+                    <div class="form-group"><label>Costo Panel Unit. (CLP)</label><input type="number" id="quotePanelCost" placeholder="Precio" required></div>
+                    <div class="form-group"><label>Inversor (Marca+Modelo)</label><input type="text" id="quoteInverter" placeholder="p.ej. Huawei SUN2000-6" required></div>
+                    <div class="form-group"><label>Costo Inversor (CLP)</label><input type="number" id="quoteInverterCost" placeholder="Precio inversor" required></div>
+                    <div class="form-group"><label>Estructura+Cableado (CLP)</label><input type="number" id="quoteStructureCost" placeholder="Costo instalación" required></div>
+                    <div class="form-group"><label>Mano de Obra (CLP)</label><input type="number" id="quoteLabor" placeholder="Costo laboral" required></div>
+                    <div class="form-group"><label>TE4/Conexión SEC (CLP)</label><input type="number" id="quoteTE4Cost" placeholder="Costo conexión" required></div>
+                    <div class="form-group"><label>Ahorro Mensual Net Billing (CLP)</label><input type="number" id="quoteMonthlySavings" placeholder="p.ej. 75000" required></div>
+                    <div class="form-group"><label>Consumo Mensual (kWh)</label><input type="number" id="quoteMonthlyUsage" placeholder="p.ej. 350" required></div>
+                </div>
+                <div class="btn-group"><button class="btn-primary" onclick="app.generateQuote()">Calcular Cotización</button></div>
+            </div>
+            <div id="quoteResult" class="hidden"></div>
+            <div id="quotesList" class="cards-grid"></div>
+        </div>
+
+        <div id="generacion" class="tab-content">
+            <div class="stats-grid">
+                <div class="stat-card"><div class="stat-label">Generación Mensual Promedio</div><div class="stat-value" id="avgMonthlyGen">0 kWh</div></div>
+                <div class="stat-card"><div class="stat-label">Performance Ratio Promedio</div><div class="stat-value" id="avgPerformance">75 %</div></div>
+                <div class="stat-card"><div class="stat-label">Irradiancia Promedio</div><div class="stat-value" id="avgIrradiance">4.5 kWh/m²/día</div></div>
+                <div class="stat-card"><div class="stat-label">Créditos Net Billing</div><div class="stat-value" id="totalNBCredits">$0</div></div>
+            </div>
+            <div class="form-section">
+                <h2 class="form-title">Registro de Generación</h2>
+                <div class="form-grid">
+                    <div class="form-group"><label>Proyecto</label><select id="genProject" required><option value="">Seleccionar proyecto</option></select></div>
+                    <div class="form-group"><label>Mes</label><input type="month" id="genMonth" required></div>
+                    <div class="form-group"><label>kWh Generados</label><input type="number" id="genKwh" placeholder="p.ej. 450" step="1" required></div>
+                    <div class="form-group"><label>Performance Ratio (%)</label><input type="number" id="genPerformance" placeholder="p.ej. 75" min="0" max="100" required></div>
+                    <div class="form-group"><label>Irradiancia (kWh/m²/día)</label><select id="genIrradiance" required><option value="">Seleccionar zona</option><option value="6.5">Norte (6.5)</option><option value="4.5">Centro (4.5)</option><option value="3.5">Sur (3.5)</option></select></div>
+                    <div class="form-group"><label>Créditos Net Billing CLP</label><input type="number" id="genNBCredits" placeholder="p.ej. 58500" required></div>
+                </div>
+                <div class="btn-group"><button class="btn-primary" onclick="app.addGeneration()">Registrar Generación</button></div>
+            </div>
+            <div class="chart-container"><div class="chart-title">Generación Anual vs Consumo</div><canvas id="generationChart"></canvas></div>
+            <div id="generationList" class="cards-grid"></div>
+        </div>
+
+        <div id="finanzas" class="tab-content">
+            <div class="stats-grid">
+                <div class="stat-card"><div class="stat-label">Ingresos Totales</div><div class="stat-value" id="totalIncome">$0</div></div>
+                <div class="stat-card"><div class="stat-label">Costos Materiales</div><div class="stat-value" id="totalMaterialCosts">$0</div></div>
+                <div class="stat-card"><div class="stat-label">Costos Laboral</div><div class="stat-value" id="totalLaborCosts">$0</div></div>
+                <div class="stat-card"><div class="stat-label">Ganancia Neta</div><div class="stat-value" id="totalProfit">$0</div><div class="stat-change" id="profitChange"></div></div>
+            </div>
+            <div class="chart-container"><div class="chart-title">Ingresos Mensuales por Proyecto</div><canvas id="incomeChart"></canvas></div>
+            <div class="chart-container"><div class="chart-title">Desglose de Costos</div><canvas id="costsChart"></canvas></div>
+            <div class="table-container">
+                <table><thead><tr><th>Proyecto</th><th>Tipo</th><th>Valor Cotización CLP</th><th>Costo Total CLP</th><th>Ganancia CLP</th><th>Margen %</th></tr></thead><tbody id="financesTable"></tbody></table>
+            </div>
+            <div class="form-section">
+                <h2 class="form-title">Net Billing - Seguimiento de Ingresos</h2>
+                <div id="nbTrackingTable" class="table-container">
+                    <table><thead><tr><th>Proyecto</th><th>Mes</th><th>Créditos Generados CLP</th><th>Compensación</th></tr></thead><tbody id="nbTable"></tbody></table>
+                </div>
+            </div>
+        </div>
+
+        <div id="clientes" class="tab-content">
+            <div class="form-section">
+                <h2 class="form-title">Nueva Ficha de Cliente</h2>
+                <div class="form-grid">
+                    <div class="form-group"><label>Nombre</label><input type="text" id="clientName" placeholder="Nombre completo" required></div>
+                    <div class="form-group"><label>Teléfono</label><input type="tel" id="clientPhone" placeholder="+56 9 XXXX XXXX" required></div>
+                    <div class="form-group"><label>Email</label><input type="email" id="clientEmail" placeholder="email@example.com" required></div>
+                    <div class="form-group"><label>RUT</label><input type="text" id="clientRut" placeholder="XX.XXX.XXX-X" required></div>
+                    <div class="form-group"><label>Dirección de Instalación</label><input type="text" id="clientAddress" placeholder="Dirección completa" required></div>
+                    <div class="form-group"><label>Tamaño Sistema (kWp)</label><input type="number" id="clientSystemSize" placeholder="p.ej. 5.5" step="0.1" required></div>
+                    <div class="form-group"><label>Fecha Conexión</label><input type="date" id="clientConnectionDate" required></div>
+                    <div class="form-group"><label>Generación Mensual Promedio (kWh)</label><input type="number" id="clientMonthlyGen" placeholder="p.ej. 450" required></div>
+                    <div class="form-group"><label>Estado Net Billing</label><select id="clientNBStatus" required><option value="">Seleccionar estado</option><option value="activo">Activo</option><option value="suspenso">Suspendido</option><option value="cancelado">Cancelado</option></select></div>
+                    <div class="form-group"><label>Próxima Mantención</label><input type="date" id="clientMaintenanceDate" required></div>
+                </div>
+                <div class="btn-group"><button class="btn-primary" onclick="app.addClient()">Guardar Cliente</button></div>
+            </div>
+            <div id="clientsList" class="cards-grid"></div>
+        </div>
+    </main>
+
+    <div class="install-prompt" id="installPrompt">
+        <div class="install-prompt-text">Instalar SolarCL en tu dispositivo</div>
+        <div class="install-prompt-buttons">
+            <button class="btn-secondary btn-sm" onclick="app.dismissInstall()">Ahora no</button>
+            <button class="btn-primary btn-sm" onclick="app.installApp()">Instalar</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1"></script>
+    <script>
+        const app = {
+            state: { proyectos: [], paneles: [], cotizaciones: [], generacion: [], clientes: [] },
+            charts: { generation: null, income: null, costs: null },
+            installPrompt: null,
+
+            loadFromStorage() {
+                try {
+                    const stored = localStorage.getItem('solarclData');
+                    if (stored) this.state = JSON.parse(stored);
+                } catch (error) {
+                    console.error('Error loading data:', error);
+                    this.showAlert('Error cargando datos', 'error');
+                }
+            },
+
+            saveToStorage() {
+                try {
+                    localStorage.setItem('solarclData', JSON.stringify(this.state));
+                    this.updateSyncStatus();
+                } catch (error) {
+                    console.error('Error saving data:', error);
+                    this.showAlert('Error guardando datos', 'error');
+                }
+            },
+
+            updateSyncStatus() {
+                try {
+                    const status = document.getElementById('syncStatus');
+                    if (status) {
+                        status.textContent = 'Sincronizado';
+                        status.classList.remove('syncing');
+                        setTimeout(() => { if (status) status.textContent = 'Listo'; }, 2000);
+                    }
+                } catch (error) {
+                    console.error('Error updating sync status:', error);
+                }
+            },
+
+            switchTab(tabName) {
+                try {
+                    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+                    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+                    const tabElement = document.getElementById(tabName);
+                    if (tabElement) tabElement.classList.add('active');
+                    const btnElement = document.querySelector(`[data-tab="${tabName}"]`);
+                    if (btnElement) btnElement.classList.add('active');
+                    this.renderTab(tabName);
+                } catch (error) {
+                    console.error('Error switching tab:', error);
+                }
+            },
+
+            renderTab(tabName) {
+                try {
+                    switch (tabName) {
+                        case 'proyectos': this.renderProjects(); break;
+                        case 'paneles': this.renderInventory(); break;
+                        case 'generacion': this.updateGenerationUI(); break;
+                        case 'finanzas': this.updateFinancesUI(); break;
+                        case 'clientes': this.renderClients(); break;
+                    }
+                } catch (error) {
+                    console.error('Error rendering tab:', error);
+                }
+            },
+
+            addProject() {
+                try {
+                    const project = {
+                        id: Date.now().toString(),
+                        clientName: document.getElementById('proyClientName').value,
+                        address: document.getElementById('proyAddress').value,
+                        type: document.getElementById('proyType').value,
+                        capacity: parseFloat(document.getElementById('proyCapacity').value),
+                        panelCount: parseInt(document.getElementById('proyPanelCount').value),
+                        inverterBrand: document.getElementById('proyInverterBrand').value,
+                        status: document.getElementById('proyStatus').value,
+                        startDate: document.getElementById('proyStartDate').value,
+                        createdAt: new Date().toISOString()
+                    };
+
+                    if (!project.clientName || !project.address || !project.type || project.capacity <= 0 || project.panelCount <= 0) {
+                        this.showAlert('Por favor completa todos los campos', 'error');
+                        return;
+                    }
+
+                    this.state.proyectos.push(project);
+                    this.saveToStorage();
+                    this.clearProjectForm();
+                    this.renderProjects();
+                    this.showAlert('Proyecto agregado exitosamente', 'success');
+                } catch (error) {
+                    console.error('Error adding project:', error);
+                    this.showAlert('Error agregando proyecto', 'error');
+                }
+            },
+
+            clearProjectForm() {
+                try {
+                    document.getElementById('proyClientName').value = '';
+                    document.getElementById('proyAddress').value = '';
+                    document.getElementById('proyType').value = '';
+                    document.getElementById('proyCapacity').value = '';
+                    document.getElementById('proyPanelCount').value = '';
+                    document.getElementById('proyInverterBrand').value = '';
+                    document.getElementById('proyStatus').value = 'evaluación';
+                    document.getElementById('proyStartDate').value = '';
+                } catch (error) {
+                    console.error('Error clearing form:', error);
+                }
+            },
+
+            renderProjects() {
+                try {
+                    const container = document.getElementById('proyectosList');
+                    if (!container) return;
+                    if (this.state.proyectos.length === 0) {
+                        container.innerHTML = '<div style="grid-column: 1/-1;"><div class="empty-state"><div class="empty-state-icon">📊</div><div class="empty-state-title">Sin proyectos</div><p>Comienza agregando tu primer proyecto solar</p></div></div>';
+                        return;
+                    }
+                    container.innerHTML = this.state.proyectos.map(p => `<div class="card"><div class="card-header"><div><div class="card-title">${this.escapeHtml(p.clientName)}</div><div class="card-meta-item" style="font-size: 0.85rem; color: #999; margin-top: 0.25rem;">${this.escapeHtml(p.address)}</div></div><span class="card-badge badge-${p.status}">${p.status}</span></div><div class="card-meta"><div class="card-meta-item"><span>Capacidad:</span><strong>${p.capacity} kWp</strong></div><div class="card-meta-item"><span>Paneles:</span><strong>${p.panelCount}</strong></div><div class="card-meta-item"><span>Tipo:</span><strong>${p.type}</strong></div><div class="card-meta-item"><span>Inversor:</span><strong>${p.inverterBrand}</strong></div><div class="card-meta-item"><span>Inicio:</span><strong>${p.startDate}</strong></div></div><div class="btn-group"><button class="btn-secondary btn-sm" onclick="app.deleteProject('${p.id}')">Eliminar</button></div></div>`).join('');
+                } catch (error) {
+                    console.error('Error rendering projects:', error);
+                }
+            },
+
+            deleteProject(id) {
+                try {
+                    if (confirm('¿Eliminar este proyecto?')) {
+                        this.state.proyectos = this.state.proyectos.filter(p => p.id !== id);
+                        this.saveToStorage();
+                        this.renderProjects();
+                        this.showAlert('Proyecto eliminado', 'success');
+                    }
+                } catch (error) {
+                    console.error('Error deleting project:', error);
+                }
+            },
+
+            updatePanelForm() {
+                try {
+                    const type = document.getElementById('panelType').value;
+                    const isBrand = document.getElementById('panelBrandGroup');
+                    const isModel = document.getElementById('panelModelGroup');
+                    const isWatts = document.getElementById('panelWattsGroup');
+                    if (type === 'panel') {
+                        isBrand.style.display = 'flex';
+                        isModel.style.display = 'flex';
+                        isWatts.style.display = 'flex';
+                        document.getElementById('panelBrand').value = 'Trina';
+                    } else {
+                        isBrand.style.display = 'flex';
+                        isModel.style.display = 'flex';
+                        isWatts.style.display = 'none';
+                        document.getElementById('panelBrand').value = 'Huawei';
+                    }
+                } catch (error) {
+                    console.error('Error updating panel form:', error);
+                }
+            },
+
+            addInventoryItem() {
+                try {
+                    const type = document.getElementById('panelType').value;
+                    const item = {
+                        id: Date.now().toString(),
+                        type: type,
+                        brand: document.getElementById('panelBrand').value,
+                        model: document.getElementById('panelModel').value,
+                        watts: type === 'panel' ? parseInt(document.getElementById('panelWatts').value) : null,
+                        quantity: parseInt(document.getElementById('panelQty').value),
+                        costPerUnit: parseInt(document.getElementById('panelCostCLP').value),
+                        createdAt: new Date().toISOString()
+                    };
+
+                    if (!item.brand || !item.model || !item.quantity || !item.costPerUnit) {
+                        this.showAlert('Por favor completa todos los campos', 'error');
+                        return;
+                    }
+
+                    this.state.paneles.push(item);
+                    this.saveToStorage();
+                    this.renderInventory();
+                    this.clearInventoryForm();
+                    this.showAlert('Item agregado al inventario', 'success');
+                } catch (error) {
+                    console.error('Error adding inventory:', error);
+                    this.showAlert('Error agregando item', 'error');
+                }
+            },
+
+            clearInventoryForm() {
+                try {
+                    document.getElementById('panelType').value = 'panel';
+                    document.getElementById('panelBrand').value = 'Trina';
+                    document.getElementById('panelModel').value = '';
+                    document.getElementById('panelWatts').value = '';
+                    document.getElementById('panelQty').value = '';
+                    document.getElementById('panelCostCLP').value = '';
+                    this.updatePanelForm();
+                } catch (error) {
+                    console.error('Error clearing inventory form:', error);
+                }
+            },
+
+            renderInventory() {
+                try {
+                    const table = document.getElementById('inventoryTable');
+                    if (!table) return;
+                    table.innerHTML = this.state.paneles.map(item => {
+                        const totalCost = item.quantity * item.costPerUnit;
+                        return `<tr><td>${item.type === 'panel' ? 'Panel Solar' : 'Inversor'}</td><td>${this.escapeHtml(item.brand)}</td><td>${this.escapeHtml(item.model)}</td><td>${item.quantity}</td><td>$${this.formatNumber(item.costPerUnit)}</td><td>$${this.formatNumber(totalCost)}</td><td><button class="btn-secondary btn-sm" onclick="app.deleteInventory('${item.id}')">Eliminar</button></td></tr>`;
+                    }).join('');
+                    if (this.state.paneles.length === 0) {
+                        table.innerHTML = '<tr><td colspan="7" class="text-center">Sin items en inventario</td></tr>';
+                    }
+                } catch (error) {
+                    console.error('Error rendering inventory:', error);
+                }
+            },
+
+            deleteInventory(id) {
+                try {
+                    if (confirm('¿Eliminar este item del inventario?')) {
+                        this.state.paneles = this.state.paneles.filter(p => p.id !== id);
+                        this.saveToStorage();
+                        this.renderInventory();
+                        this.showAlert('Item eliminado', 'success');
+                    }
+                } catch (error) {
+                    console.error('Error deleting inventory:', error);
+                }
+            },
+
+            generateQuote() {
+                try {
+                    const client = document.getElementById('quoteClient').value;
+                    const kwp = parseFloat(document.getElementById('quoteKwp').value);
+                    const panelWatts = parseFloat(document.getElementById('quotePanelWatts').value);
+                    const panelCost = parseFloat(document.getElementById('quotePanelCost').value);
+                    const inverterCost = parseFloat(document.getElementById('quoteInverterCost').value);
+                    const structureCost = parseFloat(document.getElementById('quoteStructureCost').value);
+                    const laborCost = parseFloat(document.getElementById('quoteLabor').value);
+                    const te4Cost = parseFloat(document.getElementById('quoteTE4Cost').value);
+                    const monthlySavings = parseFloat(document.getElementById('quoteMonthlySavings').value);
+
+                    const panelCount = Math.ceil((kwp * 1000) / panelWatts);
+                    document.getElementById('quotePanelCount').value = panelCount;
+
+                    const materialCost = (panelCount * panelCost) + inverterCost + structureCost + te4Cost;
+                    const totalCost = materialCost + laborCost;
+                    const totalWithIVA = totalCost * 1.19;
+                    const paybackYears = (totalWithIVA / monthlySavings) / 12;
+                    const annualSavings = monthlySavings * 12;
+
+                    const quote = {
+                        id: Date.now().toString(),
+                        client: this.escapeHtml(client),
+                        kwp: kwp,
+                        panelCount: panelCount,
+                        panelWatts: panelWatts,
+                        inverter: document.getElementById('quoteInverter').value,
+                        materialCost: materialCost,
+                        laborCost: laborCost,
+                        totalCost: totalCost,
+                        totalWithIVA: totalWithIVA,
+                        paybackYears: paybackYears,
+                        monthlySavings: monthlySavings,
+                        annualSavings: annualSavings,
+                        createdAt: new Date().toLocaleDateString('es-CL')
+                    };
+
+                    const resultDiv = document.getElementById('quoteResult');
+                    resultDiv.innerHTML = `<div class="form-section"><h3 class="form-title">Cotización para ${quote.client}</h3><div class="stats-grid"><div class="stat-card"><div class="stat-label">Capacidad Sistema</div><div class="stat-value">${quote.kwp} kWp</div></div><div class="stat-card"><div class="stat-label">Cantidad Paneles</div><div class="stat-value">${quote.panelCount}</div></div><div class="stat-card"><div class="stat-label">Costo Materiales</div><div class="stat-value">$${this.formatNumber(quote.materialCost)}</div></div><div class="stat-card"><div class="stat-label">Costo Laboral</div><div class="stat-value">$${this.formatNumber(quote.laborCost)}</div></div><div class="stat-card"><div class="stat-label">Costo Total</div><div class="stat-value">$${this.formatNumber(quote.totalCost)}</div></div><div class="stat-card"><div class="stat-label">Total con IVA 19%</div><div class="stat-value">$${this.formatNumber(quote.totalWithIVA)}</div></div><div class="stat-card"><div class="stat-label">Ahorro Mensual</div><div class="stat-value">$${this.formatNumber(quote.monthlySavings)}</div></div><div class="stat-card"><div class="stat-label">Ahorro Anual</div><div class="stat-value">$${this.formatNumber(quote.annualSavings)}</div></div><div class="stat-card"><div class="stat-label">Período de Retorno</div><div class="stat-value">${quote.paybackYears.toFixed(1)} años</div></div></div><div class="btn-group"><button class="btn-primary" onclick="app.saveQuote(${JSON.stringify(quote).replace(/"/g, '&quot;')})">Guardar Cotización</button></div></div>`;
+                    resultDiv.classList.remove('hidden');
+                } catch (error) {
+                    console.error('Error generating quote:', error);
+                    this.showAlert('Error generando cotización', 'error');
+                }
+            },
+
+            saveQuote(quote) {
+                try {
+                    this.state.cotizaciones.push(quote);
+                    this.saveToStorage();
+                    this.renderQuotes();
+                    this.clearQuoteForm();
+                    document.getElementById('quoteResult').classList.add('hidden');
+                    this.showAlert('Cotización guardada', 'success');
+                } catch (error) {
+                    console.error('Error saving quote:', error);
+                }
+            },
+
+            clearQuoteForm() {
+                try {
+                    ['quoteClient', 'quoteKwp', 'quotePanelCount', 'quotePanelWatts', 'quotePanelCost', 'quoteInverter', 'quoteInverterCost', 'quoteStructureCost', 'quoteLabor', 'quoteTE4Cost', 'quoteMonthlySavings', 'quoteMonthlyUsage'].forEach(id => {
+                        document.getElementById(id).value = '';
+                    });
+                } catch (error) {
+                    console.error('Error clearing quote form:', error);
+                }
+            },
+
+            renderQuotes() {
+                try {
+                    const container = document.getElementById('quotesList');
+                    if (!container) return;
+                    if (this.state.cotizaciones.length === 0) {
+                        container.innerHTML = '';
+                        return;
+                    }
+                    container.innerHTML = this.state.cotizaciones.map(q => `<div class="card"><div class="card-header"><div><div class="card-title">${q.client}</div><div class="card-meta-item" style="font-size: 0.85rem; color: #999; margin-top: 0.25rem;">${q.createdAt}</div></div></div><div class="card-meta"><div class="card-meta-item"><span>Capacidad:</span><strong>${q.kwp} kWp</strong></div><div class="card-meta-item"><span>Paneles:</span><strong>${q.panelCount}</strong></div><div class="card-meta-item"><span>Total con IVA:</span><strong>$${this.formatNumber(q.totalWithIVA)}</strong></div><div class="card-meta-item"><span>Ahorro Mensual:</span><strong>$${this.formatNumber(q.monthlySavings)}</strong></div><div class="card-meta-item"><span>Retorno:</span><strong>${q.paybackYears.toFixed(1)} años</strong></div></div><div class="btn-group"><button class="btn-secondary btn-sm" onclick="app.deleteQuote('${q.id}')">Eliminar</button></div></div>`).join('');
+                } catch (error) {
+                    console.error('Error rendering quotes:', error);
+                }
+            },
+
+            deleteQuote(id) {
+                try {
+                    if (confirm('¿Eliminar esta cotización?')) {
+                        this.state.cotizaciones = this.state.cotizaciones.filter(q => q.id !== id);
+                        this.saveToStorage();
+                        this.renderQuotes();
+                        this.showAlert('Cotización eliminada', 'success');
+                    }
+                } catch (error) {
+                    console.error('Error deleting quote:', error);
+                }
+            },
+
+            addGeneration() {
+                try {
+                    const projectId = document.getElementById('genProject').value;
+                    const month = document.getElementById('genMonth').value;
+                    const kwh = parseFloat(document.getElementById('genKwh').value);
+                    const performance = parseFloat(document.getElementById('genPerformance').value);
+                    const irradiance = parseFloat(document.getElementById('genIrradiance').value);
+                    const nbCredits = parseInt(document.getElementById('genNBCredits').value);
+
+                    if (!projectId || !month || !kwh || !performance) {
+                        this.showAlert('Por favor completa todos los campos', 'error');
+                        return;
+                    }
+
+                    const gen = {
+                        id: Date.now().toString(),
+                        projectId: projectId,
+                        month: month,
+                        kwh: kwh,
+                        performance: performance,
+                        irradiance: irradiance,
+                        nbCredits: nbCredits,
+                        createdAt: new Date().toISOString()
+                    };
+
+                    this.state.generacion.push(gen);
+                    this.saveToStorage();
+                    this.updateGenerationUI();
+                    this.clearGenerationForm();
+                    this.showAlert('Generación registrada', 'success');
+                } catch (error) {
+                    console.error('Error adding generation:', error);
+                    this.showAlert('Error registrando generación', 'error');
+                }
+            },
+
+            clearGenerationForm() {
+                try {
+                    ['genProject', 'genMonth', 'genKwh', 'genPerformance', 'genIrradiance', 'genNBCredits'].forEach(id => {
+                        document.getElementById(id).value = '';
+                    });
+                } catch (error) {
+                    console.error('Error clearing generation form:', error);
+                }
+            },
+
+            updateGenerationUI() {
+                try {
+                    const select = document.getElementById('genProject');
+                    if (select) {
+                        const options = this.state.proyectos.map(p => `<option value="${p.id}">${this.escapeHtml(p.clientName)} (${p.capacity} kWp)</option>`).join('');
+                        select.innerHTML = '<option value="">Seleccionar proyecto</option>' + options;
+                    }
+
+                    const stats = this.calculateGenerationStats();
+                    document.getElementById('avgMonthlyGen').textContent = `${stats.avgMonthly.toFixed(0)} kWh`;
+                    document.getElementById('avgPerformance').textContent = `${stats.avgPerformance.toFixed(1)} %`;
+                    document.getElementById('avgIrradiance').textContent = `${stats.avgIrradiance.toFixed(2)} kWh/m²/día`;
+                    document.getElementById('totalNBCredits').textContent = `$${this.formatNumber(stats.totalNBCredits)}`;
+
+                    this.renderGenerationList();
+                    this.updateGenerationChart();
+                } catch (error) {
+                    console.error('Error updating generation UI:', error);
+                }
+            },
+
+            calculateGenerationStats() {
+                try {
+                    if (this.state.generacion.length === 0) {
+                        return { avgMonthly: 0, avgPerformance: 75, avgIrradiance: 4.5, totalNBCredits: 0 };
+                    }
+
+                    const avgMonthly = this.state.generacion.reduce((sum, g) => sum + g.kwh, 0) / this.state.generacion.length;
+                    const avgPerformance = this.state.generacion.reduce((sum, g) => sum + g.performance, 0) / this.state.generacion.length;
+                    const avgIrradiance = this.state.generacion.reduce((sum, g) => sum + g.irradiance, 0) / this.state.generacion.length;
+                    const totalNBCredits = this.state.generacion.reduce((sum, g) => sum + g.nbCredits, 0);
+
+                    return { avgMonthly, avgPerformance, avgIrradiance, totalNBCredits };
+                } catch (error) {
+                    console.error('Error calculating generation stats:', error);
+                    return { avgMonthly: 0, avgPerformance: 75, avgIrradiance: 4.5, totalNBCredits: 0 };
+                }
+            },
+
+            renderGenerationList() {
+                try {
+                    const container = document.getElementById('generationList');
+                    if (!container) return;
+                    if (this.state.generacion.length === 0) {
+                        container.innerHTML = '<div style="grid-column: 1/-1;"><div class="empty-state"><div class="empty-state-icon">⚡</div><div class="empty-state-title">Sin registros</div><p>Comienza registrando la generación de tus sistemas</p></div></div>';
+                        return;
+                    }
+
+                    container.innerHTML = this.state.generacion.map(g => {
+                        const project = this.state.proyectos.find(p => p.id === g.projectId);
+                        const projectName = project ? project.clientName : 'Proyecto desconocido';
+                        return `<div class="card"><div class="card-header"><div class="card-title">${this.escapeHtml(projectName)}</div></div><div class="card-meta"><div class="card-meta-item"><span>Mes:</span><strong>${g.month}</strong></div><div class="card-meta-item"><span>kWh Generados:</span><strong>${g.kwh.toFixed(0)} kWh</strong></div><div class="card-meta-item"><span>Performance Ratio:</span><strong>${g.performance.toFixed(1)}%</strong></div><div class="card-meta-item"><span>Irradiancia:</span><strong>${g.irradiance} kWh/m²/día</strong></div><div class="card-meta-item"><span>Créditos Net Billing:</span><strong>$${this.formatNumber(g.nbCredits)}</strong></div></div><div class="btn-group"><button class="btn-secondary btn-sm" onclick="app.deleteGeneration('${g.id}')">Eliminar</button></div></div>`;
+                    }).join('');
+                } catch (error) {
+                    console.error('Error rendering generation list:', error);
+                }
+            },
+
+            deleteGeneration(id) {
+                try {
+                    if (confirm('¿Eliminar este registro de generación?')) {
+                        this.state.generacion = this.state.generacion.filter(g => g.id !== id);
+                        this.saveToStorage();
+                        this.updateGenerationUI();
+                        this.showAlert('Registro eliminado', 'success');
+                    }
+                } catch (error) {
+                    console.error('Error deleting generation:', error);
+                }
+            },
+
+            updateGenerationChart() {
+                try {
+                    const ctx = document.getElementById('generationChart');
+                    if (!ctx) return;
+
+                    const monthlyData = {};
+                    this.state.generacion.forEach(g => {
+                        const month = g.month.substring(0, 7);
+                        monthlyData[month] = (monthlyData[month] || 0) + g.kwh;
+                    });
+
+                    const months = Object.keys(monthlyData).sort();
+                    const data = months.map(m => monthlyData[m]);
+                    const consumption = data.map(d => d * 0.5);
+
+                    if (this.charts.generation) this.charts.generation.destroy();
+
+                    this.charts.generation = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: months,
+                            datasets: [
+                                { label: 'Generación (kWh)', data: data, borderColor: '#ea580c', backgroundColor: 'rgba(234, 88, 12, 0.1)', tension: 0.4, fill: true },
+                                { label: 'Consumo (kWh)', data: consumption, borderColor: '#0284c7', backgroundColor: 'rgba(2, 132, 199, 0.1)', tension: 0.4, fill: true }
+                            ]
+                        },
+                        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true } } }
+                    });
+                } catch (error) {
+                    console.error('Error updating generation chart:', error);
+                }
+            },
+
+            updateFinancesUI() {
+                try {
+                    const totals = this.calculateFinancesTotals();
+                    document.getElementById('totalIncome').textContent = `$${this.formatNumber(totals.totalIncome)}`;
+                    document.getElementById('totalMaterialCosts').textContent = `$${this.formatNumber(totals.materialCosts)}`;
+                    document.getElementById('totalLaborCosts').textContent = `$${this.formatNumber(totals.laborCosts)}`;
+                    document.getElementById('totalProfit').textContent = `$${this.formatNumber(totals.profit)}`;
+
+                    const profitChange = document.getElementById('profitChange');
+                    if (totals.profit > 0) {
+                        profitChange.textContent = '+' + this.formatNumber(totals.profit);
+                        profitChange.classList.add('positive');
+                    }
+
+                    this.renderFinancesTable();
+                    this.renderNBTrackingTable();
+                    this.updateFinancesCharts();
+                } catch (error) {
+                    console.error('Error updating finances UI:', error);
+                }
+            },
+
+            calculateFinancesTotals() {
+                try {
+                    let totalIncome = 0;
+                    let materialCosts = 0;
+                    let laborCosts = 0;
+
+                    this.state.cotizaciones.forEach(q => {
+                        totalIncome += q.totalWithIVA;
+                        materialCosts += q.materialCost;
+                        laborCosts += q.laborCost;
+                    });
+
+                    const nbCredits = this.state.generacion.reduce((sum, g) => sum + g.nbCredits, 0);
+                    totalIncome += nbCredits;
+
+                    const totalCosts = materialCosts + laborCosts;
+                    const profit = totalIncome - totalCosts;
+
+                    return { totalIncome, materialCosts, laborCosts, profit };
+                } catch (error) {
+                    console.error('Error calculating finances totals:', error);
+                    return { totalIncome: 0, materialCosts: 0, laborCosts: 0, profit: 0 };
+                }
+            },
+
+            renderFinancesTable() {
+                try {
+                    const table = document.getElementById('financesTable');
+                    if (!table) return;
+                    table.innerHTML = this.state.cotizaciones.map(q => {
+                        const totalCost = q.materialCost + q.laborCost;
+                        const profit = q.totalWithIVA - totalCost;
+                        const margin = ((profit / q.totalWithIVA) * 100).toFixed(1);
+                        const project = this.state.proyectos.find(p => p.clientName === q.client);
+                        const type = project ? project.type : 'N/A';
+                        return `<tr><td>${this.escapeHtml(q.client)}</td><td>${type}</td><td>$${this.formatNumber(q.totalWithIVA)}</td><td>$${this.formatNumber(totalCost)}</td><td>$${this.formatNumber(profit)}</td><td>${margin}%</td></tr>`;
+                    }).join('');
+                    if (this.state.cotizaciones.length === 0) {
+                        table.innerHTML = '<tr><td colspan="6" class="text-center">Sin cotizaciones registradas</td></tr>';
+                    }
+                } catch (error) {
+                    console.error('Error rendering finances table:', error);
+                }
+            },
+
+            renderNBTrackingTable() {
+                try {
+                    const table = document.getElementById('nbTable');
+                    if (!table) return;
+                    table.innerHTML = this.state.generacion.map(g => {
+                        const project = this.state.proyectos.find(p => p.id === g.projectId);
+                        const projectName = project ? project.clientName : 'Proyecto desconocido';
+                        return `<tr><td>${this.escapeHtml(projectName)}</td><td>${g.month}</td><td>$${this.formatNumber(g.nbCredits)}</td><td>✓ Compensado</td></tr>`;
+                    }).join('');
+                    if (this.state.generacion.length === 0) {
+                        table.innerHTML = '<tr><td colspan="4" class="text-center">Sin registros de generación</td></tr>';
+                    }
+                } catch (error) {
+                    console.error('Error rendering NB tracking table:', error);
+                }
+            },
+
+            updateFinancesCharts() {
+                try {
+                    this.updateIncomeChart();
+                    this.updateCostsChart();
+                } catch (error) {
+                    console.error('Error updating finances charts:', error);
+                }
+            },
+
+            updateIncomeChart() {
+                try {
+                    const ctx = document.getElementById('incomeChart');
+                    if (!ctx) return;
+                    const projects = this.state.cotizaciones.map(q => q.client);
+                    const income = this.state.cotizaciones.map(q => q.totalWithIVA);
+                    if (this.charts.income) this.charts.income.destroy();
+                    this.charts.income = new Chart(ctx, {
+                        type: 'bar',
+                        data: { labels: projects, datasets: [{ label: 'Ingresos (CLP)', data: income, backgroundColor: 'rgba(234, 88, 12, 0.8)', borderColor: '#ea580c', borderWidth: 1 }] },
+                        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+                    });
+                } catch (error) {
+                    console.error('Error updating income chart:', error);
+                }
+            },
+
+            updateCostsChart() {
+                try {
+                    const ctx = document.getElementById('costsChart');
+                    if (!ctx) return;
+                    const totals = this.calculateFinancesTotals();
+                    const data = [totals.materialCosts, totals.laborCosts];
+                    const labels = ['Materiales', 'Mano de Obra'];
+                    const colors = ['#ea580c', '#0284c7'];
+                    if (this.charts.costs) this.charts.costs.destroy();
+                    this.charts.costs = new Chart(ctx, {
+                        type: 'doughnut',
+                        data: { labels: labels, datasets: [{ data: data, backgroundColor: colors, borderColor: 'white', borderWidth: 2 }] },
+                        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+                    });
+                } catch (error) {
+                    console.error('Error updating costs chart:', error);
+                }
+            },
+
+            addClient() {
+                try {
+                    const client = {
+                        id: Date.now().toString(),
+                        name: document.getElementById('clientName').value,
+                        phone: document.getElementById('clientPhone').value,
+                        email: document.getElementById('clientEmail').value,
+                        rut: document.getElementById('clientRut').value,
+                        address: document.getElementById('clientAddress').value,
+                        systemSize: parseFloat(document.getElementById('clientSystemSize').value),
+                        connectionDate: document.getElementById('clientConnectionDate').value,
+                        monthlyGeneration: parseFloat(document.getElementById('clientMonthlyGen').value),
+                        nbStatus: document.getElementById('clientNBStatus').value,
+                        maintenanceDate: document.getElementById('clientMaintenanceDate').value,
+                        createdAt: new Date().toISOString()
+                    };
+
+                    if (!client.name || !client.phone || !client.email || !client.rut || !client.address || client.systemSize <= 0) {
+                        this.showAlert('Por favor completa todos los campos', 'error');
+                        return;
+                    }
+
+                    this.state.clientes.push(client);
+                    this.saveToStorage();
+                    this.renderClients();
+                    this.clearClientForm();
+                    this.showAlert('Cliente agregado exitosamente', 'success');
+                } catch (error) {
+                    console.error('Error adding client:', error);
+                    this.showAlert('Error agregando cliente', 'error');
+                }
+            },
+
+            clearClientForm() {
+                try {
+                    ['clientName', 'clientPhone', 'clientEmail', 'clientRut', 'clientAddress', 'clientSystemSize', 'clientConnectionDate', 'clientMonthlyGen', 'clientNBStatus', 'clientMaintenanceDate'].forEach(id => {
+                        document.getElementById(id).value = '';
+                    });
+                } catch (error) {
+                    console.error('Error clearing client form:', error);
+                }
+            },
+
+            renderClients() {
+                try {
+                    const container = document.getElementById('clientsList');
+                    if (!container) return;
+                    if (this.state.clientes.length === 0) {
+                        container.innerHTML = '<div style="grid-column: 1/-1;"><div class="empty-state"><div class="empty-state-icon">👥</div><div class="empty-state-title">Sin clientes</div><p>Comienza agregando tus clientes solares</p></div></div>';
+                        return;
+                    }
+
+                    container.innerHTML = this.state.clientes.map(c => `<div class="card"><div class="card-header"><div class="card-title">${this.escapeHtml(c.name)}</div><span class="card-badge" style="background: ${c.nbStatus === 'activo' ? '#bbf7d0' : '#fef3c7'}; color: ${c.nbStatus === 'activo' ? '#065f46' : '#92400e'};">${c.nbStatus}</span></div><div class="card-meta"><div class="card-meta-item"><span>Teléfono:</span><strong>${this.escapeHtml(c.phone)}</strong></div><div class="card-meta-item"><span>Email:</span><strong>${this.escapeHtml(c.email)}</strong></div><div class="card-meta-item"><span>RUT:</span><strong>${this.escapeHtml(c.rut)}</strong></div><div class="card-meta-item"><span>Sistema:</span><strong>${c.systemSize} kWp</strong></div><div class="card-meta-item"><span>Gen. Mensual:</span><strong>${c.monthlyGeneration.toFixed(0)} kWh</strong></div><div class="card-meta-item"><span>Próx. Mantención:</span><strong>${c.maintenanceDate}</strong></div></div><div class="btn-group"><button class="btn-secondary btn-sm" onclick="app.deleteClient('${c.id}')">Eliminar</button></div></div>`).join('');
+                } catch (error) {
+                    console.error('Error rendering clients:', error);
+                }
+            },
+
+            deleteClient(id) {
+                try {
+                    if (confirm('¿Eliminar este cliente?')) {
+                        this.state.clientes = this.state.clientes.filter(c => c.id !== id);
+                        this.saveToStorage();
+                        this.renderClients();
+                        this.showAlert('Cliente eliminado', 'success');
+                    }
+                } catch (error) {
+                    console.error('Error deleting client:', error);
+                }
+            },
+
+            escapeHtml(text) {
+                try {
+                    const div = document.createElement('div');
+                    div.textContent = text;
+                    return div.innerHTML;
+                } catch (error) {
+                    console.error('Error escaping HTML:', error);
+                    return text;
+                }
+            },
+
+            formatNumber(num) {
+                try {
+                    return Math.round(num).toLocaleString('es-CL', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+                } catch (error) {
+                    console.error('Error formatting number:', error);
+                    return num.toString();
+                }
+            },
+
+            showAlert(message, type = 'info') {
+                try {
+                    const alert = document.createElement('div');
+                    alert.className = `alert alert-${type}`;
+                    alert.textContent = message;
+                    const main = document.querySelector('main');
+                    if (main) {
+                        main.insertBefore(alert, main.firstChild);
+                        setTimeout(() => { alert.remove(); }, 3000);
+                    }
+                } catch (error) {
+                    console.error('Error showing alert:', error);
+                }
+            },
+
+            setupPWA() {
+                try {
+                    if ('serviceWorker' in navigator) {
+                        navigator.serviceWorker.register('data:application/javascript,self.addEventListener("install",e=>self.skipWaiting());self.addEventListener("activate",e=>e.waitUntil(clients.claim()));').catch(err => console.log('SW error:', err));
+                    }
+                    if ('BeforeInstallPromptEvent' in window) {
+                        window.addEventListener('beforeinstallprompt', (e) => {
+                            e.preventDefault();
+                            this.installPrompt = e;
+                            document.getElementById('installPrompt').classList.add('show');
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error setting up PWA:', error);
+                }
+            },
+
+            installApp() {
+                try {
+                    if (this.installPrompt) {
+                        this.installPrompt.prompt();
+                        this.installPrompt.userChoice.then(() => {
+                            this.installPrompt = null;
+                            this.dismissInstall();
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error installing app:', error);
+                }
+            },
+
+            dismissInstall() {
+                try {
+                    document.getElementById('installPrompt').classList.remove('show');
+                } catch (error) {
+                    console.error('Error dismissing install:', error);
+                }
+            },
+
+            init() {
+                try {
+                    this.loadFromStorage();
+                    this.setupPWA();
+                    document.querySelectorAll('.tab-btn').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            this.switchTab(e.target.dataset.tab);
+                        });
+                    });
+                    this.renderProjects();
+                    this.renderInventory();
+                    this.renderQuotes();
+                    this.updateSyncStatus();
+                } catch (error) {
+                    console.error('Error initializing app:', error);
+                }
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => app.init());
+    </script>
+</body>
+</html>

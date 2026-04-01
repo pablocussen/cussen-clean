@@ -1,0 +1,1660 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, minimum-scale=1.0, maximum-scale=5.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="CorredorPropCL">
+    <meta name="theme-color" content="#334155">
+    <meta name="description" content="Plataforma de gestión inmobiliaria para corredores de propiedades en Chile">
+    <title>CorredorPropCL - Gestión Inmobiliaria</title>
+    <link rel="manifest" href="data:application/manifest+json,{&quot;name&quot;:&quot;CorredorPropCL&quot;,&quot;short_name&quot;:&quot;PropCL&quot;,&quot;start_url&quot;:&quot;/&quot;,&quot;display&quot;:&quot;standalone&quot;,&quot;background_color&quot;:&quot;#ffffff&quot;,&quot;theme_color&quot;:&quot;#334155&quot;,&quot;icons&quot;:[{&quot;src&quot;:&quot;data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%23334155' width='192' height='192'/><text x='50%' y='50%' font-size='80' font-weight='bold' fill='%2310b981' text-anchor='middle' dominant-baseline='central'>P</text></svg>&quot;,&quot;sizes&quot;:&quot;192x192&quot;,&quot;type&quot;:&quot;image/svg+xml&quot;}]}">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23334155' width='100' height='100'/><text x='50' y='55' font-size='60' font-weight='bold' fill='%2310b981' text-anchor='middle'>P</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            width: 100%;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+
+        body {
+            padding-bottom: max(env(safe-area-inset-bottom), 0px);
+        }
+
+        #app {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #334155 0%, #475569 100%);
+            color: white;
+            padding: 1rem 1.25rem;
+            padding-top: max(1rem, env(safe-area-inset-top));
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            font-size: 0.875rem;
+            opacity: 0.9;
+        }
+
+        .content-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .tab-content {
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 1.25rem;
+        }
+
+        .tab-content.hidden {
+            display: none;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 1px solid #e2e8f0;
+            background: white;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .nav-tab {
+            flex: 1;
+            min-width: 120px;
+            padding: 0.75rem 1rem;
+            border: none;
+            background: white;
+            color: #64748b;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-bottom: 2px solid transparent;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .nav-tab:hover {
+            color: #334155;
+            background: #f8fafc;
+        }
+
+        .nav-tab.active {
+            color: #10b981;
+            border-bottom-color: #10b981;
+        }
+
+        .section {
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn {
+            padding: 0.625rem 1rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-primary {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #059669;
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #334155;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e1;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-sm {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.75rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 500;
+            color: #334155;
+            margin-bottom: 0.375rem;
+            font-size: 0.875rem;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 0.375rem;
+            font-size: 16px;
+            font-family: 'Inter', sans-serif;
+            color: #1e293b;
+            background: white;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .form-row.full {
+            grid-template-columns: 1fr;
+        }
+
+        @media (max-width: 640px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: env(safe-area-inset-bottom);
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: flex-end;
+        }
+
+        .modal-content {
+            background: white;
+            width: 100%;
+            border-radius: 1rem 1rem 0 0;
+            padding: 1.5rem 1.25rem;
+            padding-top: max(1.5rem, env(safe-area-inset-top));
+            max-height: 90vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .modal-header {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #64748b;
+        }
+
+        .card {
+            background: white;
+            border-radius: 0.5rem;
+            border: 1px solid #e2e8f0;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        .card-header {
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .property-card {
+            padding: 1.25rem;
+        }
+
+        .property-type {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: #dbeafe;
+            color: #0369a1;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .property-type.venta {
+            background: #d1fae5;
+            color: #047857;
+        }
+
+        .property-type.arriendo {
+            background: #fef08a;
+            color: #92400e;
+        }
+
+        .property-address {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 0.5rem;
+        }
+
+        .property-meta {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            color: #64748b;
+            margin-top: 0.75rem;
+        }
+
+        .property-price {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #10b981;
+            margin-top: 0.75rem;
+        }
+
+        .client-card {
+            padding: 1.25rem;
+        }
+
+        .client-name {
+            font-weight: 600;
+            color: #334155;
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .client-info {
+            font-size: 0.875rem;
+            color: #64748b;
+            line-height: 1.6;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-buscando {
+            background: #dbeafe;
+            color: #0369a1;
+        }
+
+        .status-negociacion {
+            background: #fef08a;
+            color: #92400e;
+        }
+
+        .status-cerrado {
+            background: #d1fae5;
+            color: #047857;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+
+        .table th {
+            background: #f1f5f9;
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+            color: #334155;
+            border-bottom: 1px solid #cbd5e1;
+        }
+
+        .table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .table-row-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1.25rem;
+            color: #64748b;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.3;
+        }
+
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            color: #1e293b;
+        }
+
+        .checkbox-label input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 0.375rem;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #047857;
+            border: 1px solid #a7f3d0;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
+        .alert-info {
+            background: #dbeafe;
+            color: #0369a1;
+            border: 1px solid #bae6fd;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 2rem;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 0.5rem;
+            border: 1px solid #e2e8f0;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: #64748b;
+            font-weight: 500;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #334155;
+        }
+
+        .stat-unit {
+            font-size: 0.875rem;
+            color: #10b981;
+            margin-top: 0.25rem;
+        }
+
+        .commission-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: white;
+            border-radius: 0.375rem;
+            margin-bottom: 0.75rem;
+            border-left: 4px solid #10b981;
+        }
+
+        .commission-info {
+            flex: 1;
+        }
+
+        .commission-deal {
+            font-weight: 600;
+            color: #334155;
+            font-size: 0.9rem;
+        }
+
+        .commission-date {
+            font-size: 0.75rem;
+            color: #64748b;
+        }
+
+        .commission-amount {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #10b981;
+        }
+
+        .document-checklist {
+            display: grid;
+            gap: 0.75rem;
+        }
+
+        .document-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: white;
+            border-radius: 0.375rem;
+            border: 1px solid #e2e8f0;
+        }
+
+        .document-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .document-label {
+            flex: 1;
+            cursor: pointer;
+            font-size: 0.875rem;
+            color: #334155;
+            font-weight: 500;
+        }
+
+        .document-item.completed .document-label {
+            color: #64748b;
+            text-decoration: line-through;
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+            color: #10b981;
+            font-weight: 600;
+        }
+
+        .tooltip:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #334155;
+            color: white;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.375rem;
+            white-space: nowrap;
+            font-size: 0.75rem;
+            z-index: 500;
+            font-weight: 400;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .input-group input,
+        .input-group select {
+            flex: 1;
+        }
+
+        .input-group .btn {
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 640px) {
+            .header h1 {
+                font-size: 1.25rem;
+            }
+
+            .nav-tab {
+                min-width: 100px;
+                padding: 0.625rem 0.75rem;
+                font-size: 0.75rem;
+            }
+
+            .tab-content {
+                padding: 1rem;
+            }
+
+            .property-meta {
+                grid-template-columns: 1fr;
+                gap: 0.25rem;
+            }
+
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-content {
+                padding: 1.25rem 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="header">
+            <h1>CorredorPropCL</h1>
+            <p>Gestión Inmobiliaria Profesional</p>
+        </div>
+
+        <nav class="nav-tabs">
+            <button class="nav-tab active" data-tab="propiedades">Propiedades</button>
+            <button class="nav-tab" data-tab="clientes">Clientes</button>
+            <button class="nav-tab" data-tab="visitas">Visitas</button>
+            <button class="nav-tab" data-tab="cotizador">Cotizador</button>
+            <button class="nav-tab" data-tab="finanzas">Finanzas</button>
+            <button class="nav-tab" data-tab="documentos">Documentos</button>
+        </nav>
+
+        <div class="content-wrapper">
+            <!-- PROPIEDADES TAB -->
+            <div id="propiedades" class="tab-content">
+                <div class="section">
+                    <div class="section-title">
+                        Cartera de Propiedades
+                    </div>
+                    <button class="btn btn-primary" onclick="app.openModal('addPropertyModal')">+ Agregar Propiedad</button>
+                </div>
+
+                <div id="propertiesList"></div>
+            </div>
+
+            <!-- CLIENTES TAB -->
+            <div id="clientes" class="tab-content hidden">
+                <div class="section">
+                    <div class="section-title">
+                        Base de Clientes
+                    </div>
+                    <button class="btn btn-primary" onclick="app.openModal('addClientModal')">+ Agregar Cliente</button>
+                </div>
+
+                <div id="clientsList"></div>
+            </div>
+
+            <!-- VISITAS TAB -->
+            <div id="visitas" class="tab-content hidden">
+                <div class="section">
+                    <div class="section-title">
+                        Agenda de Visitas
+                    </div>
+                    <button class="btn btn-primary" onclick="app.openModal('addVisitModal')">+ Agendar Visita</button>
+                </div>
+
+                <div id="visitsList"></div>
+            </div>
+
+            <!-- COTIZADOR TAB -->
+            <div id="cotizador" class="tab-content hidden">
+                <div class="section">
+                    <div class="section-title">Calculadora de Comisiones</div>
+                    <div class="card">
+                        <div class="form-group">
+                            <label class="form-label">Tipo de Operación</label>
+                            <select class="form-select" id="calcType" onchange="app.updateCalculator()">
+                                <option value="venta">Venta (2%)</option>
+                                <option value="arriendo">Arriendo (50% primer mes)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Monto (UF o CLP)</label>
+                            <input type="number" class="form-input" id="calcAmount" placeholder="0" min="0" onchange="app.updateCalculator()" oninput="app.updateCalculator()">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Moneda</label>
+                            <select class="form-select" id="calcCurrency" onchange="app.updateCalculator()">
+                                <option value="UF">UF (Unidad de Fomento)</option>
+                                <option value="CLP">CLP (Pesos)</option>
+                            </select>
+                        </div>
+                        <div id="calcResults"></div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">Simulador de Hipoteca</div>
+                    <div class="card">
+                        <div class="form-group">
+                            <label class="form-label">Monto a Financiar (UF)</label>
+                            <input type="number" class="form-input" id="mortgageAmount" placeholder="0" min="0" onchange="app.updateMortgage()" oninput="app.updateMortgage()">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Plazo (años)</label>
+                            <input type="number" class="form-input" id="mortgageTerm" placeholder="20" min="5" max="30" value="20" onchange="app.updateMortgage()" oninput="app.updateMortgage()">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">CAE Anual (%)</label>
+                            <input type="number" class="form-input" id="mortgageRate" placeholder="5.5" min="0" max="15" value="5.5" step="0.1" onchange="app.updateMortgage()" oninput="app.updateMortgage()">
+                        </div>
+                        <div id="mortgageResults"></div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">Conversión UF - CLP</div>
+                    <div class="card">
+                        <div class="form-group">
+                            <label class="form-label">Valor UF Hoy (CLP)</label>
+                            <input type="number" class="form-input" id="ufValue" placeholder="36500" min="0" value="36500" onchange="app.updateConversion()" oninput="app.updateConversion()">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">UF a Convertir</label>
+                                <input type="number" class="form-input" id="convertUf" placeholder="0" min="0" onchange="app.updateConversion()" oninput="app.updateConversion()">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">CLP a Convertir</label>
+                                <input type="number" class="form-input" id="convertClp" placeholder="0" min="0" onchange="app.updateConversion()" oninput="app.updateConversion()">
+                            </div>
+                        </div>
+                        <div id="conversionResults"></div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">Estimador de Gastos Notariales</div>
+                    <div class="card">
+                        <div class="form-group">
+                            <label class="form-label">Valor de la Propiedad (UF)</label>
+                            <input type="number" class="form-input" id="notaryValue" placeholder="0" min="0" onchange="app.updateNotaryFees()" oninput="app.updateNotaryFees()">
+                        </div>
+                        <div id="notaryResults"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FINANZAS TAB -->
+            <div id="finanzas" class="tab-content hidden">
+                <div class="section">
+                    <div class="section-title">Resumen Financiero</div>
+                    <div class="grid-2">
+                        <div class="stat-card">
+                            <div class="stat-label">Comisiones Pendientes</div>
+                            <div class="stat-value" id="statPending">$0</div>
+                            <div class="stat-unit">CLP</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Ingresos Cerrados</div>
+                            <div class="stat-value" id="statClosed">$0</div>
+                            <div class="stat-unit">CLP</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">Ingresos por Tipo de Propiedad</div>
+                    <div class="chart-container">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">Historial de Comisiones</div>
+                    <div id="commissionsList"></div>
+                </div>
+            </div>
+
+            <!-- DOCUMENTOS TAB -->
+            <div id="documentos" class="tab-content hidden">
+                <div class="section">
+                    <div class="section-title">Documentos por Operación</div>
+                    <div id="documentsList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODALS -->
+
+    <!-- Add Property Modal -->
+    <div id="addPropertyModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>Agregar Propiedad</span>
+                <button class="modal-close" onclick="app.closeModal('addPropertyModal')">&times;</button>
+            </div>
+            <form id="propertyForm" onsubmit="app.addProperty(event)">
+                <div class="form-group">
+                    <label class="form-label">Dirección</label>
+                    <input type="text" class="form-input" id="propAddress" required placeholder="Ej: Avenida Providencia 1234">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Comuna</label>
+                        <input type="text" class="form-input" id="propComuna" placeholder="Ej: Providencia">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">ROL</label>
+                        <input type="text" class="form-input" id="propRol" placeholder="Ej: 12-34-5678-9">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Tipo</label>
+                        <select class="form-select" id="propType">
+                            <option value="casa">Casa</option>
+                            <option value="depto">Departamento</option>
+                            <option value="terreno">Terreno</option>
+                            <option value="oficina">Oficina</option>
+                            <option value="local">Local Comercial</option>
+                            <option value="bodega">Bodega</option>
+                            <option value="parcela">Parcela</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Operación</label>
+                        <select class="form-select" id="propOperation">
+                            <option value="venta">Venta</option>
+                            <option value="arriendo">Arriendo</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">m² Construido</label>
+                        <input type="number" class="form-input" id="propBuilt" min="0" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">m² Terreno</label>
+                        <input type="number" class="form-input" id="propTerrain" min="0" placeholder="0">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Dormitorios</label>
+                        <input type="number" class="form-input" id="propBedrooms" min="0" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Baños</label>
+                        <input type="number" class="form-input" id="propBathrooms" min="0" placeholder="0">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Estacionamientos</label>
+                        <input type="number" class="form-input" id="propParking" min="0" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Precio (UF)</label>
+                        <input type="number" class="form-input" id="propPrice" min="0" placeholder="0" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Descripción</label>
+                    <textarea class="form-textarea" id="propDescription" placeholder="Detalles adicionales..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Características</label>
+                    <div class="checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="feature" value="piscina"> Piscina
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="feature" value="quincho"> Quincho
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="feature" value="terraza"> Terraza
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="feature" value="bodega"> Bodega
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="feature" value="calefaccion"> Calefacción
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="feature" value="alarma"> Alarma
+                        </label>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Guardar Propiedad</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Client Modal -->
+    <div id="addClientModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>Agregar Cliente</span>
+                <button class="modal-close" onclick="app.closeModal('addClientModal')">&times;</button>
+            </div>
+            <form id="clientForm" onsubmit="app.addClient(event)">
+                <div class="form-group">
+                    <label class="form-label">Nombre Completo</label>
+                    <input type="text" class="form-input" id="clientName" required placeholder="Ej: Juan García González">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Teléfono</label>
+                        <input type="tel" class="form-input" id="clientPhone" placeholder="+56912345678">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-input" id="clientEmail" placeholder="correo@ejemplo.com">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Tipo</label>
+                    <select class="form-select" id="clientType">
+                        <option value="comprador">Comprador</option>
+                        <option value="arrendatario">Arrendatario</option>
+                        <option value="vendedor">Vendedor</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Presupuesto (UF)</label>
+                    <input type="number" class="form-input" id="clientBudgetMin" placeholder="Mínimo" min="0">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Presupuesto Máximo (UF)</label>
+                    <input type="number" class="form-input" id="clientBudgetMax" placeholder="Máximo" min="0">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Zonas de Interés</label>
+                    <input type="text" class="form-input" id="clientZones" placeholder="Ej: Providencia, Ñuñoa, Las Condes">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Preferencias</label>
+                    <input type="text" class="form-input" id="clientPreferences" placeholder="Ej: Penthouse, vista al parque">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Urgencia</label>
+                    <select class="form-select" id="clientUrgency">
+                        <option value="baja">Baja (6+ meses)</option>
+                        <option value="media">Media (1-3 meses)</option>
+                        <option value="alta">Alta (semanas)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Estado</label>
+                    <select class="form-select" id="clientStatus">
+                        <option value="buscando">Buscando</option>
+                        <option value="negociacion">En Negociación</option>
+                        <option value="cerrado">Cerrado</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Guardar Cliente</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Visit Modal -->
+    <div id="addVisitModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>Agendar Visita</span>
+                <button class="modal-close" onclick="app.closeModal('addVisitModal')">&times;</button>
+            </div>
+            <form id="visitForm" onsubmit="app.addVisit(event)">
+                <div class="form-group">
+                    <label class="form-label">Propiedad</label>
+                    <select class="form-select" id="visitProperty" required>
+                        <option value="">Seleccionar propiedad...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Cliente</label>
+                    <select class="form-select" id="visitClient" required>
+                        <option value="">Seleccionar cliente...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Fecha y Hora</label>
+                    <input type="datetime-local" class="form-input" id="visitDateTime" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Notas del Agente</label>
+                    <textarea class="form-textarea" id="visitNotes" placeholder="Observaciones de la propiedad..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Reacción del Cliente</label>
+                    <select class="form-select" id="visitFeedback">
+                        <option value="">Sin feedback</option>
+                        <option value="interesado">Interesado</option>
+                        <option value="no-interesado">No Interesado</option>
+                        <option value="oferta">Realizó Oferta</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Próxima Fecha de Seguimiento</label>
+                    <input type="date" class="form-input" id="visitFollowUp">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Agendar Visita</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Safe localStorage wrapper with try/catch
+        const safeStorage = {
+            get: (key, defaultValue = null) => {
+                try {
+                    const item = localStorage.getItem(key);
+                    return item ? JSON.parse(item) : defaultValue;
+                } catch (e) {
+                    console.warn('localStorage get error:', e);
+                    return defaultValue;
+                }
+            },
+            set: (key, value) => {
+                try {
+                    localStorage.setItem(key, JSON.stringify(value));
+                    return true;
+                } catch (e) {
+                    console.warn('localStorage set error:', e);
+                    return false;
+                }
+            },
+            remove: (key) => {
+                try {
+                    localStorage.removeItem(key);
+                    return true;
+                } catch (e) {
+                    console.warn('localStorage remove error:', e);
+                    return false;
+                }
+            }
+        };
+
+        const app = {
+            // Data structure
+            data: {
+                properties: safeStorage.get('properties', []),
+                clients: safeStorage.get('clients', []),
+                visits: safeStorage.get('visits', []),
+                deals: safeStorage.get('deals', [])
+            },
+
+            // Initialize app
+            init() {
+                this.setupEventListeners();
+                this.renderProperties();
+                this.updateTab('propiedades');
+
+                // Register service worker for PWA
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.register('data:application/javascript,self.addEventListener("install",e=>self.skipWaiting());self.addEventListener("activate",e=>self.clients.claim());').catch(() => {});
+                }
+            },
+
+            // Setup tab navigation
+            setupEventListeners() {
+                document.querySelectorAll('.nav-tab').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const tab = btn.dataset.tab;
+                        document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        this.updateTab(tab);
+                    });
+                });
+            },
+
+            // Update tab visibility
+            updateTab(tabName) {
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.add('hidden');
+                });
+                document.getElementById(tabName).classList.remove('hidden');
+
+                if (tabName === 'propiedades') this.renderProperties();
+                else if (tabName === 'clientes') this.renderClients();
+                else if (tabName === 'visitas') this.renderVisits();
+                else if (tabName === 'finanzas') this.renderFinances();
+                else if (tabName === 'documentos') this.renderDocuments();
+            },
+
+            // Modal management
+            openModal(modalId) {
+                document.getElementById(modalId).classList.add('active');
+                this.populateSelects();
+            },
+
+            closeModal(modalId) {
+                document.getElementById(modalId).classList.remove('active');
+            },
+
+            populateSelects() {
+                const propSelect = document.getElementById('visitProperty');
+                const clientSelect = document.getElementById('visitClient');
+
+                if (propSelect && propSelect.options.length <= 1) {
+                    this.data.properties.forEach(prop => {
+                        const option = document.createElement('option');
+                        option.value = prop.id;
+                        option.textContent = prop.address + ' - ' + prop.comuna;
+                        propSelect.appendChild(option);
+                    });
+                }
+
+                if (clientSelect && clientSelect.options.length <= 1) {
+                    this.data.clients.forEach(client => {
+                        const option = document.createElement('option');
+                        option.value = client.id;
+                        option.textContent = client.name;
+                        clientSelect.appendChild(option);
+                    });
+                }
+            },
+
+            // PROPERTIES MANAGEMENT
+            addProperty(event) {
+                event.preventDefault();
+                const features = [];
+                document.querySelectorAll('#propertyForm input[name="feature"]:checked').forEach(cb => {
+                    features.push(cb.value);
+                });
+
+                const property = {
+                    id: Date.now().toString(),
+                    address: document.getElementById('propAddress').value,
+                    comuna: document.getElementById('propComuna').value,
+                    rol: document.getElementById('propRol').value,
+                    type: document.getElementById('propType').value,
+                    operation: document.getElementById('propOperation').value,
+                    builtArea: parseInt(document.getElementById('propBuilt').value) || 0,
+                    terrainArea: parseInt(document.getElementById('propTerrain').value) || 0,
+                    bedrooms: parseInt(document.getElementById('propBedrooms').value) || 0,
+                    bathrooms: parseInt(document.getElementById('propBathrooms').value) || 0,
+                    parking: parseInt(document.getElementById('propParking').value) || 0,
+                    priceUf: parseFloat(document.getElementById('propPrice').value),
+                    description: document.getElementById('propDescription').value,
+                    features: features,
+                    createdAt: new Date().toISOString()
+                };
+
+                this.data.properties.push(property);
+                safeStorage.set('properties', this.data.properties);
+
+                document.getElementById('propertyForm').reset();
+                this.closeModal('addPropertyModal');
+                this.renderProperties();
+            },
+
+            deleteProperty(id) {
+                if (confirm('¿Eliminar esta propiedad?')) {
+                    this.data.properties = this.data.properties.filter(p => p.id !== id);
+                    safeStorage.set('properties', this.data.properties);
+                    this.renderProperties();
+                }
+            },
+
+            renderProperties() {
+                const list = document.getElementById('propertiesList');
+
+                if (this.data.properties.length === 0) {
+                    list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🏠</div><p>No hay propiedades registradas</p></div>';
+                    return;
+                }
+
+                list.innerHTML = this.data.properties.map(prop => `
+                    <div class="card property-card">
+                        <div style="display: flex; justify-content: space-between; align-items: start;">
+                            <div style="flex: 1;">
+                                <div class="property-type ${prop.operation}">${prop.type.toUpperCase()} - ${prop.operation === 'venta' ? 'VENTA' : 'ARRIENDO'}</div>
+                                <div class="property-address">${prop.address}</div>
+                                <div style="font-size: 0.875rem; color: #64748b; margin-bottom: 0.5rem;">${prop.comuna}${prop.rol ? ' • ROL: ' + prop.rol : ''}</div>
+                                <div class="property-meta">
+                                    <span>${prop.builtArea} m² const.</span>
+                                    <span>${prop.terrainArea} m² terreno</span>
+                                    <span>${prop.bedrooms} dorm. • ${prop.bathrooms} baños</span>
+                                </div>
+                                ${prop.features.length > 0 ? `<div style="font-size: 0.8rem; margin-top: 0.5rem; color: #10b981;">✓ ${prop.features.join(', ')}</div>` : ''}
+                                <div class="property-price">${prop.priceUf.toLocaleString('es-CL')} UF</div>
+                                ${prop.description ? `<p style="font-size: 0.875rem; color: #64748b; margin-top: 0.5rem;">${prop.description}</p>` : ''}
+                            </div>
+                            <button class="btn btn-danger btn-sm" onclick="app.deleteProperty('${prop.id}')" style="margin-left: 0.5rem;">Eliminar</button>
+                        </div>
+                    </div>
+                `).join('');
+            },
+
+            // CLIENTS MANAGEMENT
+            addClient(event) {
+                event.preventDefault();
+                const client = {
+                    id: Date.now().toString(),
+                    name: document.getElementById('clientName').value,
+                    phone: document.getElementById('clientPhone').value,
+                    email: document.getElementById('clientEmail').value,
+                    type: document.getElementById('clientType').value,
+                    budgetMin: parseInt(document.getElementById('clientBudgetMin').value) || 0,
+                    budgetMax: parseInt(document.getElementById('clientBudgetMax').value) || 0,
+                    zones: document.getElementById('clientZones').value,
+                    preferences: document.getElementById('clientPreferences').value,
+                    urgency: document.getElementById('clientUrgency').value,
+                    status: document.getElementById('clientStatus').value,
+                    createdAt: new Date().toISOString()
+                };
+
+                this.data.clients.push(client);
+                safeStorage.set('clients', this.data.clients);
+
+                document.getElementById('clientForm').reset();
+                this.closeModal('addClientModal');
+                this.renderClients();
+            },
+
+            deleteClient(id) {
+                if (confirm('¿Eliminar este cliente?')) {
+                    this.data.clients = this.data.clients.filter(c => c.id !== id);
+                    safeStorage.set('clients', this.data.clients);
+                    this.renderClients();
+                }
+            },
+
+            renderClients() {
+                const list = document.getElementById('clientsList');
+
+                if (this.data.clients.length === 0) {
+                    list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">👥</div><p>No hay clientes registrados</p></div>';
+                    return;
+                }
+
+                list.innerHTML = this.data.clients.map(client => `
+                    <div class="card client-card">
+                        <div style="display: flex; justify-content: space-between; align-items: start;">
+                            <div style="flex: 1;">
+                                <div class="client-name">${client.name}</div>
+                                <div class="status-badge status-${client.status}">${client.status}</div>
+                                <div class="client-info" style="margin-top: 0.75rem;">
+                                    <strong>Tipo:</strong> ${client.type}<br>
+                                    <strong>Teléfono:</strong> ${client.phone || '—'}<br>
+                                    <strong>Email:</strong> ${client.email || '—'}<br>
+                                    ${client.budgetMin > 0 ? `<strong>Presupuesto:</strong> ${client.budgetMin.toLocaleString('es-CL')} - ${client.budgetMax.toLocaleString('es-CL')} UF<br>` : ''}
+                                    ${client.zones ? `<strong>Zonas:</strong> ${client.zones}<br>` : ''}
+                                    ${client.preferences ? `<strong>Preferencias:</strong> ${client.preferences}<br>` : ''}
+                                    <strong>Urgencia:</strong> ${client.urgency}
+                                </div>
+                            </div>
+                            <button class="btn btn-danger btn-sm" onclick="app.deleteClient('${client.id}')" style="margin-left: 0.5rem;">Eliminar</button>
+                        </div>
+                    </div>
+                `).join('');
+            },
+
+            // VISITS MANAGEMENT
+            addVisit(event) {
+                event.preventDefault();
+                const visit = {
+                    id: Date.now().toString(),
+                    propertyId: document.getElementById('visitProperty').value,
+                    clientId: document.getElementById('visitClient').value,
+                    dateTime: document.getElementById('visitDateTime').value,
+                    notes: document.getElementById('visitNotes').value,
+                    feedback: document.getElementById('visitFeedback').value,
+                    followUpDate: document.getElementById('visitFollowUp').value,
+                    createdAt: new Date().toISOString()
+                };
+
+                this.data.visits.push(visit);
+                safeStorage.set('visits', this.data.visits);
+
+                document.getElementById('visitForm').reset();
+                this.closeModal('addVisitModal');
+                this.renderVisits();
+            },
+
+            deleteVisit(id) {
+                if (confirm('¿Eliminar esta visita?')) {
+                    this.data.visits = this.data.visits.filter(v => v.id !== id);
+                    safeStorage.set('visits', this.data.visits);
+                    this.renderVisits();
+                }
+            },
+
+            renderVisits() {
+                const list = document.getElementById('visitsList');
+
+                if (this.data.visits.length === 0) {
+                    list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📅</div><p>No hay visitas agendadas</p></div>';
+                    return;
+                }
+
+                const sortedVisits = [...this.data.visits].sort((a, b) => new Date(b.dateTime) - new Date(a.dateTime));
+
+                list.innerHTML = sortedVisits.map(visit => {
+                    const property = this.data.properties.find(p => p.id === visit.propertyId);
+                    const client = this.data.clients.find(c => c.id === visit.clientId);
+                    const visitDate = new Date(visit.dateTime);
+
+                    return `
+                        <div class="card">
+                            <div class="card-header">
+                                ${client ? client.name : 'Cliente desconocido'} → ${property ? property.address : 'Propiedad desconocida'}
+                            </div>
+                            <div style="font-size: 0.875rem; color: #64748b; margin-bottom: 0.75rem;">
+                                <strong>Fecha:</strong> ${visitDate.toLocaleDateString('es-CL')} a las ${visitDate.toLocaleTimeString('es-CL', {hour: '2-digit', minute: '2-digit'})}
+                            </div>
+                            ${visit.notes ? `<div style="background: #f1f5f9; padding: 0.75rem; border-radius: 0.375rem; margin-bottom: 0.75rem; font-size: 0.875rem;"><strong>Notas:</strong> ${visit.notes}</div>` : ''}
+                            ${visit.feedback ? `<div style="color: #10b981; font-weight: 500; font-size: 0.875rem; margin-bottom: 0.5rem;">Feedback: ${visit.feedback}</div>` : ''}
+                            ${visit.followUpDate ? `<div style="font-size: 0.875rem; color: #64748b;">Próximo seguimiento: ${new Date(visit.followUpDate).toLocaleDateString('es-CL')}</div>` : ''}
+                            <button class="btn btn-danger btn-sm" onclick="app.deleteVisit('${visit.id}')" style="margin-top: 0.75rem;">Eliminar</button>
+                        </div>
+                    `;
+                }).join('');
+            },
+
+            // CALCULATOR FUNCTIONS
+            updateCalculator() {
+                const type = document.getElementById('calcType').value;
+                const amount = parseFloat(document.getElementById('calcAmount').value) || 0;
+                const currency = document.getElementById('calcCurrency').value;
+
+                let commission = 0;
+                let label = '';
+
+                if (type === 'venta') {
+                    commission = amount * 0.02;
+                    label = 'Comisión por Venta (2%)';
+                } else {
+                    commission = amount * 0.5;
+                    label = 'Comisión por Arriendo (50% primer mes)';
+                }
+
+                const resultsDiv = document.getElementById('calcResults');
+                resultsDiv.innerHTML = `
+                    <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 0.375rem; padding: 1rem; margin-top: 1rem;">
+                        <div style="font-size: 0.875rem; color: #64748b; margin-bottom: 0.5rem;">${label}</div>
+                        <div style="font-size: 1.75rem; font-weight: 700; color: #10b981;">
+                            ${commission.toLocaleString('es-CL', {minimumFractionDigits: 2, maximumFractionDigits: 2})} ${currency}
+                        </div>
+                    </div>
+                `;
+            },
+
+            updateMortgage() {
+                const amountUf = parseFloat(document.getElementById('mortgageAmount').value) || 0;
+                const years = parseInt(document.getElementById('mortgageTerm').value) || 20;
+                const annualRate = parseFloat(document.getElementById('mortgageRate').value) || 5.5;
+
+                const months = years * 12;
+                const monthlyRate = annualRate / 100 / 12;
+
+                let monthlyPayment = 0;
+                if (monthlyRate > 0) {
+                    monthlyPayment = amountUf * (monthlyRate * Math.pow(1 + monthlyRate, months)) / (Math.pow(1 + monthlyRate, months) - 1);
+                } else {
+                    monthlyPayment = amountUf / months;
+                }
+
+                const totalPayment = monthlyPayment * months;
+                const totalInterest = totalPayment - amountUf;
+
+                const resultsDiv = document.getElementById('mortgageResults');
+                resultsDiv.innerHTML = `
+                    <div style="margin-top: 1rem;">
+                        <div style="background: #f0fdf4; border-left: 4px solid #10b981; padding: 1rem; border-radius: 0.375rem; margin-bottom: 0.75rem;">
+                            <div style="font-size: 0.75rem; color: #64748b; text-transform: uppercase;">Cuota Mensual</div>
+                            <div style="font-size: 1.5rem; font-weight: 700; color: #334155;">${monthlyPayment.toLocaleString('es-CL', {minimumFractionDigits: 2})} UF</div>
+                        </div>
+                        <div class="grid-2">
+                            <div style="background: white; border: 1px solid #e2e8f0; padding: 0.75rem; border-radius: 0.375rem;">
+                                <div style="font-size: 0.75rem; color: #64748b; text-transform: uppercase;">Total a Pagar</div>
+                                <div style="font-size: 1.125rem; font-weight: 600; color: #334155;">${totalPayment.toLocaleString('es-CL', {minimumFractionDigits: 0})} UF</div>
+                            </div>
+                            <div style="background: white; border: 1px solid #e2e8f0; padding: 0.75rem; border-radius: 0.375rem;">
+                                <div style="font-size: 0.75rem; color: #64748b; text-transform: uppercase;">Intereses</div>
+                                <div style="font-size: 1.125rem; font-weight: 600; color: #ef4444;">${totalInterest.toLocaleString('es-CL', {minimumFractionDigits: 0})} UF</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            },
+
+            updateConversion() {
+                const ufValue = parseFloat(document.getElementById('ufValue').value) || 36500;
+                const convertUf = parseFloat(document.getElementById('convertUf').value) || 0;
+                const convertClp = parseFloat(document.getElementById('convertClp').value) || 0;
+
+                let resultUfToClp = 0;
+                let resultClpToUf = 0;
+
+                if (convertUf > 0) {
+                    resultUfToClp = convertUf * ufValue;
+                }
+                if (convertClp > 0) {
+                    resultClpToUf = convertClp / ufValue;
+                }
+
+                const resultsDiv = document.getElementById('conversionResults');
+                resultsDiv.innerHTML = `
+                    <div style="margin-top: 1rem;">
+                        ${convertUf > 0 ? `
+                            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 0.375rem; padding: 1rem; margin-bottom: 0.75rem;">
+                                <div style="font-size: 0.875rem; color: #64748b; margin-bottom: 0.5rem;">${convertUf} UF a CLP</div>
+                                <div style="font-size: 1.5rem; font-weight: 700; color: #10b981;">
+                                    $${resultUfToClp.toLocaleString('es-CL', {minimumFractionDigits: 0})} CLP
+                                </div>
+                            </div>
+                        ` : ''}
+                        ${convertClp > 0 ? `
+                            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 0.375rem; padding: 1rem;">
+                                <div style="font-size: 0.875rem; color: #64748b; margin-bottom: 0.5rem;">${convertClp.toLocaleString('es-CL')} CLP a UF</div>
+                                <div style="font-size: 1.5rem; font-weight: 700; color: #10b981;">
+                                    ${resultClpToUf.toLocaleString('es-CL', {minimumFractionDigits: 2})} UF
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            },
+
+            updateNotaryFees() {
+                const value = parseFloat(document.getElementById('notaryValue').value) || 0;
+
+                // Chilean notary fees approximate structure
+                const notaryPercentage = value > 5000 ? 0.012 : 0.015;
+                const notaryFee = value * notaryPercentage;
+                const registryFee = value * 0.008;
+                const conservadorFee = value * 0.003;
+                const totalFees = notaryFee + registryFee + conservadorFee;
+
+                const resultsDiv = document.getElementById('notaryResults');
+                resultsDiv.innerHTML = `
+                    <div style="margin-top: 1rem;">
+                        <div style="background: white; border: 1px solid #e2e8f0; border-radius: 0.375rem; padding: 1rem; margin-bottom: 0.75rem;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px solid #e2e8f0;">
+                                <span style="color: #64748b;">Notaría</span>
+                                <span style="font-weight: 600; color: #334155;">${notaryFee.toLocaleString('es-CL', {minimumFractionDigits: 2})} UF</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px solid #e2e8f0;">
+                                <span style="color: #64748b;">Inscripción</span>
+                                <span style="font-weight: 600; color: #334155;">${registryFee.toLocaleString('es-CL', {minimumFractionDigits: 2})} UF</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px solid #e2e8f0;">
+                                <span style="color: #64748b;">Conservador</span>
+                                <span style="font-weight: 600; color: #334155;">${conservadorFee.toLocaleString('es-CL', {minimumFractionDigits: 2})} UF</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; background: #f0fdf4; padding: 0.75rem; border-radius: 0.375rem; border: 1px solid #bbf7d0;">
+                                <span style="color: #047857; font-weight: 600;">Total Gastos</span>
+                                <span style="font-weight: 700; color: #10b981; font-size: 1.125rem;">${totalFees.toLocaleString('es-CL', {minimumFractionDigits: 2})} UF</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            },
+
+            // FINANCES RENDERING
+            renderFinances() {
+                const closedDeals = this.data.visits.filter(v => v.feedback === 'oferta');
+                const pendingDeals = this.data.clients.filter(c => c.status === 'negociacion').length;
+
+                let totalPending = 0;
+                let totalClosed = 0;
+                const revenueByType = {};
+
+                closedDeals.forEach(deal => {
+                    const property = this.data.properties.find(p => p.id === deal.propertyId);
+                    if (property) {
+                        const commission = property.operation === 'venta'
+                            ? property.priceUf * 0.02
+                            : property.priceUf * 0.5;
+                        totalClosed += commission;
+
+                        if (!revenueByType[property.type]) {
+                            revenueByType[property.type] = 0;
+                        }
+                        revenueByType[property.type] += commission;
+                    }
+                });
+
+                this.data.visits.forEach(visit => {
+                    if (visit.feedback !== 'oferta' && visit.feedback !== '') {
+                        const property = this.data.properties.find(p => p.id === visit.propertyId);
+                        if (property) {
+                            const commission = property.operation === 'venta'
+                                ? property.priceUf * 0.02
+                                : property.priceUf * 0.5;
+                            totalPending += commission;
+                        }
+                    }
+                });
+
+                document.getElementById('statPending').textContent = totalPending.toLocaleString('es-CL', {minimumFractionDigits: 0});
+                document.getElementById('statClosed').textContent = totalClosed.toLocaleString('es-CL', {minimumFractionDigits: 0});
+
+                // Render revenue chart
+                if (Object.keys(revenueByType).length > 0) {
+                    setTimeout(() => this.renderRevenueChart(revenueByType), 100);
+                }
+
+                this.renderCommissionsList(closedDeals);
+            },
+
+            renderRevenueChart(data) {
+                const ctx = document.getElementById('revenueChart');
+                if (!ctx) return;
+
+                // Destroy existing chart
+                if (window.revenueChart instanceof Chart) {
+                    window.revenueChart.destroy();
+                }
+
+                const labels = Object.keys(data).map(t => t.charAt(0).toUpperCase() + t.slice(1));
+                const values = Object.values(data);
+
+                window.revenueChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: values,
+                            backgroundColor: [
+                                '#10b981',
+                                '#3b82f6',
+                                '#f59e0b',
+                                '#ef4444',
+                                '#8b5cf6',
+                                '#ec4899',
+                                '#06b6d4'
+                            ],
+                            borderColor: 'white',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    font: { family: "'Inter', sans-serif" },
+                                    padding: 15,
+                                    usePointStyle: true
+                                }
+                            }
+                        }
+                    }
+                });
+            },
+
+            renderCommissionsList(deals) {
+                const list = document.getElementById('commissionsList');
+
+                if (deals.length === 0) {
+                    list.innerHTML = '<div class="empty-state" style="padding: 2rem 0;"><p>Sin comisiones cerradas</p></div>';
+                    return;
+                }
+
+                list.innerHTML = deals.map(deal => {
+                    const property = this.data.properties.find(p => p.id === deal.propertyId);
+                    const client = this.data.clients.find(c => c.id === deal.clientId);
+
+                    if (!property) return '';
+
+                    const commission = property.operation === 'venta'
+                        ? property.priceUf * 0.02
+                        : property.priceUf * 0.5;
+
+                    return `
+                        <div class="commission-row">
+                            <div class="commission-info">
+                                <div class="commission-deal">${property.address}</div>
+                                <div class="commission-date">${client ? client.name : 'Cliente'} • ${new Date(deal.dateTime).toLocaleDateString('es-CL')}</div>
+                            </div>
+                            <div class="commission-amount">${commission.toLocaleString('es-CL', {minimumFractionDigits: 2})} UF</div>
+                        </div>
+                    `;
+                }).join('');
+            },
+
+            // DOCUMENTS RENDERING
+            renderDocuments() {
+                const list = document.getElementById('documentsList');
+                const baseDocuments = [
+                    'Promesa de Compraventa',
+                    'Escritura Pública',
+                    'Certificado de Dominio',
+                    'Plano',
+                    'Tasación',
+                    'Certificado de Deuda',
+                    'Poderes'
+                ];
+
+                if (this.data.properties.length === 0) {
+                    list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📄</div><p>Agregue propiedades para gestionar documentos</p></div>';
+                    return;
+                }
+
+                list.innerHTML = this.data.properties.map(property => {
+                    const dealDocs = safeStorage.get(`docs_${property.id}`, {});
+
+                    return `
+                        <div class="card">
+                            <div class="card-header">${property.address}</div>
+                            <div class="document-checklist">
+                                ${baseDocuments.map(doc => {
+                                    const docKey = doc.toLowerCase().replace(/ /g, '_');
+                                    const isCompleted = dealDocs[docKey] || false;
+                                    return `
+                                        <div class="document-item ${isCompleted ? 'completed' : ''}">
+                                            <input type="checkbox" ${isCompleted ? 'checked' : ''} onchange="app.toggleDocument('${property.id}', '${docKey}')">
+                                            <label class="document-label">${doc}</label>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            },
+
+            toggleDocument(propertyId, docKey) {
+                const dealDocs = safeStorage.get(`docs_${propertyId}`, {});
+                dealDocs[docKey] = !dealDocs[docKey];
+                safeStorage.set(`docs_${propertyId}`, dealDocs);
+                this.renderDocuments();
+            }
+        };
+
+        // Initialize when DOM is ready
+        document.addEventListener('DOMContentLoaded', () => app.init());
+    </script>
+</body>
+</html>

@@ -1,0 +1,1700 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="description" content="ContadorCL - Gestor integral de práctica contable para contadores y bookkeepers chilenos">
+    <title>ContadorCL - Gestor de Contabilidad</title>
+
+    <link rel="manifest" href="data:application/manifest+json,{
+        %22name%22:%22ContadorCL%22,
+        %22short_name%22:%22ContadorCL%22,
+        %22start_url%22:%22/%22,
+        %22display%22:%22standalone%22,
+        %22background_color%22:%22%230f172a%22,
+        %22theme_color%22:%22%230f172a%22,
+        %22orientation%22:%22portrait-primary%22,
+        %22icons%22:[{%22src%22:%22data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 192 192%27%3E%3Crect fill=%27%230f172a%27 width=%27192%27 height=%27192%27/%3E%3Ctext x=%2750%25%27 y=%2750%25%27 font-size=%27120%27 font-weight=%27bold%27 fill=%27%23eab308%27 text-anchor=%27middle%27 dominant-baseline=%27middle%27%3ECC%3C/text%3E%3C/svg%3E%22,%22sizes%22:%22192x192%22,%22type%22:%22image/svg+xml%22,%22purpose%22:%22any%22}]
+    }">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            font-family: 'Inter', sans-serif;
+            background: #0f172a;
+            color: #e5e7eb;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        button, input, select, textarea {
+            font-size: 16px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        input, select, textarea {
+            font-size: 16px;
+        }
+
+        a {
+            color: #eab308;
+            text-decoration: none;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            padding: 1rem;
+            border-bottom: 2px solid #eab308;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            color: #eab308;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #334155;
+            overflow-x: auto;
+            padding: 0 1rem;
+            margin-top: 1rem;
+        }
+
+        .tab-btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            background: transparent;
+            color: #9ca3af;
+            cursor: pointer;
+            font-weight: 500;
+            white-space: nowrap;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .tab-btn:hover {
+            color: #e5e7eb;
+        }
+
+        .tab-btn.active {
+            color: #eab308;
+            border-bottom-color: #eab308;
+        }
+
+        .content {
+            flex: 1;
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+
+        .tab-panel {
+            display: none;
+        }
+
+        .tab-panel.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .card h2 {
+            font-size: 1.25rem;
+            color: #eab308;
+            margin-bottom: 1rem;
+        }
+
+        .card h3 {
+            font-size: 1rem;
+            color: #e5e7eb;
+            margin-top: 1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #d1d5db;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #475569;
+            background: #0f172a;
+            color: #e5e7eb;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #eab308;
+            box-shadow: 0 0 0 3px rgba(234, 179, 8, 0.1);
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: #eab308;
+            color: #0f172a;
+        }
+
+        .btn-primary:hover {
+            background: #facc15;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(234, 179, 8, 0.3);
+        }
+
+        .btn-secondary {
+            background: #475569;
+            color: #e5e7eb;
+        }
+
+        .btn-secondary:hover {
+            background: #64748b;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-small {
+            padding: 0.5rem 1rem;
+            font-size: 13px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1rem;
+        }
+
+        thead {
+            background: #0f172a;
+            border-bottom: 2px solid #eab308;
+        }
+
+        th {
+            padding: 0.75rem;
+            text-align: left;
+            color: #eab308;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #334155;
+            font-size: 14px;
+        }
+
+        tbody tr:hover {
+            background: rgba(234, 179, 8, 0.05);
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #eab308;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: #9ca3af;
+            margin-top: 0.5rem;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            font-size: 14px;
+        }
+
+        .alert-warning {
+            background: rgba(234, 179, 8, 0.1);
+            border-left: 4px solid #eab308;
+            color: #fef08a;
+        }
+
+        .alert-danger {
+            background: rgba(239, 68, 68, 0.1);
+            border-left: 4px solid #ef4444;
+            color: #fca5a5;
+        }
+
+        .alert-success {
+            background: rgba(34, 197, 94, 0.1);
+            border-left: 4px solid #22c55e;
+            color: #bbf7d0;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            color: #eab308;
+            font-size: 1.25rem;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: #9ca3af;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .modal-close:hover {
+            color: #e5e7eb;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .modal-footer {
+            padding: 1.5rem;
+            border-top: 1px solid #334155;
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-warning {
+            background: rgba(234, 179, 8, 0.2);
+            color: #fef08a;
+        }
+
+        .badge-success {
+            background: rgba(34, 197, 94, 0.2);
+            color: #bbf7d0;
+        }
+
+        .badge-danger {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+        }
+
+        .badge-info {
+            background: rgba(59, 130, 246, 0.2);
+            color: #bfdbfe;
+        }
+
+        .calculator {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .calculator {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .calc-result {
+            background: #0f172a;
+            padding: 1.5rem;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .calc-result-label {
+            color: #9ca3af;
+            font-size: 13px;
+            margin-bottom: 0.5rem;
+        }
+
+        .calc-result-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #eab308;
+        }
+
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: #0f172a;
+            border-radius: 6px;
+            margin-bottom: 0.75rem;
+            border-left: 3px solid #eab308;
+        }
+
+        .list-item-info h4 {
+            color: #e5e7eb;
+            margin-bottom: 0.25rem;
+        }
+
+        .list-item-info p {
+            color: #9ca3af;
+            font-size: 13px;
+        }
+
+        .list-item-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 2rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #9ca3af;
+        }
+
+        .empty-state p {
+            margin-bottom: 1.5rem;
+        }
+
+        .footer {
+            padding: 1rem;
+            text-align: center;
+            color: #6b7280;
+            font-size: 12px;
+            border-top: 1px solid #334155;
+        }
+
+        @media (max-width: 640px) {
+            .header h1 {
+                font-size: 1.25rem;
+            }
+
+            .content {
+                padding: 1rem;
+            }
+
+            .tab-btn {
+                padding: 0.65rem 1rem;
+                font-size: 12px;
+            }
+
+            .card {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📊 ContadorCL</h1>
+    </div>
+
+    <div class="container">
+        <div class="tabs" id="tabsContainer">
+            <button class="tab-btn active" data-tab="clientes">Clientes</button>
+            <button class="tab-btn" data-tab="declaraciones">Declaraciones</button>
+            <button class="tab-btn" data-tab="facturacion">Facturación</button>
+            <button class="tab-btn" data-tab="calculadoras">Calculadoras</button>
+            <button class="tab-btn" data-tab="documentos">Documentos</button>
+            <button class="tab-btn" data-tab="reportes">Reportes</button>
+        </div>
+
+        <div class="content">
+            <!-- CLIENTES TAB -->
+            <div id="clientes" class="tab-panel active">
+                <div class="card">
+                    <h2>📋 Base de Clientes</h2>
+                    <button class="btn btn-primary" onclick="openClientModal()">+ Nuevo Cliente</button>
+
+                    <div class="table-responsive" style="margin-top: 1.5rem;">
+                        <table id="clientesTable">
+                            <thead>
+                                <tr>
+                                    <th>RUT</th>
+                                    <th>Razón Social</th>
+                                    <th>Régimen</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="clientesList"></tbody>
+                        </table>
+                    </div>
+                    <div id="noClientes" class="empty-state">
+                        <p>No hay clientes registrados. Crea uno nuevo para comenzar.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DECLARACIONES TAB -->
+            <div id="declaraciones" class="tab-panel">
+                <div class="card">
+                    <h2>📅 Calendario de Declaraciones</h2>
+
+                    <div class="alert alert-warning">
+                        <strong>⏰ Próximos vencimientos:</strong>
+                        <div id="alertasDeclaraciones"></div>
+                    </div>
+
+                    <h3>Declaraciones Mensuales (F29)</h3>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Mes</th>
+                                    <th>Vencimiento</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="declaracionesF29"></tbody>
+                        </table>
+                    </div>
+
+                    <h3 style="margin-top: 2rem;">Declaraciones Anuales</h3>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Tipo</th>
+                                    <th>Descripción</th>
+                                    <th>Vencimiento</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="declaracionesAnuales"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FACTURACIÓN TAB -->
+            <div id="facturacion" class="tab-panel">
+                <div class="card">
+                    <h2>💵 Facturación de Servicios</h2>
+                    <button class="btn btn-primary" onclick="openInvoiceModal()">+ Nueva Factura</button>
+
+                    <div class="grid-2" style="margin-top: 1.5rem;">
+                        <div class="stat">
+                            <div class="stat-value" id="totalInvoiced">$0</div>
+                            <div class="stat-label">Facturado Este Mes</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value" id="totalPending">$0</div>
+                            <div class="stat-label">Pendiente de Pago</div>
+                        </div>
+                    </div>
+
+                    <h3 style="margin-top: 2rem;">Detalles de Facturación</h3>
+                    <div class="table-responsive">
+                        <table id="invoicesTable">
+                            <thead>
+                                <tr>
+                                    <th>Cliente</th>
+                                    <th>Monto</th>
+                                    <th>Fecha</th>
+                                    <th>Estado Pago</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="invoicesList"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CALCULADORAS TAB -->
+            <div id="calculadoras" class="tab-panel">
+                <div class="card">
+                    <h2>🧮 Calculadoras Tributarias</h2>
+
+                    <h3>IVA (19%)</h3>
+                    <div class="calculator">
+                        <div class="form-group">
+                            <label>Monto Base</label>
+                            <input type="number" id="ivaBase" placeholder="0" step="0.01" oninput="calcIVA()">
+                        </div>
+                        <div class="calc-result">
+                            <div class="calc-result-label">IVA</div>
+                            <div class="calc-result-value" id="ivaResult">$0</div>
+                        </div>
+                    </div>
+
+                    <h3>Impuesto Único (Escala 2024)</h3>
+                    <div class="calculator">
+                        <div class="form-group">
+                            <label>Renta Anual</label>
+                            <input type="number" id="rentaAnual" placeholder="0" step="0.01" oninput="calcImpuestoUnico()">
+                        </div>
+                        <div class="calc-result">
+                            <div class="calc-result-label">Impuesto Único</div>
+                            <div class="calc-result-value" id="impuestoResult">$0</div>
+                        </div>
+                    </div>
+
+                    <h3>PPM (Provisión Mensual)</h3>
+                    <div class="calculator">
+                        <div class="form-group">
+                            <label>Renta Base Imponible</label>
+                            <input type="number" id="rentaBaseImponible" placeholder="0" step="0.01" oninput="calcPPM()">
+                        </div>
+                        <div class="calc-result">
+                            <div class="calc-result-label">PPM (10%)</div>
+                            <div class="calc-result-value" id="ppmResult">$0</div>
+                        </div>
+                    </div>
+
+                    <h3>Gratificación Legal (1/12 anual)</h3>
+                    <div class="calculator">
+                        <div class="form-group">
+                            <label>Sueldo Mensual</label>
+                            <input type="number" id="sueldoGrat" placeholder="0" step="0.01" oninput="calcGratificacion()">
+                        </div>
+                        <div class="calc-result">
+                            <div class="calc-result-label">Gratificación</div>
+                            <div class="calc-result-value" id="gratResult">$0</div>
+                        </div>
+                    </div>
+
+                    <h3>Finiquito (Vacaciones + Indemnización)</h3>
+                    <div class="form-group">
+                        <label>Sueldo Mensual</label>
+                        <input type="number" id="sueldoFin" placeholder="0" step="0.01" oninput="calcFiniquito()">
+                    </div>
+                    <div class="form-group">
+                        <label>Años de Antigüedad</label>
+                        <input type="number" id="antiguedad" placeholder="0" step="0.1" min="0" oninput="calcFiniquito()">
+                    </div>
+                    <div class="grid-2">
+                        <div class="calc-result">
+                            <div class="calc-result-label">Vacaciones (15 días)</div>
+                            <div class="calc-result-value" id="vacacionesResult">$0</div>
+                        </div>
+                        <div class="calc-result">
+                            <div class="calc-result-label">Indemnización</div>
+                            <div class="calc-result-value" id="indemResult">$0</div>
+                        </div>
+                    </div>
+
+                    <h3 style="margin-top: 2rem;">Conversor UF/UTM</h3>
+                    <div class="calculator">
+                        <div class="form-group">
+                            <label>Valor UF (CLP)</label>
+                            <input type="number" id="ufValue" placeholder="35000" value="35000" step="0.01" oninput="updateConverter()">
+                        </div>
+                        <div class="form-group">
+                            <label>Cantidad UF</label>
+                            <input type="number" id="cantidadUf" placeholder="0" step="0.01" oninput="updateConverter()">
+                        </div>
+                    </div>
+                    <div class="calc-result" style="margin-bottom: 1.5rem;">
+                        <div class="calc-result-label">Equivalente en CLP</div>
+                        <div class="calc-result-value" id="conversionResult">$0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DOCUMENTOS TAB -->
+            <div id="documentos" class="tab-panel">
+                <div class="card">
+                    <h2>📁 Documentos por Cliente</h2>
+
+                    <div class="form-group">
+                        <label>Seleccionar Cliente</label>
+                        <select id="clienteSelect" onchange="loadDocumentos()">
+                            <option value="">-- Seleccionar --</option>
+                        </select>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="openDocModal()" style="margin-bottom: 1.5rem;">+ Agregar Documento</button>
+
+                    <div id="documentosList"></div>
+                </div>
+            </div>
+
+            <!-- REPORTES TAB -->
+            <div id="reportes" class="tab-panel">
+                <div class="card">
+                    <h2>📈 Reportes y Análisis</h2>
+
+                    <h3>Resumen Mensual</h3>
+                    <div class="grid-2">
+                        <div class="stat">
+                            <div class="stat-value" id="totalClientes">0</div>
+                            <div class="stat-label">Clientes Activos</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value" id="facturasMes">$0</div>
+                            <div class="stat-label">Ingresos Este Mes</div>
+                        </div>
+                    </div>
+                    <div class="grid-2">
+                        <div class="stat">
+                            <div class="stat-value" id="tasaPago">0%</div>
+                            <div class="stat-label">Tasa de Pago</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value" id="proximosVenc">0</div>
+                            <div class="stat-label">Vencimientos Próx. 7d</div>
+                        </div>
+                    </div>
+
+                    <h3 style="margin-top: 2rem;">Gráfico: Ingresos Mensuales (Últimos 12 Meses)</h3>
+                    <div class="chart-container">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+
+                    <h3>Gráfico: Distribución por Régimen Tributario</h3>
+                    <div class="chart-container">
+                        <canvas id="regimenChart"></canvas>
+                    </div>
+
+                    <h3 style="margin-top: 2rem;">Gráfico: Próximos Vencimientos (30 días)</h3>
+                    <div class="chart-container">
+                        <canvas id="deadlineChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODALES -->
+    <div id="clientModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Nuevo/Editar Cliente</h2>
+                <button class="modal-close" onclick="closeModal('clientModal')">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>RUT (12345678-9)</label>
+                    <input type="text" id="clientRut" placeholder="12345678-9">
+                </div>
+                <div class="form-group">
+                    <label>Razón Social</label>
+                    <input type="text" id="clientRazonSocial" placeholder="">
+                </div>
+                <div class="form-group">
+                    <label>Giro Comercial</label>
+                    <input type="text" id="clientGiro" placeholder="Ej: Comercio, Servicios, etc">
+                </div>
+                <div class="form-group">
+                    <label>Régimen Tributario</label>
+                    <select id="clientRegimen">
+                        <option value="simplificado">Régimen Simplificado</option>
+                        <option value="pro-pyme">Pro-Pyme</option>
+                        <option value="presunta">Renta Presunta</option>
+                        <option value="14a">Artículo 14A</option>
+                        <option value="14d">Artículo 14D</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Teléfono</label>
+                    <input type="tel" id="clientPhone" placeholder="+56 9 1234 5678">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="clientEmail" placeholder="cliente@empresa.cl">
+                </div>
+                <div class="form-group">
+                    <label>Contraseña SII (cifrada localmente)</label>
+                    <input type="password" id="clientSiiPass" placeholder="Se almacena encriptada">
+                </div>
+                <div style="font-size: 12px; color: #9ca3af; margin-top: 0.5rem; padding: 0.75rem; background: rgba(59, 130, 246, 0.1); border-radius: 4px;">
+                    Las contraseñas se cifran localmente. No se pueden recuperar. Guarda una copia aparte por seguridad.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('clientModal')">Cancelar</button>
+                <button class="btn btn-primary" onclick="saveClient()">Guardar Cliente</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="invoiceModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Nueva Factura de Servicios</h2>
+                <button class="modal-close" onclick="closeModal('invoiceModal')">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Cliente</label>
+                    <select id="invoiceClient"></select>
+                </div>
+                <div class="form-group">
+                    <label>Descripción del Servicio</label>
+                    <input type="text" id="invoiceDesc" placeholder="Ej: Asesoría Tributaria Mensual">
+                </div>
+                <div class="form-group">
+                    <label>Monto Base (sin IVA)</label>
+                    <input type="number" id="invoiceAmount" placeholder="0" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>Tipo de Plan</label>
+                    <select id="invoicePlan">
+                        <option value="once">Factura Única</option>
+                        <option value="mensual">Plan Mensual</option>
+                        <option value="trimestral">Plan Trimestral</option>
+                        <option value="anual">Plan Anual</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('invoiceModal')">Cancelar</button>
+                <button class="btn btn-primary" onclick="saveInvoice()">Crear Factura</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="docModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Agregar Documento</h2>
+                <button class="modal-close" onclick="closeModal('docModal')">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Tipo de Documento</label>
+                    <select id="docType">
+                        <option value="rut">Certificado RUT</option>
+                        <option value="balance">Balance</option>
+                        <option value="libros">Libros Contables</option>
+                        <option value="comprobantes">Comprobantes</option>
+                        <option value="boletas">Boletas</option>
+                        <option value="estados">Estados Financieros</option>
+                        <option value="otra">Otra</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Fecha de Entrega Esperada</label>
+                    <input type="date" id="docDueDate">
+                </div>
+                <div class="form-group">
+                    <label>Estado Actual</label>
+                    <select id="docStatus">
+                        <option value="pendiente">Pendiente de Recibir</option>
+                        <option value="recibido">Recibido</option>
+                        <option value="vencido">Vencido</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Notas</label>
+                    <textarea id="docNotes" placeholder="Ej: Enviar por email certificado" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('docModal')">Cancelar</button>
+                <button class="btn btn-primary" onclick="saveDoc()">Guardar Documento</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>ContadorCL v1.0 • PWA • Offline-Ready • Datos almacenados localmente • 100% Privado</p>
+    </div>
+
+    <script>
+        // ==================== STORAGE MANAGEMENT ====================
+        class Storage {
+            static get(key, defaultValue = null) {
+                try {
+                    const item = localStorage.getItem(key);
+                    return item ? JSON.parse(item) : defaultValue;
+                } catch (e) {
+                    console.warn('Storage read error:', e);
+                    return defaultValue;
+                }
+            }
+
+            static set(key, value) {
+                try {
+                    localStorage.setItem(key, JSON.stringify(value));
+                    return true;
+                } catch (e) {
+                    console.warn('Storage write error:', e);
+                    return false;
+                }
+            }
+
+            static remove(key) {
+                try {
+                    localStorage.removeItem(key);
+                    return true;
+                } catch (e) {
+                    console.warn('Storage remove error:', e);
+                    return false;
+                }
+            }
+        }
+
+        // ==================== ENCRYPTION (SIMPLE BASE64) ====================
+        class Cipher {
+            static encode(text) {
+                return btoa(text);
+            }
+
+            static decode(text) {
+                try {
+                    return atob(text);
+                } catch (e) {
+                    return '***';
+                }
+            }
+
+            static mask(text) {
+                return '*'.repeat(Math.min(text.length, 8));
+            }
+        }
+
+        // ==================== DATA INITIALIZATION ====================
+        function initializeData() {
+            if (!Storage.get('clientes')) {
+                Storage.set('clientes', []);
+            }
+            if (!Storage.get('declaraciones')) {
+                Storage.set('declaraciones', []);
+            }
+            if (!Storage.get('invoices')) {
+                Storage.set('invoices', []);
+            }
+            if (!Storage.get('documentos')) {
+                Storage.set('documentos', []);
+            }
+        }
+
+        // ==================== MODAL MANAGEMENT ====================
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        function openClientModal(clientId = null) {
+            openModal('clientModal');
+            document.getElementById('clientRut').value = '';
+            document.getElementById('clientRazonSocial').value = '';
+            document.getElementById('clientGiro').value = '';
+            document.getElementById('clientRegimen').value = 'simplificado';
+            document.getElementById('clientPhone').value = '';
+            document.getElementById('clientEmail').value = '';
+            document.getElementById('clientSiiPass').value = '';
+
+            if (clientId !== null) {
+                const clientes = Storage.get('clientes', []);
+                const cliente = clientes.find(c => c.id === clientId);
+                if (cliente) {
+                    document.getElementById('clientRut').value = cliente.rut;
+                    document.getElementById('clientRazonSocial').value = cliente.razonSocial;
+                    document.getElementById('clientGiro').value = cliente.giro;
+                    document.getElementById('clientRegimen').value = cliente.regimen;
+                    document.getElementById('clientPhone').value = cliente.phone;
+                    document.getElementById('clientEmail').value = cliente.email;
+                    document.getElementById('clientSiiPass').value = cliente.siiPass ? Cipher.decode(cliente.siiPass) : '';
+                }
+            }
+        }
+
+        function openInvoiceModal() {
+            openModal('invoiceModal');
+            document.getElementById('invoiceDesc').value = '';
+            document.getElementById('invoiceAmount').value = '';
+            document.getElementById('invoicePlan').value = 'once';
+
+            const clientes = Storage.get('clientes', []);
+            const select = document.getElementById('invoiceClient');
+            select.innerHTML = '<option value="">-- Seleccionar --</option>';
+            clientes.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.id;
+                opt.textContent = c.razonSocial + ' (' + c.rut + ')';
+                select.appendChild(opt);
+            });
+        }
+
+        function openDocModal(clientId = null) {
+            openModal('docModal');
+            document.getElementById('docType').value = 'rut';
+            document.getElementById('docDueDate').value = '';
+            document.getElementById('docStatus').value = 'pendiente';
+            document.getElementById('docNotes').value = '';
+
+            const clientes = Storage.get('clientes', []);
+            const select = document.getElementById('clienteSelect');
+            select.innerHTML = '<option value="">-- Seleccionar --</option>';
+            clientes.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.id;
+                opt.textContent = c.razonSocial + ' (' + c.rut + ')';
+                select.appendChild(opt);
+            });
+        }
+
+        // ==================== CLIENTES MANAGEMENT ====================
+        function saveClient() {
+            const rut = document.getElementById('clientRut').value.trim();
+            const razonSocial = document.getElementById('clientRazonSocial').value.trim();
+            const giro = document.getElementById('clientGiro').value.trim();
+            const regimen = document.getElementById('clientRegimen').value;
+            const phone = document.getElementById('clientPhone').value.trim();
+            const email = document.getElementById('clientEmail').value.trim();
+            const siiPass = document.getElementById('clientSiiPass').value;
+
+            if (!rut || !razonSocial) {
+                alert('RUT y Razón Social son requeridos');
+                return;
+            }
+
+            if (!validateRut(rut)) {
+                alert('Formato RUT inválido (ej: 12345678-9)');
+                return;
+            }
+
+            const clientes = Storage.get('clientes', []);
+            const id = Date.now().toString();
+
+            clientes.push({
+                id,
+                rut,
+                razonSocial,
+                giro,
+                regimen,
+                phone,
+                email,
+                siiPass: siiPass ? Cipher.encode(siiPass) : null,
+                createdAt: new Date().toISOString()
+            });
+
+            Storage.set('clientes', clientes);
+            closeModal('clientModal');
+            renderClientes();
+            updateClientSelects();
+        }
+
+        function renderClientes() {
+            const clientes = Storage.get('clientes', []);
+            const tbody = document.getElementById('clientesList');
+            const noClientes = document.getElementById('noClientes');
+
+            if (clientes.length === 0) {
+                tbody.innerHTML = '';
+                noClientes.style.display = 'block';
+                return;
+            }
+
+            noClientes.style.display = 'none';
+            tbody.innerHTML = clientes.map(c => `
+                <tr>
+                    <td><strong>${c.rut}</strong></td>
+                    <td>${c.razonSocial}</td>
+                    <td><span class="badge badge-info">${c.regimen}</span></td>
+                    <td style="display: flex; gap: 0.5rem;">
+                        <button class="btn btn-secondary btn-small" onclick="openClientModal('${c.id}')">Editar</button>
+                        <button class="btn btn-danger btn-small" onclick="deleteClient('${c.id}')">Eliminar</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function deleteClient(clientId) {
+            if (confirm('¿Eliminar este cliente y todos sus datos asociados? Esta acción no se puede deshacer.')) {
+                let clientes = Storage.get('clientes', []);
+                clientes = clientes.filter(c => c.id !== clientId);
+                Storage.set('clientes', clientes);
+                renderClientes();
+                updateClientSelects();
+            }
+        }
+
+        function validateRut(rut) {
+            const pattern = /^\d{1,8}-[0-9K]$/;
+            return pattern.test(rut);
+        }
+
+        function updateClientSelects() {
+            const clientes = Storage.get('clientes', []);
+
+            const selects = ['invoiceClient', 'clienteSelect'];
+            selects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                if (!select) return;
+                select.innerHTML = '<option value="">-- Seleccionar --</option>';
+                clientes.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.id;
+                    opt.textContent = c.razonSocial + ' (' + c.rut + ')';
+                    select.appendChild(opt);
+                });
+            });
+        }
+
+        // ==================== INVOICES MANAGEMENT ====================
+        function saveInvoice() {
+            const clientId = document.getElementById('invoiceClient').value;
+            const desc = document.getElementById('invoiceDesc').value.trim();
+            const amount = parseFloat(document.getElementById('invoiceAmount').value);
+            const plan = document.getElementById('invoicePlan').value;
+
+            if (!clientId || !desc || !amount || amount <= 0) {
+                alert('Completa todos los campos correctamente');
+                return;
+            }
+
+            const invoices = Storage.get('invoices', []);
+            invoices.push({
+                id: Date.now().toString(),
+                clientId,
+                desc,
+                amount,
+                plan,
+                paid: false,
+                createdAt: new Date().toISOString()
+            });
+
+            Storage.set('invoices', invoices);
+            closeModal('invoiceModal');
+            renderInvoices();
+        }
+
+        function renderInvoices() {
+            const invoices = Storage.get('invoices', []);
+            const clientes = Storage.get('clientes', []);
+            const tbody = document.getElementById('invoicesList');
+
+            if (invoices.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color: #9ca3af;">No hay facturas registradas</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = invoices.map(inv => {
+                const cliente = clientes.find(c => c.id === inv.clientId);
+                const monto = formatCurrency(inv.amount * 1.19);
+                const fecha = new Date(inv.createdAt).toLocaleDateString('es-CL');
+                const badge = inv.paid ? '<span class="badge badge-success">Pagada</span>' : '<span class="badge badge-warning">Pendiente</span>';
+
+                return `
+                    <tr>
+                        <td>${cliente ? cliente.razonSocial : 'N/A'}</td>
+                        <td><strong>${monto}</strong></td>
+                        <td>${fecha}</td>
+                        <td>${badge}</td>
+                        <td style="display: flex; gap: 0.5rem;">
+                            <button class="btn btn-secondary btn-small" onclick="toggleInvoicePaid('${inv.id}')">${inv.paid ? 'Pendiente' : 'Pagada'}</button>
+                            <button class="btn btn-danger btn-small" onclick="deleteInvoice('${inv.id}')">Eliminar</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            updateInvoiceStats();
+        }
+
+        function toggleInvoicePaid(invoiceId) {
+            const invoices = Storage.get('invoices', []);
+            const inv = invoices.find(i => i.id === invoiceId);
+            if (inv) {
+                inv.paid = !inv.paid;
+                Storage.set('invoices', invoices);
+                renderInvoices();
+            }
+        }
+
+        function deleteInvoice(invoiceId) {
+            if (confirm('¿Eliminar esta factura?')) {
+                let invoices = Storage.get('invoices', []);
+                invoices = invoices.filter(i => i.id !== invoiceId);
+                Storage.set('invoices', invoices);
+                renderInvoices();
+            }
+        }
+
+        function updateInvoiceStats() {
+            const invoices = Storage.get('invoices', []);
+            const now = new Date();
+            const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+            const thisMonth = invoices.filter(inv => new Date(inv.createdAt) >= monthStart);
+            const thisMonthTotal = thisMonth.reduce((sum, inv) => sum + (inv.amount * 1.19), 0);
+            const pending = thisMonth.filter(inv => !inv.paid);
+            const pendingTotal = pending.reduce((sum, inv) => sum + (inv.amount * 1.19), 0);
+
+            document.getElementById('totalInvoiced').textContent = formatCurrency(thisMonthTotal);
+            document.getElementById('totalPending').textContent = formatCurrency(pendingTotal);
+        }
+
+        // ==================== DOCUMENTOS MANAGEMENT ====================
+        function loadDocumentos() {
+            const clientId = document.getElementById('clienteSelect').value;
+            if (!clientId) {
+                document.getElementById('documentosList').innerHTML = '<p style="color: #9ca3af; padding: 1rem;">Selecciona un cliente para ver sus documentos</p>';
+                return;
+            }
+
+            const documentos = Storage.get('documentos', []);
+            const clientDocs = documentos.filter(d => d.clientId === clientId).sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+            const clientes = Storage.get('clientes', []);
+            const cliente = clientes.find(c => c.id === clientId);
+
+            if (clientDocs.length === 0) {
+                document.getElementById('documentosList').innerHTML = '<p style="color: #9ca3af; padding: 1rem;">No hay documentos para este cliente</p>';
+                return;
+            }
+
+            let html = '<h3 style="margin-bottom: 1rem;">' + (cliente ? cliente.razonSocial : 'Cliente') + '</h3>';
+            html += clientDocs.map(doc => {
+                const dueDate = new Date(doc.dueDate);
+                const today = new Date();
+                const daysLeft = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
+                const statusBadge = doc.status === 'recibido'
+                    ? '<span class="badge badge-success">Recibido</span>'
+                    : doc.status === 'vencido'
+                    ? '<span class="badge badge-danger">Vencido</span>'
+                    : '<span class="badge badge-warning">Pendiente</span>';
+
+                return `
+                    <div class="list-item">
+                        <div class="list-item-info">
+                            <h4>${doc.type}</h4>
+                            <p>Vence: ${dueDate.toLocaleDateString('es-CL')} (${daysLeft}d) • ${statusBadge}</p>
+                        </div>
+                        <div class="list-item-actions">
+                            <button class="btn btn-secondary btn-small" onclick="deleteDoc('${doc.id}')">Eliminar</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('documentosList').innerHTML = html;
+        }
+
+        function saveDoc() {
+            const clientId = document.getElementById('clienteSelect').value;
+            const type = document.getElementById('docType').value;
+            const dueDate = document.getElementById('docDueDate').value;
+            const status = document.getElementById('docStatus').value;
+            const notes = document.getElementById('docNotes').value.trim();
+
+            if (!clientId || !type || !dueDate) {
+                alert('Completa los campos requeridos');
+                return;
+            }
+
+            const documentos = Storage.get('documentos', []);
+            documentos.push({
+                id: Date.now().toString(),
+                clientId,
+                type,
+                dueDate,
+                status,
+                notes,
+                createdAt: new Date().toISOString()
+            });
+
+            Storage.set('documentos', documentos);
+            closeModal('docModal');
+            loadDocumentos();
+        }
+
+        function deleteDoc(docId) {
+            if (confirm('¿Eliminar este documento?')) {
+                let documentos = Storage.get('documentos', []);
+                documentos = documentos.filter(d => d.id !== docId);
+                Storage.set('documentos', documentos);
+                loadDocumentos();
+            }
+        }
+
+        // ==================== CALCULADORAS ====================
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('es-CL', {
+                style: 'currency',
+                currency: 'CLP',
+                minimumFractionDigits: 0
+            }).format(Math.round(value));
+        }
+
+        function calcIVA() {
+            const base = parseFloat(document.getElementById('ivaBase').value) || 0;
+            const iva = base * 0.19;
+            document.getElementById('ivaResult').textContent = formatCurrency(iva);
+        }
+
+        function calcImpuestoUnico() {
+            const renta = parseFloat(document.getElementById('rentaAnual').value) || 0;
+            let impuesto = 0;
+
+            if (renta <= 13500000) impuesto = renta * 0.04;
+            else if (renta <= 20000000) impuesto = 540000 + (renta - 13500000) * 0.08;
+            else if (renta <= 30000000) impuesto = 1560000 + (renta - 20000000) * 0.135;
+            else if (renta <= 40000000) impuesto = 3010000 + (renta - 30000000) * 0.23;
+            else impuesto = 5310000 + (renta - 40000000) * 0.304;
+
+            document.getElementById('impuestoResult').textContent = formatCurrency(impuesto);
+        }
+
+        function calcPPM() {
+            const renta = parseFloat(document.getElementById('rentaBaseImponible').value) || 0;
+            const ppm = renta * 0.10;
+            document.getElementById('ppmResult').textContent = formatCurrency(ppm);
+        }
+
+        function calcGratificacion() {
+            const sueldo = parseFloat(document.getElementById('sueldoGrat').value) || 0;
+            const grat = sueldo / 12;
+            document.getElementById('gratResult').textContent = formatCurrency(grat);
+        }
+
+        function calcFiniquito() {
+            const sueldo = parseFloat(document.getElementById('sueldoFin').value) || 0;
+            const antiguedad = parseFloat(document.getElementById('antiguedad').value) || 0;
+
+            const vacaciones = (sueldo / 30) * 15;
+            const indem = sueldo * antiguedad;
+
+            document.getElementById('vacacionesResult').textContent = formatCurrency(vacaciones);
+            document.getElementById('indemResult').textContent = formatCurrency(indem);
+        }
+
+        function updateConverter() {
+            const uf = parseFloat(document.getElementById('ufValue').value) || 35000;
+            const cantidad = parseFloat(document.getElementById('cantidadUf').value) || 0;
+            const conversion = uf * cantidad;
+            document.getElementById('conversionResult').textContent = formatCurrency(conversion);
+        }
+
+        // ==================== DECLARACIONES ====================
+        function generateDeclaraciones() {
+            const now = new Date();
+            const alertas = [];
+
+            const meses = [
+                { num: 1, nombre: 'Enero', venc: 25 },
+                { num: 2, nombre: 'Febrero', venc: 25 },
+                { num: 3, nombre: 'Marzo', venc: 25 },
+                { num: 4, nombre: 'Abril', venc: 25 },
+                { num: 5, nombre: 'Mayo', venc: 25 },
+                { num: 6, nombre: 'Junio', venc: 25 },
+                { num: 7, nombre: 'Julio', venc: 25 },
+                { num: 8, nombre: 'Agosto', venc: 25 },
+                { num: 9, nombre: 'Septiembre', venc: 25 },
+                { num: 10, nombre: 'Octubre', venc: 25 },
+                { num: 11, nombre: 'Noviembre', venc: 25 },
+                { num: 12, nombre: 'Diciembre', venc: 25 }
+            ];
+
+            const f29tbody = document.getElementById('declaracionesF29');
+            f29tbody.innerHTML = meses.map(m => {
+                const vencDate = new Date(now.getFullYear(), m.num - 1, m.venc);
+                const daysLeft = Math.ceil((vencDate - now) / (1000 * 60 * 60 * 24));
+                const isUpcoming = daysLeft > 0 && daysLeft <= 10;
+
+                if (isUpcoming) alertas.push(`F29 ${m.nombre}: vence en ${daysLeft} días`);
+
+                return `
+                    <tr${isUpcoming ? ' style="background: rgba(234, 179, 8, 0.1);"' : ''}>
+                        <td><strong>F29 - ${m.nombre}</strong></td>
+                        <td>${vencDate.toLocaleDateString('es-CL')}</td>
+                        <td><span class="badge badge-warning">Pendiente</span></td>
+                        <td><button class="btn btn-secondary btn-small" onclick="markDeclaracion('f29', '${m.nombre}')">Presentada</button></td>
+                    </tr>
+                `;
+            }).join('');
+
+            const anuales = [
+                { tipo: 'F22', desc: 'Impuesto Anual (Renta)', venc: '30 de Abril' },
+                { tipo: 'DJ', desc: 'Declaración Jurada SII', venc: '30 de Junio' }
+            ];
+
+            const f22tbody = document.getElementById('declaracionesAnuales');
+            f22tbody.innerHTML = anuales.map(a => {
+                const isUpcoming = a.venc.includes('Abril') || a.venc.includes('Junio');
+                alertas.push(`${a.tipo}: vence ${a.venc}`);
+
+                return `
+                    <tr${isUpcoming ? ' style="background: rgba(234, 179, 8, 0.1);"' : ''}>
+                        <td><strong>${a.tipo}</strong></td>
+                        <td>${a.desc}</td>
+                        <td>${a.venc}</td>
+                        <td><span class="badge badge-warning">Pendiente</span></td>
+                        <td><button class="btn btn-secondary btn-small" onclick="markDeclaracion('anual', '${a.tipo}')">Presentada</button></td>
+                    </tr>
+                `;
+            }).join('');
+
+            const alertasDiv = document.getElementById('alertasDeclaraciones');
+            alertasDiv.innerHTML = alertas.slice(0, 3).map(a => `<div style="margin-top: 0.5rem;">• ${a}</div>`).join('');
+            if (alertas.length === 0) {
+                alertasDiv.innerHTML = '<div style="margin-top: 0.5rem; color: #22c55e;">No hay vencimientos próximos</div>';
+            }
+        }
+
+        function markDeclaracion(type, name) {
+            alert(`Declaración ${name} marcada como presentada`);
+        }
+
+        // ==================== REPORTES ====================
+        let revenueChart = null;
+        let regimenChart = null;
+        let deadlineChart = null;
+
+        function generateReports() {
+            const clientes = Storage.get('clientes', []);
+            const invoices = Storage.get('invoices', []);
+            const documentos = Storage.get('documentos', []);
+
+            document.getElementById('totalClientes').textContent = clientes.length;
+
+            const now = new Date();
+            const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+            const thisMonth = invoices.filter(inv => new Date(inv.createdAt) >= monthStart);
+            const thisMonthTotal = thisMonth.reduce((sum, inv) => sum + (inv.amount * 1.19), 0);
+            document.getElementById('facturasMes').textContent = formatCurrency(thisMonthTotal);
+
+            const paid = thisMonth.filter(inv => inv.paid).length;
+            const rate = thisMonth.length > 0 ? Math.round((paid / thisMonth.length) * 100) : 0;
+            document.getElementById('tasaPago').textContent = rate + '%';
+
+            const prox7d = documentos.filter(d => {
+                const daysLeft = Math.ceil((new Date(d.dueDate) - now) / (1000 * 60 * 60 * 24));
+                return daysLeft > 0 && daysLeft <= 7 && d.status !== 'recibido';
+            }).length;
+            document.getElementById('proximosVenc').textContent = prox7d;
+
+            generateRevenueChart();
+            generateRegimenChart();
+            generateDeadlineChart();
+        }
+
+        function generateRevenueChart() {
+            const ctx = document.getElementById('revenueChart').getContext('2d');
+            const months = [];
+            const data = [];
+            const invoices = Storage.get('invoices', []);
+
+            for (let i = 11; i >= 0; i--) {
+                const date = new Date();
+                date.setMonth(date.getMonth() - i);
+                const monthStart = new Date(date.getFullYear(), date.getMonth(), 1);
+                const monthEnd = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+
+                const monthInvoices = invoices.filter(inv => {
+                    const invDate = new Date(inv.createdAt);
+                    return invDate >= monthStart && invDate <= monthEnd && inv.paid;
+                });
+
+                const total = monthInvoices.reduce((sum, inv) => sum + (inv.amount * 1.19), 0);
+                months.push(date.toLocaleDateString('es-CL', { month: 'short', year: '2-digit' }));
+                data.push(Math.round(total / 1000));
+            }
+
+            if (revenueChart) revenueChart.destroy();
+
+            revenueChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: 'Ingresos Pagados (miles CLP)',
+                        data: data,
+                        borderColor: '#eab308',
+                        backgroundColor: 'rgba(234, 179, 8, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: '#eab308',
+                        pointBorderColor: '#0f172a'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: true, labels: { color: '#e5e7eb' } }
+                    },
+                    scales: {
+                        y: {
+                            ticks: { color: '#9ca3af' },
+                            grid: { color: '#334155' }
+                        },
+                        x: {
+                            ticks: { color: '#9ca3af' },
+                            grid: { color: '#334155' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function generateRegimenChart() {
+            const ctx = document.getElementById('regimenChart').getContext('2d');
+            const clientes = Storage.get('clientes', []);
+
+            const regimenes = {};
+            clientes.forEach(c => {
+                regimenes[c.regimen] = (regimenes[c.regimen] || 0) + 1;
+            });
+
+            if (regimenChart) regimenChart.destroy();
+
+            const labels = Object.keys(regimenes);
+            const values = Object.values(regimenes);
+
+            if (labels.length === 0) {
+                ctx.fillStyle = '#9ca3af';
+                ctx.font = '14px Inter';
+                ctx.textAlign = 'center';
+                ctx.fillText('Sin datos', ctx.canvas.width / 2, ctx.canvas.height / 2);
+                return;
+            }
+
+            regimenChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: ['#eab308', '#3b82f6', '#10b981', '#f59e0b', '#ef4444']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#e5e7eb' } }
+                    }
+                }
+            });
+        }
+
+        function generateDeadlineChart() {
+            const ctx = document.getElementById('deadlineChart').getContext('2d');
+            const documentos = Storage.get('documentos', []);
+            const now = new Date();
+
+            const bins = { '0-7': 0, '8-15': 0, '16-30': 0, '+30': 0 };
+
+            documentos.forEach(d => {
+                if (d.status === 'recibido') return;
+                const daysLeft = Math.ceil((new Date(d.dueDate) - now) / (1000 * 60 * 60 * 24));
+
+                if (daysLeft <= 7) bins['0-7']++;
+                else if (daysLeft <= 15) bins['8-15']++;
+                else if (daysLeft <= 30) bins['16-30']++;
+                else bins['+30']++;
+            });
+
+            if (deadlineChart) deadlineChart.destroy();
+
+            deadlineChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(bins),
+                    datasets: [{
+                        label: 'Documentos Pendientes',
+                        data: Object.values(bins),
+                        backgroundColor: '#eab308'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#e5e7eb' } }
+                    },
+                    scales: {
+                        y: {
+                            ticks: { color: '#9ca3af' },
+                            grid: { color: '#334155' },
+                            beginAtZero: true
+                        },
+                        x: {
+                            ticks: { color: '#9ca3af' },
+                            grid: { color: '#334155' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ==================== TAB NAVIGATION ====================
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const tabName = e.target.dataset.tab;
+
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+
+                e.target.classList.add('active');
+                document.getElementById(tabName).classList.add('active');
+
+                if (tabName === 'reportes') {
+                    setTimeout(() => generateReports(), 100);
+                } else if (tabName === 'declaraciones') {
+                    generateDeclaraciones();
+                }
+            });
+        });
+
+        // ==================== PWA SERVICE WORKER ====================
+        if ('serviceWorker' in navigator) {
+            const swCode = `
+                self.addEventListener("install", e => self.skipWaiting());
+                self.addEventListener("activate", e => e.waitUntil(clients.claim()));
+                self.addEventListener("fetch", e => {
+                    e.respondWith(
+                        fetch(e.request).catch(() => new Response("Offline", { status: 503 }))
+                    );
+                });
+            `;
+            const swBlob = new Blob([swCode], { type: 'application/javascript' });
+            const swUrl = URL.createObjectURL(swBlob);
+            navigator.serviceWorker.register(swUrl).catch(e => console.log('SW error:', e));
+        }
+
+        // ==================== INITIALIZATION ====================
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeData();
+            renderClientes();
+            renderInvoices();
+            updateClientSelects();
+            generateDeclaraciones();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0369a1">
+<meta name="description" content="Calculadora laboral chilena: sueldo liquido, horas extra, finiquito y mas.">
+<title>SueldoCL — Calculadora Laboral Chilena</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f0f6ff;--card:#ffffff;--card2:#e8f2ff;--border:#b8d4f0;
+  --accent:#0369a1;--text:#1e3a5f;--muted:#6b8fa5;
+  --green:#16a34a;--yellow:#d97706;--red:#dc2626;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+header{background:linear-gradient(90deg,#0c4a7a,#0369a1);padding:13px 18px;position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;color:white}
+header h1{font-size:1.15rem;font-weight:700;letter-spacing:.3px}
+header .hsub{font-size:.75rem;opacity:.75;font-weight:400}
+nav{background:#fff;border-bottom:2px solid var(--border);display:flex;overflow-x:auto;position:sticky;top:62px;z-index:40;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+nav button{flex:0 0 auto;padding:10px 16px;border:none;background:none;font-family:'Inter',sans-serif;font-size:.78rem;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;transition:color .15s}
+nav button.active{color:var(--accent);border-bottom-color:var(--accent);background:var(--card2)}
+.tab{display:none;padding:16px;max-width:640px;margin:0 auto}
+.tab.active{display:block}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px}
+.card-title{font-size:.8rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
+label{display:block;font-size:.82rem;font-weight:500;color:var(--text);margin-bottom:4px;margin-top:10px}
+label:first-of-type{margin-top:0}
+input[type=number],input[type=text],input[type=date],select{
+  width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;
+  font-family:'Inter',sans-serif;font-size:16px;color:var(--text);background:#fff;
+  outline:none;transition:border-color .15s
+}
+input:focus,select:focus{border-color:var(--accent)}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)}
+.toggle-row:last-child{border-bottom:none}
+.tl-label{font-size:.85rem;color:var(--text)}
+.tl-sub{font-size:.75rem;color:var(--muted)}
+.switch{position:relative;width:44px;height:24px;flex-shrink:0}
+.switch input{opacity:0;width:0;height:0}
+.slider{position:absolute;cursor:pointer;inset:0;background:#ccc;border-radius:24px;transition:.2s}
+.slider:before{content:'';position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:white;border-radius:50%;transition:.2s}
+input:checked + .slider{background:var(--accent)}
+input:checked + .slider:before{transform:translateX(20px)}
+.xfield{margin-top:8px;display:none}
+.xfield.show{display:block}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:11px 18px;border-radius:9px;border:none;
+  font-family:'Inter',sans-serif;font-size:.87rem;font-weight:600;cursor:pointer;transition:background .15s}
+.btn-sec{background:var(--card2);color:var(--accent);border:1.5px solid var(--border)}
+.btn-sec:hover{background:var(--border)}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.rtable{width:100%;border-collapse:collapse;margin-top:8px}
+.rtable td{padding:7px 4px;font-size:.85rem;border-bottom:1px solid var(--border)}
+.rtable tr:last-child td{border-bottom:none}
+.rtable td:last-child{text-align:right;font-weight:600}
+.big-result{text-align:center;padding:14px 10px;background:linear-gradient(135deg,var(--card2),#d4e8fa);border-radius:10px;margin:10px 0}
+.big-result .br-label{font-size:.78rem;color:var(--muted);font-weight:500}
+.big-result .br-value{font-size:1.7rem;font-weight:700;color:var(--accent)}
+.big-result .br-sub{font-size:.8rem;color:var(--muted);margin-top:2px}
+.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.72rem;font-weight:600}
+.b-green{background:#dcfce7;color:var(--green)}
+.b-yellow{background:#fef9c3;color:var(--yellow)}
+.alert{padding:10px 13px;border-radius:8px;font-size:.82rem;font-weight:500;margin-top:10px}
+.al-yellow{background:#fef9c3;color:#92400e;border-left:3px solid var(--yellow)}
+.al-red{background:#fee2e2;color:#991b1b;border-left:3px solid var(--red)}
+.al-green{background:#dcfce7;color:#14532d;border-left:3px solid var(--green)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.afp-tbl{width:100%;border-collapse:collapse;font-size:.82rem}
+.afp-tbl th{background:var(--card2);padding:7px 8px;text-align:left;font-weight:600;color:var(--accent);border-bottom:2px solid var(--border)}
+.afp-tbl td{padding:7px 8px;border-bottom:1px solid var(--border)}
+.afp-tbl tr.best td{color:#14532d;font-weight:600;background:#dcfce7}
+.sep{height:1px;background:var(--border);margin:14px 0}
+.imm-box{background:linear-gradient(135deg,#0c4a7a,#0369a1);color:white;border-radius:12px;padding:18px;text-align:center;margin-bottom:14px}
+.imm-box .iv{font-size:2rem;font-weight:700}
+.imm-box .il{font-size:.8rem;opacity:.8;margin-top:2px}
+.rg{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.rg label{display:flex;align-items:center;gap:5px;padding:7px 12px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;font-size:.83rem;font-weight:500;margin:0;background:#fff;transition:all .15s}
+.rg input[type=radio]{width:auto;padding:0;border:none}
+.rg label:has(input:checked){border-color:var(--accent);background:var(--card2);color:var(--accent)}
+.mono{font-variant-numeric:tabular-nums}
+.tenure-info{font-size:.82rem;color:var(--muted);margin-top:6px;padding:6px 10px;background:var(--card2);border-radius:6px}
+@media(max-width:420px){.row2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>SueldoCL</h1>
+  <span class="hsub">Calculadora Laboral Chilena</span>
+</header>
+
+<nav id="mainnav">
+  <button class="active" onclick="showTab(0)">&#128176; Sueldo Liquido</button>
+  <button onclick="showTab(1)">&#9200; Horas Extra</button>
+  <button onclick="showTab(2)">&#128203; Finiquito</button>
+  <button onclick="showTab(3)">&#128202; Otras</button>
+</nav>
+
+<!-- TAB 0: SUELDO LIQUIDO -->
+<div class="tab active" id="tab0">
+  <div class="card">
+    <div class="card-title">Datos del trabajador</div>
+
+    <label>Sueldo Bruto (CLP)</label>
+    <input type="number" id="t1_bruto" placeholder="ej: 800000" min="0" oninput="calcSueldo()">
+
+    <label>Tipo de contrato</label>
+    <div class="rg">
+      <label><input type="radio" name="t1_tipo" value="dep" checked onchange="calcSueldo()"> Dependiente</label>
+      <label><input type="radio" name="t1_tipo" value="ind" onchange="calcSueldo()"> Independiente</label>
+    </div>
+
+    <label>AFP</label>
+    <select id="t1_afp" onchange="calcSueldo()">
+      <option value="11.44">AFP Capital — 11.44%</option>
+      <option value="11.44">AFP Cuprum — 11.44%</option>
+      <option value="11.27">AFP Habitat — 11.27%</option>
+      <option value="10.58">AFP Modelo — 10.58%</option>
+      <option value="11.16">AFP Planvital — 11.16%</option>
+      <option value="11.44">AFP Provida — 11.44%</option>
+      <option value="10.49">AFP Uno — 10.49%</option>
+    </select>
+
+    <label>Salud</label>
+    <div class="rg">
+      <label><input type="radio" name="t1_salud" value="fonasa" checked onchange="toggleSalud()"> FONASA (7%)</label>
+      <label><input type="radio" name="t1_salud" value="isapre" onchange="toggleSalud()"> ISAPRE</label>
+    </div>
+    <div class="xfield" id="t1_isapre_row">
+      <label>Tasa ISAPRE (%)</label>
+      <input type="number" id="t1_isapre_pct" value="7" step="0.1" min="0" max="20" oninput="calcSueldo()">
+    </div>
+
+    <div class="sep"></div>
+    <div class="card-title" style="margin-top:0">Bonos no imponibles</div>
+
+    <div class="toggle-row">
+      <div>
+        <div class="tl-label">Movilizacion</div>
+        <div class="tl-sub">No imponible ni tributable</div>
+      </div>
+      <label class="switch"><input type="checkbox" id="t1_mov" onchange="toggleMov()"><span class="slider"></span></label>
+    </div>
+    <div class="xfield" id="t1_mov_row">
+      <label>Monto movilizacion (CLP)</label>
+      <input type="number" id="t1_mov_monto" value="30000" min="0" oninput="calcSueldo()">
+    </div>
+
+    <div class="toggle-row">
+      <div>
+        <div class="tl-label">Colacion</div>
+        <div class="tl-sub">No imponible ni tributable</div>
+      </div>
+      <label class="switch"><input type="checkbox" id="t1_col" onchange="toggleCol()"><span class="slider"></span></label>
+    </div>
+    <div class="xfield" id="t1_col_row">
+      <label>Monto colacion (CLP)</label>
+      <input type="number" id="t1_col_monto" value="50000" min="0" oninput="calcSueldo()">
+    </div>
+  </div>
+
+  <div class="card" id="t1_result_card" style="display:none">
+    <div class="card-title">Resultado</div>
+    <div class="big-result">
+      <div class="br-label">Sueldo Liquido Estimado</div>
+      <div class="br-value mono" id="t1_liquido">—</div>
+      <div class="br-sub" id="t1_ratio_sub">—</div>
+    </div>
+    <table class="rtable"><tbody id="t1_tbody"></tbody></table>
+    <div id="t1_imp_alert"></div>
+    <div class="btn-row">
+      <button class="btn btn-sec" onclick="copiarSueldo()">&#128203; Copiar resumen</button>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 1: HORAS EXTRA -->
+<div class="tab" id="tab1">
+  <div class="card">
+    <div class="card-title">Datos para calculo</div>
+
+    <label>Sueldo Base Mensual (CLP)</label>
+    <input type="number" id="t2_base" placeholder="ej: 700000" min="0" oninput="calcHoras()">
+
+    <div class="row2">
+      <div>
+        <label>Jornada semanal (horas)</label>
+        <input type="number" id="t2_jornada" value="45" min="1" max="45" oninput="calcHoras()">
+      </div>
+      <div>
+        <label>Horas extra trabajadas</label>
+        <input type="number" id="t2_hextra" placeholder="ej: 8" min="0" oninput="calcHoras()">
+      </div>
+    </div>
+
+    <label>Tipo de hora extra</label>
+    <div class="rg">
+      <label><input type="radio" name="t2_tipo" value="50" checked onchange="calcHoras()"> Dia laboral (+50%)</label>
+      <label><input type="radio" name="t2_tipo" value="100" onchange="calcHoras()"> Festivo/Domingo (+100%)</label>
+    </div>
+  </div>
+
+  <div class="card" id="t2_result_card" style="display:none">
+    <div class="card-title">Resultado horas extra</div>
+    <table class="rtable"><tbody id="t2_tbody"></tbody></table>
+    <div id="t2_alerts" style="margin-top:10px"></div>
+  </div>
+</div>
+
+<!-- TAB 2: FINIQUITO -->
+<div class="tab" id="tab2">
+  <div class="card">
+    <div class="card-title">Datos del contrato</div>
+
+    <label>Sueldo Bruto Mensual (CLP)</label>
+    <input type="number" id="t3_bruto" placeholder="ej: 900000" min="0" oninput="calcFiniquito()">
+
+    <div class="row2">
+      <div>
+        <label>Fecha de inicio</label>
+        <input type="date" id="t3_inicio" oninput="calcFiniquito()">
+      </div>
+      <div>
+        <label>Fecha de termino</label>
+        <input type="date" id="t3_fin" oninput="calcFiniquito()">
+      </div>
+    </div>
+
+    <div id="t3_tenure_label"></div>
+
+    <label>Causal de termino</label>
+    <select id="t3_causal" onchange="calcFiniquito()">
+      <option value="159">Art. 159 — Renuncia voluntaria</option>
+      <option value="160">Art. 160 — Mutuo acuerdo</option>
+      <option value="161a">Art. 161 — Necesidades de la empresa</option>
+      <option value="injusto">Despido injustificado (+ 20% recargo)</option>
+    </select>
+
+    <label>Vacaciones pendientes</label>
+    <div class="rg">
+      <label><input type="radio" name="t3_vacmode" value="auto" checked onchange="toggleVacMode();calcFiniquito()"> Calcular automatico</label>
+      <label><input type="radio" name="t3_vacmode" value="manual" onchange="toggleVacMode();calcFiniquito()"> Ingresar manual</label>
+    </div>
+    <div class="xfield show" id="t3_vac_auto_row">
+      <div id="t3_vac_auto_val" style="font-size:.82rem;color:var(--muted);margin-top:4px;padding:6px 10px;background:var(--card2);border-radius:6px">Se calculara en base a las fechas ingresadas.</div>
+    </div>
+    <div class="xfield" id="t3_vac_manual_row">
+      <label>Dias de vacaciones pendientes</label>
+      <input type="number" id="t3_vac_dias" value="0" min="0" oninput="calcFiniquito()">
+    </div>
+
+    <label>Gratificacion ya pagada en el ano (CLP)</label>
+    <input type="number" id="t3_grat_pagada" value="0" min="0" oninput="calcFiniquito()">
+
+    <div class="toggle-row" style="margin-top:10px">
+      <div>
+        <div class="tl-label">Aviso previo dado</div>
+        <div class="tl-sub">Empleador dio aviso con 30 dias de anticipacion</div>
+      </div>
+      <label class="switch"><input type="checkbox" id="t3_aviso" checked onchange="calcFiniquito()"><span class="slider"></span></label>
+    </div>
+  </div>
+
+  <div class="card" id="t3_result_card" style="display:none">
+    <div class="card-title">Desglose del finiquito</div>
+    <table class="rtable"><tbody id="t3_tbody"></tbody></table>
+    <div class="big-result" style="margin-top:12px">
+      <div class="br-label">TOTAL FINIQUITO</div>
+      <div class="br-value mono" id="t3_total">—</div>
+    </div>
+    <div id="t3_alerts" style="margin-top:8px"></div>
+    <div class="btn-row">
+      <button class="btn btn-sec" onclick="copiarFiniquito()">&#128203; Copiar finiquito</button>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 3: OTRAS -->
+<div class="tab" id="tab3">
+
+  <div class="imm-box">
+    <div class="il">Ingreso Minimo Mensual (IMM) — Chile 2025</div>
+    <div class="iv">$528.000</div>
+    <div class="il" style="margin-top:6px">UTM: $67.294 &nbsp;|&nbsp; UF aprox.: $38.500</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Gratificacion Legal</div>
+    <div class="row2">
+      <div>
+        <label>Sueldo mensual (CLP)</label>
+        <input type="number" id="t4_grat_sueldo" placeholder="ej: 700000" min="0" oninput="calcGratificacion()">
+      </div>
+      <div>
+        <label>Meses trabajados en el ano</label>
+        <input type="number" id="t4_grat_meses" value="12" min="1" max="12" oninput="calcGratificacion()">
+      </div>
+    </div>
+    <div id="t4_grat_result" style="margin-top:12px"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Comparador AFP</div>
+    <label>Sueldo base para comparar (CLP)</label>
+    <input type="number" id="t4_afp_sueldo" placeholder="ej: 800000" min="0" oninput="calcComparadorAFP()">
+    <div style="margin-top:12px;overflow-x:auto">
+      <table class="afp-tbl">
+        <thead>
+          <tr>
+            <th>AFP</th>
+            <th>Tasa</th>
+            <th>Costo/mes</th>
+            <th>Rent. 12m</th>
+          </tr>
+        </thead>
+        <tbody id="t4_afp_tbody"></tbody>
+      </table>
+    </div>
+    <div style="font-size:.75rem;color:var(--muted);margin-top:8px">* Rentabilidad referencial 12 meses (datos estimados). Consulta datos oficiales en spensiones.cl</div>
+  </div>
+
+</div>
+
+<script>
+// ── Constantes Chile 2024-2025
+var IMM = 528000;
+var UTM = 67294;
+
+var AFP_DATA = [
+  {nombre:"AFP Capital",   tasa:11.44, rent:8.2},
+  {nombre:"AFP Cuprum",    tasa:11.44, rent:7.8},
+  {nombre:"AFP Habitat",   tasa:11.27, rent:8.5},
+  {nombre:"AFP Modelo",    tasa:10.58, rent:7.1},
+  {nombre:"AFP Planvital", tasa:11.16, rent:6.9},
+  {nombre:"AFP Provida",   tasa:11.44, rent:7.6},
+  {nombre:"AFP Uno",       tasa:10.49, rent:6.5}
+];
+
+// ── Helpers
+function fmt(n){
+  return '$' + Math.round(n).toLocaleString('es-CL');
+}
+function pct(n){ return n.toFixed(1) + '%'; }
+function getV(id){ return parseFloat(document.getElementById(id).value) || 0; }
+function getEl(id){ return document.getElementById(id); }
+
+// Impuesto 2da categoria progresivo (tramos vigentes CL 2024-2025)
+// Se calcula sobre la base imponible (bruto - previsiones)
+function calcImpProgresivo(utm) {
+  if (utm <= 13.5) return 0;
+  var brackets = [
+    {lo:0,    hi:13.5,   r:0    },
+    {lo:13.5, hi:30,     r:0.04 },
+    {lo:30,   hi:50,     r:0.08 },
+    {lo:50,   hi:70,     r:0.135},
+    {lo:70,   hi:90,     r:0.23 },
+    {lo:90,   hi:120,    r:0.304},
+    {lo:120,  hi:150,    r:0.35 },
+    {lo:150,  hi:999999, r:0.40 }
+  ];
+  var total = 0;
+  for (var i = 0; i < brackets.length; i++) {
+    var b = brackets[i];
+    if (utm <= b.lo) break;
+    var taxable = Math.min(utm, b.hi) - b.lo;
+    if (taxable > 0) total += taxable * b.r * UTM;
+  }
+  return total;
+}
+
+// ── Navegacion de tabs
+function showTab(n) {
+  var tabs = document.querySelectorAll('.tab');
+  var btns = document.querySelectorAll('#mainnav button');
+  for (var i = 0; i < tabs.length; i++) {
+    tabs[i].classList.toggle('active', i === n);
+    btns[i].classList.toggle('active', i === n);
+  }
+  savePrefs();
+}
+
+// ── localStorage
+function savePrefs() {
+  try {
+    localStorage.setItem('sueldocl_v2', JSON.stringify({
+      t1_bruto:     getEl('t1_bruto').value,
+      t1_isapre_pct:getEl('t1_isapre_pct').value,
+      t2_base:      getEl('t2_base').value,
+      t2_jornada:   getEl('t2_jornada').value,
+      t3_bruto:     getEl('t3_bruto').value,
+      t4_grat_sueldo:getEl('t4_grat_sueldo').value,
+      t4_afp_sueldo:getEl('t4_afp_sueldo').value
+    }));
+  } catch(e) {}
+}
+
+function loadPrefs() {
+  try {
+    var raw = localStorage.getItem('sueldocl_v2');
+    if (!raw) return;
+    var d = JSON.parse(raw);
+    if (d.t1_bruto)       getEl('t1_bruto').value       = d.t1_bruto;
+    if (d.t1_isapre_pct)  getEl('t1_isapre_pct').value  = d.t1_isapre_pct;
+    if (d.t2_base)        getEl('t2_base').value         = d.t2_base;
+    if (d.t2_jornada)     getEl('t2_jornada').value      = d.t2_jornada;
+    if (d.t3_bruto)       getEl('t3_bruto').value        = d.t3_bruto;
+    if (d.t4_grat_sueldo) getEl('t4_grat_sueldo').value  = d.t4_grat_sueldo;
+    if (d.t4_afp_sueldo)  getEl('t4_afp_sueldo').value   = d.t4_afp_sueldo;
+  } catch(e) {}
+}
+
+// ── Tab 0: Sueldo Liquido
+function toggleSalud() {
+  var isIsapre = document.querySelector('input[name=t1_salud]:checked').value === 'isapre';
+  getEl('t1_isapre_row').classList.toggle('show', isIsapre);
+  calcSueldo();
+}
+function toggleMov() {
+  getEl('t1_mov_row').classList.toggle('show', getEl('t1_mov').checked);
+  calcSueldo();
+}
+function toggleCol() {
+  getEl('t1_col_row').classList.toggle('show', getEl('t1_col').checked);
+  calcSueldo();
+}
+
+function calcSueldo() {
+  savePrefs();
+  var bruto = getV('t1_bruto');
+  if (!bruto) { getEl('t1_result_card').style.display = 'none'; return; }
+  getEl('t1_result_card').style.display = 'block';
+
+  var tipo      = document.querySelector('input[name=t1_tipo]:checked').value;
+  var afpTasa   = parseFloat(getEl('t1_afp').value) / 100;
+  var saludTipo = document.querySelector('input[name=t1_salud]:checked').value;
+  var saludPct  = saludTipo === 'fonasa' ? 0.07 : (getV('t1_isapre_pct') / 100 || 0.07);
+  var mov = getEl('t1_mov').checked ? (getV('t1_mov_monto') || 30000) : 0;
+  var col = getEl('t1_col').checked ? (getV('t1_col_monto') || 50000) : 0;
+
+  // Descuentos previsionales sobre sueldo imponible (bruto)
+  var descAFP      = bruto * afpTasa;
+  var descSalud    = bruto * saludPct;
+  var descCesantia = tipo === 'dep' ? bruto * 0.006 : 0;
+
+  // Base imponible para impuesto
+  var baseImp = bruto - descAFP - descSalud - descCesantia;
+  var imp     = calcImpProgresivo(baseImp / UTM);
+
+  var totalDesc = descAFP + descSalud + descCesantia + imp;
+  var liquido   = bruto - totalDesc + mov + col;
+  var totalRem  = bruto + mov + col;
+  var ratio     = (liquido / totalRem) * 100;
+
+  // Construir tabla
+  var tbody = getEl('t1_tbody');
+  tbody.innerHTML = '';
+
+  function tr(label, val, note, isTotal, neg) {
+    var row = document.createElement('tr');
+    var col1 = isTotal ? 'color:var(--accent)' : (neg ? 'color:var(--red)' : '');
+    var col3 = isTotal ? 'color:var(--accent)' : (neg ? 'color:var(--red)' : '');
+    if (isTotal) row.style.cssText = 'font-weight:700;border-top:2px solid var(--border)';
+    row.innerHTML =
+      '<td style="' + col1 + '">'  + label + '</td>' +
+      '<td style="text-align:center;font-size:.77rem;color:var(--muted)">' + (note||'') + '</td>' +
+      '<td class="mono" style="' + col3 + '">' + (neg ? '-' : '') + fmt(Math.abs(val)) + '</td>';
+    tbody.appendChild(row);
+  }
+
+  tr('Sueldo bruto',                          bruto,        '',               false, false);
+  tr('AFP ('    + pct(afpTasa*100)  + ')',    descAFP,      '',               false, true);
+  tr('Salud '   + (saludTipo==='fonasa'?'FONASA':'ISAPRE') + ' (' + pct(saludPct*100) + ')', descSalud, '', false, true);
+  if (tipo === 'dep') tr('Seg. Cesantia trabajador (0.6%)', descCesantia, '', false, true);
+  if (imp > 1)        tr('Imp. 2da Categoria',             imp,          '', false, true);
+  if (mov > 0)        tr('+ Movilizacion (no imponible)',  mov,          '', false, false);
+  if (col > 0)        tr('+ Colacion (no imponible)',      col,          '', false, false);
+  tr('SUELDO LIQUIDO', liquido, '', true, false);
+
+  getEl('t1_liquido').textContent   = fmt(liquido);
+  getEl('t1_ratio_sub').textContent = pct(ratio) + ' de la remuneracion total';
+
+  var utmBase = baseImp / UTM;
+  var alertEl = getEl('t1_imp_alert');
+  if (utmBase > 13.5) {
+    alertEl.innerHTML = '<div class="alert al-yellow">Base imponible: ' + utmBase.toFixed(2) + ' UTM. Impuesto 2da categoria: ' + fmt(imp) + '</div>';
+  } else {
+    alertEl.innerHTML = '<div class="alert al-green">Exento de impuesto 2da categoria (' + utmBase.toFixed(2) + ' UTM &lt; 13.5 UTM)</div>';
+  }
+
+  // Guardar para copiar
+  window._t1d = {bruto:bruto, descAFP:descAFP, descSalud:descSalud, descCesantia:descCesantia,
+    imp:imp, liquido:liquido, mov:mov, col:col, afpTasa:afpTasa, saludPct:saludPct, tipo:tipo, ratio:ratio};
+}
+
+function copiarSueldo() {
+  var d = window._t1d;
+  if (!d) { alert('Ingrese un sueldo primero.'); return; }
+  var lines = [
+    'LIQUIDACION DE SUELDO',
+    '---',
+    'Sueldo Bruto:      ' + fmt(d.bruto),
+    'AFP:               -' + fmt(d.descAFP),
+    'Salud:             -' + fmt(d.descSalud)
+  ];
+  if (d.tipo==='dep') lines.push('Seg. Cesantia:     -' + fmt(d.descCesantia));
+  if (d.imp > 1)      lines.push('Imp. 2da Cat.:     -' + fmt(d.imp));
+  if (d.mov > 0)      lines.push('Movilizacion:      +' + fmt(d.mov));
+  if (d.col > 0)      lines.push('Colacion:          +' + fmt(d.col));
+  lines.push('---');
+  lines.push('SUELDO LIQUIDO:    ' + fmt(d.liquido));
+  lines.push('Ratio liquido:     ' + d.ratio.toFixed(1) + '%');
+  lines.push('---');
+  lines.push('Calculado con SueldoCL');
+  navigator.clipboard.writeText(lines.join('\n')).then(function() { alert('Resumen copiado!'); });
+}
+
+// ── Tab 1: Horas Extra
+function calcHoras() {
+  savePrefs();
+  var base    = getV('t2_base');
+  var jornada = getV('t2_jornada') || 45;
+  var hextra  = getV('t2_hextra');
+  if (!base || !hextra) { getEl('t2_result_card').style.display = 'none'; return; }
+  getEl('t2_result_card').style.display = 'block';
+
+  var recargo      = parseInt(document.querySelector('input[name=t2_tipo]:checked').value);
+  var tipoLabel    = recargo === 50 ? 'Dia laboral (+50%)' : 'Festivo/Domingo (+100%)';
+  var horasMes     = jornada * 4.33;
+  var valorHora    = base / horasMes;
+  var valorHExtra  = valorHora * (1 + recargo / 100);
+  var totalExtra   = valorHExtra * hextra;
+  var totalFinal   = base + totalExtra;
+
+  var tbody = getEl('t2_tbody');
+  tbody.innerHTML =
+    '<tr><td>Sueldo base mensual</td><td></td><td class="mono">'     + fmt(base)        + '</td></tr>' +
+    '<tr><td>Jornada semanal</td><td></td><td class="mono">'          + jornada          + ' horas</td></tr>' +
+    '<tr><td>Horas al mes (x 4.33)</td><td></td><td class="mono">'   + horasMes.toFixed(1) + ' h</td></tr>' +
+    '<tr><td>Valor hora ordinaria</td><td></td><td class="mono">'     + fmt(valorHora)   + '</td></tr>' +
+    '<tr><td>Tipo hora extra</td><td></td><td>'                       + tipoLabel        + '</td></tr>' +
+    '<tr><td>Valor hora extra</td><td style="text-align:center;font-size:.77rem;color:var(--muted)">+' + recargo + '%</td><td class="mono">' + fmt(valorHExtra) + '</td></tr>' +
+    '<tr><td>Horas extra trabajadas</td><td></td><td class="mono">'   + hextra           + ' horas</td></tr>' +
+    '<tr style="font-weight:700;border-top:2px solid var(--border)"><td style="color:var(--green)">Total horas extra</td><td></td><td class="mono" style="color:var(--green)">' + fmt(totalExtra) + '</td></tr>' +
+    '<tr style="font-weight:700"><td style="color:var(--accent)">Sueldo + Horas Extra</td><td></td><td class="mono" style="color:var(--accent)">' + fmt(totalFinal) + '</td></tr>';
+
+  var maxMensual  = 12 * 4.33;
+  var alertsEl    = getEl('t2_alerts');
+  if (hextra > maxMensual) {
+    alertsEl.innerHTML = '<div class="alert al-red">Excede el limite mensual legal (' + maxMensual.toFixed(0) + ' horas extra = 12h/sem x 4.33). Consulte con abogado laboral.</div>';
+  } else if (hextra > 12) {
+    alertsEl.innerHTML = '<div class="alert al-yellow">Supera el limite semanal de 12 horas. Confirme que corresponden a distintas semanas.</div>';
+  } else {
+    alertsEl.innerHTML = '<div class="alert al-green">Dentro del limite legal (max. 2h/dia, 12h/semana, 52h/mes).</div>';
+  }
+}
+
+// ── Tab 2: Finiquito
+function toggleVacMode() {
+  var m = document.querySelector('input[name=t3_vacmode]:checked');
+  if (!m) return;
+  getEl('t3_vac_auto_row').classList.toggle('show',   m.value === 'auto');
+  getEl('t3_vac_manual_row').classList.toggle('show', m.value === 'manual');
+}
+
+function calcFiniquito() {
+  savePrefs();
+  var bruto  = getV('t3_bruto');
+  var inicio = getEl('t3_inicio').value;
+  var fin    = getEl('t3_fin').value;
+  getEl('t3_tenure_label').innerHTML = '';
+  if (!bruto || !inicio || !fin) { getEl('t3_result_card').style.display = 'none'; return; }
+
+  var dI = new Date(inicio + 'T00:00:00');
+  var dF = new Date(fin    + 'T00:00:00');
+  if (dF <= dI) { getEl('t3_result_card').style.display = 'none'; return; }
+
+  // Calcular antiguedad exacta
+  var yy = dF.getFullYear() - dI.getFullYear();
+  var mm = dF.getMonth()    - dI.getMonth();
+  var dd = dF.getDate()     - dI.getDate();
+  if (dd < 0) { mm--; dd += new Date(dF.getFullYear(), dF.getMonth(), 0).getDate(); }
+  if (mm < 0) { yy--; mm += 12; }
+  var totalMeses = yy * 12 + mm + (dd > 0 ? dd / 30 : 0);
+  var tenureStr  = 'Antiguedad: ' + yy + ' ano' + (yy!==1?'s':'') + ', ' + mm + ' mes' + (mm!==1?'es':'') + ', ' + dd + ' dia' + (dd!==1?'s':'');
+  getEl('t3_tenure_label').innerHTML = '<div class="tenure-info">' + tenureStr + '</div>';
+
+  // Vacaciones proporcionales (15 dias habiles por ano, art. 67 CT)
+  var diasTrab = (dF - dI) / 864e5;
+  var vacMode  = document.querySelector('input[name=t3_vacmode]:checked').value;
+  var diasVac;
+  if (vacMode === 'manual') {
+    diasVac = getV('t3_vac_dias');
+  } else {
+    diasVac = (diasTrab / 365) * 15;
+    getEl('t3_vac_auto_val').textContent = 'Vacaciones proporcionales: ' + diasVac.toFixed(1) + ' dias habiles';
+  }
+  var valorDiario = bruto / 30;
+  var vacMonto    = diasVac * valorDiario;
+
+  // Gratificacion proporcional del ano en curso
+  var gratTope      = (IMM * 4.75) / 12;
+  var gratMensual   = Math.min(bruto * 0.25 / 12, gratTope);
+  var anoFin        = dF.getFullYear();
+  var inicioAno     = new Date(anoFin, 0, 1);
+  var desdeCuando   = dI > inicioAno ? dI : inicioAno;
+  var mesesAno      = Math.min(12, Math.max(0, (dF - desdeCuando) / (864e5 * 30.44)));
+  var gratAnual     = gratMensual * mesesAno;
+  var gratPagada    = getV('t3_grat_pagada');
+  var gratPendiente = Math.max(0, gratAnual - gratPagada);
+
+  // Indemnizacion por anos de servicio (art. 163 CT, tope 11 anos x sueldo)
+  var causal      = getEl('t3_causal').value;
+  var anosInd     = Math.min(11, Math.floor(totalMeses / 12));
+  var indemnizacion = 0;
+  if ((causal === '161a' || causal === 'injusto') && anosInd >= 1) {
+    indemnizacion = bruto * anosInd;
+    if (causal === 'injusto') indemnizacion *= 1.20;
+  }
+
+  // Aviso previo (art. 161): si no se dio, empleador debe pagar 30 dias
+  var avisoDado = getEl('t3_aviso').checked;
+  var avisoMonto = 0;
+  if ((causal === '161a' || causal === 'injusto') && !avisoDado) {
+    avisoMonto = bruto;
+  }
+
+  var total = vacMonto + gratPendiente + indemnizacion + avisoMonto;
+  getEl('t3_result_card').style.display = 'block';
+
+  var tbody = getEl('t3_tbody');
+  tbody.innerHTML = '';
+  var items = [
+    {l:'Sueldo base mensual',                              v:bruto,          t:false},
+    {l:'Vacaciones pendientes (' + diasVac.toFixed(1) + ' dias)', v:vacMonto, t:false},
+    {l:'Gratificacion pendiente (' + mesesAno.toFixed(1) + ' meses)', v:gratPendiente, t:false}
+  ];
+  if (indemnizacion > 0) {
+    var rec = causal === 'injusto' ? ' +20% recargo' : '';
+    items.push({l:'Indemnizacion por anos de servicio (' + anosInd + ' anos' + rec + ')', v:indemnizacion, t:false});
+  }
+  if (avisoMonto > 0) {
+    items.push({l:'Aviso previo no dado (30 dias)', v:avisoMonto, t:false});
+  }
+  items.push({l:'TOTAL FINIQUITO', v:total, t:true});
+
+  items.forEach(function(item) {
+    var row = document.createElement('tr');
+    if (item.t) row.style.cssText = 'font-weight:700;border-top:2px solid var(--border)';
+    var c = item.t ? 'color:var(--accent)' : '';
+    row.innerHTML = '<td style="' + c + '">' + item.l + '</td><td class="mono" style="' + c + '">' + fmt(item.v) + '</td>';
+    tbody.appendChild(row);
+  });
+
+  getEl('t3_total').textContent = fmt(total);
+
+  var alertsEl = getEl('t3_alerts');
+  var al = [];
+  if (causal === 'injusto') {
+    al.push('<div class="alert al-red">Despido injustificado: indemnizacion con recargo de 20% adicional (art. 168 CT).</div>');
+  }
+  if (causal === '159') {
+    al.push('<div class="alert al-green">Renuncia voluntaria: no corresponde indemnizacion por anos de servicio.</div>');
+  }
+  if (causal === '160') {
+    al.push('<div class="alert al-green">Mutuo acuerdo: la indemnizacion puede negociarse libremente entre las partes.</div>');
+  }
+  if ((causal === '161a' || causal === 'injusto') && anosInd === 0) {
+    al.push('<div class="alert al-yellow">No corresponde indemnizacion: se requiere al menos 1 ano de antiguedad.</div>');
+  }
+  alertsEl.innerHTML = al.join('');
+
+  window._t3d = {bruto:bruto, vacMonto:vacMonto, diasVac:diasVac, gratPendiente:gratPendiente,
+    indemnizacion:indemnizacion, avisoMonto:avisoMonto, total:total,
+    causal:causal, tenureStr:tenureStr, anosInd:anosInd};
+}
+
+function copiarFiniquito() {
+  var d = window._t3d;
+  if (!d) { alert('Complete los datos del finiquito primero.'); return; }
+  var causales = {
+    '159':'Art. 159 - Renuncia',
+    '160':'Art. 160 - Mutuo Acuerdo',
+    '161a':'Art. 161 - Nec. Empresa',
+    'injusto':'Despido Injustificado'
+  };
+  var lines = [
+    'FINIQUITO LABORAL', '---',
+    d.tenureStr,
+    'Causal: ' + causales[d.causal],
+    '---',
+    'Sueldo base:         ' + fmt(d.bruto),
+    'Vacaciones (' + d.diasVac.toFixed(1) + 'd):   ' + fmt(d.vacMonto),
+    'Gratificacion:       ' + fmt(d.gratPendiente)
+  ];
+  if (d.indemnizacion > 0) lines.push('Indemnizacion (' + d.anosInd + 'a): ' + fmt(d.indemnizacion));
+  if (d.avisoMonto > 0)    lines.push('Aviso previo:        ' + fmt(d.avisoMonto));
+  lines.push('---');
+  lines.push('TOTAL FINIQUITO:     ' + fmt(d.total));
+  lines.push('---');
+  lines.push('Calculado con SueldoCL');
+  navigator.clipboard.writeText(lines.join('\n')).then(function() { alert('Finiquito copiado!'); });
+}
+
+// ── Tab 3: Otras calculadoras
+function calcGratificacion() {
+  savePrefs();
+  var sueldo = getV('t4_grat_sueldo');
+  var meses  = getV('t4_grat_meses') || 12;
+  if (!sueldo) { getEl('t4_grat_result').innerHTML = ''; return; }
+
+  var tope     = (IMM * 4.75) / 12;
+  var base25   = sueldo * 0.25 / 12;
+  var mensual  = Math.min(base25, tope);
+  var anual    = mensual * meses;
+  var usaTope  = base25 >= tope;
+
+  getEl('t4_grat_result').innerHTML =
+    '<table class="rtable"><tbody>' +
+    '<tr><td>Sueldo mensual</td><td class="mono">'              + fmt(sueldo)  + '</td></tr>' +
+    '<tr><td>25% del sueldo anual / 12</td><td class="mono">'   + fmt(base25)  + '</td></tr>' +
+    '<tr><td>Tope legal (4.75 x IMM / 12)</td><td class="mono">'+ fmt(tope)    + '</td></tr>' +
+    '<tr><td>Meses trabajados</td><td class="mono">'            + meses        + ' meses</td></tr>' +
+    '<tr style="font-weight:700;border-top:2px solid var(--border)"><td style="color:var(--accent)">Gratificacion mensual</td><td class="mono" style="color:var(--accent)">' + fmt(mensual) + '</td></tr>' +
+    '<tr style="font-weight:700"><td style="color:var(--accent)">Gratificacion anual (' + meses + ' meses)</td><td class="mono" style="color:var(--accent)">' + fmt(anual) + '</td></tr>' +
+    '</tbody></table>' +
+    (usaTope
+      ? '<div class="alert al-yellow" style="margin-top:8px">Se aplica el tope legal (' + fmt(tope) + '/mes). El 25% del sueldo supera el tope.</div>'
+      : '<div class="alert al-green" style="margin-top:8px">Se aplica 25% del sueldo (no supera el tope de ' + fmt(tope) + '/mes).</div>');
+}
+
+function calcComparadorAFP() {
+  savePrefs();
+  var sueldo  = getV('t4_afp_sueldo');
+  var tbody   = getEl('t4_afp_tbody');
+  var minTasa = Math.min.apply(null, AFP_DATA.map(function(a){ return a.tasa; }));
+
+  tbody.innerHTML = '';
+  AFP_DATA.forEach(function(afp) {
+    var costo  = sueldo ? fmt(afp.tasa / 100 * sueldo) : '—';
+    var isBest = afp.tasa === minTasa;
+    var row    = document.createElement('tr');
+    if (isBest) row.classList.add('best');
+    var badge    = isBest ? ' <span class="badge b-green">+ barata</span>' : '';
+    var rentCls  = afp.rent >= 8 ? 'b-green' : 'b-yellow';
+    row.innerHTML =
+      '<td>' + afp.nombre + badge + '</td>' +
+      '<td>' + afp.tasa + '%</td>' +
+      '<td class="mono">' + costo + '</td>' +
+      '<td><span class="badge ' + rentCls + '">' + afp.rent + '%</span></td>';
+    tbody.appendChild(row);
+  });
+}
+
+// ── Inicializacion
+loadPrefs();
+toggleVacMode();
+calcSueldo();
+calcHoras();
+calcFiniquito();
+calcGratificacion();
+calcComparadorAFP();
+</script>
+</body>
+</html>

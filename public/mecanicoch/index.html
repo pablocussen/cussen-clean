@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="theme-color" content="#18181b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>MecanicoCL — Herramientas para Mecanicos Automotrices Chile</title>
+<link rel="manifest" href="data:application/json,%7B%22name%22%3A%22MecanicoCL%22%2C%22short_name%22%3A%22MecanicoCL%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%2318181b%22%2C%22theme_color%22%3A%22%2318181b%22%7D">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#18181b;--card:#27272a;--border:#3f3f46;--accent:#f59e0b;--text:#fafafa;--muted:#a1a1aa;--green:#22c55e;--red:#ef4444;--blue:#3b82f6;--purple:#a855f7;--cyan:#06b6d4;--orange:#f97316}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;-webkit-tap-highlight-color:transparent}
+input,select,textarea,button{font-family:inherit;font-size:inherit}
+header{background:linear-gradient(90deg,#18181b,#27272a);border-bottom:2px solid var(--accent);padding:12px 16px;position:sticky;top:0;z-index:100}
+header h1{font-size:1.25rem;font-weight:700;display:flex;align-items:center;gap:8px}
+header h1 span.icon{font-size:1.4rem}
+header p{font-size:.75rem;color:var(--muted);margin-top:2px}
+nav{display:flex;background:var(--card);border-bottom:1px solid var(--border);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+nav button{flex:none;padding:10px 14px;background:none;border:none;color:var(--muted);font-size:.72rem;font-weight:500;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:all .2s}
+nav button.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab{display:none;padding:16px;max-width:800px;margin:0 auto;padding-bottom:40px}
+.tab.active{display:block}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px}
+.card h3{font-size:.95rem;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-grid.full{grid-template-columns:1fr}
+label{display:block;font-size:.75rem;color:var(--muted);margin-bottom:4px;font-weight:500}
+input,select,textarea{width:100%;padding:9px 12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:.85rem;outline:none;transition:border-color .2s}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+textarea{resize:vertical;min-height:60px}
+select{cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23a1a1aa' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center}
+select option{background:var(--card);color:var(--text)}
+.btn{padding:9px 18px;border:none;border-radius:8px;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:var(--accent);color:#18181b}
+.btn-primary:hover{background:#d97706}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text)}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent)}
+.btn-sm{padding:6px 12px;font-size:.75rem}
+.btn-danger{background:var(--red);color:#fff}
+.btn-danger:hover{background:#dc2626}
+.btn-green{background:var(--green);color:#fff}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.stat-box{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center}
+.stat-box .val{font-size:1.5rem;font-weight:700;color:var(--accent)}
+.stat-box .lbl{font-size:.7rem;color:var(--muted);margin-top:2px}
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.7rem;font-weight:600;color:#000}
+.badge-recibido{background:#60a5fa}
+.badge-diagnostico{background:#a78bfa}
+.badge-esperando{background:#fbbf24}
+.badge-reparacion{background:#fb923c}
+.badge-listo{background:#4ade80}
+.badge-entregado{background:#94a3b8}
+.order-card{border-left:4px solid var(--border)}
+.order-card.st-recibido{border-left-color:#60a5fa}
+.order-card.st-diagnostico{border-left-color:#a78bfa}
+.order-card.st-esperando{border-left-color:#fbbf24}
+.order-card.st-reparacion{border-left-color:#fb923c}
+.order-card.st-listo{border-left-color:#4ade80}
+.order-card.st-entregado{border-left-color:#94a3b8}
+.order-meta{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0;font-size:.78rem;color:var(--muted)}
+.order-meta span{display:flex;align-items:center;gap:3px}
+.filter-row{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
+.filter-row select{width:auto;min-width:140px}
+.search-box{position:relative}
+.search-box input{padding-left:32px}
+.search-box::before{content:"\1F50D";position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:.8rem}
+.totals-table{width:100%;border-collapse:collapse;margin-top:12px}
+.totals-table td{padding:6px 0;font-size:.85rem}
+.totals-table td:last-child{text-align:right;font-weight:600}
+.totals-table tr.total{border-top:2px solid var(--accent)}
+.totals-table tr.total td{font-size:1rem;color:var(--accent);padding-top:10px}
+.item-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:.82rem}
+.item-row:last-child{border-bottom:none}
+.item-row .name{flex:1}
+.item-row .qty{color:var(--muted);width:60px;text-align:center}
+.item-row .price{width:90px;text-align:right;font-weight:600}
+.obd-card{cursor:pointer}
+.obd-card .desc{font-size:.82rem;color:var(--muted);margin-top:4px}
+.obd-card .causes{display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:.82rem;line-height:1.5}
+.obd-card.expanded .causes{display:block}
+.severity{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.68rem;font-weight:600}
+.sev-baja{background:#22c55e33;color:#4ade80}
+.sev-media{background:#f59e0b33;color:#fbbf24}
+.sev-alta{background:#ef444433;color:#f87171}
+.sev-critica{background:#ef4444;color:#fff}
+.checklist-item{padding:10px 0;border-bottom:1px solid var(--border)}
+.checklist-item:last-child{border-bottom:none}
+.checklist-item h4{font-size:.88rem;font-weight:600;margin-bottom:4px}
+.checklist-item p{font-size:.8rem;color:var(--muted);line-height:1.4}
+.checklist-item .tip{font-size:.78rem;color:var(--accent);margin-top:4px;font-style:italic}
+.spec-group{margin-bottom:16px}
+.spec-group h4{font-size:.9rem;font-weight:600;color:var(--accent);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.spec-row{display:flex;justify-content:space-between;padding:6px 0;font-size:.82rem;border-bottom:1px solid var(--border)}
+.spec-row:last-child{border-bottom:none}
+.spec-row .label{color:var(--muted)}
+.spec-row .value{font-weight:600;text-align:right}
+.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);z-index:200;justify-content:center;align-items:flex-start;padding:20px;overflow-y:auto}
+.modal-overlay.show{display:flex}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:12px;width:100%;max-width:600px;padding:20px;margin-top:40px}
+.modal h2{font-size:1.1rem;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.modal-actions{display:flex;gap:8px;margin-top:16px;justify-content:flex-end}
+.empty-state{text-align:center;padding:40px 20px;color:var(--muted)}
+.empty-state .icon{font-size:2.5rem;margin-bottom:12px}
+.empty-state p{font-size:.88rem}
+.cols-full{grid-column:1/-1}
+@media print{
+body{background:#fff;color:#000}
+header,nav,.btn,.filter-row,.stats-row,.no-print{display:none!important}
+.tab{display:none!important}
+.tab.printing{display:block!important}
+.card{border:1px solid #ddd;break-inside:avoid}
+.badge{border:1px solid #999}
+}
+</style>
+</head>
+<body>
+<header>
+<h1><span class="icon">&#9881;</span> MecanicoCL</h1>
+<p>Herramientas para Mecanicos Automotrices &mdash; Chile</p>
+</header>
+<nav id="nav">
+<button class="active" data-tab="ordenes">&#128203; Ordenes</button>
+<button data-tab="presupuestos">&#128176; Presupuestos</button>
+<button data-tab="obd">&#128268; OBD-II</button>
+<button data-tab="revision">&#128661; Rev. Tecnica</button>
+<button data-tab="torques">&#128295; Torques/Espec.</button>
+</nav>
+
+<!-- TAB 1: ORDENES DE TRABAJO -->
+<div id="tab-ordenes" class="tab active">
+<div class="stats-row" id="orderStats"></div>
+<div class="filter-row no-print">
+<select id="filterEstado" onchange="renderOrders()">
+<option value="">Todos los estados</option>
+<option value="Recibido">Recibido</option>
+<option value="En diagnostico">En diagnostico</option>
+<option value="Esperando repuesto">Esperando repuesto</option>
+<option value="En reparacion">En reparacion</option>
+<option value="Listo">Listo</option>
+<option value="Entregado">Entregado</option>
+</select>
+<button class="btn btn-primary btn-sm" onclick="openOrderModal()">+ Nueva Orden</button>
+</div>
+<div id="orderList"></div>
+</div>
+
+<!-- TAB 2: PRESUPUESTOS -->
+<div id="tab-presupuestos" class="tab">
+<div class="filter-row no-print">
+<button class="btn btn-primary btn-sm" onclick="openQuoteModal()">+ Nuevo Presupuesto</button>
+</div>
+<div id="quoteList"></div>
+</div>
+
+<!-- TAB 3: OBD-II -->
+<div id="tab-obd" class="tab">
+<div class="card">
+<div class="search-box">
+<input type="text" id="obdSearch" placeholder="Buscar por codigo (P0300) o palabra clave..." oninput="renderOBD()">
+</div>
+</div>
+<div id="obdList"></div>
+</div>
+
+<!-- TAB 4: REVISION TECNICA -->
+<div id="tab-revision" class="tab">
+<div class="card">
+<h3>&#9989; Checklist Revision Tecnica (PRT Chile)</h3>
+<p style="font-size:.8rem;color:var(--muted);margin-bottom:12px">Puntos de inspeccion obligatorios en Plantas de Revision Tecnica</p>
+<div id="checklistItems"></div>
+</div>
+<div class="card">
+<h3>&#128337; Vigencias y Plazos</h3>
+<div class="checklist-item">
+<h4>Revision Tecnica</h4>
+<p>Vehiculos nuevos: exentos los primeros 2 anios. Luego cada 1 anio. Si es rechazado, tiene 60 dias para reparar y re-inspeccionar.</p>
+<p class="tip">Consejo: Agendar 1 mes antes del vencimiento para evitar multas.</p>
+</div>
+<div class="checklist-item">
+<h4>SOAP (Seguro Obligatorio de Accidentes Personales)</h4>
+<p>Vigencia: 1 anio. Obligatorio para obtener permiso de circulacion. Precio referencial 2024: $8.000 - $15.000 segun tipo de vehiculo (motos mas barato, camiones mas caro).</p>
+<p class="tip">Se puede comprar en linea (Consorcio, BCI, Mapfre) o en cualquier notaria.</p>
+</div>
+<div class="checklist-item">
+<h4>Permiso de Circulacion</h4>
+<p>Renovacion: Marzo de cada anio. El valor depende de la tasacion fiscal del SII. Se puede pagar en cuotas (marzo y septiembre). Vehiculos nuevos pagan proporcional al mes de compra.</p>
+<p class="tip">Municipalidades y Caja Vecina ofrecen pago. La patente debe estar legible y correctamente instalada.</p>
+</div>
+</div>
+<div class="card">
+<h3>&#10060; Causas Frecuentes de Rechazo</h3>
+<div id="rejectionList"></div>
+</div>
+<div class="card">
+<h3>&#127758; Plantas Revisoras por Region (Referencia)</h3>
+<p style="font-size:.8rem;color:var(--muted);margin-bottom:10px">Chile cuenta con plantas autorizadas en todas las regiones. Consulte en <strong>www.prt.cl</strong> para ubicaciones actualizadas.</p>
+<div id="plantasList"></div>
+</div>
+</div>
+
+<!-- TAB 5: TORQUES Y ESPECIFICACIONES -->
+<div id="tab-torques" class="tab">
+<div class="card">
+<h3>&#128295; Torques de Apriete Comunes</h3>
+<div id="torqueSpecs"></div>
+</div>
+<div class="card">
+<h3>&#128167; Fluidos Recomendados</h3>
+<div id="fluidSpecs"></div>
+</div>
+<div class="card">
+<h3>&#128338; Intervalos de Servicio</h3>
+<div id="serviceSpecs"></div>
+</div>
+<div class="card">
+<h3>&#127344; Presion de Neumaticos</h3>
+<div id="tireSpecs"></div>
+</div>
+</div>
+
+<!-- ORDER MODAL -->
+<div class="modal-overlay" id="orderModal">
+<div class="modal">
+<h2>&#128203; <span id="orderModalTitle">Nueva Orden de Trabajo</span></h2>
+<div class="form-grid">
+<div><label>Patente</label><input id="oPatente" placeholder="ABCD12" maxlength="8"></div>
+<div><label>Marca / Modelo</label><input id="oMarcaModelo" placeholder="Toyota Yaris"></div>
+<div><label>Anio</label><input id="oAnio" type="number" placeholder="2020" min="1970" max="2030"></div>
+<div><label>Nombre Cliente</label><input id="oCliente" placeholder="Juan Perez"></div>
+<div><label>Telefono</label><input id="oTelefono" placeholder="+56 9 1234 5678"></div>
+<div><label>Km Actual</label><input id="oKm" type="number" placeholder="85000"></div>
+<div><label>Fecha Ingreso</label><input id="oFecha" type="date"></div>
+<div><label>Estado</label>
+<select id="oEstado">
+<option>Recibido</option>
+<option>En diagnostico</option>
+<option>Esperando repuesto</option>
+<option>En reparacion</option>
+<option>Listo</option>
+<option>Entregado</option>
+</select></div>
+<div class="cols-full"><label>Descripcion del Problema</label><textarea id="oProblema" placeholder="Motor no enciende, ruido al girar..."></textarea></div>
+<div class="cols-full"><label>Diagnostico</label><textarea id="oDiagnostico" placeholder="Se detecta falla en sensor..."></textarea></div>
+<div class="cols-full"><label>Trabajos a Realizar</label><textarea id="oTrabajos" placeholder="1. Cambio de sensor&#10;2. Alineacion..."></textarea></div>
+<div class="cols-full"><label>Repuestos Necesarios</label><textarea id="oRepuestos" placeholder="1x Sensor O2, 4x Bujias NGK..."></textarea></div>
+<div><label>Mano de Obra (horas)</label><input id="oHoras" type="number" step="0.5" placeholder="3"></div>
+</div>
+<input type="hidden" id="oEditId">
+<div class="modal-actions">
+<button class="btn btn-outline" onclick="closeOrderModal()">Cancelar</button>
+<button class="btn btn-primary" onclick="saveOrder()">Guardar Orden</button>
+</div>
+</div>
+</div>
+
+<!-- QUOTE MODAL -->
+<div class="modal-overlay" id="quoteModal">
+<div class="modal">
+<h2>&#128176; <span id="quoteModalTitle">Nuevo Presupuesto</span></h2>
+<div class="form-grid">
+<div class="cols-full"><label>Orden de Trabajo Asociada</label>
+<select id="qOrden"><option value="">-- Presupuesto independiente --</option></select></div>
+<div><label>Cliente</label><input id="qCliente" placeholder="Nombre cliente"></div>
+<div><label>Vehiculo</label><input id="qVehiculo" placeholder="Toyota Yaris 2020"></div>
+<div class="cols-full"><label>Estado</label>
+<select id="qEstadoQuote"><option>Pendiente</option><option>Aceptado</option><option>Rechazado</option></select></div>
+</div>
+<h3 style="margin-top:16px;font-size:.9rem">Repuestos</h3>
+<div id="qRepuestosList"></div>
+<div class="form-grid" style="margin-top:8px">
+<div><label>Repuesto</label><input id="qrNombre" placeholder="Filtro de aceite"></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+<div><label>Cant.</label><input id="qrCant" type="number" value="1" min="1"></div>
+<div><label>Precio Unit.</label><input id="qrPrecio" type="number" placeholder="5000"></div>
+</div>
+</div>
+<button class="btn btn-outline btn-sm" style="margin-top:8px" onclick="addRepuesto()">+ Agregar Repuesto</button>
+
+<h3 style="margin-top:16px;font-size:.9rem">Mano de Obra</h3>
+<p style="font-size:.72rem;color:var(--muted);margin-bottom:6px">Tarifas referenciales 2024: Mecanico general $15.000-25.000/hr | Electricista auto $20.000-35.000/hr | Pintura $25.000-40.000/hr</p>
+<div id="qManoList"></div>
+<div class="form-grid" style="margin-top:8px">
+<div><label>Descripcion</label><input id="qmDesc" placeholder="Cambio de aceite"></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+<div><label>Horas</label><input id="qmHoras" type="number" value="1" step="0.5" min="0.5"></div>
+<div><label>Tarifa/hr</label><input id="qmTarifa" type="number" placeholder="20000"></div>
+</div>
+</div>
+<button class="btn btn-outline btn-sm" style="margin-top:8px" onclick="addManoObra()">+ Agregar Mano de Obra</button>
+
+<div id="quoteTotals" style="margin-top:16px"></div>
+<input type="hidden" id="qEditId">
+<div class="modal-actions">
+<button class="btn btn-outline" onclick="closeQuoteModal()">Cancelar</button>
+<button class="btn btn-primary" onclick="saveQuote()">Guardar Presupuesto</button>
+</div>
+</div>
+</div>
+
+<script>
+/* ===== STORAGE HELPERS ===== */
+const SK='mecanicoch_v1';
+function loadData(){try{return JSON.parse(localStorage.getItem(SK))||null}catch(e){return null}}
+function saveData(d){try{localStorage.setItem(SK,JSON.stringify(d))}catch(e){console.warn('Storage error',e)}}
+function getState(){
+  let d=loadData();
+  if(!d){d={orders:demoOrders(),quotes:[],nextOrderId:1003,nextQuoteId:101};saveData(d)}
+  if(!d.nextOrderId)d.nextOrderId=1003;
+  if(!d.nextQuoteId)d.nextQuoteId=101;
+  return d;
+}
+
+function demoOrders(){
+  return [
+    {id:1001,patente:'GHKL45',marcaModelo:'Toyota Yaris',anio:2019,cliente:'Carlos Munoz',telefono:'+56 9 8765 4321',km:72000,fecha:'2026-03-17',problema:'Motor tiembla al ralenti, se apaga en semaforos. Luz check engine encendida.',diagnostico:'Codigo P0300 falla aleatoria de cilindros. Bujias desgastadas, bobina cilindro 2 con fuga.',trabajos:'1. Cambio de 4 bujias NGK\n2. Reemplazo bobina cilindro 2\n3. Limpieza inyectores\n4. Reset ECU',repuestos:'4x Bujias NGK ILKAR7B11 - $4.500 c/u\n1x Bobina encendido cil.2 - $35.000\n1x Limpiador inyectores - $8.000',horas:3,estado:'En reparacion',created:Date.now()-86400000},
+    {id:1002,patente:'RRWW78',marcaModelo:'Hyundai Tucson',anio:2022,cliente:'Maria Gonzalez',telefono:'+56 9 5555 1234',km:31000,fecha:'2026-03-18',problema:'Ruido metalico al frenar. Pastillas posiblemente gastadas.',diagnostico:'Pastillas delanteras al limite (2mm). Discos dentro de tolerancia pero con leve surco.',trabajos:'1. Cambio pastillas delanteras\n2. Rectificado de discos\n3. Revision pastillas traseras\n4. Purga liquido frenos',repuestos:'1x Juego pastillas Hyundai OEM - $28.000\n1L Liquido frenos DOT4 - $6.500',horas:2,estado:'Listo',created:Date.now()-3600000}
+  ];
+}
+
+/* ===== TAB NAVIGATION ===== */
+document.querySelectorAll('#nav button').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('#nav button').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+  });
+});
+
+/* ===== FORMATTING ===== */
+function fmt(n){return '$'+Number(n||0).toLocaleString('es-CL')}
+function estadoClass(e){
+  const m={'Recibido':'recibido','En diagnostico':'diagnostico','Esperando repuesto':'esperando','En reparacion':'reparacion','Listo':'listo','Entregado':'entregado'};
+  return m[e]||'';
+}
+function genId(prefix,state){
+  const key=prefix==='O'?'nextOrderId':'nextQuoteId';
+  const id=state[key];state[key]=id+1;saveData(state);return id;
+}
+
+/* ===== TAB 1: ORDENES ===== */
+function renderOrders(){
+  const state=getState();
+  const filter=document.getElementById('filterEstado').value;
+  let orders=state.orders||[];
+  const enTaller=orders.filter(o=>!['Entregado'].includes(o.estado)).length;
+  const listos=orders.filter(o=>o.estado==='Listo').length;
+  const hoy=new Date().toISOString().slice(0,10);
+  const facHoy=orders.filter(o=>o.fecha===hoy).length;
+  document.getElementById('orderStats').innerHTML=`
+    <div class="stat-box"><div class="val">${enTaller}</div><div class="lbl">En Taller</div></div>
+    <div class="stat-box"><div class="val">${listos}</div><div class="lbl">Listos p/ Entrega</div></div>
+    <div class="stat-box"><div class="val">${facHoy}</div><div class="lbl">Ingresados Hoy</div></div>`;
+  if(filter)orders=orders.filter(o=>o.estado===filter);
+  orders.sort((a,b)=>(b.created||0)-(a.created||0));
+  if(!orders.length){
+    document.getElementById('orderList').innerHTML='<div class="empty-state"><div class="icon">&#128203;</div><p>No hay ordenes con este filtro</p></div>';
+    return;
+  }
+  document.getElementById('orderList').innerHTML=orders.map(o=>`
+    <div class="card order-card st-${estadoClass(o.estado)}">
+      <div style="display:flex;justify-content:space-between;align-items:start">
+        <div><strong>OT-${o.id}</strong> &mdash; ${o.patente.toUpperCase()}</div>
+        <span class="badge badge-${estadoClass(o.estado)}">${o.estado}</span>
+      </div>
+      <div class="order-meta">
+        <span>&#128663; ${o.marcaModelo} ${o.anio}</span>
+        <span>&#128100; ${o.cliente}</span>
+        <span>&#128222; ${o.telefono||'--'}</span>
+        <span>&#128338; ${o.km?o.km.toLocaleString('es-CL')+' km':'--'}</span>
+        <span>&#128197; ${o.fecha}</span>
+      </div>
+      <div style="font-size:.82rem;margin-top:6px"><strong>Problema:</strong> ${o.problema}</div>
+      ${o.diagnostico?`<div style="font-size:.82rem;margin-top:4px;color:var(--accent)"><strong>Diagnostico:</strong> ${o.diagnostico}</div>`:''}
+      <div style="display:flex;gap:6px;margin-top:10px">
+        <button class="btn btn-outline btn-sm" onclick="editOrder(${o.id})">&#9998; Editar</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteOrder(${o.id})">&#128465;</button>
+      </div>
+    </div>`).join('');
+}
+
+function openOrderModal(order){
+  document.getElementById('orderModal').classList.add('show');
+  document.getElementById('orderModalTitle').textContent=order?'Editar Orden de Trabajo':'Nueva Orden de Trabajo';
+  const today=new Date().toISOString().slice(0,10);
+  document.getElementById('oFecha').value=order?order.fecha:today;
+  ['oPatente','oMarcaModelo','oAnio','oCliente','oTelefono','oKm','oProblema','oDiagnostico','oTrabajos','oRepuestos','oHoras','oEstado'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(order){
+      const key=id.substring(1);const lk=key.charAt(0).toLowerCase()+key.slice(1);
+      el.value=order[lk]||order[key]||'';
+    }else if(id!=='oFecha'&&id!=='oEstado'){el.value='';}
+  });
+  if(order){document.getElementById('oEstado').value=order.estado;}
+  document.getElementById('oEditId').value=order?order.id:'';
+}
+function closeOrderModal(){document.getElementById('orderModal').classList.remove('show')}
+
+function saveOrder(){
+  const state=getState();
+  const editId=document.getElementById('oEditId').value;
+  const o={
+    patente:document.getElementById('oPatente').value.trim(),
+    marcaModelo:document.getElementById('oMarcaModelo').value.trim(),
+    anio:parseInt(document.getElementById('oAnio').value)||0,
+    cliente:document.getElementById('oCliente').value.trim(),
+    telefono:document.getElementById('oTelefono').value.trim(),
+    km:parseInt(document.getElementById('oKm').value)||0,
+    fecha:document.getElementById('oFecha').value,
+    problema:document.getElementById('oProblema').value.trim(),
+    diagnostico:document.getElementById('oDiagnostico').value.trim(),
+    trabajos:document.getElementById('oTrabajos').value.trim(),
+    repuestos:document.getElementById('oRepuestos').value.trim(),
+    horas:parseFloat(document.getElementById('oHoras').value)||0,
+    estado:document.getElementById('oEstado').value
+  };
+  if(!o.patente||!o.cliente){alert('Patente y nombre del cliente son obligatorios');return;}
+  if(editId){
+    const idx=state.orders.findIndex(x=>x.id===parseInt(editId));
+    if(idx>=0)Object.assign(state.orders[idx],o);
+  }else{
+    o.id=genId('O',state);o.created=Date.now();state.orders.push(o);
+  }
+  saveData(state);closeOrderModal();renderOrders();
+}
+function editOrder(id){const state=getState();const o=state.orders.find(x=>x.id===id);if(o)openOrderModal(o);}
+function deleteOrder(id){
+  if(!confirm('Eliminar esta orden?'))return;
+  const state=getState();state.orders=state.orders.filter(x=>x.id!==id);saveData(state);renderOrders();
+}
+
+/* ===== TAB 2: PRESUPUESTOS ===== */
+let tempRepuestos=[],tempMano=[];
+function renderQuotes(){
+  const state=getState();
+  const quotes=state.quotes||[];
+  if(!quotes.length){
+    document.getElementById('quoteList').innerHTML='<div class="empty-state"><div class="icon">&#128176;</div><p>No hay presupuestos creados</p></div>';
+    return;
+  }
+  document.getElementById('quoteList').innerHTML=quotes.sort((a,b)=>(b.created||0)-(a.created||0)).map(q=>{
+    const subRep=(q.repuestos||[]).reduce((s,r)=>s+r.cantidad*r.precio,0);
+    const subMano=(q.mano||[]).reduce((s,m)=>s+m.horas*m.tarifa,0);
+    const sub=subRep+subMano;const iva=Math.round(sub*0.19);const total=sub+iva;
+    const estColor=q.estadoQuote==='Aceptado'?'var(--green)':q.estadoQuote==='Rechazado'?'var(--red)':'var(--muted)';
+    return `<div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:start">
+        <div><strong>PPTO-${q.id}</strong>${q.ordenId?' (OT-'+q.ordenId+')':''}</div>
+        <span style="color:${estColor};font-size:.78rem;font-weight:600">${q.estadoQuote||'Pendiente'}</span>
+      </div>
+      <div class="order-meta"><span>&#128100; ${q.cliente||'--'}</span><span>&#128663; ${q.vehiculo||'--'}</span></div>
+      <div style="font-size:.82rem;margin-top:6px">
+        <div>Repuestos: ${fmt(subRep)} | Mano de obra: ${fmt(subMano)}</div>
+        <div>Subtotal: ${fmt(sub)} + IVA 19%: ${fmt(iva)}</div>
+        <div style="color:var(--accent);font-weight:700;font-size:1rem;margin-top:4px">TOTAL: ${fmt(total)}</div>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:10px">
+        <button class="btn btn-outline btn-sm" onclick="editQuote(${q.id})">&#9998; Editar</button>
+        <button class="btn btn-outline btn-sm" onclick="printQuote(${q.id})">&#128424; Imprimir</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteQuote(${q.id})">&#128465;</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openQuoteModal(quote){
+  document.getElementById('quoteModal').classList.add('show');
+  document.getElementById('quoteModalTitle').textContent=quote?'Editar Presupuesto':'Nuevo Presupuesto';
+  const state=getState();
+  const sel=document.getElementById('qOrden');
+  sel.innerHTML='<option value="">-- Presupuesto independiente --</option>';
+  (state.orders||[]).forEach(o=>{sel.innerHTML+=`<option value="${o.id}">OT-${o.id} ${o.patente} - ${o.cliente}</option>`;});
+  if(quote){
+    document.getElementById('qCliente').value=quote.cliente||'';
+    document.getElementById('qVehiculo').value=quote.vehiculo||'';
+    document.getElementById('qOrden').value=quote.ordenId||'';
+    document.getElementById('qEstadoQuote').value=quote.estadoQuote||'Pendiente';
+    tempRepuestos=[...(quote.repuestos||[])];
+    tempMano=[...(quote.mano||[])];
+    document.getElementById('qEditId').value=quote.id;
+  }else{
+    document.getElementById('qCliente').value='';
+    document.getElementById('qVehiculo').value='';
+    document.getElementById('qOrden').value='';
+    document.getElementById('qEstadoQuote').value='Pendiente';
+    tempRepuestos=[];tempMano=[];
+    document.getElementById('qEditId').value='';
+  }
+  renderTempItems();
+}
+function closeQuoteModal(){document.getElementById('quoteModal').classList.remove('show')}
+
+function addRepuesto(){
+  const n=document.getElementById('qrNombre').value.trim();
+  const c=parseInt(document.getElementById('qrCant').value)||1;
+  const p=parseInt(document.getElementById('qrPrecio').value)||0;
+  if(!n||!p){alert('Ingrese nombre y precio del repuesto');return;}
+  tempRepuestos.push({nombre:n,cantidad:c,precio:p});
+  document.getElementById('qrNombre').value='';document.getElementById('qrCant').value='1';document.getElementById('qrPrecio').value='';
+  renderTempItems();
+}
+function addManoObra(){
+  const d=document.getElementById('qmDesc').value.trim();
+  const h=parseFloat(document.getElementById('qmHoras').value)||1;
+  const t=parseInt(document.getElementById('qmTarifa').value)||0;
+  if(!d||!t){alert('Ingrese descripcion y tarifa');return;}
+  tempMano.push({desc:d,horas:h,tarifa:t});
+  document.getElementById('qmDesc').value='';document.getElementById('qmHoras').value='1';document.getElementById('qmTarifa').value='';
+  renderTempItems();
+}
+function removeRepuesto(i){tempRepuestos.splice(i,1);renderTempItems();}
+function removeMano(i){tempMano.splice(i,1);renderTempItems();}
+
+function renderTempItems(){
+  document.getElementById('qRepuestosList').innerHTML=tempRepuestos.map((r,i)=>`
+    <div class="item-row"><span class="name">${r.nombre}</span><span class="qty">${r.cantidad}x</span><span class="price">${fmt(r.precio)}</span>
+    <button class="btn btn-sm btn-danger" style="padding:3px 8px" onclick="removeRepuesto(${i})">&#10005;</button></div>`).join('')||'<p style="font-size:.78rem;color:var(--muted);padding:6px 0">Sin repuestos agregados</p>';
+  document.getElementById('qManoList').innerHTML=tempMano.map((m,i)=>`
+    <div class="item-row"><span class="name">${m.desc}</span><span class="qty">${m.horas}h</span><span class="price">${fmt(m.tarifa)}/hr</span>
+    <button class="btn btn-sm btn-danger" style="padding:3px 8px" onclick="removeMano(${i})">&#10005;</button></div>`).join('')||'<p style="font-size:.78rem;color:var(--muted);padding:6px 0">Sin mano de obra agregada</p>';
+  const subRep=tempRepuestos.reduce((s,r)=>s+r.cantidad*r.precio,0);
+  const subMano=tempMano.reduce((s,m)=>s+m.horas*m.tarifa,0);
+  const sub=subRep+subMano;const iva=Math.round(sub*0.19);
+  document.getElementById('quoteTotals').innerHTML=`
+    <table class="totals-table">
+      <tr><td>Subtotal Repuestos</td><td>${fmt(subRep)}</td></tr>
+      <tr><td>Subtotal Mano de Obra</td><td>${fmt(subMano)}</td></tr>
+      <tr><td>Neto</td><td>${fmt(sub)}</td></tr>
+      <tr><td>IVA 19%</td><td>${fmt(iva)}</td></tr>
+      <tr class="total"><td>TOTAL</td><td>${fmt(sub+iva)}</td></tr>
+    </table>`;
+}
+
+function saveQuote(){
+  const state=getState();
+  const editId=document.getElementById('qEditId').value;
+  const q={
+    ordenId:document.getElementById('qOrden').value?parseInt(document.getElementById('qOrden').value):null,
+    cliente:document.getElementById('qCliente').value.trim(),
+    vehiculo:document.getElementById('qVehiculo').value.trim(),
+    estadoQuote:document.getElementById('qEstadoQuote').value,
+    repuestos:[...tempRepuestos],
+    mano:[...tempMano]
+  };
+  if(!q.cliente){alert('Ingrese nombre del cliente');return;}
+  if(editId){
+    const idx=state.quotes.findIndex(x=>x.id===parseInt(editId));
+    if(idx>=0)Object.assign(state.quotes[idx],q);
+  }else{
+    q.id=genId('Q',state);q.created=Date.now();state.quotes.push(q);
+  }
+  saveData(state);closeQuoteModal();renderQuotes();
+}
+function editQuote(id){const state=getState();const q=state.quotes.find(x=>x.id===id);if(q)openQuoteModal(q);}
+function deleteQuote(id){if(!confirm('Eliminar presupuesto?'))return;const state=getState();state.quotes=state.quotes.filter(x=>x.id!==id);saveData(state);renderQuotes();}
+function printQuote(id){
+  const state=getState();const q=state.quotes.find(x=>x.id===id);if(!q)return;
+  const subRep=(q.repuestos||[]).reduce((s,r)=>s+r.cantidad*r.precio,0);
+  const subMano=(q.mano||[]).reduce((s,m)=>s+m.horas*m.tarifa,0);
+  const sub=subRep+subMano;const iva=Math.round(sub*0.19);const total=sub+iva;
+  const w=window.open('','_blank','width=700,height=900');
+  w.document.write(`<!DOCTYPE html><html><head><title>Presupuesto PPTO-${q.id}</title>
+  <style>body{font-family:Arial,sans-serif;padding:30px;color:#333;max-width:650px;margin:0 auto}
+  h1{font-size:20px;border-bottom:2px solid #f59e0b;padding-bottom:10px}
+  .info{margin:15px 0;font-size:14px;line-height:1.6}
+  table{width:100%;border-collapse:collapse;margin:15px 0}
+  th,td{border:1px solid #ddd;padding:8px;text-align:left;font-size:13px}
+  th{background:#f5f5f5}
+  .total-row{font-weight:bold;font-size:15px;background:#fffbeb}
+  .footer{margin-top:40px;font-size:11px;color:#999;text-align:center}
+  </style></head><body>
+  <h1>Presupuesto PPTO-${q.id}</h1>
+  <div class="info"><strong>Cliente:</strong> ${q.cliente}<br><strong>Vehiculo:</strong> ${q.vehiculo}${q.ordenId?'<br><strong>Orden:</strong> OT-'+q.ordenId:''}<br><strong>Fecha:</strong> ${new Date().toLocaleDateString('es-CL')}</div>
+  ${q.repuestos.length?`<h3>Repuestos</h3><table><tr><th>Item</th><th>Cant.</th><th>P. Unit.</th><th>Subtotal</th></tr>
+  ${q.repuestos.map(r=>`<tr><td>${r.nombre}</td><td>${r.cantidad}</td><td>${fmt(r.precio)}</td><td>${fmt(r.cantidad*r.precio)}</td></tr>`).join('')}</table>`:''}
+  ${q.mano.length?`<h3>Mano de Obra</h3><table><tr><th>Trabajo</th><th>Horas</th><th>Tarifa/hr</th><th>Subtotal</th></tr>
+  ${q.mano.map(m=>`<tr><td>${m.desc}</td><td>${m.horas}</td><td>${fmt(m.tarifa)}</td><td>${fmt(m.horas*m.tarifa)}</td></tr>`).join('')}</table>`:''}
+  <table><tr><td>Subtotal Repuestos</td><td style="text-align:right">${fmt(subRep)}</td></tr>
+  <tr><td>Subtotal Mano de Obra</td><td style="text-align:right">${fmt(subMano)}</td></tr>
+  <tr><td>Neto</td><td style="text-align:right">${fmt(sub)}</td></tr>
+  <tr><td>IVA 19%</td><td style="text-align:right">${fmt(iva)}</td></tr>
+  <tr class="total-row"><td>TOTAL</td><td style="text-align:right">${fmt(total)}</td></tr></table>
+  <p style="margin-top:20px;font-size:12px">Validez del presupuesto: 15 dias.<br>Precios pueden variar segun disponibilidad de repuestos.</p>
+  <div class="footer">MecanicoCL &mdash; Generado el ${new Date().toLocaleString('es-CL')}</div>
+  </body></html>`);
+  w.document.close();w.print();
+}
+
+/* ===== TAB 3: OBD-II DATABASE ===== */
+const obdDB=[
+  {code:'P0100',desc:'Flujo de masa de aire (MAF) - circuito',causes:'Sensor MAF sucio o danado, fuga de aire en admision, cableado roto',severity:'Media'},
+  {code:'P0101',desc:'Rango/rendimiento del circuito MAF',causes:'Sensor MAF contaminado, filtro de aire obstruido, fuga en ducto de admision',severity:'Media'},
+  {code:'P0110',desc:'Sensor de temperatura de aire de admision (IAT) - circuito',causes:'Sensor IAT defectuoso, conector corroido, cableado danado',severity:'Baja'},
+  {code:'P0113',desc:'Sensor IAT - senal alta',causes:'Circuito abierto en sensor IAT, conector suelto, sensor defectuoso',severity:'Baja'},
+  {code:'P0115',desc:'Sensor de temperatura del refrigerante (ECT) - circuito',causes:'Sensor ECT danado, cableado cortado, conector oxidado',severity:'Media'},
+  {code:'P0118',desc:'Sensor ECT - senal alta',causes:'Circuito abierto, sensor desconectado, corrosion en terminales',severity:'Media'},
+  {code:'P0120',desc:'Sensor de posicion del acelerador (TPS) - circuito',causes:'TPS desgastado, cableado roto, problema en PCM',severity:'Alta'},
+  {code:'P0128',desc:'Termostato - temperatura bajo umbral',causes:'Termostato pegado abierto, sensor ECT defectuoso, bajo nivel refrigerante',severity:'Media'},
+  {code:'P0130',desc:'Sensor de oxigeno (O2) banco 1 sensor 1 - circuito',causes:'Sensor O2 agotado, cableado danado, fuga de escape',severity:'Media'},
+  {code:'P0131',desc:'Sensor O2 B1S1 - voltaje bajo',causes:'Sensor O2 defectuoso, fuga de vacio, inyector con fuga',severity:'Media'},
+  {code:'P0133',desc:'Sensor O2 B1S1 - respuesta lenta',causes:'Sensor O2 envejecido, depositos de carbon, fuga de escape',severity:'Media'},
+  {code:'P0171',desc:'Sistema demasiado pobre - Banco 1',causes:'Fuga de vacio, inyectores sucios, sensor MAF sucio, bomba combustible debil, filtro tapado',severity:'Media'},
+  {code:'P0172',desc:'Sistema demasiado rico - Banco 1',causes:'Inyectores con fuga, presion combustible alta, sensor O2 danado, filtro aire obstruido',severity:'Media'},
+  {code:'P0174',desc:'Sistema demasiado pobre - Banco 2',causes:'Similar a P0171 pero en banco 2. Fuga de vacio, MAF sucio, inyectores obstruidos',severity:'Media'},
+  {code:'P0175',desc:'Sistema demasiado rico - Banco 2',causes:'Inyectores con fuga banco 2, regulador presion defectuoso, sensor O2 malo',severity:'Media'},
+  {code:'P0200',desc:'Circuito de inyector - mal funcionamiento',causes:'Inyector defectuoso, cableado roto, problema en PCM',severity:'Alta'},
+  {code:'P0217',desc:'Sobrecalentamiento del motor',causes:'Termostato pegado cerrado, bomba de agua defectuosa, radiador obstruido, ventilador no funciona',severity:'Critica'},
+  {code:'P0300',desc:'Falla aleatoria de encendido detectada en multiples cilindros',causes:'Bujias desgastadas, cables de bujia danados, bobinas defectuosas, baja compresion, inyectores sucios',severity:'Alta'},
+  {code:'P0301',desc:'Falla de encendido detectada - Cilindro 1',causes:'Bujia cil.1 defectuosa, cable/bobina cil.1, inyector cil.1, baja compresion cil.1',severity:'Alta'},
+  {code:'P0302',desc:'Falla de encendido detectada - Cilindro 2',causes:'Bujia cil.2 defectuosa, bobina cil.2, inyector obstruido cil.2, junta de culata',severity:'Alta'},
+  {code:'P0303',desc:'Falla de encendido detectada - Cilindro 3',causes:'Bujia cil.3, bobina cil.3, inyector cil.3, problema mecanico interno',severity:'Alta'},
+  {code:'P0304',desc:'Falla de encendido detectada - Cilindro 4',causes:'Bujia cil.4 defectuosa, cable/bobina cil.4, compresion baja cil.4',severity:'Alta'},
+  {code:'P0325',desc:'Sensor de detonacion (knock) - circuito banco 1',causes:'Sensor knock danado, cableado roto, torque incorrecto del sensor',severity:'Media'},
+  {code:'P0335',desc:'Sensor de posicion del ciguenial (CKP) - circuito',causes:'Sensor CKP defectuoso, rueda dentada danada, gap incorrecto, cableado',severity:'Critica'},
+  {code:'P0340',desc:'Sensor de posicion del arbol de levas (CMP) - circuito',causes:'Sensor CMP danado, correa/cadena distribucion desalineada, cableado cortado',severity:'Alta'},
+  {code:'P0400',desc:'Flujo de recirculacion de gases de escape (EGR)',causes:'Valvula EGR pegada, conductos de vacio rotos, sensor EGR defectuoso',severity:'Media'},
+  {code:'P0401',desc:'EGR - flujo insuficiente detectado',causes:'Valvula EGR con carbon, conducto EGR obstruido, sensor de presion diferencial',severity:'Media'},
+  {code:'P0420',desc:'Eficiencia del catalizador por debajo del umbral - Banco 1',causes:'Catalizador deteriorado, sensor O2 trasero defectuoso, fuga de escape, mezcla incorrecta prolongada',severity:'Alta'},
+  {code:'P0430',desc:'Eficiencia del catalizador por debajo del umbral - Banco 2',causes:'Catalizador banco 2 agotado, sensor O2 posterior B2, fuga de escape',severity:'Alta'},
+  {code:'P0440',desc:'Sistema de control de emisiones evaporativas (EVAP) - mal funcionamiento',causes:'Tapa de combustible suelta o danada, canister EVAP defectuoso, mangueras rotas',severity:'Baja'},
+  {code:'P0441',desc:'EVAP - flujo de purga incorrecto',causes:'Valvula de purga EVAP pegada, mangueras agrietadas, canister saturado',severity:'Baja'},
+  {code:'P0442',desc:'EVAP - fuga pequena detectada',causes:'Tapa combustible no sella, manguera EVAP con micro-fisura, junta del tanque',severity:'Baja'},
+  {code:'P0446',desc:'EVAP - circuito de ventilacion',causes:'Valvula de venteo EVAP, filtro canister tapado, cableado valvula',severity:'Baja'},
+  {code:'P0449',desc:'EVAP - valvula de venteo - circuito',causes:'Valvula de venteo defectuosa, conector electrico, cableado roto',severity:'Baja'},
+  {code:'P0455',desc:'EVAP - fuga grande detectada',causes:'Tapa combustible ausente/rota, manguera EVAP desconectada, canister fisurdo',severity:'Media'},
+  {code:'P0500',desc:'Sensor de velocidad del vehiculo (VSS) - mal funcionamiento',causes:'Sensor VSS defectuoso, engranaje impulsor danado, cableado cortado',severity:'Media'},
+  {code:'P0505',desc:'Control de ralenti (IAC) - mal funcionamiento',causes:'Valvula IAC sucia/pegada, fuga de vacio, cuerpo aceleracion sucio',severity:'Media'},
+  {code:'P0507',desc:'Ralenti mas alto de lo esperado',causes:'Fuga de vacio, valvula IAC pegada abierta, cuerpo aceleracion sucio, sensor TPS',severity:'Media'},
+  {code:'P0562',desc:'Voltaje del sistema - bajo',causes:'Bateria debil, alternador defectuoso, cableado principal danado, corrosion terminales',severity:'Media'},
+  {code:'P0600',desc:'Comunicacion serial del modulo de control - error',causes:'Problema interno PCM/ECM, cableado de datos corrupto, voltaje inestable',severity:'Alta'},
+  {code:'P0700',desc:'Sistema de control de transmision - mal funcionamiento',causes:'Problema en TCM, solenoide de transmision, nivel de ATF bajo, cableado',severity:'Alta'},
+  {code:'P0705',desc:'Sensor de rango de transmision (TRS) - circuito',causes:'Switch de rango defectuoso, cableado, ajuste incorrecto del cable selector',severity:'Media'},
+  {code:'P0715',desc:'Sensor de velocidad de entrada de transmision - circuito',causes:'Sensor de turbina danado, cableado roto, contaminacion de ATF',severity:'Alta'},
+  {code:'P0720',desc:'Sensor de velocidad de salida de transmision - circuito',causes:'Sensor OSS defectuoso, engranaje impulsor desgastado, cableado',severity:'Alta'},
+  {code:'P0741',desc:'Embrague convertidor de torque - rendimiento/pegado desactivado',causes:'Solenoide TCC defectuoso, ATF sucio, problema mecanico en convertidor',severity:'Alta'},
+  {code:'P0010',desc:'Actuador posicion arbol de levas A - circuito abierto (Banco 1)',causes:'Solenoide VVT defectuoso, aceite bajo o sucio, cableado cortado',severity:'Media'},
+  {code:'P0011',desc:'Posicion arbol de levas A - sobreavanzada (Banco 1)',causes:'Aceite sucio/bajo, solenoide VVT pegado, cadena de distribucion estirada',severity:'Alta'},
+  {code:'P0016',desc:'Correlacion posicion ciguenial/arbol de levas - Banco 1',causes:'Cadena de distribucion estirada, tensor danado, sensor CKP/CMP, aceite bajo',severity:'Critica'},
+  {code:'P0121',desc:'Sensor TPS - rango/rendimiento',causes:'TPS desgastado internamente, cableado intermitente, cuerpo aceleracion sucio',severity:'Alta'},
+  {code:'P0135',desc:'Sensor O2 calefactor B1S1 - circuito',causes:'Fusible quemado, cableado calefactor roto, sensor O2 defectuoso, rele danado',severity:'Media'},
+  {code:'P0174',desc:'Mezcla pobre Banco 2',causes:'Fuga de admision, sensor MAF, bomba de combustible debil, filtro obstruido',severity:'Media'},
+  {code:'P0341',desc:'Sensor CMP - rango/rendimiento',causes:'Brecha del sensor incorrecta, rueda de reluctancia danada, distribucion saltada',severity:'Alta'},
+  {code:'P0456',desc:'EVAP - fuga muy pequena detectada',causes:'Tapa combustible desgastada, junta del filler neck, micro-fisura en manguera',severity:'Baja'},
+  {code:'P0496',desc:'EVAP - flujo alto durante no-purga',causes:'Valvula de purga EVAP pegada abierta, manguera invertida',severity:'Baja'},
+  {code:'P0521',desc:'Sensor de presion de aceite - rango/rendimiento',causes:'Sensor defectuoso, aceite bajo, bomba de aceite desgastada, cableado',severity:'Alta'},
+  {code:'P0606',desc:'ECM/PCM - error de procesador',causes:'Modulo de control danado, voltaje inestable, reprogramacion necesaria',severity:'Critica'},
+  {code:'C0035',desc:'Sensor velocidad rueda delantera izquierda - circuito ABS',causes:'Sensor ABS sucio/danado, cable cortado, rodamiento rueda con juego, anillo reluctor danado',severity:'Alta'},
+  {code:'C0040',desc:'Sensor velocidad rueda delantera derecha - circuito ABS',causes:'Sensor ABS delantero derecho danado, brecha excesiva, cableado',severity:'Alta'},
+  {code:'C0045',desc:'Sensor velocidad rueda trasera izquierda - circuito ABS',causes:'Sensor ABS trasero izq. defectuoso, anillo dentado corroido, conector oxidado',severity:'Alta'},
+  {code:'C0050',desc:'Sensor velocidad rueda trasera derecha - circuito ABS',causes:'Sensor ABS trasero der. danado, acumulacion de residuos metalicos, cable roto',severity:'Alta'},
+  {code:'B0001',desc:'Circuito de airbag del conductor - resistencia fuera de rango',causes:'Modulo airbag defectuoso, conector clockspring, cableado danado',severity:'Critica'},
+  {code:'B0002',desc:'Circuito de airbag del pasajero - resistencia fuera de rango',causes:'Sensor de ocupante, modulo airbag, conector bajo asiento, cableado',severity:'Critica'},
+  {code:'B0005',desc:'Pretensor cinturon conductor - circuito',causes:'Pretensor defectuoso, conector bajo asiento, cableado roto',severity:'Alta'},
+  {code:'B0010',desc:'Sensor de impacto frontal derecho - circuito',causes:'Sensor de impacto danado, cableado cortado, modulo SRS defectuoso',severity:'Critica'},
+  {code:'U0100',desc:'Perdida de comunicacion con ECM/PCM',causes:'Bus CAN danado, ECM defectuoso, cableado de red cortado, fusible quemado',severity:'Critica'},
+  {code:'U0101',desc:'Perdida de comunicacion con TCM',causes:'Modulo de transmision sin comunicacion, bus CAN, cableado, fusible',severity:'Alta'},
+  {code:'U0121',desc:'Perdida de comunicacion con modulo ABS',causes:'Modulo ABS danado, cableado bus CAN, fusible ABS, conector oxidado',severity:'Alta'},
+  {code:'U0140',desc:'Perdida de comunicacion con modulo de carroceria (BCM)',causes:'BCM defectuoso, cableado de red, fusible, conector suelto',severity:'Media'},
+  {code:'U0155',desc:'Perdida de comunicacion con cluster de instrumentos',causes:'Tablero defectuoso, bus CAN danado, conector suelto, fusible',severity:'Media'},
+  {code:'U0300',desc:'Incompatibilidad de software - modulo de control interno',causes:'Actualizacion de software necesaria, modulo reemplazado sin programar, ECU clonada',severity:'Alta'}
+];
+
+function renderOBD(){
+  const q=document.getElementById('obdSearch').value.toLowerCase().trim();
+  let filtered=obdDB;
+  if(q)filtered=obdDB.filter(c=>c.code.toLowerCase().includes(q)||c.desc.toLowerCase().includes(q)||c.causes.toLowerCase().includes(q));
+  if(!filtered.length){
+    document.getElementById('obdList').innerHTML='<div class="empty-state"><div class="icon">&#128268;</div><p>No se encontraron codigos</p></div>';
+    return;
+  }
+  document.getElementById('obdList').innerHTML=filtered.map(c=>`
+    <div class="card obd-card" onclick="this.classList.toggle('expanded')">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <strong style="color:var(--accent);font-size:.95rem">${c.code}</strong>
+        <span class="severity sev-${c.severity.toLowerCase()}">${c.severity}</span>
+      </div>
+      <div class="desc">${c.desc}</div>
+      <div class="causes">
+        <strong style="color:var(--text);font-size:.82rem">Causas comunes:</strong><br>
+        ${c.causes.split(',').map(x=>'&bull; '+x.trim()).join('<br>')}
+      </div>
+    </div>`).join('');
+}
+
+/* ===== TAB 4: REVISION TECNICA ===== */
+function renderRevision(){
+  const checklist=[
+    {item:'Emisiones / Gases de Escape',checks:'Niveles de CO, HC, NOx y opacidad (diesel). Se mide con analizador de gases o opacimetro.',reject:'HC o CO sobre el limite, opacidad excesiva en diesel',fix:'Afinacion motor, cambio bujias, revision catalizador, limpiar inyectores. Diesel: revision bomba inyectora, filtro particulas.'},
+    {item:'Sistema de Iluminacion',checks:'Luces bajas, altas, intermitentes, freno, retroceso, patente, neblineros. Alineacion y regulacion del haz luminoso.',reject:'Ampolletas quemadas, foco desalineado, luces de color incorrecto, tercera luz de freno inoperativa',fix:'Reemplazar ampolletas, regular alineacion de focos con reglaje. Verificar masas y conectores.'},
+    {item:'Sistema de Frenos',checks:'Eficiencia en frenometro (minimo 50% eje delantero), freno de mano (minimo 16%), diferencia entre ruedas del mismo eje.',reject:'Eficiencia bajo minimo, diferencia mayor a 25% entre ruedas del mismo eje, freno de mano ineficiente',fix:'Cambio pastillas/balatas, revision discos/tambores, purga de sistema, ajuste freno de mano, revision canerias.'},
+    {item:'Suspension',checks:'Holguras en rotulas, terminales, bujes. Amortiguadores en banco de suspension. Estado de resortes/espirales.',reject:'Holgura excesiva en componentes, amortiguadores con fuga o sin efecto, resortes quebrados',fix:'Reemplazo de rotulas, terminales, bujes de suspension. Cambio amortiguadores. Resortes nuevos si quebrados.'},
+    {item:'Direccion',checks:'Juego libre del volante (no mayor a 10 grados), estado cremallera, brazos de direccion, alineacion.',reject:'Juego excesivo en volante, rotulas de direccion con holgura, fugas en direccion hidraulica',fix:'Reemplazo terminales de direccion, rotulas, reparar cremallera, rellenar liquido direccion hidraulica.'},
+    {item:'Neumaticos',checks:'Profundidad de dibujo minimo 1.6mm (indicadores TWI), estado general, tamano correcto segun ficha tecnica, sin deformaciones.',reject:'Dibujo bajo 1.6mm, neumaticos de medida diferente por eje, deformacion lateral, cortes profundos',fix:'Reemplazo de neumaticos desgastados. Respetar medida original. Rotacion de neumaticos preventiva.'},
+    {item:'Carroceria y Chasis',checks:'Oxidacion estructural, deformaciones, puertas/capot/maletero, espejos retrovisores, parabrisas.',reject:'Oxido pasante en estructura, puertas que no cierran, falta espejo lateral, trizadura en zona de barrido limpiaparabrisas',fix:'Reparacion de oxido, soldadura si es estructural, reemplazo vidrios trizados, ajuste cerraduras.'},
+    {item:'Vidrios y Parabrisas',checks:'Estado general, trizaduras, laminas de seguridad, limpiabrisas funcional.',reject:'Trizadura en zona de barrido, lamina muy oscura en parabrisas frontal, limpiaparabrisas inoperativo',fix:'Reemplazo parabrisas, retirar laminas no permitidas, cambiar plumillas limpiaparabrisas.'}
+  ];
+  document.getElementById('checklistItems').innerHTML=checklist.map(c=>`
+    <div class="checklist-item">
+      <h4>${c.item}</h4>
+      <p><strong>Que se revisa:</strong> ${c.checks}</p>
+      <p style="color:var(--red);margin-top:4px"><strong>Causa de rechazo:</strong> ${c.reject}</p>
+      <p class="tip">Solucion: ${c.fix}</p>
+    </div>`).join('');
+
+  const rejections=[
+    {causa:'Gases fuera de norma',pct:'28%',solucion:'Afinacion completa + catalizador si es necesario'},
+    {causa:'Luces desalineadas o quemadas',pct:'22%',solucion:'Regular focos + reemplazar ampolletas fundidas'},
+    {causa:'Frenos deficientes',pct:'18%',solucion:'Cambio pastillas + revision discos + purga sistema'},
+    {causa:'Neumaticos lisos',pct:'15%',solucion:'Reemplazo neumaticos (4 idealmente, minimo por eje)'},
+    {causa:'Suspension con holgura',pct:'10%',solucion:'Reemplazo rotulas y terminales desgastados'},
+    {causa:'Vidrios trizados',pct:'7%',solucion:'Reemplazo parabrisas / vidrios danados'}
+  ];
+  document.getElementById('rejectionList').innerHTML=rejections.map(r=>`
+    <div class="spec-row">
+      <span class="label">${r.causa} <span style="color:var(--accent)">(${r.pct})</span></span>
+      <span class="value" style="font-size:.78rem;color:var(--muted)">${r.solucion}</span>
+    </div>`).join('');
+
+  const plantas=[
+    {region:'Metropolitana',plantas:'Sociedad de Revision Tecnica SpA, Riteve Chile, SGS Chile, entre otras (~50+ plantas)'},
+    {region:'Valparaiso',plantas:'Plantas en Vina del Mar, Valparaiso, Quilpue, San Antonio'},
+    {region:'Biobio',plantas:'Concepcion, Talcahuano, Los Angeles, Chillan'},
+    {region:'La Araucania',plantas:'Temuco, Villarrica, Angol'},
+    {region:'Los Lagos',plantas:'Puerto Montt, Osorno, Castro'},
+    {region:'Coquimbo',plantas:'La Serena, Coquimbo, Ovalle'},
+    {region:'O\'Higgins',plantas:'Rancagua, San Fernando, Santa Cruz'},
+    {region:'Maule',plantas:'Talca, Curico, Linares'}
+  ];
+  document.getElementById('plantasList').innerHTML=plantas.map(p=>`
+    <div class="spec-row"><span class="label">${p.region}</span><span class="value" style="font-size:.76rem;max-width:60%">${p.plantas}</span></div>`).join('');
+}
+
+/* ===== TAB 5: TORQUES Y ESPECIFICACIONES ===== */
+function renderSpecs(){
+  const torques=[
+    {item:'Pernos de rueda - sedan/hatchback',val:'90 - 110 Nm'},
+    {item:'Pernos de rueda - SUV/camioneta',val:'110 - 130 Nm'},
+    {item:'Bujias (rosca 14mm)',val:'20 - 30 Nm'},
+    {item:'Bujias (rosca 12mm)',val:'15 - 20 Nm'},
+    {item:'Tapon carter aceite',val:'25 - 40 Nm'},
+    {item:'Filtro de aceite (manual)',val:'3/4 vuelta despues de contacto'},
+    {item:'Pernos caliper de freno',val:'30 - 50 Nm'},
+    {item:'Pernos soporte caliper',val:'90 - 130 Nm'},
+    {item:'Tuercas de rueda de aleacion',val:'100 - 120 Nm'},
+    {item:'Pernos tapa de valvulas',val:'8 - 12 Nm'},
+    {item:'Pernos multiple de escape',val:'25 - 35 Nm'},
+    {item:'Pernos multiple de admision',val:'15 - 25 Nm'},
+    {item:'Pernos de culata (consultar manual)',val:'Secuencia + angulo especifico'},
+    {item:'Perno tensor correa accesorios',val:'40 - 55 Nm'},
+    {item:'Pernos rotula inferior',val:'50 - 80 Nm'},
+    {item:'Pernos terminal de direccion',val:'45 - 65 Nm'}
+  ];
+  document.getElementById('torqueSpecs').innerHTML=torques.map(t=>`
+    <div class="spec-row"><span class="label">${t.item}</span><span class="value">${t.val}</span></div>`).join('');
+
+  const fluids=[
+    {item:'Aceite motor (mas comun Chile)',val:'5W-30 (API SN/SP)'},
+    {item:'Aceite motor - clima calido',val:'10W-40'},
+    {item:'Aceite motor - diesel',val:'5W-30 o 15W-40 (CK-4)'},
+    {item:'Liquido de frenos',val:'DOT 4 (punto ebullicion >230C)'},
+    {item:'Refrigerante/anticongelante',val:'-37C (verde o rosa segun marca)'},
+    {item:'Liquido direccion hidraulica',val:'ATF Dexron III / PSF especifico'},
+    {item:'Aceite transmision automatica',val:'ATF Dexron VI o WS'},
+    {item:'Aceite transmision manual',val:'75W-90 GL-4'},
+    {item:'Aceite diferencial',val:'80W-90 GL-5'},
+    {item:'Liquido limpiaparabrisas',val:'Con anticongelante en zonas frias'}
+  ];
+  document.getElementById('fluidSpecs').innerHTML=fluids.map(f=>`
+    <div class="spec-row"><span class="label">${f.item}</span><span class="value">${f.val}</span></div>`).join('');
+
+  const services=[
+    {item:'Cambio aceite motor',val:'5.000 - 10.000 km'},
+    {item:'Filtro de aceite',val:'Cada cambio de aceite'},
+    {item:'Filtro de aire motor',val:'15.000 - 20.000 km'},
+    {item:'Filtro de combustible',val:'20.000 - 40.000 km'},
+    {item:'Filtro de habitaculo',val:'10.000 - 15.000 km'},
+    {item:'Bujias de encendido',val:'30.000 - 60.000 km'},
+    {item:'Bujias de iridio/platino',val:'60.000 - 100.000 km'},
+    {item:'Correa de distribucion',val:'60.000 - 100.000 km'},
+    {item:'Cadena de distribucion',val:'150.000 - 250.000 km (o por ruido)'},
+    {item:'Correa de accesorios',val:'50.000 - 80.000 km'},
+    {item:'Pastillas de freno',val:'30.000 - 50.000 km'},
+    {item:'Discos de freno',val:'60.000 - 100.000 km'},
+    {item:'Liquido de frenos',val:'Cada 2 anios o 40.000 km'},
+    {item:'Refrigerante',val:'Cada 2 anios o 40.000 km'},
+    {item:'Aceite transmision',val:'40.000 - 60.000 km'},
+    {item:'Alineacion y balanceo',val:'10.000 km o al cambiar neumaticos'},
+    {item:'Rotacion de neumaticos',val:'Cada 10.000 km'}
+  ];
+  document.getElementById('serviceSpecs').innerHTML=services.map(s=>`
+    <div class="spec-row"><span class="label">${s.item}</span><span class="value">${s.val}</span></div>`).join('');
+
+  const tires=[
+    {item:'Sedan / Hatchback',val:'32 - 35 PSI (2.2 - 2.4 bar)'},
+    {item:'SUV mediano',val:'33 - 36 PSI (2.3 - 2.5 bar)'},
+    {item:'Camioneta (vacia)',val:'35 - 40 PSI (2.4 - 2.8 bar)'},
+    {item:'Camioneta (con carga)',val:'40 - 45 PSI (2.8 - 3.1 bar)'},
+    {item:'Van / Furgon',val:'36 - 42 PSI (2.5 - 2.9 bar)'},
+    {item:'Llanta de emergencia (galleta)',val:'60 PSI (4.2 bar)'},
+    {item:'Motocicleta delantera',val:'28 - 33 PSI'},
+    {item:'Motocicleta trasera',val:'32 - 42 PSI'}
+  ];
+  document.getElementById('tireSpecs').innerHTML=tires.map(t=>`
+    <div class="spec-row"><span class="label">${t.item}</span><span class="value">${t.val}</span></div>`).join('');
+}
+
+/* ===== INIT ===== */
+function init(){
+  getState();
+  renderOrders();
+  renderQuotes();
+  renderOBD();
+  renderRevision();
+  renderSpecs();
+}
+init();
+</script>
+</body>
+</html>

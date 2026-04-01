@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#14532d">
+<meta name="description" content="EcoScore — Tu impacto ambiental personal en Chile">
+<title>EcoScore 🌱 Tu Impacto Ambiental</title>
+<link rel="manifest" href="data:application/json,%7B%22name%22%3A%22EcoScore%22%2C%22short_name%22%3A%22EcoScore%22%2C%22start_url%22%3A%22.%2F%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23f0fdf4%22%2C%22theme_color%22%3A%22%2314532d%22%7D">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#f0fdf4;--card:#ffffff;--card2:#dcfce7;--border:#86efac;
+  --accent:#16a34a;--accent2:#0369a1;--text:#14532d;--muted:#6b8fa5;
+  --red:#dc2626;--yellow:#d97706;--blue:#0369a1;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-tap-highlight-color:transparent}
+header{background:linear-gradient(90deg,#14532d,#166534);padding:13px 18px;position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;color:white}
+header h1{font-size:1.15rem;font-weight:800;letter-spacing:-.3px}
+header span{font-size:.75rem;opacity:.85}
+nav{background:#fff;border-bottom:2px solid var(--border);display:flex;overflow-x:auto;position:sticky;top:62px;z-index:40;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+.nav-btn{flex:1 0 auto;min-width:80px;padding:10px 4px 8px;border:none;background:none;color:var(--muted);font-size:.72rem;font-weight:600;cursor:pointer;border-bottom:3px solid transparent;transition:all .2s;display:flex;flex-direction:column;align-items:center;gap:2px;white-space:nowrap}
+.nav-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+.nav-btn .nav-icon{font-size:1.3rem;line-height:1}
+.tab{display:none;padding:16px;max-width:600px;margin:0 auto;animation:fadeIn .25s ease}
+.tab.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.card{background:var(--card);border:1.5px solid var(--border);border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 1px 6px rgba(0,0,0,.04)}
+.card2{background:var(--card2);border:1.5px solid var(--border);border-radius:16px;padding:16px;margin-bottom:14px}
+.section-title{font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:10px}
+/* Score gauge */
+.gauge-wrap{display:flex;flex-direction:column;align-items:center;padding:8px 0 4px}
+.gauge-svg{width:200px;height:120px}
+.score-num{font-size:2.6rem;font-weight:800;text-align:center;line-height:1;color:var(--accent)}
+.score-sub{font-size:.78rem;color:var(--muted);text-align:center;margin-top:2px}
+.badge-card{border-radius:16px;padding:14px 18px;margin-bottom:14px;display:flex;align-items:center;gap:14px}
+.badge-emoji{font-size:2.5rem;line-height:1}
+.badge-title{font-size:1rem;font-weight:800}
+.badge-msg{font-size:.82rem;margin-top:3px}
+/* Category bars */
+.cat-row{display:flex;align-items:center;margin-bottom:9px;gap:8px}
+.cat-label{width:90px;font-size:.78rem;font-weight:600;flex-shrink:0}
+.cat-bar-bg{flex:1;height:10px;background:#e2f5e9;border-radius:99px;overflow:hidden}
+.cat-bar{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent),#4ade80);transition:width .6s ease}
+.cat-pts{width:36px;font-size:.74rem;font-weight:700;text-align:right;color:var(--accent);flex-shrink:0}
+/* Form elements */
+.form-group{margin-bottom:14px}
+.form-label{font-size:.82rem;font-weight:600;display:block;margin-bottom:6px}
+.form-hint{font-size:.72rem;color:var(--muted);margin-top:3px}
+select,input[type=number],input[type=range]{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:16px;font-family:'Inter',sans-serif;color:var(--text);background:#fff;appearance:none;-webkit-appearance:none}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2316a34a' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+input[type=range]{padding:4px 0;border:none;accent-color:var(--accent)}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--card2)}
+.toggle-row:last-child{border-bottom:none}
+.toggle-label{font-size:.85rem;font-weight:500}
+.toggle{position:relative;width:44px;height:24px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;inset:0;background:#d1d5db;border-radius:99px;transition:.3s;cursor:pointer}
+.toggle-slider:before{content:'';position:absolute;width:18px;height:18px;border-radius:50%;background:white;left:3px;top:3px;transition:.3s}
+.toggle input:checked+.toggle-slider{background:var(--accent)}
+.toggle input:checked+.toggle-slider:before{transform:translateX(20px)}
+.chip-group{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chip{padding:6px 12px;border:1.5px solid var(--border);border-radius:99px;font-size:.78rem;font-weight:600;cursor:pointer;background:#fff;color:var(--text);transition:all .15s}
+.chip.active{background:var(--accent);border-color:var(--accent);color:white}
+/* Challenge cards */
+.challenge-card{background:var(--card);border:1.5px solid var(--border);border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 1px 6px rgba(0,0,0,.05)}
+.challenge-header{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px}
+.challenge-icon{font-size:2rem;line-height:1;flex-shrink:0}
+.challenge-title{font-size:.95rem;font-weight:700}
+.challenge-desc{font-size:.8rem;color:var(--muted);margin-top:3px}
+.progress-wrap{margin:10px 0}
+.progress-bar-bg{height:10px;background:#e2f5e9;border-radius:99px;overflow:hidden}
+.progress-bar{height:100%;border-radius:99px;background:linear-gradient(90deg,#16a34a,#4ade80);transition:width .5s ease}
+.progress-label{font-size:.74rem;color:var(--muted);margin-top:4px;display:flex;justify-content:space-between}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 18px;border:none;border-radius:10px;font-size:.88rem;font-weight:700;cursor:pointer;transition:all .15s;font-family:'Inter',sans-serif}
+.btn-primary{background:var(--accent);color:white}
+.btn-primary:hover{background:#15803d}
+.btn-secondary{background:var(--card2);color:var(--accent);border:1.5px solid var(--border)}
+.btn-secondary:hover{background:#bbf7d0}
+.btn-full{width:100%;margin-top:8px}
+.btn-sm{padding:7px 14px;font-size:.8rem}
+.btn-wa{background:#25D366;color:white}
+.btn-wa:hover{background:#1db954}
+.points-badge{display:inline-block;background:#fef9c3;color:#a16207;border:1.5px solid #fde047;border-radius:99px;font-size:.72rem;font-weight:700;padding:2px 10px;margin-top:6px}
+/* Learn tab */
+.learn-section{margin-bottom:20px}
+.learn-title{font-size:1rem;font-weight:800;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.info-row{display:flex;gap:8px;padding:9px 0;border-bottom:1px solid var(--card2);align-items:flex-start}
+.info-icon{font-size:1.3rem;flex-shrink:0;line-height:1.2}
+.info-text{font-size:.82rem;line-height:1.5}
+.info-text strong{color:var(--accent)}
+.fact-card{background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1.5px solid var(--border);border-radius:12px;padding:13px;margin-bottom:8px;font-size:.82rem;line-height:1.5}
+.fact-card strong{display:block;font-size:.88rem;margin-bottom:3px;color:var(--text)}
+/* Stats row */
+.stats-row{display:flex;gap:10px;margin-bottom:14px}
+.stat-box{flex:1;background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:12px;text-align:center}
+.stat-num{font-size:1.5rem;font-weight:800;color:var(--accent)}
+.stat-lbl{font-size:.7rem;color:var(--muted);margin-top:2px}
+/* Points display */
+.ecopoints-hero{background:linear-gradient(135deg,#14532d,#166534);border-radius:16px;padding:18px;margin-bottom:14px;color:white;text-align:center}
+.ecopoints-num{font-size:2.4rem;font-weight:800}
+.ecopoints-lbl{font-size:.82rem;opacity:.85;margin-top:2px}
+/* Chart container */
+.chart-wrap{position:relative;height:140px;margin-top:6px}
+/* Notification */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#14532d;color:white;padding:10px 22px;border-radius:99px;font-size:.84rem;font-weight:600;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1}
+/* Water reference table */
+.ref-table{width:100%;font-size:.78rem;border-collapse:collapse;margin-top:6px}
+.ref-table td{padding:5px 8px;border-bottom:1px solid var(--card2)}
+.ref-table td:last-child{text-align:right;font-weight:700;color:var(--accent)}
+/* Slider value display */
+.slider-val{font-size:1rem;font-weight:800;color:var(--accent);text-align:center;margin-top:4px}
+/* level indicator colors */
+.level-ecohero{background:linear-gradient(135deg,#dcfce7,#bbf7d0);border-color:#4ade80;color:#14532d}
+.level-ecociu{background:linear-gradient(135deg,#d1fae5,#a7f3d0);border-color:#34d399;color:#065f46}
+.level-ecoapr{background:linear-gradient(135deg,#fef9c3,#fde68a);border-color:#fbbf24;color:#92400e}
+.level-ecodeu{background:linear-gradient(135deg,#fee2e2,#fecaca);border-color:#f87171;color:#991b1b}
+/* scrollable log */
+.log-list{max-height:180px;overflow-y:auto;font-size:.78rem}
+.log-item{padding:6px 0;border-bottom:1px solid var(--card2);display:flex;justify-content:space-between;align-items:center}
+.log-item:last-child{border-bottom:none}
+/* responsive tweaks */
+@media(min-width:480px){.stats-row{gap:14px}.gauge-svg{width:240px;height:144px}.score-num{font-size:3rem}}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>🌱 EcoScore</h1>
+    <span>Tu Impacto Ambiental Personal</span>
+  </div>
+  <div style="text-align:right">
+    <div id="hdr-score" style="font-size:1.5rem;font-weight:800;line-height:1">—</div>
+    <div style="font-size:.68rem;opacity:.8">puntos</div>
+  </div>
+</header>
+
+<nav id="main-nav">
+  <button class="nav-btn active" onclick="showTab('score')" id="nav-score">
+    <span class="nav-icon">🌍</span>Mi EcoScore
+  </button>
+  <button class="nav-btn" onclick="showTab('perfil')" id="nav-perfil">
+    <span class="nav-icon">📋</span>Mi Perfil
+  </button>
+  <button class="nav-btn" onclick="showTab('desafios')" id="nav-desafios">
+    <span class="nav-icon">🏆</span>Desafíos
+  </button>
+  <button class="nav-btn" onclick="showTab('aprende')" id="nav-aprende">
+    <span class="nav-icon">📚</span>Aprende
+  </button>
+</nav>
+
+<!-- TAB 1: MI ECOSCORE -->
+<div class="tab active" id="tab-score">
+  <div class="card">
+    <div class="section-title">Mi EcoScore Actual</div>
+    <div class="gauge-wrap">
+      <svg class="gauge-svg" viewBox="0 0 200 120" id="gauge-svg">
+        <defs>
+          <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style="stop-color:#14532d"/>
+            <stop offset="100%" style="stop-color:#4ade80"/>
+          </linearGradient>
+        </defs>
+        <!-- Background arc -->
+        <path id="gauge-bg" d="M20,110 A90,90 0 0,1 180,110" fill="none" stroke="#e2f5e9" stroke-width="18" stroke-linecap="round"/>
+        <!-- Value arc -->
+        <path id="gauge-fill" d="M20,110 A90,90 0 0,1 180,110" fill="none" stroke="url(#g1)" stroke-width="18" stroke-linecap="round" stroke-dasharray="0,283"/>
+        <!-- Needle base -->
+        <circle cx="100" cy="110" r="6" fill="#14532d"/>
+      </svg>
+      <div class="score-num" id="score-display">—</div>
+      <div class="score-sub">de 100 puntos posibles</div>
+    </div>
+  </div>
+
+  <div class="badge-card card" id="badge-card">
+    <div class="badge-emoji" id="badge-emoji">🌱</div>
+    <div>
+      <div class="badge-title" id="badge-title">Calculando...</div>
+      <div class="badge-msg" id="badge-msg">Completa tu perfil para ver tu nivel</div>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-box">
+      <div class="stat-num" id="co2-mine">—</div>
+      <div class="stat-lbl">tCO₂e/año<br>mi huella</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" style="color:var(--muted)">5.5</div>
+      <div class="stat-lbl">tCO₂e/año<br>promedio Chile</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" id="ecopts-mini">0</div>
+      <div class="stat-lbl">EcoPoints<br>acumulados</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Desglose por categoría</div>
+    <div id="cat-breakdown"></div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Historial últimos 6 meses</div>
+    <div class="chart-wrap">
+      <canvas id="history-chart"></canvas>
+    </div>
+    <div style="font-size:.72rem;color:var(--muted);text-align:center;margin-top:6px">Actualiza tu perfil mensualmente para ver evolución</div>
+  </div>
+
+  <button class="btn btn-wa btn-full" onclick="shareWhatsApp()">
+    📲 Compartir mi EcoScore por WhatsApp
+  </button>
+</div>
+
+<!-- TAB 2: MI PERFIL AMBIENTAL -->
+<div class="tab" id="tab-perfil">
+
+  <!-- Transporte -->
+  <div class="card">
+    <div class="section-title">🚗 Transporte (semana típica)</div>
+
+    <div class="form-group">
+      <label class="form-label">Modo de transporte principal</label>
+      <select id="p-transport" onchange="saveAndRecalc()">
+        <option value="walk">🚶 Pie / Bicicleta</option>
+        <option value="public">🚇 Metro / Micro</option>
+        <option value="gasoline" selected>🚗 Auto gasolina</option>
+        <option value="hybrid">🔋 Auto híbrido / EV</option>
+        <option value="moto">🏍️ Moto</option>
+        <option value="remote">💻 Teletrabajo completo</option>
+      </select>
+    </div>
+
+    <div class="form-group" id="km-group">
+      <label class="form-label">Kilómetros en auto por semana</label>
+      <input type="range" id="p-km" min="0" max="500" value="80" step="10" oninput="updateSliderVal('p-km','km-val','km'); saveAndRecalc()">
+      <div class="slider-val" id="km-val">80 km</div>
+      <div class="form-hint">Promedio chileno: ~80 km/sem (auto particular)</div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Vuelos al año</label>
+      <div class="chip-group" id="flights-chips">
+        <div class="chip active" onclick="selectChip('flights-chips',this,'0')">✈️ Ninguno</div>
+        <div class="chip" onclick="selectChip('flights-chips',this,'1')">1–2 vuelos</div>
+        <div class="chip" onclick="selectChip('flights-chips',this,'3')">3–5 vuelos</div>
+        <div class="chip" onclick="selectChip('flights-chips',this,'6')">+5 vuelos</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Energía -->
+  <div class="card">
+    <div class="section-title">⚡ Energía (mes)</div>
+
+    <div class="form-group">
+      <label class="form-label">Consumo eléctrico mensual (kWh)</label>
+      <input type="range" id="p-kwh" min="0" max="600" value="250" step="10" oninput="updateSliderVal('p-kwh','kwh-val','kWh'); saveAndRecalc()">
+      <div class="slider-val" id="kwh-val">250 kWh</div>
+      <div class="form-hint">Promedio Chile: 250 kWh/mes por hogar. Tarifa ENEL/ELECDA referencial: ~$120/kWh</div>
+    </div>
+
+    <div class="toggle-row">
+      <span class="toggle-label">☀️ Tiene paneles solares</span>
+      <label class="toggle"><input type="checkbox" id="p-solar" onchange="saveAndRecalc()"><span class="toggle-slider"></span></label>
+    </div>
+
+    <div class="form-group" style="margin-top:12px">
+      <label class="form-label">Tipo de calefacción</label>
+      <select id="p-heat" onchange="saveAndRecalc()">
+        <option value="none">Sin calefacción</option>
+        <option value="electric" selected>Eléctrico</option>
+        <option value="gas">Gas natural / licuado</option>
+        <option value="lena">Leña</option>
+        <option value="pellet">Pellet</option>
+      </select>
+      <div class="form-hint">La leña genera contaminación del aire (material particulado)</div>
+    </div>
+  </div>
+
+  <!-- Agua -->
+  <div class="card">
+    <div class="section-title">💧 Agua (por persona / día)</div>
+
+    <div class="form-group">
+      <label class="form-label">Litros estimados por día</label>
+      <input type="range" id="p-water" min="50" max="400" value="150" step="5" oninput="updateSliderVal('p-water','water-val','L/día'); saveAndRecalc()">
+      <div class="slider-val" id="water-val">150 L/día</div>
+    </div>
+
+    <table class="ref-table">
+      <tr><td>🚿 Ducha 5 min</td><td>~40 L</td></tr>
+      <tr><td>🚿 Ducha 10 min</td><td>~80 L</td></tr>
+      <tr><td>🧺 Lavado de ropa</td><td>~60 L</td></tr>
+      <tr><td>🍽️ Lavaplatos automático</td><td>~15 L</td></tr>
+      <tr><td>🚽 WC por descarga</td><td>~6 L</td></tr>
+    </table>
+    <div class="form-hint" style="margin-top:6px">Promedio Chile (SISS): 150 L/persona/día. Chile vive megasequía — ¡cada litro cuenta!</div>
+
+    <div class="toggle-row" style="margin-top:10px">
+      <span class="toggle-label">🌧️ Reutiliza agua de lluvia</span>
+      <label class="toggle"><input type="checkbox" id="p-rainwater" onchange="saveAndRecalc()"><span class="toggle-slider"></span></label>
+    </div>
+  </div>
+
+  <!-- Dieta -->
+  <div class="card">
+    <div class="section-title">🍽️ Dieta</div>
+
+    <div class="form-group">
+      <label class="form-label">Patrón alimentario</label>
+      <select id="p-diet" onchange="saveAndRecalc()">
+        <option value="vegan">🥦 Vegano</option>
+        <option value="veg">🥗 Vegetariano</option>
+        <option value="flexi">🐟 Flexitariano</option>
+        <option value="omni" selected>🍗 Omnívoro</option>
+        <option value="asado">🥩 Mucho asado (carne roja diaria)</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Alimentos locales / temporada: <strong id="local-pct-lbl">50%</strong></label>
+      <input type="range" id="p-local" min="0" max="100" value="50" step="5" oninput="document.getElementById('local-pct-lbl').textContent=this.value+'%'; saveAndRecalc()">
+      <div class="form-hint">Feria libre, productores locales → menor huella de transporte</div>
+    </div>
+
+    <div class="toggle-row">
+      <span class="toggle-label">🌿 Compostas residuos orgánicos</span>
+      <label class="toggle"><input type="checkbox" id="p-compost-diet" onchange="saveAndRecalc()"><span class="toggle-slider"></span></label>
+    </div>
+  </div>
+
+  <!-- Residuos -->
+  <div class="card">
+    <div class="section-title">♻️ Residuos</div>
+
+    <div class="form-group">
+      <label class="form-label">¿Qué reciclas? (selecciona todos los que aplican)</label>
+      <div class="chip-group" id="recycle-chips">
+        <div class="chip" onclick="toggleChip(this,'paper')">📄 Papel</div>
+        <div class="chip" onclick="toggleChip(this,'plastic')">🧴 Plástico</div>
+        <div class="chip" onclick="toggleChip(this,'glass')">🍶 Vidrio</div>
+        <div class="chip" onclick="toggleChip(this,'metal')">🥫 Metal</div>
+        <div class="chip" onclick="toggleChip(this,'none2')">❌ No reciclo</div>
+      </div>
+    </div>
+
+    <div class="toggle-row">
+      <span class="toggle-label">🌱 Compostas orgánicos</span>
+      <label class="toggle"><input type="checkbox" id="p-compost" onchange="saveAndRecalc()"><span class="toggle-slider"></span></label>
+    </div>
+
+    <div class="form-group" style="margin-top:12px">
+      <label class="form-label">Residuos generados por semana</label>
+      <input type="range" id="p-waste" min="0" max="20" value="8" step="1" oninput="updateSliderVal('p-waste','waste-val','kg'); saveAndRecalc()">
+      <div class="slider-val" id="waste-val">8 kg</div>
+      <div class="form-hint">Promedio Chile: ~1.2 kg/persona/día = ~8.4 kg/sem</div>
+    </div>
+
+    <div class="toggle-row">
+      <span class="toggle-label">🛍️ Lleva bolsas reutilizables</span>
+      <label class="toggle"><input type="checkbox" id="p-bags" onchange="saveAndRecalc()"><span class="toggle-slider"></span></label>
+    </div>
+  </div>
+
+</div>
+
+<!-- TAB 3: DESAFÍOS -->
+<div class="tab" id="tab-desafios">
+
+  <div class="ecopoints-hero">
+    <div class="ecopoints-num" id="total-pts">0</div>
+    <div class="ecopoints-lbl">🌟 EcoPoints totales</div>
+  </div>
+
+  <div class="card2">
+    <div class="section-title">Desafíos activos — <span id="month-label"></span></div>
+    <div id="challenge-list"></div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Historial de EcoPoints</div>
+    <div class="log-list" id="points-log">
+      <div style="color:var(--muted);font-size:.8rem;text-align:center;padding:16px">
+        ¡Completa desafíos para ganar EcoPoints!
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- TAB 4: APRENDE Y ACTÚA -->
+<div class="tab" id="tab-aprende">
+
+  <!-- Reciclaje -->
+  <div class="learn-section">
+    <div class="learn-title">♻️ Reciclaje en Chile</div>
+    <div class="card">
+      <div style="background:#fef9c3;border:1.5px solid #fde047;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:.82rem">
+        <strong>Encuentra tu Punto Limpio más cercano:</strong><br>
+        Visita <strong>puntosverde.cl</strong> o la app de tu municipalidad. La mayoría de comunas tiene Puntos Limpios gratuitos.
+      </div>
+      <div class="info-row"><div class="info-icon">📄</div><div class="info-text"><strong>Papel y Cartón →</strong> Punto Limpio. No si está mojado o con restos de comida. Aplana las cajas.</div></div>
+      <div class="info-row"><div class="info-icon">🧴</div><div class="info-text"><strong>Plástico →</strong> Solo tipos 1 (PET), 2 (HDPE) y 5 (PP). Verifica el triángulo en el fondo. Enjuaga antes.</div></div>
+      <div class="info-row"><div class="info-icon">🍶</div><div class="info-text"><strong>Vidrio →</strong> Punto Limpio, por color separado si es posible. Nunca mezclar con otros materiales.</div></div>
+      <div class="info-row"><div class="info-icon">🥫</div><div class="info-text"><strong>Metales →</strong> Latas de bebida, conservas, aluminio. Aplana y limpia. Punto Limpio.</div></div>
+      <div class="info-row"><div class="info-icon">🌿</div><div class="info-text"><strong>Orgánicos →</strong> Compost casero o biodigestor municipal. Algunas comunas retiran orgánicos.</div></div>
+      <div class="info-row"><div class="info-icon">🔋</div><div class="info-text"><strong>Pilas y baterías →</strong> <strong style="color:var(--red)">NUNCA a la basura.</strong> Llévalas a farmacias (Cruz Verde, Salcobrand) o a tu municipalidad.</div></div>
+      <div class="info-row" style="border-bottom:none"><div class="info-icon">🍳</div><div class="info-text"><strong>Aceite de cocina →</strong> Lleva a ENEX, Copec, o municipalidad. <strong style="color:var(--red)">NUNCA al lavaplatos ni alcantarillado</strong> — daña el agua.</div></div>
+    </div>
+  </div>
+
+  <!-- Agua -->
+  <div class="learn-section">
+    <div class="learn-title">💧 Agua en Chile</div>
+    <div class="card">
+      <div style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:.82rem;color:#1e40af">
+        <strong>Chile enfrenta la peor megasequía en 1.000 años.</strong> La región Metropolitana y Valparaíso han reducido sus reservas hídrogeológicas un 30–50% en la última década.
+      </div>
+      <div class="info-row"><div class="info-icon">🚿</div><div class="info-text">Ducha de <strong>5 minutos</strong> ahorra ~40L vs. una de 10min. Una familia de 4 ahorra <strong>58.000 L/año</strong>.</div></div>
+      <div class="info-row"><div class="info-icon">🧺</div><div class="info-text">Usa la lavadora con <strong>carga completa</strong>. El modo eco puede ahorrar hasta un 30% de agua.</div></div>
+      <div class="info-row"><div class="info-icon">🌙</div><div class="info-text">Riega el jardín en la <strong>noche o madrugada</strong> para reducir evaporación hasta un 50%.</div></div>
+      <div class="info-row"><div class="info-icon">🌧️</div><div class="info-text">La <strong>captación de agua lluvia</strong> para jardín o WC es legal y gratuita. Un estanque de 500L puede durar semanas.</div></div>
+      <div class="info-row" style="border-bottom:none"><div class="info-icon">💰</div><div class="info-text">Tarifa SISS: ~$700–900 por m³ (1.000 L). Una ducha larga extra al día = <strong>+$3.000/mes</strong> en tu cuenta.</div></div>
+    </div>
+  </div>
+
+  <!-- Energía -->
+  <div class="learn-section">
+    <div class="learn-title">⚡ Energía</div>
+    <div class="card">
+      <div style="background:#f0fdf4;border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:.82rem">
+        <strong>Buena noticia:</strong> En 2024, Chile generó ~47% de su electricidad con renovables (solar, eólica, hidro). ¡Cada kWh que ahorras cuenta doble!
+      </div>
+      <div class="info-row"><div class="info-icon">📄</div><div class="info-text"><strong>Lee tu boleta:</strong> Verifica "potencia contratada" (kW) vs. "energía consumida" (kWh). Si tienes potencia contratada alta sin necesidad, pídele a tu distribuidora reducirla.</div></div>
+      <div class="info-row"><div class="info-icon">🌡️</div><div class="info-text">El <strong>termostato a 20°C</strong> en invierno ahorra ~7% de energía por cada grado menos. Abrígate.</div></div>
+      <div class="info-row"><div class="info-icon">💡</div><div class="info-text">Cambiar a <strong>LED</strong> ahorra 70–80% en iluminación. Una bombilla LED de $3.000 se paga en 2 meses.</div></div>
+      <div class="info-row"><div class="info-icon">☀️</div><div class="info-text"><strong>Paneles solares en Chile:</strong> Con la ley 21.118 (Net Billing), puedes vender excedentes a la red. Retorno de inversión típico: 5–8 años.</div></div>
+      <div class="info-row" style="border-bottom:none"><div class="info-icon">🔧</div><div class="info-text">Herramienta gratuita: <strong>CNE Calculadora de Eficiencia Energética</strong> en cne.cl — simula ahorros con distintas mejoras.</div></div>
+    </div>
+  </div>
+
+  <!-- Noticias verdes -->
+  <div class="learn-section">
+    <div class="learn-title">🌍 Chile Verde — 5 hechos inspiradores</div>
+    <div class="fact-card">
+      <strong>☀️ Atacama: el mayor desierto solar del mundo</strong>
+      Chile tiene el mayor potencial solar del planeta. El Desierto de Atacama recibe hasta 3.500 horas de sol al año. En 2023, la energía solar fotovoltaica generó más del 12% de la electricidad del país.
+    </div>
+    <div class="fact-card">
+      <strong>🌬️ Patagonia a todo viento</strong>
+      El proyecto "Andes Renovables" en Aysén es uno de los mayores parques eólicos de Sudamérica. Chile tiene potencial eólico de más de 40.000 MW — 10 veces su demanda actual.
+    </div>
+    <div class="fact-card">
+      <strong>♻️ Ley REP (2016) — Responsabilidad Extendida del Productor</strong>
+      Chile fue el primer país latinoamericano en implementar esta ley. Los fabricantes ahora financian la recolección y reciclaje de neumáticos, electrónicos, aceites y envases. Se han recuperado millones de toneladas.
+    </div>
+    <div class="fact-card">
+      <strong>🌲 Reforestación en Cerro Navia y La Pintana</strong>
+      La Pintana tiene el único biodigestor municipal de Chile, que convierte residuos orgánicos en compost y biogás. Cerro Navia plantó +8.000 árboles nativos en una década. Ciudadanos lo hicieron posible.
+    </div>
+    <div class="fact-card">
+      <strong>🐋 Rapa Nui y las 200 millas libres de pesca</strong>
+      En 2018, Chile creó el Parque Marino Rapa Nui de 720.000 km² — uno de los 10 mayores del mundo. La comunidad Rapa Nui lideró la iniciativa. Un ejemplo global de conservación comunitaria.
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// STATE & STORAGE
+// ============================================================
+const STORE_KEY = 'ecoscore_v1';
+let state = {
+  transport: 'gasoline', km: 80, flights: '0',
+  kwh: 250, solar: false, heat: 'electric',
+  water: 150, rainwater: false,
+  diet: 'omni', localPct: 50, compostDiet: false,
+  recycleTypes: [], compost: false, waste: 8, bags: false,
+  challenges: {}, ecoPoints: 0, pointsLog: [],
+  history: []
+};
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) { const parsed = JSON.parse(raw); state = Object.assign({}, state, parsed); }
+  } catch(e) {}
+}
+
+function saveState() {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch(e) {}
+}
+
+// ============================================================
+// TAB NAVIGATION
+// ============================================================
+function showTab(id) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  document.getElementById('nav-' + id).classList.add('active');
+  if (id === 'score') renderScore();
+  if (id === 'desafios') renderChallenges();
+}
+
+// ============================================================
+// SCORING ENGINE
+// ============================================================
+function calcScore() {
+  let t = 0, e = 0, d = 0, w = 0, r = 0;
+
+  // Transport (30 pts)
+  const tMap = {walk:30, remote:28, public:25, hybrid:20, moto:12, gasoline:5};
+  t = tMap[state.transport] || 5;
+  if (state.flights === '0') t = Math.min(30, t + 2);
+  else if (state.flights === '6') t = Math.max(0, t - 6);
+  else if (state.flights === '3') t = Math.max(0, t - 3);
+
+  // Energy (25 pts)
+  const kwh = parseInt(state.kwh) || 250;
+  if (kwh < 100) e = 25;
+  else if (kwh < 200) e = 18;
+  else if (kwh < 350) e = 10;
+  else e = 3;
+  if (state.solar) e = Math.min(25, e + 5);
+  if (state.heat === 'lena') e = Math.max(0, e - 3);
+  if (state.heat === 'none') e = Math.min(25, e + 2);
+
+  // Diet (25 pts)
+  const dMap = {vegan:25, veg:22, flexi:18, omni:13, asado:5};
+  d = dMap[state.diet] || 13;
+  const localBonus = Math.floor((parseInt(state.localPct) || 50) / 25);
+  d = Math.min(25, d + localBonus);
+  if (state.compostDiet) d = Math.min(25, d + 2);
+
+  // Water (10 pts)
+  const lt = parseInt(state.water) || 150;
+  if (lt < 100) w = 10;
+  else if (lt < 150) w = 7;
+  else if (lt < 200) w = 4;
+  else w = 1;
+  if (state.rainwater) w = Math.min(10, w + 1);
+
+  // Waste / Recycling (10 pts)
+  const rt = state.recycleTypes || [];
+  const noRecycle = rt.includes('none2');
+  const recycleCount = noRecycle ? 0 : rt.filter(x => x !== 'none2').length;
+  if (noRecycle || recycleCount === 0) r = 1;
+  else if (recycleCount >= 3 && state.compost) r = 10;
+  else if (recycleCount >= 3) r = 7;
+  else if (recycleCount >= 1) r = 4;
+  else r = 2;
+  if (state.bags) r = Math.min(10, r + 1);
+  const wasteKg = parseInt(state.waste) || 8;
+  if (wasteKg < 4) r = Math.min(10, r + 1);
+
+  const total = Math.min(100, t + e + d + w + r);
+  return { total, t, e, d, w, r };
+}
+
+function estimateCO2(score) {
+  // interpolate: score 100 → ~1.5 tCO2e, score 0 → ~12 tCO2e
+  return (12 - (score / 100) * 10.5).toFixed(1);
+}
+
+// ============================================================
+// RENDER SCORE TAB
+// ============================================================
+function renderScore() {
+  const sc = calcScore();
+  const total = sc.total;
+
+  // Header
+  document.getElementById('hdr-score').textContent = total;
+
+  // Gauge
+  const pct = total / 100;
+  const arcLen = 283; // approx half-circle arc length for r=90
+  document.getElementById('gauge-fill').setAttribute('stroke-dasharray', (pct * arcLen) + ',' + arcLen);
+  document.getElementById('score-display').textContent = total;
+
+  // Badge
+  const bc = document.getElementById('badge-card');
+  bc.className = 'badge-card card';
+  if (total >= 80) {
+    bc.classList.add('level-ecohero');
+    document.getElementById('badge-emoji').textContent = '🌿';
+    document.getElementById('badge-title').textContent = 'EcoHéroe';
+    document.getElementById('badge-msg').textContent = 'Tu huella es ~40% menor al promedio chileno. ¡Inspiras a tu comunidad!';
+  } else if (total >= 60) {
+    bc.classList.add('level-ecociu');
+    document.getElementById('badge-emoji').textContent = '🌱';
+    document.getElementById('badge-title').textContent = 'EcoCiudadano';
+    document.getElementById('badge-msg').textContent = 'Vas por buen camino. Pequeños ajustes te llevarán al siguiente nivel.';
+  } else if (total >= 40) {
+    bc.classList.add('level-ecoapr');
+    document.getElementById('badge-emoji').textContent = '🌻';
+    document.getElementById('badge-title').textContent = 'EcoAprendiz';
+    document.getElementById('badge-msg').textContent = 'Con pequeños cambios puedes mejorar mucho. ¡Revisa tus desafíos!';
+  } else {
+    bc.classList.add('level-ecodeu');
+    document.getElementById('badge-emoji').textContent = '⚠️';
+    document.getElementById('badge-title').textContent = 'EcoDeudor';
+    document.getElementById('badge-msg').textContent = 'Tu impacto supera en ~2× el promedio chileno. ¡Cada acción cuenta!';
+  }
+
+  // CO2
+  document.getElementById('co2-mine').textContent = estimateCO2(total);
+  document.getElementById('ecopts-mini').textContent = state.ecoPoints || 0;
+
+  // Category breakdown
+  const cats = [
+    { name:'🚗 Transporte', pts: sc.t, max: 30 },
+    { name:'⚡ Energía', pts: sc.e, max: 25 },
+    { name:'🍽️ Dieta', pts: sc.d, max: 25 },
+    { name:'💧 Agua', pts: sc.w, max: 10 },
+    { name:'♻️ Residuos', pts: sc.r, max: 10 },
+  ];
+  const breakdown = document.getElementById('cat-breakdown');
+  breakdown.innerHTML = cats.map(c => `
+    <div class="cat-row">
+      <div class="cat-label">${c.name}</div>
+      <div class="cat-bar-bg"><div class="cat-bar" style="width:${Math.round((c.pts/c.max)*100)}%"></div></div>
+      <div class="cat-pts">${c.pts}/${c.max}</div>
+    </div>`).join('');
+
+  // History chart
+  renderHistoryChart(total);
+}
+
+let histChart = null;
+function renderHistoryChart(currentScore) {
+  // Build 6-month history ending with current month
+  const now = new Date();
+  const months = [];
+  const scores = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push(d.toLocaleDateString('es-CL', { month: 'short' }));
+  }
+  // Use stored history + current
+  const hist = state.history || [];
+  for (let i = 0; i < 5; i++) {
+    scores.push(hist[i] !== undefined ? hist[i] : null);
+  }
+  scores.push(currentScore);
+
+  const ctx = document.getElementById('history-chart').getContext('2d');
+  if (histChart) histChart.destroy();
+  histChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: months,
+      datasets: [{
+        label: 'EcoScore',
+        data: scores,
+        borderColor: '#16a34a',
+        backgroundColor: 'rgba(22,163,74,.12)',
+        fill: true,
+        tension: .35,
+        pointBackgroundColor: '#16a34a',
+        pointRadius: 5,
+        spanGaps: true
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { min: 0, max: 100, ticks: { font: { size: 10 } }, grid: { color: '#e2f5e9' } },
+        x: { ticks: { font: { size: 10 } } }
+      }
+    }
+  });
+}
+
+// ============================================================
+// PROFILE FORM — populate from state
+// ============================================================
+function populateForm() {
+  setEl('p-transport', state.transport);
+  setEl('p-km', state.km);
+  document.getElementById('km-val').textContent = state.km + ' km';
+  setEl('p-kwh', state.kwh);
+  document.getElementById('kwh-val').textContent = state.kwh + ' kWh';
+  setEl('p-solar', null, state.solar);
+  setEl('p-heat', state.heat);
+  setEl('p-water', state.water);
+  document.getElementById('water-val').textContent = state.water + ' L/día';
+  setEl('p-rainwater', null, state.rainwater);
+  setEl('p-diet', state.diet);
+  setEl('p-local', state.localPct);
+  document.getElementById('local-pct-lbl').textContent = state.localPct + '%';
+  setEl('p-compost-diet', null, state.compostDiet);
+  setEl('p-compost', null, state.compost);
+  setEl('p-waste', state.waste);
+  document.getElementById('waste-val').textContent = state.waste + ' kg';
+  setEl('p-bags', null, state.bags);
+
+  // Flights chips
+  const fc = document.querySelectorAll('#flights-chips .chip');
+  fc.forEach(c => c.classList.remove('active'));
+  const fMap = {'0':0,'1':1,'3':2,'6':3};
+  const fi = fMap[state.flights];
+  if (fi !== undefined) fc[fi].classList.add('active');
+
+  // Recycle chips
+  const rc = document.querySelectorAll('#recycle-chips .chip');
+  rc.forEach(c => {
+    const v = c.getAttribute('data-val') || c.textContent.trim();
+    // We'll re-identify by data-val if present
+  });
+  // Re-apply active state
+  document.querySelectorAll('#recycle-chips .chip').forEach(c => {
+    const val = c.getAttribute('data-val');
+    if (val && (state.recycleTypes || []).includes(val)) c.classList.add('active');
+  });
+
+  toggleKmGroup();
+}
+
+function setEl(id, val, checked) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (checked !== undefined) el.checked = checked;
+  else if (val !== null && val !== undefined) el.value = val;
+}
+
+function toggleKmGroup() {
+  const t = document.getElementById('p-transport').value;
+  const show = (t === 'gasoline' || t === 'hybrid' || t === 'moto');
+  document.getElementById('km-group').style.display = show ? 'block' : 'none';
+}
+
+function saveAndRecalc() {
+  // Read all form values
+  state.transport = document.getElementById('p-transport').value;
+  toggleKmGroup();
+  state.km = parseInt(document.getElementById('p-km').value) || 80;
+  state.kwh = parseInt(document.getElementById('p-kwh').value) || 250;
+  state.solar = document.getElementById('p-solar').checked;
+  state.heat = document.getElementById('p-heat').value;
+  state.water = parseInt(document.getElementById('p-water').value) || 150;
+  state.rainwater = document.getElementById('p-rainwater').checked;
+  state.diet = document.getElementById('p-diet').value;
+  state.localPct = parseInt(document.getElementById('p-local').value) || 50;
+  state.compostDiet = document.getElementById('p-compost-diet').checked;
+  state.compost = document.getElementById('p-compost').checked;
+  state.waste = parseInt(document.getElementById('p-waste').value) || 8;
+  state.bags = document.getElementById('p-bags').checked;
+  saveState();
+  // Update header score
+  const sc = calcScore();
+  document.getElementById('hdr-score').textContent = sc.total;
+}
+
+function updateSliderVal(sliderId, labelId, unit) {
+  const v = document.getElementById(sliderId).value;
+  document.getElementById(labelId).textContent = v + ' ' + unit;
+}
+
+function selectChip(groupId, el, value) {
+  document.querySelectorAll('#' + groupId + ' .chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  if (groupId === 'flights-chips') { state.flights = value; saveAndRecalc(); }
+}
+
+function toggleChip(el, val) {
+  el.classList.toggle('active');
+  const rTypes = [];
+  document.querySelectorAll('#recycle-chips .chip').forEach(c => {
+    if (c.classList.contains('active')) rTypes.push(c.getAttribute('data-val'));
+  });
+  state.recycleTypes = rTypes.filter(Boolean);
+  // if 'none2' is clicked, deactivate others
+  if (val === 'none2' && el.classList.contains('active')) {
+    document.querySelectorAll('#recycle-chips .chip').forEach(c => {
+      if (c.getAttribute('data-val') !== 'none2') c.classList.remove('active');
+    });
+    state.recycleTypes = ['none2'];
+  } else if (val !== 'none2') {
+    const noneChip = document.querySelector('#recycle-chips .chip[data-val="none2"]');
+    if (noneChip) noneChip.classList.remove('active');
+    state.recycleTypes = state.recycleTypes.filter(x => x !== 'none2');
+  }
+  saveAndRecalc();
+}
+
+// Assign data-val attributes to recycle chips on load
+function initRecycleChips() {
+  const vals = ['paper','plastic','glass','metal','none2'];
+  const chips = document.querySelectorAll('#recycle-chips .chip');
+  chips.forEach((c, i) => {
+    if (vals[i]) c.setAttribute('data-val', vals[i]);
+  });
+}
+
+// ============================================================
+// CHALLENGES
+// ============================================================
+const CHALLENGES_DEF = {
+  1:  [{ id:'c01', icon:'🌊', title:'Verano EcoChile', desc:'Usa ducha de máximo 5 minutos por 30 días seguidos', days:30, points:150, tips:'Pon un cronómetro. Una ducha de 5 min = 40L vs. 80L en 10 min.' }],
+  2:  [{ id:'c01', icon:'🌊', title:'Verano EcoChile', desc:'Usa ducha de máximo 5 minutos por 30 días seguidos', days:30, points:150, tips:'Instala un temporizador en el baño. ¡Hazlo un hábito de verano!' }],
+  3:  [{ id:'c02', icon:'🧴', title:'Semana Santa sin plástico', desc:'0 plástico de un solo uso durante 2 semanas', days:14, points:100, tips:'Lleva tu propia bolsa, botella y cubiertos. Di "sin pajita" en restaurantes.' }],
+  4:  [{ id:'c02', icon:'🧴', title:'Sin plástico este mes', desc:'Evita 5 plásticos de un solo uso diferentes', days:20, points:100, tips:'Vasos, pajitas, bolsas, envases de unicel, film plástico.' }],
+  5:  [{ id:'c03', icon:'♻️', title:'Mes del Reciclaje', desc:'Recicla 5 tipos de materiales diferentes este mes', days:30, points:120, tips:'Papel, plástico PET, vidrio, aluminio, tetrapak. Busca tu Punto Limpio.' }],
+  6:  [{ id:'c03', icon:'♻️', title:'Mes del Reciclaje', desc:'Recicla regularmente por 30 días', days:30, points:120, tips:'¡Pon un segundo basurero en casa solo para reciclables!' }],
+  7:  [{ id:'c04', icon:'🌡️', title:'Invierno eficiente', desc:'Reduce la temperatura de calefacción 2°C por 31 días', days:31, points:130, tips:'Abrígate más, sella ventanas con burletes. 1°C menos = 7% menos gasto.' }],
+  8:  [{ id:'c05', icon:'🚌', title:'Mes del Transporte verde', desc:'15 días sin auto: usa metro, micro, bicicleta o camina', days:15, points:140, tips:'Planifica con Google Maps en transporte público. ¡Descubre rutas nuevas!' }],
+  9:  [{ id:'c06', icon:'🌸', title:'Primavera sin pesticidas', desc:'Jardinería orgánica: nada de químicos por 30 días', days:30, points:90, tips:'Usa compost, biofertilizantes, aceite de neem contra plagas.' }],
+  10: [{ id:'c06', icon:'🌸', title:'Primavera sin pesticidas', desc:'Planta algo nativo y cuídalo este mes', days:30, points:90, tips:'Quillay, peumo, copihue — las plantas nativas necesitan menos agua.' }],
+  11: [{ id:'c07', icon:'🏖️', title:'Contigo el mundo', desc:'Participa en 1 limpieza de playa, río o cerro', days:1, points:200, tips:'Busca en "Yo Me Comprometo" o en redes sociales de tu municipalidad.' }],
+  12: [{ id:'c08', icon:'🎁', title:'Fiestas ecológicas', desc:'Regala sustentable: sin globos, papel reciclado, regalos experienciales', days:31, points:110, tips:'Papel kraft, bolsas de tela, experiencias (cenas, paseos) vs. cosas.' }],
+};
+
+function getChallengesForMonth(month) {
+  return CHALLENGES_DEF[month] || CHALLENGES_DEF[3];
+}
+
+function renderChallenges() {
+  const now = new Date();
+  const month = now.getMonth() + 1;
+  const monthNames = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  document.getElementById('month-label').textContent = monthNames[month];
+  document.getElementById('total-pts').textContent = state.ecoPoints || 0;
+
+  const challenges = getChallengesForMonth(month);
+  // Add a bonus water challenge every month
+  const waterChallenge = { id:'cw'+month, icon:'💧', title:'Reto Agua Corta', desc:'Dúchate en 5 minutos durante 10 días este mes', days:10, points:80, tips:'Activa el cronómetro del teléfono. ¡40L menos por ducha = 400L en el reto!' };
+  const wasteChallenge = { id:'cwr'+month, icon:'🛍️', title:'Cero bolsas plásticas', desc:'Usa solo bolsas reutilizables por 30 días', days:30, points:70, tips:'Ten una bolsa de tela en tu mochila o cartera siempre lista.' };
+  const allC = [...challenges, waterChallenge, wasteChallenge].slice(0, 3);
+
+  const list = document.getElementById('challenge-list');
+  list.innerHTML = allC.map(ch => {
+    const key = ch.id;
+    const prog = state.challenges[key] || 0;
+    const done = prog >= ch.days;
+    const pct = Math.min(100, Math.round((prog / ch.days) * 100));
+    return `<div class="challenge-card">
+      <div class="challenge-header">
+        <div class="challenge-icon">${ch.icon}</div>
+        <div>
+          <div class="challenge-title">${ch.title}</div>
+          <div class="challenge-desc">${ch.desc}</div>
+          <div class="points-badge">🌟 +${ch.points} EcoPoints al completar</div>
+        </div>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-bar-bg"><div class="progress-bar" style="width:${pct}%"></div></div>
+        <div class="progress-label">
+          <span>${prog} / ${ch.days} días</span>
+          <span>${pct}%</span>
+        </div>
+      </div>
+      <div style="background:#f0fdf4;border-radius:8px;padding:8px 10px;font-size:.77rem;color:var(--muted);margin-bottom:10px">
+        💡 <strong>Tips:</strong> ${ch.tips}
+      </div>
+      ${done
+        ? `<div style="background:#dcfce7;border-radius:8px;padding:9px;text-align:center;font-weight:700;color:#15803d">✅ ¡Completado! +${ch.points} EcoPoints ganados</div>`
+        : `<button class="btn btn-primary btn-sm" onclick="markDay('${key}',${ch.days},${ch.points})">✅ Marcar día completado (${prog}/${ch.days})</button>`
+      }
+    </div>`;
+  }).join('');
+
+  renderPointsLog();
+}
+
+function markDay(key, total, pts) {
+  const current = state.challenges[key] || 0;
+  if (current >= total) return;
+  state.challenges[key] = current + 1;
+  const newVal = state.challenges[key];
+  if (newVal >= total) {
+    state.ecoPoints = (state.ecoPoints || 0) + pts;
+    const now = new Date();
+    state.pointsLog = state.pointsLog || [];
+    state.pointsLog.unshift({ text: `+${pts} pts — Desafío completado 🎉`, date: now.toLocaleDateString('es-CL') });
+    showToast(`🎉 ¡Desafío completado! +${pts} EcoPoints`);
+  } else {
+    showToast(`✅ Día ${newVal}/${total} registrado`);
+  }
+  saveState();
+  renderChallenges();
+}
+
+function renderPointsLog() {
+  const log = state.pointsLog || [];
+  const el = document.getElementById('points-log');
+  if (log.length === 0) {
+    el.innerHTML = '<div style="color:var(--muted);font-size:.8rem;text-align:center;padding:16px">¡Completa desafíos para ganar EcoPoints!</div>';
+    return;
+  }
+  el.innerHTML = log.slice(0, 20).map(l => `
+    <div class="log-item">
+      <span>${l.text}</span>
+      <span style="color:var(--muted);font-size:.72rem">${l.date}</span>
+    </div>`).join('');
+}
+
+// ============================================================
+// SHARE
+// ============================================================
+function shareWhatsApp() {
+  const sc = calcScore();
+  const co2 = estimateCO2(sc.total);
+  let level = '';
+  if (sc.total >= 80) level = 'EcoHéroe 🌿';
+  else if (sc.total >= 60) level = 'EcoCiudadano 🌱';
+  else if (sc.total >= 40) level = 'EcoAprendiz 🌻';
+  else level = 'EcoDeudor ⚠️';
+  const msg = encodeURIComponent(
+    `🌱 *Mi EcoScore: ${sc.total}/100* — ${level}\n\n` +
+    `🚗 Transporte: ${sc.t}/30 | ⚡ Energía: ${sc.e}/25\n` +
+    `🍽️ Dieta: ${sc.d}/25 | 💧 Agua: ${sc.w}/10 | ♻️ Residuos: ${sc.r}/10\n\n` +
+    `🌍 Mi huella: ~${co2} tCO₂e/año (promedio Chile: 5.5)\n\n` +
+    `¡Calcula tu impacto ambiental en EcoScore!`
+  );
+  window.open('https://wa.me/?text=' + msg, '_blank');
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+function showToast(msg, dur = 2200) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), dur);
+}
+
+// ============================================================
+// INIT
+// ============================================================
+function init() {
+  loadState();
+  initRecycleChips();
+  populateForm();
+
+  // Save monthly history snapshot (once per month)
+  try {
+    const now = new Date();
+    const monthKey = now.getFullYear() + '-' + (now.getMonth() + 1);
+    if (state.lastHistoryMonth !== monthKey) {
+      const sc = calcScore();
+      state.history = state.history || [];
+      state.history.push(sc.total);
+      if (state.history.length > 5) state.history = state.history.slice(-5);
+      state.lastHistoryMonth = monthKey;
+      saveState();
+    }
+  } catch(e) {}
+
+  renderScore();
+
+  // Update header score
+  const sc = calcScore();
+  document.getElementById('hdr-score').textContent = sc.total;
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

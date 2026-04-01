@@ -1,0 +1,2284 @@
+<!DOCTYPE html>
+<html lang="es" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#78350f">
+  <meta name="description" content="LibreriaCL - Sistema de gestión para librerías y papelerías chilenas">
+  <title>LibreriaCL - Gestión de Librerías</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22LibreriaCL%22,%22short_name%22:%22LibreriaCL%22,%22start_url%22:%22/%22,%22display%22:%22standalone%22,%22background_color%22:%22%23fefce8%22,%22theme_color%22:%22%2378350f%22,%22icons%22:[{%22src%22:%22data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%2378350f' width='192' height='192'/><text x='50%' y='50%' font-size='80' font-weight='bold' fill='%23fefce8' text-anchor='middle' dominant-baseline='central'>L</text></svg>%22,%22sizes%22:%22192x192%22,%22type%22:%22image/svg+xml%22}]}">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: #fefce8;
+      color: #292524;
+      -webkit-font-smoothing: antialiased;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100dvh;
+      padding-bottom: max(env(safe-area-inset-bottom), 60px);
+      overflow-y: auto;
+      -webkit-user-select: text;
+      user-select: text;
+    }
+
+    header {
+      background: linear-gradient(135deg, #78350f 0%, #92400e 100%);
+      color: #fefce8;
+      padding: max(1rem, env(safe-area-inset-top)) 1rem 1rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
+      z-index: 40;
+    }
+
+    header h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    header p {
+      font-size: 0.875rem;
+      opacity: 0.95;
+    }
+
+    .icon {
+      display: inline-block;
+      width: 1.5rem;
+      height: 1.5rem;
+    }
+
+    main {
+      flex: 1;
+      padding: 1rem;
+      max-width: 100%;
+      margin-bottom: 1rem;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+      animation: fadeIn 0.2s ease-in;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .section {
+      margin-bottom: 1.5rem;
+    }
+
+    .section h2 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #78350f;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid #f5deb3;
+    }
+
+    .section h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #92400e;
+      margin: 1rem 0 0.5rem 0;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+      display: flex;
+      flex-direction: column;
+    }
+
+    label {
+      font-weight: 500;
+      margin-bottom: 0.25rem;
+      color: #78350f;
+      font-size: 0.95rem;
+    }
+
+    input, select, textarea {
+      padding: 0.75rem;
+      border: 1px solid #d4a574;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 16px;
+      color: #292524;
+      background-color: #fffbf0;
+      transition: border-color 0.2s;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #78350f;
+      box-shadow: 0 0 0 3px rgba(120, 53, 15, 0.1);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .button-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+
+    button {
+      padding: 0.75rem 1.25rem;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 16px;
+      transition: all 0.2s;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    .btn-primary {
+      background-color: #78350f;
+      color: #fefce8;
+    }
+
+    .btn-primary:active {
+      background-color: #5c2a0a;
+      transform: scale(0.98);
+    }
+
+    .btn-secondary {
+      background-color: #f5deb3;
+      color: #78350f;
+      border: 2px solid #d4a574;
+    }
+
+    .btn-secondary:active {
+      background-color: #ead9a7;
+      transform: scale(0.98);
+    }
+
+    .btn-danger {
+      background-color: #ef4444;
+      color: white;
+      font-size: 0.875rem;
+      padding: 0.5rem 0.75rem;
+    }
+
+    .btn-danger:active {
+      background-color: #dc2626;
+      transform: scale(0.98);
+    }
+
+    .btn-success {
+      background-color: #16a34a;
+      color: white;
+    }
+
+    .btn-success:active {
+      background-color: #15803d;
+      transform: scale(0.98);
+    }
+
+    .card {
+      background: white;
+      border: 1px solid #f5deb3;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 0.75rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.75rem;
+      gap: 0.5rem;
+    }
+
+    .card-title {
+      font-weight: 600;
+      color: #78350f;
+      font-size: 1rem;
+    }
+
+    .card-meta {
+      font-size: 0.875rem;
+      color: #92400e;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 0.5rem;
+    }
+
+    .meta-tag {
+      background: #f5deb3;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.8rem;
+    }
+
+    .table-responsive {
+      overflow-x: auto;
+      margin-bottom: 1rem;
+      border-radius: 6px;
+      border: 1px solid #f5deb3;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+    }
+
+    thead {
+      background-color: #f5deb3;
+      border-bottom: 2px solid #d4a574;
+    }
+
+    th {
+      padding: 0.75rem;
+      text-align: left;
+      font-weight: 600;
+      color: #78350f;
+    }
+
+    td {
+      padding: 0.75rem;
+      border-bottom: 1px solid #f5deb3;
+    }
+
+    tbody tr:hover {
+      background-color: #fffbf0;
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      background: white;
+      padding: 0.5rem;
+      border-radius: 8px;
+      border: 1px solid #f5deb3;
+      position: sticky;
+      bottom: max(60px, env(safe-area-inset-bottom));
+      z-index: 30;
+    }
+
+    .tab-button {
+      padding: 0.75rem 1rem;
+      background: transparent;
+      border: 2px solid transparent;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 0.95rem;
+      color: #78350f;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .tab-button.active {
+      background-color: #78350f;
+      color: #fefce8;
+      border-color: #78350f;
+    }
+
+    .tab-button:active {
+      transform: scale(0.95);
+    }
+
+    .alert {
+      padding: 1rem;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+      font-weight: 500;
+    }
+
+    .alert-success {
+      background-color: #d1fae5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+    }
+
+    .alert-danger {
+      background-color: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+
+    .alert-info {
+      background-color: #dbeafe;
+      color: #0c4a6e;
+      border: 1px solid #bae6fd;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .stat-card {
+      background: linear-gradient(135deg, #78350f 0%, #92400e 100%);
+      color: #fefce8;
+      padding: 1.5rem;
+      border-radius: 8px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      margin: 0.5rem 0;
+    }
+
+    .stat-label {
+      font-size: 0.875rem;
+      opacity: 0.95;
+    }
+
+    .list-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .list-item {
+      background: white;
+      padding: 0.75rem;
+      border-radius: 6px;
+      border-left: 4px solid #78350f;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.95rem;
+    }
+
+    .list-item.secondary {
+      border-left-color: #d4a574;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .badge-primary {
+      background-color: #78350f;
+      color: #fefce8;
+    }
+
+    .badge-secondary {
+      background-color: #f5deb3;
+      color: #78350f;
+    }
+
+    .badge-success {
+      background-color: #d1fae5;
+      color: #065f46;
+    }
+
+    .badge-danger {
+      background-color: #fee2e2;
+      color: #991b1b;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      z-index: 100;
+      animation: fadeIn 0.2s ease-in;
+    }
+
+    .modal.active {
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    .modal-content {
+      background: white;
+      width: 100%;
+      max-width: 600px;
+      max-height: 90%;
+      overflow-y: auto;
+      border-radius: 12px 12px 0 0;
+      padding: 1.5rem;
+      animation: slideUp 0.3s ease-out;
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateY(100%);
+      }
+      to {
+        transform: translateY(0);
+      }
+    }
+
+    .close-button {
+      float: right;
+      font-size: 1.5rem;
+      font-weight: 300;
+      color: #78350f;
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 0;
+      margin-bottom: 1rem;
+    }
+
+    .search-box {
+      position: relative;
+      margin-bottom: 1rem;
+    }
+
+    .search-box input {
+      width: 100%;
+      padding-left: 2.5rem;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #92400e;
+      font-size: 1.25rem;
+      pointer-events: none;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 2rem 1rem;
+      color: #92400e;
+    }
+
+    .empty-state svg {
+      width: 64px;
+      height: 64px;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background-color: #f5deb3;
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 0.5rem 0;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background-color: #78350f;
+      transition: width 0.3s ease;
+    }
+
+    .currency {
+      font-weight: 600;
+      color: #78350f;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    @media (max-width: 640px) {
+      .row {
+        grid-template-columns: 1fr;
+      }
+
+      header h1 {
+        font-size: 1.5rem;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .tabs {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .button-group {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .chart-container {
+      position: relative;
+      height: 300px;
+      margin: 1rem 0;
+      padding: 1rem;
+      background: white;
+      border-radius: 8px;
+      border: 1px solid #f5deb3;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>📚 LibreriaCL</h1>
+    <p>Sistema de Gestión para Librerías y Papelerías Chilenas</p>
+  </header>
+
+  <main>
+    <!-- CATÁLOGO TAB -->
+    <div id="catalogo-tab" class="tab-content active">
+      <div class="section">
+        <h2>📖 Catálogo de Productos</h2>
+
+        <div class="tabs" style="position: static; bottom: auto; margin-bottom: 1rem;">
+          <button class="tab-button active" onclick="switchCatalogTab('books')">Libros</button>
+          <button class="tab-button" onclick="switchCatalogTab('stationery')">Papelería</button>
+        </div>
+
+        <div id="books-catalog" class="catalog-section">
+          <div class="section">
+            <h3>Agregar Nuevo Libro</h3>
+            <form onsubmit="addBook(event)">
+              <div class="form-group">
+                <label>Título *</label>
+                <input type="text" id="book-title" required>
+              </div>
+              <div class="row">
+                <div class="form-group">
+                  <label>Autor *</label>
+                  <input type="text" id="book-author" required>
+                </div>
+                <div class="form-group">
+                  <label>Editorial</label>
+                  <select id="book-editorial">
+                    <option value="">Seleccionar...</option>
+                    <option value="Planeta">Planeta</option>
+                    <option value="Alfaguara">Alfaguara</option>
+                    <option value="Penguin">Penguin Random House</option>
+                    <option value="SM">SM</option>
+                    <option value="Zig-Zag">Zig-Zag</option>
+                    <option value="Santillana">Santillana</option>
+                    <option value="Norma">Norma</option>
+                    <option value="Otra">Otra</option>
+                  </select>
+                </div>
+              </div>
+              <div class="row">
+                <div class="form-group">
+                  <label>ISBN</label>
+                  <input type="text" id="book-isbn">
+                </div>
+                <div class="form-group">
+                  <label>Género *</label>
+                  <select id="book-genre" required>
+                    <option value="">Seleccionar...</option>
+                    <option value="ficción">Ficción</option>
+                    <option value="no-ficción">No-ficción</option>
+                    <option value="infantil">Infantil</option>
+                    <option value="juvenil">Juvenil</option>
+                    <option value="académico">Académico</option>
+                    <option value="técnico">Técnico</option>
+                    <option value="poesía">Poesía</option>
+                    <option value="cómic">Cómic</option>
+                  </select>
+                </div>
+              </div>
+              <div class="row">
+                <div class="form-group">
+                  <label>Stock *</label>
+                  <input type="number" id="book-stock" min="0" required>
+                </div>
+                <div class="form-group">
+                  <label>Costo (CLP) *</label>
+                  <input type="number" id="book-cost" min="0" step="100" required>
+                </div>
+              </div>
+              <div class="row">
+                <div class="form-group">
+                  <label>Precio de Venta (CLP) *</label>
+                  <input type="number" id="book-price" min="0" step="100" required>
+                </div>
+                <div class="form-group">
+                  <label>Consignación</label>
+                  <select id="book-consignment">
+                    <option value="no">No</option>
+                    <option value="yes">Sí</option>
+                  </select>
+                </div>
+              </div>
+              <div class="button-group">
+                <button type="submit" class="btn-primary">Agregar Libro</button>
+                <button type="reset" class="btn-secondary">Limpiar</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="section">
+            <h3>Libros en Catálogo</h3>
+            <div class="search-box">
+              <span class="search-icon">🔍</span>
+              <input type="text" id="book-search" placeholder="Buscar por título, autor..." onkeyup="filterBooks()">
+            </div>
+            <div id="books-list" class="list-group"></div>
+          </div>
+        </div>
+
+        <div id="stationery-catalog" class="catalog-section" style="display: none;">
+          <div class="section">
+            <h3>Agregar Artículo de Papelería</h3>
+            <form onsubmit="addStationeryItem(event)">
+              <div class="form-group">
+                <label>Nombre del Artículo *</label>
+                <input type="text" id="station-name" required>
+              </div>
+              <div class="row">
+                <div class="form-group">
+                  <label>Categoría *</label>
+                  <select id="station-category" required>
+                    <option value="">Seleccionar...</option>
+                    <option value="cuadernos">Cuadernos</option>
+                    <option value="lápices">Lápices</option>
+                    <option value="gomas">Gomas y Borrones</option>
+                    <option value="carpetas">Carpetas</option>
+                    <option value="mochilas">Mochilas</option>
+                    <option value="plumas">Plumas y Marcadores</option>
+                    <option value="pegamento">Pegamento y Cinta</option>
+                    <option value="otro">Otro</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Marca</label>
+                  <input type="text" id="station-brand">
+                </div>
+              </div>
+              <div class="row">
+                <div class="form-group">
+                  <label>Stock *</label>
+                  <input type="number" id="station-stock" min="0" required>
+                </div>
+                <div class="form-group">
+                  <label>Costo (CLP) *</label>
+                  <input type="number" id="station-cost" min="0" step="100" required>
+                </div>
+              </div>
+              <div class="row">
+                <div class="form-group">
+                  <label>Precio de Venta (CLP) *</label>
+                  <input type="number" id="station-price" min="0" step="100" required>
+                </div>
+              </div>
+              <div class="button-group">
+                <button type="submit" class="btn-primary">Agregar Artículo</button>
+                <button type="reset" class="btn-secondary">Limpiar</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="section">
+            <h3>Artículos de Papelería</h3>
+            <div class="search-box">
+              <span class="search-icon">🔍</span>
+              <input type="text" id="station-search" placeholder="Buscar artículos..." onkeyup="filterStationery()">
+            </div>
+            <div id="stationery-list" class="list-group"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VENTAS TAB -->
+    <div id="ventas-tab" class="tab-content">
+      <div class="section">
+        <h2>💳 Punto de Venta</h2>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Venta del Día</div>
+            <div class="stat-value" id="daily-sales">$0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Artículos Vendidos</div>
+            <div class="stat-value" id="items-sold">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Transacciones</div>
+            <div class="stat-value" id="transactions-count">0</div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h3>Crear Nueva Venta</h3>
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="pos-search" placeholder="Buscar producto..." onkeyup="showProductSuggestions()">
+          </div>
+          <div id="pos-suggestions" style="margin-bottom: 1rem;"></div>
+
+          <div class="section">
+            <h3>Carrito de Compras</h3>
+            <div id="pos-cart" class="list-group"></div>
+            <div style="margin-top: 1rem;">
+              <div style="background: white; padding: 1rem; border-radius: 6px;">
+                <div style="display: flex; justify-content: space-between; font-weight: 600; color: #78350f; font-size: 1.25rem; margin-bottom: 1rem;">
+                  <span>Total:</span>
+                  <span id="pos-total">$0</span>
+                </div>
+                <div class="row">
+                  <div class="form-group">
+                    <label>Método de Pago</label>
+                    <select id="payment-method">
+                      <option value="efectivo">Efectivo</option>
+                      <option value="transferencia">Transferencia Bancaria</option>
+                      <option value="tarjeta">Tarjeta de Crédito</option>
+                      <option value="otro">Otro</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label>&nbsp;</label>
+                    <div class="button-group" style="margin-top: 0.5rem;">
+                      <button class="btn-primary" onclick="completeSale()">Completar Venta</button>
+                      <button class="btn-secondary" onclick="clearCart()">Limpiar</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h3>Registro de Ventas del Día</h3>
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="sales-filter" placeholder="Filtrar ventas..." onkeyup="filterSalesLog()">
+          </div>
+          <div id="sales-log" class="list-group"></div>
+        </div>
+
+        <div class="section">
+          <h3>Top 10 Productos Más Vendidos</h3>
+          <div id="best-sellers" class="list-group"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PEDIDOS TAB -->
+    <div id="pedidos-tab" class="tab-content">
+      <div class="section">
+        <h2>📦 Gestión de Pedidos</h2>
+
+        <div class="section">
+          <h3>Crear Encargo (Libro no en Stock)</h3>
+          <form onsubmit="addSpecialOrder(event)">
+            <div class="form-group">
+              <label>Título del Libro *</label>
+              <input type="text" id="order-title" required>
+            </div>
+            <div class="row">
+              <div class="form-group">
+                <label>Autor *</label>
+                <input type="text" id="order-author" required>
+              </div>
+              <div class="form-group">
+                <label>Editorial</label>
+                <input type="text" id="order-publisher">
+              </div>
+            </div>
+            <div class="row">
+              <div class="form-group">
+                <label>ISBN</label>
+                <input type="text" id="order-isbn">
+              </div>
+              <div class="form-group">
+                <label>Cantidad *</label>
+                <input type="number" id="order-quantity" min="1" required>
+              </div>
+            </div>
+            <div class="row">
+              <div class="form-group">
+                <label>Costo Estimado (CLP)</label>
+                <input type="number" id="order-cost" min="0" step="100">
+              </div>
+              <div class="form-group">
+                <label>Cliente/Destinatario</label>
+                <input type="text" id="order-customer">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Fecha Estimada de Llegada</label>
+              <input type="date" id="order-estimated-date">
+            </div>
+            <div class="form-group">
+              <label>Notas</label>
+              <textarea id="order-notes" placeholder="Especificaciones, preferencias..."></textarea>
+            </div>
+            <div class="button-group">
+              <button type="submit" class="btn-primary">Crear Encargo</button>
+              <button type="reset" class="btn-secondary">Limpiar</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="section">
+          <h3>Encarguos Activos</h3>
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="orders-filter" placeholder="Buscar encargos..." onkeyup="filterOrders()">
+          </div>
+          <div id="orders-list" class="list-group"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EVENTOS TAB -->
+    <div id="eventos-tab" class="tab-content">
+      <div class="section">
+        <h2>🎉 Eventos y Actividades</h2>
+
+        <div class="section">
+          <h3>Crear Nuevo Evento</h3>
+          <form onsubmit="addEvent(event)">
+            <div class="form-group">
+              <label>Tipo de Evento *</label>
+              <select id="event-type" required>
+                <option value="">Seleccionar...</option>
+                <option value="lanzamiento">Lanzamiento de Libro</option>
+                <option value="firma">Firma de Autor</option>
+                <option value="club">Club de Lectura</option>
+                <option value="taller">Taller Infantil</option>
+                <option value="promocion">Promoción Especial</option>
+                <option value="otro">Otro</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Título/Descripción *</label>
+              <input type="text" id="event-title" required>
+            </div>
+            <div class="row">
+              <div class="form-group">
+                <label>Autor o Coordinador</label>
+                <input type="text" id="event-author">
+              </div>
+              <div class="form-group">
+                <label>Fecha *</label>
+                <input type="date" id="event-date" required>
+              </div>
+            </div>
+            <div class="row">
+              <div class="form-group">
+                <label>Hora</label>
+                <input type="time" id="event-time">
+              </div>
+              <div class="form-group">
+                <label>Capacidad Máxima</label>
+                <input type="number" id="event-capacity" min="0">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Descripción</label>
+              <textarea id="event-description" placeholder="Detalles del evento..."></textarea>
+            </div>
+            <div class="button-group">
+              <button type="submit" class="btn-primary">Crear Evento</button>
+              <button type="reset" class="btn-secondary">Limpiar</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="section">
+          <h3>Eventos Programados</h3>
+          <div id="events-list" class="list-group"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FINANZAS TAB -->
+    <div id="finanzas-tab" class="tab-content">
+      <div class="section">
+        <h2>💰 Análisis Financiero</h2>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Ingresos Mes Actual</div>
+            <div class="stat-value" id="monthly-revenue">$0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Margen Promedio</div>
+            <div class="stat-value" id="average-margin">0%</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Stock Total</div>
+            <div class="stat-value" id="total-stock">0</div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h3>Ingresos por Categoría (Últimas 30 días)</h3>
+          <div class="chart-container">
+            <canvas id="revenue-chart"></canvas>
+          </div>
+        </div>
+
+        <div class="section">
+          <h3>Desglose de Ingresos</h3>
+          <div class="card">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem;">
+              <span>Libros</span>
+              <span class="currency" id="books-revenue">$0</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" id="books-progress" style="width: 0%"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem;">
+              <span>Papelería</span>
+              <span class="currency" id="station-revenue">$0</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" id="station-progress" style="width: 0%"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h3>Análisis de Consignaciones</h3>
+          <div id="consignment-analysis" class="list-group"></div>
+        </div>
+
+        <div class="section">
+          <h3>Margen por Categoría</h3>
+          <div id="margin-analysis" class="list-group"></div>
+        </div>
+
+        <div class="section">
+          <h3>Estado Mensual (P&L)</h3>
+          <div class="card">
+            <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #f5deb3;">
+              <span>Ingresos Totales</span>
+              <span class="currency" id="pl-revenue">$0</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #f5deb3;">
+              <span>Costo de Ventas</span>
+              <span class="currency" id="pl-cost">$0</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; font-weight: 600; color: #16a34a; font-size: 1.1rem;">
+              <span>Ganancia Bruta</span>
+              <span class="currency" id="pl-profit">$0</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h3>Tendencia de Ventas</h3>
+          <button class="btn-secondary" onclick="generateSalesReport()">Generar Reporte Detallado</button>
+          <div id="sales-report" style="margin-top: 1rem;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CLIENTES TAB -->
+    <div id="clientes-tab" class="tab-content">
+      <div class="section">
+        <h2>👥 Base de Clientes</h2>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Total de Clientes</div>
+            <div class="stat-value" id="total-customers">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Clientes Activos (30d)</div>
+            <div class="stat-value" id="active-customers">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Gasto Promedio</div>
+            <div class="stat-value" id="avg-customer-spend">$0</div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h3>Registrar Nuevo Cliente</h3>
+          <form onsubmit="addCustomer(event)">
+            <div class="form-group">
+              <label>Nombre Completo *</label>
+              <input type="text" id="customer-name" required>
+            </div>
+            <div class="row">
+              <div class="form-group">
+                <label>Teléfono</label>
+                <input type="tel" id="customer-phone">
+              </div>
+              <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="customer-email">
+              </div>
+            </div>
+            <div class="row">
+              <div class="form-group">
+                <label>Afiliación</label>
+                <select id="customer-affiliation">
+                  <option value="">Ninguna</option>
+                  <option value="escolar">Estudiante Escolar</option>
+                  <option value="universitario">Estudiante Universitario</option>
+                  <option value="docente">Docente/Profesor</option>
+                  <option value="profesional">Profesional</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Institución</label>
+                <input type="text" id="customer-institution">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Preferencias de Lectura</label>
+              <input type="text" id="customer-preferences" placeholder="Géneros o autores favoritos...">
+            </div>
+            <div class="button-group">
+              <button type="submit" class="btn-primary">Registrar Cliente</button>
+              <button type="reset" class="btn-secondary">Limpiar</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="section">
+          <h3>Base de Datos de Clientes</h3>
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="customers-search" placeholder="Buscar cliente..." onkeyup="filterCustomers()">
+          </div>
+          <div id="customers-list" class="list-group"></div>
+        </div>
+
+        <div class="section">
+          <h3>Programa de Lealtad</h3>
+          <div id="loyalty-summary" class="list-group"></div>
+        </div>
+
+        <div class="section">
+          <h3>Listas de Deseos Populares</h3>
+          <div id="wishlist-popular" class="list-group"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Bottom Navigation Tabs -->
+  <div class="tabs" style="position: fixed; bottom: 0; left: 0; right: 0; width: 100%; border-radius: 0; margin: 0; padding: 0.5rem; gap: 0;">
+    <button class="tab-button active" onclick="switchTab('catalogo')">📖 Catálogo</button>
+    <button class="tab-button" onclick="switchTab('ventas')">💳 Ventas</button>
+    <button class="tab-button" onclick="switchTab('pedidos')">📦 Pedidos</button>
+    <button class="tab-button" onclick="switchTab('eventos')">🎉 Eventos</button>
+    <button class="tab-button" onclick="switchTab('finanzas')">💰 Finanzas</button>
+    <button class="tab-button" onclick="switchTab('clientes')">👥 Clientes</button>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
+  <script>
+    // ============== DATA MANAGEMENT ==============
+    const DB_KEYS = {
+      BOOKS: 'libreriacl_books',
+      STATIONERY: 'libreriacl_stationery',
+      SALES: 'libreriacl_sales',
+      ORDERS: 'libreriacl_orders',
+      EVENTS: 'libreriacl_events',
+      CUSTOMERS: 'libreriacl_customers',
+      CART: 'libreriacl_cart'
+    };
+
+    function safeStorage(key, value = null) {
+      try {
+        if (value === null) {
+          const stored = localStorage.getItem(key);
+          return stored ? JSON.parse(stored) : null;
+        } else {
+          localStorage.setItem(key, JSON.stringify(value));
+          return value;
+        }
+      } catch (e) {
+        console.warn('Storage error:', e);
+        return null;
+      }
+    }
+
+    // Initialize data
+    function initializeData() {
+      if (!safeStorage(DB_KEYS.BOOKS)) {
+        safeStorage(DB_KEYS.BOOKS, [
+          {
+            id: 1,
+            title: 'Cien años de soledad',
+            author: 'Gabriel García Márquez',
+            editorial: 'Planeta',
+            isbn: '978-0307474728',
+            genre: 'ficción',
+            stock: 12,
+            cost: 8500,
+            price: 15999,
+            consignment: false,
+            created: new Date().toISOString()
+          },
+          {
+            id: 2,
+            title: 'El Quijote',
+            author: 'Miguel de Cervantes',
+            editorial: 'Penguin',
+            isbn: '978-0142437230',
+            genre: 'ficción',
+            stock: 8,
+            cost: 7200,
+            price: 12999,
+            consignment: false,
+            created: new Date().toISOString()
+          }
+        ]);
+      }
+
+      if (!safeStorage(DB_KEYS.STATIONERY)) {
+        safeStorage(DB_KEYS.STATIONERY, [
+          {
+            id: 1,
+            name: 'Cuaderno 100 Hojas Rayado',
+            category: 'cuadernos',
+            brand: 'Miquelrius',
+            stock: 45,
+            cost: 1500,
+            price: 2490,
+            created: new Date().toISOString()
+          }
+        ]);
+      }
+
+      if (!safeStorage(DB_KEYS.SALES)) {
+        safeStorage(DB_KEYS.SALES, []);
+      }
+
+      if (!safeStorage(DB_KEYS.ORDERS)) {
+        safeStorage(DB_KEYS.ORDERS, []);
+      }
+
+      if (!safeStorage(DB_KEYS.EVENTS)) {
+        safeStorage(DB_KEYS.EVENTS, []);
+      }
+
+      if (!safeStorage(DB_KEYS.CUSTOMERS)) {
+        safeStorage(DB_KEYS.CUSTOMERS, []);
+      }
+
+      if (!safeStorage(DB_KEYS.CART)) {
+        safeStorage(DB_KEYS.CART, []);
+      }
+    }
+
+    // ============== TAB NAVIGATION ==============
+    function switchTab(tabName) {
+      const tabs = document.querySelectorAll('.tab-content');
+      const buttons = document.querySelectorAll('.tabs:last-of-type .tab-button');
+
+      tabs.forEach(tab => tab.classList.remove('active'));
+      buttons.forEach(btn => btn.classList.remove('active'));
+
+      document.getElementById(`${tabName}-tab`).classList.add('active');
+      event.target.classList.add('active');
+
+      updateDashboards();
+    }
+
+    function switchCatalogTab(tabName) {
+      const catalogs = document.querySelectorAll('.catalog-section');
+      const buttons = document.querySelectorAll('#catalogo-tab .tabs:first-of-type .tab-button');
+
+      catalogs.forEach(cat => cat.style.display = 'none');
+      buttons.forEach(btn => btn.classList.remove('active'));
+
+      document.getElementById(`${tabName}-catalog`).style.display = 'block';
+      event.target.classList.add('active');
+    }
+
+    // ============== CATÁLOGO ==============
+    function addBook(event) {
+      event.preventDefault();
+
+      const books = safeStorage(DB_KEYS.BOOKS) || [];
+      const newBook = {
+        id: Date.now(),
+        title: document.getElementById('book-title').value,
+        author: document.getElementById('book-author').value,
+        editorial: document.getElementById('book-editorial').value || 'No especificada',
+        isbn: document.getElementById('book-isbn').value || '-',
+        genre: document.getElementById('book-genre').value,
+        stock: parseInt(document.getElementById('book-stock').value),
+        cost: parseInt(document.getElementById('book-cost').value),
+        price: parseInt(document.getElementById('book-price').value),
+        consignment: document.getElementById('book-consignment').value === 'yes',
+        created: new Date().toISOString()
+      };
+
+      books.push(newBook);
+      safeStorage(DB_KEYS.BOOKS, books);
+
+      event.target.reset();
+      renderBooksList();
+      showNotification('Libro agregado exitosamente', 'success');
+    }
+
+    function renderBooksList() {
+      const books = safeStorage(DB_KEYS.BOOKS) || [];
+      const container = document.getElementById('books-list');
+
+      if (books.length === 0) {
+        container.innerHTML = '<div class="empty-state"><p>No hay libros en el catálogo</p></div>';
+        return;
+      }
+
+      container.innerHTML = books.map(book => `
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">${book.title}</div>
+              <div class="card-meta">
+                <span class="meta-tag">${book.author}</span>
+                <span class="meta-tag">${book.genre}</span>
+                <span class="meta-tag">${book.editorial}</span>
+                ${book.consignment ? '<span class="meta-tag" style="background: #fef3c7; color: #92400e;">Consignación</span>' : ''}
+              </div>
+            </div>
+            <button class="btn-danger" onclick="deleteBook(${book.id})">Eliminar</button>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.9rem;">
+            <div>ISBN: ${book.isbn}</div>
+            <div><strong>Stock:</strong> ${book.stock}</div>
+            <div><strong>Costo:</strong> <span class="currency">$${book.cost.toLocaleString()}</span></div>
+            <div><strong>Venta:</strong> <span class="currency">$${book.price.toLocaleString()}</span></div>
+            <div><strong>Margen:</strong> <span class="currency">${(((book.price - book.cost) / book.price * 100).toFixed(1))}%</span></div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function deleteBook(id) {
+      if (!confirm('¿Eliminar este libro del catálogo?')) return;
+      let books = safeStorage(DB_KEYS.BOOKS) || [];
+      books = books.filter(b => b.id !== id);
+      safeStorage(DB_KEYS.BOOKS, books);
+      renderBooksList();
+      showNotification('Libro eliminado', 'success');
+    }
+
+    function filterBooks() {
+      const searchTerm = document.getElementById('book-search').value.toLowerCase();
+      const books = safeStorage(DB_KEYS.BOOKS) || [];
+      const filtered = books.filter(b =>
+        b.title.toLowerCase().includes(searchTerm) ||
+        b.author.toLowerCase().includes(searchTerm)
+      );
+
+      const container = document.getElementById('books-list');
+      if (filtered.length === 0) {
+        container.innerHTML = '<div class="empty-state"><p>No se encontraron libros</p></div>';
+        return;
+      }
+
+      container.innerHTML = filtered.map(book => `
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">${book.title}</div>
+              <div class="card-meta">
+                <span class="meta-tag">${book.author}</span>
+                <span class="meta-tag">${book.genre}</span>
+              </div>
+            </div>
+            <button class="btn-danger" onclick="deleteBook(${book.id})">Eliminar</button>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.9rem;">
+            <div><strong>Stock:</strong> ${book.stock}</div>
+            <div><strong>Precio:</strong> <span class="currency">$${book.price.toLocaleString()}</span></div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function addStationeryItem(event) {
+      event.preventDefault();
+
+      const stationery = safeStorage(DB_KEYS.STATIONERY) || [];
+      const newItem = {
+        id: Date.now(),
+        name: document.getElementById('station-name').value,
+        category: document.getElementById('station-category').value,
+        brand: document.getElementById('station-brand').value || '-',
+        stock: parseInt(document.getElementById('station-stock').value),
+        cost: parseInt(document.getElementById('station-cost').value),
+        price: parseInt(document.getElementById('station-price').value),
+        created: new Date().toISOString()
+      };
+
+      stationery.push(newItem);
+      safeStorage(DB_KEYS.STATIONERY, stationery);
+
+      event.target.reset();
+      renderStationeryList();
+      showNotification('Artículo agregado exitosamente', 'success');
+    }
+
+    function renderStationeryList() {
+      const stationery = safeStorage(DB_KEYS.STATIONERY) || [];
+      const container = document.getElementById('stationery-list');
+
+      if (stationery.length === 0) {
+        container.innerHTML = '<div class="empty-state"><p>No hay artículos de papelería</p></div>';
+        return;
+      }
+
+      container.innerHTML = stationery.map(item => `
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">${item.name}</div>
+              <div class="card-meta">
+                <span class="meta-tag">${item.category}</span>
+                <span class="meta-tag">${item.brand}</span>
+              </div>
+            </div>
+            <button class="btn-danger" onclick="deleteStationeryItem(${item.id})">Eliminar</button>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.9rem;">
+            <div><strong>Stock:</strong> ${item.stock}</div>
+            <div><strong>Precio:</strong> <span class="currency">$${item.price.toLocaleString()}</span></div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function deleteStationeryItem(id) {
+      if (!confirm('¿Eliminar este artículo?')) return;
+      let stationery = safeStorage(DB_KEYS.STATIONERY) || [];
+      stationery = stationery.filter(s => s.id !== id);
+      safeStorage(DB_KEYS.STATIONERY, stationery);
+      renderStationeryList();
+      showNotification('Artículo eliminado', 'success');
+    }
+
+    function filterStationery() {
+      const searchTerm = document.getElementById('station-search').value.toLowerCase();
+      const stationery = safeStorage(DB_KEYS.STATIONERY) || [];
+      const filtered = stationery.filter(s =>
+        s.name.toLowerCase().includes(searchTerm) ||
+        s.category.toLowerCase().includes(searchTerm)
+      );
+
+      const container = document.getElementById('stationery-list');
+      if (filtered.length === 0) {
+        container.innerHTML = '<div class="empty-state"><p>No se encontraron artículos</p></div>';
+        return;
+      }
+
+      container.innerHTML = filtered.map(item => `
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">${item.name}</div>
+              <div class="card-meta">
+                <span class="meta-tag">${item.category}</span>
+              </div>
+            </div>
+            <button class="btn-danger" onclick="deleteStationeryItem(${item.id})">Eliminar</button>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.9rem;">
+            <div><strong>Stock:</strong> ${item.stock}</div>
+            <div><strong>Precio:</strong> <span class="currency">$${item.price.toLocaleString()}</span></div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // ============== VENTAS ==============
+    function showProductSuggestions() {
+      const searchTerm = document.getElementById('pos-search').value.toLowerCase();
+      if (!searchTerm) {
+        document.getElementById('pos-suggestions').innerHTML = '';
+        return;
+      }
+
+      const books = safeStorage(DB_KEYS.BOOKS) || [];
+      const stationery = safeStorage(DB_KEYS.STATIONERY) || [];
+
+      const filteredBooks = books.filter(b =>
+        (b.title.toLowerCase().includes(searchTerm) || b.author.toLowerCase().includes(searchTerm)) && b.stock > 0
+      );
+
+      const filteredStation = stationery.filter(s =>
+        (s.name.toLowerCase().includes(searchTerm) || s.category.toLowerCase().includes(searchTerm)) && s.stock > 0
+      );
+
+      let html = '';
+
+      if (filteredBooks.length > 0) {
+        html += '<div style="margin-bottom: 1rem;"><strong style="color: #78350f;">Libros:</strong>';
+        html += filteredBooks.map(b => `
+          <div style="padding: 0.5rem; background: white; border-radius: 4px; margin-top: 0.25rem; cursor: pointer;" onclick="addToCart('book', ${b.id}, '${b.title}', ${b.price})">
+            <div style="font-weight: 500; font-size: 0.95rem;">${b.title}</div>
+            <div style="font-size: 0.85rem; color: #92400e;">$${b.price.toLocaleString()} - Stock: ${b.stock}</div>
+          </div>
+        `).join('');
+        html += '</div>';
+      }
+
+      if (filteredStation.length > 0) {
+        html += '<div><strong style="color: #78350f;">Papelería:</strong>';
+        html += filteredStation.map(s => `
+          <div style="padding: 0.5rem; background: white; border-radius: 4px; margin-top: 0.25rem; cursor: pointer;" onclick="addToCart('station', ${s.id}, '${s.name}', ${s.price})">
+            <div style="font-weight: 500; font-size: 0.95rem;">${s.name}</div>
+            <div style="font-size: 0.85rem; color: #92400e;">$${s.price.toLocaleString()} - Stock: ${s.stock}</div>
+          </div>
+        `).join('');
+        html += '</div>';
+      }
+
+      document.getElementById('pos-suggestions').innerHTML = html || '<div style="color: #92400e; padding: 0.5rem;">No hay productos disponibles</div>';
+    }
+
+    function addToCart(type, productId, name, price) {
+      let cart = safeStorage(DB_KEYS.CART) || [];
+      const existing = cart.find(item => item.type === type && item.productId === productId);
+
+      if (existing) {
+        existing.quantity += 1;
+      } else {
+        cart.push({
+          type,
+          productId,
+          name,
+          price,
+          quantity: 1
+        });
+      }
+
+      safeStorage(DB_KEYS.CART, cart);
+      document.getElementById('pos-search').value = '';
+      document.getElementById('pos-suggestions').innerHTML = '';
+      renderCart();
+      showNotification(`${name} agregado al carrito`, 'success');
+    }
+
+    function renderCart() {
+      const cart = safeStorage(DB_KEYS.CART) || [];
+      const container = document.getElementById('pos-cart');
+      let total = 0;
+
+      if (cart.length === 0) {
+        container.innerHTML = '<div class="empty-state"><p>El carrito está vacío</p></div>';
+        document.getElementById('pos-total').textContent = '$0';
+        return;
+      }
+
+      container.innerHTML = cart.map((item, idx) => {
+        const subtotal = item.price * item.quantity;
+        total += subtotal;
+
+        return `
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">${item.name}</div>
+                <div style="font-size: 0.85rem; color: #92400e;">$${item.price.toLocaleString()} x ${item.quantity}</div>
+              </div>
+              <button class="btn-danger" onclick="removeFromCart(${idx})">×</button>
+            </div>
+            <div style="text-align: right; font-weight: 600; color: #78350f;">
+              Subtotal: <span class="currency">$${subtotal.toLocaleString()}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('pos-total').textContent = `$${total.toLocaleString()}`;
+    }
+
+    function removeFromCart(index) {
+      let cart = safeStorage(DB_KEYS.CART) || [];
+      cart.splice(index, 1);
+      safeStorage(DB_KEYS.CART, cart);
+      renderCart();
+    }
+
+    function clearCart() {
+      if (!confirm('¿Limpiar el carrito?')) return;
+      safeStorage(DB_KEYS.CART, []);
+      renderCart();
+    }
+
+    function completeSale() {
+      const cart = safeStorage(DB_KEYS.CART) || [];
+      if (cart.length === 0) {
+        showNotification('El carrito está vacío', 'danger');
+        return;
+      }
+
+      const paymentMethod = document.getElementById('payment-method').value;
+      const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+      const sale = {
+        id: Date.now(),
+        date: new Date().toISOString(),
+        items: cart,
+        total,
+        paymentMethod,
+        timestamp: new Date().toLocaleString('es-CL')
+      };
+
+      let sales = safeStorage(DB_KEYS.SALES) || [];
+      sales.push(sale);
+      safeStorage(DB_KEYS.SALES, sales);
+
+      // Update inventory
+      const books = safeStorage(DB_KEYS.BOOKS) || [];
+      const stationery = safeStorage(DB_KEYS.STATIONERY) || [];
+
+      cart.forEach(item => {
+        if (item.type === 'book') {
+          const book = books.find(b => b.id === item.productId);
+          if (book) book.stock -= item.quantity;
+        } else {
+          const station = stationery.find(s => s.id === item.productId);
+          if (station) station.stock -= item.quantity;
+        }
+      });
+
+      safeStorage(DB_KEYS.BOOKS, books);
+      safeStorage(DB_KEYS.STATIONERY, stationery);
+
+      safeStorage(DB_KEYS.CART, []);
+      renderCart();
+      renderBooksList();
+      renderStationeryList();
+      renderSalesLog();
+      updateDashboards();
+
+      showNotification(`Venta completada: $${total.toLocaleString()}`, 'success');
+    }
+
+    function renderSalesLog() {
+      const sales = safeStorage(DB_KEYS.SALES) || [];
+      const container = document.getElementById('sales-log');
+
+      const today = new Date().toDateString();
+      const todaysSales = sales.filter(s => new Date(s.date).toDateString() === today);
+
+      if (todaysSales.length === 0) {
+        container.innerHTML = '<div class="empty-state"><p>Sin ventas hoy</p></div>';
+        return;
+      }
+
+      container.innerHTML = todaysSales.reverse().map(sale => `
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">${sale.timestamp}</div>
+              <div class="card-meta">
+                <span class="meta-tag">${sale.items.length} item(s)</span>
+                <span class="meta-tag">${sale.paymentMethod}</span>
+              </div>
+            </div>
+            <div style="text-align: right;">
+              <span class="currency" style="font-size: 1.25rem;">$${sale.total.toLocaleString()}</span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function filterSalesLog() {
+      const searchTerm = document.getElementById('sales-filter').value.toLowerCase();
+      const sales = safeStorage(DB_KEYS.SALES) || [];
+
+      const today = new Date().toDateString();
+      const filtered = sales.filter(s =>
+        new Date(s.date).toDateString() === today &&
+        (s.timestamp.toLowerCase().includes(searchTerm) || s.paymentMethod.toLowerCase().includes(searchTerm))
+      );
+
+      const container = document.getElementById('sales-log');
+      if (filtered.length === 0) {
+        container.innerHTML = '<div class="empty-state"><p>Sin resultados</p></div>';
+        return;
+      }
+
+      container.innerHTML = filtered.reverse().map(sale => `
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">${sale.timestamp}</div>
+              <div class="card-meta">
+                <span class="meta-tag">${sale.items.length} item(s)</span>
+              </div>
+            </div>
+            <div style="text-align: right;">
+              <span class="currency" style="font-size: 1.25rem;">$${sale.total.toLocaleString()}</span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderBestSellers() {
+      const sales = safeStorage(DB_KEYS.SALES) || [];
+      const productSales = {};
+
+      sales.forEach(sale => {
+        sale.items.forEach(item => {
+          const key = `${item.type}-${item.productId}`;
+          if (!productSales[key]) {
+            productSales[key] = {
+              name: item.name,
+              quantity: 0,
+              revenue: 0
+            };
+          }
+          productSales[key].quantity += item.quantity;
+          productSales[key].revenue += item.price * item.quantity;
+        });
+      });
+
+      const sorted = Object.values(productSales)
+        .sort((a, b) => b.revenue - a.revenue)
+        .slice(0, 10);
+
+      const container = document.getElementById('best-sellers');
+      if (sorted.length === 0) {
+        container.innerHTML = '<div class="empty-state"><p>Sin datos de ventas</p></div>';
+        return;
+      }
+
+      container.innerHTML = sorted.map((product, idx) => `
+        <div class="list-item">
+          <div>
+            <strong>#${idx + 1} ${product.name}</strong>
+            <div style="font-size: 0.85rem; color: #92400e;">
+              ${product.quantity} unidades | $${product.revenue.toLocaleString()}
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // ============== PEDIDOS ==============
+    function addSpecialOrder(event) {
+      event.preventDefault();
+
+      const orders = safeStorage(DB_KEYS.ORDERS) || [];
+      const newOrder = {
+        id: Date.now(),
+        title: document.getElementById('order-title').value,
+        author: document.getElementById('order-author').value,
+        publisher: document.getElementById('order-publisher').value || '-',
+        isbn: document.getElementById('order-isbn').value || '-',
+        quantity: parseInt(document.getElementById('order-quantity').value),
+        cost: parseInt(document.getElementById('order-cost').value) || 0,
+        customer: document.getElementById('order-customer').value || 'General',
+        estimatedDate: document.getElementById('order-estimated-date').value,
+        notes: document.getElementById('order-notes').value,
+        status: 'pendiente',
+        created: new Date().toISOString()
+      };
+
+      orders.push(newOrder);
+      safeStorage(DB_KEYS.ORDERS, orders);
+
+      event.target.reset();
+      renderOrdersList();
+      showNotification('Encargo creado exitosamente', 'success');
+    }
+
+    function renderOrdersList() {
+      const orders = safeStorage(DB_KEYS.ORDERS) || [];
+      const container = document.getElementById('orders-list');
+
+      if (orders.length === 0) {
+        container.innerHTML = '<div class="empty-state"><p>No hay encarguos</p></div>';
+        return;
+      }
+
+      container.innerHTML = orders.map(order => `
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">${order.title}</div>
+              <div class="card-meta">
+                <span class="meta-tag">${order.author}</span>
+                <span class="meta-tag">${order.status}</span>
+              </div>
+            </div>
+            <button class="btn-danger" onclick="deleteOrder(${order.id})">Eliminar</button>
+          </div>
+          <div style="font-size: 0.9rem;">
+            <div><strong>Editorial:</strong> ${order.publisher}</div>
+            <div><strong>Cantidad:</strong> ${order.quantity} unidades</div>
+            <div><strong>Cliente:</strong> ${order.customer}</div>
+            <div><strong>Fecha Estimada:</strong> ${order.estimatedDate || 'Sin especificar'}</div>
+            ${order.notes ? `<div><strong>Notas:</strong> ${order.notes}</div>` : ''}
+          </div>
+          <div style="margin-top: 0.75rem;">
+            <select onchange="updateOrderStatus(${order.id}, this.value)" style="width: 100%;">
+              <option value="pendiente" ${order.status === 'pendiente' ? 'selected' : ''}>Pendiente</option>
+              <option value="confirmado" ${order.status === 'confirmado' ? 'selected' : ''}>Confirmado con Editorial</option>
+              <option value="en-transito" ${order.status === 'en-transito' ? 'selected' : ''}>En Tránsito</option>
+              <option value="entregado" ${order.status === 'entregado' ? 'selected' : ''}>Entregado</option>
+            </select>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function updateOrderStatus(id, status) {
+      let orders = safeStorage(DB_KEYS.ORDERS) || [];
+      const order = orders.find(o => o.id === id);
+      if (order) {
+        order.status = status;
+        safeStorage(DB_KEYS.ORDERS, orders);
+        renderOrdersList();
+        showNotification('Estado actualizado', 'success');
+      }
+    }
+
+    function deleteOrder(id) {
+      if (!confirm('¿Eliminar este encargo?')) return;
+      let orders = safeStorage(DB_KEYS.ORDERS) || [];
+      orders = orders.filter(o => o.id !== id);
+      safeStorage(DB_KEYS.ORDERS, orders);
+      renderOrdersList();
+      showNotification('Encargo eliminado', 'success');
+    }
+
+    function filterOrders() {
+      const searchTerm = document.getElementById('orders-filter').value.toLowerCase();
+      const orders = safeStorage(DB_KEYS.ORDERS) || [];
+      const filtered = orders.filter(o =>
+        o.title.toLowerCase().includes(searchTerm) ||
+        o.author.toLowerCase().includes(searchTerm) ||
+        o.customer.toLowerCase().includes(searchTerm)
+      );
+
+      const container = document.getElementById('orders-list');
+      if (filtered.length === 0) {
+        container.innerHTML = '<div class="empty-state"><p>No se encontraron encarguos</p></div>';
+        return;
+      }
+
+      container.innerHTML = filtered.map(order => `
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">${order.title}</div>
+              <div class="card-meta">
+                <span class="meta-tag">${order.status}</span>
+              </div>
+            </div>
+          </div>
+          <div style="font-size: 0.9rem;">
+            <div><strong>Cliente:</strong> ${order.customer}</div>
+            <div><strong>Cantidad:</strong> ${order.quantity} unidades</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // ============== EVENTOS ==============
+    function addEvent(event) {
+      event.preventDefault();
+
+      const events = safeStorage(DB_KEYS.EVENTS) || [];
+      const newEvent = {
+        id: Date.now(),
+        type: document.getElementById('event-type').value,
+        title: document.getElementById('event-title').value,
+        author: document.getElementById('event-author').value || '-',
+        date: document.getElementById('event-date').value,
+        time: document.getElementById('event-time').value || '15:00',
+        capacity: parseInt(document.getElementById('event-capacity').value) || 0,
+        description: document.getElementById('event-description').value,
+        attendees: 0,
+        revenue: 0,
+        created: new Date().toISOString()
+      };
+
+      events.push(newEvent);
+      safeStorage(DB_KEYS.EVENTS, events);
+
+      event.target.reset();
+      renderEventsList();
+      showNotification('Evento creado exitosamente', 'success');
+    }
+
+    function renderEventsList() {
+      const events = safeStorage(DB_KEYS.EVENTS) || [];
+      const container = document.getElementById('events-list');
+
+      if (events.length === 0) {
+        container.innerHTML = '<div class="empty-state"><p>No hay eventos programados</p></div>';
+        return;
+      }
+
+      container.innerHTML = events.map(evt => `
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">${evt.title}</div>
+              <div class="card-meta">
+                <span class="meta-tag">${evt.type}</span>
+                <span class="meta-tag">${evt.date} ${evt.time}</span>
+              </div>
+            </div>
+            <button class="btn-danger" onclick="deleteEvent(${evt.id})">Eliminar</button>
+          </div>
+          <div style="font-size: 0.9rem;">
+            ${evt.author !== '-' ? `<div><strong>Autor/Coordinador:</strong> ${evt.author}</div>` : ''}
+            ${evt.capacity > 0 ? `<div><strong>Capacidad:</strong> ${evt.attendees}/${evt.capacity}</div>` : ''}
+            <div><strong>Asistentes:</strong> ${evt.attendees}</div>
+            ${evt.description ? `<div style="margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid #f5deb3;">${evt.description}</div>` : ''}
+          </div>
+          <div style="margin-top: 0.75rem;">
+            <div class="row">
+              <input type="number" min="0" id="attendees-${evt.id}" placeholder="Asistentes" value="${evt.attendees}" style="padding: 0.5rem; font-size: 16px;">
+              <button class="btn-secondary" onclick="updateEventAttendees(${evt.id})">Actualizar</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function updateEventAttendees(id) {
+      const attendees = parseInt(document.getElementById(`attendees-${id}`).value) || 0;
+      let events = safeStorage(DB_KEYS.EVENTS) || [];
+      const evt = events.find(e => e.id === id);
+      if (evt) {
+        evt.attendees = attendees;
+        safeStorage(DB_KEYS.EVENTS, events);
+        renderEventsList();
+        showNotification('Asistentes actualizados', 'success');
+      }
+    }
+
+    function deleteEvent(id) {
+      if (!confirm('¿Eliminar este evento?')) return;
+      let events = safeStorage(DB_KEYS.EVENTS) || [];
+      events = events.filter(e => e.id !== id);
+      safeStorage(DB_KEYS.EVENTS, events);
+      renderEventsList();
+      showNotification('Evento eliminado', 'success');
+    }
+
+    // ============== FINANZAS ==============
+    let revenueChart = null;
+
+    function updateFinanceDashboard() {
+      const sales = safeStorage(DB_KEYS.SALES) || [];
+      const books = safeStorage(DB_KEYS.BOOKS) || [];
+      const stationery = safeStorage(DB_KEYS.STATIONERY) || [];
+
+      // Monthly revenue
+      const now = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const monthlySales = sales.filter(s => new Date(s.date) >= monthStart);
+      const monthlyRevenue = monthlySales.reduce((sum, s) => sum + s.total, 0);
+
+      // Revenue by category
+      let booksRevenue = 0, stationRevenue = 0;
+      monthlySales.forEach(sale => {
+        sale.items.forEach(item => {
+          if (item.type === 'book') {
+            booksRevenue += item.price * item.quantity;
+          } else {
+            stationRevenue += item.price * item.quantity;
+          }
+        });
+      });
+
+      // Stock value
+      const booksStockValue = books.reduce((sum, b) => sum + (b.cost * b.stock), 0);
+      const stationStockValue = stationery.reduce((sum, s) => sum + (s.cost * s.stock), 0);
+      const totalStock = books.length + stationery.length;
+
+      // Costs
+      const monthlyBooksCost = monthlySales.reduce((sum, s) => {
+        return sum + s.items
+          .filter(i => i.type === 'book')
+          .reduce((itemSum, i) => itemSum + (i.price * i.quantity * 0.5), 0); // Rough estimate
+      }, 0);
+
+      // Calculate margin
+      const totalRevenue = booksRevenue + stationRevenue;
+      const totalCost = monthlyBooksCost;
+      const margin = totalRevenue > 0 ? ((totalRevenue - totalCost) / totalRevenue * 100).toFixed(1) : 0;
+
+      document.getElementById('monthly-revenue').textContent = `$${monthlyRevenue.toLocaleString()}`;
+      document.getElementById('average-margin').textContent = `${margin}%`;
+      document.getElementById('total-stock').textContent = totalStock;
+      document.getElementById('books-revenue').textContent = `$${booksRevenue.toLocaleString()}`;
+      document.getElementById('station-revenue').textContent = `$${stationRevenue.toLocaleString()}`;
+
+      const totalRevenueAmount = booksRevenue + stationRevenue;
+      if (totalRevenueAmount > 0) {
+        document.getElementById('books-progress').style.width = `${(booksRevenue / totalRevenueAmount * 100).toFixed(1)}%`;
+        document.getElementById('station-progress').style.width = `${(stationRevenue / totalRevenueAmount * 100).toFixed(1)}%`;
+      }
+
+      document.getElementById('pl-revenue').textContent = `$${totalRevenue.toLocaleString()}`;
+      document.getElementById('pl-cost').textContent = `$${totalCost.toLocaleString()}`;
+      document.getElementById('pl-profit').textContent = `$${(totalRevenue - totalCost).toLocaleString()}`;
+
+      // Consignment analysis
+      const consignmentBooks = books.filter(b => b.consignment);
+      const consignmentAnalysis = document.getElementById('consignment-analysis');
+      if (consignmentBooks.length === 0) {
+        consignmentAnalysis.innerHTML = '<div class="empty-state"><p>Sin libros en consignación</p></div>';
+      } else {
+        consignmentAnalysis.innerHTML = consignmentBooks.map(b => `
+          <div class="list-item">
+            <div>
+              <strong>${b.title}</strong>
+              <div style="font-size: 0.85rem; color: #92400e;">${b.author} - Stock: ${b.stock}</div>
+            </div>
+            <span class="badge badge-secondary">Consignación</span>
+          </div>
+        `).join('');
+      }
+
+      // Margin analysis
+      const marginData = [
+        ...books.map(b => ({
+          name: b.title,
+          margin: ((b.price - b.cost) / b.price * 100).toFixed(1)
+        })),
+        ...stationery.map(s => ({
+          name: s.name,
+          margin: ((s.price - s.cost) / s.price * 100).toFixed(1)
+        }))
+      ].sort((a, b) => b.margin - a.margin).slice(0, 5);
+
+      const marginContainer = document.getElementById('margin-analysis');
+      marginContainer.innerHTML = marginData.map(item => `
+        <div class="list-item">
+          <div style="flex: 1;">
+            <strong>${item.name}</strong>
+          </div>
+          <span class="badge badge-primary">${item.margin}%</span>
+        </div>
+      `).join('');
+
+      // Update chart
+      updateRevenueChart(booksRevenue, stationRevenue);
+    }
+
+    function updateRevenueChart(books, stationery) {
+      const ctx = document.getElementById('revenue-chart');
+      if (!ctx) return;
+
+      if (revenueChart) {
+        revenueChart.destroy();
+      }
+
+      revenueChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['📚 Libros', '📝 Papelería'],
+          datasets: [{
+            data: [books, stationery],
+            backgroundColor: ['#78350f', '#f5deb3'],
+            borderColor: ['#92400e', '#d4a574'],
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                font: { size: 12 },
+                padding: 15,
+                color: '#78350f'
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function generateSalesReport() {
+      const sales = safeStorage(DB_KEYS.SALES) || [];
+      const days = {};
+
+      sales.forEach(sale => {
+        const date = new Date(sale.date).toLocaleDateString('es-CL');
+        if (!days[date]) {
+          days[date] = { total: 0, count: 0 };
+        }
+        days[date].total += sale.total;
+        days[date].count += 1;
+      });
+
+      const container = document.getElementById('sales-report');
+      if (Object.keys(days).length === 0) {
+        container.innerHTML = '<div class="empty-state"><p>Sin datos de ventas</p></div>';
+        return;
+      }
+
+      container.innerHTML = Object.entries(days)
+        .sort((a, b) => new Date(b[0]) - new Date(a[0]))
+        .slice(0, 30)
+        .map(([date, data]) => `
+          <div class="list-item">
+            <div>
+              <strong>${date}</strong>
+              <div style="font-size: 0.85rem; color: #92400e;">${data.count} transacción(es)</div>
+            </div>
+            <span class="currency" style="font-size: 1.1rem;">$${data.total.toLocaleString()}</span>
+          </div>
+        `).join('');
+    }
+
+    // ============== CLIENTES ==============
+    function addCustomer(event) {
+      event.preventDefault();
+
+      const customers = safeStorage(DB_KEYS.CUSTOMERS) || [];
+      const newCustomer = {
+        id: Date.now(),
+        name: document.getElementById('customer-name').value,
+        phone: document.getElementById('customer-phone').value || '-',
+        email: document.getElementById('customer-email').value || '-',
+        affiliation: document.getElementById('customer-affiliation').value || '-',
+        institution: document.getElementById('customer-institution').value || '-',
+        preferences: document.getElementById('customer-preferences').value || '-',
+        loyaltyPoints: 0,
+        totalSpent: 0,
+        purchases: 0,
+        wishlist: [],
+        created: new Date().toISOString()
+      };
+
+      customers.push(newCustomer);
+      safeStorage(DB_KEYS.CUSTOMERS, customers);
+
+      event.target.reset();
+      renderCustomersList();
+      showNotification('Cliente registrado exitosamente', 'success');
+    }
+
+    function renderCustomersList() {
+      const customers = safeStorage(DB_KEYS.CUSTOMERS) || [];
+      const container = document.getElementById('customers-list');
+
+      if (customers.length === 0) {
+        container.innerHTML = '<div class="empty-state"><p>Sin clientes registrados</p></div>';
+        updateCustomersStats();
+        return;
+      }
+
+      container.innerHTML = customers.map(customer => `
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">${customer.name}</div>
+              <div class="card-meta">
+                ${customer.affiliation !== '-' ? `<span class="meta-tag">${customer.affiliation}</span>` : ''}
+                <span class="meta-tag">${customer.purchases} compras</span>
+                <span class="meta-tag">${customer.loyaltyPoints} puntos</span>
+              </div>
+            </div>
+            <button class="btn-danger" onclick="deleteCustomer(${customer.id})">Eliminar</button>
+          </div>
+          <div style="font-size: 0.9rem;">
+            ${customer.phone !== '-' ? `<div>📞 ${customer.phone}</div>` : ''}
+            ${customer.email !== '-' ? `<div>✉️ ${customer.email}</div>` : ''}
+            ${customer.institution !== '-' ? `<div>🏫 ${customer.institution}</div>` : ''}
+            ${customer.preferences !== '-' ? `<div><strong>Preferencias:</strong> ${customer.preferences}</div>` : ''}
+            <div style="margin-top: 0.5rem;"><strong>Gasto Total:</strong> <span class="currency">$${customer.totalSpent.toLocaleString()}</span></div>
+          </div>
+        </div>
+      `).join('');
+
+      updateCustomersStats();
+    }
+
+    function updateCustomersStats() {
+      const customers = safeStorage(DB_KEYS.CUSTOMERS) || [];
+      const sales = safeStorage(DB_KEYS.SALES) || [];
+
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      const activeCustomers = customers.filter(c => new Date(c.created) > thirtyDaysAgo).length;
+
+      const totalSpent = customers.reduce((sum, c) => sum + c.totalSpent, 0);
+      const avgSpend = customers.length > 0 ? (totalSpent / customers.length).toFixed(0) : 0;
+
+      document.getElementById('total-customers').textContent = customers.length;
+      document.getElementById('active-customers').textContent = activeCustomers;
+      document.getElementById('avg-customer-spend').textContent = `$${parseInt(avgSpend).toLocaleString()}`;
+
+      // Loyalty summary
+      const loyaltyCustomers = customers
+        .filter(c => c.loyaltyPoints > 0)
+        .sort((a, b) => b.loyaltyPoints - a.loyaltyPoints)
+        .slice(0, 5);
+
+      const loyaltyContainer = document.getElementById('loyalty-summary');
+      if (loyaltyCustomers.length === 0) {
+        loyaltyContainer.innerHTML = '<div class="empty-state"><p>Sin puntos de lealtad</p></div>';
+      } else {
+        loyaltyContainer.innerHTML = loyaltyCustomers.map((customer, idx) => `
+          <div class="list-item">
+            <div>
+              <strong>#${idx + 1} ${customer.name}</strong>
+              <div style="font-size: 0.85rem; color: #92400e;">${customer.purchases} compras</div>
+            </div>
+            <span class="badge badge-primary">${customer.loyaltyPoints} pts</span>
+          </div>
+        `).join('');
+      }
+
+      // Popular wishlist items (mocked)
+      const wishlistContainer = document.getElementById('wishlist-popular');
+      wishlistContainer.innerHTML = `
+        <div class="list-item">
+          <div>
+            <strong>Los Evangelios Desconocidos</strong>
+            <div style="font-size: 0.85rem; color: #92400e;">3 clientes en lista</div>
+          </div>
+        </div>
+        <div class="list-item">
+          <div>
+            <strong>La Última Conferencia de Soros</strong>
+            <div style="font-size: 0.85rem; color: #92400e;">2 clientes en lista</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function deleteCustomer(id) {
+      if (!confirm('¿Eliminar este cliente?')) return;
+      let customers = safeStorage(DB_KEYS.CUSTOMERS) || [];
+      customers = customers.filter(c => c.id !== id);
+      safeStorage(DB_KEYS.CUSTOMERS, customers);
+      renderCustomersList();
+      showNotification('Cliente eliminado', 'success');
+    }
+
+    function filterCustomers() {
+      const searchTerm = document.getElementById('customers-search').value.toLowerCase();
+      const customers = safeStorage(DB_KEYS.CUSTOMERS) || [];
+      const filtered = customers.filter(c =>
+        c.name.toLowerCase().includes(searchTerm) ||
+        c.phone.toLowerCase().includes(searchTerm) ||
+        c.email.toLowerCase().includes(searchTerm)
+      );
+
+      const container = document.getElementById('customers-list');
+      if (filtered.length === 0) {
+        container.innerHTML = '<div class="empty-state"><p>No se encontraron clientes</p></div>';
+        return;
+      }
+
+      container.innerHTML = filtered.map(customer => `
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">${customer.name}</div>
+              <div class="card-meta">
+                <span class="meta-tag">${customer.purchases} compras</span>
+              </div>
+            </div>
+          </div>
+          <div style="font-size: 0.9rem;">
+            ${customer.phone !== '-' ? `<div>📞 ${customer.phone}</div>` : ''}
+            ${customer.email !== '-' ? `<div>✉️ ${customer.email}</div>` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // ============== UTILITIES ==============
+    function updateDashboards() {
+      updateFinanceDashboard();
+      updateCustomersStats();
+      renderSalesLog();
+      renderBestSellers();
+    }
+
+    function showNotification(message, type = 'info') {
+      // Simple notification - could be enhanced
+      console.log(`[${type.toUpperCase()}] ${message}`);
+      alert(message);
+    }
+
+    // ============== INITIALIZATION ==============
+    document.addEventListener('DOMContentLoaded', function() {
+      initializeData();
+      renderBooksList();
+      renderStationeryList();
+      renderSalesLog();
+      renderBestSellers();
+      renderOrdersList();
+      renderEventsList();
+      renderCustomersList();
+      updateDashboards();
+
+      // Register service worker for PWA
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('data:text/javascript,').catch(() => {
+          console.log('Service worker registration deferred');
+        });
+      }
+    });
+
+    // Prevent iOS zoom on input focus
+    document.addEventListener('touchstart', function(e) {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') {
+        e.target.style.fontSize = '16px';
+      }
+    });
+  </script>
+</body>
+</html>

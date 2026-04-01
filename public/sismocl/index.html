@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5">
+<meta name="theme-color" content="#0c4a7a">
+<meta name="description" content="Monitor sísmico en tiempo real para Chile. Terremotos y sismos usando datos USGS.">
+<title>SismoCL — Monitor Sísmico de Chile</title>
+<link rel="manifest" href="data:application/json,{%22name%22:%22SismoCL%22,%22short_name%22:%22SismoCL%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%23f0f6ff%22,%22theme_color%22:%22%230c4a7a%22}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#f0f6ff;--card:#ffffff;--card2:#e8f2ff;--border:#b8d4f0;
+  --accent:#0369a1;--text:#2d5a7a;--muted:#6b8fa5;
+  --green:#16a34a;--yellow:#d97706;--orange:#ea580c;--red:#dc2626;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:#1e3a5f;min-height:100vh}
+header{background:linear-gradient(90deg,#0c4a7a,#0369a1);border-bottom:1px solid #0369a1;padding:13px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+nav{background:#fff;border-bottom:2px solid var(--border);display:flex;overflow-x:auto;scrollbar-width:none;position:sticky;top:62px;z-index:40}
+nav::-webkit-scrollbar{display:none}
+.tab-btn{flex:1;min-width:80px;padding:12px 8px;border:none;background:none;cursor:pointer;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;color:var(--muted);border-bottom:3px solid transparent;transition:all .2s;white-space:nowrap}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-content{display:none}
+.tab-content.active{display:block}
+.header-title{color:#fff;font-size:18px;font-weight:700;display:flex;align-items:center;gap:8px}
+.header-sub{color:#90caf9;font-size:11px;margin-top:2px}
+.live-dot{width:8px;height:8px;background:#4ade80;border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
+.spinner{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;background:rgba(255,255,255,.9);border-radius:16px;padding:24px;flex-direction:column;align-items:center;gap:12px;box-shadow:0 8px 32px rgba(3,105,161,.2)}
+.spinner.show{display:flex}
+.spin{width:40px;height:40px;border:4px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner-text{color:var(--text);font-size:14px;font-weight:500}
+.alert-banner{background:linear-gradient(90deg,#7f1d1d,#dc2626);color:#fff;padding:10px 18px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;animation:flashBg 2s ease-in-out infinite}
+@keyframes flashBg{0%,100%{opacity:1}50%{opacity:.85}}
+.offline-banner{background:#f59e0b;color:#fff;padding:8px 18px;font-size:13px;font-weight:600;text-align:center;display:none}
+.offline-banner.show{display:block}
+/* MAP TAB */
+#map-tab{padding:0}
+.map-stats-bar{background:var(--card);border-bottom:1px solid var(--border);padding:10px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.map-stats-info{font-size:13px;color:var(--text);font-weight:500}
+.map-controls{display:flex;align-items:center;gap:10px}
+.btn{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;display:flex;align-items:center;gap:6px;transition:background .2s}
+.btn:hover{background:#075985}
+.btn:active{background:#0c4a7a}
+.last-updated{font-size:11px;color:var(--muted)}
+#leaflet-map{height:calc(100svh - 62px - 50px - 52px - 2px);min-height:300px}
+/* LISTA TAB */
+#list-tab{padding:0}
+.filter-bar{background:var(--card);border-bottom:1px solid var(--border);padding:12px 18px;display:flex;flex-direction:column;gap:10px}
+.search-input{width:100%;padding:9px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:16px;font-family:'Inter',sans-serif;color:#1e3a5f;background:#fff;outline:none;transition:border-color .2s}
+.search-input:focus{border-color:var(--accent)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{padding:5px 12px;border-radius:20px;border:1.5px solid var(--border);background:#fff;font-size:12px;font-weight:600;color:var(--text);cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif}
+.chip.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.quake-list{padding:0 0 80px}
+.quake-item{background:var(--card);border-bottom:1px solid var(--border);padding:14px 18px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:background .15s}
+.quake-item:hover{background:var(--card2)}
+.mag-badge{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0}
+.quake-info{flex:1;min-width:0}
+.quake-region{font-size:14px;font-weight:600;color:#1e3a5f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.quake-sub{font-size:12px;color:var(--muted);margin-top:2px;display:flex;gap:8px;flex-wrap:wrap}
+.depth-tag{font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;background:var(--card2);color:var(--text)}
+.quake-time{font-size:11px;color:var(--muted);text-align:right;white-space:nowrap;flex-shrink:0}
+.empty-state{text-align:center;padding:60px 20px;color:var(--muted)}
+.empty-state .icon{font-size:48px;margin-bottom:12px}
+/* STATS TAB */
+#stats-tab{padding:16px 16px 80px}
+.stat-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.stat-card{background:var(--card);border-radius:14px;padding:16px;border:1px solid var(--border)}
+.stat-card-label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.stat-card-value{font-size:22px;font-weight:700;color:var(--accent)}
+.stat-card-sub{font-size:11px;color:var(--muted);margin-top:3px}
+.chart-card{background:var(--card);border-radius:14px;padding:16px;border:1px solid var(--border);margin-bottom:16px}
+.chart-card h3{font-size:14px;font-weight:600;color:var(--text);margin-bottom:14px}
+.chart-wrap{position:relative;max-height:220px}
+.charts-row{display:grid;grid-template-columns:1.5fr 1fr;gap:12px;margin-bottom:16px}
+@media(max-width:480px){.charts-row{grid-template-columns:1fr}}
+.fun-fact{background:linear-gradient(135deg,#e0f2fe,#bfdbfe);border-radius:14px;padding:16px;border:1px solid #7dd3fc;font-size:13px;color:#1e3a5f}
+.fun-fact strong{display:block;font-size:14px;margin-bottom:6px;color:#0369a1}
+/* INFO TAB */
+#info-tab{padding:16px 16px 80px}
+.info-section{background:var(--card);border-radius:14px;padding:18px;border:1px solid var(--border);margin-bottom:16px}
+.info-section h2{font-size:15px;font-weight:700;color:#1e3a5f;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.richter-table{width:100%;border-collapse:collapse}
+.richter-table th{text-align:left;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;padding:6px 8px;border-bottom:2px solid var(--border)}
+.richter-table td{padding:9px 8px;border-bottom:1px solid var(--border);font-size:13px;color:#1e3a5f;vertical-align:top}
+.richter-table tr:last-child td{border-bottom:none}
+.richter-table td:first-child{font-weight:700;white-space:nowrap}
+.steps-list{list-style:none;display:flex;flex-direction:column;gap:10px}
+.steps-list li{display:flex;align-items:flex-start;gap:10px;font-size:13px;color:#1e3a5f;line-height:1.5}
+.step-num{background:var(--accent);color:#fff;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;margin-top:1px}
+.emergency-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.emergency-card{background:var(--card2);border-radius:12px;padding:14px;border:1px solid var(--border);text-align:center}
+.emergency-card .num{font-size:28px;font-weight:700;color:var(--accent)}
+.emergency-card .org{font-size:12px;font-weight:600;color:var(--text);margin-top:2px}
+.emergency-card .role{font-size:11px;color:var(--muted);margin-top:2px}
+.checklist{list-style:none;display:flex;flex-direction:column;gap:8px}
+.checklist li{display:flex;align-items:center;gap:10px;font-size:13px;color:#1e3a5f}
+.checklist li::before{content:'✓';background:#dcfce7;color:#16a34a;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+/* LEAFLET POPUP */
+.leaflet-popup-content-wrapper{border-radius:12px;box-shadow:0 4px 20px rgba(3,105,161,.2);border:1px solid var(--border)}
+.leaflet-popup-content{margin:12px 14px;font-family:'Inter',sans-serif;font-size:13px;color:#1e3a5f;min-width:160px}
+.popup-mag{font-size:20px;font-weight:700;margin-bottom:6px}
+.popup-place{font-weight:600;margin-bottom:4px;line-height:1.3}
+.popup-detail{font-size:12px;color:var(--muted);margin-top:2px}
+/* SCROLL */
+html{scroll-behavior:smooth}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+</style>
+</head>
+<body>
+
+<div class="spinner" id="spinner">
+  <div class="spin"></div>
+  <div class="spinner-text">Cargando sismos...</div>
+</div>
+
+<div class="offline-banner" id="offlineBanner">
+  Mostrando datos guardados · Sin conexión
+</div>
+
+<header>
+  <div>
+    <div class="header-title">
+      <div class="live-dot"></div>
+      SismoCL
+    </div>
+    <div class="header-sub">Monitor Sísmico de Chile</div>
+  </div>
+  <div style="text-align:right">
+    <div style="color:#90caf9;font-size:11px;font-weight:500">Datos USGS</div>
+    <div style="color:#64b5f6;font-size:10px" id="quakeCount">—</div>
+  </div>
+</header>
+
+<nav>
+  <button class="tab-btn active" onclick="switchTab('map')">Mapa</button>
+  <button class="tab-btn" onclick="switchTab('list')">Lista</button>
+  <button class="tab-btn" onclick="switchTab('stats')">Estadísticas</button>
+  <button class="tab-btn" onclick="switchTab('info')">Info</button>
+</nav>
+
+<!-- ALERT BANNER (hidden by default) -->
+<div class="alert-banner" id="alertBanner" style="display:none">
+  ⚠️ ALERTA: Se detectó un sismo de magnitud M≥6.0 en los últimos 7 días
+</div>
+
+<!-- TAB 1: MAPA -->
+<div class="tab-content active" id="map-tab">
+  <div class="map-stats-bar">
+    <div class="map-stats-info" id="mapStatsInfo">Cargando datos...</div>
+    <div class="map-controls">
+      <div class="last-updated" id="lastUpdated"></div>
+      <button class="btn" onclick="loadData(true)">↺ Actualizar</button>
+    </div>
+  </div>
+  <div id="leaflet-map"></div>
+</div>
+
+<!-- TAB 2: LISTA -->
+<div class="tab-content" id="list-tab">
+  <div class="filter-bar">
+    <input class="search-input" type="text" id="searchInput" placeholder="Buscar por lugar..." oninput="renderList()" autocomplete="off" autocorrect="off" spellcheck="false">
+    <div class="chips" id="timeChips">
+      <button class="chip active" data-hours="24" onclick="setTimeFilter(this,24)">24h</button>
+      <button class="chip" data-hours="72" onclick="setTimeFilter(this,72)">3 días</button>
+      <button class="chip" data-hours="168" onclick="setTimeFilter(this,168)">7 días</button>
+    </div>
+    <div class="chips" id="magChips">
+      <button class="chip active" data-mag="0" onclick="setMagFilter(this,0)">Todos</button>
+      <button class="chip" data-mag="3" onclick="setMagFilter(this,3)">M≥3</button>
+      <button class="chip" data-mag="4" onclick="setMagFilter(this,4)">M≥4</button>
+      <button class="chip" data-mag="5" onclick="setMagFilter(this,5)">M≥5</button>
+    </div>
+  </div>
+  <div class="quake-list" id="quakeList"></div>
+</div>
+
+<!-- TAB 3: ESTADÍSTICAS -->
+<div class="tab-content" id="stats-tab">
+  <div class="stat-cards" id="statCards">
+    <div class="stat-card">
+      <div class="stat-card-label">Total 7 días</div>
+      <div class="stat-card-value" id="sc-total">—</div>
+      <div class="stat-card-sub">sismos registrados</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-label">Más fuerte</div>
+      <div class="stat-card-value" id="sc-max">—</div>
+      <div class="stat-card-sub" id="sc-max-loc">magnitud Richter</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-label">Prof. promedio</div>
+      <div class="stat-card-value" id="sc-depth">—</div>
+      <div class="stat-card-sub">kilómetros</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-label">Región más activa</div>
+      <div class="stat-card-value" style="font-size:14px" id="sc-region">—</div>
+      <div class="stat-card-sub" id="sc-region-count"></div>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <h3>Sismos por día (últimos 7 días)</h3>
+    <div class="chart-wrap"><canvas id="barChart"></canvas></div>
+  </div>
+
+  <div class="charts-row">
+    <div class="chart-card" style="margin-bottom:0">
+      <h3>Por magnitud</h3>
+      <div class="chart-wrap"><canvas id="doughnutChart"></canvas></div>
+    </div>
+    <div class="chart-card" style="margin-bottom:0">
+      <h3>Por profundidad</h3>
+      <div class="chart-wrap"><canvas id="depthChart"></canvas></div>
+    </div>
+  </div>
+
+  <div style="margin-top:16px"></div>
+  <div class="fun-fact">
+    <strong>Dato curioso</strong>
+    Chile registra en promedio 2.000 sismos al mes. Es uno de los países más sísmicos del planeta, ubicado sobre el Cinturón de Fuego del Pacífico y el encuentro entre las placas de Nazca y Sudamericana.
+  </div>
+</div>
+
+<!-- TAB 4: INFO -->
+<div class="tab-content" id="info-tab">
+
+  <div class="info-section">
+    <h2>Escala de Magnitud</h2>
+    <table class="richter-table">
+      <thead>
+        <tr>
+          <th>Magnitud</th>
+          <th>Categoría</th>
+          <th>Efectos</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="color:#16a34a">M 1–2</td>
+          <td>Micro</td>
+          <td>Imperceptible. Solo detectado por instrumentos.</td>
+        </tr>
+        <tr>
+          <td style="color:#16a34a">M 2–3</td>
+          <td>Muy leve</td>
+          <td>Muy raramente sentido, sin daños.</td>
+        </tr>
+        <tr>
+          <td style="color:#d97706">M 3–4</td>
+          <td>Leve</td>
+          <td>Sentido en interiores, objetos vibran levemente.</td>
+        </tr>
+        <tr>
+          <td style="color:#ea580c">M 4–5</td>
+          <td>Moderado</td>
+          <td>Sentido ampliamente. Posibles daños menores.</td>
+        </tr>
+        <tr>
+          <td style="color:#dc2626">M 5–6</td>
+          <td>Fuerte</td>
+          <td>Daños en estructuras débiles. Objetos caen.</td>
+        </tr>
+        <tr>
+          <td style="color:#b91c1c">M 6–7</td>
+          <td>Severo</td>
+          <td>Daños en un radio de 80 km. Riesgo de tsunami.</td>
+        </tr>
+        <tr>
+          <td style="color:#7f1d1d">M 7–8</td>
+          <td>Mayor</td>
+          <td>Daños graves. Colapso de edificios.</td>
+        </tr>
+        <tr>
+          <td style="color:#450a0a">M 8+</td>
+          <td>Gran terremoto</td>
+          <td>Destrucción masiva. Tsunami probable.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="info-section">
+    <h2>¿Qué hacer en un terremoto?</h2>
+    <ul class="steps-list">
+      <li><div class="step-num">1</div><span>Mantén la calma. El pánico puede causar más daños que el sismo.</span></li>
+      <li><div class="step-num">2</div><span>Aléjate de ventanas, espejos y objetos que puedan caer sobre ti.</span></li>
+      <li><div class="step-num">3</div><span>Agáchate, cúbrete la cabeza y cuello con los brazos (si no hay mesa cerca).</span></li>
+      <li><div class="step-num">4</div><span>Si hay mesa resistente, métete debajo y agárrate con fuerza.</span></li>
+      <li><div class="step-num">5</div><span>No intentes salir mientras el sismo dure. Espera que pare.</span></li>
+      <li><div class="step-num">6</div><span>Si estás en exterior, aléjate de edificios, cables y árboles.</span></li>
+      <li><div class="step-num">7</div><span>Después del sismo, revisa tu estado y el de las personas a tu alrededor.</span></li>
+      <li><div class="step-num">8</div><span>Sal del edificio con calma, usa las escaleras, nunca el ascensor.</span></li>
+      <li><div class="step-num">9</div><span>Si estás cerca del mar, aléjate de la costa inmediatamente (posible tsunami).</span></li>
+      <li><div class="step-num">10</div><span>Escucha la radio o TV oficial para instrucciones de las autoridades.</span></li>
+    </ul>
+  </div>
+
+  <div class="info-section">
+    <h2>Teléfonos de emergencia</h2>
+    <div class="emergency-cards">
+      <div class="emergency-card">
+        <div class="num">132</div>
+        <div class="org">SENAPRED</div>
+        <div class="role">Emergencias nacionales</div>
+      </div>
+      <div class="emergency-card">
+        <div class="num">132</div>
+        <div class="org">Bomberos</div>
+        <div class="role">Incendios y rescate</div>
+      </div>
+      <div class="emergency-card">
+        <div class="num">133</div>
+        <div class="org">Carabineros</div>
+        <div class="role">Seguridad y orden</div>
+      </div>
+      <div class="emergency-card">
+        <div class="num">131</div>
+        <div class="org">SAMU</div>
+        <div class="role">Urgencias médicas</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="info-section">
+    <h2>Kit de preparación</h2>
+    <ul class="checklist">
+      <li>Agua potable (3 litros por persona por día, 3 días)</li>
+      <li>Alimentos no perecederos (atún, galletas, frutas secas)</li>
+      <li>Linterna y pilas de repuesto</li>
+      <li>Radio a pilas o manivela</li>
+      <li>Botiquín de primeros auxilios completo</li>
+      <li>Documentos importantes en bolsa hermética</li>
+      <li>Dinero en efectivo (los cajeros pueden fallar)</li>
+      <li>Ropa abrigada y zapatos resistentes</li>
+      <li>Medicamentos esenciales para 7 días</li>
+      <li>Silbato para pedir ayuda si quedas atrapado</li>
+    </ul>
+  </div>
+
+  <div style="text-align:center;padding:20px 0;color:var(--muted);font-size:12px">
+    Datos sísmicos: USGS Earthquake Hazards Program · Actualización cada 5 minutos
+  </div>
+</div>
+
+<script>
+// ─── STATE ─────────────────────────────────────────────────────────────────
+const CACHE_KEY = 'sismocl_cache';
+const CACHE_TTL = 5 * 60 * 1000; // 5 min
+let allQuakes = [];
+let map = null;
+let markers = [];
+let activeTab = 'map';
+let timeFilter = 24;
+let magFilter = 0;
+let barChart = null;
+let doughnutChart = null;
+let depthChart = null;
+let mapInitialized = false;
+
+// ─── HELPERS ───────────────────────────────────────────────────────────────
+function magColor(m) {
+  if (m < 3.0) return '#16a34a';
+  if (m < 4.0) return '#d97706';
+  if (m < 5.0) return '#ea580c';
+  if (m < 6.0) return '#dc2626';
+  return '#7f1d1d';
+}
+
+function depthClass(d) {
+  if (d < 70) return { label: 'Superficial', color: '#ef4444' };
+  if (d < 300) return { label: 'Intermedio', color: '#f59e0b' };
+  return { label: 'Profundo', color: '#6366f1' };
+}
+
+function timeAgo(ts) {
+  const diff = Date.now() - ts;
+  const min = Math.floor(diff / 60000);
+  if (min < 1) return 'Hace un momento';
+  if (min < 60) return `Hace ${min} min`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `Hace ${h}h`;
+  const d = Math.floor(h / 24);
+  return `Hace ${d}d`;
+}
+
+function fmtCL(ts) {
+  try {
+    return new Date(ts).toLocaleString('es-CL', { timeZone: 'America/Santiago' });
+  } catch (e) {
+    return new Date(ts).toLocaleString();
+  }
+}
+
+function parseRegion(place) {
+  if (!place) return 'Zona desconocida';
+  // Common patterns: "X km N of City, Chile" or "City, Region, Chile"
+  const parts = place.split(',');
+  if (parts.length >= 2) {
+    const last = parts[parts.length - 1].trim();
+    const secondLast = parts[parts.length - 2].trim();
+    if (last.toLowerCase() === 'chile') return secondLast;
+    return last;
+  }
+  return place.length > 40 ? place.substring(0, 40) + '…' : place;
+}
+
+function storeTry(key, value) {
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {}
+}
+
+function getTry(key) {
+  try { return JSON.parse(localStorage.getItem(key)); } catch (e) { return null; }
+}
+
+// ─── API ───────────────────────────────────────────────────────────────────
+async function fetchUSGS() {
+  const end = new Date();
+  const start = new Date(end - 7 * 24 * 60 * 60 * 1000);
+  const startISO = start.toISOString().split('T')[0];
+  const url = `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=${startISO}&minlatitude=-56&maxlatitude=-17&minlongitude=-76&maxlongitude=-66&orderby=time&limit=100`;
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
+
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeout);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    return data.features || [];
+  } catch (e) {
+    clearTimeout(timeout);
+    throw e;
+  }
+}
+
+async function loadData(force = false) {
+  // Check cache
+  if (!force) {
+    const cached = getTry(CACHE_KEY);
+    if (cached && Date.now() - cached.ts < CACHE_TTL) {
+      allQuakes = cached.data;
+      renderAll();
+      return;
+    }
+  }
+
+  showSpinner(true);
+  document.getElementById('offlineBanner').classList.remove('show');
+
+  try {
+    const features = await fetchUSGS();
+    allQuakes = features.map(f => ({
+      id: f.id,
+      mag: f.properties.mag || 0,
+      place: f.properties.place || 'Desconocido',
+      time: f.properties.time,
+      depth: f.geometry.coordinates[2] || 0,
+      lat: f.geometry.coordinates[1],
+      lng: f.geometry.coordinates[0],
+      felt: f.properties.felt,
+      url: f.properties.url
+    })).filter(q => q.mag !== null && q.mag !== undefined);
+
+    storeTry(CACHE_KEY, { ts: Date.now(), data: allQuakes });
+    document.getElementById('lastUpdated').textContent = 'Actualizado ' + timeAgo(Date.now());
+    renderAll();
+  } catch (e) {
+    // Try cache fallback
+    const cached = getTry(CACHE_KEY);
+    if (cached && cached.data) {
+      allQuakes = cached.data;
+      document.getElementById('offlineBanner').classList.add('show');
+      renderAll();
+    } else {
+      document.getElementById('quakeList').innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><p>No se pudieron cargar los datos.<br>Verifica tu conexión a internet.</p></div>`;
+    }
+  } finally {
+    showSpinner(false);
+  }
+}
+
+function showSpinner(v) {
+  document.getElementById('spinner').className = v ? 'spinner show' : 'spinner';
+}
+
+// ─── RENDER ALL ────────────────────────────────────────────────────────────
+function renderAll() {
+  updateHeaderCount();
+  checkAlert();
+  updateMapStats();
+  if (mapInitialized) renderMap();
+  renderList();
+  renderStats();
+}
+
+function updateHeaderCount() {
+  const n = allQuakes.length;
+  document.getElementById('quakeCount').textContent = `${n} sismos · 7 días`;
+}
+
+function checkAlert() {
+  const big = allQuakes.some(q => q.mag >= 6.0);
+  document.getElementById('alertBanner').style.display = big ? 'flex' : 'none';
+}
+
+function updateMapStats() {
+  if (!allQuakes.length) return;
+  const now = Date.now();
+  const last24 = allQuakes.filter(q => now - q.time < 86400000).length;
+  const maxMag = Math.max(...allQuakes.map(q => q.mag)).toFixed(1);
+  document.getElementById('mapStatsInfo').textContent =
+    `${allQuakes.length} sismos · Mayor: M${maxMag} · Últimas 24h: ${last24}`;
+}
+
+// ─── MAP ───────────────────────────────────────────────────────────────────
+function initMap() {
+  if (mapInitialized) return;
+  map = L.map('leaflet-map', { zoomControl: true }).setView([-33, -71], 5);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    maxZoom: 18
+  }).addTo(map);
+  mapInitialized = true;
+  if (allQuakes.length) renderMap();
+}
+
+function renderMap() {
+  if (!map) return;
+  markers.forEach(m => m.remove());
+  markers = [];
+
+  allQuakes.forEach(q => {
+    if (!q.lat || !q.lng) return;
+    const color = magColor(q.mag);
+    const radius = Math.max(q.mag * 5, 6);
+    const dc = depthClass(q.depth);
+
+    const marker = L.circleMarker([q.lat, q.lng], {
+      radius,
+      color,
+      fillColor: color,
+      fillOpacity: 0.7,
+      weight: 1.5,
+      opacity: 0.9
+    });
+
+    const region = parseRegion(q.place);
+    marker.bindPopup(`
+      <div class="popup-mag" style="color:${color}">M ${q.mag.toFixed(1)}</div>
+      <div class="popup-place">${region}</div>
+      <div class="popup-detail">Prof: ${q.depth.toFixed(0)} km · <span style="color:${dc.color}">${dc.label}</span></div>
+      <div class="popup-detail">${fmtCL(q.time)}</div>
+      <div class="popup-detail" style="margin-top:6px;color:#6b8fa5">${q.place}</div>
+    `);
+
+    marker.addTo(map);
+    markers.push(marker);
+  });
+}
+
+// ─── LIST ──────────────────────────────────────────────────────────────────
+function setTimeFilter(btn, hours) {
+  timeFilter = hours;
+  document.querySelectorAll('#timeChips .chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  renderList();
+}
+
+function setMagFilter(btn, mag) {
+  magFilter = mag;
+  document.querySelectorAll('#magChips .chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  renderList();
+}
+
+function renderList() {
+  const search = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+  const now = Date.now();
+  const cutoff = now - timeFilter * 3600000;
+
+  let filtered = allQuakes.filter(q => {
+    if (q.time < cutoff) return false;
+    if (q.mag < magFilter) return false;
+    if (search && !q.place.toLowerCase().includes(search)) return false;
+    return true;
+  });
+
+  const el = document.getElementById('quakeList');
+  if (!filtered.length) {
+    el.innerHTML = `<div class="empty-state"><div class="icon">🔍</div><p>Sin sismos para los filtros seleccionados.</p></div>`;
+    return;
+  }
+
+  el.innerHTML = filtered.map(q => {
+    const color = magColor(q.mag);
+    const dc = depthClass(q.depth);
+    const region = parseRegion(q.place);
+    return `
+      <div class="quake-item" onclick="showOnMap(${q.lat},${q.lng})">
+        <div class="mag-badge" style="background:${color}">${q.mag.toFixed(1)}</div>
+        <div class="quake-info">
+          <div class="quake-region">${region}</div>
+          <div class="quake-sub">
+            <span>Prof: ${q.depth.toFixed(0)} km</span>
+            <span class="depth-tag" style="background:${dc.color}22;color:${dc.color}">${dc.label}</span>
+            <span style="font-size:10px;color:#8ba8c0">${q.place.length > 50 ? q.place.substring(0,50)+'…' : q.place}</span>
+          </div>
+        </div>
+        <div class="quake-time">${timeAgo(q.time)}<br><span style="font-size:10px">${fmtCL(q.time).split(',')[0]}</span></div>
+      </div>
+    `;
+  }).join('');
+}
+
+function showOnMap(lat, lng) {
+  switchTab('map');
+  setTimeout(() => {
+    if (map) {
+      map.setView([lat, lng], 8);
+      markers.forEach(m => {
+        const pos = m.getLatLng();
+        if (Math.abs(pos.lat - lat) < 0.01 && Math.abs(pos.lng - lng) < 0.01) {
+          m.openPopup();
+        }
+      });
+    }
+  }, 150);
+}
+
+// ─── STATS ─────────────────────────────────────────────────────────────────
+function renderStats() {
+  if (!allQuakes.length) return;
+
+  const total = allQuakes.length;
+  const maxMag = allQuakes.reduce((p, c) => c.mag > p.mag ? c : p, allQuakes[0]);
+  const avgDepth = (allQuakes.reduce((s, q) => s + q.depth, 0) / total).toFixed(1);
+
+  // Region frequency
+  const regionMap = {};
+  allQuakes.forEach(q => {
+    const r = parseRegion(q.place);
+    regionMap[r] = (regionMap[r] || 0) + 1;
+  });
+  const topRegion = Object.entries(regionMap).sort((a,b) => b[1]-a[1])[0] || ['—', 0];
+
+  document.getElementById('sc-total').textContent = total;
+  document.getElementById('sc-max').textContent = `M ${maxMag.mag.toFixed(1)}`;
+  document.getElementById('sc-max-loc').textContent = parseRegion(maxMag.place);
+  document.getElementById('sc-depth').textContent = avgDepth + ' km';
+  document.getElementById('sc-region').textContent = topRegion[0];
+  document.getElementById('sc-region-count').textContent = `${topRegion[1]} sismos`;
+
+  // Bar chart: per day
+  const days = [];
+  const dayCounts = [];
+  const now = new Date();
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    const label = d.toLocaleDateString('es-CL', { weekday: 'short', day: 'numeric', timeZone: 'America/Santiago' });
+    days.push(label);
+    const dayStart = new Date(d);
+    dayStart.setHours(0, 0, 0, 0);
+    const dayEnd = new Date(d);
+    dayEnd.setHours(23, 59, 59, 999);
+    dayCounts.push(allQuakes.filter(q => q.time >= dayStart.getTime() && q.time <= dayEnd.getTime()).length);
+  }
+
+  // Magnitude buckets
+  const m0 = allQuakes.filter(q => q.mag < 3).length;
+  const m1 = allQuakes.filter(q => q.mag >= 3 && q.mag < 4).length;
+  const m2 = allQuakes.filter(q => q.mag >= 4 && q.mag < 5).length;
+  const m3 = allQuakes.filter(q => q.mag >= 5).length;
+
+  // Depth buckets
+  const dSuper = allQuakes.filter(q => q.depth < 70).length;
+  const dInter = allQuakes.filter(q => q.depth >= 70 && q.depth < 300).length;
+  const dProfundo = allQuakes.filter(q => q.depth >= 300).length;
+
+  // Bar chart
+  const barCtx = document.getElementById('barChart').getContext('2d');
+  if (barChart) barChart.destroy();
+  barChart = new Chart(barCtx, {
+    type: 'bar',
+    data: {
+      labels: days,
+      datasets: [{
+        label: 'Sismos',
+        data: dayCounts,
+        backgroundColor: '#0369a1',
+        borderRadius: 6,
+        borderSkipped: false
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 11 } }, grid: { color: '#e2edf5' } },
+        x: { ticks: { font: { size: 10 } }, grid: { display: false } }
+      }
+    }
+  });
+
+  // Doughnut
+  const dCtx = document.getElementById('doughnutChart').getContext('2d');
+  if (doughnutChart) doughnutChart.destroy();
+  doughnutChart = new Chart(dCtx, {
+    type: 'doughnut',
+    data: {
+      labels: ['<3', '3–4', '4–5', '≥5'],
+      datasets: [{
+        data: [m0, m1, m2, m3],
+        backgroundColor: ['#16a34a', '#d97706', '#ea580c', '#dc2626'],
+        borderWidth: 2,
+        borderColor: '#fff'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { size: 10 }, padding: 8 } }
+      }
+    }
+  });
+
+  // Depth doughnut
+  const dpCtx = document.getElementById('depthChart').getContext('2d');
+  if (depthChart) depthChart.destroy();
+  depthChart = new Chart(dpCtx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Superficial', 'Intermedio', 'Profundo'],
+      datasets: [{
+        data: [dSuper, dInter, dProfundo],
+        backgroundColor: ['#ef4444', '#f59e0b', '#6366f1'],
+        borderWidth: 2,
+        borderColor: '#fff'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { size: 10 }, padding: 8 } }
+      }
+    }
+  });
+}
+
+// ─── TAB SWITCHING ─────────────────────────────────────────────────────────
+function switchTab(name) {
+  activeTab = name;
+  document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+    const tabs = ['map', 'list', 'stats', 'info'];
+    btn.classList.toggle('active', tabs[i] === name);
+  });
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById(name + '-tab').classList.add('active');
+
+  if (name === 'map') {
+    // Invalidate map size after display:block
+    setTimeout(() => {
+      if (!mapInitialized) initMap();
+      else if (map) map.invalidateSize();
+    }, 50);
+  }
+
+  if (name === 'stats' && allQuakes.length) {
+    setTimeout(renderStats, 50);
+  }
+}
+
+// ─── AUTO REFRESH ──────────────────────────────────────────────────────────
+function startAutoRefresh() {
+  setInterval(() => {
+    loadData(false);
+    document.getElementById('lastUpdated').textContent = 'Actualizado ' + timeAgo(Date.now());
+  }, CACHE_TTL);
+}
+
+// ─── INIT ──────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  initMap();
+  loadData(false);
+  startAutoRefresh();
+
+  // Network status
+  window.addEventListener('offline', () => {
+    document.getElementById('offlineBanner').classList.add('show');
+  });
+  window.addEventListener('online', () => {
+    document.getElementById('offlineBanner').classList.remove('show');
+    loadData(true);
+  });
+});
+</script>
+</body>
+</html>

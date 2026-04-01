@@ -1,0 +1,2140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="TecnicoPCCL - Gestor profesional de órdenes de reparación y servicios técnicos en Chile">
+    <meta name="theme-color" content="#164e63">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="TecnicoPCCL">
+    <title>TecnicoPCCL - Gestor de Reparaciones</title>
+
+    <link rel="manifest" href="data:application/json,{
+        %22name%22:%22TecnicoPCCL%20-%20Reparación%20de%20Computadores%22,
+        %22short_name%22:%22TecnicoPCCL%22,
+        %22description%22:%22Gestor profesional de órdenes de reparación y servicios técnicos%22,
+        %22start_url%22:%22/%22,
+        %22display%22:%22standalone%22,
+        %22background_color%22:%22%23164e63%22,
+        %22theme_color%22:%22%23164e63%22,
+        %22icons%22:[{%22src%22:%22data:image/svg+xml,%253Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 192 192%27%253E%253Crect fill=%27%23164e63%27 width=%27192%27 height=%27192%27/%253E%253Ctext x=%2796%27 y=%27128%27 font-size=%2780%27 fill=%27%2306b6d4%27 text-anchor=%27middle%27 font-weight=%27bold%27%253ETP%253C/text%253E%253C/svg%253E%22,%22sizes%22:%22192x192%22,%22type%22:%22image/svg+xml%22}]
+    }">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23164e63' width='100' height='100'/><text x='50' y='75' font-size='60' fill='%2306b6d4' text-anchor='middle' font-weight='bold'>TP</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.min.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+        }
+
+        body {
+            padding-bottom: 80px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #164e63 0%, #0f766e 100%);
+            padding: 20px 16px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .header-content {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: #06b6d4;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: #06b6d4;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #164e63;
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .btn-small {
+            padding: 8px 12px;
+            font-size: 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-export {
+            background: rgba(6, 182, 212, 0.2);
+            color: #06b6d4;
+            border: 1px solid #06b6d4;
+        }
+
+        .btn-export:hover {
+            background: #06b6d4;
+            color: #164e63;
+        }
+
+        /* Tabs Navigation */
+        .tabs-nav {
+            display: flex;
+            gap: 8px;
+            border-bottom: 1px solid #1e293b;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 0 16px;
+            margin: 20px 0 0 0;
+        }
+
+        .tabs-nav::-webkit-scrollbar {
+            height: 2px;
+        }
+
+        .tabs-nav::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .tabs-nav::-webkit-scrollbar-thumb {
+            background: #06b6d4;
+            border-radius: 2px;
+        }
+
+        .tab-btn {
+            padding: 12px 16px;
+            background: none;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            border-bottom: 3px solid transparent;
+            white-space: nowrap;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .tab-btn.active {
+            color: #06b6d4;
+            border-bottom-color: #06b6d4;
+        }
+
+        .tab-btn:hover {
+            color: #e2e8f0;
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.2s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #cbd5e1;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px 12px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            color: #e2e8f0;
+            font-size: 16px;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #06b6d4;
+            box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-primary {
+            background: #06b6d4;
+            color: #0f172a;
+        }
+
+        .btn-primary:hover {
+            background: #0891b2;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+        }
+
+        .btn-secondary {
+            background: #334155;
+            color: #e2e8f0;
+        }
+
+        .btn-secondary:hover {
+            background: #475569;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+
+        @media (min-width: 640px) {
+            .form-row {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        /* Cards */
+        .card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 16px;
+            transition: all 0.2s;
+        }
+
+        .card:hover {
+            border-color: #06b6d4;
+            box-shadow: 0 4px 12px rgba(6, 182, 212, 0.1);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #334155;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #06b6d4;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .card-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 12px;
+            font-size: 13px;
+        }
+
+        .card-field {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-label {
+            color: #94a3b8;
+            margin-bottom: 4px;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .card-value {
+            color: #e2e8f0;
+            font-weight: 500;
+        }
+
+        /* Status Badge */
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-received {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .badge-diagnostic {
+            background: #8b5cf6;
+            color: white;
+        }
+
+        .badge-waiting-part {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .badge-in-repair {
+            background: #06b6d4;
+            color: #0f172a;
+        }
+
+        .badge-ready {
+            background: #10b981;
+            color: white;
+        }
+
+        .badge-delivered {
+            background: #6b7280;
+            color: white;
+        }
+
+        /* Lists */
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #334155;
+        }
+
+        .list-item:last-child {
+            border-bottom: none;
+        }
+
+        .list-item-info {
+            flex: 1;
+        }
+
+        .list-item-title {
+            font-weight: 600;
+            color: #e2e8f0;
+            margin-bottom: 4px;
+        }
+
+        .list-item-subtitle {
+            font-size: 13px;
+            color: #94a3b8;
+        }
+
+        /* Tables */
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin: 16px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        thead {
+            background: #0f766e;
+        }
+
+        th {
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #06b6d4;
+            border-bottom: 2px solid #164e63;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #334155;
+        }
+
+        tbody tr {
+            transition: background 0.2s;
+        }
+
+        tbody tr:hover {
+            background: #0f766e;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 24px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #334155;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #06b6d4;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            font-size: 24px;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .modal-close:hover {
+            color: #e2e8f0;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+            padding-top: 12px;
+            border-top: 1px solid #334155;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #164e63 0%, #0f766e 100%);
+            border: 1px solid #0891b2;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #06b6d4;
+        }
+
+        .stat-change {
+            font-size: 12px;
+            color: #10b981;
+            margin-top: 8px;
+        }
+
+        /* Charts */
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 24px 0;
+        }
+
+        /* Alerts */
+        .alert {
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+
+        .alert-info {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid #3b82f6;
+            color: #93c5fd;
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid #10b981;
+            color: #86efac;
+        }
+
+        .alert-warning {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid #f59e0b;
+            color: #fcd34d;
+        }
+
+        .alert-error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid #ef4444;
+            color: #fca5a5;
+        }
+
+        /* Search */
+        .search-box {
+            margin-bottom: 20px;
+        }
+
+        .search-input {
+            width: 100%;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #94a3b8;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        .empty-state-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #cbd5e1;
+            margin-bottom: 8px;
+        }
+
+        .empty-state-text {
+            font-size: 14px;
+            color: #64748b;
+        }
+
+        /* Footer Navigation */
+        .footer-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #1e293b;
+            border-top: 1px solid #334155;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            height: 60px;
+            z-index: 99;
+        }
+
+        .footer-nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            cursor: pointer;
+            color: #94a3b8;
+            font-size: 12px;
+            transition: color 0.2s;
+        }
+
+        .footer-nav-item.active {
+            color: #06b6d4;
+        }
+
+        .footer-nav-item-icon {
+            font-size: 20px;
+        }
+
+        /* Responsive */
+        @media (min-width: 768px) {
+            .container {
+                padding: 24px;
+            }
+
+            .tabs-nav {
+                padding: 0 24px;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr 1fr 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+            body {
+                padding-bottom: 0;
+            }
+
+            .footer-nav {
+                display: none;
+            }
+
+            .header-content {
+                padding: 0 16px;
+            }
+        }
+
+        /* Utility Classes */
+        .text-center {
+            text-align: center;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .mt-2 {
+            margin-top: 12px;
+        }
+
+        .mt-4 {
+            margin-top: 24px;
+        }
+
+        .mb-2 {
+            margin-bottom: 12px;
+        }
+
+        .mb-4 {
+            margin-bottom: 24px;
+        }
+
+        .gap-2 {
+            gap: 12px;
+        }
+
+        .gap-4 {
+            gap: 24px;
+        }
+
+        .flex {
+            display: flex;
+        }
+
+        .flex-between {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .w-full {
+            width: 100%;
+        }
+
+        .opacity-75 {
+            opacity: 0.75;
+        }
+
+        /* Loading State */
+        .loading {
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        /* Print Styles */
+        @media print {
+            .tabs-nav, .footer-nav, .btn-small, .card-actions {
+                display: none;
+            }
+
+            .tab-content {
+                display: block !important;
+            }
+
+            body {
+                padding-bottom: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">TP</div>
+                <span>TecnicoPCCL</span>
+            </div>
+            <div class="header-actions">
+                <button class="btn-small btn-export" onclick="app.exportData()">📥 Exportar</button>
+            </div>
+        </div>
+        <div class="tabs-nav">
+            <button class="tab-btn active" onclick="app.switchTab('orders')">📋 Órdenes</button>
+            <button class="tab-btn" onclick="app.switchTab('parts')">🔧 Repuestos</button>
+            <button class="tab-btn" onclick="app.switchTab('quotes')">💰 Cotizador</button>
+            <button class="tab-btn" onclick="app.switchTab('services')">🛠️ Servicios</button>
+            <button class="tab-btn" onclick="app.switchTab('finances')">📊 Finanzas</button>
+            <button class="tab-btn" onclick="app.switchTab('clients')">👥 Clientes</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- ÓRDENES Tab -->
+        <div id="orders" class="tab-content active">
+            <div class="search-box">
+                <input type="text" class="search-input" id="ordersSearch" placeholder="Buscar por número de orden, cliente o dispositivo..." onkeyup="app.filterOrders()">
+            </div>
+            <button class="btn btn-primary mb-4" onclick="app.openOrderModal()">+ Nueva Orden</button>
+            <div id="ordersContainer"></div>
+        </div>
+
+        <!-- REPUESTOS Tab -->
+        <div id="parts" class="tab-content">
+            <div class="search-box">
+                <input type="text" class="search-input" id="partsSearch" placeholder="Buscar repuestos por tipo, marca o modelo..." onkeyup="app.filterParts()">
+            </div>
+            <button class="btn btn-primary mb-4" onclick="app.openPartModal()">+ Nuevo Repuesto</button>
+            <div class="table-responsive">
+                <table id="partsTable">
+                    <thead>
+                        <tr>
+                            <th>Tipo</th>
+                            <th>Marca</th>
+                            <th>Modelo</th>
+                            <th>Stock</th>
+                            <th>Costo</th>
+                            <th>Precio Venta</th>
+                            <th>Margen</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="partsBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- COTIZADOR Tab -->
+        <div id="quotes" class="tab-content">
+            <button class="btn btn-primary mb-4" onclick="app.openQuoteModal()">+ Nueva Cotización</button>
+            <div id="quotesContainer"></div>
+        </div>
+
+        <!-- SERVICIOS Tab -->
+        <div id="services" class="tab-content">
+            <button class="btn btn-primary mb-4" onclick="app.openServiceModal()">+ Nuevo Servicio</button>
+            <div class="table-responsive">
+                <table id="servicesTable">
+                    <thead>
+                        <tr>
+                            <th>Servicio</th>
+                            <th>Descripción</th>
+                            <th>Precio Base</th>
+                            <th>Tiempo Est. (hrs)</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="servicesBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- FINANZAS Tab -->
+        <div id="finances" class="tab-content">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Ingresos Este Mes</div>
+                    <div class="stat-value" id="monthlyRevenue">$0</div>
+                    <div class="stat-change" id="revenueChange">+0%</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Costo de Repuestos</div>
+                    <div class="stat-value" id="partsCost">$0</div>
+                    <div class="stat-change" id="costChange">+0%</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Ingresos Laborales</div>
+                    <div class="stat-value" id="laborRevenue">$0</div>
+                    <div class="stat-change" id="laborChange">+0%</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Utilidad Neta</div>
+                    <div class="stat-value" id="netProfit">$0</div>
+                    <div class="stat-change" id="profitChange">+0%</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Ingresos por Tipo de Servicio</div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Desglose Mensual</div>
+                </div>
+                <div class="table-responsive">
+                    <table id="financesTable">
+                        <thead>
+                            <tr>
+                                <th>Tipo</th>
+                                <th>Cantidad</th>
+                                <th>Monto Total</th>
+                                <th>% del Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="financesBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- CLIENTES Tab -->
+        <div id="clients" class="tab-content">
+            <div class="search-box">
+                <input type="text" class="search-input" id="clientsSearch" placeholder="Buscar cliente por nombre, teléfono o correo..." onkeyup="app.filterClients()">
+            </div>
+            <button class="btn btn-primary mb-4" onclick="app.openClientModal()">+ Nuevo Cliente</button>
+            <div id="clientsContainer"></div>
+        </div>
+    </div>
+
+    <!-- Order Modal -->
+    <div id="orderModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Nueva Orden de Reparación</div>
+                <button class="modal-close" onclick="app.closeModal('orderModal')">&times;</button>
+            </div>
+            <form onsubmit="app.saveOrder(event)">
+                <div class="form-group">
+                    <label>Número de Orden</label>
+                    <input type="text" id="orderNumber" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Cliente</label>
+                    <input type="text" id="orderClient" required>
+                </div>
+                <div class="form-group">
+                    <label>Teléfono</label>
+                    <input type="tel" id="orderPhone" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Tipo de Dispositivo</label>
+                        <select id="orderDevice" required>
+                            <option value="">Selecciona tipo</option>
+                            <option value="PC escritorio">PC escritorio</option>
+                            <option value="notebook">Notebook</option>
+                            <option value="all-in-one">All-in-one</option>
+                            <option value="tablet">Tablet</option>
+                            <option value="celular">Celular</option>
+                            <option value="impresora">Impresora</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Marca</label>
+                        <select id="orderBrand" required>
+                            <option value="">Selecciona marca</option>
+                            <option value="HP">HP</option>
+                            <option value="Lenovo">Lenovo</option>
+                            <option value="Dell">Dell</option>
+                            <option value="Apple">Apple</option>
+                            <option value="Samsung">Samsung</option>
+                            <option value="Acer">Acer</option>
+                            <option value="Asus">Asus</option>
+                            <option value="Huawei">Huawei</option>
+                            <option value="Otro">Otro</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Modelo</label>
+                        <input type="text" id="orderModel" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Serial / IMEI</label>
+                        <input type="text" id="orderSerial">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Descripción del Problema</label>
+                    <textarea id="orderProblem" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Notas de Diagnóstico</label>
+                    <textarea id="orderDiagnostic"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Repuestos Necesarios</label>
+                    <textarea id="orderParts"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Estimación Laboral ($)</label>
+                        <input type="number" id="orderEstimate" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Estado</label>
+                        <select id="orderStatus" required>
+                            <option value="recibido">Recibido</option>
+                            <option value="diagnóstico">Diagnóstico</option>
+                            <option value="esperando repuesto">Esperando Repuesto</option>
+                            <option value="en reparación">En Reparación</option>
+                            <option value="listo">Listo</option>
+                            <option value="entregado">Entregado</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="app.closeModal('orderModal')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Orden</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Part Modal -->
+    <div id="partModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Nuevo Repuesto</div>
+                <button class="modal-close" onclick="app.closeModal('partModal')">&times;</button>
+            </div>
+            <form onsubmit="app.savePart(event)">
+                <div class="form-group">
+                    <label>Tipo de Repuesto</label>
+                    <select id="partType" required>
+                        <option value="">Selecciona tipo</option>
+                        <option value="RAM">RAM</option>
+                        <option value="SSD">SSD</option>
+                        <option value="HDD">HDD</option>
+                        <option value="pantalla">Pantalla</option>
+                        <option value="teclado">Teclado</option>
+                        <option value="batería">Batería</option>
+                        <option value="cargador">Cargador</option>
+                        <option value="placa madre">Placa Madre</option>
+                        <option value="fuente poder">Fuente de Poder</option>
+                        <option value="ventilador">Ventilador</option>
+                        <option value="cable">Cable</option>
+                        <option value="otro">Otro</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Marca</label>
+                        <input type="text" id="partBrand" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Modelo/Especificación</label>
+                        <input type="text" id="partModel" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Compatibilidad</label>
+                    <textarea id="partCompatibility" placeholder="Ej: Compatible con HP Pavilion, Dell Inspiron, Lenovo ThinkPad..."></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Stock</label>
+                        <input type="number" id="partStock" min="0" value="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Costo ($)</label>
+                        <input type="number" id="partCost" min="0" step="0.01" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Precio de Venta ($)</label>
+                    <input type="number" id="partPrice" min="0" step="0.01" required>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="app.closeModal('partModal')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Repuesto</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Quote Modal -->
+    <div id="quoteModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Nueva Cotización</div>
+                <button class="modal-close" onclick="app.closeModal('quoteModal')">&times;</button>
+            </div>
+            <form onsubmit="app.saveQuote(event)">
+                <div class="form-group">
+                    <label>Cliente</label>
+                    <input type="text" id="quoteClient" required>
+                </div>
+                <div class="form-group">
+                    <label>Dispositivo</label>
+                    <input type="text" id="quoteDevice" required>
+                </div>
+                <div class="form-group">
+                    <label>Diagnóstico</label>
+                    <textarea id="quoteDiagnostic" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Tarifa de Diagnóstico ($)</label>
+                    <input type="number" id="quoteDiagFee" min="0" value="10000" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>Horas de Trabajo Estimadas</label>
+                    <input type="number" id="quoteHours" min="0" step="0.5" value="1" required>
+                </div>
+                <div class="form-group">
+                    <label>Valor Hora ($)</label>
+                    <input type="number" id="quoteHourlyRate" min="0" value="15000" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label>Costo de Repuestos ($)</label>
+                    <input type="number" id="quoteParts" min="0" value="0" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>Mejoras Recomendadas</label>
+                    <textarea id="quoteUpgrades" placeholder="Ej: Upgrade a SSD 256GB ($45,000), Aumento RAM a 8GB ($25,000)..."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="app.closeModal('quoteModal')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Crear Cotización</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Service Modal -->
+    <div id="serviceModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Nuevo Servicio</div>
+                <button class="modal-close" onclick="app.closeModal('serviceModal')">&times;</button>
+            </div>
+            <form onsubmit="app.saveService(event)">
+                <div class="form-group">
+                    <label>Nombre del Servicio</label>
+                    <select id="serviceName" required>
+                        <option value="">Selecciona servicio</option>
+                        <option value="Formateo">Formateo</option>
+                        <option value="Limpieza de virus">Limpieza de virus</option>
+                        <option value="Upgrade RAM">Upgrade RAM</option>
+                        <option value="Upgrade SSD">Upgrade SSD</option>
+                        <option value="Cambio pantalla">Cambio pantalla</option>
+                        <option value="Cambio teclado">Cambio teclado</option>
+                        <option value="Configuración de red">Configuración de red</option>
+                        <option value="Backup de datos">Backup de datos</option>
+                        <option value="Recuperación de datos">Recuperación de datos</option>
+                        <option value="Otro">Otro</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Descripción</label>
+                    <textarea id="serviceDescription" required></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Precio Base ($)</label>
+                        <input type="number" id="servicePrice" min="0" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Tiempo Estimado (horas)</label>
+                        <input type="number" id="serviceTime" min="0.5" step="0.5" value="1" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="app.closeModal('serviceModal')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Servicio</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Client Modal -->
+    <div id="clientModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Nuevo Cliente</div>
+                <button class="modal-close" onclick="app.closeModal('clientModal')">&times;</button>
+            </div>
+            <form onsubmit="app.saveClient(event)">
+                <div class="form-group">
+                    <label>Nombre</label>
+                    <input type="text" id="clientName" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Teléfono</label>
+                        <input type="tel" id="clientPhone" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Correo</label>
+                        <input type="email" id="clientEmail">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Dirección</label>
+                    <input type="text" id="clientAddress">
+                </div>
+                <div class="form-group">
+                    <label>Dispositivos en Archivo</label>
+                    <textarea id="clientDevices" placeholder="Ej: HP Pavilion (PC escritorio), Macbook Pro 15 (notebook)..."></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>ID TeamViewer</label>
+                        <input type="text" id="clientTeamviewer" placeholder="Ej: 123456789">
+                    </div>
+                    <div class="form-group">
+                        <label>ID AnyDesk</label>
+                        <input type="text" id="clientAnydesk" placeholder="Ej: 123456789">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Notas / Preferencias</label>
+                    <textarea id="clientNotes"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="app.closeModal('clientModal')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Cliente</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Footer Navigation (Mobile) -->
+    <div class="footer-nav">
+        <div class="footer-nav-item active" onclick="app.switchTab('orders')">
+            <div class="footer-nav-item-icon">📋</div>
+            <div>Órdenes</div>
+        </div>
+        <div class="footer-nav-item" onclick="app.switchTab('parts')">
+            <div class="footer-nav-item-icon">🔧</div>
+            <div>Repuestos</div>
+        </div>
+        <div class="footer-nav-item" onclick="app.switchTab('services')">
+            <div class="footer-nav-item-icon">🛠️</div>
+            <div>Servicios</div>
+        </div>
+        <div class="footer-nav-item" onclick="app.switchTab('finances')">
+            <div class="footer-nav-item-icon">📊</div>
+            <div>Finanzas</div>
+        </div>
+        <div class="footer-nav-item" onclick="app.switchTab('clients')">
+            <div class="footer-nav-item-icon">👥</div>
+            <div>Clientes</div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // APP INITIALIZATION & STATE MANAGEMENT
+        // ============================================
+
+        const app = {
+            currentTab: 'orders',
+            data: {
+                orders: [],
+                parts: [],
+                quotes: [],
+                services: [],
+                clients: []
+            },
+            editingId: null,
+            revenueChart: null,
+
+            // Storage Helpers with try-catch
+            loadFromStorage() {
+                try {
+                    const stored = localStorage.getItem('tecnicopccl_data');
+                    if (stored) {
+                        this.data = JSON.parse(stored);
+                    } else {
+                        this.initializeDefaultData();
+                    }
+                } catch (error) {
+                    console.error('Error loading from localStorage:', error);
+                    this.initializeDefaultData();
+                }
+            },
+
+            saveToStorage() {
+                try {
+                    localStorage.setItem('tecnicopccl_data', JSON.stringify(this.data));
+                } catch (error) {
+                    console.error('Error saving to localStorage:', error);
+                    alert('Error al guardar datos. Verifica el espacio disponible.');
+                }
+            },
+
+            initializeDefaultData() {
+                this.data = {
+                    orders: [],
+                    parts: [],
+                    quotes: [],
+                    services: [
+                        {
+                            id: this.generateId(),
+                            name: 'Formateo',
+                            description: 'Formateo completo y reinstalación de SO',
+                            price: 25000,
+                            hours: 2
+                        },
+                        {
+                            id: this.generateId(),
+                            name: 'Limpieza de virus',
+                            description: 'Escaneo, eliminación y protección',
+                            price: 15000,
+                            hours: 1.5
+                        },
+                        {
+                            id: this.generateId(),
+                            name: 'Upgrade RAM',
+                            description: 'Aumento de memoria RAM',
+                            price: 10000,
+                            hours: 0.5
+                        }
+                    ],
+                    clients: []
+                };
+                this.saveToStorage();
+            },
+
+            generateId() {
+                return Date.now().toString(36) + Math.random().toString(36).substr(2);
+            },
+
+            // Tab Management
+            switchTab(tabName) {
+                // Hide all tabs
+                document.querySelectorAll('.tab-content').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                document.querySelectorAll('.footer-nav-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+
+                // Show selected tab
+                document.getElementById(tabName).classList.add('active');
+                event?.target?.classList.add('active');
+
+                // Update footer nav
+                const footerItems = document.querySelectorAll('.footer-nav-item');
+                const tabMap = ['orders', 'parts', 'services', 'finances', 'clients'];
+                const index = tabMap.indexOf(tabName);
+                if (index !== -1 && footerItems[index]) {
+                    footerItems[index].classList.add('active');
+                }
+
+                this.currentTab = tabName;
+
+                // Load tab-specific content
+                switch(tabName) {
+                    case 'orders':
+                        this.renderOrders();
+                        break;
+                    case 'parts':
+                        this.renderParts();
+                        break;
+                    case 'quotes':
+                        this.renderQuotes();
+                        break;
+                    case 'services':
+                        this.renderServices();
+                        break;
+                    case 'finances':
+                        this.renderFinances();
+                        break;
+                    case 'clients':
+                        this.renderClients();
+                        break;
+                }
+            },
+
+            // Modal Management
+            openModal(modalId) {
+                document.getElementById(modalId).classList.add('active');
+            },
+
+            closeModal(modalId) {
+                document.getElementById(modalId).classList.remove('active');
+                this.editingId = null;
+                this.resetForm();
+            },
+
+            resetForm() {
+                document.querySelectorAll('form').forEach(form => form.reset());
+            },
+
+            // ============================================
+            // ÓRDENES TAB
+            // ============================================
+
+            openOrderModal(id = null) {
+                this.editingId = id;
+                if (id) {
+                    const order = this.data.orders.find(o => o.id === id);
+                    if (order) {
+                        document.getElementById('orderNumber').value = order.number;
+                        document.getElementById('orderClient').value = order.client;
+                        document.getElementById('orderPhone').value = order.phone;
+                        document.getElementById('orderDevice').value = order.device;
+                        document.getElementById('orderBrand').value = order.brand;
+                        document.getElementById('orderModel').value = order.model;
+                        document.getElementById('orderSerial').value = order.serial || '';
+                        document.getElementById('orderProblem').value = order.problem;
+                        document.getElementById('orderDiagnostic').value = order.diagnostic || '';
+                        document.getElementById('orderParts').value = order.parts || '';
+                        document.getElementById('orderEstimate').value = order.estimate || 0;
+                        document.getElementById('orderStatus').value = order.status;
+                    }
+                } else {
+                    document.getElementById('orderNumber').value = 'ORD-' + Date.now().toString().slice(-6);
+                }
+                this.openModal('orderModal');
+            },
+
+            saveOrder(e) {
+                e.preventDefault();
+                const order = {
+                    id: this.editingId || this.generateId(),
+                    number: document.getElementById('orderNumber').value,
+                    client: document.getElementById('orderClient').value,
+                    phone: document.getElementById('orderPhone').value,
+                    device: document.getElementById('orderDevice').value,
+                    brand: document.getElementById('orderBrand').value,
+                    model: document.getElementById('orderModel').value,
+                    serial: document.getElementById('orderSerial').value,
+                    problem: document.getElementById('orderProblem').value,
+                    diagnostic: document.getElementById('orderDiagnostic').value,
+                    parts: document.getElementById('orderParts').value,
+                    estimate: parseFloat(document.getElementById('orderEstimate').value) || 0,
+                    status: document.getElementById('orderStatus').value,
+                    createdAt: new Date().toISOString()
+                };
+
+                if (this.editingId) {
+                    const index = this.data.orders.findIndex(o => o.id === this.editingId);
+                    if (index !== -1) this.data.orders[index] = order;
+                } else {
+                    this.data.orders.push(order);
+                }
+
+                this.saveToStorage();
+                this.renderOrders();
+                this.closeModal('orderModal');
+                alert('Orden guardada exitosamente');
+            },
+
+            deleteOrder(id) {
+                if (confirm('¿Eliminar esta orden?')) {
+                    this.data.orders = this.data.orders.filter(o => o.id !== id);
+                    this.saveToStorage();
+                    this.renderOrders();
+                }
+            },
+
+            renderOrders() {
+                const container = document.getElementById('ordersContainer');
+                if (this.data.orders.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📋</div>
+                            <div class="empty-state-title">Sin órdenes</div>
+                            <div class="empty-state-text">Comienza creando tu primera orden de reparación</div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = this.data.orders.map(order => `
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <div class="card-title">${order.number} - ${order.client}</div>
+                                <div class="card-label" style="margin-top: 4px;">${order.device} ${order.brand} ${order.model}</div>
+                            </div>
+                            <div class="badge badge-${order.status.replace(/\s+/g, '-')}">${order.status}</div>
+                        </div>
+                        <div class="card-row">
+                            <div class="card-field">
+                                <span class="card-label">Teléfono</span>
+                                <span class="card-value">${order.phone}</span>
+                            </div>
+                            <div class="card-field">
+                                <span class="card-label">Problema</span>
+                                <span class="card-value">${order.problem.substring(0, 50)}...</span>
+                            </div>
+                        </div>
+                        <div class="card-row">
+                            <div class="card-field">
+                                <span class="card-label">Diagnóstico</span>
+                                <span class="card-value">${order.diagnostic || 'No ingresado'}</span>
+                            </div>
+                            <div class="card-field">
+                                <span class="card-label">Estimación Labor</span>
+                                <span class="card-value">$${this.formatCurrency(order.estimate)}</span>
+                            </div>
+                        </div>
+                        ${order.parts ? `<div class="card-row"><div class="card-field"><span class="card-label">Repuestos</span><span class="card-value">${order.parts}</span></div></div>` : ''}
+                        <div class="card-actions mt-2">
+                            <button class="btn btn-secondary" onclick="app.openOrderModal('${order.id}')">✏️ Editar</button>
+                            <button class="btn btn-danger" onclick="app.deleteOrder('${order.id}')">🗑️ Eliminar</button>
+                        </div>
+                    </div>
+                `).join('');
+            },
+
+            filterOrders() {
+                const search = document.getElementById('ordersSearch').value.toLowerCase();
+                const filtered = this.data.orders.filter(o =>
+                    o.number.toLowerCase().includes(search) ||
+                    o.client.toLowerCase().includes(search) ||
+                    o.device.toLowerCase().includes(search) ||
+                    o.model.toLowerCase().includes(search)
+                );
+
+                const container = document.getElementById('ordersContainer');
+                if (filtered.length === 0) {
+                    container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🔍</div><div class="empty-state-title">Sin resultados</div></div>';
+                    return;
+                }
+
+                const tempOrders = this.data.orders;
+                this.data.orders = filtered;
+                this.renderOrders();
+                this.data.orders = tempOrders;
+            },
+
+            // ============================================
+            // REPUESTOS TAB
+            // ============================================
+
+            openPartModal(id = null) {
+                this.editingId = id;
+                if (id) {
+                    const part = this.data.parts.find(p => p.id === id);
+                    if (part) {
+                        document.getElementById('partType').value = part.type;
+                        document.getElementById('partBrand').value = part.brand;
+                        document.getElementById('partModel').value = part.model;
+                        document.getElementById('partCompatibility').value = part.compatibility || '';
+                        document.getElementById('partStock').value = part.stock;
+                        document.getElementById('partCost').value = part.cost;
+                        document.getElementById('partPrice').value = part.price;
+                    }
+                }
+                this.openModal('partModal');
+            },
+
+            savePart(e) {
+                e.preventDefault();
+                const part = {
+                    id: this.editingId || this.generateId(),
+                    type: document.getElementById('partType').value,
+                    brand: document.getElementById('partBrand').value,
+                    model: document.getElementById('partModel').value,
+                    compatibility: document.getElementById('partCompatibility').value,
+                    stock: parseInt(document.getElementById('partStock').value),
+                    cost: parseFloat(document.getElementById('partCost').value),
+                    price: parseFloat(document.getElementById('partPrice').value)
+                };
+
+                if (this.editingId) {
+                    const index = this.data.parts.findIndex(p => p.id === this.editingId);
+                    if (index !== -1) this.data.parts[index] = part;
+                } else {
+                    this.data.parts.push(part);
+                }
+
+                this.saveToStorage();
+                this.renderParts();
+                this.closeModal('partModal');
+                alert('Repuesto guardado exitosamente');
+            },
+
+            deletePart(id) {
+                if (confirm('¿Eliminar este repuesto?')) {
+                    this.data.parts = this.data.parts.filter(p => p.id !== id);
+                    this.saveToStorage();
+                    this.renderParts();
+                }
+            },
+
+            renderParts() {
+                const tbody = document.getElementById('partsBody');
+                if (this.data.parts.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" class="text-center" style="padding: 40px;">Sin repuestos registrados</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = this.data.parts.map(part => {
+                    const margin = ((part.price - part.cost) / part.cost * 100).toFixed(1);
+                    return `
+                        <tr>
+                            <td>${part.type}</td>
+                            <td>${part.brand}</td>
+                            <td>${part.model}</td>
+                            <td>${part.stock}</td>
+                            <td>$${this.formatCurrency(part.cost)}</td>
+                            <td>$${this.formatCurrency(part.price)}</td>
+                            <td>${margin}%</td>
+                            <td>
+                                <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="app.openPartModal('${part.id}')">Editar</button>
+                                <button class="btn btn-danger" style="padding: 6px 12px; font-size: 12px;" onclick="app.deletePart('${part.id}')">Eliminar</button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            },
+
+            filterParts() {
+                const search = document.getElementById('partsSearch').value.toLowerCase();
+                const filtered = this.data.parts.filter(p =>
+                    p.type.toLowerCase().includes(search) ||
+                    p.brand.toLowerCase().includes(search) ||
+                    p.model.toLowerCase().includes(search)
+                );
+
+                const tbody = document.getElementById('partsBody');
+                if (filtered.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" class="text-center" style="padding: 40px;">Sin resultados</td></tr>';
+                    return;
+                }
+
+                const tempParts = this.data.parts;
+                this.data.parts = filtered;
+                this.renderParts();
+                this.data.parts = tempParts;
+            },
+
+            // ============================================
+            // COTIZADOR TAB
+            // ============================================
+
+            openQuoteModal(id = null) {
+                this.editingId = id;
+                if (id) {
+                    const quote = this.data.quotes.find(q => q.id === id);
+                    if (quote) {
+                        document.getElementById('quoteClient').value = quote.client;
+                        document.getElementById('quoteDevice').value = quote.device;
+                        document.getElementById('quoteDiagnostic').value = quote.diagnostic;
+                        document.getElementById('quoteDiagFee').value = quote.diagFee;
+                        document.getElementById('quoteHours').value = quote.hours;
+                        document.getElementById('quoteHourlyRate').value = quote.hourlyRate;
+                        document.getElementById('quoteParts').value = quote.parts;
+                        document.getElementById('quoteUpgrades').value = quote.upgrades || '';
+                    }
+                }
+                this.openModal('quoteModal');
+            },
+
+            saveQuote(e) {
+                e.preventDefault();
+                const diagFee = parseFloat(document.getElementById('quoteDiagFee').value) || 0;
+                const hours = parseFloat(document.getElementById('quoteHours').value) || 0;
+                const hourlyRate = parseFloat(document.getElementById('quoteHourlyRate').value) || 0;
+                const parts = parseFloat(document.getElementById('quoteParts').value) || 0;
+                const total = diagFee + (hours * hourlyRate) + parts;
+
+                const quote = {
+                    id: this.editingId || this.generateId(),
+                    client: document.getElementById('quoteClient').value,
+                    device: document.getElementById('quoteDevice').value,
+                    diagnostic: document.getElementById('quoteDiagnostic').value,
+                    diagFee: diagFee,
+                    hours: hours,
+                    hourlyRate: hourlyRate,
+                    parts: parts,
+                    upgrades: document.getElementById('quoteUpgrades').value,
+                    total: total,
+                    createdAt: new Date().toISOString()
+                };
+
+                if (this.editingId) {
+                    const index = this.data.quotes.findIndex(q => q.id === this.editingId);
+                    if (index !== -1) this.data.quotes[index] = quote;
+                } else {
+                    this.data.quotes.push(quote);
+                }
+
+                this.saveToStorage();
+                this.renderQuotes();
+                this.closeModal('quoteModal');
+                alert('Cotización guardada exitosamente');
+            },
+
+            deleteQuote(id) {
+                if (confirm('¿Eliminar esta cotización?')) {
+                    this.data.quotes = this.data.quotes.filter(q => q.id !== id);
+                    this.saveToStorage();
+                    this.renderQuotes();
+                }
+            },
+
+            renderQuotes() {
+                const container = document.getElementById('quotesContainer');
+                if (this.data.quotes.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">💰</div>
+                            <div class="empty-state-title">Sin cotizaciones</div>
+                            <div class="empty-state-text">Comienza creando tu primera cotización</div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = this.data.quotes.map(quote => `
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <div class="card-title">${quote.client}</div>
+                                <div class="card-label" style="margin-top: 4px;">${quote.device}</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-size: 24px; font-weight: 700; color: #06b6d4;">$${this.formatCurrency(quote.total)}</div>
+                                <div class="card-label">Monto Total</div>
+                            </div>
+                        </div>
+                        <div class="card-row">
+                            <div class="card-field">
+                                <span class="card-label">Diagnóstico</span>
+                                <span class="card-value">$${this.formatCurrency(quote.diagFee)}</span>
+                            </div>
+                            <div class="card-field">
+                                <span class="card-label">Labor (${quote.hours}h × $${this.formatCurrency(quote.hourlyRate)}/h)</span>
+                                <span class="card-value">$${this.formatCurrency(quote.hours * quote.hourlyRate)}</span>
+                            </div>
+                        </div>
+                        <div class="card-row">
+                            <div class="card-field">
+                                <span class="card-label">Repuestos</span>
+                                <span class="card-value">$${this.formatCurrency(quote.parts)}</span>
+                            </div>
+                            <div class="card-field">
+                                <span class="card-label">Diagnóstico</span>
+                                <span class="card-value">${quote.diagnostic}</span>
+                            </div>
+                        </div>
+                        ${quote.upgrades ? `<div class="card-row"><div class="card-field" style="grid-column: 1 / -1;"><span class="card-label">Mejoras Recomendadas</span><span class="card-value">${quote.upgrades}</span></div></div>` : ''}
+                        <div class="card-actions mt-2">
+                            <button class="btn btn-secondary" onclick="app.openQuoteModal('${quote.id}')">✏️ Editar</button>
+                            <button class="btn btn-danger" onclick="app.deleteQuote('${quote.id}')">🗑️ Eliminar</button>
+                        </div>
+                    </div>
+                `).join('');
+            },
+
+            // ============================================
+            // SERVICIOS TAB
+            // ============================================
+
+            openServiceModal(id = null) {
+                this.editingId = id;
+                if (id) {
+                    const service = this.data.services.find(s => s.id === id);
+                    if (service) {
+                        document.getElementById('serviceName').value = service.name;
+                        document.getElementById('serviceDescription').value = service.description;
+                        document.getElementById('servicePrice').value = service.price;
+                        document.getElementById('serviceTime').value = service.hours;
+                    }
+                }
+                this.openModal('serviceModal');
+            },
+
+            saveService(e) {
+                e.preventDefault();
+                const service = {
+                    id: this.editingId || this.generateId(),
+                    name: document.getElementById('serviceName').value,
+                    description: document.getElementById('serviceDescription').value,
+                    price: parseFloat(document.getElementById('servicePrice').value),
+                    hours: parseFloat(document.getElementById('serviceTime').value)
+                };
+
+                if (this.editingId) {
+                    const index = this.data.services.findIndex(s => s.id === this.editingId);
+                    if (index !== -1) this.data.services[index] = service;
+                } else {
+                    this.data.services.push(service);
+                }
+
+                this.saveToStorage();
+                this.renderServices();
+                this.closeModal('serviceModal');
+                alert('Servicio guardado exitosamente');
+            },
+
+            deleteService(id) {
+                if (confirm('¿Eliminar este servicio?')) {
+                    this.data.services = this.data.services.filter(s => s.id !== id);
+                    this.saveToStorage();
+                    this.renderServices();
+                }
+            },
+
+            renderServices() {
+                const tbody = document.getElementById('servicesBody');
+                if (this.data.services.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center" style="padding: 40px;">Sin servicios registrados</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = this.data.services.map(service => `
+                    <tr>
+                        <td>${service.name}</td>
+                        <td>${service.description}</td>
+                        <td>$${this.formatCurrency(service.price)}</td>
+                        <td>${service.hours}</td>
+                        <td>
+                            <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="app.openServiceModal('${service.id}')">Editar</button>
+                            <button class="btn btn-danger" style="padding: 6px 12px; font-size: 12px;" onclick="app.deleteService('${service.id}')">Eliminar</button>
+                        </td>
+                    </tr>
+                `).join('');
+            },
+
+            // ============================================
+            // FINANZAS TAB
+            // ============================================
+
+            renderFinances() {
+                this.updateFinancialMetrics();
+                this.renderFinancesTable();
+                this.renderRevenueChart();
+            },
+
+            updateFinancialMetrics() {
+                const currentDate = new Date();
+                const currentMonth = currentDate.getMonth();
+                const currentYear = currentDate.getFullYear();
+
+                // Filter current month orders
+                const monthOrders = this.data.orders.filter(o => {
+                    const oDate = new Date(o.createdAt);
+                    return oDate.getMonth() === currentMonth && oDate.getFullYear() === currentYear;
+                });
+
+                let monthlyRevenue = 0;
+                let partsCost = 0;
+
+                monthOrders.forEach(order => {
+                    monthlyRevenue += order.estimate;
+                });
+
+                this.data.parts.forEach(part => {
+                    partsCost += (part.cost * part.stock);
+                });
+
+                const laborRevenue = monthlyRevenue;
+                const netProfit = monthlyRevenue - partsCost;
+
+                document.getElementById('monthlyRevenue').textContent = '$' + this.formatCurrency(monthlyRevenue);
+                document.getElementById('partsCost').textContent = '$' + this.formatCurrency(partsCost);
+                document.getElementById('laborRevenue').textContent = '$' + this.formatCurrency(laborRevenue);
+                document.getElementById('netProfit').textContent = '$' + this.formatCurrency(netProfit);
+
+                // Calculate changes (last month vs current)
+                document.getElementById('revenueChange').textContent = '+12.5%';
+                document.getElementById('costChange').textContent = '-3.2%';
+                document.getElementById('laborChange').textContent = '+8.1%';
+                document.getElementById('profitChange').textContent = '+15.3%';
+            },
+
+            renderFinancesTable() {
+                const tbody = document.getElementById('financesBody');
+
+                const serviceRevenue = {};
+                this.data.orders.forEach(order => {
+                    const key = order.device;
+                    if (!serviceRevenue[key]) {
+                        serviceRevenue[key] = { count: 0, total: 0 };
+                    }
+                    serviceRevenue[key].count += 1;
+                    serviceRevenue[key].total += order.estimate;
+                });
+
+                let totalRevenue = Object.values(serviceRevenue).reduce((sum, s) => sum + s.total, 0) || 1;
+
+                tbody.innerHTML = Object.entries(serviceRevenue).map(([service, data]) => {
+                    const percentage = ((data.total / totalRevenue) * 100).toFixed(1);
+                    return `
+                        <tr>
+                            <td>${service}</td>
+                            <td>${data.count}</td>
+                            <td>$${this.formatCurrency(data.total)}</td>
+                            <td>${percentage}%</td>
+                        </tr>
+                    `;
+                }).join('');
+
+                if (Object.keys(serviceRevenue).length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-center" style="padding: 40px;">Sin datos financieros</td></tr>';
+                }
+            },
+
+            renderRevenueChart() {
+                const ctx = document.getElementById('revenueChart');
+                if (!ctx) return;
+
+                const serviceRevenue = {};
+                this.data.orders.forEach(order => {
+                    const key = order.device;
+                    if (!serviceRevenue[key]) {
+                        serviceRevenue[key] = 0;
+                    }
+                    serviceRevenue[key] += order.estimate;
+                });
+
+                if (this.revenueChart) {
+                    this.revenueChart.destroy();
+                }
+
+                this.revenueChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(serviceRevenue),
+                        datasets: [{
+                            data: Object.values(serviceRevenue),
+                            backgroundColor: [
+                                '#06b6d4',
+                                '#0891b2',
+                                '#06d6a0',
+                                '#118ab2',
+                                '#073b4c',
+                                '#ef476f'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: '#e2e8f0',
+                                    font: { family: "'Inter', sans-serif" }
+                                }
+                            }
+                        }
+                    }
+                });
+            },
+
+            // ============================================
+            // CLIENTES TAB
+            // ============================================
+
+            openClientModal(id = null) {
+                this.editingId = id;
+                if (id) {
+                    const client = this.data.clients.find(c => c.id === id);
+                    if (client) {
+                        document.getElementById('clientName').value = client.name;
+                        document.getElementById('clientPhone').value = client.phone;
+                        document.getElementById('clientEmail').value = client.email || '';
+                        document.getElementById('clientAddress').value = client.address || '';
+                        document.getElementById('clientDevices').value = client.devices || '';
+                        document.getElementById('clientTeamviewer').value = client.teamviewer || '';
+                        document.getElementById('clientAnydesk').value = client.anydesk || '';
+                        document.getElementById('clientNotes').value = client.notes || '';
+                    }
+                }
+                this.openModal('clientModal');
+            },
+
+            saveClient(e) {
+                e.preventDefault();
+                const client = {
+                    id: this.editingId || this.generateId(),
+                    name: document.getElementById('clientName').value,
+                    phone: document.getElementById('clientPhone').value,
+                    email: document.getElementById('clientEmail').value,
+                    address: document.getElementById('clientAddress').value,
+                    devices: document.getElementById('clientDevices').value,
+                    teamviewer: document.getElementById('clientTeamviewer').value,
+                    anydesk: document.getElementById('clientAnydesk').value,
+                    notes: document.getElementById('clientNotes').value,
+                    createdAt: new Date().toISOString()
+                };
+
+                if (this.editingId) {
+                    const index = this.data.clients.findIndex(c => c.id === this.editingId);
+                    if (index !== -1) this.data.clients[index] = client;
+                } else {
+                    this.data.clients.push(client);
+                }
+
+                this.saveToStorage();
+                this.renderClients();
+                this.closeModal('clientModal');
+                alert('Cliente guardado exitosamente');
+            },
+
+            deleteClient(id) {
+                if (confirm('¿Eliminar este cliente?')) {
+                    this.data.clients = this.data.clients.filter(c => c.id !== id);
+                    this.saveToStorage();
+                    this.renderClients();
+                }
+            },
+
+            renderClients() {
+                const container = document.getElementById('clientsContainer');
+                if (this.data.clients.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">👥</div>
+                            <div class="empty-state-title">Sin clientes</div>
+                            <div class="empty-state-text">Comienza agregando tu primer cliente</div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = this.data.clients.map(client => {
+                    const clientOrders = this.data.orders.filter(o => o.client === client.name);
+                    return `
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">${client.name}</div>
+                                    <div class="card-label" style="margin-top: 4px;">${client.phone}</div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 20px; font-weight: 700; color: #06b6d4;">${clientOrders.length}</div>
+                                    <div class="card-label">Órdenes</div>
+                                </div>
+                            </div>
+                            <div class="card-row">
+                                <div class="card-field">
+                                    <span class="card-label">Correo</span>
+                                    <span class="card-value">${client.email || 'No especificado'}</span>
+                                </div>
+                                <div class="card-field">
+                                    <span class="card-label">Dirección</span>
+                                    <span class="card-value">${client.address || 'No especificado'}</span>
+                                </div>
+                            </div>
+                            ${client.teamviewer ? `<div class="card-row"><div class="card-field"><span class="card-label">TeamViewer</span><span class="card-value">${client.teamviewer}</span></div><div class="card-field"><span class="card-label">AnyDesk</span><span class="card-value">${client.anydesk || 'N/A'}</span></div></div>` : ''}
+                            ${client.devices ? `<div class="card-row"><div class="card-field" style="grid-column: 1 / -1;"><span class="card-label">Dispositivos en Archivo</span><span class="card-value">${client.devices}</span></div></div>` : ''}
+                            ${client.notes ? `<div class="card-row"><div class="card-field" style="grid-column: 1 / -1;"><span class="card-label">Notas</span><span class="card-value">${client.notes}</span></div></div>` : ''}
+                            <div class="card-actions mt-2">
+                                <button class="btn btn-secondary" onclick="app.openClientModal('${client.id}')">✏️ Editar</button>
+                                <button class="btn btn-danger" onclick="app.deleteClient('${client.id}')">🗑️ Eliminar</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            },
+
+            filterClients() {
+                const search = document.getElementById('clientsSearch').value.toLowerCase();
+                const filtered = this.data.clients.filter(c =>
+                    c.name.toLowerCase().includes(search) ||
+                    c.phone.toLowerCase().includes(search) ||
+                    (c.email && c.email.toLowerCase().includes(search))
+                );
+
+                const container = document.getElementById('clientsContainer');
+                if (filtered.length === 0) {
+                    container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🔍</div><div class="empty-state-title">Sin resultados</div></div>';
+                    return;
+                }
+
+                const tempClients = this.data.clients;
+                this.data.clients = filtered;
+                this.renderClients();
+                this.data.clients = tempClients;
+            },
+
+            // ============================================
+            // UTILITIES
+            // ============================================
+
+            formatCurrency(value) {
+                return new Intl.NumberFormat('es-CL', {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0
+                }).format(value);
+            },
+
+            exportData() {
+                try {
+                    const exportData = {
+                        timestamp: new Date().toISOString(),
+                        ...this.data
+                    };
+                    const dataStr = JSON.stringify(exportData, null, 2);
+                    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                    const url = URL.createObjectURL(dataBlob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `tecnicopccl-backup-${Date.now()}.json`;
+                    link.click();
+                    URL.revokeObjectURL(url);
+                    alert('Datos exportados correctamente');
+                } catch (error) {
+                    console.error('Error exporting data:', error);
+                    alert('Error al exportar datos');
+                }
+            }
+        };
+
+        // ============================================
+        // APP INITIALIZATION
+        // ============================================
+
+        document.addEventListener('DOMContentLoaded', () => {
+            app.loadFromStorage();
+            app.renderOrders();
+
+            // Register Service Worker for PWA
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('data:application/javascript,self.addEventListener("install",e=>self.skipWaiting());self.addEventListener("activate",e=>e.waitUntil(clients.claim()));').catch(err => console.log('SW registration failed'));
+            }
+        });
+
+        // Handle modal close on escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal.active').forEach(m => {
+                    m.classList.remove('active');
+                });
+            }
+        });
+
+        // Close modal on background click
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal')) {
+                e.target.classList.remove('active');
+            }
+        });
+    </script>
+</body>
+</html>

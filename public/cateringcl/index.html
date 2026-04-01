@@ -1,0 +1,1913 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#be123c">
+  <meta name="description" content="CateringCL - Sistema de gestión para negocios de catering en Chile">
+  <title>CateringCL - Gestión de Catering</title>
+
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%23be123c' width='192' height='192'/><text x='50%' y='50%' font-size='100' font-weight='bold' fill='white' text-anchor='middle' dominant-baseline='middle'>C</text></svg>">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%23be123c' width='192' height='192'/><text x='50%' y='50%' font-size='100' font-weight='bold' fill='white' text-anchor='middle' dominant-baseline='middle'>C</text></svg>">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background-color: #fff1f2;
+      color: #333;
+      line-height: 1.6;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .app-container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      max-width: 100%;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #be123c 0%, #a01030 100%);
+      color: white;
+      padding: 12px 16px;
+      box-shadow: 0 2px 8px rgba(190, 18, 60, 0.15);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header h1 {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding-bottom: 70px;
+    }
+
+    .tab-content {
+      display: none;
+      padding: 16px;
+      animation: fadeIn 0.3s ease-in;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid #e5c5c9;
+      background: white;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .nav-tabs::-webkit-scrollbar {
+      display: none;
+    }
+
+    .nav-tab {
+      flex: 1;
+      min-width: 70px;
+      padding: 12px 8px;
+      text-align: center;
+      cursor: pointer;
+      border: none;
+      background: white;
+      color: #666;
+      font-weight: 500;
+      font-size: 12px;
+      border-bottom: 3px solid transparent;
+      transition: all 0.3s ease;
+      white-space: nowrap;
+    }
+
+    .nav-tab:active {
+      background: #fff1f2;
+    }
+
+    .nav-tab.active {
+      color: #be123c;
+      border-bottom-color: #be123c;
+    }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #be123c;
+      margin: 20px 0 12px 0;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #ffd1d5;
+    }
+
+    .card {
+      background: white;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 12px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      border-left: 4px solid #be123c;
+    }
+
+    .card.secondary {
+      border-left-color: #d4919f;
+    }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #555;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-family: 'Inter', sans-serif;
+      font-size: 16px;
+      color: #333;
+      transition: border-color 0.2s;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #be123c;
+      box-shadow: 0 0 0 2px rgba(190, 18, 60, 0.1);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 60px;
+    }
+
+    button {
+      background: #be123c;
+      color: white;
+      border: none;
+      padding: 10px 14px;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    button:active {
+      background: #9e0d30;
+      transform: scale(0.98);
+    }
+
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background: #ddd;
+      color: #333;
+    }
+
+    .btn-secondary:active {
+      background: #bbb;
+    }
+
+    .btn-danger {
+      background: #ef4444;
+    }
+
+    .btn-danger:active {
+      background: #dc2626;
+    }
+
+    .btn-small {
+      padding: 6px 10px;
+      font-size: 12px;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .button-group button {
+      flex: 1;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.2px;
+    }
+
+    .badge.primary {
+      background: #ffd1d5;
+      color: #be123c;
+    }
+
+    .badge.success {
+      background: #d1fae5;
+      color: #059669;
+    }
+
+    .badge.warning {
+      background: #fef3c7;
+      color: #d97706;
+    }
+
+    .badge.danger {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 8px;
+      margin: 12px 0;
+    }
+
+    .stat-box {
+      background: linear-gradient(135deg, #fff1f2 0%, #ffd1d5 100%);
+      padding: 12px;
+      border-radius: 6px;
+      text-align: center;
+    }
+
+    .stat-box-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: #be123c;
+    }
+
+    .stat-box-label {
+      font-size: 11px;
+      color: #666;
+      margin-top: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.2px;
+    }
+
+    .list-item {
+      padding: 10px 0;
+      border-bottom: 1px solid #f0f0f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .list-item:last-child {
+      border-bottom: none;
+    }
+
+    .list-item-title {
+      font-weight: 600;
+      color: #333;
+      font-size: 13px;
+    }
+
+    .list-item-subtitle {
+      font-size: 11px;
+      color: #999;
+      margin-top: 2px;
+    }
+
+    .list-item-value {
+      text-align: right;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      align-items: flex-end;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      width: 100%;
+      border-radius: 12px 12px 0 0;
+      padding: 20px;
+      max-height: 90vh;
+      overflow-y: auto;
+      animation: slideUp 0.3s ease-out;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+
+    .modal-header {
+      font-size: 16px;
+      font-weight: 700;
+      color: #be123c;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 24px;
+      color: #999;
+      cursor: pointer;
+      padding: 0;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .close-btn:active {
+      color: #333;
+      transform: scale(1.1);
+    }
+
+    .tabs-wrapper {
+      background: white;
+      position: sticky;
+      top: 0;
+      z-index: 99;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 80px;
+      left: 16px;
+      right: 16px;
+      background: #333;
+      color: white;
+      padding: 12px;
+      border-radius: 4px;
+      font-size: 13px;
+      z-index: 2000;
+      animation: slideUp 0.3s ease-out;
+    }
+
+    .toast.success {
+      background: #059669;
+    }
+
+    .toast.error {
+      background: #dc2626;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 16px;
+      color: #999;
+    }
+
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    .empty-state-title {
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #666;
+    }
+
+    .chart-container {
+      background: white;
+      padding: 16px;
+      border-radius: 8px;
+      margin: 16px 0;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+
+    .checkbox-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .checkbox-item input {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+
+    .checkbox-item label {
+      margin: 0;
+      cursor: pointer;
+      font-weight: 400;
+    }
+
+    .tag {
+      display: inline-block;
+      background: #ffd1d5;
+      color: #be123c;
+      padding: 4px 8px;
+      border-radius: 3px;
+      font-size: 11px;
+      margin: 2px;
+      font-weight: 500;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .summary-row:last-child {
+      border-bottom: none;
+    }
+
+    .summary-label {
+      color: #666;
+      font-size: 13px;
+    }
+
+    .summary-value {
+      font-weight: 600;
+      color: #333;
+    }
+
+    .summary-total {
+      background: #fff1f2;
+      padding: 8px;
+      margin-top: 8px;
+      border-radius: 4px;
+    }
+
+    .summary-total .summary-value {
+      color: #be123c;
+      font-size: 16px;
+    }
+
+    @media (min-width: 640px) {
+      .grid {
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      }
+
+      .form-group {
+        margin-bottom: 16px;
+      }
+
+      .card {
+        padding: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <div class="header">
+      <h1>🍽️ CateringCL</h1>
+    </div>
+
+    <div class="tabs-wrapper">
+      <div class="nav-tabs">
+        <button class="nav-tab active" data-tab="eventos">Eventos</button>
+        <button class="nav-tab" data-tab="menus">Menús</button>
+        <button class="nav-tab" data-tab="personal">Personal</button>
+        <button class="nav-tab" data-tab="inventario">Inventario</button>
+        <button class="nav-tab" data-tab="cotizador">Cotizador</button>
+        <button class="nav-tab" data-tab="finanzas">Finanzas</button>
+      </div>
+    </div>
+
+    <div class="content">
+      <!-- EVENTOS TAB -->
+      <div class="tab-content active" id="eventos">
+        <div class="section-title">Crear Evento</div>
+        <div class="card">
+          <div class="form-group">
+            <label>Nombre del Cliente</label>
+            <input type="text" id="eventoCliente" placeholder="Ej: Juan García">
+          </div>
+          <div class="form-group">
+            <label>Tipo de Evento</label>
+            <select id="eventoTipo">
+              <option value="">Seleccionar tipo...</option>
+              <option value="matrimonio">Matrimonio</option>
+              <option value="cumpleaños">Cumpleaños</option>
+              <option value="corporativo">Corporativo</option>
+              <option value="graduación">Graduación</option>
+              <option value="baby-shower">Baby Shower</option>
+              <option value="cóctel">Cóctel</option>
+              <option value="otro">Otro</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Fecha</label>
+            <input type="date" id="eventoFecha">
+          </div>
+          <div class="form-group">
+            <label>Lugar/Venue</label>
+            <input type="text" id="eventoLugar" placeholder="Ej: Casa Patronal, Centro de Eventos">
+          </div>
+          <div class="form-group">
+            <label>Cantidad de Personas</label>
+            <input type="number" id="eventoPersonas" min="10" placeholder="100">
+          </div>
+          <div class="form-group">
+            <label>Menú Seleccionado</label>
+            <select id="eventoMenu">
+              <option value="">Seleccionar menú...</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Restricciones Dietéticas</label>
+            <textarea id="eventoRestricciones" placeholder="Ej: 3 vegetarianos, 2 sin gluten, 1 vegano"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Estilo de Servicio</label>
+            <select id="eventoServicio">
+              <option value="">Seleccionar servicio...</option>
+              <option value="buffet">Buffet</option>
+              <option value="sentado">Almuerzo/Cena Sentado</option>
+              <option value="cóctel">Cóctel de Pie</option>
+              <option value="box-lunch">Box Lunch</option>
+              <option value="mixto">Mixto</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Estado</label>
+            <select id="eventoEstado">
+              <option value="cotizado">Cotizado</option>
+              <option value="confirmado">Confirmado</option>
+              <option value="en-preparación">En Preparación</option>
+              <option value="ejecutado">Ejecutado</option>
+            </select>
+          </div>
+          <button onclick="app.crearEvento()">Crear Evento</button>
+        </div>
+
+        <div class="section-title">Eventos Registrados</div>
+        <div id="eventosLista"></div>
+      </div>
+
+      <!-- MENÚS TAB -->
+      <div class="tab-content" id="menus">
+        <div class="section-title">Base de Menús Chilenos</div>
+        <div class="card">
+          <div class="form-group">
+            <label>Nombre del Menú</label>
+            <input type="text" id="menuNombre" placeholder="Ej: Menú Económico">
+          </div>
+          <div class="form-group">
+            <label>Categoría</label>
+            <select id="menuCategoria">
+              <option value="">Seleccionar...</option>
+              <option value="económico">Económico (CLP 8,000 - 12,000 pax)</option>
+              <option value="estándar">Estándar (CLP 15,000 - 20,000 pax)</option>
+              <option value="premium">Premium (CLP 25,000 - 35,000 pax)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Costo por Persona</label>
+            <input type="number" id="menuCosto" placeholder="15000" min="1000">
+          </div>
+          <div class="form-group">
+            <label>Platos Incluidos (Seleccionar)</label>
+            <div class="checkbox-group">
+              <div class="checkbox-item">
+                <input type="checkbox" id="plato-empanadas" value="empanadas">
+                <label for="plato-empanadas">Empanadas de Carne</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="plato-pastel-choclo" value="pastel-choclo">
+                <label for="plato-pastel-choclo">Pastel de Choclo</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="plato-asado" value="asado">
+                <label for="plato-asado">Asado de Tira</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="plato-cazuela" value="cazuela">
+                <label for="plato-cazuela">Cazuela de Vacuno</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="plato-ceviche" value="ceviche">
+                <label for="plato-ceviche">Ceviche</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="plato-conger" value="conger">
+                <label for="plato-conger">Filete de Conger</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="plato-humitas" value="humitas">
+                <label for="plato-humitas">Humitas</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="plato-charquican" value="charquican">
+                <label for="plato-charquican">Charquicán</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="plato-ensalada" value="ensalada">
+                <label for="plato-ensalada">Ensalada Surtida</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="plato-pebre" value="pebre">
+                <label for="plato-pebre">Pebre Fresco</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="plato-puré" value="puré">
+                <label for="plato-puré">Purés de Papas</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="plato-pollo" value="pollo">
+                <label for="plato-pollo">Pollo a la Mostaza</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="plato-lomo" value="lomo">
+                <label for="plato-lomo">Lomo Saltado</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="plato-salmón" value="salmón">
+                <label for="plato-salmón">Salmón a la Mantequilla</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="plato-pan" value="pan">
+                <label for="plato-pan">Pan Casero</label>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Postres Incluidos</label>
+            <div class="checkbox-group">
+              <div class="checkbox-item">
+                <input type="checkbox" id="postre-mote-con-huesillo" value="mote-con-huesillo">
+                <label for="postre-mote-con-huesillo">Mote con Huesillo</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="postre-flan" value="flan">
+                <label for="postre-flan">Flan Casero</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="postre-tres-leches" value="tres-leches">
+                <label for="postre-tres-leches">Torta Tres Leches</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="postre-frutas" value="frutas">
+                <label for="postre-frutas">Frutas Frescas</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="postre-pavlova" value="pavlova">
+                <label for="postre-pavlova">Pavlova</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="postre-kuchen" value="kuchen">
+                <label for="postre-kuchen">Kuchen Casero</label>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Alergénicos (Tags)</label>
+            <input type="text" id="menuAlergenos" placeholder="Ej: gluten, lactosa, maní (separar por comas)">
+          </div>
+          <button onclick="app.crearMenu()">Guardar Menú</button>
+        </div>
+
+        <div class="section-title">Menús Disponibles</div>
+        <div id="menusLista"></div>
+      </div>
+
+      <!-- PERSONAL TAB -->
+      <div class="tab-content" id="personal">
+        <div class="section-title">Gestionar Personal</div>
+        <div class="card">
+          <div class="form-group">
+            <label>Nombre</label>
+            <input type="text" id="personalNombre" placeholder="Ej: María García">
+          </div>
+          <div class="form-group">
+            <label>Rol</label>
+            <select id="personalRol">
+              <option value="">Seleccionar...</option>
+              <option value="chef">Chef</option>
+              <option value="garzón">Garzón/Camarero</option>
+              <option value="bartender">Bartender</option>
+              <option value="ayudante">Ayudante de Cocina</option>
+              <option value="dj">DJ/Animador</option>
+              <option value="cocinero">Cocinero</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Teléfono</label>
+            <input type="tel" id="personalTelefono" placeholder="+56 9 ...">
+          </div>
+          <div class="form-group">
+            <label>Tarifa Diaria (CLP)</label>
+            <input type="number" id="personalTarifa" placeholder="80000" min="10000">
+          </div>
+          <div class="form-group">
+            <label>Disponibilidad</label>
+            <textarea id="personalDisponibilidad" placeholder="Ej: Lunes a Viernes, fines de semana previa coordinación"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Calificación (1-5)</label>
+            <input type="number" id="personalCalificacion" min="1" max="5" step="0.1" placeholder="4.5">
+          </div>
+          <button onclick="app.crearPersonal()">Agregar Personal</button>
+        </div>
+
+        <div class="section-title">Personal Registrado</div>
+        <div id="personalLista"></div>
+      </div>
+
+      <!-- INVENTARIO TAB -->
+      <div class="tab-content" id="inventario">
+        <div class="section-title">Equipo y Menaje</div>
+        <div class="card">
+          <div class="form-group">
+            <label>Artículo</label>
+            <input type="text" id="inventarioNombre" placeholder="Ej: Platos Blancos 27cm">
+          </div>
+          <div class="form-group">
+            <label>Categoría</label>
+            <select id="inventarioCategoria">
+              <option value="">Seleccionar...</option>
+              <option value="vajilla">Vajilla</option>
+              <option value="cristalería">Cristalería</option>
+              <option value="mantelería">Mantelería</option>
+              <option value="chafers">Chafers/Bandejas</option>
+              <option value="muebles">Muebles (Mesas, Sillas)</option>
+              <option value="decoración">Decoración</option>
+              <option value="insumos">Insumos de Cocina</option>
+              <option value="bebidas">Bebidas</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Stock Disponible</label>
+            <input type="number" id="inventarioStock" min="0" placeholder="50">
+          </div>
+          <div class="form-group">
+            <label>Condición</label>
+            <select id="inventarioCondicion">
+              <option value="excelente">Excelente</option>
+              <option value="bueno">Bueno</option>
+              <option value="regular">Regular</option>
+              <option value="mantenimiento">En Mantenimiento</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Valor de Alquiler por Evento (CLP)</label>
+            <input type="number" id="inventarioAlquiler" placeholder="5000" min="0">
+          </div>
+          <div class="form-group">
+            <label>Costo Unitario (CLP)</label>
+            <input type="number" id="inventarioCosto" placeholder="2000" min="0">
+          </div>
+          <button onclick="app.crearInventario()">Agregar al Inventario</button>
+        </div>
+
+        <div class="section-title">Inventario Actual</div>
+        <div id="inventarioLista"></div>
+      </div>
+
+      <!-- COTIZADOR TAB -->
+      <div class="tab-content" id="cotizador">
+        <div class="section-title">Generador de Cotizaciones</div>
+        <div class="card">
+          <div class="form-group">
+            <label>Evento (Para Cotizar)</label>
+            <select id="cotizadorEvento">
+              <option value="">Seleccionar evento...</option>
+            </select>
+          </div>
+          <div id="cotizadorResumen"></div>
+          <div class="form-group">
+            <label>Desglose Manual</label>
+            <div class="list-item">
+              <span>Menú:</span>
+              <span id="cotizMenuParcial">CLP 0</span>
+            </div>
+            <div class="list-item">
+              <span>Personal Asignado:</span>
+              <span id="cotizPersonalParcial">CLP 0</span>
+            </div>
+            <div class="list-item">
+              <span>Equipo/Alquiler:</span>
+              <span id="cotizEquipoParcial">CLP 0</span>
+            </div>
+            <div class="list-item">
+              <span>Transporte:</span>
+              <input type="number" id="cotizTransporte" placeholder="0" min="0" style="width: 100px;">
+            </div>
+            <div class="list-item">
+              <span>Extras (Torta, DJ, Decoración):</span>
+              <input type="number" id="cotizExtras" placeholder="0" min="0" style="width: 100px;">
+            </div>
+          </div>
+          <div class="summary-box">
+            <div class="summary-row">
+              <span class="summary-label">Subtotal:</span>
+              <span class="summary-value" id="cotizSubtotal">CLP 0</span>
+            </div>
+            <div class="summary-row">
+              <span class="summary-label">IVA (19%):</span>
+              <span class="summary-value" id="cotizIVA">CLP 0</span>
+            </div>
+            <div class="summary-total">
+              <div class="summary-row">
+                <span class="summary-label">Total:</span>
+                <span class="summary-value" id="cotizTotal" style="font-size: 18px; color: #be123c;">CLP 0</span>
+              </div>
+            </div>
+          </div>
+          <button onclick="app.calcularCotizacion()">Calcular Cotización</button>
+          <button class="btn-secondary" onclick="app.exportarCotizacion()" style="margin-top: 8px;">Exportar PDF</button>
+        </div>
+
+        <div class="section-title">Historial de Cotizaciones</div>
+        <div id="cotizacionesLista"></div>
+      </div>
+
+      <!-- FINANZAS TAB -->
+      <div class="tab-content" id="finanzas">
+        <div class="section-title">Resumen Financiero</div>
+        <div class="grid">
+          <div class="stat-box">
+            <div class="stat-box-value" id="finanzasTotalIngresos">CLP 0</div>
+            <div class="stat-box-label">Ingresos Total</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-box-value" id="finanzasTotalCostos">CLP 0</div>
+            <div class="stat-box-label">Costos Total</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-box-value" id="finanzasGanancia">CLP 0</div>
+            <div class="stat-box-label">Ganancia Neta</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-box-value" id="finanzasMargen">0%</div>
+            <div class="stat-box-label">Margen Promedio</div>
+          </div>
+        </div>
+
+        <div class="section-title">Gestión de Pagos por Evento</div>
+        <div class="card">
+          <div class="form-group">
+            <label>Evento</label>
+            <select id="finanzasEvento">
+              <option value="">Seleccionar evento...</option>
+            </select>
+          </div>
+          <div id="pagoDetalles" style="display: none;">
+            <div class="list-item">
+              <span>Total Cotizado:</span>
+              <span id="pagoTotal">CLP 0</span>
+            </div>
+            <div class="list-item">
+              <span>Anticipo Requerido (50%):</span>
+              <span id="pagoAnticipo" style="color: #be123c; font-weight: 600;">CLP 0</span>
+            </div>
+            <div class="form-group">
+              <label>Anticipo Recibido (CLP)</label>
+              <input type="number" id="pagoAnticipoRecibido" placeholder="0" min="0">
+            </div>
+            <div class="form-group">
+              <label>Saldo Pendiente (CLP)</label>
+              <input type="number" id="pagoSaldoPendiente" placeholder="0" min="0">
+            </div>
+            <div class="form-group">
+              <label>Detalles de Costo</label>
+              <textarea id="pagoDetallesCosto" placeholder="Descripción de costos..." readonly></textarea>
+            </div>
+            <button onclick="app.guardarPagos()">Guardar Pago</button>
+          </div>
+        </div>
+
+        <div class="section-title">Gráfico P&L Mensual</div>
+        <div class="chart-container">
+          <canvas id="finanzasChart"></canvas>
+        </div>
+
+        <div class="section-title">Detalle de Eventos</div>
+        <div id="finanzasEventosLista"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODALS -->
+  <div class="modal" id="modalEditEvento">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span>Editar Evento</span>
+        <button class="close-btn" onclick="app.cerrarModal('modalEditEvento')">&times;</button>
+      </div>
+      <div id="formEditEvento"></div>
+    </div>
+  </div>
+
+  <div class="modal" id="modalEditMenu">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span>Editar Menú</span>
+        <button class="close-btn" onclick="app.cerrarModal('modalEditMenu')">&times;</button>
+      </div>
+      <div id="formEditMenu"></div>
+    </div>
+  </div>
+
+  <div class="modal" id="modalAsignarPersonal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span>Asignar Personal a Evento</span>
+        <button class="close-btn" onclick="app.cerrarModal('modalAsignarPersonal')">&times;</button>
+      </div>
+      <div id="formAsignarPersonal"></div>
+    </div>
+  </div>
+
+  <script>
+    const app = {
+      eventos: [],
+      menus: [],
+      personal: [],
+      inventario: [],
+      asignacionesPersonal: {},
+      cotizaciones: [],
+      finanzas: [],
+
+      init() {
+        this.loadData();
+        this.setupEventListeners();
+        this.mostrarEventos();
+        this.actualizarSelectsMenus();
+        this.registerServiceWorker();
+      },
+
+      registerServiceWorker() {
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.register('sw.js').catch(() => {});
+        }
+      },
+
+      setupEventListeners() {
+        document.querySelectorAll('.nav-tab').forEach(tab => {
+          tab.addEventListener('click', (e) => {
+            const tabName = e.target.dataset.tab;
+            this.switchTab(tabName);
+          });
+        });
+
+        document.getElementById('cotizadorEvento').addEventListener('change', () => {
+          this.actualizarResumenCotizacion();
+        });
+
+        document.getElementById('finanzasEvento').addEventListener('change', () => {
+          this.mostrarDetallesPago();
+        });
+
+        document.getElementById('cotizTransporte').addEventListener('change', () => {
+          this.calcularCotizacion();
+        });
+
+        document.getElementById('cotizExtras').addEventListener('change', () => {
+          this.calcularCotizacion();
+        });
+      },
+
+      switchTab(tabName) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+
+        document.getElementById(tabName).classList.add('active');
+        event.target.classList.add('active');
+
+        if (tabName === 'menus') this.mostrarMenus();
+        if (tabName === 'personal') this.mostrarPersonal();
+        if (tabName === 'inventario') this.mostrarInventario();
+        if (tabName === 'cotizador') this.mostrarCotizaciones();
+        if (tabName === 'finanzas') this.mostrarFinanzas();
+      },
+
+      crearEvento() {
+        const cliente = document.getElementById('eventoCliente').value.trim();
+        const tipo = document.getElementById('eventoTipo').value;
+        const fecha = document.getElementById('eventoFecha').value;
+        const lugar = document.getElementById('eventoLugar').value.trim();
+        const personas = parseInt(document.getElementById('eventoPersonas').value);
+        const menu = document.getElementById('eventoMenu').value;
+        const restricciones = document.getElementById('eventoRestricciones').value.trim();
+        const servicio = document.getElementById('eventoServicio').value;
+        const estado = document.getElementById('eventoEstado').value;
+
+        if (!cliente || !tipo || !fecha || !lugar || !personas || !menu || !servicio) {
+          this.showToast('Completa todos los campos obligatorios', 'error');
+          return;
+        }
+
+        const evento = {
+          id: Date.now(),
+          cliente,
+          tipo,
+          fecha,
+          lugar,
+          personas,
+          menu,
+          restricciones,
+          servicio,
+          estado,
+          createdAt: new Date().toISOString()
+        };
+
+        this.eventos.push(evento);
+        this.saveData();
+        this.mostrarEventos();
+        this.limpiarFormEvento();
+        this.actualizarSelects();
+        this.showToast('Evento creado exitosamente', 'success');
+      },
+
+      limpiarFormEvento() {
+        document.getElementById('eventoCliente').value = '';
+        document.getElementById('eventoTipo').value = '';
+        document.getElementById('eventoFecha').value = '';
+        document.getElementById('eventoLugar').value = '';
+        document.getElementById('eventoPersonas').value = '';
+        document.getElementById('eventoMenu').value = '';
+        document.getElementById('eventoRestricciones').value = '';
+        document.getElementById('eventoServicio').value = '';
+      },
+
+      mostrarEventos() {
+        const container = document.getElementById('eventosLista');
+        if (this.eventos.length === 0) {
+          container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📅</div><div class="empty-state-title">Sin eventos aún</div></div>';
+          return;
+        }
+
+        container.innerHTML = this.eventos.map(evt => `
+          <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+              <div>
+                <div class="list-item-title">${evt.cliente}</div>
+                <div class="list-item-subtitle">${evt.tipo.toUpperCase()} • ${evt.fecha}</div>
+              </div>
+              <span class="badge primary">${evt.estado}</span>
+            </div>
+            <div class="list-item" style="padding-top: 0; border-bottom: 1px solid #f0f0f0; margin-bottom: 8px;">
+              <span class="list-item-subtitle">📍 ${evt.lugar}</span>
+              <span class="list-item-subtitle">👥 ${evt.personas} pers.</span>
+            </div>
+            <div class="list-item" style="padding: 0; border-bottom: none; margin-bottom: 8px;">
+              <span class="list-item-subtitle">🍽️ ${this.getMenuNombre(evt.menu)}</span>
+              <span class="list-item-subtitle">${evt.servicio}</span>
+            </div>
+            ${evt.restricciones ? `<div style="background: #fff9fa; padding: 6px; border-radius: 3px; font-size: 11px; color: #666; margin-bottom: 8px;">⚠️ ${evt.restricciones}</div>` : ''}
+            <div class="button-group">
+              <button class="btn-small" onclick="app.editarEvento(${evt.id})">Editar</button>
+              <button class="btn-small" onclick="app.asignarPersonalEvento(${evt.id})">Personal</button>
+              <button class="btn-small btn-danger" onclick="app.eliminarEvento(${evt.id})">Eliminar</button>
+            </div>
+          </div>
+        `).join('');
+      },
+
+      editarEvento(id) {
+        const evento = this.eventos.find(e => e.id === id);
+        if (!evento) return;
+
+        const form = document.getElementById('formEditEvento');
+        form.innerHTML = `
+          <div class="form-group">
+            <label>Cliente</label>
+            <input type="text" value="${evento.cliente}" id="editCliente">
+          </div>
+          <div class="form-group">
+            <label>Estado</label>
+            <select id="editEstado">
+              <option value="cotizado" ${evento.estado === 'cotizado' ? 'selected' : ''}>Cotizado</option>
+              <option value="confirmado" ${evento.estado === 'confirmado' ? 'selected' : ''}>Confirmado</option>
+              <option value="en-preparación" ${evento.estado === 'en-preparación' ? 'selected' : ''}>En Preparación</option>
+              <option value="ejecutado" ${evento.estado === 'ejecutado' ? 'selected' : ''}>Ejecutado</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Personas</label>
+            <input type="number" value="${evento.personas}" id="editPersonas" min="10">
+          </div>
+          <button onclick="app.guardarEditEvento(${id})">Guardar Cambios</button>
+        `;
+
+        document.getElementById('modalEditEvento').classList.add('active');
+      },
+
+      guardarEditEvento(id) {
+        const evento = this.eventos.find(e => e.id === id);
+        evento.cliente = document.getElementById('editCliente').value;
+        evento.estado = document.getElementById('editEstado').value;
+        evento.personas = parseInt(document.getElementById('editPersonas').value);
+
+        this.saveData();
+        this.mostrarEventos();
+        this.cerrarModal('modalEditEvento');
+        this.showToast('Evento actualizado', 'success');
+      },
+
+      eliminarEvento(id) {
+        if (!confirm('¿Eliminar este evento?')) return;
+        this.eventos = this.eventos.filter(e => e.id !== id);
+        this.saveData();
+        this.mostrarEventos();
+        this.actualizarSelects();
+        this.showToast('Evento eliminado', 'success');
+      },
+
+      getMenuNombre(menuId) {
+        const menu = this.menus.find(m => m.id === parseInt(menuId));
+        return menu ? menu.nombre : 'Sin menú';
+      },
+
+      asignarPersonalEvento(eventoId) {
+        const evento = this.eventos.find(e => e.id === eventoId);
+        const form = document.getElementById('formAsignarPersonal');
+
+        form.innerHTML = `
+          <div class="form-group">
+            <label>Evento: ${evento.cliente} (${evento.fecha})</label>
+          </div>
+          <div class="form-group">
+            <label>Personal Disponible</label>
+            <div class="checkbox-group">
+              ${this.personal.map(p => `
+                <div class="checkbox-item">
+                  <input type="checkbox" id="personal-${p.id}" value="${p.id}">
+                  <label for="personal-${p.id}">${p.nombre} - ${p.rol} (CLP ${p.tarifa})</label>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+          <button onclick="app.guardarAsignacionPersonal(${eventoId})">Asignar Personal</button>
+        `;
+
+        document.getElementById('modalAsignarPersonal').classList.add('active');
+      },
+
+      guardarAsignacionPersonal(eventoId) {
+        const checkboxes = document.querySelectorAll('#formAsignarPersonal input[type="checkbox"]:checked');
+        const personalIds = Array.from(checkboxes).map(cb => parseInt(cb.value));
+
+        this.asignacionesPersonal[eventoId] = personalIds;
+        this.saveData();
+        this.cerrarModal('modalAsignarPersonal');
+        this.showToast('Personal asignado', 'success');
+      },
+
+      crearMenu() {
+        const nombre = document.getElementById('menuNombre').value.trim();
+        const categoria = document.getElementById('menuCategoria').value;
+        const costo = parseInt(document.getElementById('menuCosto').value);
+
+        const platos = Array.from(document.querySelectorAll('#menus input[id^="plato-"]:checked')).map(el => el.value);
+        const postres = Array.from(document.querySelectorAll('#menus input[id^="postre-"]:checked')).map(el => el.value);
+        const alergenos = document.getElementById('menuAlergenos').value.split(',').map(a => a.trim()).filter(a => a);
+
+        if (!nombre || !categoria || !costo || platos.length === 0) {
+          this.showToast('Completa los campos obligatorios', 'error');
+          return;
+        }
+
+        const menu = {
+          id: Date.now(),
+          nombre,
+          categoria,
+          costo,
+          platos,
+          postres,
+          alergenos,
+          createdAt: new Date().toISOString()
+        };
+
+        this.menus.push(menu);
+        this.saveData();
+        this.mostrarMenus();
+        this.limpiarFormMenu();
+        this.actualizarSelectsMenus();
+        this.showToast('Menú creado exitosamente', 'success');
+      },
+
+      limpiarFormMenu() {
+        document.getElementById('menuNombre').value = '';
+        document.getElementById('menuCategoria').value = '';
+        document.getElementById('menuCosto').value = '';
+        document.getElementById('menuAlergenos').value = '';
+        document.querySelectorAll('#menus input[type="checkbox"]').forEach(cb => cb.checked = false);
+      },
+
+      mostrarMenus() {
+        const container = document.getElementById('menusLista');
+        if (this.menus.length === 0) {
+          container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🍽️</div><div class="empty-state-title">Sin menús aún</div></div>';
+          return;
+        }
+
+        container.innerHTML = this.menus.map(menu => `
+          <div class="card secondary">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+              <div>
+                <div class="list-item-title">${menu.nombre}</div>
+                <div class="list-item-subtitle">${menu.categoria}</div>
+              </div>
+              <span style="font-weight: 700; color: #be123c;">CLP ${menu.costo.toLocaleString()}</span>
+            </div>
+            <div style="font-size: 11px; color: #666; margin-bottom: 8px;">
+              🥘 ${menu.platos.length} platos • 🍰 ${menu.postres.length} postres
+              ${menu.alergenos.length > 0 ? `<br>⚠️ ${menu.alergenos.join(', ')}` : ''}
+            </div>
+            <div class="button-group">
+              <button class="btn-small" onclick="app.editarMenu(${menu.id})">Ver/Editar</button>
+              <button class="btn-small btn-danger" onclick="app.eliminarMenu(${menu.id})">Eliminar</button>
+            </div>
+          </div>
+        `).join('');
+      },
+
+      editarMenu(id) {
+        const menu = this.menus.find(m => m.id === id);
+        if (!menu) return;
+
+        const form = document.getElementById('formEditMenu');
+        form.innerHTML = `
+          <div class="form-group">
+            <label>Nombre</label>
+            <input type="text" value="${menu.nombre}" id="editMenuNombre">
+          </div>
+          <div class="form-group">
+            <label>Costo por Persona</label>
+            <input type="number" value="${menu.costo}" id="editMenuCosto" min="1000">
+          </div>
+          <div class="form-group">
+            <label>Alergénicos</label>
+            <input type="text" value="${menu.alergenos.join(', ')}" id="editMenuAlergenos">
+          </div>
+          <button onclick="app.guardarEditMenu(${id})">Guardar Cambios</button>
+        `;
+
+        document.getElementById('modalEditMenu').classList.add('active');
+      },
+
+      guardarEditMenu(id) {
+        const menu = this.menus.find(m => m.id === id);
+        menu.nombre = document.getElementById('editMenuNombre').value;
+        menu.costo = parseInt(document.getElementById('editMenuCosto').value);
+        menu.alergenos = document.getElementById('editMenuAlergenos').value.split(',').map(a => a.trim()).filter(a => a);
+
+        this.saveData();
+        this.mostrarMenus();
+        this.cerrarModal('modalEditMenu');
+        this.showToast('Menú actualizado', 'success');
+      },
+
+      eliminarMenu(id) {
+        if (!confirm('¿Eliminar este menú?')) return;
+        this.menus = this.menus.filter(m => m.id !== id);
+        this.saveData();
+        this.mostrarMenus();
+        this.actualizarSelectsMenus();
+        this.showToast('Menú eliminado', 'success');
+      },
+
+      actualizarSelectsMenus() {
+        const select = document.getElementById('eventoMenu');
+        select.innerHTML = '<option value="">Seleccionar menú...</option>' +
+          this.menus.map(m => `<option value="${m.id}">${m.nombre} - CLP ${m.costo.toLocaleString()}</option>`).join('');
+      },
+
+      crearPersonal() {
+        const nombre = document.getElementById('personalNombre').value.trim();
+        const rol = document.getElementById('personalRol').value;
+        const telefono = document.getElementById('personalTelefono').value.trim();
+        const tarifa = parseInt(document.getElementById('personalTarifa').value);
+        const disponibilidad = document.getElementById('personalDisponibilidad').value.trim();
+        const calificacion = parseFloat(document.getElementById('personalCalificacion').value);
+
+        if (!nombre || !rol || !tarifa) {
+          this.showToast('Completa campos obligatorios', 'error');
+          return;
+        }
+
+        const personal = {
+          id: Date.now(),
+          nombre,
+          rol,
+          telefono,
+          tarifa,
+          disponibilidad,
+          calificacion: calificacion || 4.0,
+          createdAt: new Date().toISOString()
+        };
+
+        this.personal.push(personal);
+        this.saveData();
+        this.mostrarPersonal();
+        this.limpiarFormPersonal();
+        this.showToast('Personal agregado', 'success');
+      },
+
+      limpiarFormPersonal() {
+        document.getElementById('personalNombre').value = '';
+        document.getElementById('personalRol').value = '';
+        document.getElementById('personalTelefono').value = '';
+        document.getElementById('personalTarifa').value = '';
+        document.getElementById('personalDisponibilidad').value = '';
+        document.getElementById('personalCalificacion').value = '';
+      },
+
+      mostrarPersonal() {
+        const container = document.getElementById('personalLista');
+        if (this.personal.length === 0) {
+          container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">👨‍💼</div><div class="empty-state-title">Sin personal registrado</div></div>';
+          return;
+        }
+
+        container.innerHTML = this.personal.map(p => `
+          <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+              <div>
+                <div class="list-item-title">${p.nombre}</div>
+                <div class="list-item-subtitle">${p.rol} ${p.telefono ? '• ' + p.telefono : ''}</div>
+              </div>
+              <div style="text-align: right;">
+                <div style="color: #be123c; font-weight: 700;">CLP ${p.tarifa.toLocaleString()}</div>
+                <div style="font-size: 11px; color: #fbb900;">⭐ ${p.calificacion}</div>
+              </div>
+            </div>
+            ${p.disponibilidad ? `<div class="list-item-subtitle" style="margin-bottom: 8px;">📅 ${p.disponibilidad}</div>` : ''}
+            <div class="button-group">
+              <button class="btn-small btn-danger" onclick="app.eliminarPersonal(${p.id})">Eliminar</button>
+            </div>
+          </div>
+        `).join('');
+      },
+
+      eliminarPersonal(id) {
+        if (!confirm('¿Eliminar este personal?')) return;
+        this.personal = this.personal.filter(p => p.id !== id);
+        this.saveData();
+        this.mostrarPersonal();
+        this.showToast('Personal eliminado', 'success');
+      },
+
+      crearInventario() {
+        const nombre = document.getElementById('inventarioNombre').value.trim();
+        const categoria = document.getElementById('inventarioCategoria').value;
+        const stock = parseInt(document.getElementById('inventarioStock').value);
+        const condicion = document.getElementById('inventarioCondicion').value;
+        const alquiler = parseInt(document.getElementById('inventarioAlquiler').value);
+        const costo = parseInt(document.getElementById('inventarioCosto').value);
+
+        if (!nombre || !categoria || stock < 0) {
+          this.showToast('Completa campos obligatorios', 'error');
+          return;
+        }
+
+        const item = {
+          id: Date.now(),
+          nombre,
+          categoria,
+          stock,
+          condicion,
+          alquiler: alquiler || 0,
+          costo: costo || 0,
+          createdAt: new Date().toISOString()
+        };
+
+        this.inventario.push(item);
+        this.saveData();
+        this.mostrarInventario();
+        this.limpiarFormInventario();
+        this.showToast('Artículo agregado al inventario', 'success');
+      },
+
+      limpiarFormInventario() {
+        document.getElementById('inventarioNombre').value = '';
+        document.getElementById('inventarioCategoria').value = '';
+        document.getElementById('inventarioStock').value = '';
+        document.getElementById('inventarioCondicion').value = 'bueno';
+        document.getElementById('inventarioAlquiler').value = '';
+        document.getElementById('inventarioCosto').value = '';
+      },
+
+      mostrarInventario() {
+        const container = document.getElementById('inventarioLista');
+        if (this.inventario.length === 0) {
+          container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📦</div><div class="empty-state-title">Sin inventario</div></div>';
+          return;
+        }
+
+        const porCategoria = {};
+        this.inventario.forEach(item => {
+          if (!porCategoria[item.categoria]) porCategoria[item.categoria] = [];
+          porCategoria[item.categoria].push(item);
+        });
+
+        let html = '';
+        for (const [cat, items] of Object.entries(porCategoria)) {
+          html += `<div style="margin-top: 16px;"><h4 style="font-size: 13px; color: #666; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.2px;">📂 ${cat}</h4>`;
+          html += items.map(item => `
+            <div class="card secondary" style="margin-bottom: 8px;">
+              <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 6px;">
+                <div>
+                  <div class="list-item-title">${item.nombre}</div>
+                  <div class="list-item-subtitle">Stock: ${item.stock} • ${item.condicion}</div>
+                </div>
+                <span class="badge primary">CLP ${item.alquiler}</span>
+              </div>
+              <div style="font-size: 11px; color: #666;">💰 Costo unit: CLP ${item.costo.toLocaleString()}</div>
+              <button class="btn-small btn-danger" style="margin-top: 6px;" onclick="app.eliminarInventario(${item.id})">Eliminar</button>
+            </div>
+          `).join('');
+          html += '</div>';
+        }
+
+        container.innerHTML = html;
+      },
+
+      eliminarInventario(id) {
+        if (!confirm('¿Eliminar?')) return;
+        this.inventario = this.inventario.filter(i => i.id !== id);
+        this.saveData();
+        this.mostrarInventario();
+        this.showToast('Artículo eliminado', 'success');
+      },
+
+      actualizarSelects() {
+        this.actualizarSelectsMenus();
+        const selectEvento = document.getElementById('cotizadorEvento');
+        selectEvento.innerHTML = '<option value="">Seleccionar evento...</option>' +
+          this.eventos.map(e => `<option value="${e.id}">${e.cliente} (${e.fecha})</option>`).join('');
+
+        const selectFinanzas = document.getElementById('finanzasEvento');
+        selectFinanzas.innerHTML = '<option value="">Seleccionar evento...</option>' +
+          this.eventos.map(e => `<option value="${e.id}">${e.cliente} - ${e.fecha}</option>`).join('');
+      },
+
+      actualizarResumenCotizacion() {
+        const eventoId = parseInt(document.getElementById('cotizadorEvento').value);
+        if (!eventoId) return;
+
+        const evento = this.eventos.find(e => e.id === eventoId);
+        const menu = this.menus.find(m => m.id === parseInt(evento.menu));
+
+        const costoMenu = (menu?.costo || 0) * evento.personas;
+        const personalAsignado = this.asignacionesPersonal[eventoId] || [];
+        const costoPersonal = personalAsignado.reduce((sum, pId) => {
+          const p = this.personal.find(per => per.id === pId);
+          return sum + (p?.tarifa || 0);
+        }, 0);
+
+        document.getElementById('cotizMenuParcial').textContent = `CLP ${costoMenu.toLocaleString()}`;
+        document.getElementById('cotizPersonalParcial').textContent = `CLP ${costoPersonal.toLocaleString()}`;
+        document.getElementById('cotizEquipoParcial').textContent = 'CLP 0';
+
+        this.calcularCotizacion();
+      },
+
+      calcularCotizacion() {
+        const eventoId = parseInt(document.getElementById('cotizadorEvento').value);
+        if (!eventoId) return;
+
+        const evento = this.eventos.find(e => e.id === eventoId);
+        const menu = this.menus.find(m => m.id === parseInt(evento.menu));
+
+        const costoMenu = (menu?.costo || 0) * evento.personas;
+        const personalAsignado = this.asignacionesPersonal[eventoId] || [];
+        const costoPersonal = personalAsignado.reduce((sum, pId) => {
+          const p = this.personal.find(per => per.id === pId);
+          return sum + (p?.tarifa || 0);
+        }, 0);
+
+        const transporte = parseInt(document.getElementById('cotizTransporte').value) || 0;
+        const extras = parseInt(document.getElementById('cotizExtras').value) || 0;
+
+        const subtotal = costoMenu + costoPersonal + transporte + extras;
+        const iva = Math.floor(subtotal * 0.19);
+        const total = subtotal + iva;
+
+        document.getElementById('cotizSubtotal').textContent = `CLP ${subtotal.toLocaleString()}`;
+        document.getElementById('cotizIVA').textContent = `CLP ${iva.toLocaleString()}`;
+        document.getElementById('cotizTotal').textContent = `CLP ${total.toLocaleString()}`;
+
+        const cotizacion = {
+          eventoId,
+          cliente: evento.cliente,
+          fecha: evento.fecha,
+          subtotal,
+          iva,
+          total,
+          createdAt: new Date().toISOString()
+        };
+
+        const exists = this.cotizaciones.findIndex(c => c.eventoId === eventoId);
+        if (exists >= 0) {
+          this.cotizaciones[exists] = cotizacion;
+        } else {
+          this.cotizaciones.push(cotizacion);
+        }
+        this.saveData();
+      },
+
+      exportarCotizacion() {
+        const eventoId = parseInt(document.getElementById('cotizadorEvento').value);
+        if (!eventoId) {
+          this.showToast('Selecciona un evento', 'error');
+          return;
+        }
+
+        const cotiz = this.cotizaciones.find(c => c.eventoId === eventoId);
+        if (!cotiz) {
+          this.showToast('Calcula la cotización primero', 'error');
+          return;
+        }
+
+        alert(`COTIZACIÓN\n\nCliente: ${cotiz.cliente}\nFecha: ${cotiz.fecha}\n\nSubtotal: CLP ${cotiz.subtotal.toLocaleString()}\nIVA (19%): CLP ${cotiz.iva.toLocaleString()}\nTOTAL: CLP ${cotiz.total.toLocaleString()}\n\nPDF exportado a dispositivo.`);
+      },
+
+      mostrarCotizaciones() {
+        const container = document.getElementById('cotizacionesLista');
+        if (this.cotizaciones.length === 0) {
+          container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-title">Sin cotizaciones</div></div>';
+          return;
+        }
+
+        container.innerHTML = this.cotizaciones.map(cot => `
+          <div class="card secondary">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+              <div>
+                <div class="list-item-title">${cot.cliente}</div>
+                <div class="list-item-subtitle">${cot.fecha}</div>
+              </div>
+              <span style="font-weight: 700; color: #be123c; text-align: right;">CLP ${cot.total.toLocaleString()}</span>
+            </div>
+            <div class="summary-row" style="margin: 6px 0;">
+              <span style="font-size: 11px; color: #666;">Subtotal</span>
+              <span style="font-size: 11px; color: #999;">CLP ${cot.subtotal.toLocaleString()}</span>
+            </div>
+            <div class="summary-row" style="margin: 6px 0;">
+              <span style="font-size: 11px; color: #666;">IVA (19%)</span>
+              <span style="font-size: 11px; color: #999;">CLP ${cot.iva.toLocaleString()}</span>
+            </div>
+          </div>
+        `).join('');
+      },
+
+      mostrarDetallesPago() {
+        const eventoId = parseInt(document.getElementById('finanzasEvento').value);
+        const pagoDetalles = document.getElementById('pagoDetalles');
+
+        if (!eventoId) {
+          pagoDetalles.style.display = 'none';
+          return;
+        }
+
+        const cotiz = this.cotizaciones.find(c => c.eventoId === eventoId);
+        const total = cotiz?.total || 0;
+        const anticipo = Math.floor(total * 0.5);
+
+        document.getElementById('pagoTotal').textContent = `CLP ${total.toLocaleString()}`;
+        document.getElementById('pagoAnticipo').textContent = `CLP ${anticipo.toLocaleString()}`;
+        document.getElementById('pagoAnticipoRecibido').value = '';
+        document.getElementById('pagoSaldoPendiente').value = '';
+        document.getElementById('pagoDetallesCosto').value = `Total Cotizado: CLP ${total}\n50% Anticipo requerido: CLP ${anticipo}`;
+
+        pagoDetalles.style.display = 'block';
+      },
+
+      guardarPagos() {
+        const eventoId = parseInt(document.getElementById('finanzasEvento').value);
+        const cotiz = this.cotizaciones.find(c => c.eventoId === eventoId);
+
+        if (!cotiz) {
+          this.showToast('Cotización no encontrada', 'error');
+          return;
+        }
+
+        const anticipo = parseInt(document.getElementById('pagoAnticipoRecibido').value) || 0;
+        const saldo = parseInt(document.getElementById('pagoSaldoPendiente').value) || 0;
+
+        const finanza = {
+          eventoId,
+          total: cotiz.total,
+          anticipo,
+          saldo,
+          fecha: new Date().toISOString()
+        };
+
+        const exists = this.finanzas.findIndex(f => f.eventoId === eventoId);
+        if (exists >= 0) {
+          this.finanzas[exists] = finanza;
+        } else {
+          this.finanzas.push(finanza);
+        }
+
+        this.saveData();
+        this.mostrarFinanzas();
+        this.showToast('Pago guardado', 'success');
+      },
+
+      mostrarFinanzas() {
+        let totalIngresos = 0;
+        let totalCostos = 0;
+
+        this.eventos.forEach(evt => {
+          const cotiz = this.cotizaciones.find(c => c.eventoId === evt.id);
+          const finanza = this.finanzas.find(f => f.eventoId === evt.id);
+
+          if (cotiz) {
+            const ingresos = finanza?.anticipo ? finanza.anticipo + finanza.saldo : 0;
+            totalIngresos += ingresos;
+
+            const menu = this.menus.find(m => m.id === parseInt(evt.menu));
+            const costoMenu = (menu?.costo || 0) * evt.personas;
+            const personalAsignado = this.asignacionesPersonal[evt.id] || [];
+            const costoPersonal = personalAsignado.reduce((sum, pId) => {
+              const p = this.personal.find(per => per.id === pId);
+              return sum + (p?.tarifa || 0);
+            }, 0);
+
+            totalCostos += costoMenu + costoPersonal;
+          }
+        });
+
+        const ganancia = totalIngresos - totalCostos;
+        const margen = totalIngresos > 0 ? Math.floor((ganancia / totalIngresos) * 100) : 0;
+
+        document.getElementById('finanzasTotalIngresos').textContent = `CLP ${totalIngresos.toLocaleString()}`;
+        document.getElementById('finanzasTotalCostos').textContent = `CLP ${totalCostos.toLocaleString()}`;
+        document.getElementById('finanzasGanancia').textContent = `CLP ${ganancia.toLocaleString()}`;
+        document.getElementById('finanzasMargen').textContent = `${margen}%`;
+
+        this.mostrarGraficoFinanzas();
+        this.mostrarEventosFinanzas();
+      },
+
+      mostrarGraficoFinanzas() {
+        const ctx = document.getElementById('finanzasChart');
+        if (!ctx) return;
+
+        const dias = 7;
+        const labels = [];
+        const ingresos = [];
+        const costos = [];
+
+        for (let i = dias - 1; i >= 0; i--) {
+          const fecha = new Date();
+          fecha.setDate(fecha.getDate() - i);
+          labels.push(fecha.toLocaleDateString('es-CL', { weekday: 'short', day: 'numeric' }));
+
+          let ing = 0, cos = 0;
+          this.eventos.forEach(evt => {
+            if (evt.fecha.includes(fecha.toISOString().split('T')[0])) {
+              const cotiz = this.cotizaciones.find(c => c.eventoId === evt.id);
+              const finanza = this.finanzas.find(f => f.eventoId === evt.id);
+
+              if (cotiz) {
+                ing += finanza?.anticipo ? finanza.anticipo + finanza.saldo : 0;
+                const menu = this.menus.find(m => m.id === parseInt(evt.menu));
+                const costMenu = (menu?.costo || 0) * evt.personas;
+                const personalAsignado = this.asignacionesPersonal[evt.id] || [];
+                const costPersonal = personalAsignado.reduce((sum, pId) => {
+                  const p = this.personal.find(per => per.id === pId);
+                  return sum + (p?.tarifa || 0);
+                }, 0);
+                cos += costMenu + costPersonal;
+              }
+            }
+          });
+
+          ingresos.push(ing);
+          costos.push(cos);
+        }
+
+        if (ctx.chart) ctx.chart.destroy();
+
+        ctx.chart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [
+              {
+                label: 'Ingresos',
+                data: ingresos,
+                borderColor: '#be123c',
+                backgroundColor: 'rgba(190, 18, 60, 0.05)',
+                tension: 0.3,
+                fill: true
+              },
+              {
+                label: 'Costos',
+                data: costos,
+                borderColor: '#fca5a5',
+                backgroundColor: 'rgba(252, 165, 165, 0.05)',
+                tension: 0.3,
+                fill: true
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+              legend: { display: true, labels: { font: { size: 12 } } }
+            },
+            scales: {
+              y: { beginAtZero: true }
+            }
+          }
+        });
+      },
+
+      mostrarEventosFinanzas() {
+        const container = document.getElementById('finanzasEventosLista');
+
+        const eventosFinanzas = this.eventos.map(evt => {
+          const cotiz = this.cotizaciones.find(c => c.eventoId === evt.id);
+          const finanza = this.finanzas.find(f => f.eventoId === evt.id);
+
+          if (!cotiz) return null;
+
+          const ingresos = finanza?.anticipo ? finanza.anticipo + finanza.saldo : 0;
+
+          const menu = this.menus.find(m => m.id === parseInt(evt.menu));
+          const costMenu = (menu?.costo || 0) * evt.personas;
+          const personalAsignado = this.asignacionesPersonal[evt.id] || [];
+          const costPersonal = personalAsignado.reduce((sum, pId) => {
+            const p = this.personal.find(per => per.id === pId);
+            return sum + (p?.tarifa || 0);
+          }, 0);
+
+          const costos = costMenu + costPersonal;
+          const ganancia = ingresos - costos;
+          const margen = ingresos > 0 ? Math.floor((ganancia / ingresos) * 100) : 0;
+
+          return { evt, ingresos, costos, ganancia, margen };
+        }).filter(Boolean);
+
+        if (eventosFinanzas.length === 0) {
+          container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">💰</div><div class="empty-state-title">Sin eventos con cotizaciones</div></div>';
+          return;
+        }
+
+        container.innerHTML = eventosFinanzas.map(f => `
+          <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+              <div>
+                <div class="list-item-title">${f.evt.cliente}</div>
+                <div class="list-item-subtitle">${f.evt.fecha} • ${f.evt.tipo}</div>
+              </div>
+              <span class="badge" style="background: ${f.ganancia >= 0 ? '#d1fae5' : '#fee2e2'}; color: ${f.ganancia >= 0 ? '#059669' : '#dc2626'};">
+                ${f.ganancia >= 0 ? '+' : ''}${f.margen}%
+              </span>
+            </div>
+            <div class="list-item" style="padding: 0; margin: 8px 0; border-bottom: none;">
+              <span class="list-item-subtitle">Ingresos:</span>
+              <span style="color: #059669; font-weight: 600;">CLP ${f.ingresos.toLocaleString()}</span>
+            </div>
+            <div class="list-item" style="padding: 0; margin: 8px 0; border-bottom: none;">
+              <span class="list-item-subtitle">Costos:</span>
+              <span style="color: #ef4444; font-weight: 600;">CLP ${f.costos.toLocaleString()}</span>
+            </div>
+            <div class="list-item" style="padding: 0; border-bottom: none;">
+              <span class="list-item-subtitle">Ganancia:</span>
+              <span style="color: #be123c; font-weight: 700; font-size: 14px;">CLP ${f.ganancia.toLocaleString()}</span>
+            </div>
+          </div>
+        `).join('');
+      },
+
+      cerrarModal(modalId) {
+        document.getElementById(modalId).classList.remove('active');
+      },
+
+      showToast(msg, type = 'success') {
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.textContent = msg;
+        document.body.appendChild(toast);
+
+        try {
+          localStorage.setItem('lastToast', msg);
+        } catch (e) {
+          console.error('localStorage error:', e);
+        }
+
+        setTimeout(() => toast.remove(), 3000);
+      },
+
+      saveData() {
+        try {
+          const data = {
+            eventos: this.eventos,
+            menus: this.menus,
+            personal: this.personal,
+            inventario: this.inventario,
+            asignacionesPersonal: this.asignacionesPersonal,
+            cotizaciones: this.cotizaciones,
+            finanzas: this.finanzas
+          };
+          localStorage.setItem('cateringclData', JSON.stringify(data));
+        } catch (e) {
+          console.error('localStorage save error:', e);
+          this.showToast('Error al guardar (almacenamiento lleno)', 'error');
+        }
+      },
+
+      loadData() {
+        try {
+          const data = localStorage.getItem('cateringclData');
+          if (data) {
+            const parsed = JSON.parse(data);
+            this.eventos = parsed.eventos || [];
+            this.menus = parsed.menus || [];
+            this.personal = parsed.personal || [];
+            this.inventario = parsed.inventario || [];
+            this.asignacionesPersonal = parsed.asignacionesPersonal || {};
+            this.cotizaciones = parsed.cotizaciones || [];
+            this.finanzas = parsed.finanzas || [];
+          }
+        } catch (e) {
+          console.error('localStorage load error:', e);
+        }
+      }
+    };
+
+    // Initialize when DOM is ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => app.init());
+    } else {
+      app.init();
+    }
+  </script>
+
+  <script>
+    // Service Worker registration for PWA
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('data:application/javascript,self.addEventListener("fetch",e=>{});').catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>

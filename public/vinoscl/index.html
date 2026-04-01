@@ -1,0 +1,2536 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="VinosCL">
+  <meta name="theme-color" content="#7f1d1d">
+  <title>VinosCL — Gestión de Bodegas Chilenas</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍷</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --primary: #7f1d1d;
+      --primary-light: #a02828;
+      --primary-dark: #5a1515;
+      --accent: #d4a017;
+      --accent-light: #e6b833;
+      --accent-dark: #b8860b;
+      --bg-light: #f9f7f4;
+      --bg-white: #ffffff;
+      --text-dark: #2c2c2c;
+      --text-gray: #666666;
+      --border-light: #e0e0e0;
+      --border-gray: #cccccc;
+      --success: #16a34a;
+      --warning: #ea580c;
+      --error: #dc2626;
+      --info: #0284c7;
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.15);
+      --transition: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background-color: var(--bg-light);
+      color: var(--text-dark);
+      -webkit-font-smoothing: antialiased;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      overflow-y: auto;
+      overflow-x: visible;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 1rem;
+    }
+
+    /* ============ HEADER ============ */
+    header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      color: var(--bg-white);
+      padding: 1rem;
+      box-shadow: var(--shadow-md);
+      z-index: 100;
+      flex-shrink: 0;
+    }
+
+    header .header-content {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .logo {
+      font-size: 1.75rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      letter-spacing: -0.5px;
+    }
+
+    .header-meta {
+      font-size: 0.85rem;
+      opacity: 0.9;
+      text-align: right;
+    }
+
+    /* ============ TABS ============ */
+    .tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 2px solid var(--border-light);
+      background: var(--bg-white);
+      overflow-x: auto;
+      overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
+      scroll-behavior: smooth;
+    }
+
+    .tabs::-webkit-scrollbar {
+      height: 4px;
+    }
+
+    .tabs::-webkit-scrollbar-track {
+      background: var(--border-light);
+    }
+
+    .tabs::-webkit-scrollbar-thumb {
+      background: var(--accent);
+      border-radius: 2px;
+    }
+
+    .tab-button {
+      padding: 1rem 1.25rem;
+      border: none;
+      background: transparent;
+      color: var(--text-gray);
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+      border-bottom: 3px solid transparent;
+      transition: all var(--transition);
+      font-family: 'Inter', sans-serif;
+      min-height: 56px;
+    }
+
+    .tab-button:hover {
+      color: var(--primary);
+      background: rgba(127, 29, 29, 0.05);
+    }
+
+    .tab-button.active {
+      color: var(--primary);
+      border-bottom-color: var(--accent);
+      background: rgba(212, 160, 23, 0.05);
+    }
+
+    /* ============ TAB CONTENT ============ */
+    .tab-content {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ============ FORMS ============ */
+    .form-section {
+      background: var(--bg-white);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-light);
+    }
+
+    .form-section h3 {
+      color: var(--primary);
+      margin-bottom: 1.25rem;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    label {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text-dark);
+    }
+
+    .required::after {
+      content: " *";
+      color: var(--error);
+    }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="date"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="password"],
+    select,
+    textarea {
+      padding: 0.75rem;
+      border: 1px solid var(--border-gray);
+      border-radius: 6px;
+      font-family: 'Inter', sans-serif;
+      font-size: 1rem;
+      color: var(--text-dark);
+      background: var(--bg-white);
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+
+    input[type="text"]:focus,
+    input[type="number"]:focus,
+    input[type="date"]:focus,
+    input[type="email"]:focus,
+    input[type="tel"]:focus,
+    input[type="password"]:focus,
+    select:focus,
+    textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(127, 29, 29, 0.1);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-top: 1.5rem;
+    }
+
+    /* ============ BUTTONS ============ */
+    button {
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      transition: all var(--transition);
+      border: none;
+      border-radius: 6px;
+      font-weight: 500;
+      font-size: 1rem;
+    }
+
+    .btn {
+      padding: 0.75rem 1.25rem;
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-light);
+      box-shadow: var(--shadow-md);
+    }
+
+    .btn-primary:active {
+      background: var(--primary-dark);
+    }
+
+    .btn-secondary {
+      background: var(--accent);
+      color: var(--text-dark);
+    }
+
+    .btn-secondary:hover {
+      background: var(--accent-light);
+      box-shadow: var(--shadow-md);
+    }
+
+    .btn-success {
+      background: var(--success);
+      color: white;
+    }
+
+    .btn-success:hover {
+      background: #15803d;
+    }
+
+    .btn-danger {
+      background: var(--error);
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #b91c1c;
+    }
+
+    .btn-small {
+      padding: 0.5rem 0.875rem;
+      font-size: 0.85rem;
+      min-height: 36px;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* ============ TABLES ============ */
+    .table-responsive {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      border-radius: 8px;
+      box-shadow: var(--shadow-sm);
+      background: var(--bg-white);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+    }
+
+    thead {
+      background: var(--primary);
+      color: white;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    th {
+      padding: 0.875rem;
+      text-align: left;
+      font-weight: 600;
+      border-bottom: 2px solid var(--primary-light);
+    }
+
+    td {
+      padding: 0.875rem;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    tbody tr:hover {
+      background: var(--bg-light);
+    }
+
+    .text-center {
+      text-align: center;
+    }
+
+    .text-right {
+      text-align: right;
+    }
+
+    /* ============ CARDS ============ */
+    .card {
+      background: var(--bg-white);
+      border-radius: 8px;
+      padding: 1.25rem;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-light);
+      transition: box-shadow var(--transition), transform var(--transition);
+    }
+
+    .card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      border-bottom: 1px solid var(--border-light);
+      padding-bottom: 0.875rem;
+    }
+
+    .card-title {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--primary);
+    }
+
+    .card-content {
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.35rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .badge-primary {
+      background: rgba(127, 29, 29, 0.15);
+      color: var(--primary);
+    }
+
+    .badge-success {
+      background: rgba(22, 163, 74, 0.15);
+      color: var(--success);
+    }
+
+    .badge-warning {
+      background: rgba(234, 88, 12, 0.15);
+      color: var(--warning);
+    }
+
+    .badge-info {
+      background: rgba(2, 132, 199, 0.15);
+      color: var(--info);
+    }
+
+    /* ============ STATS ============ */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: var(--bg-white);
+      border-radius: 8px;
+      padding: 1.25rem;
+      box-shadow: var(--shadow-sm);
+      border-left: 4px solid var(--accent);
+    }
+
+    .stat-label {
+      font-size: 0.85rem;
+      color: var(--text-gray);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-value {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--primary);
+      word-break: break-word;
+    }
+
+    .stat-unit {
+      font-size: 0.85rem;
+      color: var(--text-gray);
+      margin-left: 0.25rem;
+    }
+
+    /* ============ MODALS ============ */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: var(--bg-white);
+      border-radius: 12px;
+      max-width: 500px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .modal-header {
+      padding: 1.5rem;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-header h2 {
+      color: var(--primary);
+      font-size: 1.25rem;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1.5rem;
+      color: var(--text-gray);
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-close:hover {
+      color: var(--text-dark);
+    }
+
+    .modal-body {
+      padding: 1.5rem;
+    }
+
+    .modal-footer {
+      padding: 1.5rem;
+      border-top: 1px solid var(--border-light);
+      display: flex;
+      gap: 0.75rem;
+      justify-content: flex-end;
+    }
+
+    /* ============ ALERTS ============ */
+    .alert {
+      padding: 1rem;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+      display: flex;
+      gap: 0.75rem;
+      align-items: flex-start;
+      animation: slideDown 0.3s ease;
+    }
+
+    @keyframes slideDown {
+      from {
+        transform: translateY(-20px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .alert-success {
+      background: rgba(22, 163, 74, 0.1);
+      color: var(--success);
+      border-left: 4px solid var(--success);
+    }
+
+    .alert-error {
+      background: rgba(220, 38, 38, 0.1);
+      color: var(--error);
+      border-left: 4px solid var(--error);
+    }
+
+    .alert-warning {
+      background: rgba(234, 88, 12, 0.1);
+      color: var(--warning);
+      border-left: 4px solid var(--warning);
+    }
+
+    .alert-info {
+      background: rgba(2, 132, 199, 0.1);
+      color: var(--info);
+      border-left: 4px solid var(--info);
+    }
+
+    .alert-icon {
+      flex-shrink: 0;
+      font-size: 1.25rem;
+      margin-top: 2px;
+    }
+
+    /* ============ CHARTS ============ */
+    .chart-container {
+      position: relative;
+      height: 300px;
+      margin-bottom: 1.5rem;
+      background: var(--bg-white);
+      border-radius: 8px;
+      padding: 1rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* ============ CALCULATOR ============ */
+    .calculator {
+      background: linear-gradient(135deg, rgba(127, 29, 29, 0.05) 0%, rgba(212, 160, 23, 0.05) 100%);
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+      border: 2px solid var(--border-light);
+    }
+
+    .calculator h4 {
+      color: var(--primary);
+      margin-bottom: 1rem;
+      font-size: 1rem;
+    }
+
+    .calculator-result {
+      background: var(--bg-white);
+      padding: 0.875rem;
+      border-radius: 6px;
+      margin-top: 1rem;
+      border-left: 4px solid var(--accent);
+    }
+
+    .calculator-result-label {
+      font-size: 0.85rem;
+      color: var(--text-gray);
+      margin-bottom: 0.25rem;
+    }
+
+    .calculator-result-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    /* ============ EMPTY STATE ============ */
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1.5rem;
+      color: var(--text-gray);
+    }
+
+    .empty-state-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+
+    .empty-state-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-dark);
+      margin-bottom: 0.5rem;
+    }
+
+    .empty-state-text {
+      font-size: 0.95rem;
+      margin-bottom: 1.5rem;
+    }
+
+    /* ============ RESPONSIVE ============ */
+    @media (max-width: 768px) {
+      .container {
+        padding: 0.75rem;
+      }
+
+      header .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+      }
+
+      .logo {
+        font-size: 1.5rem;
+      }
+
+      .header-meta {
+        text-align: left;
+        font-size: 0.75rem;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .tab-button {
+        padding: 0.875rem 1rem;
+        font-size: 0.85rem;
+      }
+
+      table {
+        font-size: 0.85rem;
+      }
+
+      th, td {
+        padding: 0.625rem;
+      }
+
+      .form-actions {
+        flex-direction: column;
+      }
+
+      .btn {
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .logo {
+        font-size: 1.25rem;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .modal-content {
+        border-radius: 16px;
+        max-height: 85vh;
+      }
+    }
+
+    /* ============ UTILITY ============ */
+    .hidden {
+      display: none !important;
+    }
+
+    .mt-1 { margin-top: 0.5rem; }
+    .mt-2 { margin-top: 1rem; }
+    .mt-3 { margin-top: 1.5rem; }
+    .mb-1 { margin-bottom: 0.5rem; }
+    .mb-2 { margin-bottom: 1rem; }
+    .mb-3 { margin-bottom: 1.5rem; }
+    .p-0 { padding: 0; }
+    .p-1 { padding: 0.5rem; }
+    .gap-1 { gap: 0.5rem; }
+    .gap-2 { gap: 1rem; }
+
+    .flex { display: flex; }
+    .flex-col { flex-direction: column; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+    .justify-center { justify-content: center; }
+
+    .w-full { width: 100%; }
+    .max-w-full { max-width: 100%; }
+
+    .text-xs { font-size: 0.75rem; }
+    .text-sm { font-size: 0.875rem; }
+    .text-lg { font-size: 1.125rem; }
+    .text-xl { font-size: 1.25rem; }
+
+    .font-semibold { font-weight: 600; }
+    .font-bold { font-weight: 700; }
+
+    .text-primary { color: var(--primary); }
+    .text-accent { color: var(--accent); }
+    .text-gray { color: var(--text-gray); }
+
+    .bg-primary { background: var(--primary); }
+    .bg-light { background: var(--bg-light); }
+
+    .rounded { border-radius: 6px; }
+    .rounded-lg { border-radius: 8px; }
+    .rounded-full { border-radius: 9999px; }
+
+    .border { border: 1px solid var(--border-light); }
+    .border-t { border-top: 1px solid var(--border-light); }
+    .border-b { border-bottom: 1px solid var(--border-light); }
+
+    .opacity-50 { opacity: 0.5; }
+    .opacity-75 { opacity: 0.75; }
+
+    .cursor-pointer { cursor: pointer; }
+    .cursor-default { cursor: default; }
+
+    .select-none { user-select: none; }
+    .select-text { user-select: text; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-content">
+      <div class="logo">🍷 VinosCL</div>
+      <div class="header-meta">
+        <div>Gestión de Bodegas Chilenas</div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <!-- TABS -->
+      <div class="tabs">
+        <button class="tab-button active" data-tab="vinedos">🌾 Viñedos</button>
+        <button class="tab-button" data-tab="vendimia">🍇 Vendimia</button>
+        <button class="tab-button" data-tab="bodega">🏭 Bodega</button>
+        <button class="tab-button" data-tab="vinos">🍷 Vinos</button>
+        <button class="tab-button" data-tab="finanzas">💰 Finanzas</button>
+        <button class="tab-button" data-tab="clientes">👥 Clientes</button>
+      </div>
+
+      <!-- ============ TAB: VIÑEDOS ============ -->
+      <div id="vinedos" class="tab-content active">
+        <div class="form-section">
+          <h3>➕ Agregar Parcela</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="parcela-nombre" class="required">Nombre Parcela</label>
+              <input type="text" id="parcela-nombre" placeholder="P. Norte, La Esperanza, etc.">
+            </div>
+            <div class="form-group">
+              <label for="parcela-cepa" class="required">Cepa</label>
+              <select id="parcela-cepa">
+                <option value="">Seleccionar...</option>
+                <option>Cabernet Sauvignon</option>
+                <option>Carmenère</option>
+                <option>Merlot</option>
+                <option>Syrah</option>
+                <option>Pinot Noir</option>
+                <option>Chardonnay</option>
+                <option>Sauvignon Blanc</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="parcela-hectareas" class="required">Hectáreas</label>
+              <input type="number" id="parcela-hectareas" placeholder="5.5" step="0.1" min="0">
+            </div>
+            <div class="form-group">
+              <label for="parcela-ano" class="required">Año Plantación</label>
+              <input type="number" id="parcela-ano" placeholder="2018" min="1990" max="2099">
+            </div>
+            <div class="form-group">
+              <label for="parcela-portainjerto">Portainjerto</label>
+              <input type="text" id="parcela-portainjerto" placeholder="101-14, SO4, etc.">
+            </div>
+            <div class="form-group">
+              <label for="parcela-densidad" class="required">Densidad (plantas/ha)</label>
+              <input type="number" id="parcela-densidad" placeholder="4000" min="0">
+            </div>
+            <div class="form-group">
+              <label for="parcela-valle" class="required">Valle</label>
+              <select id="parcela-valle">
+                <option value="">Seleccionar...</option>
+                <option>Maipo</option>
+                <option>Colchagua</option>
+                <option>Casablanca</option>
+                <option>Maule</option>
+                <option>Rapel</option>
+                <option>Aconcagua</option>
+                <option>Itata</option>
+                <option>Bío-Bío</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-primary" onclick="agregarParcela()">Agregar Parcela</button>
+            <button class="btn btn-secondary" onclick="limpiarFormularioParcela()">Limpiar</button>
+          </div>
+        </div>
+
+        <div class="stats-grid" id="vinedos-stats"></div>
+
+        <div class="form-section">
+          <h3>📋 Parcelas Registradas</h3>
+          <div class="table-responsive">
+            <table id="parcelas-table">
+              <thead>
+                <tr>
+                  <th>Parcela</th>
+                  <th>Cepa</th>
+                  <th>Hectáreas</th>
+                  <th>Año</th>
+                  <th>Valle</th>
+                  <th>Densidad</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="parcelas-tbody">
+                <tr class="empty-state">
+                  <td colspan="7">
+                    <div class="empty-state-icon">🌾</div>
+                    <div class="empty-state-title">Sin parcelas</div>
+                    <div class="empty-state-text">Comienza a agregar tus parcelas</div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ TAB: VENDIMIA ============ -->
+      <div id="vendimia" class="tab-content">
+        <div class="form-section">
+          <h3>➕ Registrar Cosecha</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="cosecha-parcela" class="required">Parcela</label>
+              <select id="cosecha-parcela">
+                <option value="">Seleccionar...</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="cosecha-fecha" class="required">Fecha Cosecha</label>
+              <input type="date" id="cosecha-fecha">
+            </div>
+            <div class="form-group">
+              <label for="cosecha-toneladas" class="required">Toneladas Cosechadas</label>
+              <input type="number" id="cosecha-toneladas" placeholder="12.5" step="0.1" min="0">
+            </div>
+            <div class="form-group">
+              <label for="cosecha-brix" class="required">Grado Brix</label>
+              <input type="number" id="cosecha-brix" placeholder="23.5" step="0.1" min="0">
+            </div>
+            <div class="form-group">
+              <label for="cosecha-acidez" class="required">Acidez (g/L)</label>
+              <input type="number" id="cosecha-acidez" placeholder="5.2" step="0.1" min="0">
+            </div>
+            <div class="form-group">
+              <label for="cosecha-ph" class="required">pH</label>
+              <input type="number" id="cosecha-ph" placeholder="3.8" step="0.1" min="0" max="14">
+            </div>
+            <div class="form-group">
+              <label for="cosecha-estado" class="required">Estado</label>
+              <select id="cosecha-estado">
+                <option>En viña</option>
+                <option selected>Cosechado</option>
+                <option>En bodega</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="calculator">
+            <h4>⚗️ Calculadora: Brix → Alcohol</h4>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="brix-calc">Grado Brix</label>
+                <input type="number" id="brix-calc" placeholder="23" step="0.1" min="0" oninput="calcularAlcohol()">
+              </div>
+            </div>
+            <div class="calculator-result">
+              <div class="calculator-result-label">Potencial Alcohólico</div>
+              <div class="calculator-result-value" id="brix-result">-</div>
+            </div>
+          </div>
+
+          <div class="calculator">
+            <h4>📊 Calculadora: Rendimiento</h4>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="rend-toneladas">Toneladas</label>
+                <input type="number" id="rend-toneladas" placeholder="10" step="0.1" min="0" oninput="calcularRendimiento()">
+              </div>
+              <div class="form-group">
+                <label for="rend-hectareas">Hectáreas</label>
+                <input type="number" id="rend-hectareas" placeholder="2" step="0.1" min="0" oninput="calcularRendimiento()">
+              </div>
+            </div>
+            <div class="calculator-result">
+              <div class="calculator-result-label">Rendimiento</div>
+              <div class="calculator-result-value" id="rend-result">-</div>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button class="btn btn-primary" onclick="agregarCosecha()">Registrar Cosecha</button>
+            <button class="btn btn-secondary" onclick="limpiarFormularioCosecha()">Limpiar</button>
+          </div>
+        </div>
+
+        <div class="stats-grid" id="vendimia-stats"></div>
+
+        <div class="form-section">
+          <h3>📋 Cosechas Registradas</h3>
+          <div class="table-responsive">
+            <table id="cosechas-table">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Parcela</th>
+                  <th>Toneladas</th>
+                  <th>Brix</th>
+                  <th>pH</th>
+                  <th>Rendimiento</th>
+                  <th>Estado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="cosechas-tbody">
+                <tr class="empty-state">
+                  <td colspan="8">
+                    <div class="empty-state-icon">🍇</div>
+                    <div class="empty-state-title">Sin cosechas</div>
+                    <div class="empty-state-text">Registra tus cosechas aquí</div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ TAB: BODEGA ============ -->
+      <div id="bodega" class="tab-content">
+        <div class="form-section">
+          <h3>➕ Agregar Contenedor</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="contenedor-nombre" class="required">Nombre/ID</label>
+              <input type="text" id="contenedor-nombre" placeholder="Barrica B-12, Tank 5, etc.">
+            </div>
+            <div class="form-group">
+              <label for="contenedor-tipo" class="required">Tipo</label>
+              <select id="contenedor-tipo">
+                <option value="">Seleccionar...</option>
+                <option>Barrica</option>
+                <option>Tanque Inox</option>
+                <option>Demijohn</option>
+                <option>Vat</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="contenedor-capacidad" class="required">Capacidad (L)</label>
+              <input type="number" id="contenedor-capacidad" placeholder="225" min="0">
+            </div>
+            <div class="form-group">
+              <label for="contenedor-varietal" class="required">Varietal</label>
+              <select id="contenedor-varietal">
+                <option value="">Seleccionar...</option>
+                <option>Cabernet Sauvignon</option>
+                <option>Carmenère</option>
+                <option>Merlot</option>
+                <option>Syrah</option>
+                <option>Pinot Noir</option>
+                <option>Chardonnay</option>
+                <option>Sauvignon Blanc</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="contenedor-cosecha">Cosecha</label>
+              <input type="number" id="contenedor-cosecha" placeholder="2023" min="1990" max="2099">
+            </div>
+            <div class="form-group">
+              <label for="contenedor-etapa" class="required">Etapa Actual</label>
+              <select id="contenedor-etapa">
+                <option>Fermentación</option>
+                <option>Maceración</option>
+                <option selected>Crianza</option>
+                <option>Embotellado</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="contenedor-roble">Tipo de Roble</label>
+              <select id="contenedor-roble">
+                <option value="">Seleccionar...</option>
+                <option>Roble Francés</option>
+                <option>Roble Americano</option>
+                <option>Roble Húngaro</option>
+                <option>Sin Roble</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="contenedor-fecha-entrada">Fecha Entrada</label>
+              <input type="date" id="contenedor-fecha-entrada">
+            </div>
+          </div>
+
+          <div class="calculator">
+            <h4>⏱️ Calculadora: Tiempo en Barrica</h4>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="barrica-fecha-entrada">Fecha Entrada</label>
+                <input type="date" id="barrica-fecha-entrada" oninput="calcularDiasBarrica()">
+              </div>
+            </div>
+            <div class="calculator-result">
+              <div class="calculator-result-label">Días en Barrica</div>
+              <div class="calculator-result-value" id="barrica-result">-</div>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button class="btn btn-primary" onclick="agregarContenedor()">Agregar Contenedor</button>
+            <button class="btn btn-secondary" onclick="limpiarFormularioContenedor()">Limpiar</button>
+          </div>
+        </div>
+
+        <div class="stats-grid" id="bodega-stats"></div>
+
+        <div class="form-section">
+          <h3>📋 Contenedores en Bodega</h3>
+          <div class="table-responsive">
+            <table id="contenedores-table">
+              <thead>
+                <tr>
+                  <th>ID/Nombre</th>
+                  <th>Tipo</th>
+                  <th>Varietal</th>
+                  <th>Cosecha</th>
+                  <th>Etapa</th>
+                  <th>Días</th>
+                  <th>Roble</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="contenedores-tbody">
+                <tr class="empty-state">
+                  <td colspan="8">
+                    <div class="empty-state-icon">🏭</div>
+                    <div class="empty-state-title">Sin contenedores</div>
+                    <div class="empty-state-text">Agrega contenedores a tu bodega</div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ TAB: VINOS ============ -->
+      <div id="vinos" class="tab-content">
+        <div class="form-section">
+          <h3>➕ Agregar Vino</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="vino-nombre" class="required">Nombre Comercial</label>
+              <input type="text" id="vino-nombre" placeholder="Viña Mapocho Reserva 2021">
+            </div>
+            <div class="form-group">
+              <label for="vino-linea" class="required">Línea</label>
+              <select id="vino-linea">
+                <option value="">Seleccionar...</option>
+                <option>Ícono</option>
+                <option>Premium</option>
+                <option>Gran Reserva</option>
+                <option>Reserva</option>
+                <option>Carrusel</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="vino-cepa" class="required">Cepa Dominante</label>
+              <select id="vino-cepa">
+                <option value="">Seleccionar...</option>
+                <option>Cabernet Sauvignon</option>
+                <option>Carmenère</option>
+                <option>Merlot</option>
+                <option>Syrah</option>
+                <option>Pinot Noir</option>
+                <option>Chardonnay</option>
+                <option>Sauvignon Blanc</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="vino-anada" class="required">Añada</label>
+              <input type="number" id="vino-anada" placeholder="2021" min="1990" max="2099">
+            </div>
+            <div class="form-group">
+              <label for="vino-do" class="required">DO (Denominación Origen)</label>
+              <input type="text" id="vino-do" placeholder="Colchagua, Maipo, etc.">
+            </div>
+            <div class="form-group">
+              <label for="vino-volumen" class="required">Volumen Producido (cajas)</label>
+              <input type="number" id="vino-volumen" placeholder="500" min="0">
+            </div>
+            <div class="form-group">
+              <label for="vino-precio-botella" class="required">Precio/Botella (CLP)</label>
+              <input type="number" id="vino-precio-botella" placeholder="15000" min="0">
+            </div>
+            <div class="form-group">
+              <label for="vino-stock" class="required">Stock Botellas</label>
+              <input type="number" id="vino-stock" placeholder="6000" min="0">
+            </div>
+            <div class="form-group">
+              <label for="vino-notas">Notas de Cata</label>
+              <textarea id="vino-notas" placeholder="Aromas a ciruela, taninos sedosos..."></textarea>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button class="btn btn-primary" onclick="agregarVino()">Agregar Vino</button>
+            <button class="btn btn-secondary" onclick="limpiarFormularioVino()">Limpiar</button>
+          </div>
+        </div>
+
+        <div class="stats-grid" id="vinos-stats"></div>
+
+        <div class="form-section">
+          <h3>📋 Catálogo de Vinos</h3>
+          <div class="table-responsive">
+            <table id="vinos-table">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Línea</th>
+                  <th>Cepa</th>
+                  <th>Añada</th>
+                  <th>Stock</th>
+                  <th>Precio CLP</th>
+                  <th>Ingresos</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="vinos-tbody">
+                <tr class="empty-state">
+                  <td colspan="8">
+                    <div class="empty-state-icon">🍷</div>
+                    <div class="empty-state-title">Sin vinos</div>
+                    <div class="empty-state-text">Crea tu catálogo de vinos</div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ TAB: FINANZAS ============ -->
+      <div id="finanzas" class="tab-content">
+        <div class="form-section">
+          <h3>📊 Análisis de Ingresos</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="finanzas-mes">Mes</label>
+              <input type="month" id="finanzas-mes">
+            </div>
+            <div class="form-group">
+              <label for="finanzas-moneda">Moneda</label>
+              <select id="finanzas-moneda" onchange="actualizarFinanzas()">
+                <option>CLP</option>
+                <option>USD</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="stats-grid" id="finanzas-stats"></div>
+
+        <div class="form-section">
+          <div class="chart-container">
+            <canvas id="chartIngresos"></canvas>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>💸 Costos Operacionales</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="costo-vina">Costos Viña (CLP)</label>
+              <input type="number" id="costo-vina" placeholder="50000" min="0">
+            </div>
+            <div class="form-group">
+              <label for="costo-bodega">Costos Bodega (CLP)</label>
+              <input type="number" id="costo-bodega" placeholder="75000" min="0">
+            </div>
+            <div class="form-group">
+              <label for="costo-embotellado">Costos Embotellado (CLP)</label>
+              <input type="number" id="costo-embotellado" placeholder="30000" min="0">
+            </div>
+            <div class="form-group">
+              <label for="costo-marketing">Costos Marketing (CLP)</label>
+              <input type="number" id="costo-marketing" placeholder="20000" min="0">
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-primary" onclick="calcularMargen()">Calcular Márgenes</button>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>📈 Mercados de Exportación</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="export-mercado">País Destino</label>
+              <input type="text" id="export-mercado" placeholder="Estados Unidos, China, etc.">
+            </div>
+            <div class="form-group">
+              <label for="export-cajas">Volumen (cajas)</label>
+              <input type="number" id="export-cajas" placeholder="100" min="0">
+            </div>
+            <div class="form-group">
+              <label for="export-precio-usd">Precio FOB (USD)</label>
+              <input type="number" id="export-precio-usd" placeholder="8.5" step="0.01" min="0">
+            </div>
+            <div class="form-group">
+              <label for="export-vino">Vino</label>
+              <select id="export-vino">
+                <option value="">Seleccionar...</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-primary" onclick="agregarExportacion()">Agregar Exportación</button>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>📋 Exportaciones Registradas</h3>
+          <div class="table-responsive">
+            <table id="exportaciones-table">
+              <thead>
+                <tr>
+                  <th>Vino</th>
+                  <th>País</th>
+                  <th>Cajas</th>
+                  <th>Precio USD</th>
+                  <th>Ingresos USD</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="exportaciones-tbody">
+                <tr class="empty-state">
+                  <td colspan="6">
+                    <div class="empty-state-icon">🌍</div>
+                    <div class="empty-state-title">Sin exportaciones</div>
+                    <div class="empty-state-text">Registra tus ventas de exportación</div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ TAB: CLIENTES ============ -->
+      <div id="clientes" class="tab-content">
+        <div class="form-section">
+          <h3>➕ Agregar Cliente</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="cliente-nombre" class="required">Nombre/Razón Social</label>
+              <input type="text" id="cliente-nombre" placeholder="Distribuidora XYZ S.A.">
+            </div>
+            <div class="form-group">
+              <label for="cliente-tipo" class="required">Tipo</label>
+              <select id="cliente-tipo">
+                <option value="">Seleccionar...</option>
+                <option>Distribuidor</option>
+                <option>Restaurante</option>
+                <option>Tienda Retail</option>
+                <option>Comprador Exportación</option>
+                <option>Hoteles</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="cliente-pais" class="required">País/Región</label>
+              <input type="text" id="cliente-pais" placeholder="Chile, USA, China, etc.">
+            </div>
+            <div class="form-group">
+              <label for="cliente-email">Email</label>
+              <input type="email" id="cliente-email" placeholder="contacto@ejemplo.com">
+            </div>
+            <div class="form-group">
+              <label for="cliente-telefono">Teléfono</label>
+              <input type="tel" id="cliente-telefono" placeholder="+56 9 1234 5678">
+            </div>
+            <div class="form-group">
+              <label for="cliente-contacto">Persona Contacto</label>
+              <input type="text" id="cliente-contacto" placeholder="Juan Pérez">
+            </div>
+            <div class="form-group">
+              <label for="cliente-volumen-anual">Volumen Anual (cajas)</label>
+              <input type="number" id="cliente-volumen-anual" placeholder="500" min="0">
+            </div>
+            <div class="form-group">
+              <label for="cliente-terminos">Términos de Pago</label>
+              <select id="cliente-terminos">
+                <option value="">Seleccionar...</option>
+                <option>Contado</option>
+                <option>30 días</option>
+                <option>60 días</option>
+                <option>90 días</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="cliente-notas">Notas</label>
+              <textarea id="cliente-notas" placeholder="Información adicional..."></textarea>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button class="btn btn-primary" onclick="agregarCliente()">Agregar Cliente</button>
+            <button class="btn btn-secondary" onclick="limpiarFormularioCliente()">Limpiar</button>
+          </div>
+        </div>
+
+        <div class="stats-grid" id="clientes-stats"></div>
+
+        <div class="form-section">
+          <h3>📋 Base de Clientes</h3>
+          <div class="table-responsive">
+            <table id="clientes-table">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Tipo</th>
+                  <th>País/Región</th>
+                  <th>Contacto</th>
+                  <th>Volumen Anual</th>
+                  <th>Términos</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="clientes-tbody">
+                <tr class="empty-state">
+                  <td colspan="7">
+                    <div class="empty-state-icon">👥</div>
+                    <div class="empty-state-title">Sin clientes</div>
+                    <div class="empty-state-text">Crea tu base de clientes</div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // ============ STORAGE UTILITIES ============
+    function safeGetItem(key) {
+      try {
+        const item = localStorage.getItem(key);
+        return item ? JSON.parse(item) : null;
+      } catch (e) {
+        console.error('Error reading localStorage:', e);
+        return null;
+      }
+    }
+
+    function safeSetItem(key, value) {
+      try {
+        localStorage.setItem(key, JSON.stringify(value));
+      } catch (e) {
+        console.error('Error writing to localStorage:', e);
+      }
+    }
+
+    // ============ DATA STRUCTURE INITIALIZATION ============
+    let data = {
+      parcelas: safeGetItem('vinoscl_parcelas') || [],
+      cosechas: safeGetItem('vinoscl_cosechas') || [],
+      contenedores: safeGetItem('vinoscl_contenedores') || [],
+      vinos: safeGetItem('vinoscl_vinos') || [],
+      clientes: safeGetItem('vinoscl_clientes') || [],
+      exportaciones: safeGetItem('vinoscl_exportaciones') || [],
+    };
+
+    // ============ TAB NAVIGATION ============
+    document.querySelectorAll('.tab-button').forEach(button => {
+      button.addEventListener('click', function() {
+        const tabName = this.getAttribute('data-tab');
+
+        document.querySelectorAll('.tab-button').forEach(btn => {
+          btn.classList.remove('active');
+        });
+        this.classList.add('active');
+
+        document.querySelectorAll('.tab-content').forEach(content => {
+          content.classList.remove('active');
+        });
+        document.getElementById(tabName).classList.add('active');
+      });
+    });
+
+    // ============ VIÑEDOS FUNCTIONS ============
+    function agregarParcela() {
+      const nombre = document.getElementById('parcela-nombre').value.trim();
+      const cepa = document.getElementById('parcela-cepa').value;
+      const hectareas = parseFloat(document.getElementById('parcela-hectareas').value);
+      const ano = parseInt(document.getElementById('parcela-ano').value);
+      const portainjerto = document.getElementById('parcela-portainjerto').value.trim();
+      const densidad = parseInt(document.getElementById('parcela-densidad').value);
+      const valle = document.getElementById('parcela-valle').value;
+
+      if (!nombre || !cepa || !hectareas || !ano || !densidad || !valle) {
+        alert('Por favor completa los campos requeridos');
+        return;
+      }
+
+      const parcela = {
+        id: Date.now(),
+        nombre,
+        cepa,
+        hectareas,
+        ano,
+        portainjerto,
+        densidad,
+        valle,
+        plantas_totales: hectareas * densidad
+      };
+
+      data.parcelas.push(parcela);
+      safeSetItem('vinoscl_parcelas', data.parcelas);
+
+      actualizarTablaParcelas();
+      actualizarStatsVinedos();
+      actualizarSelectParcelas();
+      limpiarFormularioParcela();
+
+      mostrarAlerta('✓ Parcela agregada correctamente', 'success');
+    }
+
+    function limpiarFormularioParcela() {
+      document.getElementById('parcela-nombre').value = '';
+      document.getElementById('parcela-cepa').value = '';
+      document.getElementById('parcela-hectareas').value = '';
+      document.getElementById('parcela-ano').value = new Date().getFullYear();
+      document.getElementById('parcela-portainjerto').value = '';
+      document.getElementById('parcela-densidad').value = '';
+      document.getElementById('parcela-valle').value = '';
+    }
+
+    function actualizarTablaParcelas() {
+      const tbody = document.getElementById('parcelas-tbody');
+      tbody.innerHTML = '';
+
+      if (data.parcelas.length === 0) {
+        tbody.innerHTML = `
+          <tr class="empty-state">
+            <td colspan="7">
+              <div class="empty-state-icon">🌾</div>
+              <div class="empty-state-title">Sin parcelas</div>
+              <div class="empty-state-text">Comienza a agregar tus parcelas</div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      data.parcelas.forEach(parcela => {
+        tbody.innerHTML += `
+          <tr>
+            <td><strong>${parcela.nombre}</strong></td>
+            <td>${parcela.cepa}</td>
+            <td>${parcela.hectareas.toFixed(1)} ha</td>
+            <td>${parcela.ano}</td>
+            <td>${parcela.valle}</td>
+            <td>${parcela.densidad.toLocaleString()} plantas/ha</td>
+            <td>
+              <button class="btn btn-small btn-danger" onclick="eliminarParcela(${parcela.id})">Eliminar</button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    function eliminarParcela(id) {
+      if (confirm('¿Eliminar esta parcela?')) {
+        data.parcelas = data.parcelas.filter(p => p.id !== id);
+        safeSetItem('vinoscl_parcelas', data.parcelas);
+        actualizarTablaParcelas();
+        actualizarStatsVinedos();
+        actualizarSelectParcelas();
+      }
+    }
+
+    function actualizarStatsVinedos() {
+      const container = document.getElementById('vinedos-stats');
+      const totalHectareas = data.parcelas.reduce((sum, p) => sum + p.hectareas, 0);
+      const totalPlantas = data.parcelas.reduce((sum, p) => sum + p.plantas_totales, 0);
+      const promedioDensidad = data.parcelas.length > 0
+        ? (data.parcelas.reduce((sum, p) => sum + p.densidad, 0) / data.parcelas.length).toFixed(0)
+        : 0;
+
+      container.innerHTML = `
+        <div class="stat-card">
+          <div class="stat-label">Parcelas</div>
+          <div class="stat-value">${data.parcelas.length}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Hectáreas</div>
+          <div class="stat-value">${totalHectareas.toFixed(1)}<span class="stat-unit">ha</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Plantas Totales</div>
+          <div class="stat-value">${totalPlantas.toLocaleString()}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Densidad Promedio</div>
+          <div class="stat-value">${promedioDensidad}<span class="stat-unit">/ha</span></div>
+        </div>
+      `;
+    }
+
+    function actualizarSelectParcelas() {
+      const select = document.getElementById('cosecha-parcela');
+      const selectExport = document.getElementById('export-vino');
+
+      select.innerHTML = '<option value="">Seleccionar...</option>';
+      data.parcelas.forEach(parcela => {
+        select.innerHTML += `<option value="${parcela.id}">${parcela.nombre} (${parcela.cepa})</option>`;
+      });
+    }
+
+    // ============ VENDIMIA FUNCTIONS ============
+    function agregarCosecha() {
+      const parcelaId = document.getElementById('cosecha-parcela').value;
+      const fecha = document.getElementById('cosecha-fecha').value;
+      const toneladas = parseFloat(document.getElementById('cosecha-toneladas').value);
+      const brix = parseFloat(document.getElementById('cosecha-brix').value);
+      const acidez = parseFloat(document.getElementById('cosecha-acidez').value);
+      const ph = parseFloat(document.getElementById('cosecha-ph').value);
+      const estado = document.getElementById('cosecha-estado').value;
+
+      if (!parcelaId || !fecha || !toneladas || !brix || !acidez || !ph) {
+        alert('Por favor completa los campos requeridos');
+        return;
+      }
+
+      const parcela = data.parcelas.find(p => p.id === parseInt(parcelaId));
+      const rendimiento = (toneladas / parcela.hectareas).toFixed(2);
+
+      const cosecha = {
+        id: Date.now(),
+        parcelaId: parseInt(parcelaId),
+        parcelaNombre: parcela.nombre,
+        cepa: parcela.cepa,
+        fecha,
+        toneladas,
+        brix,
+        acidez,
+        ph,
+        rendimiento,
+        estado
+      };
+
+      data.cosechas.push(cosecha);
+      safeSetItem('vinoscl_cosechas', data.cosechas);
+
+      actualizarTablaCosechas();
+      actualizarStatsVendimia();
+      limpiarFormularioCosecha();
+
+      mostrarAlerta('✓ Cosecha registrada correctamente', 'success');
+    }
+
+    function limpiarFormularioCosecha() {
+      document.getElementById('cosecha-parcela').value = '';
+      document.getElementById('cosecha-fecha').value = '';
+      document.getElementById('cosecha-toneladas').value = '';
+      document.getElementById('cosecha-brix').value = '';
+      document.getElementById('cosecha-acidez').value = '';
+      document.getElementById('cosecha-ph').value = '';
+      document.getElementById('cosecha-estado').value = 'Cosechado';
+      document.getElementById('brix-calc').value = '';
+      document.getElementById('rend-toneladas').value = '';
+      document.getElementById('rend-hectareas').value = '';
+      document.getElementById('brix-result').textContent = '-';
+      document.getElementById('rend-result').textContent = '-';
+    }
+
+    function calcularAlcohol() {
+      const brix = parseFloat(document.getElementById('brix-calc').value);
+      if (!brix || brix < 0) {
+        document.getElementById('brix-result').textContent = '-';
+        return;
+      }
+
+      // Fórmula simplificada: alcohol% ≈ brix * 0.55 + 0.1
+      const alcohol = (brix * 0.55 + 0.1).toFixed(1);
+      document.getElementById('brix-result').textContent = `${alcohol}°`;
+    }
+
+    function calcularRendimiento() {
+      const toneladas = parseFloat(document.getElementById('rend-toneladas').value);
+      const hectareas = parseFloat(document.getElementById('rend-hectareas').value);
+
+      if (!toneladas || !hectareas || toneladas <= 0 || hectareas <= 0) {
+        document.getElementById('rend-result').textContent = '-';
+        return;
+      }
+
+      const rendimiento = (toneladas / hectareas).toFixed(2);
+      document.getElementById('rend-result').textContent = `${rendimiento} ton/ha`;
+    }
+
+    function actualizarTablaCosechas() {
+      const tbody = document.getElementById('cosechas-tbody');
+      tbody.innerHTML = '';
+
+      if (data.cosechas.length === 0) {
+        tbody.innerHTML = `
+          <tr class="empty-state">
+            <td colspan="8">
+              <div class="empty-state-icon">🍇</div>
+              <div class="empty-state-title">Sin cosechas</div>
+              <div class="empty-state-text">Registra tus cosechas aquí</div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      data.cosechas.forEach(cosecha => {
+        const estadoBadge = {
+          'En viña': 'badge-warning',
+          'Cosechado': 'badge-success',
+          'En bodega': 'badge-info'
+        };
+
+        tbody.innerHTML += `
+          <tr>
+            <td>${new Date(cosecha.fecha).toLocaleDateString('es-CL')}</td>
+            <td><strong>${cosecha.parcelaNombre}</strong></td>
+            <td>${cosecha.toneladas.toFixed(1)} ton</td>
+            <td>${cosecha.brix.toFixed(1)}°</td>
+            <td>${cosecha.ph.toFixed(1)}</td>
+            <td>${cosecha.rendimiento} ton/ha</td>
+            <td><span class="badge ${estadoBadge[cosecha.estado]}">${cosecha.estado}</span></td>
+            <td>
+              <button class="btn btn-small btn-danger" onclick="eliminarCosecha(${cosecha.id})">Eliminar</button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    function eliminarCosecha(id) {
+      if (confirm('¿Eliminar esta cosecha?')) {
+        data.cosechas = data.cosechas.filter(c => c.id !== id);
+        safeSetItem('vinoscl_cosechas', data.cosechas);
+        actualizarTablaCosechas();
+        actualizarStatsVendimia();
+      }
+    }
+
+    function actualizarStatsVendimia() {
+      const container = document.getElementById('vendimia-stats');
+      const totalToneladas = data.cosechas.reduce((sum, c) => sum + c.toneladas, 0);
+      const promedioBrix = data.cosechas.length > 0
+        ? (data.cosechas.reduce((sum, c) => sum + c.brix, 0) / data.cosechas.length).toFixed(1)
+        : 0;
+      const promedioRendimiento = data.cosechas.length > 0
+        ? (data.cosechas.reduce((sum, c) => sum + parseFloat(c.rendimiento), 0) / data.cosechas.length).toFixed(2)
+        : 0;
+
+      container.innerHTML = `
+        <div class="stat-card">
+          <div class="stat-label">Cosechas</div>
+          <div class="stat-value">${data.cosechas.length}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Toneladas Totales</div>
+          <div class="stat-value">${totalToneladas.toFixed(1)}<span class="stat-unit">ton</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Brix Promedio</div>
+          <div class="stat-value">${promedioBrix}<span class="stat-unit">°</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Rendimiento Promedio</div>
+          <div class="stat-value">${promedioRendimiento}<span class="stat-unit">ton/ha</span></div>
+        </div>
+      `;
+    }
+
+    // ============ BODEGA FUNCTIONS ============
+    function agregarContenedor() {
+      const nombre = document.getElementById('contenedor-nombre').value.trim();
+      const tipo = document.getElementById('contenedor-tipo').value;
+      const capacidad = parseInt(document.getElementById('contenedor-capacidad').value);
+      const varietal = document.getElementById('contenedor-varietal').value;
+      const cosecha = document.getElementById('contenedor-cosecha').value;
+      const etapa = document.getElementById('contenedor-etapa').value;
+      const roble = document.getElementById('contenedor-roble').value;
+      const fechaEntrada = document.getElementById('contenedor-fecha-entrada').value;
+
+      if (!nombre || !tipo || !capacidad || !varietal || !etapa) {
+        alert('Por favor completa los campos requeridos');
+        return;
+      }
+
+      const contenedor = {
+        id: Date.now(),
+        nombre,
+        tipo,
+        capacidad,
+        varietal,
+        cosecha: cosecha || new Date().getFullYear(),
+        etapa,
+        roble,
+        fechaEntrada,
+        diasEnBarrica: calcularDiasContenedor(fechaEntrada)
+      };
+
+      data.contenedores.push(contenedor);
+      safeSetItem('vinoscl_contenedores', data.contenedores);
+
+      actualizarTablaContenedores();
+      actualizarStatsBodega();
+      limpiarFormularioContenedor();
+
+      mostrarAlerta('✓ Contenedor agregado a bodega', 'success');
+    }
+
+    function calcularDiasContenedor(fecha) {
+      if (!fecha) return 0;
+      const hoy = new Date();
+      const entrada = new Date(fecha);
+      return Math.floor((hoy - entrada) / (1000 * 60 * 60 * 24));
+    }
+
+    function calcularDiasBarrica() {
+      const fecha = document.getElementById('barrica-fecha-entrada').value;
+      if (!fecha) {
+        document.getElementById('barrica-result').textContent = '-';
+        return;
+      }
+
+      const dias = calcularDiasContenedor(fecha);
+      const meses = (dias / 30).toFixed(1);
+      document.getElementById('barrica-result').textContent = `${dias} días (${meses} meses)`;
+    }
+
+    function limpiarFormularioContenedor() {
+      document.getElementById('contenedor-nombre').value = '';
+      document.getElementById('contenedor-tipo').value = '';
+      document.getElementById('contenedor-capacidad').value = '';
+      document.getElementById('contenedor-varietal').value = '';
+      document.getElementById('contenedor-cosecha').value = '';
+      document.getElementById('contenedor-etapa').value = 'Crianza';
+      document.getElementById('contenedor-roble').value = '';
+      document.getElementById('contenedor-fecha-entrada').value = '';
+      document.getElementById('barrica-fecha-entrada').value = '';
+      document.getElementById('barrica-result').textContent = '-';
+    }
+
+    function actualizarTablaContenedores() {
+      const tbody = document.getElementById('contenedores-tbody');
+      tbody.innerHTML = '';
+
+      if (data.contenedores.length === 0) {
+        tbody.innerHTML = `
+          <tr class="empty-state">
+            <td colspan="8">
+              <div class="empty-state-icon">🏭</div>
+              <div class="empty-state-title">Sin contenedores</div>
+              <div class="empty-state-text">Agrega contenedores a tu bodega</div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      data.contenedores.forEach(contenedor => {
+        const etapaBadge = {
+          'Fermentación': 'badge-warning',
+          'Maceración': 'badge-info',
+          'Crianza': 'badge-primary',
+          'Embotellado': 'badge-success'
+        };
+
+        tbody.innerHTML += `
+          <tr>
+            <td><strong>${contenedor.nombre}</strong></td>
+            <td>${contenedor.tipo}</td>
+            <td>${contenedor.varietal}</td>
+            <td>${contenedor.cosecha}</td>
+            <td><span class="badge ${etapaBadge[contenedor.etapa]}">${contenedor.etapa}</span></td>
+            <td>${contenedor.diasEnBarrica} días</td>
+            <td>${contenedor.roble || '-'}</td>
+            <td>
+              <button class="btn btn-small btn-danger" onclick="eliminarContenedor(${contenedor.id})">Eliminar</button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    function eliminarContenedor(id) {
+      if (confirm('¿Eliminar este contenedor?')) {
+        data.contenedores = data.contenedores.filter(c => c.id !== id);
+        safeSetItem('vinoscl_contenedores', data.contenedores);
+        actualizarTablaContenedores();
+        actualizarStatsBodega();
+      }
+    }
+
+    function actualizarStatsBodega() {
+      const container = document.getElementById('bodega-stats');
+      const capacidadTotal = data.contenedores.reduce((sum, c) => sum + c.capacidad, 0);
+      const contenedoresBarrica = data.contenedores.filter(c => c.tipo === 'Barrica').length;
+      const contenedoresTanque = data.contenedores.filter(c => c.tipo === 'Tanque Inox').length;
+
+      container.innerHTML = `
+        <div class="stat-card">
+          <div class="stat-label">Contenedores</div>
+          <div class="stat-value">${data.contenedores.length}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Capacidad Total</div>
+          <div class="stat-value">${capacidadTotal.toLocaleString()}<span class="stat-unit">L</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Barricas</div>
+          <div class="stat-value">${contenedoresBarrica}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Tanques Inox</div>
+          <div class="stat-value">${contenedoresTanque}</div>
+        </div>
+      `;
+    }
+
+    // ============ VINOS FUNCTIONS ============
+    function agregarVino() {
+      const nombre = document.getElementById('vino-nombre').value.trim();
+      const linea = document.getElementById('vino-linea').value;
+      const cepa = document.getElementById('vino-cepa').value;
+      const anada = parseInt(document.getElementById('vino-anada').value);
+      const do_ = document.getElementById('vino-do').value.trim();
+      const volumen = parseInt(document.getElementById('vino-volumen').value);
+      const precioBotella = parseInt(document.getElementById('vino-precio-botella').value);
+      const stock = parseInt(document.getElementById('vino-stock').value);
+      const notas = document.getElementById('vino-notas').value.trim();
+
+      if (!nombre || !linea || !cepa || !anada || !do_ || !volumen || !precioBotella || !stock) {
+        alert('Por favor completa los campos requeridos');
+        return;
+      }
+
+      const vino = {
+        id: Date.now(),
+        nombre,
+        linea,
+        cepa,
+        anada,
+        do: do_,
+        volumen,
+        precioBotella,
+        stock,
+        ingresos: stock * precioBotella,
+        notas
+      };
+
+      data.vinos.push(vino);
+      safeSetItem('vinoscl_vinos', data.vinos);
+
+      actualizarTablaVinos();
+      actualizarStatsVinos();
+      actualizarSelectVinos();
+      limpiarFormularioVino();
+
+      mostrarAlerta('✓ Vino agregado al catálogo', 'success');
+    }
+
+    function limpiarFormularioVino() {
+      document.getElementById('vino-nombre').value = '';
+      document.getElementById('vino-linea').value = '';
+      document.getElementById('vino-cepa').value = '';
+      document.getElementById('vino-anada').value = '';
+      document.getElementById('vino-do').value = '';
+      document.getElementById('vino-volumen').value = '';
+      document.getElementById('vino-precio-botella').value = '';
+      document.getElementById('vino-stock').value = '';
+      document.getElementById('vino-notas').value = '';
+    }
+
+    function actualizarTablaVinos() {
+      const tbody = document.getElementById('vinos-tbody');
+      tbody.innerHTML = '';
+
+      if (data.vinos.length === 0) {
+        tbody.innerHTML = `
+          <tr class="empty-state">
+            <td colspan="8">
+              <div class="empty-state-icon">🍷</div>
+              <div class="empty-state-title">Sin vinos</div>
+              <div class="empty-state-text">Crea tu catálogo de vinos</div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      data.vinos.forEach(vino => {
+        tbody.innerHTML += `
+          <tr>
+            <td><strong>${vino.nombre}</strong></td>
+            <td><span class="badge badge-primary">${vino.linea}</span></td>
+            <td>${vino.cepa}</td>
+            <td>${vino.anada}</td>
+            <td>${vino.stock.toLocaleString()} bot</td>
+            <td>$${vino.precioBotella.toLocaleString()}</td>
+            <td>$${vino.ingresos.toLocaleString()}</td>
+            <td>
+              <button class="btn btn-small btn-danger" onclick="eliminarVino(${vino.id})">Eliminar</button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    function eliminarVino(id) {
+      if (confirm('¿Eliminar este vino?')) {
+        data.vinos = data.vinos.filter(v => v.id !== id);
+        safeSetItem('vinoscl_vinos', data.vinos);
+        actualizarTablaVinos();
+        actualizarStatsVinos();
+        actualizarSelectVinos();
+      }
+    }
+
+    function actualizarStatsVinos() {
+      const container = document.getElementById('vinos-stats');
+      const ingresosTotales = data.vinos.reduce((sum, v) => sum + v.ingresos, 0);
+      const stockTotal = data.vinos.reduce((sum, v) => sum + v.stock, 0);
+      const precioPromedio = data.vinos.length > 0
+        ? (data.vinos.reduce((sum, v) => sum + v.precioBotella, 0) / data.vinos.length).toFixed(0)
+        : 0;
+
+      container.innerHTML = `
+        <div class="stat-card">
+          <div class="stat-label">Vinos en Catálogo</div>
+          <div class="stat-value">${data.vinos.length}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Stock Total</div>
+          <div class="stat-value">${stockTotal.toLocaleString()}<span class="stat-unit">bot</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Ingresos Potenciales</div>
+          <div class="stat-value">$${ingresosTotales.toLocaleString('es-CL', {maximumFractionDigits: 0})}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Precio Promedio</div>
+          <div class="stat-value">$${parseInt(precioPromedio).toLocaleString()}</div>
+        </div>
+      `;
+    }
+
+    function actualizarSelectVinos() {
+      const select = document.getElementById('export-vino');
+      select.innerHTML = '<option value="">Seleccionar...</option>';
+      data.vinos.forEach(vino => {
+        select.innerHTML += `<option value="${vino.id}">${vino.nombre} (${vino.anada})</option>`;
+      });
+    }
+
+    // ============ FINANZAS FUNCTIONS ============
+    function actualizarFinanzas() {
+      const container = document.getElementById('finanzas-stats');
+      const moneda = document.getElementById('finanzas-moneda').value;
+
+      if (moneda === 'USD') {
+        // Conversión simple CLP → USD (aprox 800:1)
+        const ingresosTotalCLP = data.vinos.reduce((sum, v) => sum + v.ingresos, 0);
+        const ingresosUSD = (ingresosTotalCLP / 800).toFixed(0);
+
+        container.innerHTML = `
+          <div class="stat-card">
+            <div class="stat-label">Ingresos Potenciales</div>
+            <div class="stat-value">USD ${parseInt(ingresosUSD).toLocaleString()}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Exportaciones</div>
+            <div class="stat-value">${data.exportaciones.length}</div>
+          </div>
+        `;
+      } else {
+        const ingresosTotales = data.vinos.reduce((sum, v) => sum + v.ingresos, 0);
+
+        container.innerHTML = `
+          <div class="stat-card">
+            <div class="stat-label">Ingresos Potenciales</div>
+            <div class="stat-value">$${ingresosTotales.toLocaleString('es-CL', {maximumFractionDigits: 0})}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Exportaciones</div>
+            <div class="stat-value">${data.exportaciones.length}</div>
+          </div>
+        `;
+      }
+    }
+
+    function calcularMargen() {
+      const costoVina = parseInt(document.getElementById('costo-vina').value) || 0;
+      const costoBodega = parseInt(document.getElementById('costo-bodega').value) || 0;
+      const costoEmbotellado = parseInt(document.getElementById('costo-embotellado').value) || 0;
+      const costoMarketing = parseInt(document.getElementById('costo-marketing').value) || 0;
+
+      const costosTotal = costoVina + costoBodega + costoEmbotellado + costoMarketing;
+      const ingresosTotal = data.vinos.reduce((sum, v) => sum + v.ingresos, 0);
+      const margenBruto = ingresosTotal - costosTotal;
+      const margenPorcentaje = ingresosTotal > 0 ? ((margenBruto / ingresosTotal) * 100).toFixed(1) : 0;
+
+      const container = document.getElementById('finanzas-stats');
+      container.innerHTML = `
+        <div class="stat-card">
+          <div class="stat-label">Ingresos Totales</div>
+          <div class="stat-value">$${ingresosTotal.toLocaleString('es-CL', {maximumFractionDigits: 0})}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Costos Totales</div>
+          <div class="stat-value">$${costosTotal.toLocaleString('es-CL', {maximumFractionDigits: 0})}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Margen Bruto</div>
+          <div class="stat-value">$${margenBruto.toLocaleString('es-CL', {maximumFractionDigits: 0})}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Margen %</div>
+          <div class="stat-value">${margenPorcentaje}%</div>
+        </div>
+      `;
+
+      mostrarAlerta(`✓ Margen calculado: ${margenPorcentaje}%`, 'success');
+    }
+
+    function agregarExportacion() {
+      const vinoId = document.getElementById('export-vino').value;
+      const mercado = document.getElementById('export-mercado').value.trim();
+      const cajas = parseInt(document.getElementById('export-cajas').value);
+      const precioUSD = parseFloat(document.getElementById('export-precio-usd').value);
+
+      if (!vinoId || !mercado || !cajas || !precioUSD) {
+        alert('Por favor completa los campos requeridos');
+        return;
+      }
+
+      const vino = data.vinos.find(v => v.id === parseInt(vinoId));
+
+      const exportacion = {
+        id: Date.now(),
+        vinoId: parseInt(vinoId),
+        vinoNombre: vino.nombre,
+        mercado,
+        cajas,
+        precioUSD,
+        ingresosUSD: cajas * 12 * precioUSD // 12 botellas por caja
+      };
+
+      data.exportaciones.push(exportacion);
+      safeSetItem('vinoscl_exportaciones', data.exportaciones);
+
+      actualizarTablaExportaciones();
+      document.getElementById('export-vino').value = '';
+      document.getElementById('export-mercado').value = '';
+      document.getElementById('export-cajas').value = '';
+      document.getElementById('export-precio-usd').value = '';
+
+      mostrarAlerta('✓ Exportación registrada', 'success');
+    }
+
+    function actualizarTablaExportaciones() {
+      const tbody = document.getElementById('exportaciones-tbody');
+      tbody.innerHTML = '';
+
+      if (data.exportaciones.length === 0) {
+        tbody.innerHTML = `
+          <tr class="empty-state">
+            <td colspan="6">
+              <div class="empty-state-icon">🌍</div>
+              <div class="empty-state-title">Sin exportaciones</div>
+              <div class="empty-state-text">Registra tus ventas de exportación</div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      data.exportaciones.forEach(exp => {
+        tbody.innerHTML += `
+          <tr>
+            <td><strong>${exp.vinoNombre}</strong></td>
+            <td>${exp.mercado}</td>
+            <td>${exp.cajas}</td>
+            <td>USD ${exp.precioUSD.toFixed(2)}</td>
+            <td>USD ${exp.ingresosUSD.toLocaleString('en-US', {maximumFractionDigits: 0})}</td>
+            <td>
+              <button class="btn btn-small btn-danger" onclick="eliminarExportacion(${exp.id})">Eliminar</button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    function eliminarExportacion(id) {
+      if (confirm('¿Eliminar esta exportación?')) {
+        data.exportaciones = data.exportaciones.filter(e => e.id !== id);
+        safeSetItem('vinoscl_exportaciones', data.exportaciones);
+        actualizarTablaExportaciones();
+      }
+    }
+
+    // ============ CLIENTES FUNCTIONS ============
+    function agregarCliente() {
+      const nombre = document.getElementById('cliente-nombre').value.trim();
+      const tipo = document.getElementById('cliente-tipo').value;
+      const pais = document.getElementById('cliente-pais').value.trim();
+      const email = document.getElementById('cliente-email').value.trim();
+      const telefono = document.getElementById('cliente-telefono').value.trim();
+      const contacto = document.getElementById('cliente-contacto').value.trim();
+      const volumenAnual = parseInt(document.getElementById('cliente-volumen-anual').value);
+      const terminos = document.getElementById('cliente-terminos').value;
+      const notas = document.getElementById('cliente-notas').value.trim();
+
+      if (!nombre || !tipo || !pais || !volumenAnual) {
+        alert('Por favor completa los campos requeridos');
+        return;
+      }
+
+      const cliente = {
+        id: Date.now(),
+        nombre,
+        tipo,
+        pais,
+        email,
+        telefono,
+        contacto,
+        volumenAnual,
+        terminos,
+        notas,
+        fechaRegistro: new Date().toISOString()
+      };
+
+      data.clientes.push(cliente);
+      safeSetItem('vinoscl_clientes', data.clientes);
+
+      actualizarTablaClientes();
+      actualizarStatsClientes();
+      limpiarFormularioCliente();
+
+      mostrarAlerta('✓ Cliente agregado a base de datos', 'success');
+    }
+
+    function limpiarFormularioCliente() {
+      document.getElementById('cliente-nombre').value = '';
+      document.getElementById('cliente-tipo').value = '';
+      document.getElementById('cliente-pais').value = '';
+      document.getElementById('cliente-email').value = '';
+      document.getElementById('cliente-telefono').value = '';
+      document.getElementById('cliente-contacto').value = '';
+      document.getElementById('cliente-volumen-anual').value = '';
+      document.getElementById('cliente-terminos').value = '';
+      document.getElementById('cliente-notas').value = '';
+    }
+
+    function actualizarTablaClientes() {
+      const tbody = document.getElementById('clientes-tbody');
+      tbody.innerHTML = '';
+
+      if (data.clientes.length === 0) {
+        tbody.innerHTML = `
+          <tr class="empty-state">
+            <td colspan="7">
+              <div class="empty-state-icon">👥</div>
+              <div class="empty-state-title">Sin clientes</div>
+              <div class="empty-state-text">Crea tu base de clientes</div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      data.clientes.forEach(cliente => {
+        const terminosBadge = {
+          'Contado': 'badge-success',
+          '30 días': 'badge-info',
+          '60 días': 'badge-warning',
+          '90 días': 'badge-warning'
+        };
+
+        tbody.innerHTML += `
+          <tr>
+            <td><strong>${cliente.nombre}</strong></td>
+            <td><span class="badge badge-primary">${cliente.tipo}</span></td>
+            <td>${cliente.pais}</td>
+            <td>${cliente.contacto || '-'}</td>
+            <td>${cliente.volumenAnual.toLocaleString()} cajas</td>
+            <td><span class="badge ${terminosBadge[cliente.terminos] || 'badge-info'}">${cliente.terminos || '-'}</span></td>
+            <td>
+              <button class="btn btn-small btn-danger" onclick="eliminarCliente(${cliente.id})">Eliminar</button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    function eliminarCliente(id) {
+      if (confirm('¿Eliminar este cliente?')) {
+        data.clientes = data.clientes.filter(c => c.id !== id);
+        safeSetItem('vinoscl_clientes', data.clientes);
+        actualizarTablaClientes();
+        actualizarStatsClientes();
+      }
+    }
+
+    function actualizarStatsClientes() {
+      const container = document.getElementById('clientes-stats');
+      const volumenTotal = data.clientes.reduce((sum, c) => sum + c.volumenAnual, 0);
+      const clientesExportacion = data.clientes.filter(c => c.pais !== 'Chile').length;
+      const volumenPromedio = data.clientes.length > 0
+        ? (volumenTotal / data.clientes.length).toFixed(0)
+        : 0;
+
+      container.innerHTML = `
+        <div class="stat-card">
+          <div class="stat-label">Clientes</div>
+          <div class="stat-value">${data.clientes.length}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Volumen Total Anual</div>
+          <div class="stat-value">${volumenTotal.toLocaleString()}<span class="stat-unit">cajas</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Clientes Exportación</div>
+          <div class="stat-value">${clientesExportacion}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Volumen Promedio/Cliente</div>
+          <div class="stat-value">${parseInt(volumenPromedio).toLocaleString()}<span class="stat-unit">cajas</span></div>
+        </div>
+      `;
+    }
+
+    // ============ CHARTS ============
+    let chartInstance = null;
+
+    function inicializarChartIngresos() {
+      if (data.vinos.length === 0) {
+        document.getElementById('chartIngresos').parentElement.innerHTML = `
+          <div class="empty-state" style="padding: 2rem;">
+            <div class="empty-state-icon">📊</div>
+            <div class="empty-state-title">Sin datos</div>
+            <div class="empty-state-text">Agrega vinos para ver el gráfico</div>
+          </div>
+        `;
+        return;
+      }
+
+      const ctx = document.getElementById('chartIngresos').getContext('2d');
+
+      if (chartInstance) {
+        chartInstance.destroy();
+      }
+
+      const lineas = [...new Set(data.vinos.map(v => v.linea))];
+      const colores = ['#7f1d1d', '#a02828', '#d4a017', '#0284c7', '#16a34a', '#ea580c'];
+
+      const datasets = lineas.map((linea, idx) => {
+        const vinosLinea = data.vinos.filter(v => v.linea === linea);
+        const ingresosLinea = vinosLinea.reduce((sum, v) => sum + v.ingresos, 0);
+
+        return {
+          label: linea,
+          data: [ingresosLinea],
+          backgroundColor: colores[idx % colores.length],
+          borderRadius: 6,
+          borderSkipped: false
+        };
+      });
+
+      chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Ingresos por Línea'],
+          datasets: datasets
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                font: { family: "'Inter', sans-serif", size: 12 },
+                padding: 15,
+                usePointStyle: true
+              }
+            }
+          },
+          scales: {
+            x: {
+              beginAtZero: true,
+              ticks: {
+                font: { family: "'Inter', sans-serif" },
+                callback: function(value) {
+                  return '$' + (value / 1000000).toFixed(1) + 'M';
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // ============ ALERTS ============
+    function mostrarAlerta(mensaje, tipo = 'success') {
+      const alerta = document.createElement('div');
+      alerta.className = `alert alert-${tipo}`;
+      alerta.innerHTML = `
+        <div class="alert-icon">${tipo === 'success' ? '✓' : tipo === 'error' ? '✕' : '⚠'}</div>
+        <div>${mensaje}</div>
+      `;
+
+      const container = document.querySelector('.container');
+      container.insertBefore(alerta, container.firstChild);
+
+      setTimeout(() => {
+        alerta.remove();
+      }, 3000);
+    }
+
+    // ============ INITIALIZATION ============
+    document.addEventListener('DOMContentLoaded', function() {
+      actualizarTablaParcelas();
+      actualizarStatsVinedos();
+      actualizarSelectParcelas();
+
+      actualizarTablaCosechas();
+      actualizarStatsVendimia();
+
+      actualizarTablaContenedores();
+      actualizarStatsBodega();
+
+      actualizarTablaVinos();
+      actualizarStatsVinos();
+      actualizarSelectVinos();
+
+      actualizarTablaClientes();
+      actualizarStatsClientes();
+
+      actualizarTablaExportaciones();
+      actualizarFinanzas();
+      inicializarChartIngresos();
+
+      // Observar cambios en los meses para actualizar charts
+      document.getElementById('finanzas-mes').addEventListener('change', () => {
+        inicializarChartIngresos();
+      });
+
+      // Escuchar cambios en moneda
+      document.getElementById('finanzas-moneda').addEventListener('change', actualizarFinanzas);
+
+      // Inicializar fechas
+      const hoy = new Date().toISOString().split('T')[0];
+      const inputs = document.querySelectorAll('input[type="date"]');
+      inputs.forEach(input => {
+        if (!input.value) input.value = hoy;
+      });
+
+      // Año actual por defecto
+      const inputsYear = document.querySelectorAll('input[type="number"][placeholder*="202"]');
+      inputsYear.forEach(input => {
+        if (!input.value) input.value = new Date().getFullYear();
+      });
+
+      // Inicializar mes actual
+      const mesInput = document.getElementById('finanzas-mes');
+      if (mesInput && !mesInput.value) {
+        const hoy = new Date();
+        const mes = String(hoy.getMonth() + 1).padStart(2, '0');
+        const ano = hoy.getFullYear();
+        mesInput.value = `${ano}-${mes}`;
+      }
+    });
+
+    // ============ PWA MANIFEST ============
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('data:application/javascript;base64,CiAvKiBNaW5pbWFsIFN3IGZvciBlYXJseSBwdXNoIHN1cHBvcnQgKi8KcmVnaXN0ZXIuaW5zdGFsbCgpOwpzZWxmLmFkZEV2ZW50TGlzdGVuZXIoJ2ZldGNoJywgZXYgPT4gZXYucmVzcG9uZFdpdGgoY2FjaGVzLm1hdGNoKGV2LnJlcXVlc3QpKSk7').catch(() => {});
+    }
+  </script>
+
+  <!-- PWA Manifest -->
+  <script>
+    const manifest = {
+      name: "VinosCL - Gestión de Bodegas",
+      short_name: "VinosCL",
+      description: "Plataforma profesional de gestión para viñedos y bodegas chilenas",
+      start_url: "/vinoscl/",
+      display: "standalone",
+      background_color: "#ffffff",
+      theme_color: "#7f1d1d",
+      orientation: "portrait-primary",
+      icons: [
+        {
+          src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%237f1d1d' width='192' height='192'/><text x='50%' y='50%' font-size='120' text-anchor='middle' dominant-baseline='middle'>🍷</text></svg>",
+          sizes: "192x192",
+          type: "image/svg+xml",
+          purpose: "any"
+        }
+      ],
+      screenshots: [],
+      categories: ["business", "productivity"],
+      scope: "/vinoscl/",
+      share_target: {
+        action: "/share",
+        method: "POST",
+        enctype: "application/x-www-form-urlencoded",
+        params: {
+          title: "title",
+          text: "text",
+          url: "url"
+        }
+      }
+    };
+
+    const manifestLink = document.createElement('link');
+    manifestLink.rel = 'manifest';
+    manifestLink.href = 'data:application/manifest+json,' + encodeURIComponent(JSON.stringify(manifest));
+    document.head.appendChild(manifestLink);
+  </script>
+</body>
+</html>

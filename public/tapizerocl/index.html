@@ -1,0 +1,2037 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="TapizeroCL - Sistema de gestión para tapicerías chilenas">
+    <meta name="theme-color" content="#581c87">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="TapizeroCL">
+    <meta name="csrf-token" content="">
+    <title>TapizeroCL - Gestión de Tapicería</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%23581c87' width='192' height='192'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='120' fill='%23fef9c3' font-family='serif' font-weight='bold'>T</text></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%23581c87' width='192' height='192'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='120' fill='%23fef9c3' font-family='serif' font-weight='bold'>T</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #581c87;
+            --primary-dark: #3f1360;
+            --primary-light: #7c3aed;
+            --accent: #fef9c3;
+            --accent-dark: #fde047;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: var(--gray-800);
+            background-color: var(--gray-50);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            padding: env(safe-area-inset-left) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+        }
+
+        #root {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 100%;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 1rem;
+            padding-bottom: 5rem;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 1.5rem 1rem;
+            padding-top: max(1.5rem, env(safe-area-inset-top));
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        header h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        header p {
+            font-size: 0.875rem;
+            opacity: 0.9;
+            margin-top: 0.25rem;
+        }
+
+        nav.tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin: 1.5rem 0 1rem 0;
+            overflow-x: auto;
+            padding-bottom: 0.5rem;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        nav.tabs::-webkit-scrollbar {
+            height: 3px;
+        }
+
+        nav.tabs::-webkit-scrollbar-track {
+            background: var(--gray-200);
+        }
+
+        nav.tabs::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 3px;
+        }
+
+        .tab-btn {
+            flex-shrink: 0;
+            padding: 0.75rem 1.25rem;
+            border: none;
+            background: white;
+            color: var(--gray-600);
+            border-radius: 0.5rem;
+            font-size: 0.9375rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .tab-btn:active {
+            transform: scale(0.98);
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(88, 28, 135, 0.2);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            border-left: 4px solid var(--primary);
+        }
+
+        .card.success {
+            border-left-color: var(--success);
+        }
+
+        .card.warning {
+            border-left-color: var(--warning);
+        }
+
+        .card.danger {
+            border-left-color: var(--danger);
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: var(--gray-700);
+            font-size: 0.9375rem;
+        }
+
+        input, select, textarea {
+            font-size: 16px;
+            width: 100%;
+            padding: 0.875rem;
+            border: 1px solid var(--gray-300);
+            border-radius: 0.5rem;
+            font-family: inherit;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(88, 28, 135, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.875rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 0.9375rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:active {
+            background: var(--primary-dark);
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            background: var(--gray-200);
+            color: var(--gray-800);
+        }
+
+        .btn-secondary:active {
+            background: var(--gray-300);
+            transform: scale(0.98);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-block {
+            width: 100%;
+        }
+
+        .btn-sm {
+            padding: 0.625rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        @media (min-width: 640px) {
+            .grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        .stat-box {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            text-align: center;
+        }
+
+        .stat-box h3 {
+            font-size: 0.875rem;
+            font-weight: 500;
+            opacity: 0.9;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-box .value {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin-bottom: 1rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9375rem;
+        }
+
+        thead {
+            background: var(--gray-100);
+            border-bottom: 2px solid var(--gray-300);
+        }
+
+        th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--gray-700);
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        tbody tr:hover {
+            background: var(--gray-50);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.375rem 0.75rem;
+            border-radius: 0.375rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-success {
+            background: rgba(34, 197, 94, 0.1);
+            color: var(--success);
+        }
+
+        .badge-warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .badge-danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            padding: 1rem;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 1rem 1rem 0 0;
+            padding: 2rem 1.5rem;
+            padding-bottom: max(2rem, env(safe-area-inset-bottom));
+            max-width: 100%;
+            width: 100%;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(100%);
+            }
+            to {
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .modal-header h2 {
+            font-size: 1.5rem;
+            margin: 0;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--gray-500);
+            padding: 0;
+            width: 2rem;
+            height: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-btn:active {
+            color: var(--gray-800);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1.5rem;
+            color: var(--gray-500);
+        }
+
+        .empty-state h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+            color: var(--gray-700);
+        }
+
+        .empty-state p {
+            margin-bottom: 1.5rem;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .action-buttons .btn {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 1rem;
+            right: 1rem;
+            background: var(--primary);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            animation: slideUp 0.3s ease;
+            z-index: 999;
+        }
+
+        .toast.success {
+            background: var(--success);
+        }
+
+        .toast.danger {
+            background: var(--danger);
+        }
+
+        .toast.warning {
+            background: var(--warning);
+        }
+
+        footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 1px solid var(--gray-200);
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            padding: 0.5rem;
+            padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+            gap: 0.5rem;
+            z-index: 100;
+        }
+
+        .footer-btn {
+            padding: 0.75rem 0.5rem;
+            border: none;
+            background: transparent;
+            color: var(--gray-600);
+            border-radius: 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.375rem;
+        }
+
+        .footer-btn.active {
+            background: var(--primary-light);
+            background: rgba(88, 28, 135, 0.1);
+            color: var(--primary);
+        }
+
+        .color-swatch {
+            display: inline-block;
+            width: 2rem;
+            height: 2rem;
+            border-radius: 0.375rem;
+            border: 2px solid var(--gray-300);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .color-swatch.selected {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px white, 0 0 0 4px var(--primary);
+        }
+
+        .swatch-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.75rem;
+            margin-top: 0.75rem;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 1rem 0;
+        }
+
+        .filter-bar {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 0.5rem;
+        }
+
+        .filter-btn {
+            flex-shrink: 0;
+            padding: 0.625rem 1rem;
+            border: 1px solid var(--gray-300);
+            background: white;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .filter-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .input-group input {
+            flex: 1;
+        }
+
+        .section-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin: 1.5rem 0 1rem 0;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid var(--gray-200);
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                padding: 1rem 0.75rem;
+            }
+
+            header {
+                margin: calc(-1 * env(safe-area-inset-left)) calc(-1 * env(safe-area-inset-right)) 0 calc(-1 * env(safe-area-inset-left));
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+
+            header h1 {
+                font-size: 1.5rem;
+            }
+
+            .modal-content {
+                padding: 1.5rem 1rem;
+            }
+
+            table {
+                font-size: 0.8125rem;
+            }
+
+            th, td {
+                padding: 0.75rem 0.5rem;
+            }
+        }
+
+        @supports (padding: max(0px)) {
+            body {
+                padding-left: max(1rem, env(safe-area-inset-left));
+                padding-right: max(1rem, env(safe-area-inset-right));
+                padding-bottom: max(5rem, env(safe-area-inset-bottom));
+            }
+        }
+
+        .section-divider {
+            height: 1px;
+            background: var(--gray-200);
+            margin: 1.5rem 0;
+        }
+
+        .info-box {
+            background: rgba(88, 28, 135, 0.05);
+            border-left: 4px solid var(--primary);
+            padding: 1rem;
+            border-radius: 0.375rem;
+            margin-bottom: 1rem;
+            font-size: 0.9375rem;
+            color: var(--gray-700);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--gray-200);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--primary-light) 100%);
+            transition: width 0.3s ease;
+        }
+
+        .pill {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background: var(--gray-100);
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            margin: 0.25rem;
+        }
+
+        .pill.primary {
+            background: rgba(88, 28, 135, 0.1);
+            color: var(--primary);
+        }
+
+        .list-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .list-item:last-child {
+            border-bottom: none;
+        }
+
+        .list-item-content {
+            flex: 1;
+        }
+
+        .list-item-title {
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 0.25rem;
+        }
+
+        .list-item-subtitle {
+            font-size: 0.875rem;
+            color: var(--gray-500);
+        }
+
+        .list-item-value {
+            font-weight: 700;
+            color: var(--primary);
+            font-size: 1.125rem;
+        }
+    </style>
+</head>
+<body>
+    <div id="root">
+        <header>
+            <h1>TapizeroCL</h1>
+            <p>Gestión profesional de tapicería</p>
+        </header>
+
+        <div class="container">
+            <nav class="tabs" id="tabs">
+                <button class="tab-btn active" data-tab="trabajos">👔 Trabajos</button>
+                <button class="tab-btn" data-tab="telas">🧵 Telas</button>
+                <button class="tab-btn" data-tab="cotizador">💰 Cotizador</button>
+                <button class="tab-btn" data-tab="insumos">📦 Insumos</button>
+                <button class="tab-btn" data-tab="finanzas">📊 Finanzas</button>
+                <button class="tab-btn" data-tab="clientes">👥 Clientes</button>
+            </nav>
+
+            <!-- TRABAJOS TAB -->
+            <div id="trabajos" class="tab-content active">
+                <div class="action-buttons">
+                    <button class="btn btn-primary btn-block" onclick="openTrabajoModal()">+ Nuevo Trabajo</button>
+                </div>
+                <div id="trabajosList"></div>
+            </div>
+
+            <!-- TELAS TAB -->
+            <div id="telas" class="tab-content">
+                <div class="action-buttons">
+                    <button class="btn btn-primary btn-block" onclick="openTelaModal()">+ Agregar Tela</button>
+                </div>
+                <div id="telasList"></div>
+            </div>
+
+            <!-- COTIZADOR TAB -->
+            <div id="cotizador" class="tab-content">
+                <div class="card">
+                    <h2 style="margin-bottom: 1.25rem;">Calculadora de Presupuesto</h2>
+
+                    <div class="form-group">
+                        <label>Tipo de Mueble</label>
+                        <select id="cotizMueble" onchange="actualizarCotizacion()">
+                            <option value="">Selecciona un mueble</option>
+                            <option value="sofá">Sofá</option>
+                            <option value="sillón">Sillón</option>
+                            <option value="silla">Silla Comedor</option>
+                            <option value="cabecera">Cabecera</option>
+                            <option value="asiento">Asiento Auto</option>
+                            <option value="cortinas">Cortinas</option>
+                            <option value="cojines">Cojines</option>
+                            <option value="ottoman">Ottoman</option>
+                            <option value="banqueta">Banqueta</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Ancho (m)</label>
+                        <input type="number" id="cotizAncho" min="0.1" step="0.1" value="2" onchange="actualizarCotizacion()">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Largo (m)</label>
+                        <input type="number" id="cotizLargo" min="0.1" step="0.1" value="1.5" onchange="actualizarCotizacion()">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Profundidad (m)</label>
+                        <input type="number" id="cotizProfundidad" min="0.1" step="0.1" value="0.8" onchange="actualizarCotizacion()">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Selecciona Tela</label>
+                        <select id="cotizTela" onchange="actualizarCotizacion()">
+                            <option value="">Selecciona una tela</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Horas de Trabajo</label>
+                        <input type="number" id="cotizHoras" min="1" value="8" onchange="actualizarCotizacion()">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Tarifa por Hora ($)</label>
+                        <input type="number" id="cotizTarifa" min="1000" value="20000" onchange="actualizarCotizacion()">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Multiplicador de Complejidad (0.8 - 2.0)</label>
+                        <input type="number" id="cotizComplejidad" min="0.8" max="2" step="0.1" value="1" onchange="actualizarCotizacion()">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Espuma / Relleno ($)</label>
+                        <input type="number" id="cotizEspuma" min="0" value="15000" onchange="actualizarCotizacion()">
+                    </div>
+
+                    <div class="section-divider"></div>
+
+                    <div class="stat-box">
+                        <h3>Presupuesto Total</h3>
+                        <div class="value" id="cotizTotal">$0</div>
+                    </div>
+
+                    <div style="margin-top: 1rem; display: grid; gap: 0.5rem;">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+                            <span>Tela:</span>
+                            <span id="cotizTelaDetalle" style="color: var(--primary); font-weight: 600;">$0</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+                            <span>Espuma/Relleno:</span>
+                            <span id="cotizEspumaDetalle" style="color: var(--primary); font-weight: 600;">$0</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+                            <span>Mano de Obra:</span>
+                            <span id="cotizManoDetalle" style="color: var(--primary); font-weight: 600;">$0</span>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary btn-block" style="margin-top: 1.5rem;" onclick="guardarCotizacion()">Guardar Cotización</button>
+                </div>
+            </div>
+
+            <!-- INSUMOS TAB -->
+            <div id="insumos" class="tab-content">
+                <div class="action-buttons">
+                    <button class="btn btn-primary btn-block" onclick="openInsumoModal()">+ Agregar Insumo</button>
+                </div>
+                <div id="insumosList"></div>
+            </div>
+
+            <!-- FINANZAS TAB -->
+            <div id="finanzas" class="tab-content">
+                <div class="grid">
+                    <div class="stat-box">
+                        <h3>Ingresos Mes</h3>
+                        <div class="value" id="finIngresos">$0</div>
+                    </div>
+                    <div class="stat-box">
+                        <h3>Costos Mes</h3>
+                        <div class="value" id="finCostos">$0</div>
+                    </div>
+                    <div class="stat-box">
+                        <h3>Ganancia Mes</h3>
+                        <div class="value" id="finGanancia">$0</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2 style="margin-bottom: 1.25rem;">Por Tipo de Mueble</h2>
+                    <div class="chart-container">
+                        <canvas id="chartIngresos"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2 style="margin-bottom: 1.25rem;">Ingresos por Mes</h2>
+                    <div class="chart-container">
+                        <canvas id="chartMeses"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2 style="margin-bottom: 1.25rem;">Resumen Mensual</h2>
+                    <div id="resumenFinanzas"></div>
+                </div>
+            </div>
+
+            <!-- CLIENTES TAB -->
+            <div id="clientes" class="tab-content">
+                <div class="action-buttons">
+                    <button class="btn btn-primary btn-block" onclick="openClienteModal()">+ Nuevo Cliente</button>
+                </div>
+                <div id="clientesList"></div>
+            </div>
+        </div>
+
+        <!-- MODALES -->
+
+        <!-- Trabajo Modal -->
+        <div id="trabajoModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Nuevo Trabajo</h2>
+                    <button class="close-btn" onclick="closeModal('trabajoModal')">✕</button>
+                </div>
+
+                <div class="form-group">
+                    <label>Cliente</label>
+                    <select id="trabajoCliente">
+                        <option value="">Selecciona un cliente</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Tipo de Mueble</label>
+                    <select id="trabajoMueble">
+                        <option value="sofá">Sofá</option>
+                        <option value="sillón">Sillón</option>
+                        <option value="silla">Silla Comedor</option>
+                        <option value="cabecera">Cabecera</option>
+                        <option value="asiento">Asiento Auto</option>
+                        <option value="cortinas">Cortinas</option>
+                        <option value="cojines">Cojines</option>
+                        <option value="ottoman">Ottoman</option>
+                        <option value="banqueta">Banqueta</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Estado Actual</label>
+                    <select id="trabajoEstadoActual">
+                        <option value="desgastado">Desgastado</option>
+                        <option value="roto">Roto</option>
+                        <option value="mancha">Con Manchas</option>
+                        <option value="descolorido">Descolorido</option>
+                        <option value="otro">Otro</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Tipo de Trabajo</label>
+                    <select id="trabajoTipo">
+                        <option value="retapizado">Retapizado Completo</option>
+                        <option value="reparación">Reparación</option>
+                        <option value="espuma">Cambio Espuma</option>
+                        <option value="tela">Cambio Tela</option>
+                        <option value="restauración">Restauración</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Tela Seleccionada</label>
+                    <select id="trabajoTela">
+                        <option value="">Selecciona una tela</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Ancho (m)</label>
+                    <input type="number" id="trabajoAncho" min="0.1" step="0.1" value="2">
+                </div>
+
+                <div class="form-group">
+                    <label>Largo (m)</label>
+                    <input type="number" id="trabajoLargo" min="0.1" step="0.1" value="1.5">
+                </div>
+
+                <div class="form-group">
+                    <label>Precio ($)</label>
+                    <input type="number" id="trabajoPrecio" min="0" value="100000">
+                </div>
+
+                <div class="form-group">
+                    <label>Fecha de Entrega</label>
+                    <input type="date" id="trabajoFecha">
+                </div>
+
+                <div class="form-group">
+                    <label>Estado</label>
+                    <select id="trabajoStatus">
+                        <option value="pendiente">Pendiente</option>
+                        <option value="en-progreso">En Progreso</option>
+                        <option value="completado">Completado</option>
+                        <option value="entregado">Entregado</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Notas</label>
+                    <textarea id="trabajoNotas" placeholder="Notas adicionales..."></textarea>
+                </div>
+
+                <button class="btn btn-primary btn-block" onclick="guardarTrabajo()">Guardar Trabajo</button>
+            </div>
+        </div>
+
+        <!-- Tela Modal -->
+        <div id="telaModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Nueva Tela</h2>
+                    <button class="close-btn" onclick="closeModal('telaModal')">✕</button>
+                </div>
+
+                <div class="form-group">
+                    <label>Tipo de Tela</label>
+                    <select id="telaTipo">
+                        <option value="cuerina">Cuerina</option>
+                        <option value="tela">Tela</option>
+                        <option value="cuero">Cuero</option>
+                        <option value="terciopelo">Terciopelo</option>
+                        <option value="lino">Lino</option>
+                        <option value="chenille">Chenille</option>
+                        <option value="microfibra">Microfibra</option>
+                        <option value="outdoor">Outdoor</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Color</label>
+                    <input type="text" id="telaColor" placeholder="Ej: Gris Oscuro, Beige">
+                </div>
+
+                <div class="form-group">
+                    <label>Ancho (metros)</label>
+                    <input type="number" id="telaAncho" min="1" step="0.1" value="1.4">
+                </div>
+
+                <div class="form-group">
+                    <label>Stock (metros)</label>
+                    <input type="number" id="telaStock" min="0" step="0.1" value="10">
+                </div>
+
+                <div class="form-group">
+                    <label>Costo por Metro ($)</label>
+                    <input type="number" id="telaCosto" min="0" value="8000">
+                </div>
+
+                <div class="form-group">
+                    <label>Proveedor</label>
+                    <input type="text" id="telaProveedor" placeholder="Ej: Santiago Textiles">
+                </div>
+
+                <div class="form-group">
+                    <label>Durabilidad (1-5)</label>
+                    <input type="number" id="telaDurabilidad" min="1" max="5" value="3">
+                </div>
+
+                <button class="btn btn-primary btn-block" onclick="guardarTela()">Guardar Tela</button>
+            </div>
+        </div>
+
+        <!-- Insumo Modal -->
+        <div id="insumoModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Nuevo Insumo</h2>
+                    <button class="close-btn" onclick="closeModal('insumoModal')">✕</button>
+                </div>
+
+                <div class="form-group">
+                    <label>Tipo de Insumo</label>
+                    <select id="insumoTipo">
+                        <option value="espuma-densidad">Espuma Densidad</option>
+                        <option value="relleno">Relleno</option>
+                        <option value="tachuelas">Tachuelas</option>
+                        <option value="grapas">Grapas</option>
+                        <option value="pegamento">Pegamento</option>
+                        <option value="hilo">Hilo</option>
+                        <option value="cierres">Cierres</option>
+                        <option value="patas">Patas</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Descripción</label>
+                    <input type="text" id="insumoDescripcion" placeholder="Ej: Espuma densidad 28">
+                </div>
+
+                <div class="form-group">
+                    <label>Cantidad en Stock</label>
+                    <input type="number" id="insumoStock" min="0" value="50">
+                </div>
+
+                <div class="form-group">
+                    <label>Unidad</label>
+                    <select id="insumoUnidad">
+                        <option value="kg">Kilogramo</option>
+                        <option value="metro">Metro</option>
+                        <option value="caja">Caja</option>
+                        <option value="rollo">Rollo</option>
+                        <option value="unidad">Unidad</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Costo por Unidad ($)</label>
+                    <input type="number" id="insumoCosto" min="0" value="5000">
+                </div>
+
+                <div class="form-group">
+                    <label>Proveedor</label>
+                    <input type="text" id="insumoProveedor" placeholder="Proveedor">
+                </div>
+
+                <button class="btn btn-primary btn-block" onclick="guardarInsumo()">Guardar Insumo</button>
+            </div>
+        </div>
+
+        <!-- Cliente Modal -->
+        <div id="clienteModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Nuevo Cliente</h2>
+                    <button class="close-btn" onclick="closeModal('clienteModal')">✕</button>
+                </div>
+
+                <div class="form-group">
+                    <label>Nombre Completo</label>
+                    <input type="text" id="clienteNombre" placeholder="Nombre del cliente">
+                </div>
+
+                <div class="form-group">
+                    <label>Teléfono</label>
+                    <input type="tel" id="clienteTelefono" placeholder="+56 9 XXXX XXXX">
+                </div>
+
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="clienteEmail" placeholder="correo@ejemplo.com">
+                </div>
+
+                <div class="form-group">
+                    <label>Dirección</label>
+                    <input type="text" id="clienteDireccion" placeholder="Calle, número, comuna">
+                </div>
+
+                <div class="form-group">
+                    <label>Preferencias de Tela</label>
+                    <textarea id="clientePreferencias" placeholder="Ej: Le gustan los tonos neutros, no le gusta el cuero..."></textarea>
+                </div>
+
+                <button class="btn btn-primary btn-block" onclick="guardarCliente()">Guardar Cliente</button>
+            </div>
+        </div>
+
+        <!-- Detalle Trabajo Modal -->
+        <div id="detalleTrabajoModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Detalle del Trabajo</h2>
+                    <button class="close-btn" onclick="closeModal('detalleTrabajoModal')">✕</button>
+                </div>
+                <div id="detalleTrabajoContenido"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <footer>
+        <button class="footer-btn active" onclick="switchTab('trabajos')">👔 Trabajos</button>
+        <button class="footer-btn" onclick="switchTab('telas')">🧵 Telas</button>
+        <button class="footer-btn" onclick="switchTab('cotizador')">💰 Cotizador</button>
+        <button class="footer-btn" onclick="switchTab('insumos')">📦 Insumos</button>
+        <button class="footer-btn" onclick="switchTab('finanzas')">📊 Finanzas</button>
+        <button class="footer-btn" onclick="switchTab('clientes')">👥 Clientes</button>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // ===== DATA MANAGEMENT =====
+        const db = {
+            trabajos: [],
+            telas: [],
+            insumos: [],
+            clientes: [],
+            cotizaciones: []
+        };
+
+        const Charts = {};
+
+        // Safe localStorage wrapper for iOS
+        function safeLocalStorage(action, key, value = null) {
+            try {
+                if (action === 'set') {
+                    localStorage.setItem(key, JSON.stringify(value));
+                    return true;
+                } else if (action === 'get') {
+                    const item = localStorage.getItem(key);
+                    return item ? JSON.parse(item) : null;
+                } else if (action === 'remove') {
+                    localStorage.removeItem(key);
+                    return true;
+                }
+            } catch (e) {
+                console.warn('localStorage error:', e);
+                return null;
+            }
+        }
+
+        // Load data from localStorage
+        function loadData() {
+            const saved = safeLocalStorage('get', 'tapizerocl_db');
+            if (saved) {
+                Object.assign(db, saved);
+            } else {
+                loadDemoData();
+            }
+        }
+
+        // Save data to localStorage
+        function saveData() {
+            safeLocalStorage('set', 'tapizerocl_db', db);
+        }
+
+        // Demo data
+        function loadDemoData() {
+            db.clientes = [
+                {
+                    id: 1,
+                    nombre: 'Juan García',
+                    telefono: '+56 9 1234 5678',
+                    email: 'juan@example.com',
+                    direccion: 'Av. Principal 123, Santiago',
+                    preferencias: 'Tonos neutros, resistente'
+                },
+                {
+                    id: 2,
+                    nombre: 'María López',
+                    telefono: '+56 9 8765 4321',
+                    email: 'maria@example.com',
+                    direccion: 'Calle Secundaria 456, Providencia',
+                    preferencias: 'Colores vibrantes'
+                }
+            ];
+
+            db.telas = [
+                {
+                    id: 1,
+                    tipo: 'tela',
+                    color: 'Gris Oscuro',
+                    ancho: 1.4,
+                    stock: 15,
+                    costo: 12000,
+                    proveedor: 'Textiles Santiago',
+                    durabilidad: 4
+                },
+                {
+                    id: 2,
+                    tipo: 'cuero',
+                    color: 'Negro',
+                    ancho: 1.2,
+                    stock: 8,
+                    costo: 25000,
+                    proveedor: 'Cueros Premium',
+                    durabilidad: 5
+                },
+                {
+                    id: 3,
+                    tipo: 'chenille',
+                    color: 'Beige',
+                    ancho: 1.4,
+                    stock: 20,
+                    costo: 8000,
+                    proveedor: 'Textiles Santiago',
+                    durabilidad: 3
+                }
+            ];
+
+            db.insumos = [
+                {
+                    id: 1,
+                    tipo: 'espuma-densidad',
+                    descripcion: 'Espuma densidad 28',
+                    stock: 100,
+                    unidad: 'kg',
+                    costo: 3000,
+                    proveedor: 'Insumos del Sur'
+                },
+                {
+                    id: 2,
+                    tipo: 'tachuelas',
+                    descripcion: 'Tachuelas doradas 10mm',
+                    stock: 5000,
+                    unidad: 'caja',
+                    costo: 2500,
+                    proveedor: 'Ferretería Central'
+                }
+            ];
+
+            db.trabajos = [
+                {
+                    id: 1,
+                    clienteId: 1,
+                    mueble: 'sofá',
+                    estadoActual: 'desgastado',
+                    tipo: 'retapizado',
+                    telaId: 1,
+                    ancho: 2.2,
+                    largo: 1.0,
+                    precio: 250000,
+                    fecha: '2026-04-15',
+                    status: 'en-progreso',
+                    notas: 'Con clavos de bronce',
+                    fechaCreacion: new Date().toISOString()
+                }
+            ];
+
+            saveData();
+        }
+
+        // ===== UI FUNCTIONS =====
+
+        function switchTab(tabName) {
+            // Hide all
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.footer-btn').forEach(el => el.classList.remove('active'));
+
+            // Show selected
+            document.getElementById(tabName).classList.add('active');
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+            document.querySelector(`.footer-btn[onclick*="${tabName}"]`).classList.add('active');
+
+            // Refresh content
+            switch (tabName) {
+                case 'trabajos':
+                    renderTrabajos();
+                    break;
+                case 'telas':
+                    renderTelas();
+                    break;
+                case 'insumos':
+                    renderInsumos();
+                    break;
+                case 'finanzas':
+                    renderFinanzas();
+                    break;
+                case 'clientes':
+                    renderClientes();
+                    break;
+            }
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        // ===== TRABAJOS =====
+
+        function openTrabajoModal() {
+            document.getElementById('trabajoCliente').innerHTML = '<option value="">Selecciona un cliente</option>' +
+                db.clientes.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
+            document.getElementById('trabajoTela').innerHTML = '<option value="">Selecciona una tela</option>' +
+                db.telas.map(t => `<option value="${t.id}">${t.tipo} - ${t.color}</option>`).join('');
+
+            document.getElementById('trabajoFecha').valueAsDate = new Date();
+            openModal('trabajoModal');
+        }
+
+        function guardarTrabajo() {
+            const trabajo = {
+                id: Date.now(),
+                clienteId: parseInt(document.getElementById('trabajoCliente').value) || null,
+                mueble: document.getElementById('trabajoMueble').value,
+                estadoActual: document.getElementById('trabajoEstadoActual').value,
+                tipo: document.getElementById('trabajoTipo').value,
+                telaId: parseInt(document.getElementById('trabajoTela').value) || null,
+                ancho: parseFloat(document.getElementById('trabajoAncho').value),
+                largo: parseFloat(document.getElementById('trabajoLargo').value),
+                precio: parseInt(document.getElementById('trabajoPrecio').value),
+                fecha: document.getElementById('trabajoFecha').value,
+                status: document.getElementById('trabajoStatus').value,
+                notas: document.getElementById('trabajoNotas').value,
+                fechaCreacion: new Date().toISOString()
+            };
+
+            db.trabajos.push(trabajo);
+            saveData();
+            closeModal('trabajoModal');
+            renderTrabajos();
+            showToast('Trabajo guardado exitosamente');
+        }
+
+        function renderTrabajos() {
+            const container = document.getElementById('trabajosList');
+            if (!db.trabajos.length) {
+                container.innerHTML = '<div class="empty-state"><h3>Sin trabajos</h3><p>Crea tu primer trabajo para comenzar</p></div>';
+                return;
+            }
+
+            container.innerHTML = db.trabajos.map(t => {
+                const cliente = db.clientes.find(c => c.id === t.clienteId);
+                const tela = db.telas.find(tel => tel.id === t.telaId);
+                const statusBadge = {
+                    'pendiente': 'warning',
+                    'en-progreso': 'warning',
+                    'completado': 'success',
+                    'entregado': 'success'
+                };
+
+                return `
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                            <div>
+                                <h3 style="margin-bottom: 0.25rem;">${t.mueble.toUpperCase()}</h3>
+                                <p style="font-size: 0.875rem; color: var(--gray-500);">${cliente ? cliente.nombre : 'Cliente N/A'}</p>
+                            </div>
+                            <span class="badge badge-${statusBadge[t.status] || 'warning'}">${t.status}</span>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; font-size: 0.875rem;">
+                            <div>
+                                <span style="color: var(--gray-500);">Tela</span>
+                                <div style="font-weight: 600;">${tela ? tela.color : 'N/A'}</div>
+                            </div>
+                            <div>
+                                <span style="color: var(--gray-500);">Precio</span>
+                                <div style="font-weight: 600;">$${t.precio.toLocaleString('es-CL')}</div>
+                            </div>
+                            <div>
+                                <span style="color: var(--gray-500);">Dimensiones</span>
+                                <div style="font-weight: 600;">${t.ancho}m × ${t.largo}m</div>
+                            </div>
+                            <div>
+                                <span style="color: var(--gray-500);">Entrega</span>
+                                <div style="font-weight: 600;">${new Date(t.fecha).toLocaleDateString('es-CL')}</div>
+                            </div>
+                        </div>
+
+                        <div class="action-buttons">
+                            <button class="btn btn-secondary btn-sm" onclick="editarTrabajo(${t.id})">Editar</button>
+                            <button class="btn btn-success btn-sm" onclick="actualizarStatusTrabajo(${t.id})">+ Estado</button>
+                            <button class="btn btn-danger btn-sm" onclick="eliminarTrabajo(${t.id})">Eliminar</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function editarTrabajo(id) {
+            const trabajo = db.trabajos.find(t => t.id === id);
+            if (!trabajo) return;
+
+            document.getElementById('trabajoCliente').value = trabajo.clienteId || '';
+            document.getElementById('trabajoMueble').value = trabajo.mueble;
+            document.getElementById('trabajoEstadoActual').value = trabajo.estadoActual;
+            document.getElementById('trabajoTipo').value = trabajo.tipo;
+            document.getElementById('trabajoTela').value = trabajo.telaId || '';
+            document.getElementById('trabajoAncho').value = trabajo.ancho;
+            document.getElementById('trabajoLargo').value = trabajo.largo;
+            document.getElementById('trabajoPrecio').value = trabajo.precio;
+            document.getElementById('trabajoFecha').value = trabajo.fecha;
+            document.getElementById('trabajoStatus').value = trabajo.status;
+            document.getElementById('trabajoNotas').value = trabajo.notas;
+
+            const oldOnClick = document.querySelector('[onclick="guardarTrabajo()"]').onclick;
+            document.querySelector('[onclick="guardarTrabajo()"]').onclick = function() {
+                Object.assign(trabajo, {
+                    clienteId: parseInt(document.getElementById('trabajoCliente').value) || null,
+                    mueble: document.getElementById('trabajoMueble').value,
+                    estadoActual: document.getElementById('trabajoEstadoActual').value,
+                    tipo: document.getElementById('trabajoTipo').value,
+                    telaId: parseInt(document.getElementById('trabajoTela').value) || null,
+                    ancho: parseFloat(document.getElementById('trabajoAncho').value),
+                    largo: parseFloat(document.getElementById('trabajoLargo').value),
+                    precio: parseInt(document.getElementById('trabajoPrecio').value),
+                    fecha: document.getElementById('trabajoFecha').value,
+                    status: document.getElementById('trabajoStatus').value,
+                    notas: document.getElementById('trabajoNotas').value
+                });
+                saveData();
+                closeModal('trabajoModal');
+                renderTrabajos();
+                showToast('Trabajo actualizado');
+                document.querySelector('[onclick="guardarTrabajo()"]').onclick = oldOnClick;
+            };
+
+            openModal('trabajoModal');
+        }
+
+        function actualizarStatusTrabajo(id) {
+            const trabajo = db.trabajos.find(t => t.id === id);
+            const statuses = ['pendiente', 'en-progreso', 'completado', 'entregado'];
+            const currentIdx = statuses.indexOf(trabajo.status);
+            trabajo.status = statuses[(currentIdx + 1) % statuses.length];
+            saveData();
+            renderTrabajos();
+            showToast(`Status actualizado a: ${trabajo.status}`);
+        }
+
+        function eliminarTrabajo(id) {
+            if (confirm('¿Eliminar este trabajo?')) {
+                db.trabajos = db.trabajos.filter(t => t.id !== id);
+                saveData();
+                renderTrabajos();
+                showToast('Trabajo eliminado');
+            }
+        }
+
+        // ===== TELAS =====
+
+        function openTelaModal() {
+            document.getElementById('telaTipo').value = 'tela';
+            document.getElementById('telaColor').value = '';
+            document.getElementById('telaAncho').value = '1.4';
+            document.getElementById('telaStock').value = '10';
+            document.getElementById('telaCosto').value = '8000';
+            document.getElementById('telaProveedor').value = '';
+            document.getElementById('telaDurabilidad').value = '3';
+            openModal('telaModal');
+        }
+
+        function guardarTela() {
+            const tela = {
+                id: Date.now(),
+                tipo: document.getElementById('telaTipo').value,
+                color: document.getElementById('telaColor').value,
+                ancho: parseFloat(document.getElementById('telaAncho').value),
+                stock: parseFloat(document.getElementById('telaStock').value),
+                costo: parseInt(document.getElementById('telaCosto').value),
+                proveedor: document.getElementById('telaProveedor').value,
+                durabilidad: parseInt(document.getElementById('telaDurabilidad').value)
+            };
+
+            db.telas.push(tela);
+            saveData();
+            closeModal('telaModal');
+            renderTelas();
+            showToast('Tela agregada exitosamente');
+        }
+
+        function renderTelas() {
+            const container = document.getElementById('telasList');
+            if (!db.telas.length) {
+                container.innerHTML = '<div class="empty-state"><h3>Sin telas</h3><p>Agrega tu catálogo de telas</p></div>';
+                return;
+            }
+
+            container.innerHTML = db.telas.map(t => `
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                        <div>
+                            <h3 style="margin-bottom: 0.25rem;">${t.tipo.toUpperCase()}</h3>
+                            <p style="font-size: 0.875rem; color: var(--gray-500);">${t.color}</p>
+                        </div>
+                        <div class="color-swatch" style="background: linear-gradient(135deg, #ccc 0%, #999 100%);"></div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; font-size: 0.875rem;">
+                        <div>
+                            <span style="color: var(--gray-500);">Ancho</span>
+                            <div style="font-weight: 600;">${t.ancho}m</div>
+                        </div>
+                        <div>
+                            <span style="color: var(--gray-500);">Stock</span>
+                            <div style="font-weight: 600;">${t.stock.toFixed(1)}m</div>
+                        </div>
+                        <div>
+                            <span style="color: var(--gray-500);">Costo/m</span>
+                            <div style="font-weight: 600;">$${t.costo.toLocaleString('es-CL')}</div>
+                        </div>
+                        <div>
+                            <span style="color: var(--gray-500);">Durabilidad</span>
+                            <div style="font-weight: 600;">⭐ ${t.durabilidad}/5</div>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <span style="font-size: 0.75rem; color: var(--gray-500);">Proveedor: ${t.proveedor}</span>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="btn btn-secondary btn-sm" onclick="editarTela(${t.id})">Editar</button>
+                        <button class="btn btn-danger btn-sm" onclick="eliminarTela(${t.id})">Eliminar</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function editarTela(id) {
+            const tela = db.telas.find(t => t.id === id);
+            document.getElementById('telaTipo').value = tela.tipo;
+            document.getElementById('telaColor').value = tela.color;
+            document.getElementById('telaAncho').value = tela.ancho;
+            document.getElementById('telaStock').value = tela.stock;
+            document.getElementById('telaCosto').value = tela.costo;
+            document.getElementById('telaProveedor').value = tela.proveedor;
+            document.getElementById('telaDurabilidad').value = tela.durabilidad;
+
+            const btn = document.querySelector('[onclick="guardarTela()"]');
+            const oldClick = btn.onclick;
+            btn.onclick = function() {
+                Object.assign(tela, {
+                    tipo: document.getElementById('telaTipo').value,
+                    color: document.getElementById('telaColor').value,
+                    ancho: parseFloat(document.getElementById('telaAncho').value),
+                    stock: parseFloat(document.getElementById('telaStock').value),
+                    costo: parseInt(document.getElementById('telaCosto').value),
+                    proveedor: document.getElementById('telaProveedor').value,
+                    durabilidad: parseInt(document.getElementById('telaDurabilidad').value)
+                });
+                saveData();
+                closeModal('telaModal');
+                renderTelas();
+                showToast('Tela actualizada');
+                btn.onclick = oldClick;
+            };
+            openModal('telaModal');
+        }
+
+        function eliminarTela(id) {
+            if (confirm('¿Eliminar esta tela?')) {
+                db.telas = db.telas.filter(t => t.id !== id);
+                saveData();
+                renderTelas();
+                showToast('Tela eliminada');
+            }
+        }
+
+        // ===== COTIZADOR =====
+
+        function actualizarCotizacion() {
+            const mueble = document.getElementById('cotizMueble').value;
+            const ancho = parseFloat(document.getElementById('cotizAncho').value) || 0;
+            const largo = parseFloat(document.getElementById('cotizLargo').value) || 0;
+            const telaId = parseInt(document.getElementById('cotizTela').value);
+            const horas = parseFloat(document.getElementById('cotizHoras').value) || 0;
+            const tarifa = parseInt(document.getElementById('cotizTarifa').value) || 0;
+            const complejidad = parseFloat(document.getElementById('cotizComplejidad').value) || 1;
+            const espuma = parseInt(document.getElementById('cotizEspuma').value) || 0;
+
+            const tela = db.telas.find(t => t.id === telaId);
+            const areaTela = ancho * largo;
+            const costoTela = tela ? Math.ceil(areaTela * tela.costo) : 0;
+
+            const manoObra = Math.round(horas * tarifa * complejidad);
+
+            const total = costoTela + espuma + manoObra;
+
+            document.getElementById('cotizTelaDetalle').textContent = `$${costoTela.toLocaleString('es-CL')}`;
+            document.getElementById('cotizEspumaDetalle').textContent = `$${espuma.toLocaleString('es-CL')}`;
+            document.getElementById('cotizManoDetalle').textContent = `$${manoObra.toLocaleString('es-CL')}`;
+            document.getElementById('cotizTotal').textContent = `$${total.toLocaleString('es-CL')}`;
+        }
+
+        function guardarCotizacion() {
+            const mueble = document.getElementById('cotizMueble').value;
+            if (!mueble) {
+                showToast('Selecciona un mueble', 'warning');
+                return;
+            }
+
+            const cotizacion = {
+                id: Date.now(),
+                mueble,
+                ancho: parseFloat(document.getElementById('cotizAncho').value),
+                largo: parseFloat(document.getElementById('cotizLargo').value),
+                profundidad: parseFloat(document.getElementById('cotizProfundidad').value),
+                telaId: parseInt(document.getElementById('cotizTela').value) || null,
+                horas: parseFloat(document.getElementById('cotizHoras').value),
+                tarifa: parseInt(document.getElementById('cotizTarifa').value),
+                complejidad: parseFloat(document.getElementById('cotizComplejidad').value),
+                espuma: parseInt(document.getElementById('cotizEspuma').value),
+                total: parseInt(document.getElementById('cotizTotal').textContent.replace(/\D/g, '')),
+                fecha: new Date().toISOString()
+            };
+
+            db.cotizaciones.push(cotizacion);
+            saveData();
+            showToast('Cotización guardada');
+            document.getElementById('cotizMueble').value = '';
+            actualizarCotizacion();
+        }
+
+        // Populate tela selects in cotizador
+        function populateTelaSelects() {
+            const selects = document.getElementById('cotizTela');
+            if (selects) {
+                selects.innerHTML = '<option value="">Selecciona una tela</option>' +
+                    db.telas.map(t => `<option value="${t.id}">${t.tipo} - ${t.color}</option>`).join('');
+            }
+        }
+
+        // ===== INSUMOS =====
+
+        function openInsumoModal() {
+            document.getElementById('insumoTipo').value = 'espuma-densidad';
+            document.getElementById('insumoDescripcion').value = '';
+            document.getElementById('insumoStock').value = '50';
+            document.getElementById('insumoUnidad').value = 'kg';
+            document.getElementById('insumoCosto').value = '5000';
+            document.getElementById('insumoProveedor').value = '';
+            openModal('insumoModal');
+        }
+
+        function guardarInsumo() {
+            const insumo = {
+                id: Date.now(),
+                tipo: document.getElementById('insumoTipo').value,
+                descripcion: document.getElementById('insumoDescripcion').value,
+                stock: parseInt(document.getElementById('insumoStock').value),
+                unidad: document.getElementById('insumoUnidad').value,
+                costo: parseInt(document.getElementById('insumoCosto').value),
+                proveedor: document.getElementById('insumoProveedor').value
+            };
+
+            db.insumos.push(insumo);
+            saveData();
+            closeModal('insumoModal');
+            renderInsumos();
+            showToast('Insumo agregado');
+        }
+
+        function renderInsumos() {
+            const container = document.getElementById('insumosList');
+            if (!db.insumos.length) {
+                container.innerHTML = '<div class="empty-state"><h3>Sin insumos</h3><p>Agrega tu inventario de insumos</p></div>';
+                return;
+            }
+
+            container.innerHTML = db.insumos.map(i => `
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                        <div>
+                            <h3 style="margin-bottom: 0.25rem;">${i.descripcion}</h3>
+                            <p style="font-size: 0.875rem; color: var(--gray-500);">${i.tipo}</p>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; font-size: 0.875rem;">
+                        <div>
+                            <span style="color: var(--gray-500);">Stock</span>
+                            <div style="font-weight: 600;">${i.stock} ${i.unidad}</div>
+                        </div>
+                        <div>
+                            <span style="color: var(--gray-500);">Costo/u</span>
+                            <div style="font-weight: 600;">$${i.costo.toLocaleString('es-CL')}</div>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <span style="font-size: 0.75rem; color: var(--gray-500);">Proveedor: ${i.proveedor}</span>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="btn btn-secondary btn-sm" onclick="editarInsumo(${i.id})">Editar</button>
+                        <button class="btn btn-danger btn-sm" onclick="eliminarInsumo(${i.id})">Eliminar</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function editarInsumo(id) {
+            const insumo = db.insumos.find(i => i.id === id);
+            document.getElementById('insumoTipo').value = insumo.tipo;
+            document.getElementById('insumoDescripcion').value = insumo.descripcion;
+            document.getElementById('insumoStock').value = insumo.stock;
+            document.getElementById('insumoUnidad').value = insumo.unidad;
+            document.getElementById('insumoCosto').value = insumo.costo;
+            document.getElementById('insumoProveedor').value = insumo.proveedor;
+
+            const btn = document.querySelector('[onclick="guardarInsumo()"]');
+            const oldClick = btn.onclick;
+            btn.onclick = function() {
+                Object.assign(insumo, {
+                    tipo: document.getElementById('insumoTipo').value,
+                    descripcion: document.getElementById('insumoDescripcion').value,
+                    stock: parseInt(document.getElementById('insumoStock').value),
+                    unidad: document.getElementById('insumoUnidad').value,
+                    costo: parseInt(document.getElementById('insumoCosto').value),
+                    proveedor: document.getElementById('insumoProveedor').value
+                });
+                saveData();
+                closeModal('insumoModal');
+                renderInsumos();
+                showToast('Insumo actualizado');
+                btn.onclick = oldClick;
+            };
+            openModal('insumoModal');
+        }
+
+        function eliminarInsumo(id) {
+            if (confirm('¿Eliminar este insumo?')) {
+                db.insumos = db.insumos.filter(i => i.id !== id);
+                saveData();
+                renderInsumos();
+                showToast('Insumo eliminado');
+            }
+        }
+
+        // ===== FINANZAS =====
+
+        function renderFinanzas() {
+            const trabajosCompletados = db.trabajos.filter(t => ['completado', 'entregado'].includes(t.status));
+            const ingresos = trabajosCompletados.reduce((sum, t) => sum + t.precio, 0);
+
+            const costoTelas = db.telas.reduce((sum, t) => sum + (t.costo * t.stock), 0);
+            const costoInsumos = db.insumos.reduce((sum, i) => sum + (i.costo * i.stock), 0);
+            const costos = costoTelas + costoInsumos;
+
+            const ganancia = ingresos - costos;
+
+            document.getElementById('finIngresos').textContent = `$${ingresos.toLocaleString('es-CL')}`;
+            document.getElementById('finCostos').textContent = `$${costos.toLocaleString('es-CL')}`;
+            document.getElementById('finGanancia').textContent = `$${ganancia.toLocaleString('es-CL')}`;
+
+            // Chart: Por tipo de mueble
+            const ingresosPorMueble = {};
+            trabajosCompletados.forEach(t => {
+                ingresosPorMueble[t.mueble] = (ingresosPorMueble[t.mueble] || 0) + t.precio;
+            });
+
+            if (Charts.ingresos) Charts.ingresos.destroy();
+            const ctx1 = document.getElementById('chartIngresos');
+            if (ctx1) {
+                Charts.ingresos = new Chart(ctx1, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(ingresosPorMueble),
+                        datasets: [{
+                            data: Object.values(ingresosPorMueble),
+                            backgroundColor: ['#581c87', '#7c3aed', '#a855f7', '#d946ef', '#ec4899', '#f43f5e']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Chart: Por mes
+            const ingresosPorMes = {};
+            trabajosCompletados.forEach(t => {
+                const mes = new Date(t.fechaCreacion).toLocaleDateString('es-CL', { month: 'short' });
+                ingresosPorMes[mes] = (ingresosPorMes[mes] || 0) + t.precio;
+            });
+
+            if (Charts.meses) Charts.meses.destroy();
+            const ctx2 = document.getElementById('chartMeses');
+            if (ctx2) {
+                Charts.meses = new Chart(ctx2, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(ingresosPorMes),
+                        datasets: [{
+                            label: 'Ingresos',
+                            data: Object.values(ingresosPorMes),
+                            backgroundColor: '#581c87'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Resumen
+            document.getElementById('resumenFinanzas').innerHTML = `
+                <div class="list-item">
+                    <div class="list-item-content">
+                        <div class="list-item-title">Trabajos Completados</div>
+                    </div>
+                    <div class="list-item-value">${trabajosCompletados.length}</div>
+                </div>
+                <div class="list-item">
+                    <div class="list-item-content">
+                        <div class="list-item-title">Margen de Ganancia</div>
+                    </div>
+                    <div class="list-item-value">${ingresos > 0 ? Math.round((ganancia / ingresos) * 100) : 0}%</div>
+                </div>
+                <div class="list-item">
+                    <div class="list-item-content">
+                        <div class="list-item-title">Promedio por Trabajo</div>
+                    </div>
+                    <div class="list-item-value">$${trabajosCompletados.length > 0 ? Math.round(ingresos / trabajosCompletados.length).toLocaleString('es-CL') : 0}</div>
+                </div>
+            `;
+        }
+
+        // ===== CLIENTES =====
+
+        function openClienteModal() {
+            document.getElementById('clienteNombre').value = '';
+            document.getElementById('clienteTelefono').value = '';
+            document.getElementById('clienteEmail').value = '';
+            document.getElementById('clienteDireccion').value = '';
+            document.getElementById('clientePreferencias').value = '';
+            openModal('clienteModal');
+        }
+
+        function guardarCliente() {
+            const cliente = {
+                id: Date.now(),
+                nombre: document.getElementById('clienteNombre').value,
+                telefono: document.getElementById('clienteTelefono').value,
+                email: document.getElementById('clienteEmail').value,
+                direccion: document.getElementById('clienteDireccion').value,
+                preferencias: document.getElementById('clientePreferencias').value
+            };
+
+            if (!cliente.nombre) {
+                showToast('El nombre es requerido', 'warning');
+                return;
+            }
+
+            db.clientes.push(cliente);
+            saveData();
+            closeModal('clienteModal');
+            renderClientes();
+            showToast('Cliente agregado');
+        }
+
+        function renderClientes() {
+            const container = document.getElementById('clientesList');
+            if (!db.clientes.length) {
+                container.innerHTML = '<div class="empty-state"><h3>Sin clientes</h3><p>Agrega tu primer cliente</p></div>';
+                return;
+            }
+
+            container.innerHTML = db.clientes.map(c => {
+                const trabajosCliente = db.trabajos.filter(t => t.clienteId === c.id);
+                return `
+                    <div class="card">
+                        <div style="margin-bottom: 1rem;">
+                            <h3 style="margin-bottom: 0.25rem;">${c.nombre}</h3>
+                            <p style="font-size: 0.875rem; color: var(--gray-500);">${trabajosCliente.length} trabajo(s)</p>
+                        </div>
+
+                        <div style="display: grid; gap: 0.75rem; margin-bottom: 1rem; font-size: 0.875rem;">
+                            <div>📞 <a href="tel:${c.telefono}" style="color: var(--primary); text-decoration: none;">${c.telefono}</a></div>
+                            <div>📧 <a href="mailto:${c.email}" style="color: var(--primary); text-decoration: none;">${c.email}</a></div>
+                            <div>📍 ${c.direccion}</div>
+                            ${c.preferencias ? `<div>💡 ${c.preferencias}</div>` : ''}
+                        </div>
+
+                        <div class="action-buttons">
+                            <button class="btn btn-secondary btn-sm" onclick="editarCliente(${c.id})">Editar</button>
+                            <button class="btn btn-danger btn-sm" onclick="eliminarCliente(${c.id})">Eliminar</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function editarCliente(id) {
+            const cliente = db.clientes.find(c => c.id === id);
+            document.getElementById('clienteNombre').value = cliente.nombre;
+            document.getElementById('clienteTelefono').value = cliente.telefono;
+            document.getElementById('clienteEmail').value = cliente.email;
+            document.getElementById('clienteDireccion').value = cliente.direccion;
+            document.getElementById('clientePreferencias').value = cliente.preferencias;
+
+            const btn = document.querySelector('[onclick="guardarCliente()"]');
+            const oldClick = btn.onclick;
+            btn.onclick = function() {
+                Object.assign(cliente, {
+                    nombre: document.getElementById('clienteNombre').value,
+                    telefono: document.getElementById('clienteTelefono').value,
+                    email: document.getElementById('clienteEmail').value,
+                    direccion: document.getElementById('clienteDireccion').value,
+                    preferencias: document.getElementById('clientePreferencias').value
+                });
+                saveData();
+                closeModal('clienteModal');
+                renderClientes();
+                showToast('Cliente actualizado');
+                btn.onclick = oldClick;
+            };
+            openModal('clienteModal');
+        }
+
+        function eliminarCliente(id) {
+            if (confirm('¿Eliminar este cliente?')) {
+                db.clientes = db.clientes.filter(c => c.id !== id);
+                saveData();
+                renderClientes();
+                showToast('Cliente eliminado');
+            }
+        }
+
+        // ===== INIT =====
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Register service worker for PWA
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('data:application/javascript,self.addEventListener("install",e=>self.skipWaiting());self.addEventListener("activate",e=>e.waitUntil(clients.claim()));').catch(() => {});
+            }
+
+            // Load data
+            loadData();
+            populateTelaSelects();
+            renderTrabajos();
+
+            // Tab switching
+            document.querySelectorAll('[data-tab]').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    switchTab(this.dataset.tab);
+                });
+            });
+
+            // Modal closing
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        closeModal(this.id);
+                    }
+                });
+            });
+
+            // Cotizador on load
+            actualizarCotizacion();
+        });
+    </script>
+</body>
+</html>

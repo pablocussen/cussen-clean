@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapeo Mineral Lunar — Cráter Copernicus (M3) | CUSSEN</title>
+    <meta name="description" content="Espectroscopía de reflectancia lunar usando Moon Mineralogy Mapper (M3) de Chandrayaan-1. Mapeo de olivino, piroxeno y prospección de recursos en el cráter Copernicus.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --dark: #07090f;
+            --dark2: #0d1117;
+            --card: #111827;
+            --border: rgba(255,255,255,0.07);
+            --cyan: #06b6d4;
+            --cyan-dim: rgba(6,182,212,0.12);
+            --cyan-border: rgba(6,182,212,0.25);
+            --text: #e2e8f0;
+            --muted: #94a3b8;
+            --mono: 'JetBrains Mono', monospace;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background:
+                radial-gradient(ellipse 800px 600px at 80% 10%, rgba(148,163,184,0.12) 0%, transparent 70%),
+                radial-gradient(ellipse 600px 600px at 15% 85%, rgba(148,163,184,0.08) 0%, transparent 70%),
+                radial-gradient(ellipse 400px 300px at 50% 50%, rgba(100,116,139,0.06) 0%, transparent 60%),
+                var(--dark);
+            color: var(--text);
+            font-family: 'Inter', system-ui, sans-serif;
+            font-size: 16px;
+            line-height: 1.7;
+        }
+
+        a { color: var(--cyan); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        /* ── NAV ──────────────────────────────────────────── */
+        nav {
+            position: sticky; top: 0; z-index: 100;
+            background: rgba(7,9,15,0.90);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 40px; height: 60px;
+        }
+        .nav-logo {
+            font-weight: 700; font-size: 1rem; letter-spacing: 0.08em;
+            color: var(--text);
+        }
+        .nav-links { display: flex; gap: 32px; list-style: none; }
+        .nav-links a { font-size: 0.875rem; color: var(--muted); transition: color .2s; }
+        .nav-links a:hover { color: var(--text); text-decoration: none; }
+        .nav-cta {
+            background: var(--cyan); color: var(--dark) !important;
+            padding: 6px 18px; border-radius: 6px; font-weight: 600;
+        }
+        .nav-cta:hover { opacity: 0.88; }
+        .nav-back {
+            font-size: 0.8rem; color: var(--muted); font-family: var(--mono);
+            border: 1px solid var(--border); padding: 4px 12px; border-radius: 4px;
+            transition: all .2s;
+        }
+        .nav-back:hover { color: var(--cyan); border-color: var(--cyan-border); text-decoration: none; }
+
+        /* ── LAYOUT ───────────────────────────────────────── */
+        .wrap { max-width: 900px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+        /* ── BG PLANET (Moon) ─────────────────────────────── */
+        .bg-planet {
+            position: fixed;
+            top: 3%;
+            right: -60px;
+            width: 520px;
+            height: 520px;
+            border-radius: 50%;
+            /* Zoom in 115% so the moon fills the circle, no black border */
+            background: url('assets/moon-real.jpg') center/115% no-repeat;
+            box-shadow:
+                0 0 80px 25px rgba(180,190,210,0.12),
+                0 0 200px 60px rgba(148,163,184,0.05);
+            opacity: 0.40;
+            z-index: 0;
+            pointer-events: none;
+            animation: planetFloat 40s ease-in-out infinite;
+        }
+        .bg-starfield {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            pointer-events: none;
+            background:
+                radial-gradient(1.5px 1.5px at 5% 8%, rgba(255,255,255,0.6), transparent),
+                radial-gradient(1px 1px at 15% 42%, rgba(255,255,255,0.4), transparent),
+                radial-gradient(1.5px 1.5px at 28% 15%, rgba(255,255,255,0.5), transparent),
+                radial-gradient(1px 1px at 40% 68%, rgba(255,255,255,0.35), transparent),
+                radial-gradient(2px 2px at 55% 5%, rgba(255,255,255,0.5), transparent),
+                radial-gradient(1px 1px at 65% 82%, rgba(255,255,255,0.3), transparent),
+                radial-gradient(1.5px 1.5px at 78% 55%, rgba(255,255,255,0.45), transparent),
+                radial-gradient(1px 1px at 88% 22%, rgba(255,255,255,0.35), transparent),
+                radial-gradient(1px 1px at 92% 75%, rgba(255,255,255,0.4), transparent),
+                radial-gradient(1.5px 1.5px at 3% 90%, rgba(255,255,255,0.5), transparent),
+                radial-gradient(1px 1px at 35% 95%, rgba(255,255,255,0.3), transparent),
+                radial-gradient(2px 2px at 72% 12%, rgba(255,255,255,0.45), transparent),
+                radial-gradient(1px 1px at 48% 38%, rgba(255,255,255,0.25), transparent),
+                radial-gradient(1px 1px at 18% 72%, rgba(255,255,255,0.35), transparent),
+                radial-gradient(1.5px 1.5px at 82% 92%, rgba(255,255,255,0.4), transparent),
+                radial-gradient(1px 1px at 60% 48%, rgba(255,255,255,0.3), transparent);
+        }
+        /* Shooting star / comet */
+        .bg-comet {
+            position: fixed;
+            top: 12%;
+            left: -100px;
+            width: 120px;
+            height: 1.5px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.7), rgba(200,220,255,0.3), transparent);
+            border-radius: 50%;
+            z-index: -1;
+            pointer-events: none;
+            opacity: 0;
+            animation: cometShoot 12s ease-in-out infinite;
+            animation-delay: 4s;
+        }
+        .bg-comet:nth-child(2) {
+            top: 35%;
+            animation-delay: 9s;
+            animation-duration: 10s;
+            width: 80px;
+        }
+        @keyframes cometShoot {
+            0%, 90%, 100% { transform: translateX(0) rotate(-25deg); opacity: 0; }
+            5% { opacity: 0.8; }
+            15% { transform: translateX(calc(100vw + 200px)) rotate(-25deg); opacity: 0; }
+        }
+        @keyframes planetFloat {
+            0% { transform: translateY(0) translateX(0); }
+            25% { transform: translateY(-15px) translateX(5px); }
+            50% { transform: translateY(-25px) translateX(0); }
+            75% { transform: translateY(-10px) translateX(-5px); }
+            100% { transform: translateY(0) translateX(0); }
+        }
+
+        /* ── HEADER ───────────────────────────────────────── */
+        .page-header {
+            border-bottom: 1px solid var(--border);
+            padding: 56px 0 40px;
+        }
+        .header-eyebrow {
+            font-family: var(--mono); font-size: 0.75rem;
+            color: var(--cyan); letter-spacing: 0.12em; text-transform: uppercase;
+            margin-bottom: 14px;
+        }
+        .page-header h1 {
+            font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+            font-weight: 700; line-height: 1.2;
+            color: var(--text); margin-bottom: 18px;
+        }
+        .page-header .abstract {
+            font-size: 0.975rem; color: var(--muted);
+            max-width: 720px; line-height: 1.75;
+            margin-bottom: 24px; text-align: justify;
+        }
+        .badge-row { display: flex; flex-wrap: wrap; gap: 8px; }
+        .badge {
+            font-family: var(--mono); font-size: 0.75rem; font-weight: 600;
+            padding: 4px 12px; border-radius: 4px;
+            background: var(--cyan-dim); border: 1px solid var(--cyan-border);
+            color: var(--cyan); letter-spacing: 0.06em;
+        }
+        .badge-tag {
+            font-size: 0.75rem; padding: 4px 10px; border-radius: 4px;
+            background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+            color: var(--muted);
+        }
+
+        /* ── KEY RESULTS BAR ──────────────────────────────── */
+        .results-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 1px;
+            background: var(--border);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 48px 0;
+        }
+        .res-cell {
+            background: var(--card);
+            padding: 20px 18px;
+            text-align: center;
+        }
+        .res-value {
+            font-family: var(--mono); font-size: 1.35rem; font-weight: 600;
+            color: var(--cyan); display: block; margin-bottom: 6px;
+        }
+        .res-label { font-size: 0.78rem; color: var(--muted); line-height: 1.4; }
+
+        /* ── SECTION ──────────────────────────────────────── */
+        section { padding: 56px 0; border-top: 1px solid var(--border); }
+        section h2 {
+            font-size: 1.25rem; font-weight: 700;
+            color: var(--text); margin-bottom: 6px;
+        }
+        .sec-code {
+            font-family: var(--mono); font-size: 0.72rem; color: var(--cyan);
+            letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px;
+        }
+        .sec-intro { font-size: 0.95rem; color: var(--muted); margin: 16px 0 28px; max-width: 680px; text-align: justify; }
+
+        /* ── FIGURE ───────────────────────────────────────── */
+        .figure {
+            margin: 36px 0;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            background: var(--dark2);
+        }
+        .figure img {
+            display: block; width: 100%; height: auto;
+        }
+        .figure-placeholder {
+            display: flex; align-items: center; justify-content: center;
+            min-height: 280px;
+            background: linear-gradient(145deg, rgba(6,182,212,0.04), rgba(7,9,15,0.8));
+            border: 1px dashed var(--cyan-border);
+            margin: 0;
+            position: relative;
+        }
+        .figure-placeholder::before {
+            content: '';
+            position: absolute; inset: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 20px,
+                rgba(6,182,212,0.03) 20px,
+                rgba(6,182,212,0.03) 21px
+            );
+        }
+        .figure-placeholder span {
+            font-family: var(--mono); font-size: 0.8rem;
+            color: var(--cyan); opacity: 0.7;
+            text-align: center; padding: 20px; z-index: 1;
+            line-height: 1.7;
+        }
+        .figure-caption {
+            padding: 16px 20px;
+            border-top: 1px solid var(--border);
+        }
+        .figure-caption .fig-label {
+            font-family: var(--mono); font-size: 0.75rem; color: var(--cyan);
+            font-weight: 600; margin-bottom: 6px;
+        }
+        .figure-caption p {
+            font-size: 0.875rem; color: var(--muted); line-height: 1.65; text-align: justify;
+        }
+
+        /* ── ANALYSIS BLOCK ───────────────────────────────── */
+        .analysis {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--cyan);
+            border-radius: 0 8px 8px 0;
+            padding: 20px 24px;
+            margin: 24px 0;
+            font-size: 0.925rem; color: var(--muted); line-height: 1.72; text-align: justify;
+        }
+        .analysis strong { color: var(--text); }
+
+        /* ── FORMULA ──────────────────────────────────────── */
+        .formula {
+            background: rgba(0,0,0,0.4);
+            border: 1px solid var(--border);
+            border-left: 3px solid rgba(6,182,212,0.5);
+            border-radius: 0 6px 6px 0;
+            padding: 16px 20px;
+            font-family: var(--mono); font-size: 0.82rem;
+            color: #7dd3fc; line-height: 1.9;
+            overflow-x: auto; margin: 16px 0;
+        }
+        .formula-label {
+            font-family: var(--mono); font-size: 0.7rem;
+            color: var(--muted); text-transform: uppercase;
+            letter-spacing: 0.1em; margin-bottom: 6px;
+        }
+
+        /* ── DATA TABLE ───────────────────────────────────── */
+        .data-table { width: 100%; border-collapse: collapse; margin: 24px 0; font-size: 0.9rem; }
+        .data-table th {
+            font-family: var(--mono); font-size: 0.72rem; color: var(--cyan);
+            text-transform: uppercase; letter-spacing: 0.08em;
+            padding: 10px 14px; text-align: left;
+            border-bottom: 1px solid var(--cyan-border);
+        }
+        .data-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); color: var(--muted); }
+        .data-table tr:last-child td { border-bottom: none; }
+        .data-table .val { color: var(--cyan); font-family: var(--mono); font-weight: 500; text-align: right; }
+        .data-table .total td { color: var(--text); font-weight: 600; }
+        .data-table .total .val { color: var(--cyan); }
+
+        /* ── CTA ──────────────────────────────────────────── */
+        .cta-section {
+            padding: 48px 0;
+            border-top: 1px solid var(--border);
+            display: flex; flex-direction: column; align-items: flex-start; gap: 20px;
+        }
+        .cta-section h3 { font-size: 1.1rem; font-weight: 600; color: var(--text); }
+        .cta-section p { font-size: 0.9rem; color: var(--muted); max-width: 560px; }
+        .btn-row { display: flex; gap: 12px; flex-wrap: wrap; }
+        .btn-primary {
+            background: var(--cyan); color: var(--dark);
+            padding: 10px 22px; border-radius: 6px;
+            font-weight: 600; font-size: 0.875rem;
+            transition: opacity .2s;
+        }
+        .btn-primary:hover { opacity: 0.85; text-decoration: none; }
+        .btn-secondary {
+            background: transparent; color: var(--cyan);
+            padding: 10px 22px; border-radius: 6px;
+            border: 1px solid var(--cyan-border);
+            font-weight: 500; font-size: 0.875rem;
+            transition: all .2s;
+        }
+        .btn-secondary:hover { background: var(--cyan-dim); text-decoration: none; }
+
+        /* ── REFERENCES ───────────────────────────────────── */
+        .ref-list { list-style: none; }
+        .ref-list li {
+            font-size: 0.875rem; color: var(--muted);
+            padding: 8px 0; border-bottom: 1px solid var(--border);
+            padding-left: 20px; position: relative; line-height: 1.55;
+        }
+        .ref-list li::before {
+            content: '[' attr(data-n) ']';
+            font-family: var(--mono); font-size: 0.7rem; color: var(--cyan);
+            position: absolute; left: 0; top: 9px;
+        }
+        .ref-list li:last-child { border-bottom: none; }
+
+        /* ── FOOTER ───────────────────────────────────────── */
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 32px 0;
+            font-size: 0.825rem; color: var(--muted);
+        }
+        .footer-inner {
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 12px;
+        }
+
+        /* ── NOTE ─────────────────────────────────────────── */
+        .note {
+            font-size: 0.825rem; color: var(--muted);
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: 6px; padding: 12px 16px;
+            margin-top: 20px; line-height: 1.6;
+        }
+
+        /* ── LANG TOGGLE ─────────────────────────────────── */
+        .lang-toggle {
+            font-family: var(--mono); font-size: 0.75rem;
+            color: var(--muted); cursor: pointer;
+            border: 1px solid var(--border); padding: 4px 10px;
+            border-radius: 4px; background: transparent;
+            transition: all .2s;
+        }
+        .lang-toggle:hover { color: var(--cyan); border-color: var(--cyan-border); }
+        [data-en] { display: none; }
+        html[lang="en"] [data-es] { display: none; }
+        html[lang="en"] [data-en] { display: revert; }
+
+        @media (max-width: 768px) {
+            nav { padding: 0 12px; }
+            .wrap { padding: 0 16px; }
+            .nav-links { display: none; }
+            .results-bar { grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 16px; }
+            .page-header h1 { font-size: 1.6rem; }
+            .page-header .abstract { font-size: 0.9rem; }
+            .figure img { border-radius: 4px; }
+            .figure-caption { padding: 12px 14px; }
+            .analysis { padding: 14px 16px; font-size: 0.875rem; }
+            .data-table { font-size: 0.8rem; }
+            .data-table td, .data-table th { padding: 6px 8px; }
+            h2 { font-size: 1.2rem; }
+            .sec-intro { font-size: 0.875rem; }
+            .ref-list li { font-size: 0.8rem; padding: 8px 0; }
+        }
+
+        @media (max-width: 480px) {
+            .results-bar { grid-template-columns: repeat(2, 1fr); gap: 8px; padding: 12px; }
+            .results-bar .r-val { font-size: 1rem; }
+            .badge-row { gap: 4px; }
+            .badge { font-size: 0.65rem; padding: 3px 8px; }
+            .page-header h1 { font-size: 1.3rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-starfield"></div>
+    <div class="bg-comet"></div>
+    <div class="bg-comet"></div>
+    <div class="bg-planet"></div>
+
+    <nav>
+        <a href="../../../" class="nav-logo">CUSSEN</a>
+        <ul class="nav-links">
+            <li><a href="../../../servicios/">Servicios</a></li>
+            <li><a href="../../../#proyectos">Proyectos</a></li>
+            <li><a href="../../../framework/">Framework</a></li>
+            <li>
+                <button class="lang-toggle" onclick="toggleLang()" aria-label="Toggle language">
+                    <span data-es>EN</span><span data-en>ES</span>
+                </button>
+            </li>
+            <li><a href="../../../#contacto" class="nav-cta">Contacto</a></li>
+        </ul>
+        <a href="../../../#proyectos" class="nav-back" data-es>&larr; Portfolio</a>
+        <a href="../../../#proyectos" class="nav-back" data-en>&larr; Portfolio</a>
+    </nav>
+
+    <div class="wrap">
+
+        <!-- ── HEADER ── -->
+        <header class="page-header">
+            <div class="header-eyebrow">
+                <span data-es>SP.04 &middot; Inteligencia Planetaria &mdash; Spectral Intelligence for Space Resources</span>
+                <span data-en>SP.04 &middot; Planetary Intelligence &mdash; Spectral Intelligence for Space Resources</span>
+            </div>
+            <h1>
+                <span data-es>Mapeo Mineral Lunar &mdash; Cr&aacute;ter Copernicus<br>
+                    mediante Moon Mineralogy Mapper (M<sup>3</sup>)</span>
+                <span data-en>Lunar Mineral Mapping &mdash; Copernicus Crater<br>
+                    via Moon Mineralogy Mapper (M<sup>3</sup>)</span>
+            </h1>
+            <p class="abstract" data-es>
+                An&aacute;lisis de datos de reflectancia Level 2 del instrumento Moon Mineralogy Mapper (M<sup>3</sup>)
+                a bordo de Chandrayaan-1 (NASA/ISRO). El objetivo es el cr&aacute;ter <strong>Copernicus</strong>
+                (~9.6&deg;N, 339.9&deg;E), un cr&aacute;ter complejo joven cuyas cumbres centrales exponen material
+                rico en olivino interpretado como manto superior lunar. Se procesan 85 bandas espectrales
+                (430&ndash;3000 nm) a 140 m/pixel del Per&iacute;odo &Oacute;ptico 1 (Nov 2008 &ndash; Feb 2009)
+                para discriminar fases minerales (olivino, piroxeno LCP/HCP) y generar &iacute;ndices de
+                prospecci&oacute;n de recursos lunares (<strong>CLPI</strong> &mdash; Cussen Lunar Prospection Indices).
+            </p>
+            <p class="abstract" data-en>
+                Analysis of Level 2 reflectance data from the Moon Mineralogy Mapper (M<sup>3</sup>)
+                instrument aboard Chandrayaan-1 (NASA/ISRO). The target is <strong>Copernicus Crater</strong>
+                (~9.6&deg;N, 339.9&deg;E), a young complex crater whose central peaks expose olivine-rich
+                material interpreted as upper mantle. We process 85 spectral bands (430&ndash;3000 nm) at
+                140 m/pixel from Optical Period 1 (Nov 2008 &ndash; Feb 2009) to discriminate mineral phases
+                (olivine, LCP/HCP pyroxene) and derive lunar resource prospection indices
+                (<strong>CLPI</strong> &mdash; Cussen Lunar Prospection Indices).
+            </p>
+            <div class="badge-row">
+                <span class="badge">CLPI-01</span>
+                <span class="badge">CLPI-02</span>
+                <span class="badge">CLPI-03</span>
+                <span class="badge-tag">M<sup>3</sup> Chandrayaan-1</span>
+                <span class="badge-tag">Reflectance L2</span>
+                <span class="badge-tag">Olivine / Pyroxene</span>
+                <span class="badge-tag">Copernicus Crater</span>
+                <span class="badge-tag">OP1 2008&ndash;2009</span>
+            </div>
+        </header>
+
+        <!-- ── KEY RESULTS ── -->
+        <div class="results-bar">
+            <div class="res-cell">
+                <span class="res-value">85</span>
+                <span class="res-label" data-es>Bandas espectrales (430&ndash;3000 nm)</span>
+                <span class="res-label" data-en>Spectral bands (430&ndash;3000 nm)</span>
+            </div>
+            <div class="res-cell">
+                <span class="res-value">140 m/px</span>
+                <span class="res-label" data-es>Resoluci&oacute;n espacial M<sup>3</sup></span>
+                <span class="res-label" data-en>M<sup>3</sup> spatial resolution</span>
+            </div>
+            <div class="res-cell">
+                <span class="res-value">~93 km</span>
+                <span class="res-label" data-es>Di&aacute;metro cr&aacute;ter Copernicus</span>
+                <span class="res-label" data-en>Copernicus Crater diameter</span>
+            </div>
+            <div class="res-cell">
+                <span class="res-value">3 CLPI</span>
+                <span class="res-label" data-es>&Iacute;ndices de prospecci&oacute;n propuestos</span>
+                <span class="res-label" data-en>Prospection indices proposed</span>
+            </div>
+            <div class="res-cell">
+                <span class="res-value">LCP / HCP</span>
+                <span class="res-label" data-es>Discriminaci&oacute;n de piroxenos</span>
+                <span class="res-label" data-en>Pyroxene discrimination</span>
+            </div>
+            <div class="res-cell">
+                <span class="res-value">PDS3</span>
+                <span class="res-label" data-es>Formato de ingesti&oacute;n de datos</span>
+                <span class="res-label" data-en>Data ingestion format</span>
+            </div>
+        </div>
+
+        <!-- ── FIGURA 1: MINERAL COMPOSITE ── -->
+        <section>
+            <div class="sec-code" data-es>Figura 1 &mdash; Composici&oacute;n Mineral M<sup>3</sup></div>
+            <div class="sec-code" data-en>Figure 1 &mdash; M<sup>3</sup> Mineral Composite</div>
+            <h2 data-es>Composici&oacute;n Mineral: R=IBD1000, G=IBD2000, B=R750</h2>
+            <h2 data-en>Mineral Composite: R=IBD1000, G=IBD2000, B=R750</h2>
+            <p class="sec-intro" data-es>
+                Composici&oacute;n RGB cl&aacute;sica de par&aacute;metros espectrales M<sup>3</sup> para la
+                discriminaci&oacute;n mineral&oacute;gica a escala regional. Los colores codifican la
+                profundidad de absorci&oacute;n integrada a 1 &mu;m (IBD1000, m&aacute;ficos) y
+                2 &mu;m (IBD2000, piroxenos), con la reflectancia en 750 nm como proxy de albedo.
+            </p>
+            <p class="sec-intro" data-en>
+                Classic M<sup>3</sup> spectral parameter RGB composite for regional mineralogical
+                discrimination. Colors encode integrated band depth at 1 &mu;m (IBD1000, mafics)
+                and 2 &mu;m (IBD2000, pyroxenes), with 750 nm reflectance as an albedo proxy.
+            </p>
+
+            <div class="figure">
+                <img src="assets/fig02_mineral_composite.png" alt="M3 Mineral Composite — Copernicus Crater" style="width:100%;border-radius:8px;border:1px solid var(--border);">
+                <div class="figure-caption">
+                    <div class="fig-label">
+                        <span data-es>Fig. 1 &mdash; Composici&oacute;n mineral (IBD1000:IBD2000:R750) &middot; M<sup>3</sup> L2 Reflectance &middot; Copernicus Crater &middot; OP1 2008&ndash;2009</span>
+                        <span data-en>Fig. 1 &mdash; Mineral composite (IBD1000:IBD2000:R750) &middot; M<sup>3</sup> L2 Reflectance &middot; Copernicus Crater &middot; OP1 2008&ndash;2009</span>
+                    </div>
+                    <p data-es>
+                        Los tonos verdes indican piroxeno dominante (alta absorci&oacute;n a 2 &mu;m),
+                        los rojos revelan olivino (fuerte absorci&oacute;n a 1 &mu;m sin absorci&oacute;n significativa a 2 &mu;m),
+                        y los tonos azulados corresponden a materiales de tierras altas con alto albedo (anortosita).
+                        Las cumbres centrales de Copernicus muestran firma olivin&iacute;tica prominente,
+                        consistente con excavaci&oacute;n profunda de material del manto superior.
+                    </p>
+                    <p data-en>
+                        Green tones indicate dominant pyroxene (strong 2 &mu;m absorption),
+                        reds reveal olivine (strong 1 &mu;m absorption without significant 2 &mu;m feature),
+                        and blue tones correspond to high-albedo highland materials (anorthosite).
+                        Copernicus central peaks show a prominent olivine signature,
+                        consistent with deep excavation of upper mantle material.
+                    </p>
+                </div>
+            </div>
+
+            <div class="analysis">
+                <strong data-es>Interpretaci&oacute;n:</strong>
+                <strong data-en>Interpretation:</strong>
+                <span data-es>
+                    La composici&oacute;n mineral confirma la presencia de tres unidades litol&oacute;gicas principales
+                    en la regi&oacute;n de Copernicus: (1) material de cumbres centrales rico en olivino con
+                    ratio BD1/BD2 &gt; 3, (2) paredes del cr&aacute;ter con piroxeno dominante, y (3) eyecta
+                    mixto con mezcla plagioclasa-piroxeno. El contraste espectral entre las cumbres centrales
+                    y las paredes es consistente con la hip&oacute;tesis de excavaci&oacute;n hasta el manto
+                    superior lunar (Pieters et al., 2009).
+                </span>
+                <span data-en>
+                    The mineral composite confirms the presence of three main lithological units
+                    in the Copernicus region: (1) olivine-rich central peak material with
+                    BD1/BD2 ratio &gt; 3, (2) pyroxene-dominated crater walls, and (3) mixed
+                    ejecta with plagioclase-pyroxene blend. The spectral contrast between central
+                    peaks and walls is consistent with the hypothesis of excavation into the
+                    lunar upper mantle (Pieters et al., 2009).
+                </span>
+            </div>
+        </section>
+
+        <!-- ── FIGURA 2: PYROXENE DISCRIMINATION ── -->
+        <section>
+            <div class="sec-code" data-es>Figura 2 &mdash; Discriminaci&oacute;n de Piroxenos</div>
+            <div class="sec-code" data-en>Figure 2 &mdash; Pyroxene Discrimination</div>
+            <h2 data-es>Mapa de Discriminaci&oacute;n de Piroxenos &mdash; Centros de Banda 1 y 2</h2>
+            <h2 data-en>Pyroxene Discrimination Map &mdash; Band 1 &amp; 2 Centers</h2>
+            <p class="sec-intro" data-es>
+                El mapeo de centros de absorci&oacute;n permite discriminar entre piroxeno de bajo calcio
+                (LCP &mdash; ortopiroxeno) y piroxeno de alto calcio (HCP &mdash; clinopiroxeno).
+                Los centros de banda se obtienen tras la remoci&oacute;n del continuo en las regiones
+                de 1 &mu;m y 2 &mu;m.
+            </p>
+            <p class="sec-intro" data-en>
+                Band center mapping enables discrimination between low-calcium pyroxene
+                (LCP &mdash; orthopyroxene) and high-calcium pyroxene (HCP &mdash; clinopyroxene).
+                Band centers are derived after continuum removal in the 1 &mu;m and 2 &mu;m regions.
+            </p>
+
+            <div class="formula-label" data-es>Criterio de clasificaci&oacute;n LCP / HCP</div>
+            <div class="formula-label" data-en>LCP / HCP classification criteria</div>
+            <div class="formula">LCP (orthopyroxene): Band 1 center &lt; 930 nm,  Band 2 center &lt; 1950 nm
+HCP (clinopyroxene): Band 1 center &gt; 950 nm,  Band 2 center &gt; 2050 nm
+Continuum removal: linear fit to shoulders at ~750 nm and ~1550 nm (Band 1)
+                   linear fit to shoulders at ~1550 nm and ~2500 nm (Band 2)</div>
+
+            <div class="figure">
+                <img src="assets/fig01_spectral_profiles.png" alt="M3 Spectral Profiles — Copernicus Crater" style="width:100%;border-radius:8px;border:1px solid var(--border);">
+                <div class="figure-caption">
+                    <div class="fig-label">
+                        <span data-es>Fig. 2 &mdash; Centros de absorci&oacute;n Band 1 y Band 2 &middot; Discriminaci&oacute;n LCP vs HCP &middot; Copernicus Crater</span>
+                        <span data-en>Fig. 2 &mdash; Band 1 &amp; Band 2 absorption centers &middot; LCP vs HCP discrimination &middot; Copernicus Crater</span>
+                    </div>
+                    <p data-es>
+                        El mapa muestra la zonaci&oacute;n composicional de piroxenos en las paredes y el
+                        piso del cr&aacute;ter. Las zonas con centros de banda cortos (LCP, tonos fr&iacute;os)
+                        dominan las paredes superiores, mientras que los piroxenos de alto calcio (HCP, tonos c&aacute;lidos)
+                        se concentran en el piso y los dep&oacute;sitos de impacto fundido.
+                    </p>
+                    <p data-en>
+                        The map shows pyroxene compositional zonation in the crater walls and
+                        floor. Short band-center zones (LCP, cool tones) dominate the upper walls,
+                        while high-calcium pyroxenes (HCP, warm tones) concentrate on the floor
+                        and impact melt deposits.
+                    </p>
+                </div>
+            </div>
+
+            <div class="analysis">
+                <strong data-es>Zonaci&oacute;n LCP/HCP:</strong>
+                <strong data-en>LCP/HCP zonation:</strong>
+                <span data-es>
+                    La clara separaci&oacute;n espacial entre LCP y HCP en las paredes del cr&aacute;ter refleja
+                    la estratigraf&iacute;a composicional de la corteza lunar: las capas superiores (norita,
+                    rica en ortopiroxeno) quedan expuestas en las paredes, mientras que las capas m&aacute;s
+                    profundas (gabbro, ricas en clinopiroxeno) aparecen en el piso. Esta zonaci&oacute;n es
+                    consistente con un modelo de corteza diferenciada y tiene implicaciones para la
+                    prospecci&oacute;n de recursos (el piroxeno rico en calcio es proxy de fertilidad mineral).
+                </span>
+                <span data-en>
+                    The clear spatial separation between LCP and HCP in the crater walls reflects
+                    the compositional stratigraphy of the lunar crust: upper layers (norite,
+                    orthopyroxene-rich) are exposed in the walls, while deeper layers (gabbro,
+                    clinopyroxene-rich) appear on the floor. This zonation is consistent with a
+                    differentiated crust model and has implications for resource prospection
+                    (Ca-rich pyroxene is a proxy for mineral fertility).
+                </span>
+            </div>
+        </section>
+
+        <!-- ── FIGURA 3: CLPI COMPOSITE ── -->
+        <section>
+            <div class="sec-code" data-es>Figura 3 &mdash; Compuesto CLPI de Prospecci&oacute;n</div>
+            <div class="sec-code" data-en>Figure 3 &mdash; CLPI Prospection Composite</div>
+            <h2 data-es>Compuesto de Prospecci&oacute;n Lunar CLPI &mdash; R=MRI, G=HPI, B=R750</h2>
+            <h2 data-en>CLPI Lunar Prospection Composite &mdash; R=MRI, G=HPI, B=R750</h2>
+            <p class="sec-intro" data-es>
+                Composici&oacute;n RGB de los &iacute;ndices CLPI propuestos para visualizar
+                simult&aacute;neamente recursos m&aacute;ficos (olivino+piroxeno), potencial de
+                hidrataci&oacute;n y albedo superficial. Este marco de prospecci&oacute;n traslada
+                directamente la metodolog&iacute;a terrestre SST/KHAI al contexto lunar.
+            </p>
+            <p class="sec-intro" data-en>
+                RGB composite of the proposed CLPI indices to simultaneously visualize
+                mafic resources (olivine+pyroxene), hydration potential, and surface albedo.
+                This prospection framework directly transfers the terrestrial SST/KHAI
+                methodology to the lunar context.
+            </p>
+
+            <div class="figure">
+                <img src="assets/fig03_prospection_analysis.png" alt="CLPI Prospection Analysis — Copernicus Crater" style="width:100%;border-radius:8px;border:1px solid var(--border);">
+                <div class="figure-caption">
+                    <div class="fig-label">
+                        <span data-es>Fig. 3 &mdash; Compuesto CLPI (MRI:HPI:R750) &middot; &Iacute;ndices de prospecci&oacute;n propuestos &middot; Copernicus Crater &middot; M<sup>3</sup> L2</span>
+                        <span data-en>Fig. 3 &mdash; CLPI composite (MRI:HPI:R750) &middot; Proposed prospection indices &middot; Copernicus Crater &middot; M<sup>3</sup> L2</span>
+                    </div>
+                    <p data-es>
+                        Los tonos rojos intensos destacan zonas de alta concentraci&oacute;n m&aacute;fica (olivino puro
+                        en cumbres centrales). Los tonos verdes revelan se&ntilde;ales sutiles de hidrataci&oacute;n
+                        detectadas en latitudes m&aacute;s altas de la escena. El canal azul normaliza por albedo,
+                        permitiendo discriminar entre materiales oscuros m&aacute;ficos y brillantes de tierras altas.
+                    </p>
+                    <p data-en>
+                        Intense red tones highlight high mafic concentration zones (pure olivine
+                        on central peaks). Green tones reveal subtle hydration signals detected
+                        at higher latitudes in the scene. The blue channel normalizes by albedo,
+                        enabling discrimination between dark mafic and bright highland materials.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── CUSTOM INDICES ── -->
+        <section>
+            <div class="sec-code" data-es>&Iacute;ndices CLPI &mdash; Cussen Lunar Prospection Indices</div>
+            <div class="sec-code" data-en>CLPI &mdash; Cussen Lunar Prospection Indices</div>
+            <h2 data-es>&Iacute;ndices de Prospecci&oacute;n Lunar Propuestos</h2>
+            <h2 data-en>Proposed Lunar Prospection Indices</h2>
+            <p class="sec-intro" data-es>
+                Tres &iacute;ndices espectrales propuestos para la evaluaci&oacute;n cuantitativa de
+                recursos minerales y vol&aacute;tiles lunares a partir de datos hiperespectrales M<sup>3</sup>.
+                Estos &iacute;ndices son <strong>propuestos</strong> y est&aacute;n pendientes de validaci&oacute;n.
+            </p>
+            <p class="sec-intro" data-en>
+                Three spectral indices proposed for quantitative assessment of lunar mineral
+                and volatile resources from M<sup>3</sup> hyperspectral data.
+                These indices are <strong>proposed</strong> and pending validation.
+            </p>
+
+            <table class="data-table" style="margin-top:16px">
+                <thead>
+                    <tr>
+                        <th data-es>C&oacute;digo</th><th data-en>Code</th>
+                        <th data-es>Nombre</th><th data-en>Name</th>
+                        <th data-es>F&oacute;rmula</th><th data-en>Formula</th>
+                        <th data-es>Descripci&oacute;n</th><th data-en>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="val">CLPI-01</td>
+                        <td>MRI (Mafic Resource Index)</td>
+                        <td class="val" style="font-size:0.8rem">IBD1000 &times; IBD2000 / R750&sup2;</td>
+                        <td data-es>Concentraci&oacute;n de recursos m&aacute;ficos normalizada por albedo</td>
+                        <td data-en>Mafic resource concentration normalized by albedo</td>
+                    </tr>
+                    <tr>
+                        <td class="val">CLPI-02</td>
+                        <td>HPI (Hydration Prospection Index)</td>
+                        <td class="val" style="font-size:0.8rem">Band depth @ 2800 nm</td>
+                        <td data-es>Profundidad de absorci&oacute;n a 2800 nm como proxy de OH/H<sub>2</sub>O</td>
+                        <td data-en>Band depth at 2800 nm as OH/H<sub>2</sub>O proxy</td>
+                    </tr>
+                    <tr>
+                        <td class="val">CLPI-03</td>
+                        <td>OPI (Olivine Purity Index)</td>
+                        <td class="val" style="font-size:0.8rem">BD1 &times; max(0, 1 &minus; BD2/0.05)</td>
+                        <td data-es>Discrimina olivino puro vs mezcla olivino-piroxeno</td>
+                        <td data-en>Discriminates pure olivine vs olivine-pyroxene mixture</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="formula-label">CLPI-01 &mdash; Mafic Resource Index (MRI)</div>
+            <div class="formula">MRI = IBD1000 &times; IBD2000 / R750&sup2;
+  IBD1000 = &sum; (1 &minus; R<sub>&lambda;</sub>/R<sub>cont</sub>) for &lambda; &isin; [900, 1050 nm]
+  IBD2000 = &sum; (1 &minus; R<sub>&lambda;</sub>/R<sub>cont</sub>) for &lambda; &isin; [1900, 2300 nm]
+  R750 = reflectance at 750 nm (albedo proxy)</div>
+
+            <div class="formula-label">CLPI-02 &mdash; Hydration Prospection Index (HPI)</div>
+            <div class="formula">HPI = 1 &minus; R<sub>2800</sub> / R<sub>cont,2800</sub>
+  Continuum: linear fit between 2600 nm and 3000 nm shoulders
+  Sensitive to hydroxyl (OH) and molecular water (H<sub>2</sub>O) in regolith</div>
+
+            <div class="formula-label">CLPI-03 &mdash; Olivine Purity Index (OPI)</div>
+            <div class="formula">OPI = BD1_depth &times; max(0,  1 &minus; BD2_depth / 0.05)
+  BD1_depth = continuum-removed depth at Band 1 minimum (~1050 nm)
+  BD2_depth = continuum-removed depth at Band 2 minimum (~2000 nm)
+  Pure olivine: strong BD1, negligible BD2 &rarr; OPI &rarr; BD1_depth
+  Pyroxene mix: BD2 &gt; 0.05 &rarr; OPI &rarr; 0</div>
+
+            <div class="note" data-es>
+                Los &iacute;ndices CLPI son <strong>propuestos por el autor</strong> y no provienen de la
+                literatura existente. Est&aacute;n dise&ntilde;ados como extensi&oacute;n del marco de prospecci&oacute;n
+                terrestre (Framework Cussen MAR.01/MAR.02) al contexto planetario, y requieren
+                validaci&oacute;n con datos de terreno y bibliotecas espectrales de laboratorio.
+            </div>
+            <div class="note" data-en>
+                CLPI indices are <strong>proposed by the author</strong> and are not derived from
+                existing literature. They are designed as an extension of the terrestrial
+                prospection framework (Cussen Framework MAR.01/MAR.02) to the planetary context,
+                and require validation with ground-truth data and laboratory spectral libraries.
+            </div>
+        </section>
+
+        <!-- ── KEY FINDINGS ── -->
+        <section>
+            <div class="sec-code" data-es>Hallazgos Principales</div>
+            <div class="sec-code" data-en>Key Findings</div>
+            <h2 data-es>Resultados y Conclusiones</h2>
+            <h2 data-en>Results and Conclusions</h2>
+
+            <div class="analysis">
+                <strong data-es>1. Exposiciones de olivino en cumbres centrales:</strong>
+                <strong data-en>1. Olivine exposures on central peaks:</strong>
+                <span data-es>
+                    Se detectan exposiciones ricas en olivino en las cumbres centrales de Copernicus,
+                    caracterizadas por un alto ratio BD1/BD2 (&gt; 3). La profundidad de absorci&oacute;n a 1 &mu;m
+                    y la ausencia de absorci&oacute;n significativa a 2 &mu;m son consistentes con olivino de
+                    composici&oacute;n forster&iacute;tica (Fo~80), interpretado como material excavado del manto superior.
+                </span>
+                <span data-en>
+                    Olivine-rich exposures are detected on Copernicus central peaks,
+                    characterized by a high BD1/BD2 ratio (&gt; 3). The 1 &mu;m absorption depth
+                    and absence of significant 2 &mu;m absorption are consistent with forsteritic
+                    olivine (Fo~80), interpreted as excavated upper mantle material.
+                </span>
+            </div>
+
+            <div class="analysis">
+                <strong data-es>2. Zonaci&oacute;n LCP/HCP en paredes del cr&aacute;ter:</strong>
+                <strong data-en>2. LCP/HCP zonation in crater walls:</strong>
+                <span data-es>
+                    El mapeo de centros de banda revela una clara estratigraf&iacute;a composicional:
+                    ortopiroxeno (LCP) dominante en las paredes superiores y clinopiroxeno (HCP)
+                    concentrado en el piso y dep&oacute;sitos de impacto fundido. Esta distribuci&oacute;n
+                    refleja la diferenciaci&oacute;n vertical de la corteza lunar en la regi&oacute;n de Copernicus.
+                </span>
+                <span data-en>
+                    Band center mapping reveals a clear compositional stratigraphy:
+                    orthopyroxene (LCP) dominant in the upper walls and clinopyroxene (HCP)
+                    concentrated on the floor and impact melt deposits. This distribution
+                    reflects the vertical differentiation of the lunar crust in the Copernicus region.
+                </span>
+            </div>
+
+            <div class="analysis">
+                <strong data-es>3. Limitaciones a esta latitud:</strong>
+                <strong data-en>3. Limitations at this latitude:</strong>
+                <span data-es>
+                    A 9.6&deg;N, Copernicus se encuentra en la zona ecuatorial donde la se&ntilde;al de OH/H<sub>2</sub>O
+                    a 2800 nm es d&eacute;bil o inexistente seg&uacute;n Pieters et al. (2009). Un an&aacute;lisis preliminar
+                    del &iacute;ndice HPI mostr&oacute; artefactos consistentes con emisi&oacute;n t&eacute;rmica residual, no con
+                    hidrataci&oacute;n real. Por esta raz&oacute;n, el CLPI-02 (HPI) no se incluye en los resultados finales
+                    para esta regi&oacute;n. Su aplicaci&oacute;n ser&iacute;a m&aacute;s apropiada en latitudes &gt;60&deg; (polos lunares).
+                </span>
+                <span data-en>
+                    At 9.6&deg;N, Copernicus lies in the equatorial zone where the OH/H<sub>2</sub>O signal
+                    at 2800 nm is weak to nonexistent according to Pieters et al. (2009). A preliminary
+                    HPI analysis showed artifacts consistent with residual thermal emission, not real
+                    hydration. For this reason, CLPI-02 (HPI) is not included in the final results
+                    for this region. Its application would be more appropriate at latitudes &gt;60&deg; (lunar poles).
+                </span>
+            </div>
+
+            <div class="analysis">
+                <strong data-es>4. Transferencia metodol&oacute;gica terrestre&rarr;lunar:</strong>
+                <strong data-en>4. Terrestrial&rarr;lunar methodology transfer:</strong>
+                <span data-es>
+                    El marco CLPI demuestra que la aproximaci&oacute;n de &iacute;ndices espectrales desarrollada
+                    para an&aacute;lisis de SST y h&aacute;bitat kelp (Framework Cussen MAR.01/MAR.02) puede
+                    transferirse directamente a la prospecci&oacute;n de recursos planetarios, adaptando
+                    las longitudes de onda y umbrales al contexto de la superficie lunar.
+                </span>
+                <span data-en>
+                    The CLPI framework demonstrates that the spectral index approach developed
+                    for SST and kelp habitat analysis (Cussen Framework MAR.01/MAR.02) can be
+                    directly transferred to planetary resource prospection, adapting wavelengths
+                    and thresholds to the lunar surface context.
+                </span>
+            </div>
+        </section>
+
+        <!-- ── METODOLOG&Iacute;A ── -->
+        <section>
+            <div class="sec-code" data-es>Metodolog&iacute;a</div>
+            <div class="sec-code" data-en>Methodology</div>
+            <h2 data-es>Datos, procesamiento y stack t&eacute;cnico</h2>
+            <h2 data-en>Data, processing, and tech stack</h2>
+
+            <table class="data-table" style="margin-top:16px">
+                <thead>
+                    <tr>
+                        <th data-es>Par&aacute;metro</th><th data-en>Parameter</th>
+                        <th data-es>Detalle</th><th data-en>Detail</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td data-es>Instrumento</td><td data-en>Instrument</td><td class="val">Moon Mineralogy Mapper (M<sup>3</sup>) &mdash; Chandrayaan-1</td></tr>
+                    <tr><td data-es>Nivel de producto</td><td data-en>Product level</td><td class="val">Level 2 &mdash; Reflectance (thermally corrected)</td></tr>
+                    <tr><td data-es>Per&iacute;odo</td><td data-en>Period</td><td class="val">Optical Period 1 (OP1) &mdash; Nov 2008 &ndash; Feb 2009</td></tr>
+                    <tr><td data-es>Objetivo</td><td data-en>Target</td><td class="val">Copernicus Crater (~9.6&deg;N, 339.9&deg;E)</td></tr>
+                    <tr><td data-es>Bandas espectrales</td><td data-en>Spectral bands</td><td class="val">85 bandas (430&ndash;3000 nm)</td></tr>
+                    <tr><td data-es>Resoluci&oacute;n espacial</td><td data-en>Spatial resolution</td><td class="val">140 m/pixel</td></tr>
+                    <tr><td data-es>Formato de datos</td><td data-en>Data format</td><td class="val">PDS3 (NASA Planetary Data System)</td></tr>
+                    <tr><td data-es>Fuente de descarga</td><td data-en>Data source</td><td class="val">PDS Geosciences Node (pds-geosciences.wustl.edu)</td></tr>
+                    <tr><td data-es>Ingesti&oacute;n de datos</td><td data-en>Data ingestion</td><td class="val">Spectral Python (SPy) + pvl</td></tr>
+                    <tr><td data-es>M&aacute;scara de calidad</td><td data-en>Quality mask</td><td class="val">Shadows, saturation, detector artifacts</td></tr>
+                    <tr><td data-es>Lenguaje</td><td data-en>Language</td><td class="val">Python 3.12</td></tr>
+                    <tr><td data-es>Librer&iacute;as</td><td data-en>Libraries</td><td class="val">spectral (SPy) &middot; pvl &middot; NumPy &middot; SciPy &middot; Matplotlib</td></tr>
+                </tbody>
+            </table>
+
+            <div class="badge-row" style="margin-top:24px">
+                <span class="badge-tag">Python</span>
+                <span class="badge-tag">Spectral Python</span>
+                <span class="badge-tag">pvl</span>
+                <span class="badge-tag">NumPy</span>
+                <span class="badge-tag">SciPy</span>
+                <span class="badge-tag">Matplotlib</span>
+                <span class="badge-tag">PDS3</span>
+            </div>
+        </section>
+
+        <!-- ── REFERENCIAS ── -->
+        <section>
+            <div class="sec-code" data-es>Referencias</div>
+            <div class="sec-code" data-en>References</div>
+            <h2 data-es>Bibliograf&iacute;a</h2>
+            <h2 data-en>Bibliography</h2>
+            <ul class="ref-list" style="margin-top:20px">
+                <li data-n="1">Pieters, C.M. (1982). Copernicus Crater Central Peak: Lunar Mountain of Unique Composition. <em>Science</em>, 215(4528), 59&ndash;61.</li>
+                <li data-n="2">Pieters, C.M. et al. (2009). Character and Spatial Distribution of OH/H<sub>2</sub>O on the Surface of the Moon Seen by M<sup>3</sup> on Chandrayaan-1. <em>Science</em>, 326(5952), 568&ndash;572.</li>
+                <li data-n="3">Green, R.O. et al. (2011). The Moon Mineralogy Mapper (M<sup>3</sup>) imaging spectrometer for lunar science. <em>JGR: Planets</em>, 116(E10).</li>
+                <li data-n="4">Clark, R.N. et al. (2011). Thermal removal from near-infrared imaging spectroscopy data of the Moon. <em>JGR: Planets</em>, 116(E6).</li>
+                <li data-n="5">Clark, R.N. &amp; Roush, T.L. (1984). Reflectance Spectroscopy: Quantitative Analysis Techniques for Remote Sensing Applications. <em>JGR: Solid Earth</em>, 89(B7), 6329&ndash;6340.</li>
+                <li data-n="6">Milliken, R.E. &amp; Li, S. (2017). Remote detection of widespread indigenous water in lunar pyroclastic deposits. <em>Nature Geoscience</em>, 10, 561&ndash;565.</li>
+                <li data-n="7">Li, S. et al. (2018). Direct evidence of surface exposed water ice in the lunar polar regions. <em>PNAS</em>, 115(36), 8907&ndash;8912.</li>
+                <li data-n="8">Moriarty, D.P. &amp; Pieters, C.M. (2018). The Character of South Pole&ndash;Aitken Basin: Patterns of Surface and Subsurface Composition. <em>JGR: Planets</em>, 123.</li>
+            </ul>
+        </section>
+
+        <!-- ── CTA ── -->
+        <div class="cta-section">
+            <h3 data-es>An&aacute;lisis espectral para su proyecto</h3>
+            <h3 data-en>Spectral analysis for your project</h3>
+            <p data-es>
+                Procesamiento de datos hiperespectrales planetarios y terrestres, mapeo mineral&oacute;gico
+                y dise&ntilde;o de &iacute;ndices espectrales a medida para prospecci&oacute;n de recursos.
+            </p>
+            <p data-en>
+                Planetary and terrestrial hyperspectral data processing, mineralogical mapping,
+                and custom spectral index design for resource prospection.
+            </p>
+            <div class="btn-row">
+                <a href="../../../servicios/" class="btn-primary" data-es>Ver Servicios</a>
+                <a href="../../../servicios/" class="btn-primary" data-en>View Services</a>
+                <a href="../../../#contacto" class="btn-secondary" data-es>Solicitar an&aacute;lisis similar</a>
+                <a href="../../../#contacto" class="btn-secondary" data-en>Request similar analysis</a>
+            </div>
+        </div>
+
+    </div>
+
+    <footer>
+        <div class="wrap">
+            <div class="footer-inner">
+                <span data-es>CUSSEN &mdash; Inteligencia Geoespacial &middot; Patagonia, Chile</span>
+                <span data-en>CUSSEN &mdash; Geospatial Intelligence &middot; Patagonia, Chile</span>
+                <a href="../../../#proyectos" data-es>&larr; Volver al portfolio</a>
+                <a href="../../../#proyectos" data-en>&larr; Back to portfolio</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        function toggleLang() {
+            const html = document.documentElement;
+            html.lang = html.lang === 'es' ? 'en' : 'es';
+        }
+    </script>
+
+</body>
+</html>

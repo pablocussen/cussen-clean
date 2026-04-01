@@ -1,0 +1,310 @@
+openapi: 3.0.3
+info:
+  title: CLAUDIA Construction Assistant API
+  description: |
+    API para el bot de construcción CLAUDIA (Asesora de Proyectos en Arqattack).
+    Proporciona endpoints para interacción con Telegram, análisis de IA, y gestión de proyectos de construcción.
+
+    ## Características Principales
+    - Webhook de Telegram para recibir mensajes
+    - Análisis de construcción con IA (Gemini)
+    - Cálculo de materiales de construcción
+    - Gestión de proyectos
+    - Envío de bitácoras
+
+    ## Autenticación
+    - Los webhooks de Telegram usan validación de IP
+    - Las funciones HTTP están protegidas por Cloud Functions authentication
+
+  version: 8.4.0
+  contact:
+    name: Arqattack Team
+    url: https://claudia-i8bxh.web.app
+  license:
+    name: Proprietary
+
+servers:
+  - url: https://us-central1-claudia-i8bxh.cloudfunctions.net
+    description: Producción (Cloud Functions)
+  - url: http://localhost:8080
+    description: Desarrollo local
+
+tags:
+  - name: Telegram
+    description: Endpoints para integración con Telegram
+  - name: Bitácoras
+    description: Envío de bitácoras diarias
+  - name: Notificaciones
+    description: Notificaciones matutinas
+
+paths:
+  /claudia_handler:
+    post:
+      tags:
+        - Telegram
+      summary: Webhook principal de Telegram
+      description: |
+        Recibe actualizaciones de Telegram (mensajes, callbacks, fotos).
+        Procesa comandos, consultas de IA, y maneja la conversación con el usuario.
+      operationId: claudiaHandler
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TelegramUpdate'
+            examples:
+              message:
+                summary: Mensaje de texto
+                value:
+                  update_id: 123456789
+                  message:
+                    message_id: 1
+                    from:
+                      id: 987654321
+                      first_name: "Juan"
+                      last_name: "Pérez"
+                      username: "juanperez"
+                    chat:
+                      id: 987654321
+                      type: "private"
+                    date: 1698765432
+                    text: "¿Cuánto cuesta construir un radier de 100m2?"
+              callback:
+                summary: Callback query
+                value:
+                  update_id: 123456790
+                  callback_query:
+                    id: "callback123"
+                    from:
+                      id: 987654321
+                      first_name: "Juan"
+                    message:
+                      message_id: 2
+                      chat:
+                        id: 987654321
+                    data: "start_baño"
+              photo:
+                summary: Foto enviada
+                value:
+                  update_id: 123456791
+                  message:
+                    message_id: 3
+                    from:
+                      id: 987654321
+                    chat:
+                      id: 987654321
+                    photo:
+                      - file_id: "AgACAgQAAxkBAAIBCGZh..."
+                        file_size: 12345
+                    caption: "Foto de mi baño actual"
+      responses:
+        '200':
+          description: Actualización procesada correctamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "OK"
+        '400':
+          description: Petición inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /send_log:
+    post:
+      tags:
+        - Bitácoras
+      summary: Enviar bitácora diaria
+      description: |
+        Envía bitácoras diarias por email y/o WhatsApp a usuarios suscritos.
+      operationId: sendLog
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - message
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: Email del destinatario
+                  example: "maestro@ejemplo.cl"
+                whatsapp:
+                  type: string
+                  description: Número de WhatsApp (con código de país)
+                  example: "+56912345678"
+                message:
+                  type: string
+                  description: Contenido del mensaje de bitácora
+                  example: "Resumen del día: 3 actividades completadas..."
+                log:
+                  type: object
+                  description: Datos estructurados de la bitácora
+                  additionalProperties: true
+      responses:
+        '200':
+          description: Bitácora enviada exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Bitácora enviada"
+        '400':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /send_morning:
+    post:
+      tags:
+        - Notificaciones
+      summary: Enviar mensaje motivacional matutino
+      description: |
+        Envía un mensaje motivacional matutino a usuarios suscritos.
+        Programado para ejecutarse diariamente a las 8:00 AM Chile.
+      operationId: sendMorning
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: string
+                  description: ID del usuario de Telegram
+                  example: "987654321"
+                custom_message:
+                  type: string
+                  description: Mensaje personalizado (opcional)
+                  example: "¡Buen día, Juan! Hoy es un gran día para construir."
+      responses:
+        '200':
+          description: Mensaje enviado exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Mensaje matutino enviado"
+
+components:
+  schemas:
+    TelegramUpdate:
+      type: object
+      properties:
+        update_id:
+          type: integer
+          description: ID único de la actualización
+        message:
+          $ref: '#/components/schemas/TelegramMessage'
+        callback_query:
+          $ref: '#/components/schemas/TelegramCallbackQuery'
+
+    TelegramMessage:
+      type: object
+      properties:
+        message_id:
+          type: integer
+        from:
+          $ref: '#/components/schemas/TelegramUser'
+        chat:
+          $ref: '#/components/schemas/TelegramChat'
+        date:
+          type: integer
+          description: Timestamp Unix
+        text:
+          type: string
+          description: Texto del mensaje
+        photo:
+          type: array
+          items:
+            $ref: '#/components/schemas/TelegramPhotoSize'
+        caption:
+          type: string
+          description: Leyenda de la foto
+
+    TelegramUser:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID único del usuario
+        first_name:
+          type: string
+        last_name:
+          type: string
+        username:
+          type: string
+
+    TelegramChat:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+          enum: [private, group, supergroup, channel]
+
+    TelegramCallbackQuery:
+      type: object
+      properties:
+        id:
+          type: string
+        from:
+          $ref: '#/components/schemas/TelegramUser'
+        message:
+          $ref: '#/components/schemas/TelegramMessage'
+        data:
+          type: string
+          description: Datos del callback (ej. "start_baño", "bano_objetivo_A")
+
+    TelegramPhotoSize:
+      type: object
+      properties:
+        file_id:
+          type: string
+        file_size:
+          type: integer
+        width:
+          type: integer
+        height:
+          type: integer
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Mensaje de error
+        details:
+          type: string
+          description: Detalles adicionales del error

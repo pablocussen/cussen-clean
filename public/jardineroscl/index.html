@@ -1,0 +1,1864 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="JardinerosCL - Herramienta profesional de gestión de jardines y paisajismo para Chile">
+    <meta name="theme-color" content="#166534">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="JardinerosCL">
+    <title>JardinerosCL - Gestión de Jardines</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%23166534' width='192' height='192'/><text x='50%' y='60%' font-size='100' font-weight='bold' fill='%2322c55e' text-anchor='middle' dominant-baseline='middle'>🌿</text></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%23166534' width='192' height='192'/><text x='50%' y='60%' font-size='100' font-weight='bold' fill='%2322c55e' text-anchor='middle' dominant-baseline='middle'>🌿</text></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: #f0fdf4;
+            color: #1f2937;
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            padding-bottom: 60px;
+        }
+
+        header {
+            background: linear-gradient(135deg, #166534 0%, #15803d 100%);
+            color: white;
+            padding: 1rem;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .container {
+            max-width: 100%;
+            overflow-x: visible;
+            padding: 0;
+        }
+
+        .tabs {
+            display: flex;
+            background: white;
+            border-bottom: 2px solid #e5e7eb;
+            overflow-x: auto;
+            position: sticky;
+            top: 60px;
+            z-index: 99;
+            scrollbar-width: none;
+        }
+
+        .tabs::-webkit-scrollbar {
+            height: 0;
+        }
+
+        .tab-btn {
+            flex: 1;
+            min-width: 110px;
+            padding: 0.75rem 1rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #6b7280;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .tab-btn:hover {
+            color: #166534;
+            background-color: #f9fafb;
+        }
+
+        .tab-btn.active {
+            color: #166534;
+            border-bottom-color: #22c55e;
+            background-color: #f0fdf4;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 1.5rem 1rem;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        button {
+            padding: 0.625rem 1rem;
+            background-color: #22c55e;
+            color: white;
+            border: none;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        button:hover {
+            background-color: #16a34a;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            background-color: #e5e7eb;
+            color: #1f2937;
+        }
+
+        .btn-secondary:hover {
+            background-color: #d1d5db;
+        }
+
+        .btn-danger {
+            background-color: #ef4444;
+        }
+
+        .btn-danger:hover {
+            background-color: #dc2626;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            font-family: inherit;
+            font-size: 16px;
+            margin-bottom: 0.75rem;
+            transition: border-color 0.2s ease;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #22c55e;
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .form-row-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 640px) {
+            .form-row, .form-row-3 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: all 0.2s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 4px 12px rgba(22, 101, 52, 0.1);
+        }
+
+        .card-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #166534;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-text {
+            color: #6b7280;
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .badge-primary {
+            background-color: #dbeafe;
+            color: #0c4a6e;
+        }
+
+        .badge-success {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+
+        .badge-warning {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-danger {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .action-buttons button {
+            flex: 1;
+            min-width: 80px;
+            font-size: 0.8rem;
+            padding: 0.5rem;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 25px rgba(0,0,0,0.15);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .modal-header h2 {
+            font-size: 1.25rem;
+            color: #166534;
+            margin: 0;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #9ca3af;
+            padding: 0;
+            min-width: auto;
+        }
+
+        .close-modal:hover {
+            color: #1f2937;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-left: 4px solid #22c55e;
+            padding: 1rem;
+            border-radius: 0.375rem;
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            color: #6b7280;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card .value {
+            color: #166534;
+            font-size: 1.875rem;
+            font-weight: 700;
+        }
+
+        .search-box {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        .search-box input {
+            padding-left: 2.5rem;
+            margin-bottom: 0;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 0.75rem;
+            top: 0.75rem;
+            color: #9ca3af;
+            pointer-events: none;
+        }
+
+        .plant-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .plant-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .plant-card:hover {
+            box-shadow: 0 8px 16px rgba(22, 101, 52, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .plant-emoji {
+            font-size: 2.5rem;
+            text-align: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .plant-name {
+            font-weight: 600;
+            color: #166534;
+            margin-bottom: 0.25rem;
+            font-size: 0.95rem;
+        }
+
+        .plant-type {
+            color: #9ca3af;
+            font-size: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .plant-info {
+            font-size: 0.8rem;
+            color: #6b7280;
+            line-height: 1.4;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 2rem;
+        }
+
+        .checklist {
+            list-style: none;
+        }
+
+        .checklist li {
+            padding: 0.75rem;
+            border-bottom: 1px solid #f3f4f6;
+            display: flex;
+            align-items: center;
+        }
+
+        .checklist li:last-child {
+            border-bottom: none;
+        }
+
+        .checklist input[type="checkbox"] {
+            width: auto;
+            margin-right: 0.75rem;
+            cursor: pointer;
+            margin-bottom: 0;
+        }
+
+        .checklist label {
+            flex: 1;
+            cursor: pointer;
+        }
+
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        .summary-table th {
+            background-color: #f3f4f6;
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+            color: #166534;
+            font-size: 0.875rem;
+        }
+
+        .summary-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 0.875rem;
+        }
+
+        .summary-table tr:hover {
+            background-color: #f9fafb;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .text-muted {
+            color: #9ca3af;
+        }
+
+        .mt-2 {
+            margin-top: 1rem;
+        }
+
+        .mb-2 {
+            margin-bottom: 1rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #9ca3af;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            gap: 0;
+            box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
+            z-index: 101;
+        }
+
+        footer button {
+            flex: 1;
+            border: none;
+            border-radius: 0;
+            padding: 0.75rem 0.5rem;
+            background: white;
+            color: #6b7280;
+            font-size: 0.75rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+            transition: all 0.2s ease;
+        }
+
+        footer button:hover {
+            background: #f9fafb;
+        }
+
+        footer button.active {
+            color: #166534;
+            background: #f0fdf4;
+        }
+
+        footer button span {
+            font-size: 1.25rem;
+        }
+
+        @media (max-width: 640px) {
+            header h1 {
+                font-size: 1.25rem;
+            }
+
+            .tab-btn {
+                min-width: 80px;
+                font-size: 0.75rem;
+                padding: 0.5rem;
+            }
+
+            .plant-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 0.375rem;
+            margin-bottom: 1rem;
+        }
+
+        .alert-success {
+            background-color: #dcfce7;
+            color: #166534;
+            border-left: 4px solid #22c55e;
+        }
+
+        .alert-error {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border-left: 4px solid #ef4444;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🌿 JardinerosCL</h1>
+    </header>
+
+    <div class="container">
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="jardines">
+                <span>📍 MIS JARDINES</span>
+            </button>
+            <button class="tab-btn" data-tab="plantas">
+                <span>🌱 PLANTAS</span>
+            </button>
+            <button class="tab-btn" data-tab="riego">
+                <span>💧 RIEGO</span>
+            </button>
+            <button class="tab-btn" data-tab="presupuestos">
+                <span>💰 PRESUPUESTOS</span>
+            </button>
+            <button class="tab-btn" data-tab="calendario">
+                <span>📅 CALENDARIO</span>
+            </button>
+        </div>
+
+        <!-- TAB 1: MIS JARDINES -->
+        <div id="jardines" class="tab-content active">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>Total Proyectos</h3>
+                    <div class="value" id="totalProjects">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>En Ejecución</h3>
+                    <div class="value" id="activeProjects">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Presupuesto Total</h3>
+                    <div class="value" id="totalBudget">$0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Mantenimiento</h3>
+                    <div class="value" id="maintenanceProjects">0</div>
+                </div>
+            </div>
+
+            <button onclick="openGardenModal()">+ Agregar Nuevo Jardín</button>
+
+            <div id="gardensList" style="margin-top: 1.5rem;"></div>
+
+            <div id="gardenModal" class="modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>Crear/Editar Jardín</h2>
+                        <button class="close-modal" onclick="closeGardenModal()">✕</button>
+                    </div>
+                    <form id="gardenForm" onsubmit="saveGarden(event)">
+                        <div class="form-group">
+                            <label>Nombre Cliente *</label>
+                            <input type="text" id="clientName" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Dirección *</label>
+                            <input type="text" id="address" required>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Tamaño (m²) *</label>
+                                <input type="number" id="size" min="1" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Tipo de Proyecto *</label>
+                                <select id="type" required>
+                                    <option value="">Seleccionar...</option>
+                                    <option value="residencial">Residencial</option>
+                                    <option value="comercial">Comercial</option>
+                                    <option value="condominio">Condominio</option>
+                                    <option value="parque">Parque</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Estado *</label>
+                                <select id="status" required>
+                                    <option value="">Seleccionar...</option>
+                                    <option value="Cotizado">Cotizado</option>
+                                    <option value="En Diseño">En Diseño</option>
+                                    <option value="En Ejecución">En Ejecución</option>
+                                    <option value="Mantenimiento">Mantenimiento</option>
+                                    <option value="Terminado">Terminado</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Presupuesto ($) *</label>
+                                <input type="number" id="budget" min="0" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Notas</label>
+                            <textarea id="notes" placeholder="Detalles especiales del proyecto..."></textarea>
+                        </div>
+                        <input type="hidden" id="gardenId">
+                        <div class="action-buttons">
+                            <button type="submit">Guardar</button>
+                            <button type="button" class="btn-secondary" onclick="closeGardenModal()">Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: PLANTAS -->
+        <div id="plantas" class="tab-content">
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="plantSearch" placeholder="Buscar plantas..." onkeyup="filterPlants()">
+            </div>
+            <div class="form-group">
+                <label>Filtrar por tipo:</label>
+                <select id="plantTypeFilter" onchange="filterPlants()">
+                    <option value="">Todos</option>
+                    <option value="Árboles Nativos">Árboles Nativos</option>
+                    <option value="Frutales">Frutales</option>
+                    <option value="Arbustos">Arbustos</option>
+                    <option value="Flores">Flores</option>
+                    <option value="Suculentas">Suculentas</option>
+                    <option value="Césped">Césped</option>
+                </select>
+            </div>
+            <div class="plant-grid" id="plantsGrid"></div>
+
+            <div id="plantDetailModal" class="modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 id="plantDetailName"></h2>
+                        <button class="close-modal" onclick="closePlantDetail()">✕</button>
+                    </div>
+                    <div id="plantDetailContent"></div>
+                    <button class="mt-2" onclick="addPlantToProject()">Agregar a Proyecto</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: RIEGO -->
+        <div id="riego" class="tab-content">
+            <div class="form-group">
+                <h3 style="color: #166534; margin-bottom: 1rem;">Calculadora de Riego</h3>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Área Total (m²) *</label>
+                    <input type="number" id="irrigationArea" min="1" value="100" onchange="calculateIrrigation()">
+                </div>
+                <div class="form-group">
+                    <label>Tipo de Sistema *</label>
+                    <select id="irrigationSystem" onchange="calculateIrrigation()">
+                        <option value="goteo">Riego por Goteo (eficiencia 90%)</option>
+                        <option value="aspersores">Aspersores (eficiencia 75%)</option>
+                        <option value="microaspercion">Microasperción (eficiencia 85%)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Necesidad de Agua (mm/semana) *</label>
+                    <select id="waterNeed" onchange="calculateIrrigation()">
+                        <option value="">Seleccionar...</option>
+                        <option value="15">Bajo (plantas resistentes) - 15mm</option>
+                        <option value="25">Medio (plantas comunes) - 25mm</option>
+                        <option value="35">Alto (plantas exigentes) - 35mm</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Estación *</label>
+                    <select id="season" onchange="calculateIrrigation()">
+                        <option value="invierno">Invierno (3x/semana)</option>
+                        <option value="primavera">Primavera (4x/semana)</option>
+                        <option value="verano">Verano (2-3x/día)</option>
+                        <option value="otoño">Otoño (4x/semana)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Costo por m³ ($) *</label>
+                <input type="number" id="waterCost" min="0" value="2200" onchange="calculateIrrigation()">
+            </div>
+
+            <button onclick="calculateIrrigation()">Calcular Necesidad Hídrica</button>
+
+            <div id="irrigationResults" style="margin-top: 1.5rem;"></div>
+
+            <div style="margin-top: 2rem;">
+                <h3 style="color: #166534; margin-bottom: 1rem;">Generador de Horario de Riego</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Hora Inicio (HH:MM)</label>
+                        <input type="time" id="scheduleStart" value="06:00">
+                    </div>
+                    <div class="form-group">
+                        <label>Duración (minutos)</label>
+                        <input type="number" id="scheduleDuration" value="30" min="5">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Días de Riego</label>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem;">
+                        <label style="display: flex; align-items: center; margin: 0;">
+                            <input type="checkbox" name="scheduleDay" value="Lunes" checked> Lunes
+                        </label>
+                        <label style="display: flex; align-items: center; margin: 0;">
+                            <input type="checkbox" name="scheduleDay" value="Miércoles" checked> Miércoles
+                        </label>
+                        <label style="display: flex; align-items: center; margin: 0;">
+                            <input type="checkbox" name="scheduleDay" value="Viernes" checked> Viernes
+                        </label>
+                        <label style="display: flex; align-items: center; margin: 0;">
+                            <input type="checkbox" name="scheduleDay" value="Domingo"> Domingo
+                        </label>
+                    </div>
+                </div>
+                <button onclick="generateSchedule()">Generar Horario</button>
+                <div id="scheduleResults" style="margin-top: 1rem;"></div>
+            </div>
+        </div>
+
+        <!-- TAB 4: PRESUPUESTOS -->
+        <div id="presupuestos" class="tab-content">
+            <button onclick="openQuoteModal()">+ Crear Nuevo Presupuesto</button>
+
+            <div id="quotesList" style="margin-top: 1.5rem;"></div>
+
+            <div id="quoteModal" class="modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>Crear Presupuesto</h2>
+                        <button class="close-modal" onclick="closeQuoteModal()">✕</button>
+                    </div>
+                    <form id="quoteForm" onsubmit="saveQuote(event)">
+                        <div class="form-group">
+                            <label>Nombre del Presupuesto *</label>
+                            <input type="text" id="quoteName" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Cliente *</label>
+                            <input type="text" id="quoteClient" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Descripción</label>
+                            <textarea id="quoteDescription" placeholder="Detalles del proyecto..."></textarea>
+                        </div>
+
+                        <div id="quoteItems"></div>
+
+                        <button type="button" class="btn-secondary" onclick="addQuoteItem()">+ Agregar Línea</button>
+
+                        <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb;">
+                            <div class="form-row-3">
+                                <div>
+                                    <label style="display: block; color: #6b7280; font-size: 0.875rem; margin-bottom: 0.5rem;">Subtotal</label>
+                                    <div style="font-size: 1.5rem; font-weight: 700; color: #166534;" id="quoteSubtotal">$0</div>
+                                </div>
+                                <div>
+                                    <label style="display: block; color: #6b7280; font-size: 0.875rem; margin-bottom: 0.5rem;">IVA (19%)</label>
+                                    <div style="font-size: 1.5rem; font-weight: 700; color: #166534;" id="quoteIva">$0</div>
+                                </div>
+                                <div>
+                                    <label style="display: block; color: #6b7280; font-size: 0.875rem; margin-bottom: 0.5rem;">Total</label>
+                                    <div style="font-size: 1.5rem; font-weight: 700; color: #22c55e;" id="quoteTotal">$0</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <input type="hidden" id="quoteId">
+                        <div class="action-buttons" style="margin-top: 1.5rem;">
+                            <button type="submit">Guardar</button>
+                            <button type="button" class="btn-secondary" onclick="closeQuoteModal()">Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 5: CALENDARIO -->
+        <div id="calendario" class="tab-content">
+            <div class="form-group">
+                <label>Seleccionar Mes:</label>
+                <select id="calendarMonth" onchange="displayCalendarMonth()">
+                    <option value="0">Enero</option>
+                    <option value="1">Febrero</option>
+                    <option value="2">Marzo</option>
+                    <option value="3">Abril</option>
+                    <option value="4">Mayo</option>
+                    <option value="5">Junio</option>
+                    <option value="6">Julio</option>
+                    <option value="7">Agosto</option>
+                    <option value="8">Septiembre</option>
+                    <option value="9">Octubre</option>
+                    <option value="10">Noviembre</option>
+                    <option value="11">Diciembre</option>
+                </select>
+            </div>
+
+            <div id="calendarContent" style="margin-top: 1.5rem;"></div>
+        </div>
+    </div>
+
+    <footer>
+        <button class="active" data-tab="jardines" onclick="switchTab('jardines', this)">
+            <span>📍</span>
+            <span>Jardines</span>
+        </button>
+        <button data-tab="plantas" onclick="switchTab('plantas', this)">
+            <span>🌱</span>
+            <span>Plantas</span>
+        </button>
+        <button data-tab="riego" onclick="switchTab('riego', this)">
+            <span>💧</span>
+            <span>Riego</span>
+        </button>
+        <button data-tab="presupuestos" onclick="switchTab('presupuestos', this)">
+            <span>💰</span>
+            <span>Presupuestos</span>
+        </button>
+        <button data-tab="calendario" onclick="switchTab('calendario', this)">
+            <span>📅</span>
+            <span>Calendario</span>
+        </button>
+    </footer>
+
+    <script>
+        // ==================== PLANT DATABASE ====================
+        const plantsDatabase = [
+            // Árboles Nativos
+            {name: 'Araucaria', type: 'Árboles Nativos', emoji: '🌲', luz: 'Pleno sol', agua: '2-3x semana', poda: 'Junio-Agosto', problemas: 'Plagas: Escarabajo de la corteza'},
+            {name: 'Quillay', type: 'Árboles Nativos', emoji: '🌳', luz: 'Pleno sol', agua: '1-2x semana', poda: 'Junio-Julio', problemas: 'Sequía tolerante'},
+            {name: 'Boldo', type: 'Árboles Nativos', emoji: '🌿', luz: 'Sol/sombra parcial', agua: '1-2x semana', poda: 'Junio-Agosto', problemas: 'Resistente a plagas'},
+            {name: 'Peumo', type: 'Árboles Nativos', emoji: '🌳', luz: 'Pleno sol', agua: '2x semana', poda: 'Junio-Julio', problemas: 'Tolerante sequía'},
+            {name: 'Canelo', type: 'Árboles Nativos', emoji: '🌲', luz: 'Sol/sombra parcial', agua: '2-3x semana', poda: 'Junio-Julio', problemas: 'Requiere protección viento'},
+            {name: 'Espino', type: 'Árboles Nativos', emoji: '🌳', luz: 'Pleno sol', agua: '1-2x semana', poda: 'Junio-Agosto', problemas: 'Muy resistente'},
+            {name: 'Roble', type: 'Árboles Nativos', emoji: '🌲', luz: 'Pleno sol', agua: '2x semana', poda: 'Junio-Julio', problemas: 'Crecimiento lento'},
+
+            // Frutales
+            {name: 'Limonero', type: 'Frutales', emoji: '🍋', luz: 'Pleno sol', agua: '3-4x semana', poda: 'Julio-Agosto', problemas: 'Mosca blanca, cochinilla'},
+            {name: 'Naranjo', type: 'Frutales', emoji: '🍊', luz: 'Pleno sol', agua: '3x semana', poda: 'Julio-Agosto', problemas: 'Ácaros, hongos'},
+            {name: 'Palto', type: 'Frutales', emoji: '🥑', luz: 'Pleno sol', agua: '3-4x semana', poda: 'Agosto-Septiembre', problemas: 'Requiere polinización'},
+            {name: 'Cerezo', type: 'Frutales', emoji: '🍒', luz: 'Pleno sol', agua: '2-3x semana', poda: 'Junio-Julio', problemas: 'Hongos en flor'},
+            {name: 'Nogal', type: 'Frutales', emoji: '🌰', luz: 'Pleno sol', agua: '2x semana', poda: 'Junio-Julio', problemas: 'Tóxico para otras plantas'},
+            {name: 'Kiwi', type: 'Frutales', emoji: '🥝', luz: 'Pleno sol', agua: '3-4x semana', poda: 'Julio-Agosto', problemas: 'Requiere espaldera'},
+            {name: 'Frambuesa', type: 'Frutales', emoji: '🫐', luz: 'Sol/sombra parcial', agua: '2-3x semana', poda: 'Junio-Julio', problemas: 'Plagas diversas'},
+            {name: 'Manzano', type: 'Frutales', emoji: '🍎', luz: 'Pleno sol', agua: '2-3x semana', poda: 'Junio-Agosto', problemas: 'Oídio, roya'},
+
+            // Arbustos
+            {name: 'Lavanda', type: 'Arbustos', emoji: '💜', luz: 'Pleno sol', agua: '1-2x semana', poda: 'Marzo-Abril', problemas: 'Tolerante sequía'},
+            {name: 'Romero', type: 'Arbustos', emoji: '🌿', luz: 'Pleno sol', agua: '1x semana', poda: 'Mayo-Junio', problemas: 'Muy resistente'},
+            {name: 'Buganvilia', type: 'Arbustos', emoji: '💗', luz: 'Pleno sol', agua: '2-3x semana', poda: 'Marzo-Abril', problemas: 'Proteína oxalatos'},
+            {name: 'Hortensia', type: 'Arbustos', emoji: '💜', luz: 'Sombra parcial', agua: '3-4x semana', poda: 'Julio-Agosto', problemas: 'Suelo ácido para azul'},
+            {name: 'Azalea', type: 'Arbustos', emoji: '💜', luz: 'Sombra parcial', agua: '3x semana', poda: 'Julio', problemas: 'Requiere suelo ácido'},
+            {name: 'Carqueja', type: 'Arbustos', emoji: '🌿', luz: 'Pleno sol/sombra', agua: '1-2x semana', poda: 'Junio-Julio', problemas: 'Muy resistente'},
+            {name: 'Chagual', type: 'Arbustos', emoji: '🌿', luz: 'Pleno sol', agua: '1x semana', poda: 'Raro', problemas: 'Xerófita'},
+            {name: 'Retama', type: 'Arbustos', emoji: '💛', luz: 'Pleno sol', agua: '1-2x semana', poda: 'Junio', problemas: 'Invasiva en algunas zonas'},
+
+            // Flores
+            {name: 'Rosa', type: 'Flores', emoji: '🌹', luz: 'Pleno sol (6h+)', agua: '3x semana', poda: 'Junio-Julio', problemas: 'Oídio, pulgones'},
+            {name: 'Clavel', type: 'Flores', emoji: '🌷', luz: 'Pleno sol', agua: '2x semana', poda: 'Febrero-Marzo', problemas: 'Hongos raíz'},
+            {name: 'Margarita', type: 'Flores', emoji: '🌼', luz: 'Pleno sol', agua: '2x semana', poda: 'Marzo-Abril', problemas: 'Muy resistente'},
+            {name: 'Girasol', type: 'Flores', emoji: '🌻', luz: 'Pleno sol', agua: '2-3x semana', poda: 'N/A', problemas: 'Anual, requiere tutorado'},
+            {name: 'Dalia', type: 'Flores', emoji: '💐', luz: 'Pleno sol', agua: '2-3x semana', poda: 'Junio-Julio', problemas: 'Plagas varias'},
+            {name: 'Tulipán', type: 'Flores', emoji: '🌷', luz: 'Pleno sol/sombra', agua: '1-2x semana', poda: 'N/A', problemas: 'Bulbo requiere frío'},
+            {name: 'Iris', type: 'Flores', emoji: '💜', luz: 'Pleno sol', agua: '2x semana', poda: 'Junio-Julio', problemas: 'Requiere drenaje'},
+
+            // Suculentas
+            {name: 'Aloe Vera', type: 'Suculentas', emoji: '💚', luz: 'Pleno sol/sombra', agua: '1x cada 2 semanas', poda: 'Raro', problemas: 'Pudición en exceso agua'},
+            {name: 'Echeveria', type: 'Suculentas', emoji: '💚', luz: 'Pleno sol', agua: '1x cada 2-3 semanas', poda: 'Raro', problemas: 'Tolerante'],
+            {name: 'Sempervivum', type: 'Suculentas', emoji: '💚', luz: 'Pleno sol', agua: '1x cada 2 semanas', poda: 'Raro', problemas: 'Muy resistente'},
+            {name: 'Cactus', type: 'Suculentas', emoji: '🌵', luz: 'Pleno sol', agua: '1x cada 3 semanas', poda: 'Raro', problemas: 'Espinas peligrosas'},
+            {name: 'Jade', type: 'Suculentas', emoji: '💚', luz: 'Pleno sol/sombra', agua: '1x cada 2 semanas', poda: 'Tolerada', problemas: 'Lento crecimiento'},
+            {name: 'Sedum', type: 'Suculentas', emoji: '💚', luz: 'Pleno sol', agua: '1x cada 2 semanas', poda: 'Raro', problemas: 'Muy rústico'},
+
+            // Césped
+            {name: 'Bermuda', type: 'Césped', emoji: '🌾', luz: 'Pleno sol', agua: 'Diario verano', poda: '2-3 semanas', problemas: 'Resiste sequía moderada'},
+            {name: 'Kikuyo', type: 'Césped', emoji: '🌾', luz: 'Pleno sol/sombra', agua: 'Diario verano', poda: '2-3 semanas', problemas: 'Invasivo en frío'},
+            {name: 'Festuca', type: 'Césped', emoji: '🌾', luz: 'Sombra parcial', agua: '2-3x semana', poda: '2 semanas', problemas: 'Requiere frío'},
+            {name: 'Ray Grass', type: 'Césped', emoji: '🌾', luz: 'Pleno sol/sombra', agua: 'Diario verano', poda: '1-2 semanas', problemas: 'Muy resiliente'},
+            {name: 'Grama Tipo Alfombra', type: 'Césped', emoji: '🌾', luz: 'Sombra parcial', agua: '2-3x semana', poda: 'Frecuente', problemas: 'Baja altura'},
+        ];
+
+        // ==================== CALENDAR DATA ====================
+        const calendarData = [
+            {
+                month: 0,
+                name: 'Enero',
+                tasks: [
+                    '✅ Preparar lechos para plantación de verano',
+                    '💧 Aumentar riego (2-3 veces diarias)',
+                    '✂️ Poda de mantenimiento en árboles',
+                    '🦗 Vigilancia de plagas (mosca blanca, araña roja)',
+                    '🌱 Plantar flores de verano (dalia, girasol)',
+                    '⚠️ Protección contra quemaduras solares'
+                ]
+            },
+            {
+                month: 1,
+                name: 'Febrero',
+                tasks: [
+                    '💧 Mantener riego intenso',
+                    '🌿 Limpiar malas hierbas regularmente',
+                    '✂️ Poda ligera de formación',
+                    '🐛 Plagas: mosca de la fruta, pulgones',
+                    '🌱 Últimas plantaciones antes de otoño',
+                    '📋 Revisión de sistemas de riego'
+                ]
+            },
+            {
+                month: 2,
+                name: 'Marzo',
+                tasks: [
+                    '🍂 Inicio de podas de otoño (primeros árboles)',
+                    '💧 Reducir frecuencia de riego gradualmente',
+                    '🌿 Limpieza de follaje caído',
+                    '✂️ Poda de flores gastadas (rosas, dalias)',
+                    '🎯 Preparación para plantación de otoño',
+                    '🐛 Control de plagas residuales'
+                ]
+            },
+            {
+                month: 3,
+                name: 'Abril',
+                tasks: [
+                    '🌱 Plantación masiva de otoño (árboles, arbustos)',
+                    '✂️ Poda fuerte de árboles de hoja caduca',
+                    '💧 Riego moderado (2-3x semana)',
+                    '🍂 Limpieza de follaje en macizos',
+                    '🌿 Mulching en bases de plantas',
+                    '🔧 Mantenimiento de herramientas'
+                ]
+            },
+            {
+                month: 4,
+                name: 'Mayo',
+                tasks: [
+                    '❄️ Protección contra heladas tardías',
+                    '✂️ Podas de formación en arbustos',
+                    '💧 Riego según demanda (1-2x semana)',
+                    '🌱 Última ventana de plantación',
+                    '🍁 Abonado de otoño',
+                    '🏵️ Flores de primavera (tulipanes, narcisos)'
+                ]
+            },
+            {
+                month: 5,
+                name: 'Junio',
+                tasks: [
+                    '❄️ Protección contra heladas (norte/centro)',
+                    '✂️ PODA FUERTE de invierno (mejor época)',
+                    '💧 Riego mínimo (1x semana)',
+                    '🌿 Limpieza y organización',
+                    '🍁 Abonado de invierno',
+                    '🔍 Inspección de plagas hibernales'
+                ]
+            },
+            {
+                month: 6,
+                name: 'Julio',
+                tasks: [
+                    '❄️ Protección en sur (heladas severas)',
+                    '✂️ Continuación de podas (finalización)',
+                    '💧 Riego muy reducido',
+                    '🍁 Fertilización de plantaciones recientes',
+                    '🌿 Labores de mantenimiento',
+                    '🏵️ Preparación para floración primaveral'
+                ]
+            },
+            {
+                month: 7,
+                name: 'Agosto',
+                tasks: [
+                    '🌱 Semillas de flores anuales en almácigos',
+                    '✂️ Últimas podas de invierno',
+                    '💧 Inicio leve de aumento de riego',
+                    '🍁 Abonado de primavera',
+                    '🌿 Preparación de lechos',
+                    '🦗 Vigilancia de plagas emergentes'
+                ]
+            },
+            {
+                month: 8,
+                name: 'Septiembre',
+                tasks: [
+                    '🌱 Plantación masiva de primavera',
+                    '🌸 Floración de bulbos de primavera',
+                    '💧 Aumentar riego progresivamente',
+                    '✂️ Poda ligera de floración',
+                    '🐛 Control de plagas (pulgones, ácaros)',
+                    '🌿 Limpias de malas hierbas'
+                ]
+            },
+            {
+                month: 9,
+                name: 'Octubre',
+                tasks: [
+                    '🌸 Floración completa de primavera',
+                    '🌱 Plantación final antes de calor',
+                    '💧 Riego frecuente (2-3x semana)',
+                    '✂️ Poda de flores gastadas',
+                    '🦗 Plagas: afidos, trips',
+                    '🌿 Deshierbe regular'
+                ]
+            },
+            {
+                month: 10,
+                name: 'Noviembre',
+                tasks: [
+                    '☀️ Protección contra calor excesivo',
+                    '💧 Aumento progresivo de riego',
+                    '✂️ Poda ligera de mantenimiento',
+                    '🌱 Plantación de verano (especies nuevas)',
+                    '🐛 Plagas activas: mosca blanca, ácaros',
+                    '🌿 Mulching para retención humedad'
+                ]
+            },
+            {
+                month: 11,
+                name: 'Diciembre',
+                tasks: [
+                    '☀️ Protección solar (telas, sombra)',
+                    '💧 Riego intenso según necesidad',
+                    '🌺 Floración de plantas de verano',
+                    '✂️ Poda ligera selectiva',
+                    '🦗 Control de plagas de calor',
+                    '🎄 Mantenimiento general pre-vacaciones'
+                ]
+            }
+        ];
+
+        // ==================== STATE MANAGEMENT ====================
+        let gardens = [];
+        let quotes = [];
+        let currentPlantDetail = null;
+
+        // ==================== LOCAL STORAGE ====================
+        function loadData() {
+            try {
+                const savedGardens = localStorage.getItem('jardineroscl_gardens');
+                gardens = savedGardens ? JSON.parse(savedGardens) : [];
+            } catch (e) {
+                console.error('Error loading gardens:', e);
+                gardens = [];
+            }
+
+            try {
+                const savedQuotes = localStorage.getItem('jardineroscl_quotes');
+                quotes = savedQuotes ? JSON.parse(savedQuotes) : [];
+            } catch (e) {
+                console.error('Error loading quotes:', e);
+                quotes = [];
+            }
+        }
+
+        function saveGardenData() {
+            try {
+                localStorage.setItem('jardineroscl_gardens', JSON.stringify(gardens));
+            } catch (e) {
+                console.error('Error saving gardens:', e);
+            }
+        }
+
+        function saveQuoteData() {
+            try {
+                localStorage.setItem('jardineroscl_quotes', JSON.stringify(quotes));
+            } catch (e) {
+                console.error('Error saving quotes:', e);
+            }
+        }
+
+        // ==================== TAB NAVIGATION ====================
+        function switchTab(tabName, button) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('footer button').forEach(btn => btn.classList.remove('active'));
+
+            document.getElementById(tabName).classList.add('active');
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+            if (button) button.classList.add('active');
+
+            if (tabName === 'plantas') {
+                displayPlants();
+            } else if (tabName === 'calendario') {
+                displayCalendarMonth();
+            }
+        }
+
+        // ==================== JARDINES (GARDENS) ====================
+        function openGardenModal(id = null) {
+            document.getElementById('gardenId').value = id || '';
+            if (id) {
+                const garden = gardens.find(g => g.id === id);
+                document.getElementById('clientName').value = garden.clientName;
+                document.getElementById('address').value = garden.address;
+                document.getElementById('size').value = garden.size;
+                document.getElementById('type').value = garden.type;
+                document.getElementById('status').value = garden.status;
+                document.getElementById('budget').value = garden.budget;
+                document.getElementById('notes').value = garden.notes;
+            } else {
+                document.getElementById('gardenForm').reset();
+            }
+            document.getElementById('gardenModal').classList.add('active');
+        }
+
+        function closeGardenModal() {
+            document.getElementById('gardenModal').classList.remove('active');
+        }
+
+        function saveGarden(event) {
+            event.preventDefault();
+            const id = document.getElementById('gardenId').value;
+            const newGarden = {
+                id: id || Date.now().toString(),
+                clientName: document.getElementById('clientName').value,
+                address: document.getElementById('address').value,
+                size: parseInt(document.getElementById('size').value),
+                type: document.getElementById('type').value,
+                status: document.getElementById('status').value,
+                budget: parseInt(document.getElementById('budget').value),
+                notes: document.getElementById('notes').value,
+                createdAt: id ? gardens.find(g => g.id === id).createdAt : new Date().toISOString()
+            };
+
+            if (id) {
+                gardens = gardens.map(g => g.id === id ? newGarden : g);
+            } else {
+                gardens.push(newGarden);
+            }
+
+            saveGardenData();
+            displayGardens();
+            closeGardenModal();
+        }
+
+        function deleteGarden(id) {
+            if (confirm('¿Estás seguro de que deseas eliminar este jardín?')) {
+                gardens = gardens.filter(g => g.id !== id);
+                saveGardenData();
+                displayGardens();
+            }
+        }
+
+        function displayGardens() {
+            const container = document.getElementById('gardensList');
+            if (gardens.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div><p>No hay proyectos registrados. ¡Crea el primero!</p></div>';
+                updateGardenStats();
+                return;
+            }
+
+            container.innerHTML = gardens.map(garden => {
+                const statusColors = {
+                    'Cotizado': 'badge-primary',
+                    'En Diseño': 'badge-warning',
+                    'En Ejecución': 'badge-success',
+                    'Mantenimiento': 'badge-success',
+                    'Terminado': 'badge-primary'
+                };
+
+                return `
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: start;">
+                            <div>
+                                <div class="card-title">${garden.clientName}</div>
+                                <p class="card-text"><strong>📍</strong> ${garden.address}</p>
+                                <p class="card-text"><strong>📐</strong> ${garden.size} m² • <strong>🏢</strong> ${garden.type}</p>
+                                <p class="card-text"><strong>💰</strong> $${garden.budget.toLocaleString()}</p>
+                                <div style="margin-top: 0.5rem;">
+                                    <span class="badge ${statusColors[garden.status] || 'badge-primary'}">${garden.status}</span>
+                                </div>
+                                ${garden.notes ? `<p class="card-text" style="margin-top: 0.75rem; font-style: italic;">📝 ${garden.notes}</p>` : ''}
+                            </div>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn-secondary" onclick="openGardenModal('${garden.id}')">Editar</button>
+                            <button class="btn-danger" onclick="deleteGarden('${garden.id}')">Eliminar</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            updateGardenStats();
+        }
+
+        function updateGardenStats() {
+            document.getElementById('totalProjects').textContent = gardens.length;
+            document.getElementById('activeProjects').textContent = gardens.filter(g => g.status === 'En Ejecución').length;
+            document.getElementById('maintenanceProjects').textContent = gardens.filter(g => g.status === 'Mantenimiento').length;
+            const total = gardens.reduce((sum, g) => sum + g.budget, 0);
+            document.getElementById('totalBudget').textContent = `$${total.toLocaleString()}`;
+        }
+
+        // ==================== PLANTAS (PLANTS) ====================
+        function displayPlants() {
+            const grid = document.getElementById('plantsGrid');
+            grid.innerHTML = plantsDatabase.map(plant => `
+                <div class="plant-card" onclick="showPlantDetail('${plant.name}')">
+                    <div class="plant-emoji">${plant.emoji}</div>
+                    <div class="plant-name">${plant.name}</div>
+                    <div class="plant-type">${plant.type}</div>
+                    <div class="plant-info">
+                        <strong>☀️</strong> ${plant.luz}<br>
+                        <strong>💧</strong> ${plant.agua}<br>
+                        <strong>✂️</strong> ${plant.poda}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterPlants() {
+            const search = document.getElementById('plantSearch').value.toLowerCase();
+            const typeFilter = document.getElementById('plantTypeFilter').value;
+
+            const grid = document.getElementById('plantsGrid');
+            grid.innerHTML = plantsDatabase
+                .filter(plant => {
+                    const matchSearch = plant.name.toLowerCase().includes(search) || plant.type.toLowerCase().includes(search);
+                    const matchType = !typeFilter || plant.type === typeFilter;
+                    return matchSearch && matchType;
+                })
+                .map(plant => `
+                    <div class="plant-card" onclick="showPlantDetail('${plant.name}')">
+                        <div class="plant-emoji">${plant.emoji}</div>
+                        <div class="plant-name">${plant.name}</div>
+                        <div class="plant-type">${plant.type}</div>
+                        <div class="plant-info">
+                            <strong>☀️</strong> ${plant.luz}<br>
+                            <strong>💧</strong> ${plant.agua}<br>
+                            <strong>✂️</strong> ${plant.poda}
+                        </div>
+                    </div>
+                `)
+                .join('');
+        }
+
+        function showPlantDetail(plantName) {
+            const plant = plantsDatabase.find(p => p.name === plantName);
+            currentPlantDetail = plant;
+
+            document.getElementById('plantDetailName').textContent = plant.emoji + ' ' + plant.name;
+            document.getElementById('plantDetailContent').innerHTML = `
+                <div class="card">
+                    <h3 style="color: #166534; margin-bottom: 1rem;">Información Detallada</h3>
+                    <table style="width: 100%; margin-bottom: 1rem;">
+                        <tr>
+                            <td style="padding: 0.5rem; font-weight: 500; color: #166534;">Tipo</td>
+                            <td style="padding: 0.5rem;">${plant.type}</td>
+                        </tr>
+                        <tr style="background: #f9fafb;">
+                            <td style="padding: 0.5rem; font-weight: 500; color: #166534;">Luz</td>
+                            <td style="padding: 0.5rem;">☀️ ${plant.luz}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 0.5rem; font-weight: 500; color: #166534;">Agua</td>
+                            <td style="padding: 0.5rem;">💧 ${plant.agua}</td>
+                        </tr>
+                        <tr style="background: #f9fafb;">
+                            <td style="padding: 0.5rem; font-weight: 500; color: #166534;">Mejor época poda</td>
+                            <td style="padding: 0.5rem;">✂️ ${plant.poda}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 0.5rem; font-weight: 500; color: #166534;">Problemas comunes</td>
+                            <td style="padding: 0.5rem;">🐛 ${plant.problemas}</td>
+                        </tr>
+                    </table>
+                </div>
+            `;
+            document.getElementById('plantDetailModal').classList.add('active');
+        }
+
+        function closePlantDetail() {
+            document.getElementById('plantDetailModal').classList.remove('active');
+            currentPlantDetail = null;
+        }
+
+        function addPlantToProject() {
+            if (!currentPlantDetail) return;
+            alert(`✅ ${currentPlantDetail.name} agregado a tu proyecto. Puedes añadirlo en el presupuesto o anotarlo en las notas del jardín.`);
+            closePlantDetail();
+        }
+
+        // ==================== RIEGO (IRRIGATION) ====================
+        function calculateIrrigation() {
+            const area = parseFloat(document.getElementById('irrigationArea').value) || 0;
+            const system = document.getElementById('irrigationSystem').value;
+            const waterNeed = parseFloat(document.getElementById('waterNeed').value) || 0;
+            const season = document.getElementById('season').value;
+            const cost = parseFloat(document.getElementById('waterCost').value) || 0;
+
+            if (area <= 0 || !waterNeed) {
+                document.getElementById('irrigationResults').innerHTML = '';
+                return;
+            }
+
+            // Calculate weekly water volume (mm to m³)
+            let weeklyM3 = (area * waterNeed) / 1000;
+
+            // Apply system efficiency
+            const efficiency = {
+                'goteo': 0.90,
+                'aspersores': 0.75,
+                'microaspercion': 0.85
+            };
+            weeklyM3 = weeklyM3 / efficiency[system];
+
+            // Apply seasonal multiplier
+            const seasonMultiplier = {
+                'invierno': 0.5,
+                'primavera': 0.8,
+                'verano': 2.5,
+                'otoño': 0.8
+            };
+            const adjustedM3 = weeklyM3 * seasonMultiplier[season];
+
+            // Monthly calculation
+            const monthlyM3 = adjustedM3 * 4.33;
+            const monthlyCost = monthlyM3 * cost;
+
+            const systemNames = {
+                'goteo': 'Riego por Goteo',
+                'aspersores': 'Aspersores',
+                'microaspercion': 'Microasperción'
+            };
+
+            document.getElementById('irrigationResults').innerHTML = `
+                <div class="card">
+                    <h3 style="color: #166534; margin-bottom: 1rem;">📊 Resultados del Cálculo</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <h3>Sistema</h3>
+                            <div class="value" style="font-size: 1rem;">${systemNames[system]}</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Agua/Semana</h3>
+                            <div class="value">${adjustedM3.toFixed(1)} m³</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Agua/Mes</h3>
+                            <div class="value">${monthlyM3.toFixed(1)} m³</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Costo/Mes</h3>
+                            <div class="value">$${monthlyCost.toLocaleString('es-CL', {maximumFractionDigits: 0})}</div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 1rem; padding: 1rem; background: #f0fdf4; border-radius: 0.375rem;">
+                        <p style="color: #166534; font-weight: 500; margin-bottom: 0.5rem;">💡 Recomendaciones:</p>
+                        <ul style="margin-left: 1.25rem; color: #6b7280; font-size: 0.875rem;">
+                            <li>Verificar que el riego sea uniforme en toda el área</li>
+                            <li>En verano puede requerir ajustes diarios según temperatura</li>
+                            <li>Sistema ${systemNames[system].toLowerCase()} es ideal para ahorro de agua</li>
+                            <li>Revisar presión y goteros/aspersores mensualmente</li>
+                        </ul>
+                    </div>
+                </div>
+            `;
+        }
+
+        function generateSchedule() {
+            const start = document.getElementById('scheduleStart').value;
+            const duration = parseInt(document.getElementById('scheduleDuration').value);
+            const days = Array.from(document.querySelectorAll('input[name="scheduleDay"]:checked')).map(el => el.value);
+
+            if (!start || days.length === 0) {
+                alert('Por favor completa todos los campos');
+                return;
+            }
+
+            const schedule = days.map(day => `${day}: ${start} (${duration} minutos)`).join('\n');
+
+            document.getElementById('scheduleResults').innerHTML = `
+                <div class="card">
+                    <h3 style="color: #166534; margin-bottom: 1rem;">⏰ Horario de Riego Generado</h3>
+                    <pre style="background: #f9fafb; padding: 1rem; border-radius: 0.375rem; overflow-x: auto; font-size: 0.875rem; line-height: 1.6;">${schedule}</pre>
+                    <button class="mt-2" onclick="copySchedule('${schedule.replace(/'/g, '\\'')}')" style="width: 100%;">📋 Copiar Horario</button>
+                </div>
+            `;
+        }
+
+        function copySchedule(schedule) {
+            try {
+                navigator.clipboard.writeText(schedule);
+                alert('✅ Horario copiado al portapapeles');
+            } catch (e) {
+                console.error('Error copying:', e);
+            }
+        }
+
+        // ==================== PRESUPUESTOS (QUOTES) ====================
+        function openQuoteModal() {
+            document.getElementById('quoteId').value = '';
+            document.getElementById('quoteForm').reset();
+            document.getElementById('quoteItems').innerHTML = '';
+            addQuoteItem();
+            document.getElementById('quoteModal').classList.add('active');
+        }
+
+        function closeQuoteModal() {
+            document.getElementById('quoteModal').classList.remove('active');
+        }
+
+        function addQuoteItem() {
+            const itemId = 'item_' + Date.now();
+            const html = `
+                <div class="card" style="margin-bottom: 1rem; padding: 1rem;" id="${itemId}">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Categoría</label>
+                            <select onchange="updateQuoteTotals()">
+                                <option value="">Seleccionar...</option>
+                                <option value="Diseño">Diseño</option>
+                                <option value="Preparación Terreno">Preparación Terreno</option>
+                                <option value="Plantas">Plantas</option>
+                                <option value="Materiales">Materiales</option>
+                                <option value="Riego">Riego</option>
+                                <option value="Mano de Obra">Mano de Obra</option>
+                                <option value="Mantención Mensual">Mantención Mensual</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Descripción</label>
+                            <input type="text" placeholder="Ej: Diseño conceptual" onchange="updateQuoteTotals()">
+                        </div>
+                    </div>
+                    <div class="form-row-3">
+                        <div class="form-group">
+                            <label>Cantidad</label>
+                            <input type="number" min="1" value="1" onchange="updateQuoteTotals()">
+                        </div>
+                        <div class="form-group">
+                            <label>Precio Unitario ($)</label>
+                            <input type="number" min="0" value="0" onchange="updateQuoteTotals()">
+                        </div>
+                        <div style="display: flex; align-items: flex-end;">
+                            <button type="button" class="btn-danger" style="width: 100%; margin-bottom: 0.75rem;" onclick="document.getElementById('${itemId}').remove(); updateQuoteTotals();">Eliminar</button>
+                        </div>
+                    </div>
+                    <div style="text-align: right; font-weight: 600; color: #166534;">
+                        Subtotal: $<span class="item-subtotal">0</span>
+                    </div>
+                </div>
+            `;
+            document.getElementById('quoteItems').insertAdjacentHTML('beforeend', html);
+        }
+
+        function updateQuoteTotals() {
+            let subtotal = 0;
+            document.querySelectorAll('#quoteItems .card').forEach(card => {
+                const inputs = card.querySelectorAll('input[type="number"]');
+                const qty = parseFloat(inputs[0].value) || 0;
+                const price = parseFloat(inputs[1].value) || 0;
+                const itemTotal = qty * price;
+                card.querySelector('.item-subtotal').textContent = itemTotal.toLocaleString('es-CL', {maximumFractionDigits: 0});
+                subtotal += itemTotal;
+            });
+
+            const iva = subtotal * 0.19;
+            const total = subtotal + iva;
+
+            document.getElementById('quoteSubtotal').textContent = `$${subtotal.toLocaleString('es-CL', {maximumFractionDigits: 0})}`;
+            document.getElementById('quoteIva').textContent = `$${iva.toLocaleString('es-CL', {maximumFractionDigits: 0})}`;
+            document.getElementById('quoteTotal').textContent = `$${total.toLocaleString('es-CL', {maximumFractionDigits: 0})}`;
+        }
+
+        function saveQuote(event) {
+            event.preventDefault();
+
+            const items = [];
+            document.querySelectorAll('#quoteItems .card').forEach(card => {
+                const selects = card.querySelectorAll('select');
+                const inputs = card.querySelectorAll('input[type="text"], input[type="number"]');
+                items.push({
+                    category: selects[0].value,
+                    description: inputs[0].value,
+                    quantity: parseFloat(inputs[1].value),
+                    unitPrice: parseFloat(inputs[2].value)
+                });
+            });
+
+            const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
+            const iva = subtotal * 0.19;
+            const total = subtotal + iva;
+
+            const id = document.getElementById('quoteId').value;
+            const newQuote = {
+                id: id || Date.now().toString(),
+                name: document.getElementById('quoteName').value,
+                client: document.getElementById('quoteClient').value,
+                description: document.getElementById('quoteDescription').value,
+                items: items,
+                subtotal: subtotal,
+                iva: iva,
+                total: total,
+                createdAt: id ? quotes.find(q => q.id === id).createdAt : new Date().toISOString()
+            };
+
+            if (id) {
+                quotes = quotes.map(q => q.id === id ? newQuote : q);
+            } else {
+                quotes.push(newQuote);
+            }
+
+            saveQuoteData();
+            displayQuotes();
+            closeQuoteModal();
+        }
+
+        function deleteQuote(id) {
+            if (confirm('¿Eliminar este presupuesto?')) {
+                quotes = quotes.filter(q => q.id !== id);
+                saveQuoteData();
+                displayQuotes();
+            }
+        }
+
+        function displayQuotes() {
+            const container = document.getElementById('quotesList');
+            if (quotes.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📋</div><p>Sin presupuestos registrados</p></div>';
+                return;
+            }
+
+            container.innerHTML = quotes.map(quote => `
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                        <div style="flex: 1;">
+                            <div class="card-title">${quote.name}</div>
+                            <p class="card-text"><strong>👤</strong> ${quote.client}</p>
+                            <p class="card-text"><strong>📝</strong> ${quote.description || '(sin descripción)'}</p>
+                            <p class="card-text"><strong>${quote.items.length}</strong> líneas de presupuesto</p>
+                            <div style="margin-top: 1rem; padding: 1rem; background: #f0fdf4; border-radius: 0.375rem;">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; text-align: center;">
+                                    <div>
+                                        <div style="color: #6b7280; font-size: 0.875rem;">Subtotal</div>
+                                        <div style="color: #166534; font-weight: 700;">$${quote.subtotal.toLocaleString('es-CL', {maximumFractionDigits: 0})}</div>
+                                    </div>
+                                    <div>
+                                        <div style="color: #6b7280; font-size: 0.875rem;">IVA 19%</div>
+                                        <div style="color: #166534; font-weight: 700;">$${quote.iva.toLocaleString('es-CL', {maximumFractionDigits: 0})}</div>
+                                    </div>
+                                    <div>
+                                        <div style="color: #6b7280; font-size: 0.875rem;">Total</div>
+                                        <div style="color: #22c55e; font-weight: 700; font-size: 1.25rem;">$${quote.total.toLocaleString('es-CL', {maximumFractionDigits: 0})}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="action-buttons">
+                        <button class="btn-secondary" onclick="shareQuoteWhatsApp('${quote.id}')">📱 WhatsApp</button>
+                        <button class="btn-secondary" onclick="printQuote('${quote.id}')">🖨️ Imprimir</button>
+                        <button class="btn-danger" onclick="deleteQuote('${quote.id}')">Eliminar</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function shareQuoteWhatsApp(quoteId) {
+            const quote = quotes.find(q => q.id === quoteId);
+            let message = `📋 *Presupuesto: ${quote.name}*\n\n`;
+            message += `Cliente: ${quote.client}\n`;
+            message += `Descripción: ${quote.description || '(sin descripción)'}\n\n`;
+            message += `*Detalles:*\n`;
+            quote.items.forEach(item => {
+                const itemTotal = item.quantity * item.unitPrice;
+                message += `• ${item.description || item.category} (${item.quantity}x $${item.unitPrice}) = $${itemTotal}\n`;
+            });
+            message += `\n*Subtotal:* $${quote.subtotal.toLocaleString('es-CL', {maximumFractionDigits: 0})}\n`;
+            message += `*IVA 19%:* $${quote.iva.toLocaleString('es-CL', {maximumFractionDigits: 0})}\n`;
+            message += `*TOTAL:* $${quote.total.toLocaleString('es-CL', {maximumFractionDigits: 0})}`;
+
+            const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+            window.open(whatsappUrl, '_blank');
+        }
+
+        function printQuote(quoteId) {
+            const quote = quotes.find(q => q.id === quoteId);
+            let html = `
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Presupuesto ${quote.name}</title>
+                    <style>
+                        body { font-family: Arial; margin: 20px; color: #1f2937; }
+                        h1 { color: #166534; margin-bottom: 10px; }
+                        .header { border-bottom: 3px solid #22c55e; padding-bottom: 15px; margin-bottom: 20px; }
+                        .client-info { margin-bottom: 20px; }
+                        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+                        th { background: #f0fdf4; color: #166534; padding: 10px; text-align: left; border-bottom: 1px solid #d1d5db; }
+                        td { padding: 10px; border-bottom: 1px solid #e5e7eb; }
+                        .totals { width: 300px; margin-left: auto; margin-top: 20px; padding: 15px; background: #f0fdf4; border-radius: 5px; }
+                        .total-row { display: flex; justify-content: space-between; margin-bottom: 10px; }
+                        .total-final { font-size: 1.5em; font-weight: bold; color: #22c55e; border-top: 2px solid #22c55e; padding-top: 10px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>🌿 JardinerosCL</h1>
+                        <h2>Presupuesto: ${quote.name}</h2>
+                    </div>
+                    <div class="client-info">
+                        <p><strong>Cliente:</strong> ${quote.client}</p>
+                        <p><strong>Descripción:</strong> ${quote.description || '(sin descripción)'}</p>
+                        <p><strong>Fecha:</strong> ${new Date(quote.createdAt).toLocaleDateString('es-CL')}</p>
+                    </div>
+                    <table>
+                        <tr>
+                            <th>Categoría</th>
+                            <th>Descripción</th>
+                            <th>Cantidad</th>
+                            <th>Precio Unitario</th>
+                            <th>Subtotal</th>
+                        </tr>
+            `;
+            quote.items.forEach(item => {
+                const itemTotal = item.quantity * item.unitPrice;
+                html += `
+                        <tr>
+                            <td>${item.category}</td>
+                            <td>${item.description || '-'}</td>
+                            <td>${item.quantity}</td>
+                            <td>$${item.unitPrice.toLocaleString('es-CL')}</td>
+                            <td>$${itemTotal.toLocaleString('es-CL', {maximumFractionDigits: 0})}</td>
+                        </tr>
+                `;
+            });
+            html += `
+                    </table>
+                    <div class="totals">
+                        <div class="total-row"><span>Subtotal:</span> <strong>$${quote.subtotal.toLocaleString('es-CL', {maximumFractionDigits: 0})}</strong></div>
+                        <div class="total-row"><span>IVA (19%):</span> <strong>$${quote.iva.toLocaleString('es-CL', {maximumFractionDigits: 0})}</strong></div>
+                        <div class="total-row total-final"><span>TOTAL:</span> <strong>$${quote.total.toLocaleString('es-CL', {maximumFractionDigits: 0})}</strong></div>
+                    </div>
+                </body>
+                </html>
+            `;
+
+            const newWindow = window.open('', '', 'width=800,height=600');
+            newWindow.document.write(html);
+            newWindow.document.close();
+            setTimeout(() => newWindow.print(), 100);
+        }
+
+        // ==================== CALENDARIO (CALENDAR) ====================
+        function displayCalendarMonth() {
+            const monthIndex = parseInt(document.getElementById('calendarMonth').value);
+            const month = calendarData[monthIndex];
+
+            let html = `
+                <div class="card">
+                    <h2 style="color: #166534; margin-bottom: 1rem; font-size: 1.5rem;">${month.name}</h2>
+                    <ul class="checklist">
+            `;
+
+            month.tasks.forEach((task, index) => {
+                const taskId = `task_${monthIndex}_${index}`;
+                html += `
+                        <li>
+                            <input type="checkbox" id="${taskId}">
+                            <label for="${taskId}">${task}</label>
+                        </li>
+                `;
+            });
+
+            html += `
+                    </ul>
+                </div>
+            `;
+
+            document.getElementById('calendarContent').innerHTML = html;
+        }
+
+        // ==================== PWA & SERVICE WORKER ====================
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('data:application/javascript,' + encodeURIComponent(`
+                const CACHE_NAME = 'jardineroscl-v1';
+                const assets = ['/jardineroscl/', '/jardineroscl/index.html'];
+
+                self.addEventListener('install', event => {
+                    event.waitUntil(
+                        caches.open(CACHE_NAME).then(cache => cache.addAll(assets))
+                    );
+                    self.skipWaiting();
+                });
+
+                self.addEventListener('activate', event => {
+                    event.waitUntil(caches.keys().then(names => {
+                        return Promise.all(names.filter(name => name !== CACHE_NAME).map(name => caches.delete(name)));
+                    }));
+                    self.clients.claim();
+                });
+
+                self.addEventListener('fetch', event => {
+                    if (event.request.method === 'GET') {
+                        event.respondWith(
+                            caches.match(event.request).then(response => {
+                                return response || fetch(event.request).then(response => {
+                                    return caches.open(CACHE_NAME).then(cache => {
+                                        cache.put(event.request, response.clone());
+                                        return response;
+                                    });
+                                });
+                            }).catch(() => caches.match('/jardineroscl/index.html'))
+                        );
+                    }
+                });
+            `)).catch(err => console.error('SW error:', err));
+        }
+
+        // ==================== MANIFEST ====================
+        const manifest = {
+            name: 'JardinerosCL',
+            short_name: 'JardinerosCL',
+            description: 'Herramienta profesional de gestión de jardines y paisajismo',
+            start_url: '/jardineroscl/',
+            scope: '/jardineroscl/',
+            display: 'standalone',
+            background_color: '#ffffff',
+            theme_color: '#166534',
+            icons: [
+                {
+                    src: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192"><rect fill="%23166534" width="192" height="192"/><text x="50%" y="60%" font-size="100" font-weight="bold" fill="%2322c55e" text-anchor="middle" dominant-baseline="middle">🌿</text></svg>',
+                    sizes: '192x192',
+                    type: 'image/svg+xml',
+                    purpose: 'any'
+                }
+            ],
+            screenshots: [
+                {
+                    src: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 540 720"><rect fill="%23f0fdf4" width="540" height="720"/><rect fill="%23166534" width="540" height="60"/><text x="270" y="35" font-size="24" fill="white" text-anchor="middle" dominant-baseline="middle">🌿 JardinerosCL</text></svg>',
+                    sizes: '540x720',
+                    form_factor: 'narrow'
+                }
+            ],
+            categories: ['productivity', 'utilities']
+        };
+
+        // Create and inject manifest
+        const manifestLink = document.querySelector('link[rel="manifest"]');
+        const manifestUrl = URL.createObjectURL(new Blob([JSON.stringify(manifest)], {type: 'application/json'}));
+        manifestLink.href = manifestUrl;
+
+        // ==================== INITIALIZATION ====================
+        document.addEventListener('DOMContentLoaded', () => {
+            loadData();
+            displayGardens();
+            displayPlants();
+            displayCalendarMonth();
+            updateGardenStats();
+
+            // Tab navigation
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => switchTab(btn.dataset.tab, null));
+            });
+        });
+
+        // Prevent horizontal scrolling
+        document.addEventListener('wheel', (e) => {
+            if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+                e.preventDefault();
+            }
+        }, {passive: false});
+    </script>
+</body>
+</html>

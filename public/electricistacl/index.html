@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<title>ElectricistaCL - Herramientas para Electricistas</title>
+<meta name="description" content="Toolkit profesional para electricistas y contratistas en Chile. Calculadoras SEC, presupuestos, gestión de trabajos.">
+<meta name="theme-color" content="#1e293b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#1e293b;--card:#334155;--card-hover:#3b4f6b;--accent:#fbbf24;--accent-dim:#d4a017;--text:#f8fafc;--text-sec:#94a3b8;--danger:#ef4444;--success:#22c55e;--info:#38bdf8;--border:#475569;--radius:12px;--shadow:0 4px 12px rgba(0,0,0,.3)}
+html{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);-webkit-text-size-adjust:100%}
+body{min-height:100dvh;padding-bottom:80px;max-width:600px;margin:0 auto}
+input,select,textarea,button{font-family:inherit;font-size:16px}
+input,select,textarea{background:var(--bg);color:var(--text);border:1.5px solid var(--border);border-radius:8px;padding:10px 12px;width:100%;outline:none;transition:border .2s}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+textarea{resize:vertical;min-height:60px}
+select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+button{cursor:pointer;border:none;border-radius:8px;padding:10px 18px;font-weight:600;transition:all .15s}
+.btn-primary{background:var(--accent);color:#1e293b}
+.btn-primary:active{background:var(--accent-dim);transform:scale(.97)}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-outline{background:transparent;border:1.5px solid var(--accent);color:var(--accent)}
+.btn-sm{padding:6px 12px;font-size:13px}
+.btn-block{width:100%;display:block}
+header{background:linear-gradient(135deg,#0f172a,#1e293b);padding:16px;text-align:center;border-bottom:2px solid var(--accent);position:sticky;top:0;z-index:50}
+header h1{font-size:20px;font-weight:800;color:var(--accent);letter-spacing:.5px}
+header p{font-size:11px;color:var(--text-sec);margin-top:2px}
+nav{position:fixed;bottom:0;left:0;right:0;background:#0f172a;border-top:2px solid var(--accent);display:flex;z-index:100;max-width:600px;margin:0 auto}
+nav button{flex:1;background:transparent;color:var(--text-sec);font-size:9px;padding:8px 2px 10px;border-radius:0;display:flex;flex-direction:column;align-items:center;gap:3px;font-weight:600}
+nav button.active{color:var(--accent)}
+nav button svg{width:22px;height:22px}
+.tab{display:none;padding:16px;animation:fadeIn .2s}
+.tab.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.card{background:var(--card);border-radius:var(--radius);padding:16px;margin-bottom:12px;box-shadow:var(--shadow)}
+.card h3{font-size:15px;font-weight:700;color:var(--accent);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.form-group{margin-bottom:10px}
+.form-group label{display:block;font-size:12px;font-weight:600;color:var(--text-sec);margin-bottom:4px;text-transform:uppercase;letter-spacing:.3px}
+.row{display:flex;gap:10px}
+.row>*{flex:1;min-width:0}
+.badge{display:inline-block;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;text-transform:uppercase}
+.badge-presupuestado{background:#6366f1;color:#fff}
+.badge-aprobado{background:#3b82f6;color:#fff}
+.badge-ejecucion{background:#f59e0b;color:#1e293b}
+.badge-terminado{background:#22c55e;color:#1e293b}
+.badge-cobrado{background:#10b981;color:#fff}
+.job-card{border-left:4px solid var(--accent);cursor:pointer;transition:background .15s}
+.job-card:active{background:var(--card-hover)}
+.job-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;font-size:12px;color:var(--text-sec)}
+.result-box{background:#0f172a;border:1.5px solid var(--accent);border-radius:8px;padding:14px;margin-top:10px;font-size:14px;line-height:1.7}
+.result-box strong{color:var(--accent)}
+.chip-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.chip{padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;border:1.5px solid var(--border);color:var(--text-sec);background:transparent;cursor:pointer;transition:all .15s}
+.chip.active{border-color:var(--accent);color:var(--accent);background:rgba(251,191,36,.1)}
+.sec-item{border-bottom:1px solid var(--border);padding:12px 0}
+.sec-item:last-child{border:none}
+.sec-item h4{font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px}
+.sec-item p{font-size:13px;color:var(--text-sec);line-height:1.5}
+.color-dot{display:inline-block;width:14px;height:14px;border-radius:50%;vertical-align:middle;margin-right:4px;border:1px solid rgba(255,255,255,.3)}
+.mat-cat{font-size:13px;font-weight:700;color:var(--accent);margin:14px 0 6px;text-transform:uppercase}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;color:var(--accent);font-weight:700;padding:6px 4px;border-bottom:1.5px solid var(--border);font-size:12px}
+td{padding:6px 4px;border-bottom:1px solid rgba(71,85,105,.4);color:var(--text-sec)}
+.quote-line{display:flex;gap:6px;align-items:center;margin-bottom:6px;font-size:13px}
+.quote-line input{font-size:14px}
+.total-row{font-size:18px;font-weight:800;color:var(--accent);text-align:right;padding:12px 0}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:flex;align-items:flex-end;justify-content:center;animation:fadeIn .15s}
+.modal{background:var(--card);border-radius:16px 16px 0 0;padding:20px;width:100%;max-width:600px;max-height:85dvh;overflow-y:auto}
+.modal h2{font-size:18px;font-weight:800;color:var(--accent);margin-bottom:14px}
+.empty-state{text-align:center;padding:40px 20px;color:var(--text-sec)}
+.empty-state svg{width:48px;height:48px;margin-bottom:12px;opacity:.5}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.stat-card{background:#0f172a;border-radius:10px;padding:12px;text-align:center}
+.stat-card .num{font-size:24px;font-weight:800;color:var(--accent)}
+.stat-card .lbl{font-size:11px;color:var(--text-sec);margin-top:2px}
+.hidden{display:none!important}
+@media print{nav,header,.no-print{display:none!important}.tab{display:block!important;padding:0}body{background:#fff;color:#000;max-width:100%}.card{box-shadow:none;border:1px solid #ccc}}
+</style>
+</head>
+<body>
+<header>
+<h1>&#9889; ElectricistaCL</h1>
+<p>Herramientas profesionales para electricistas chilenos</p>
+</header>
+
+<!-- TAB 1: MIS TRABAJOS -->
+<div id="tab-trabajos" class="tab active">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+<h2 style="font-size:17px;font-weight:800">Mis Trabajos</h2>
+<button class="btn-primary btn-sm" onclick="openJobModal()">+ Nuevo</button>
+</div>
+<div id="job-stats" class="stats-grid hidden"></div>
+<div class="chip-row" id="job-filters">
+<button class="chip active" data-f="todos" onclick="filterJobs(this)">Todos</button>
+<button class="chip" data-f="Presupuestado" onclick="filterJobs(this)">Presupuestado</button>
+<button class="chip" data-f="Aprobado" onclick="filterJobs(this)">Aprobado</button>
+<button class="chip" data-f="En Ejecución" onclick="filterJobs(this)">En Ejecucion</button>
+<button class="chip" data-f="Terminado" onclick="filterJobs(this)">Terminado</button>
+<button class="chip" data-f="Cobrado" onclick="filterJobs(this)">Cobrado</button>
+</div>
+<div id="job-list"></div>
+<div id="job-chart-wrap" class="card hidden"><canvas id="jobChart" height="200"></canvas></div>
+</div>
+
+<!-- TAB 2: CALCULADORAS -->
+<div id="tab-calc" class="tab">
+<h2 style="font-size:17px;font-weight:800;margin-bottom:12px">Calculadoras Electricas</h2>
+<div class="chip-row" id="calc-chips">
+<button class="chip active" onclick="showCalc('conductor',this)">Conductor</button>
+<button class="chip" onclick="showCalc('vdrop',this)">Caida V</button>
+<button class="chip" onclick="showCalc('breaker',this)">Proteccion</button>
+<button class="chip" onclick="showCalc('pf',this)">Cos phi</button>
+<button class="chip" onclick="showCalc('trafo',this)">Trafo</button>
+<button class="chip" onclick="showCalc('lux',this)">Iluminacion</button>
+</div>
+
+<!-- Conductor Sizing -->
+<div id="calc-conductor" class="calc-panel card">
+<h3>Dimensionamiento de Conductor</h3>
+<p style="font-size:12px;color:var(--text-sec);margin-bottom:10px">Segun norma SEC NSEG 5 E.n. 71</p>
+<div class="form-group"><label>Corriente de carga (A)</label><input type="number" id="cc-amps" placeholder="Ej: 20"></div>
+<div class="row">
+<div class="form-group"><label>Material</label><select id="cc-mat"><option value="cu">Cobre</option><option value="al">Aluminio</option></select></div>
+<div class="form-group"><label>Instalacion</label><select id="cc-inst"><option value="conduit">Conduit/Ducto</option><option value="air">Al aire</option></select></div>
+</div>
+<div class="form-group"><label>Temp. ambiente (C)</label><select id="cc-temp"><option value="30">30C (normal)</option><option value="35">35C</option><option value="40">40C</option><option value="45">45C</option><option value="50">50C</option></select></div>
+<button class="btn-primary btn-block" onclick="calcConductor()">Calcular Conductor</button>
+<div id="cc-result" class="result-box hidden"></div>
+</div>
+
+<!-- Voltage Drop -->
+<div id="calc-vdrop" class="calc-panel card hidden">
+<h3>Caida de Tension</h3>
+<p style="font-size:12px;color:var(--text-sec);margin-bottom:10px">Max 3% ramal, 5% total (SEC)</p>
+<div class="row">
+<div class="form-group"><label>Corriente (A)</label><input type="number" id="vd-amps" placeholder="20"></div>
+<div class="form-group"><label>Longitud (m)</label><input type="number" id="vd-len" placeholder="30"></div>
+</div>
+<div class="row">
+<div class="form-group"><label>Seccion (mm2)</label><select id="vd-sec"><option>1.5</option><option>2.5</option><option selected>4</option><option>6</option><option>10</option><option>16</option><option>25</option><option>35</option><option>50</option><option>70</option><option>95</option></select></div>
+<div class="form-group"><label>Tension (V)</label><select id="vd-volt"><option value="220">220V Mono</option><option value="380">380V Tri</option></select></div>
+</div>
+<div class="form-group"><label>Fases</label><select id="vd-phase"><option value="1">Monofasico</option><option value="3">Trifasico</option></select></div>
+<button class="btn-primary btn-block" onclick="calcVDrop()">Calcular Caida</button>
+<div id="vd-result" class="result-box hidden"></div>
+</div>
+
+<!-- Circuit Breaker -->
+<div id="calc-breaker" class="calc-panel card hidden">
+<h3>Proteccion (Interruptor Automatico)</h3>
+<div class="row">
+<div class="form-group"><label>Potencia (W)</label><input type="number" id="br-watts" placeholder="3500"></div>
+<div class="form-group"><label>Tension (V)</label><select id="br-volt"><option value="220">220V</option><option value="380">380V</option></select></div>
+</div>
+<div class="form-group"><label>Factor de potencia</label><input type="number" id="br-fp" value="0.9" step="0.01" min="0.5" max="1"></div>
+<button class="btn-primary btn-block" onclick="calcBreaker()">Calcular Proteccion</button>
+<div id="br-result" class="result-box hidden"></div>
+</div>
+
+<!-- Power Factor -->
+<div id="calc-pf" class="calc-panel card hidden">
+<h3>Correccion Factor de Potencia</h3>
+<div class="row">
+<div class="form-group"><label>Potencia activa (kW)</label><input type="number" id="pf-kw" placeholder="50"></div>
+<div class="form-group"><label>Cos phi actual</label><input type="number" id="pf-cos1" value="0.75" step="0.01"></div>
+</div>
+<div class="form-group"><label>Cos phi deseado</label><input type="number" id="pf-cos2" value="0.95" step="0.01"></div>
+<button class="btn-primary btn-block" onclick="calcPF()">Calcular Capacitor</button>
+<div id="pf-result" class="result-box hidden"></div>
+</div>
+
+<!-- Transformer -->
+<div id="calc-trafo" class="calc-panel card hidden">
+<h3>Dimensionamiento de Transformador</h3>
+<div class="form-group"><label>Carga conectada (kW)</label><input type="number" id="tf-kw" placeholder="75"></div>
+<div class="row">
+<div class="form-group"><label>Factor de demanda</label><input type="number" id="tf-fd" value="0.7" step="0.05"></div>
+<div class="form-group"><label>Factor de potencia</label><input type="number" id="tf-fp" value="0.85" step="0.01"></div>
+</div>
+<div class="form-group"><label>Reserva futura (%)</label><input type="number" id="tf-res" value="20" step="5"></div>
+<button class="btn-primary btn-block" onclick="calcTrafo()">Calcular Trafo</button>
+<div id="tf-result" class="result-box hidden"></div>
+</div>
+
+<!-- Lighting -->
+<div id="calc-lux" class="calc-panel card hidden">
+<h3>Calculo de Iluminacion</h3>
+<div class="row">
+<div class="form-group"><label>Largo (m)</label><input type="number" id="lx-l" placeholder="6"></div>
+<div class="form-group"><label>Ancho (m)</label><input type="number" id="lx-w" placeholder="4"></div>
+</div>
+<div class="form-group"><label>Tipo de recinto</label><select id="lx-type">
+<option value="150">Bodega / Pasillo (150 lux)</option>
+<option value="300" selected>Oficina general (300 lux)</option>
+<option value="500">Oficina detalle / Aula (500 lux)</option>
+<option value="750">Trabajo fino / Taller (750 lux)</option>
+<option value="100">Dormitorio (100 lux)</option>
+<option value="200">Cocina / Bano (200 lux)</option>
+<option value="400">Local comercial (400 lux)</option>
+</select></div>
+<div class="form-group"><label>Tipo de luminaria</label><select id="lx-lum">
+<option value="3600">Panel LED 40W (3600 lm)</option>
+<option value="1800">Downlight LED 18W (1800 lm)</option>
+<option value="2400">Tubo LED 18W x2 (2400 lm)</option>
+<option value="5000">Reflector LED 50W (5000 lm)</option>
+<option value="900">Ampolleta LED 10W (900 lm)</option>
+</select></div>
+<div class="form-group"><label>Factor mantenimiento</label><input type="number" id="lx-fm" value="0.8" step="0.05"></div>
+<button class="btn-primary btn-block" onclick="calcLux()">Calcular Luminarias</button>
+<div id="lx-result" class="result-box hidden"></div>
+</div>
+</div>
+
+<!-- TAB 3: NORMATIVA SEC -->
+<div id="tab-sec" class="tab">
+<h2 style="font-size:17px;font-weight:800;margin-bottom:12px">Normativa SEC Chile</h2>
+<div class="card">
+<h3>Codigos de Color - Conductores</h3>
+<div style="font-size:13px;line-height:2">
+<span class="color-dot" style="background:#3b82f6"></span> <strong>Azul</strong> = Neutro<br>
+<span class="color-dot" style="background:linear-gradient(135deg,#22c55e 50%,#fbbf24 50%)"></span> <strong>Verde/Amarillo</strong> = Tierra de proteccion (PE)<br>
+<span class="color-dot" style="background:#ef4444"></span> <strong>Rojo</strong> = Fase R (L1)<br>
+<span class="color-dot" style="background:#1e293b;border-color:#888"></span> <strong>Negro</strong> = Fase S (L2)<br>
+<span class="color-dot" style="background:#f8fafc;border-color:#888"></span> <strong>Blanco</strong> = Fase T (L3)
+</div>
+</div>
+<div class="card">
+<h3>Normas Principales</h3>
+<div class="sec-item"><h4>NSEG 5 E.n. 71 - Instalaciones Interiores</h4><p>Norma base para todo trabajo de instalacion electrica interior en Chile. Define requisitos de seguridad, canalizaciones, protecciones y puesta a tierra.</p></div>
+<div class="sec-item"><h4>NSEG 6 E.n. 71 - Cruces y Paralelismos</h4><p>Distancias minimas entre lineas electricas y otras instalaciones (gas, agua, comunicaciones).</p></div>
+<div class="sec-item"><h4>Proteccion Diferencial</h4><p><strong>Obligatoria 30mA</strong> en todos los circuitos de enchufes y banos. Protege contra electrocucion por fuga a tierra.</p></div>
+<div class="sec-item"><h4>Puesta a Tierra</h4><p>Resistencia maxima: <strong>20 ohm</strong> para instalaciones residenciales. Electrodo tipo jabalina de cobre 5/8" x 1.5m minimo. Medir con telurometro.</p></div>
+<div class="sec-item"><h4>Secciones Minimas</h4><p><strong>1.5 mm2</strong> para circuitos de iluminacion.<br><strong>2.5 mm2</strong> para circuitos de enchufes normales.<br><strong>4.0 mm2</strong> para cocina electrica y calefont.<br><strong>6.0 mm2</strong> alimentador principal (viviendas pequenas).</p></div>
+<div class="sec-item"><h4>Distancias Minimas</h4><p>Gas: <strong>30 cm</strong> minimo entre canalizacion electrica y caneria de gas.<br>Agua: <strong>20 cm</strong> minimo.<br>Tablero a piso: <strong>1.2 a 1.8 m</strong> (centro).</p></div>
+</div>
+<div class="card">
+<h3>Clasificacion por Potencia Instalada</h3>
+<table>
+<tr><th>Categoria</th><th>Potencia</th><th>TE</th></tr>
+<tr><td>Baja tension</td><td>Hasta 10 kW</td><td>TE1</td></tr>
+<tr><td>Baja tension</td><td>10 - 50 kW</td><td>TE2</td></tr>
+<tr><td>Media tension</td><td>50 - 200 kW</td><td>TE3</td></tr>
+<tr><td>Alta tension</td><td>> 200 kW</td><td>TE4</td></tr>
+</table>
+</div>
+<div class="card">
+<h3>Checklist TE1 - Declaracion SEC</h3>
+<div id="te1-checklist" style="font-size:13px"></div>
+</div>
+<div class="card">
+<h3>Puntos de Inspeccion SEC</h3>
+<div class="sec-item"><h4>Tablero General</h4><p>Proteccion general + diferencial 30mA + termomagneticos por circuito. Etiquetado obligatorio de cada circuito.</p></div>
+<div class="sec-item"><h4>Canalizaciones</h4><p>Sin empalmes dentro de ductos. Cajas de derivacion accesibles. Llenado maximo 40% del ducto.</p></div>
+<div class="sec-item"><h4>Circuitos Independientes</h4><p>Minimo: 1 iluminacion + 1 enchufes + 1 cocina/calefont. Banos con circuito propio si hay calefont.</p></div>
+<div class="sec-item"><h4>Enchufes</h4><p>Altura minima 30cm del piso. En banos: minimo 60cm del borde de la tina/ducha (zona 2+). GFCI/diferencial obligatorio.</p></div>
+</div>
+</div>
+
+<!-- TAB 4: MATERIALES -->
+<div id="tab-mat" class="tab">
+<h2 style="font-size:17px;font-weight:800;margin-bottom:12px">Materiales Electricos</h2>
+<div class="chip-row">
+<button class="chip active" onclick="showMatCat('cables',this)">Cables</button>
+<button class="chip" onclick="showMatCat('protecciones',this)">Protecciones</button>
+<button class="chip" onclick="showMatCat('tableros',this)">Tableros</button>
+<button class="chip" onclick="showMatCat('canalizacion',this)">Canalizacion</button>
+<button class="chip" onclick="showMatCat('enchufes',this)">Enchufes</button>
+<button class="chip" onclick="showMatCat('luminarias',this)">Luminarias</button>
+</div>
+<div id="mat-content" class="card"></div>
+<div class="card">
+<h3>Marcas de Referencia</h3>
+<p style="font-size:13px;color:var(--text-sec);line-height:1.8"><strong>Protecciones:</strong> Schneider Electric, ABB, Siemens, Legrand<br><strong>Cables:</strong> General Cable (Prysmian), Madeco, Procables, IMSA<br><strong>Canalizacion:</strong> Colmena, Legrand, OBO Bettermann<br><strong>Iluminacion:</strong> Philips, Osram/Ledvance, Sylvania, Megaluz<br><strong>Enchufes:</strong> Legrand (Magic), Schneider, BTicino, Veto</p>
+</div>
+<div class="card">
+<h3>Lista Rapida de Materiales</h3>
+<p style="font-size:12px;color:var(--text-sec);margin-bottom:8px">Agrega materiales para copiar o enviar por WhatsApp</p>
+<div class="row" style="margin-bottom:8px">
+<input id="mat-quick-item" placeholder="Ej: Cable THHN 2.5mm2 x 100m">
+<button class="btn-primary btn-sm" onclick="addQuickMat()" style="flex:none">+</button>
+</div>
+<div id="mat-quick-list" style="font-size:13px"></div>
+<div class="row" style="margin-top:8px">
+<button class="btn-outline btn-sm" onclick="copyMatList()">Copiar Lista</button>
+<button class="btn-outline btn-sm" onclick="shareMatListWA()">WhatsApp</button>
+<button class="btn-outline btn-sm btn-danger" onclick="clearMatList()" style="border-color:var(--danger);color:var(--danger)">Limpiar</button>
+</div>
+</div>
+</div>
+
+<!-- TAB 5: PRESUPUESTOS -->
+<div id="tab-quote" class="tab">
+<h2 style="font-size:17px;font-weight:800;margin-bottom:12px">Presupuesto Electrico</h2>
+<div class="card">
+<h3>Datos del Cliente</h3>
+<div class="form-group"><label>Cliente</label><input id="q-client" placeholder="Nombre del cliente"></div>
+<div class="form-group"><label>Direccion</label><input id="q-addr" placeholder="Direccion de la obra"></div>
+<div class="form-group"><label>Descripcion del trabajo</label><textarea id="q-desc" placeholder="Instalacion electrica completa..."></textarea></div>
+</div>
+<div id="quote-sections"></div>
+<div class="card">
+<button class="btn-outline btn-sm" onclick="addQuoteSection()" style="width:100%">+ Agregar Categoria</button>
+</div>
+<div class="card">
+<div class="row" style="align-items:center;margin-bottom:8px">
+<label style="font-size:13px;display:flex;align-items:center;gap:6px"><input type="checkbox" id="q-iva" checked onchange="renderQuoteTotals()"> Incluir IVA 19%</label>
+</div>
+<div id="quote-totals"></div>
+</div>
+<div class="row no-print">
+<button class="btn-primary" onclick="exportQuoteText()">Copiar Texto</button>
+<button class="btn-outline" onclick="shareQuoteWA()">WhatsApp</button>
+<button class="btn-outline" onclick="window.print()">Imprimir</button>
+</div>
+<div style="margin-top:10px" class="no-print">
+<button class="btn-outline btn-sm btn-block" onclick="saveQuote()">Guardar Presupuesto</button>
+</div>
+<div id="saved-quotes" class="card hidden" style="margin-top:12px">
+<h3>Presupuestos Guardados</h3>
+<div id="saved-quotes-list"></div>
+</div>
+</div>
+
+<!-- MODALS -->
+<div id="modal-container"></div>
+
+<nav>
+<button class="active" onclick="switchTab('trabajos',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/><path d="M9 14l2 2 4-4"/></svg>Trabajos</button>
+<button onclick="switchTab('calc',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8M8 10h8M8 14h3M8 18h3M15 14h1M15 18h1"/></svg>Calculos</button>
+<button onclick="switchTab('sec',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>SEC</button>
+<button onclick="switchTab('mat',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><path d="M3.27 6.96L12 12.01l8.73-5.05M12 22.08V12"/></svg>Materiales</button>
+<button onclick="switchTab('quote',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>Presupuesto</button>
+</nav>
+
+<script>
+/* ==================== STORAGE HELPERS ==================== */
+function lsGet(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){console.warn('Storage error',e)}}
+
+/* ==================== TAB NAVIGATION ==================== */
+function switchTab(id,btn){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  if(btn)btn.classList.add('active');
+}
+
+/* ==================== TAB 1: JOBS ==================== */
+let jobs=lsGet('ecl_jobs',[]);
+let currentFilter='todos';
+let jobChart=null;
+
+function filterJobs(btn){
+  document.querySelectorAll('#job-filters .chip').forEach(c=>c.classList.remove('active'));
+  btn.classList.add('active');
+  currentFilter=btn.dataset.f;
+  renderJobs();
+}
+
+function renderJobs(){
+  const list=document.getElementById('job-list');
+  const filtered=currentFilter==='todos'?jobs:jobs.filter(j=>j.status===currentFilter);
+  if(!filtered.length){
+    list.innerHTML='<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><path d="M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg><p>Sin trabajos '+(currentFilter==='todos'?'registrados':'con este estado')+'</p><p style="font-size:12px;margin-top:4px">Presiona "+ Nuevo" para agregar</p></div>';
+  } else {
+    list.innerHTML=filtered.map((j,i)=>{
+      const idx=jobs.indexOf(j);
+      const cls={'Presupuestado':'presupuestado','Aprobado':'aprobado','En Ejecución':'ejecucion','Terminado':'terminado','Cobrado':'cobrado'}[j.status]||'presupuestado';
+      return `<div class="card job-card" onclick="openJobDetail(${idx})">
+        <div style="display:flex;justify-content:space-between;align-items:start">
+          <div><strong style="font-size:14px">${esc(j.client)}</strong><br><span style="font-size:12px;color:var(--text-sec)">${esc(j.address||'Sin direccion')}</span></div>
+          <span class="badge badge-${cls}">${j.status}</span>
+        </div>
+        <div class="job-meta">
+          <span>${j.type||'Residencial'}</span>
+          ${j.budget?`<span>$${numF(j.budget)}</span>`:''}
+          <span>${j.date||''}</span>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  renderJobStats();
+}
+
+function renderJobStats(){
+  const wrap=document.getElementById('job-stats');
+  const chartWrap=document.getElementById('job-chart-wrap');
+  if(!jobs.length){wrap.classList.add('hidden');chartWrap.classList.add('hidden');return}
+  wrap.classList.remove('hidden');chartWrap.classList.remove('hidden');
+  const counts={};const statuses=['Presupuestado','Aprobado','En Ejecución','Terminado','Cobrado'];
+  statuses.forEach(s=>counts[s]=0);jobs.forEach(j=>counts[j.status]=(counts[j.status]||0)+1);
+  const totalBudget=jobs.reduce((s,j)=>s+(parseInt(j.budget)||0),0);
+  const cobrado=jobs.filter(j=>j.status==='Cobrado').reduce((s,j)=>s+(parseInt(j.budget)||0),0);
+  wrap.innerHTML=`<div class="stat-card"><div class="num">${jobs.length}</div><div class="lbl">Total Trabajos</div></div>
+    <div class="stat-card"><div class="num">${counts['En Ejecución']||0}</div><div class="lbl">En Ejecucion</div></div>
+    <div class="stat-card"><div class="num">$${numF(totalBudget)}</div><div class="lbl">Presupuestado</div></div>
+    <div class="stat-card"><div class="num">$${numF(cobrado)}</div><div class="lbl">Cobrado</div></div>`;
+  const ctx=document.getElementById('jobChart');
+  if(jobChart)jobChart.destroy();
+  jobChart=new Chart(ctx,{type:'doughnut',data:{labels:statuses,datasets:[{data:statuses.map(s=>counts[s]),backgroundColor:['#6366f1','#3b82f6','#f59e0b','#22c55e','#10b981'],borderWidth:0}]},options:{plugins:{legend:{labels:{color:'#f8fafc',font:{size:11}}}},cutout:'60%'}});
+}
+
+function openJobModal(editIdx){
+  const j=editIdx!==undefined?jobs[editIdx]:{client:'',address:'',phone:'',desc:'',type:'Residencial',status:'Presupuestado',budget:'',notes:'',materials:'',date:new Date().toISOString().slice(0,10)};
+  const isEdit=editIdx!==undefined;
+  document.getElementById('modal-container').innerHTML=`<div class="modal-overlay" onclick="if(event.target===this)closeModal()"><div class="modal">
+    <h2>${isEdit?'Editar':'Nuevo'} Trabajo</h2>
+    <div class="form-group"><label>Cliente</label><input id="jm-client" value="${esc(j.client)}"></div>
+    <div class="form-group"><label>Direccion</label><input id="jm-addr" value="${esc(j.address)}"></div>
+    <div class="row">
+      <div class="form-group"><label>Telefono</label><input id="jm-phone" type="tel" value="${esc(j.phone)}"></div>
+      <div class="form-group"><label>Fecha</label><input id="jm-date" type="date" value="${j.date||''}"></div>
+    </div>
+    <div class="row">
+      <div class="form-group"><label>Tipo</label><select id="jm-type"><option ${j.type==='Residencial'?'selected':''}>Residencial</option><option ${j.type==='Comercial'?'selected':''}>Comercial</option><option ${j.type==='Industrial'?'selected':''}>Industrial</option></select></div>
+      <div class="form-group"><label>Estado</label><select id="jm-status"><option ${j.status==='Presupuestado'?'selected':''}>Presupuestado</option><option ${j.status==='Aprobado'?'selected':''}>Aprobado</option><option ${j.status==='En Ejecución'?'selected':''}>En Ejecucion</option><option value="En Ejecución" ${j.status==='En Ejecución'?'selected':''} class="hidden">En Ejecucion</option><option ${j.status==='Terminado'?'selected':''}>Terminado</option><option ${j.status==='Cobrado'?'selected':''}>Cobrado</option></select></div>
+    </div>
+    <div class="form-group"><label>Presupuesto ($CLP)</label><input id="jm-budget" type="number" value="${j.budget||''}"></div>
+    <div class="form-group"><label>Descripcion</label><textarea id="jm-desc">${esc(j.desc)}</textarea></div>
+    <div class="form-group"><label>Materiales</label><textarea id="jm-mat" placeholder="Cable THHN 2.5mm2 x 50m&#10;Interruptor diferencial 25A...">${esc(j.materials||'')}</textarea></div>
+    <div class="form-group"><label>Notas</label><textarea id="jm-notes">${esc(j.notes||'')}</textarea></div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn-primary btn-block" onclick="saveJob(${isEdit?editIdx:'null'})">Guardar</button>
+      ${isEdit?`<button class="btn-danger btn-block" onclick="deleteJob(${editIdx})">Eliminar</button>`:''}
+    </div>
+    <button class="btn-outline btn-block" style="margin-top:8px" onclick="closeModal()">Cancelar</button>
+  </div></div>`;
+}
+
+function saveJob(idx){
+  const j={client:document.getElementById('jm-client').value.trim(),address:document.getElementById('jm-addr').value.trim(),phone:document.getElementById('jm-phone').value.trim(),date:document.getElementById('jm-date').value,type:document.getElementById('jm-type').value,status:document.getElementById('jm-status').value,budget:document.getElementById('jm-budget').value,desc:document.getElementById('jm-desc').value.trim(),materials:document.getElementById('jm-mat').value.trim(),notes:document.getElementById('jm-notes').value.trim()};
+  if(!j.client){alert('Ingresa el nombre del cliente');return}
+  if(j.status==='En Ejecucion')j.status='En Ejecución';
+  if(idx!==null&&idx!==undefined)jobs[idx]=j;else jobs.unshift(j);
+  lsSet('ecl_jobs',jobs);closeModal();renderJobs();
+}
+
+function deleteJob(idx){if(confirm('Eliminar este trabajo?')){jobs.splice(idx,1);lsSet('ecl_jobs',jobs);closeModal();renderJobs()}}
+function openJobDetail(idx){openJobModal(idx)}
+function closeModal(){document.getElementById('modal-container').innerHTML=''}
+
+/* ==================== TAB 2: CALCULATORS ==================== */
+const conductorTable={cu:{conduit:[14,19,25,32,43,57,76,96,121,151,179],air:[18,25,34,43,60,80,106,131,158,200,241]},al:{conduit:[11,14,19,24,33,44,59,75,93,117,139],air:[14,19,26,33,46,61,81,101,122,155,187]}};
+const gauges=[1.5,2.5,4,6,10,16,25,35,50,70,95];
+const tempCorr={30:1,35:0.94,40:0.87,45:0.79,50:0.71};
+
+function showCalc(id,btn){
+  document.querySelectorAll('.calc-panel').forEach(p=>{p.classList.add('hidden')});
+  document.getElementById('calc-'+id).classList.remove('hidden');
+  document.querySelectorAll('#calc-chips .chip').forEach(c=>c.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+}
+
+function calcConductor(){
+  const amps=parseFloat(document.getElementById('cc-amps').value);
+  if(!amps||amps<=0){alert('Ingresa la corriente en Amperes');return}
+  const mat=document.getElementById('cc-mat').value;
+  const inst=document.getElementById('cc-inst').value;
+  const temp=parseInt(document.getElementById('cc-temp').value);
+  const corrFactor=tempCorr[temp]||1;
+  const corrAmps=amps/corrFactor;
+  const caps=conductorTable[mat][inst];
+  let selected=-1;
+  for(let i=0;i<caps.length;i++){if(caps[i]>=corrAmps){selected=i;break}}
+  const r=document.getElementById('cc-result');r.classList.remove('hidden');
+  if(selected===-1){r.innerHTML=`<strong style="color:var(--danger)">La corriente excede la capacidad maxima de ${gauges[gauges.length-1]}mm2 (${caps[caps.length-1]}A)</strong><br>Considere dividir la carga en multiples circuitos.`;return}
+  const g=gauges[selected];const cap=caps[selected];
+  r.innerHTML=`<strong>Conductor recomendado: ${g} mm2</strong><br>
+    Capacidad: ${cap}A (${mat==='cu'?'Cobre':'Aluminio'}, ${inst==='conduit'?'en ducto':'al aire'})<br>
+    Corriente corregida: ${corrAmps.toFixed(1)}A (factor temp ${temp}C: ${corrFactor})<br>
+    Corriente de carga: ${amps}A<br>
+    <span style="color:var(--success)">Margen de seguridad: ${((cap/corrAmps-1)*100).toFixed(0)}%</span><br>
+    <small style="color:var(--text-sec)">Ref: NSEG 5 E.n. 71, Tabla de capacidad de corriente</small>`;
+}
+
+function calcVDrop(){
+  const amps=parseFloat(document.getElementById('vd-amps').value);
+  const len=parseFloat(document.getElementById('vd-len').value);
+  const sec=parseFloat(document.getElementById('vd-sec').value);
+  const volt=parseInt(document.getElementById('vd-volt').value);
+  const phases=parseInt(document.getElementById('vd-phase').value);
+  if(!amps||!len||!sec){alert('Completa todos los campos');return}
+  const rho=0.0175;// ohm*mm2/m for copper
+  const R=rho*len/sec;
+  const vdrop=phases===1?2*R*amps:Math.sqrt(3)*R*amps;
+  const pct=(vdrop/volt*100);
+  const r=document.getElementById('vd-result');r.classList.remove('hidden');
+  const ok3=pct<=3;const ok5=pct<=5;
+  r.innerHTML=`<strong>Caida de tension: ${vdrop.toFixed(2)}V (${pct.toFixed(2)}%)</strong><br>
+    Tension nominal: ${volt}V ${phases===1?'monofasico':'trifasico'}<br>
+    Resistencia del tramo: ${R.toFixed(4)} ohm<br>
+    ${ok3?'<span style="color:var(--success)">OK para circuito ramal (max 3%)</span>':'<span style="color:var(--danger)">EXCEDE limite ramal 3%</span>'}<br>
+    ${ok5?'<span style="color:var(--success)">OK para caida total (max 5%)</span>':'<span style="color:var(--danger)">EXCEDE limite total 5%</span>'}<br>
+    <small style="color:var(--text-sec)">Ref: NSEG 5 E.n. 71 - Caida de tension maxima permitida</small>`;
+}
+
+function calcBreaker(){
+  const watts=parseFloat(document.getElementById('br-watts').value);
+  const volt=parseInt(document.getElementById('br-volt').value);
+  const fp=parseFloat(document.getElementById('br-fp').value)||0.9;
+  if(!watts){alert('Ingresa la potencia');return}
+  const amps=watts/(volt*fp);
+  const std=[6,10,16,20,25,32,40,50,63,80,100];
+  let breaker=std.find(s=>s>=amps*1.25)||100;
+  const r=document.getElementById('br-result');r.classList.remove('hidden');
+  r.innerHTML=`<strong>Interruptor recomendado: ${breaker}A</strong><br>
+    Corriente nominal de carga: ${amps.toFixed(1)}A<br>
+    Corriente con factor 1.25x: ${(amps*1.25).toFixed(1)}A<br>
+    Curva recomendada: <strong>C</strong> (uso general)<br>
+    Proteccion diferencial: <strong>30mA</strong> (obligatoria enchufes/banos)<br>
+    <small style="color:var(--text-sec)">Protecciones estandar disponibles: ${std.join(', ')}A</small>`;
+}
+
+function calcPF(){
+  const kw=parseFloat(document.getElementById('pf-kw').value);
+  const cos1=parseFloat(document.getElementById('pf-cos1').value);
+  const cos2=parseFloat(document.getElementById('pf-cos2').value);
+  if(!kw||!cos1||!cos2){alert('Completa todos los campos');return}
+  const phi1=Math.acos(cos1);const phi2=Math.acos(cos2);
+  const kvar=kw*(Math.tan(phi1)-Math.tan(phi2));
+  const kva1=kw/cos1;const kva2=kw/cos2;
+  const r=document.getElementById('pf-result');r.classList.remove('hidden');
+  r.innerHTML=`<strong>Capacitor necesario: ${kvar.toFixed(1)} kVAR</strong><br>
+    Potencia aparente actual: ${kva1.toFixed(1)} kVA (cos phi ${cos1})<br>
+    Potencia aparente corregida: ${kva2.toFixed(1)} kVA (cos phi ${cos2})<br>
+    Reduccion de corriente: ${((1-kva2/kva1)*100).toFixed(1)}%<br>
+    <span style="color:var(--success)">Ahorro en demanda: ${(kva1-kva2).toFixed(1)} kVA</span>`;
+}
+
+function calcTrafo(){
+  const kw=parseFloat(document.getElementById('tf-kw').value);
+  const fd=parseFloat(document.getElementById('tf-fd').value)||0.7;
+  const fp=parseFloat(document.getElementById('tf-fp').value)||0.85;
+  const res=parseFloat(document.getElementById('tf-res').value)||20;
+  if(!kw){alert('Ingresa la carga conectada');return}
+  const demand=kw*fd;const kva=demand/fp;const withRes=kva*(1+res/100);
+  const std=[10,15,25,37.5,50,75,100,112.5,150,225,300,500,750,1000];
+  const trafo=std.find(s=>s>=withRes)||std[std.length-1];
+  const r=document.getElementById('tf-result');r.classList.remove('hidden');
+  r.innerHTML=`<strong>Transformador recomendado: ${trafo} kVA</strong><br>
+    Carga conectada: ${kw} kW<br>
+    Demanda maxima (fd ${fd}): ${demand.toFixed(1)} kW<br>
+    Potencia aparente: ${kva.toFixed(1)} kVA<br>
+    Con reserva ${res}%: ${withRes.toFixed(1)} kVA<br>
+    Factor de carga: ${((kva/trafo)*100).toFixed(0)}%<br>
+    <small style="color:var(--text-sec)">Transformadores estandar: ${std.join(', ')} kVA</small>`;
+}
+
+function calcLux(){
+  const l=parseFloat(document.getElementById('lx-l').value);
+  const w=parseFloat(document.getElementById('lx-w').value);
+  const luxReq=parseInt(document.getElementById('lx-type').value);
+  const lumens=parseInt(document.getElementById('lx-lum').value);
+  const fm=parseFloat(document.getElementById('lx-fm').value)||0.8;
+  if(!l||!w){alert('Ingresa las dimensiones del recinto');return}
+  const area=l*w;const cu=0.6;
+  const totalLm=luxReq*area/(cu*fm);const qty=Math.ceil(totalLm/lumens);
+  const r=document.getElementById('lx-result');r.classList.remove('hidden');
+  r.innerHTML=`<strong>Luminarias necesarias: ${qty} unidades</strong><br>
+    Area: ${area.toFixed(1)} m2 (${l}m x ${w}m)<br>
+    Nivel requerido: ${luxReq} lux<br>
+    Lumenes totales: ${Math.round(totalLm).toLocaleString('es-CL')} lm<br>
+    Lumenes por luminaria: ${lumens.toLocaleString('es-CL')} lm<br>
+    Factor utilizacion: ${cu} | Mantenimiento: ${fm}<br>
+    <small style="color:var(--text-sec)">Metodo de los lumenes (cavidad zonal simplificado)</small>`;
+}
+
+/* ==================== TAB 3: TE1 CHECKLIST ==================== */
+const te1Items=['Formulario TE1 firmado por instalador autorizado SEC','Plano electrico unilineal de la instalacion','Protocolo de puesta a tierra (medicion con telurometro)','Protocolo de aislacion de conductores (megger)','Verificacion de proteccion diferencial 30mA','Tablero general con etiquetado de circuitos','Canalizaciones terminadas y selladas','Enchufes y puntos de iluminacion instalados','Certificado de instalador SEC clase A/B/C/D vigente','Empalme y medidor coordinado con distribuidora'];
+
+function renderTE1(){
+  const checked=lsGet('ecl_te1',[]);
+  document.getElementById('te1-checklist').innerHTML=te1Items.map((item,i)=>
+    `<label style="display:flex;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer;align-items:start">
+      <input type="checkbox" ${checked.includes(i)?'checked':''} onchange="toggleTE1(${i})" style="width:18px;height:18px;flex-shrink:0;margin-top:1px;accent-color:var(--accent)">
+      <span style="${checked.includes(i)?'text-decoration:line-through;opacity:.6':''}">${item}</span>
+    </label>`
+  ).join('');
+}
+function toggleTE1(i){const c=lsGet('ecl_te1',[]);const idx=c.indexOf(i);if(idx>-1)c.splice(idx,1);else c.push(i);lsSet('ecl_te1',c);renderTE1()}
+
+/* ==================== TAB 4: MATERIALS ==================== */
+const matData={
+cables:`<table><tr><th>Tipo</th><th>Seccion</th><th>Precio ref.</th></tr>
+<tr><td>THHN</td><td>1.5 mm2</td><td>$150-200/m</td></tr>
+<tr><td>THHN</td><td>2.5 mm2</td><td>$250-350/m</td></tr>
+<tr><td>THHN</td><td>4 mm2</td><td>$400-550/m</td></tr>
+<tr><td>THHN</td><td>6 mm2</td><td>$600-800/m</td></tr>
+<tr><td>THHN</td><td>10 mm2</td><td>$1.000-1.400/m</td></tr>
+<tr><td>NYA</td><td>1.5 mm2</td><td>$120-170/m</td></tr>
+<tr><td>NYA</td><td>2.5 mm2</td><td>$200-280/m</td></tr>
+<tr><td>Concentrico</td><td>2x4+4 mm2</td><td>$1.800-2.500/m</td></tr>
+<tr><td>Concentrico</td><td>2x6+6 mm2</td><td>$2.800-3.500/m</td></tr>
+<tr><td>Concentrico</td><td>3x10+10 mm2</td><td>$6.000-8.000/m</td></tr></table>
+<p style="font-size:11px;color:var(--text-sec);margin-top:6px">Precios referenciales en CLP por metro, sujetos a variacion. Consultar distribuidor.</p>`,
+protecciones:`<table><tr><th>Tipo</th><th>Capacidad</th><th>Precio ref.</th></tr>
+<tr><td>Termomagnetico 1P</td><td>6-32A</td><td>$4.000-8.000</td></tr>
+<tr><td>Termomagnetico 2P</td><td>10-63A</td><td>$8.000-18.000</td></tr>
+<tr><td>Termomagnetico 3P</td><td>16-100A</td><td>$15.000-45.000</td></tr>
+<tr><td>Diferencial 2P 30mA</td><td>25-40A</td><td>$25.000-45.000</td></tr>
+<tr><td>Diferencial 4P 30mA</td><td>25-63A</td><td>$55.000-90.000</td></tr>
+<tr><td>Protector sobretension</td><td>Tipo 2</td><td>$35.000-60.000</td></tr>
+<tr><td>Interruptor general</td><td>40-100A</td><td>$12.000-35.000</td></tr></table>
+<p style="font-size:11px;color:var(--text-sec);margin-top:6px">Marcas: Schneider (iC60N), ABB (S200), Siemens (5SY), Legrand (DX3)</p>`,
+tableros:`<table><tr><th>Tipo</th><th>Polos</th><th>Precio ref.</th></tr>
+<tr><td>Sobreponer</td><td>4-6 polos</td><td>$8.000-15.000</td></tr>
+<tr><td>Sobreponer</td><td>8-12 polos</td><td>$15.000-25.000</td></tr>
+<tr><td>Sobreponer</td><td>16-24 polos</td><td>$25.000-45.000</td></tr>
+<tr><td>Embutir</td><td>4-6 polos</td><td>$12.000-20.000</td></tr>
+<tr><td>Embutir</td><td>8-12 polos</td><td>$20.000-35.000</td></tr>
+<tr><td>Embutir</td><td>16-24 polos</td><td>$35.000-65.000</td></tr>
+<tr><td>Industrial IP65</td><td>12-36 polos</td><td>$80.000-200.000</td></tr></table>`,
+canalizacion:`<table><tr><th>Tipo</th><th>Medida</th><th>Precio ref.</th></tr>
+<tr><td>EMT</td><td>3/4" x 3m</td><td>$3.500-5.000</td></tr>
+<tr><td>EMT</td><td>1" x 3m</td><td>$5.000-7.500</td></tr>
+<tr><td>Conduit PVC</td><td>20mm x 3m</td><td>$1.200-2.000</td></tr>
+<tr><td>Conduit PVC</td><td>25mm x 3m</td><td>$1.800-2.800</td></tr>
+<tr><td>Bandeja portacable</td><td>100mm x 3m</td><td>$12.000-20.000</td></tr>
+<tr><td>Bandeja portacable</td><td>200mm x 3m</td><td>$18.000-30.000</td></tr>
+<tr><td>Curva EMT</td><td>3/4"</td><td>$1.500-2.500</td></tr>
+<tr><td>Caja derivacion</td><td>100x100mm</td><td>$800-1.500</td></tr></table>`,
+enchufes:`<table><tr><th>Tipo</th><th>Detalle</th><th>Precio ref.</th></tr>
+<tr><td>Magic simple</td><td>10A, empotrar</td><td>$1.500-3.000</td></tr>
+<tr><td>Magic doble</td><td>10A, empotrar</td><td>$2.500-4.500</td></tr>
+<tr><td>Schuko</td><td>16A, empotrar</td><td>$3.000-5.500</td></tr>
+<tr><td>Industrial</td><td>16A 3P+T</td><td>$8.000-15.000</td></tr>
+<tr><td>Industrial</td><td>32A 3P+T+N</td><td>$15.000-25.000</td></tr>
+<tr><td>Interruptor simple</td><td>10A</td><td>$1.500-3.500</td></tr>
+<tr><td>Interruptor doble</td><td>10A</td><td>$2.500-5.000</td></tr>
+<tr><td>Dimmer LED</td><td>300W</td><td>$8.000-15.000</td></tr></table>`,
+luminarias:`<table><tr><th>Tipo</th><th>Potencia</th><th>Precio ref.</th></tr>
+<tr><td>Panel LED embutir</td><td>40W / 3600lm</td><td>$12.000-25.000</td></tr>
+<tr><td>Panel LED 60x60</td><td>48W / 4200lm</td><td>$15.000-30.000</td></tr>
+<tr><td>Downlight LED</td><td>18W / 1800lm</td><td>$5.000-12.000</td></tr>
+<tr><td>Tubo LED T8</td><td>18W / 1800lm</td><td>$3.000-6.000</td></tr>
+<tr><td>Reflector LED</td><td>50W / 5000lm</td><td>$15.000-30.000</td></tr>
+<tr><td>Reflector LED</td><td>100W / 10000lm</td><td>$25.000-50.000</td></tr>
+<tr><td>Ampolleta LED E27</td><td>10W / 900lm</td><td>$1.500-3.500</td></tr>
+<tr><td>Cinta LED</td><td>14W/m / 1200lm</td><td>$3.000-6.000/m</td></tr></table>`
+};
+
+function showMatCat(cat,btn){
+  document.querySelectorAll('#tab-mat .chip').forEach(c=>c.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('mat-content').innerHTML=matData[cat]||'';
+}
+
+let quickMats=lsGet('ecl_quickmat',[]);
+function renderQuickMats(){
+  document.getElementById('mat-quick-list').innerHTML=quickMats.length?quickMats.map((m,i)=>
+    `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border)"><span>${esc(m)}</span><button class="btn-sm" style="color:var(--danger);background:transparent" onclick="quickMats.splice(${i},1);lsSet('ecl_quickmat',quickMats);renderQuickMats()">X</button></div>`
+  ).join(''):'<p style="color:var(--text-sec);font-size:12px;padding:8px 0">Lista vacia</p>';
+}
+function addQuickMat(){const inp=document.getElementById('mat-quick-item');const v=inp.value.trim();if(!v)return;quickMats.push(v);lsSet('ecl_quickmat',quickMats);inp.value='';renderQuickMats()}
+function copyMatList(){if(!quickMats.length)return;navigator.clipboard.writeText('LISTA DE MATERIALES:\n'+quickMats.map((m,i)=>`${i+1}. ${m}`).join('\n'));alert('Lista copiada')}
+function shareMatListWA(){if(!quickMats.length)return;const t=encodeURIComponent('*LISTA DE MATERIALES*\n'+quickMats.map((m,i)=>`${i+1}. ${m}`).join('\n'));window.open('https://wa.me/?text='+t)}
+function clearMatList(){quickMats=[];lsSet('ecl_quickmat',quickMats);renderQuickMats()}
+
+/* ==================== TAB 5: QUOTES ==================== */
+let quoteSections=lsGet('ecl_qsections',[]);
+const defaultCats=['Materiales','Mano de Obra','Canalizacion','Iluminacion','Tablero'];
+
+function initQuoteSections(){
+  if(!quoteSections.length){defaultCats.forEach(c=>quoteSections.push({name:c,items:[]}));lsSet('ecl_qsections',quoteSections)}
+  renderQuoteSections();
+}
+
+function addQuoteSection(){
+  const name=prompt('Nombre de la categoria:');if(!name)return;
+  quoteSections.push({name:name.trim(),items:[]});lsSet('ecl_qsections',quoteSections);renderQuoteSections();
+}
+
+function renderQuoteSections(){
+  document.getElementById('quote-sections').innerHTML=quoteSections.map((sec,si)=>
+    `<div class="card"><h3>${esc(sec.name)} <button class="btn-sm btn-outline" onclick="addQuoteLine(${si})" style="margin-left:auto;font-size:11px">+ Item</button></h3>
+    ${sec.items.map((it,ii)=>
+      `<div class="quote-line">
+        <input style="flex:3" value="${esc(it.desc)}" onchange="updateQL(${si},${ii},'desc',this.value)" placeholder="Descripcion">
+        <input type="number" style="flex:1" value="${it.qty}" onchange="updateQL(${si},${ii},'qty',this.value)" placeholder="Cant">
+        <input type="number" style="flex:1.5" value="${it.price}" onchange="updateQL(${si},${ii},'price',this.value)" placeholder="Precio">
+        <span style="flex:1;text-align:right;font-weight:700;font-size:12px;white-space:nowrap">$${numF(it.qty*it.price)}</span>
+        <button class="btn-sm" style="color:var(--danger);background:transparent;flex:none;padding:4px" onclick="removeQL(${si},${ii})">X</button>
+      </div>`
+    ).join('')}
+    <div style="text-align:right;font-size:13px;font-weight:700;color:var(--text-sec);padding-top:6px;border-top:1px solid var(--border)">Subtotal: $${numF(sec.items.reduce((s,i)=>s+i.qty*i.price,0))}</div>
+    </div>`
+  ).join('');
+  renderQuoteTotals();
+}
+
+function addQuoteLine(si){quoteSections[si].items.push({desc:'',qty:1,price:0});lsSet('ecl_qsections',quoteSections);renderQuoteSections()}
+function removeQL(si,ii){quoteSections[si].items.splice(ii,1);lsSet('ecl_qsections',quoteSections);renderQuoteSections()}
+function updateQL(si,ii,field,val){quoteSections[si].items[ii][field]=field==='desc'?val:(parseFloat(val)||0);lsSet('ecl_qsections',quoteSections);renderQuoteSections()}
+
+function renderQuoteTotals(){
+  const neto=quoteSections.reduce((s,sec)=>s+sec.items.reduce((ss,i)=>ss+i.qty*i.price,0),0);
+  const iva=document.getElementById('q-iva').checked?Math.round(neto*0.19):0;
+  document.getElementById('quote-totals').innerHTML=`
+    <div style="display:flex;justify-content:space-between;font-size:14px;padding:4px 0"><span>Neto</span><span>$${numF(neto)}</span></div>
+    ${iva?`<div style="display:flex;justify-content:space-between;font-size:14px;padding:4px 0"><span>IVA 19%</span><span>$${numF(iva)}</span></div>`:''}
+    <div class="total-row" style="display:flex;justify-content:space-between;border-top:2px solid var(--accent);margin-top:6px"><span>TOTAL</span><span>$${numF(neto+iva)}</span></div>`;
+}
+
+function buildQuoteText(){
+  const client=document.getElementById('q-client').value.trim()||'Cliente';
+  const addr=document.getElementById('q-addr').value.trim();
+  const desc=document.getElementById('q-desc').value.trim();
+  const neto=quoteSections.reduce((s,sec)=>s+sec.items.reduce((ss,i)=>ss+i.qty*i.price,0),0);
+  const iva=document.getElementById('q-iva').checked?Math.round(neto*0.19):0;
+  let txt=`*PRESUPUESTO ELECTRICO*\n`;
+  txt+=`Fecha: ${new Date().toLocaleDateString('es-CL')}\n`;
+  txt+=`Cliente: ${client}\n`;
+  if(addr)txt+=`Direccion: ${addr}\n`;
+  if(desc)txt+=`Trabajo: ${desc}\n`;
+  txt+=`${'─'.repeat(30)}\n`;
+  quoteSections.forEach(sec=>{
+    if(!sec.items.length)return;
+    txt+=`\n*${sec.name}*\n`;
+    sec.items.forEach(it=>{
+      if(it.desc)txt+=`  ${it.desc} x${it.qty} = $${numF(it.qty*it.price)}\n`;
+    });
+    txt+=`  Subtotal: $${numF(sec.items.reduce((s,i)=>s+i.qty*i.price,0))}\n`;
+  });
+  txt+=`\n${'─'.repeat(30)}\n`;
+  txt+=`Neto: $${numF(neto)}\n`;
+  if(iva)txt+=`IVA 19%: $${numF(iva)}\n`;
+  txt+=`*TOTAL: $${numF(neto+iva)}*\n`;
+  txt+=`\nElectricistaCL - Presupuesto profesional`;
+  return txt;
+}
+
+function exportQuoteText(){navigator.clipboard.writeText(buildQuoteText());alert('Presupuesto copiado al portapapeles')}
+function shareQuoteWA(){window.open('https://wa.me/?text='+encodeURIComponent(buildQuoteText()))}
+
+function saveQuote(){
+  const quotes=lsGet('ecl_quotes',[]);
+  quotes.unshift({date:new Date().toISOString(),client:document.getElementById('q-client').value.trim()||'Sin nombre',sections:JSON.parse(JSON.stringify(quoteSections)),iva:document.getElementById('q-iva').checked});
+  lsSet('ecl_quotes',quotes);
+  renderSavedQuotes();
+  alert('Presupuesto guardado');
+}
+
+function renderSavedQuotes(){
+  const quotes=lsGet('ecl_quotes',[]);
+  const wrap=document.getElementById('saved-quotes');
+  const list=document.getElementById('saved-quotes-list');
+  if(!quotes.length){wrap.classList.add('hidden');return}
+  wrap.classList.remove('hidden');
+  list.innerHTML=quotes.map((q,i)=>{
+    const total=q.sections.reduce((s,sec)=>s+sec.items.reduce((ss,it)=>ss+it.qty*it.price,0),0);
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+      <div><strong style="font-size:13px">${esc(q.client)}</strong><br><span style="font-size:11px;color:var(--text-sec)">${new Date(q.date).toLocaleDateString('es-CL')} - $${numF(total)}</span></div>
+      <div style="display:flex;gap:6px">
+        <button class="btn-sm btn-outline" onclick="loadQuote(${i})">Cargar</button>
+        <button class="btn-sm" style="color:var(--danger);background:transparent" onclick="deleteSavedQuote(${i})">X</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function loadQuote(i){
+  const quotes=lsGet('ecl_quotes',[]);const q=quotes[i];if(!q)return;
+  document.getElementById('q-client').value=q.client;
+  document.getElementById('q-iva').checked=q.iva!==false;
+  quoteSections=JSON.parse(JSON.stringify(q.sections));
+  lsSet('ecl_qsections',quoteSections);
+  renderQuoteSections();
+}
+
+function deleteSavedQuote(i){
+  if(!confirm('Eliminar este presupuesto guardado?'))return;
+  const quotes=lsGet('ecl_quotes',[]);quotes.splice(i,1);lsSet('ecl_quotes',quotes);renderSavedQuotes();
+}
+
+/* ==================== HELPERS ==================== */
+function esc(s){if(!s)return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+function numF(n){return Math.round(n).toLocaleString('es-CL')}
+
+/* ==================== INIT ==================== */
+renderJobs();
+renderTE1();
+showMatCat('cables',document.querySelector('#tab-mat .chip'));
+renderQuickMats();
+initQuoteSections();
+renderSavedQuotes();
+</script>
+</body>
+</html>

@@ -1,0 +1,2006 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="LavanderaCL - Gestión integral para lavanderías y tintorerías">
+    <meta name="theme-color" content="#0891b2">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="LavanderaCL">
+
+    <title>LavanderaCL - Gestión de Lavandería</title>
+
+    <link rel="manifest" href="/lavanderacl/manifest.json">
+    <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==">
+    <link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #0891b2 0%, #06b6d4 100%);
+            color: white;
+            padding: 1.5rem 1rem max(1rem, env(safe-area-inset-top));
+            box-shadow: 0 2px 8px rgba(8, 145, 178, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.5px;
+        }
+
+        .header p {
+            font-size: 0.875rem;
+            opacity: 0.95;
+            font-weight: 300;
+        }
+
+        .container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .tabs-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .tab-content {
+            display: none;
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+            padding: 1rem;
+            padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+        }
+
+        .tab-content.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tab-nav {
+            display: flex;
+            gap: 0;
+            background: white;
+            border-top: 1px solid #e2e8f0;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 0 env(safe-area-inset-left) 0 env(safe-area-inset-right);
+        }
+
+        .tab-nav::-webkit-scrollbar {
+            height: 3px;
+        }
+
+        .tab-nav::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+
+        .tab-nav::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 2px;
+        }
+
+        .tab-btn {
+            flex: 0 0 auto;
+            padding: 1rem;
+            min-width: max-content;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            color: #64748b;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .tab-btn:hover {
+            background: #f8fafc;
+            color: #475569;
+        }
+
+        .tab-btn.active {
+            color: #0891b2;
+            border-bottom-color: #0891b2;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #334155;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-family: 'Inter', sans-serif;
+            background: white;
+            color: #1e293b;
+            -webkit-appearance: none;
+            appearance: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #0891b2;
+            box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.1);
+        }
+
+        .form-group select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23475569' d='M10.293 3.293L6 7.586 1.707 3.293A1 1 0 00.293 4.707l5 5a1 1 0 001.414 0l5-5a1 1 0 10-1.414-1.414z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            padding-right: 2.5rem;
+            background-color: white;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #0891b2 0%, #06b6d4 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(8, 145, 178, 0.3);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #475569;
+        }
+
+        .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+
+        .btn-group .btn {
+            flex: 1;
+        }
+
+        .card {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            border: 1px solid #e2e8f0;
+            margin-bottom: 1rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .card-header {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #0f172a;
+            margin-bottom: 0.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-body {
+            font-size: 0.875rem;
+            color: #475569;
+            line-height: 1.6;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .badge-warning {
+            background: #fef3c7;
+            color: #b45309;
+        }
+
+        .badge-danger {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge-info {
+            background: #cffafe;
+            color: #0c4a6e;
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+        }
+
+        .stat-card .value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #0891b2;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-card .label {
+            font-size: 0.75rem;
+            color: #64748b;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #94a3b8;
+        }
+
+        .empty-state p {
+            margin-bottom: 1.5rem;
+            font-size: 0.95rem;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin-bottom: 1rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 0.75rem;
+            overflow: hidden;
+        }
+
+        table thead {
+            background: #f8fafc;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        table th {
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+            color: #475569;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+        }
+
+        table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 0.875rem;
+        }
+
+        table tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: flex-end;
+            justify-content: center;
+            animation: slideUp 0.3s ease;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(100%);
+            }
+            to {
+                transform: translateY(0);
+            }
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 1rem 1rem 0 0;
+            padding: 1.5rem;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            animation: slideUp 0.3s ease;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .modal-header h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #0f172a;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #94a3b8;
+            cursor: pointer;
+            padding: 0;
+            width: 2rem;
+            height: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-btn:hover {
+            color: #475569;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 3rem;
+            height: 1.5rem;
+        }
+
+        .toggle-switch input {
+            display: none;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #cbd5e1;
+            border-radius: 1.5rem;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .toggle-slider::before {
+            content: '';
+            position: absolute;
+            height: 1.25rem;
+            width: 1.25rem;
+            left: 0.125rem;
+            bottom: 0.125rem;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+        }
+
+        input:checked + .toggle-slider {
+            background: #0891b2;
+        }
+
+        input:checked + .toggle-slider::before {
+            transform: translateX(1.5rem);
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .alert-success {
+            background: #dcfce7;
+            color: #166534;
+            border-left: 4px solid #22c55e;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border-left: 4px solid #ef4444;
+        }
+
+        .alert-warning {
+            background: #fef3c7;
+            color: #b45309;
+            border-left: 4px solid #f59e0b;
+        }
+
+        .divider {
+            height: 1px;
+            background: #e2e8f0;
+            margin: 1.5rem 0;
+        }
+
+        .text-sm {
+            font-size: 0.75rem;
+            color: #94a3b8;
+        }
+
+        .text-muted {
+            color: #64748b;
+        }
+
+        .mt-1 { margin-top: 0.5rem; }
+        .mt-2 { margin-top: 1rem; }
+        .mt-3 { margin-top: 1.5rem; }
+        .mb-1 { margin-bottom: 0.5rem; }
+        .mb-2 { margin-bottom: 1rem; }
+        .mb-3 { margin-bottom: 1.5rem; }
+
+        .d-flex {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .d-flex.space-between {
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        @media (min-width: 768px) {
+            .stat-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+            .tab-nav {
+                padding: 0;
+            }
+
+            .modal-content {
+                max-width: 600px;
+                border-radius: 1rem;
+                max-height: 80vh;
+            }
+        }
+
+        .spinner {
+            border: 3px solid #f1f5f9;
+            border-top-color: #0891b2;
+            border-radius: 50%;
+            width: 2rem;
+            height: 2rem;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .color-primary { color: #0891b2; }
+        .color-success { color: #22c55e; }
+        .color-danger { color: #ef4444; }
+        .color-warning { color: #f59e0b; }
+
+        @supports (padding: max(0px)) {
+            body {
+                padding-left: env(safe-area-inset-left);
+                padding-right: env(safe-area-inset-right);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🧺 LavanderaCL</h1>
+        <p id="dateDisplay"></p>
+    </div>
+
+    <div class="container">
+        <div class="tabs-container">
+            <!-- PEDIDOS Tab -->
+            <div id="pedidos" class="tab-content active">
+                <div class="mb-3">
+                    <button class="btn btn-primary" onclick="openOrderModal()">+ Nuevo Pedido</button>
+                </div>
+
+                <div id="statsOrders" class="stat-grid">
+                    <div class="stat-card">
+                        <div class="value" id="statRecibidos">0</div>
+                        <div class="label">Recibidos</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="value" id="statEnProceso">0</div>
+                        <div class="label">En Proceso</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="value" id="statListo">0</div>
+                        <div class="label">Listo</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="value" id="statEntregado">0</div>
+                        <div class="label">Entregado</div>
+                    </div>
+                </div>
+
+                <div id="ordersList" class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Ticket</th>
+                                <th>Cliente</th>
+                                <th>Items</th>
+                                <th>Prioridad</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ordersBody"></tbody>
+                    </table>
+                </div>
+
+                <div id="ordersEmpty" class="empty-state" style="display: none;">
+                    <p>No hay pedidos registrados</p>
+                    <button class="btn btn-primary" onclick="openOrderModal()">Crear Primer Pedido</button>
+                </div>
+            </div>
+
+            <!-- PRECIOS Tab -->
+            <div id="precios" class="tab-content">
+                <div class="mb-3">
+                    <button class="btn btn-primary" onclick="openPriceModal()">+ Agregar Precio</button>
+                </div>
+
+                <div class="form-group">
+                    <label>Filtrar por Prenda</label>
+                    <select id="filterGarment" onchange="filterPrices()">
+                        <option value="">Todas las prendas</option>
+                        <option value="camisa">Camisa</option>
+                        <option value="pantalón">Pantalón</option>
+                        <option value="vestido">Vestido</option>
+                        <option value="abrigo">Abrigo</option>
+                        <option value="cortina">Cortina</option>
+                        <option value="edredón">Edredón</option>
+                        <option value="traje">Traje</option>
+                        <option value="falda">Falda</option>
+                        <option value="blusa">Blusa</option>
+                        <option value="chaqueta">Chaqueta</option>
+                    </select>
+                </div>
+
+                <div id="pricesList" class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Prenda</th>
+                                <th>Servicio</th>
+                                <th>Precio Base</th>
+                                <th>Express (+50%)</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pricesBody"></tbody>
+                    </table>
+                </div>
+
+                <div id="pricesEmpty" class="empty-state" style="display: none;">
+                    <p>No hay precios configurados</p>
+                </div>
+
+                <div class="divider mt-3"></div>
+
+                <div class="card">
+                    <div class="card-header">Recargos Especiales</div>
+                    <div class="form-group">
+                        <label>Recargo Servicio Urgente (%)</label>
+                        <input type="number" id="urgentSurcharge" value="100" min="0" max="200" onchange="saveUrgentSurcharge()">
+                    </div>
+                </div>
+            </div>
+
+            <!-- CLIENTES Tab -->
+            <div id="clientes" class="tab-content">
+                <div class="mb-3">
+                    <button class="btn btn-primary" onclick="openClientModal()">+ Nuevo Cliente</button>
+                </div>
+
+                <div class="form-group">
+                    <input type="text" id="searchClient" placeholder="Buscar por nombre o teléfono..." onkeyup="filterClients()">
+                </div>
+
+                <div id="clientsList" class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Teléfono</th>
+                                <th>Pedidos</th>
+                                <th>Gastado</th>
+                                <th>Descuento</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="clientsBody"></tbody>
+                    </table>
+                </div>
+
+                <div id="clientsEmpty" class="empty-state" style="display: none;">
+                    <p>No hay clientes registrados</p>
+                </div>
+            </div>
+
+            <!-- PRODUCCIÓN Tab -->
+            <div id="produccion" class="tab-content">
+                <div class="stat-grid">
+                    <div class="stat-card">
+                        <div class="value" id="lavanderasUse">0%</div>
+                        <div class="label">Lavadoras</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="value" id="secadorasUse">0%</div>
+                        <div class="label">Secadoras</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="value" id="plancha">0%</div>
+                        <div class="label">Planchado</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="value" id="secoUse">0%</div>
+                        <div class="label">Seco</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">Gestión de Máquinas</div>
+                    <div class="form-group">
+                        <label>Lavadoras Disponibles</label>
+                        <input type="number" id="lavanderasTotal" value="4" min="1" onchange="saveMachineConfig()">
+                    </div>
+                    <div class="form-group">
+                        <label>Secadoras Disponibles</label>
+                        <input type="number" id="secadorasTotal" value="3" min="1" onchange="saveMachineConfig()">
+                    </div>
+                    <div class="form-group">
+                        <label>Máquinas Planchado Disponibles</label>
+                        <input type="number" id="planchasTotal" value="2" min="1" onchange="saveMachineConfig()">
+                    </div>
+                    <div class="form-group">
+                        <label>Máquinas Seco Disponibles</label>
+                        <input type="number" id="secoTotal" value="1" min="1" onchange="saveMachineConfig()">
+                    </div>
+                </div>
+
+                <div class="card mt-2">
+                    <div class="card-header">Insumos Químicos</div>
+                    <div class="form-group">
+                        <label>Detergente (kg)</label>
+                        <div class="d-flex">
+                            <input type="number" id="detergentStock" value="50" style="flex: 1;" onchange="saveChemicals()">
+                            <span style="padding: 0.75rem; background: #f1f5f9; border-radius: 0.5rem; min-width: 80px; text-align: center;">kg</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Suavizante (L)</label>
+                        <div class="d-flex">
+                            <input type="number" id="softenerStock" value="30" style="flex: 1;" onchange="saveChemicals()">
+                            <span style="padding: 0.75rem; background: #f1f5f9; border-radius: 0.5rem; min-width: 80px; text-align: center;">L</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Percloroetileno (L)</label>
+                        <div class="d-flex">
+                            <input type="number" id="pceStock" value="20" style="flex: 1;" onchange="saveChemicals()">
+                            <span style="padding: 0.75rem; background: #f1f5f9; border-radius: 0.5rem; min-width: 80px; text-align: center;">L</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mt-2">
+                    <div class="card-header">Checklist de Calidad</div>
+                    <div id="qualityChecklist"></div>
+                </div>
+            </div>
+
+            <!-- FINANZAS Tab -->
+            <div id="finanzas" class="tab-content">
+                <div class="stat-grid">
+                    <div class="stat-card">
+                        <div class="value color-success" id="todayRevenue">$0</div>
+                        <div class="label">Hoy</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="value" id="monthRevenue">$0</div>
+                        <div class="label">Este Mes</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="value color-danger" id="todayExpenses">$0</div>
+                        <div class="label">Gastos Hoy</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="value" id="cashRegister">$0</div>
+                        <div class="label">Caja</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">Registrar Ingreso</div>
+                    <div class="form-group">
+                        <label>Concepto</label>
+                        <input type="text" id="incomeDesc" placeholder="Ventas, depósito, etc.">
+                    </div>
+                    <div class="form-group">
+                        <label>Monto ($)</label>
+                        <input type="number" id="incomeAmount" placeholder="0" min="0">
+                    </div>
+                    <button class="btn btn-primary w-full" onclick="addIncome()">Registrar Ingreso</button>
+                </div>
+
+                <div class="card mt-2">
+                    <div class="card-header">Registrar Gasto</div>
+                    <div class="form-group">
+                        <label>Categoría</label>
+                        <select id="expenseCategory">
+                            <option value="">Seleccionar</option>
+                            <option value="insumos">Insumos</option>
+                            <option value="agua">Agua</option>
+                            <option value="electricidad">Electricidad</option>
+                            <option value="arriendo">Arriendo</option>
+                            <option value="personal">Salarios Personal</option>
+                            <option value="mantenimiento">Mantenimiento</option>
+                            <option value="otro">Otro</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Monto ($)</label>
+                        <input type="number" id="expenseAmount" placeholder="0" min="0">
+                    </div>
+                    <button class="btn btn-primary w-full" onclick="addExpense()">Registrar Gasto</button>
+                </div>
+
+                <div class="card mt-2">
+                    <div class="card-header">Gráfico de Ingresos (Últimos 30 días)</div>
+                    <div style="height: 300px; position: relative;">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="card mt-2">
+                    <div class="card-header">Transacciones Recientes</div>
+                    <div id="transactionList"></div>
+                </div>
+            </div>
+
+            <!-- ENTREGAS Tab -->
+            <div id="entregas" class="tab-content">
+                <div class="mb-3">
+                    <button class="btn btn-primary" onclick="openDeliveryModal()">+ Agendar Entrega</button>
+                </div>
+
+                <div class="stat-grid">
+                    <div class="stat-card">
+                        <div class="value" id="deliveryPending">0</div>
+                        <div class="label">Pendientes</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="value" id="deliveryEnRoute">0</div>
+                        <div class="label">En Ruta</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="value" id="deliveryCompleted">0</div>
+                        <div class="label">Completadas</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Filtrar por Estado</label>
+                    <select id="filterDelivery" onchange="filterDeliveries()">
+                        <option value="">Todos</option>
+                        <option value="pendiente">Pendiente</option>
+                        <option value="en_ruta">En Ruta</option>
+                        <option value="entregado">Entregado</option>
+                    </select>
+                </div>
+
+                <div id="deliveriesList" class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Ticket</th>
+                                <th>Cliente</th>
+                                <th>Zona</th>
+                                <th>Chofer</th>
+                                <th>Fecha</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="deliveriesBody"></tbody>
+                    </table>
+                </div>
+
+                <div id="deliveriesEmpty" class="empty-state" style="display: none;">
+                    <p>No hay entregas agendadas</p>
+                </div>
+
+                <div class="card mt-3">
+                    <div class="card-header">Plantilla WhatsApp para Notificación</div>
+                    <div class="form-group">
+                        <label>Teléfono Cliente</label>
+                        <input type="tel" id="waPhone" placeholder="+56912345678">
+                    </div>
+                    <div class="form-group">
+                        <label>Mensaje</label>
+                        <textarea id="waMessage" placeholder="Hola! Tu pedido está listo para entrega. Disponible el..." rows="4"></textarea>
+                    </div>
+                    <button class="btn btn-primary" onclick="copyWAMessage()">Copiar para WhatsApp</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-nav">
+            <button class="tab-btn active" onclick="switchTab('pedidos')">Pedidos</button>
+            <button class="tab-btn" onclick="switchTab('precios')">Precios</button>
+            <button class="tab-btn" onclick="switchTab('clientes')">Clientes</button>
+            <button class="tab-btn" onclick="switchTab('produccion')">Producción</button>
+            <button class="tab-btn" onclick="switchTab('finanzas')">Finanzas</button>
+            <button class="tab-btn" onclick="switchTab('entregas')">Entregas</button>
+        </div>
+    </div>
+
+    <!-- ORDER MODAL -->
+    <div id="orderModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Nuevo Pedido</h2>
+                <button class="close-btn" onclick="closeModal('orderModal')">✕</button>
+            </div>
+            <div class="form-group">
+                <label>Ticket #</label>
+                <input type="text" id="orderTicket" readonly placeholder="Auto-generado">
+            </div>
+            <div class="form-group">
+                <label>Cliente</label>
+                <input type="text" id="orderClient" placeholder="Nombre del cliente">
+            </div>
+            <div class="form-group">
+                <label>Teléfono</label>
+                <input type="tel" id="orderPhone" placeholder="+56 9 xxxx xxxx">
+            </div>
+            <div class="form-group">
+                <label>Prenda</label>
+                <select id="orderGarment">
+                    <option value="">Seleccionar</option>
+                    <option value="camisa">Camisa</option>
+                    <option value="pantalón">Pantalón</option>
+                    <option value="vestido">Vestido</option>
+                    <option value="abrigo">Abrigo</option>
+                    <option value="cortina">Cortina</option>
+                    <option value="edredón">Edredón</option>
+                    <option value="traje">Traje</option>
+                    <option value="falda">Falda</option>
+                    <option value="blusa">Blusa</option>
+                    <option value="chaqueta">Chaqueta</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Cantidad</label>
+                <input type="number" id="orderQuantity" value="1" min="1">
+            </div>
+            <div class="form-group">
+                <label>Servicio</label>
+                <select id="orderService">
+                    <option value="">Seleccionar</option>
+                    <option value="lavado">Lavado</option>
+                    <option value="secado">Secado</option>
+                    <option value="planchado">Planchado</option>
+                    <option value="lavado_en_seco">Lavado en Seco</option>
+                    <option value="desmanchado">Desmanchado</option>
+                    <option value="tintoreria">Tintorería</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Prioridad</label>
+                <select id="orderPriority">
+                    <option value="normal">Normal</option>
+                    <option value="express">Express</option>
+                    <option value="urgente">Urgente</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Fecha de Entrega</label>
+                <input type="date" id="orderDate">
+            </div>
+            <div class="form-group">
+                <label>Notas</label>
+                <textarea id="orderNotes" placeholder="Instrucciones especiales..." rows="3"></textarea>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-secondary" onclick="closeModal('orderModal')">Cancelar</button>
+                <button class="btn btn-primary" onclick="saveOrder()">Guardar Pedido</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PRICE MODAL -->
+    <div id="priceModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Agregar Precio</h2>
+                <button class="close-btn" onclick="closeModal('priceModal')">✕</button>
+            </div>
+            <div class="form-group">
+                <label>Prenda</label>
+                <select id="priceGarment">
+                    <option value="">Seleccionar</option>
+                    <option value="camisa">Camisa</option>
+                    <option value="pantalón">Pantalón</option>
+                    <option value="vestido">Vestido</option>
+                    <option value="abrigo">Abrigo</option>
+                    <option value="cortina">Cortina</option>
+                    <option value="edredón">Edredón</option>
+                    <option value="traje">Traje</option>
+                    <option value="falda">Falda</option>
+                    <option value="blusa">Blusa</option>
+                    <option value="chaqueta">Chaqueta</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Servicio</label>
+                <select id="priceService">
+                    <option value="">Seleccionar</option>
+                    <option value="lavado">Lavado</option>
+                    <option value="secado">Secado</option>
+                    <option value="planchado">Planchado</option>
+                    <option value="lavado_en_seco">Lavado en Seco</option>
+                    <option value="desmanchado">Desmanchado</option>
+                    <option value="tintoreria">Tintorería</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Precio Base ($)</label>
+                <input type="number" id="priceBase" placeholder="0" min="0" step="100">
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-secondary" onclick="closeModal('priceModal')">Cancelar</button>
+                <button class="btn btn-primary" onclick="savePrice()">Guardar Precio</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CLIENT MODAL -->
+    <div id="clientModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Nuevo Cliente</h2>
+                <button class="close-btn" onclick="closeModal('clientModal')">✕</button>
+            </div>
+            <div class="form-group">
+                <label>Nombre</label>
+                <input type="text" id="clientName" placeholder="Nombre completo">
+            </div>
+            <div class="form-group">
+                <label>Teléfono</label>
+                <input type="tel" id="clientPhone" placeholder="+56 9 xxxx xxxx">
+            </div>
+            <div class="form-group">
+                <label>Servicios Preferidos</label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; margin: 0;">
+                        <input type="checkbox" value="lavado" onchange="updatePreferredServices()"> Lavado
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem; margin: 0;">
+                        <input type="checkbox" value="secado" onchange="updatePreferredServices()"> Secado
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem; margin: 0;">
+                        <input type="checkbox" value="planchado" onchange="updatePreferredServices()"> Planchado
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem; margin: 0;">
+                        <input type="checkbox" value="tintoreria" onchange="updatePreferredServices()"> Tintorería
+                    </label>
+                </div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-secondary" onclick="closeModal('clientModal')">Cancelar</button>
+                <button class="btn btn-primary" onclick="saveClient()">Guardar Cliente</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DELIVERY MODAL -->
+    <div id="deliveryModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Agendar Entrega</h2>
+                <button class="close-btn" onclick="closeModal('deliveryModal')">✕</button>
+            </div>
+            <div class="form-group">
+                <label>Seleccionar Pedido</label>
+                <select id="deliveryOrder">
+                    <option value="">Seleccionar pedido</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Zona de Entrega</label>
+                <select id="deliveryZone">
+                    <option value="">Seleccionar zona</option>
+                    <option value="zona_norte">Zona Norte</option>
+                    <option value="zona_centro">Zona Centro</option>
+                    <option value="zona_sur">Zona Sur</option>
+                    <option value="zona_este">Zona Este</option>
+                    <option value="zona_oeste">Zona Oeste</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Chofer</label>
+                <input type="text" id="deliveryDriver" placeholder="Nombre del chofer">
+            </div>
+            <div class="form-group">
+                <label>Fecha y Hora</label>
+                <input type="datetime-local" id="deliveryDateTime">
+            </div>
+            <div class="form-group">
+                <label>Dirección</label>
+                <textarea id="deliveryAddress" placeholder="Dirección completa" rows="2"></textarea>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-secondary" onclick="closeModal('deliveryModal')">Cancelar</button>
+                <button class="btn btn-primary" onclick="saveDelivery()">Agendar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== INITIALIZATION ====================
+        const APP_STATE = {
+            orders: [],
+            prices: [],
+            clients: [],
+            deliveries: [],
+            transactions: [],
+            machineConfig: {
+                lavadoras: 4,
+                secadoras: 3,
+                planchas: 2,
+                seco: 1
+            },
+            chemicals: {
+                detergent: 50,
+                softener: 30,
+                pce: 20
+            },
+            urgentSurcharge: 100
+        };
+
+        let revenueChart = null;
+
+        // ==================== UTILS ====================
+        function formatCLP(amount) {
+            return new Intl.NumberFormat('es-CL', {
+                style: 'currency',
+                currency: 'CLP',
+                minimumFractionDigits: 0
+            }).format(amount);
+        }
+
+        function formatDate(date) {
+            return new Intl.DateTimeFormat('es-CL', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            }).format(new Date(date));
+        }
+
+        function generateTicket() {
+            const date = new Date();
+            const dateStr = date.toISOString().slice(2, 10).replace(/-/g, '');
+            const random = Math.floor(Math.random() * 1000).toString().padStart(4, '0');
+            return `TKT-${dateStr}-${random}`;
+        }
+
+        function safe(fn) {
+            try {
+                fn();
+            } catch (e) {
+                console.error('localStorage error:', e);
+            }
+        }
+
+        function loadFromStorage(key, defaultValue) {
+            let result = defaultValue;
+            safe(() => {
+                const stored = localStorage.getItem(`lavanderacl_${key}`);
+                if (stored) result = JSON.parse(stored);
+            });
+            return result;
+        }
+
+        function saveToStorage(key, value) {
+            safe(() => {
+                localStorage.setItem(`lavanderacl_${key}`, JSON.stringify(value));
+            });
+        }
+
+        // ==================== INITIALIZATION ====================
+        function initApp() {
+            // Load all data from storage
+            APP_STATE.orders = loadFromStorage('orders', []);
+            APP_STATE.prices = loadFromStorage('prices', getDefaultPrices());
+            APP_STATE.clients = loadFromStorage('clients', []);
+            APP_STATE.deliveries = loadFromStorage('deliveries', []);
+            APP_STATE.transactions = loadFromStorage('transactions', []);
+            APP_STATE.machineConfig = loadFromStorage('machineConfig', APP_STATE.machineConfig);
+            APP_STATE.chemicals = loadFromStorage('chemicals', APP_STATE.chemicals);
+            APP_STATE.urgentSurcharge = loadFromStorage('urgentSurcharge', 100);
+
+            // Update UI
+            updateDateDisplay();
+            renderOrders();
+            renderPrices();
+            renderClients();
+            renderDeliveries();
+            updateFinancesUI();
+            updateProductionUI();
+            updateMachineConfig();
+            updateChemicalInputs();
+            document.getElementById('urgentSurcharge').value = APP_STATE.urgentSurcharge;
+
+            // Set default delivery date to today
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('orderDate').value = today;
+            document.getElementById('deliveryDateTime').value = new Date().toISOString().slice(0, 16);
+
+            // Initialize revenue chart
+            setTimeout(() => initRevenueChart(), 500);
+
+            // Setup PWA
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/lavanderacl/sw.js').catch(() => {});
+            }
+        }
+
+        function updateDateDisplay() {
+            const date = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('dateDisplay').textContent = new Intl.DateTimeFormat('es-CL', options).format(date);
+        }
+
+        function getDefaultPrices() {
+            const services = ['lavado', 'secado', 'planchado', 'lavado_en_seco', 'desmanchado', 'tintoreria'];
+            const garments = ['camisa', 'pantalón', 'vestido', 'abrigo', 'cortina', 'edredón', 'traje', 'falda', 'blusa', 'chaqueta'];
+            const prices = [];
+
+            garments.forEach(garment => {
+                services.forEach(service => {
+                    let basePrice = 3000;
+                    if (garment === 'abrigo' || garment === 'edredón' || garment === 'traje') basePrice = 8000;
+                    if (garment === 'cortina') basePrice = 10000;
+                    if (service === 'tintoreria') basePrice = basePrice * 1.5;
+                    if (service === 'lavado_en_seco') basePrice = basePrice * 2;
+
+                    prices.push({
+                        id: `${garment}_${service}`,
+                        garment,
+                        service,
+                        price: basePrice
+                    });
+                });
+            });
+
+            return prices;
+        }
+
+        // ==================== TAB SWITCHING ====================
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // ==================== MODAL MANAGEMENT ====================
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        // ==================== ORDERS ====================
+        function openOrderModal() {
+            document.getElementById('orderTicket').value = generateTicket();
+            document.getElementById('orderClient').value = '';
+            document.getElementById('orderPhone').value = '';
+            document.getElementById('orderGarment').value = '';
+            document.getElementById('orderQuantity').value = '1';
+            document.getElementById('orderService').value = '';
+            document.getElementById('orderPriority').value = 'normal';
+            document.getElementById('orderNotes').value = '';
+            openModal('orderModal');
+        }
+
+        function saveOrder() {
+            const order = {
+                id: document.getElementById('orderTicket').value,
+                ticket: document.getElementById('orderTicket').value,
+                client: document.getElementById('orderClient').value,
+                phone: document.getElementById('orderPhone').value,
+                garment: document.getElementById('orderGarment').value,
+                quantity: parseInt(document.getElementById('orderQuantity').value),
+                service: document.getElementById('orderService').value,
+                priority: document.getElementById('orderPriority').value,
+                deliveryDate: document.getElementById('orderDate').value,
+                status: 'recibido',
+                notes: document.getElementById('orderNotes').value,
+                createdAt: new Date().toISOString()
+            };
+
+            if (!order.client || !order.garment || !order.service) {
+                alert('Por favor completa todos los campos requeridos');
+                return;
+            }
+
+            APP_STATE.orders.push(order);
+            saveToStorage('orders', APP_STATE.orders);
+
+            // Add client if new
+            const existingClient = APP_STATE.clients.find(c => c.phone === order.phone);
+            if (!existingClient) {
+                APP_STATE.clients.push({
+                    id: 'cli_' + Date.now(),
+                    name: order.client,
+                    phone: order.phone,
+                    orders: 1,
+                    spent: 0,
+                    services: [order.service],
+                    discountTier: '0%'
+                });
+                saveToStorage('clients', APP_STATE.clients);
+            }
+
+            renderOrders();
+            closeModal('orderModal');
+        }
+
+        function renderOrders() {
+            const tbody = document.getElementById('ordersBody');
+            const empty = document.getElementById('ordersEmpty');
+
+            if (APP_STATE.orders.length === 0) {
+                tbody.parentElement.style.display = 'none';
+                empty.style.display = 'block';
+            } else {
+                tbody.parentElement.style.display = 'table';
+                empty.style.display = 'none';
+
+                tbody.innerHTML = APP_STATE.orders.map(order => `
+                    <tr>
+                        <td><strong>${order.ticket}</strong></td>
+                        <td>${order.client}</td>
+                        <td>${order.garment} x${order.quantity}</td>
+                        <td><span class="badge ${order.priority === 'urgente' ? 'badge-danger' : order.priority === 'express' ? 'badge-warning' : 'badge-info'}">${order.priority}</span></td>
+                        <td><span class="badge ${getStatusBadge(order.status)}">${order.status}</span></td>
+                        <td>
+                            <select onchange="updateOrderStatus('${order.id}', this.value)" style="padding: 0.25rem; font-size: 0.75rem;">
+                                <option value="recibido" ${order.status === 'recibido' ? 'selected' : ''}>Recibido</option>
+                                <option value="en_proceso" ${order.status === 'en_proceso' ? 'selected' : ''}>En Proceso</option>
+                                <option value="listo" ${order.status === 'listo' ? 'selected' : ''}>Listo</option>
+                                <option value="entregado" ${order.status === 'entregado' ? 'selected' : ''}>Entregado</option>
+                            </select>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            updateOrderStats();
+        }
+
+        function updateOrderStatus(orderId, newStatus) {
+            const order = APP_STATE.orders.find(o => o.id === orderId);
+            if (order) {
+                order.status = newStatus;
+                saveToStorage('orders', APP_STATE.orders);
+                renderOrders();
+            }
+        }
+
+        function getStatusBadge(status) {
+            const badges = {
+                'recibido': 'badge-info',
+                'en_proceso': 'badge-warning',
+                'listo': 'badge-success',
+                'entregado': 'badge-success'
+            };
+            return badges[status] || 'badge-info';
+        }
+
+        function updateOrderStats() {
+            const stats = {
+                recibidos: APP_STATE.orders.filter(o => o.status === 'recibido').length,
+                en_proceso: APP_STATE.orders.filter(o => o.status === 'en_proceso').length,
+                listo: APP_STATE.orders.filter(o => o.status === 'listo').length,
+                entregado: APP_STATE.orders.filter(o => o.status === 'entregado').length
+            };
+
+            document.getElementById('statRecibidos').textContent = stats.recibidos;
+            document.getElementById('statEnProceso').textContent = stats.en_proceso;
+            document.getElementById('statListo').textContent = stats.listo;
+            document.getElementById('statEntregado').textContent = stats.entregado;
+        }
+
+        // ==================== PRICES ====================
+        function openPriceModal() {
+            document.getElementById('priceGarment').value = '';
+            document.getElementById('priceService').value = '';
+            document.getElementById('priceBase').value = '';
+            openModal('priceModal');
+        }
+
+        function savePrice() {
+            const garment = document.getElementById('priceGarment').value;
+            const service = document.getElementById('priceService').value;
+            const price = parseInt(document.getElementById('priceBase').value);
+
+            if (!garment || !service || !price) {
+                alert('Por favor completa todos los campos');
+                return;
+            }
+
+            const existingId = `${garment}_${service}`;
+            const existing = APP_STATE.prices.find(p => p.id === existingId);
+
+            if (existing) {
+                existing.price = price;
+            } else {
+                APP_STATE.prices.push({ id: existingId, garment, service, price });
+            }
+
+            saveToStorage('prices', APP_STATE.prices);
+            renderPrices();
+            closeModal('priceModal');
+        }
+
+        function renderPrices() {
+            const tbody = document.getElementById('pricesBody');
+            const empty = document.getElementById('pricesEmpty');
+            let filtered = APP_STATE.prices;
+
+            const filterVal = document.getElementById('filterGarment').value;
+            if (filterVal) filtered = filtered.filter(p => p.garment === filterVal);
+
+            if (filtered.length === 0) {
+                tbody.parentElement.style.display = 'none';
+                empty.style.display = 'block';
+            } else {
+                tbody.parentElement.style.display = 'table';
+                empty.style.display = 'none';
+
+                tbody.innerHTML = filtered.map(p => `
+                    <tr>
+                        <td>${p.garment}</td>
+                        <td>${p.service}</td>
+                        <td>${formatCLP(p.price)}</td>
+                        <td>${formatCLP(p.price * 1.5)}</td>
+                        <td>
+                            <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;" onclick="deletePrice('${p.id}')">Eliminar</button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        function filterPrices() {
+            renderPrices();
+        }
+
+        function deletePrice(id) {
+            APP_STATE.prices = APP_STATE.prices.filter(p => p.id !== id);
+            saveToStorage('prices', APP_STATE.prices);
+            renderPrices();
+        }
+
+        function saveUrgentSurcharge() {
+            APP_STATE.urgentSurcharge = parseInt(document.getElementById('urgentSurcharge').value);
+            saveToStorage('urgentSurcharge', APP_STATE.urgentSurcharge);
+        }
+
+        // ==================== CLIENTS ====================
+        function openClientModal() {
+            document.getElementById('clientName').value = '';
+            document.getElementById('clientPhone').value = '';
+            document.querySelectorAll('#clientModal input[type="checkbox"]').forEach(cb => cb.checked = false);
+            openModal('clientModal');
+        }
+
+        function updatePreferredServices() {
+            // Updated on save
+        }
+
+        function saveClient() {
+            const name = document.getElementById('clientName').value;
+            const phone = document.getElementById('clientPhone').value;
+
+            if (!name || !phone) {
+                alert('Por favor completa todos los campos');
+                return;
+            }
+
+            const services = Array.from(document.querySelectorAll('#clientModal input[type="checkbox"]:checked')).map(cb => cb.value);
+
+            const client = {
+                id: 'cli_' + Date.now(),
+                name,
+                phone,
+                orders: 0,
+                spent: 0,
+                services,
+                discountTier: '0%',
+                createdAt: new Date().toISOString()
+            };
+
+            APP_STATE.clients.push(client);
+            saveToStorage('clients', APP_STATE.clients);
+            renderClients();
+            closeModal('clientModal');
+        }
+
+        function renderClients() {
+            const tbody = document.getElementById('clientsBody');
+            const empty = document.getElementById('clientsEmpty');
+            let filtered = APP_STATE.clients;
+
+            const searchVal = document.getElementById('searchClient').value.toLowerCase();
+            if (searchVal) {
+                filtered = filtered.filter(c => c.name.toLowerCase().includes(searchVal) || c.phone.includes(searchVal));
+            }
+
+            if (filtered.length === 0) {
+                tbody.parentElement.style.display = 'none';
+                empty.style.display = 'block';
+            } else {
+                tbody.parentElement.style.display = 'table';
+                empty.style.display = 'none';
+
+                tbody.innerHTML = filtered.map(c => {
+                    const orderCount = APP_STATE.orders.filter(o => o.phone === c.phone).length;
+                    let discount = '0%';
+                    if (orderCount >= 10) discount = '15%';
+                    else if (orderCount >= 5) discount = '10%';
+                    else if (orderCount >= 2) discount = '5%';
+
+                    return `
+                        <tr>
+                            <td>${c.name}</td>
+                            <td>${c.phone}</td>
+                            <td>${orderCount}</td>
+                            <td>${formatCLP(c.spent)}</td>
+                            <td><span class="badge badge-success">${discount}</span></td>
+                            <td>
+                                <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;" onclick="deleteClient('${c.id}')">Eliminar</button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+        }
+
+        function filterClients() {
+            renderClients();
+        }
+
+        function deleteClient(id) {
+            APP_STATE.clients = APP_STATE.clients.filter(c => c.id !== id);
+            saveToStorage('clients', APP_STATE.clients);
+            renderClients();
+        }
+
+        // ==================== PRODUCTION ====================
+        function updateProductionUI() {
+            const inProcess = APP_STATE.orders.filter(o => o.status === 'en_proceso').length;
+            const inLavado = inProcess * 0.4;
+            const inSecado = inProcess * 0.3;
+            const inPlanchado = inProcess * 0.2;
+            const inSeco = inProcess * 0.1;
+
+            document.getElementById('lavanderasUse').textContent = Math.round((inLavado / APP_STATE.machineConfig.lavadoras) * 100) + '%';
+            document.getElementById('secadorasUse').textContent = Math.round((inSecado / APP_STATE.machineConfig.secadoras) * 100) + '%';
+            document.getElementById('plancha').textContent = Math.round((inPlanchado / APP_STATE.machineConfig.planchas) * 100) + '%';
+            document.getElementById('secoUse').textContent = Math.round((inSeco / APP_STATE.machineConfig.seco) * 100) + '%';
+
+            renderQualityChecklist();
+        }
+
+        function updateMachineConfig() {
+            document.getElementById('lavanderasTotal').value = APP_STATE.machineConfig.lavadoras;
+            document.getElementById('secadorasTotal').value = APP_STATE.machineConfig.secadoras;
+            document.getElementById('planchasTotal').value = APP_STATE.machineConfig.planchas;
+            document.getElementById('secoTotal').value = APP_STATE.machineConfig.seco;
+        }
+
+        function saveMachineConfig() {
+            APP_STATE.machineConfig.lavadoras = parseInt(document.getElementById('lavanderasTotal').value);
+            APP_STATE.machineConfig.secadoras = parseInt(document.getElementById('secadorasTotal').value);
+            APP_STATE.machineConfig.planchas = parseInt(document.getElementById('planchasTotal').value);
+            APP_STATE.machineConfig.seco = parseInt(document.getElementById('secoTotal').value);
+            saveToStorage('machineConfig', APP_STATE.machineConfig);
+            updateProductionUI();
+        }
+
+        function updateChemicalInputs() {
+            document.getElementById('detergentStock').value = APP_STATE.chemicals.detergent;
+            document.getElementById('softenerStock').value = APP_STATE.chemicals.softener;
+            document.getElementById('pceStock').value = APP_STATE.chemicals.pce;
+        }
+
+        function saveChemicals() {
+            APP_STATE.chemicals.detergent = parseFloat(document.getElementById('detergentStock').value);
+            APP_STATE.chemicals.softener = parseFloat(document.getElementById('softenerStock').value);
+            APP_STATE.chemicals.pce = parseFloat(document.getElementById('pceStock').value);
+            saveToStorage('chemicals', APP_STATE.chemicals);
+        }
+
+        function renderQualityChecklist() {
+            const container = document.getElementById('qualityChecklist');
+            const readyOrders = APP_STATE.orders.filter(o => o.status === 'listo');
+
+            if (readyOrders.length === 0) {
+                container.innerHTML = '<p style="color: #94a3b8; font-size: 0.875rem;">No hay pedidos listos para verificar</p>';
+                return;
+            }
+
+            container.innerHTML = readyOrders.slice(0, 5).map(order => `
+                <div style="padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 0.5rem; margin-bottom: 0.5rem;">
+                    <div style="font-weight: 500; margin-bottom: 0.5rem;">Ticket ${order.ticket} - ${order.client}</div>
+                    <label style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                        <input type="checkbox"> Verificación visual completada
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="checkbox"> Empaque listo para entrega
+                    </label>
+                </div>
+            `).join('');
+        }
+
+        // ==================== FINANCES ====================
+        function addIncome() {
+            const desc = document.getElementById('incomeDesc').value;
+            const amount = parseInt(document.getElementById('incomeAmount').value);
+
+            if (!desc || !amount) {
+                alert('Por favor completa todos los campos');
+                return;
+            }
+
+            const transaction = {
+                id: 'txn_' + Date.now(),
+                type: 'income',
+                description: desc,
+                amount,
+                category: 'ingresos',
+                date: new Date().toISOString()
+            };
+
+            APP_STATE.transactions.push(transaction);
+            saveToStorage('transactions', APP_STATE.transactions);
+
+            document.getElementById('incomeDesc').value = '';
+            document.getElementById('incomeAmount').value = '';
+
+            updateFinancesUI();
+        }
+
+        function addExpense() {
+            const category = document.getElementById('expenseCategory').value;
+            const amount = parseInt(document.getElementById('expenseAmount').value);
+
+            if (!category || !amount) {
+                alert('Por favor completa todos los campos');
+                return;
+            }
+
+            const transaction = {
+                id: 'txn_' + Date.now(),
+                type: 'expense',
+                description: category,
+                amount,
+                category,
+                date: new Date().toISOString()
+            };
+
+            APP_STATE.transactions.push(transaction);
+            saveToStorage('transactions', APP_STATE.transactions);
+
+            document.getElementById('expenseCategory').value = '';
+            document.getElementById('expenseAmount').value = '';
+
+            updateFinancesUI();
+        }
+
+        function updateFinancesUI() {
+            const today = new Date().toDateString();
+            const thisMonth = new Date().getMonth();
+            const thisYear = new Date().getFullYear();
+
+            let todayRevenue = 0;
+            let monthRevenue = 0;
+            let todayExpenses = 0;
+            const chartData = {};
+
+            APP_STATE.transactions.forEach(txn => {
+                const txnDate = new Date(txn.date);
+                const txnDateStr = txnDate.toDateString();
+                const txnMonth = txnDate.getMonth();
+                const txnYear = txnDate.getFullYear();
+
+                if (txn.type === 'income') {
+                    if (txnDateStr === today) todayRevenue += txn.amount;
+                    if (txnMonth === thisMonth && txnYear === thisYear) monthRevenue += txn.amount;
+
+                    const dayKey = txnDate.toISOString().split('T')[0];
+                    if (!chartData[dayKey]) chartData[dayKey] = 0;
+                    chartData[dayKey] += txn.amount;
+                }
+
+                if (txn.type === 'expense' && txnDateStr === today) {
+                    todayExpenses += txn.amount;
+                }
+            });
+
+            const cashRegister = todayRevenue - todayExpenses;
+
+            document.getElementById('todayRevenue').textContent = formatCLP(todayRevenue);
+            document.getElementById('monthRevenue').textContent = formatCLP(monthRevenue);
+            document.getElementById('todayExpenses').textContent = formatCLP(todayExpenses);
+            document.getElementById('cashRegister').textContent = formatCLP(Math.max(0, cashRegister));
+
+            renderTransactionList();
+            updateRevenueChart(chartData);
+        }
+
+        function renderTransactionList() {
+            const container = document.getElementById('transactionList');
+            const recent = APP_STATE.transactions.slice(-10).reverse();
+
+            container.innerHTML = recent.map(txn => {
+                const date = new Date(txn.date);
+                const dateStr = date.toLocaleString('es-CL', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+                return `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid #e2e8f0;">
+                        <div>
+                            <div style="font-weight: 500; font-size: 0.875rem;">${txn.description}</div>
+                            <div style="font-size: 0.75rem; color: #94a3b8;">${dateStr}</div>
+                        </div>
+                        <div style="font-weight: 600; ${txn.type === 'income' ? 'color: #22c55e;' : 'color: #ef4444;'}">
+                            ${txn.type === 'income' ? '+' : '-'} ${formatCLP(txn.amount)}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function initRevenueChart() {
+            const ctx = document.getElementById('revenueChart');
+            if (!ctx) return;
+
+            const last30Days = {};
+            for (let i = 29; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                const key = date.toISOString().split('T')[0];
+                last30Days[key] = 0;
+            }
+
+            APP_STATE.transactions.forEach(txn => {
+                if (txn.type === 'income') {
+                    const key = txn.date.split('T')[0];
+                    if (last30Days.hasOwnProperty(key)) {
+                        last30Days[key] += txn.amount;
+                    }
+                }
+            });
+
+            const labels = Object.keys(last30Days).map(d => {
+                const date = new Date(d);
+                return date.toLocaleDateString('es-CL', { month: 'short', day: 'numeric' });
+            });
+            const data = Object.values(last30Days);
+
+            if (revenueChart) revenueChart.destroy();
+
+            revenueChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Ingresos Diarios',
+                        data,
+                        borderColor: '#0891b2',
+                        backgroundColor: 'rgba(8, 145, 178, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 3,
+                        pointBackgroundColor: '#0891b2',
+                        pointHoverRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            ticks: {
+                                callback: (value) => formatCLP(value).replace('$', '')
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateRevenueChart(chartData) {
+            if (!revenueChart) return;
+
+            const today = new Date();
+            const last30Days = {};
+
+            for (let i = 29; i >= 0; i--) {
+                const date = new Date(today);
+                date.setDate(date.getDate() - i);
+                const key = date.toISOString().split('T')[0];
+                last30Days[key] = chartData[key] || 0;
+            }
+
+            revenueChart.data.datasets[0].data = Object.values(last30Days);
+            revenueChart.update();
+        }
+
+        // ==================== DELIVERIES ====================
+        function openDeliveryModal() {
+            const select = document.getElementById('deliveryOrder');
+            select.innerHTML = '<option value="">Seleccionar pedido</option>';
+
+            APP_STATE.orders.filter(o => o.status === 'listo').forEach(order => {
+                const option = document.createElement('option');
+                option.value = order.id;
+                option.textContent = `${order.ticket} - ${order.client}`;
+                select.appendChild(option);
+            });
+
+            document.getElementById('deliveryZone').value = '';
+            document.getElementById('deliveryDriver').value = '';
+            document.getElementById('deliveryAddress').value = '';
+            openModal('deliveryModal');
+        }
+
+        function saveDelivery() {
+            const orderId = document.getElementById('deliveryOrder').value;
+            const zone = document.getElementById('deliveryZone').value;
+            const driver = document.getElementById('deliveryDriver').value;
+            const address = document.getElementById('deliveryAddress').value;
+            const dateTime = document.getElementById('deliveryDateTime').value;
+
+            if (!orderId || !zone || !driver || !address || !dateTime) {
+                alert('Por favor completa todos los campos');
+                return;
+            }
+
+            const order = APP_STATE.orders.find(o => o.id === orderId);
+            const delivery = {
+                id: 'del_' + Date.now(),
+                orderId,
+                ticket: order.ticket,
+                client: order.client,
+                zone,
+                driver,
+                address,
+                dateTime,
+                status: 'pendiente',
+                createdAt: new Date().toISOString()
+            };
+
+            APP_STATE.deliveries.push(delivery);
+            saveToStorage('deliveries', APP_STATE.deliveries);
+            renderDeliveries();
+            closeModal('deliveryModal');
+        }
+
+        function renderDeliveries() {
+            const tbody = document.getElementById('deliveriesBody');
+            const empty = document.getElementById('deliveriesEmpty');
+            let filtered = APP_STATE.deliveries;
+
+            const filterVal = document.getElementById('filterDelivery').value;
+            if (filterVal) filtered = filtered.filter(d => d.status === filterVal);
+
+            if (filtered.length === 0) {
+                tbody.parentElement.style.display = 'none';
+                empty.style.display = 'block';
+            } else {
+                tbody.parentElement.style.display = 'table';
+                empty.style.display = 'none';
+
+                tbody.innerHTML = filtered.map(delivery => {
+                    const date = new Date(delivery.dateTime);
+                    const dateStr = date.toLocaleDateString('es-CL');
+                    const timeStr = date.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+
+                    return `
+                        <tr>
+                            <td><strong>${delivery.ticket}</strong></td>
+                            <td>${delivery.client}</td>
+                            <td>${delivery.zone}</td>
+                            <td>${delivery.driver}</td>
+                            <td>${dateStr}<br><small>${timeStr}</small></td>
+                            <td><span class="badge ${delivery.status === 'entregado' ? 'badge-success' : delivery.status === 'en_ruta' ? 'badge-warning' : 'badge-info'}">${delivery.status}</span></td>
+                            <td>
+                                <select onchange="updateDeliveryStatus('${delivery.id}', this.value)" style="padding: 0.25rem; font-size: 0.75rem;">
+                                    <option value="pendiente" ${delivery.status === 'pendiente' ? 'selected' : ''}>Pendiente</option>
+                                    <option value="en_ruta" ${delivery.status === 'en_ruta' ? 'selected' : ''}>En Ruta</option>
+                                    <option value="entregado" ${delivery.status === 'entregado' ? 'selected' : ''}>Entregado</option>
+                                </select>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            updateDeliveryStats();
+        }
+
+        function filterDeliveries() {
+            renderDeliveries();
+        }
+
+        function updateDeliveryStatus(deliveryId, newStatus) {
+            const delivery = APP_STATE.deliveries.find(d => d.id === deliveryId);
+            if (delivery) {
+                delivery.status = newStatus;
+                saveToStorage('deliveries', APP_STATE.deliveries);
+                renderDeliveries();
+            }
+        }
+
+        function updateDeliveryStats() {
+            const pending = APP_STATE.deliveries.filter(d => d.status === 'pendiente').length;
+            const enRoute = APP_STATE.deliveries.filter(d => d.status === 'en_ruta').length;
+            const completed = APP_STATE.deliveries.filter(d => d.status === 'entregado').length;
+
+            document.getElementById('deliveryPending').textContent = pending;
+            document.getElementById('deliveryEnRoute').textContent = enRoute;
+            document.getElementById('deliveryCompleted').textContent = completed;
+        }
+
+        function copyWAMessage() {
+            const phone = document.getElementById('waPhone').value;
+            const message = document.getElementById('waMessage').value;
+
+            if (!phone || !message) {
+                alert('Por favor completa teléfono y mensaje');
+                return;
+            }
+
+            const waUrl = `https://wa.me/${phone.replace(/[^\d]/g, '')}?text=${encodeURIComponent(message)}`;
+
+            // Copy to clipboard
+            navigator.clipboard.writeText(waUrl).then(() => {
+                alert('Enlace de WhatsApp copiado al portapapeles');
+            }).catch(() => {
+                // Fallback
+                const textArea = document.createElement('textarea');
+                textArea.value = waUrl;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert('Enlace de WhatsApp copiado al portapapeles');
+            });
+        }
+
+        // Initialize app on load
+        window.addEventListener('load', initApp);
+    </script>
+
+    <style>
+        .w-full {
+            width: 100%;
+        }
+    </style>
+</body>
+</html>

@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análisis Satelital | Predio Jungla Peumayen | Cussen Geoespacial</title>
+    <meta name="description" content="Informe técnico de análisis geoespacial del Predio Jungla Peumayen (San Jose, Rol 112-2), Coihueco, Región de Ñuble. 3.300 hectáreas de bosque nativo en conservación.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../../assets/style.css">
+    <style>
+        :root {
+            --cussen-dark: #064e3b;
+            --cussen-mid: #065f46;
+            --cussen-light: #10b981;
+            --cussen-accent: #f59e0b;
+        }
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+        #map { height: 380px; width: 100%; border-radius: 0 0 12px 12px; z-index: 1; }
+        @media (min-width: 768px) { #map { height: 500px; } }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .section-divider { width: 60px; height: 3px; background: linear-gradient(90deg, #10b981, #059669); margin: 0 auto 1.5rem; border-radius: 2px; }
+        .nav-link { position: relative; transition: color 0.2s; }
+        .nav-link:hover { color: #10b981; }
+        .sup-ref { color: #10b981; font-size: 9px; margin-left: 1px; cursor: help; }
+        .coord-display { position: absolute; bottom: 8px; left: 8px; z-index: 1000; background: rgba(0,0,0,0.75); color: #fff; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-family: 'Inter', monospace; pointer-events: none; display: none; }
+        @media (min-width: 768px) { .coord-display { display: block; } }
+        .animate-in { animation: slideUp 0.6s ease-out; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @media print { .no-print { display: none !important; } }
+    </style>
+</head>
+<body class="text-gray-700">
+
+    <!-- NAVIGATION -->
+    <nav class="bg-white/95 backdrop-blur-md shadow-sm sticky top-0 z-50 no-print">
+        <div class="container mx-auto max-w-7xl px-4 flex items-center h-12 gap-4">
+            <a href="/index.html" class="font-black text-emerald-800 text-sm tracking-tight shrink-0">CUSSEN</a>
+            <div class="flex gap-4 md:gap-6 text-xs font-medium text-gray-500 overflow-x-auto scrollbar-hide whitespace-nowrap flex-1 -mx-1 px-1" style="-webkit-overflow-scrolling: touch; scrollbar-width: none; -ms-overflow-style: none;">
+                <a href="#mapa" class="nav-link py-1 shrink-0" data-es="Mapa" data-en="Map">Mapa</a>
+                <a href="#bosque" class="nav-link py-1 shrink-0" data-es="Bosque" data-en="Forest">Bosque</a>
+                <a href="#conservacion" class="nav-link py-1 shrink-0" data-es="Conservación" data-en="Conservation">Conservación</a>
+                <a href="#acceso" class="nav-link py-1 shrink-0 text-blue-600 font-bold" data-es="Acceso IFM" data-en="IFM Access">Acceso IFM</a>
+                <a href="#conclusiones" class="nav-link py-1 shrink-0 text-emerald-700 font-bold" data-es="Conclusiones" data-en="Conclusions">Conclusiones</a>
+                <a href="#referencias" class="nav-link py-1 shrink-0" data-es="Referencias" data-en="References">Referencias</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- HEADER -->
+    <header id="top" class="bg-gradient-to-br from-purple-950 via-purple-900 to-indigo-900 text-center py-8 md:py-12 px-4 shadow-2xl relative overflow-hidden">
+        <div class="absolute inset-0 opacity-5" style="background-image: url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2260%22 height=%2260%22><circle cx=%2230%22 cy=%2230%22 r=%221%22 fill=%22white%22/></svg>');"></div>
+        <div class="relative z-10">
+            <div class="inline-block bg-purple-800/50 border border-purple-700/50 rounded-full px-3 py-1 mb-3">
+                <p class="text-purple-300 text-[10px] md:text-xs font-semibold tracking-widest uppercase">Informe Técnico IT-2026-FCH-002</p>
+            </div>
+            <h1 class="text-2xl md:text-5xl font-black text-white mb-2 md:mb-3 tracking-tight leading-tight" data-es="Predio Jungla Peumayen" data-en="Jungla Peumayen Property">Predio Jungla Peumayen</h1>
+            <p class="text-lg md:text-2xl font-light text-purple-200">San Jose | Rol 112-2 | 3.300 hectáreas</p>
+            <p class="text-purple-300 text-xs md:text-sm mt-2 font-medium">Coihueco, Región de Ñuble, Chile</p>
+            <div class="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-4 md:mt-6 text-[10px] md:text-xs text-purple-400">
+                <span>19 de febrero de 2026</span>
+                <span class="text-purple-600 hidden md:inline">|</span>
+                <span>Datum WGS84 / EPSG:4326</span>
+                <span class="text-purple-600 hidden md:inline">|</span>
+                <span>Cussen Consultoría Geoespacial</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-4 md:p-8 max-w-7xl">
+
+        <!-- KPIs PRINCIPALES -->
+        <section class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 -mt-6 md:-mt-8 mb-10 md:mb-12 relative z-10 animate-in px-1 md:px-0">
+            <div class="stat-card bg-white p-3 md:p-5 rounded-xl shadow-lg text-center border border-gray-100">
+                <h4 class="text-xl md:text-3xl font-black text-purple-700">3.300</h4>
+                <p class="text-gray-500 text-[10px] md:text-xs mt-1 font-medium" data-es="Hectáreas" data-en="Hectares">Hectáreas</p>
+                <p class="text-gray-300 text-[8px] md:text-[10px] mt-0.5">33,0 km²</p>
+            </div>
+            <div class="stat-card bg-white p-3 md:p-5 rounded-xl shadow-lg text-center border border-gray-100">
+                <h4 class="text-xl md:text-3xl font-black text-green-600">~2.400</h4>
+                <p class="text-gray-500 text-[10px] md:text-xs mt-1 font-medium" data-es="ha Bosque Nativo" data-en="ha Native Forest">ha Bosque Nativo</p>
+                <p class="text-gray-300 text-[8px] md:text-[10px] mt-0.5" data-es="73% cobertura" data-en="73% coverage">73% cobertura</p>
+            </div>
+            <div class="stat-card bg-white p-3 md:p-5 rounded-xl shadow-lg text-center border border-gray-100">
+                <h4 class="text-lg md:text-2xl font-black text-blue-600">Huemul</h4>
+                <p class="text-gray-500 text-[10px] md:text-xs mt-1 font-medium" data-es="Conservación MMA" data-en="MMA Conservation">Conservación MMA</p>
+                <p class="text-gray-300 text-[8px] md:text-[10px] mt-0.5">1 familia detectada</p>
+            </div>
+            <div class="stat-card bg-white p-3 md:p-5 rounded-xl shadow-lg text-center border border-gray-100">
+                <h4 class="text-base md:text-xl font-black text-purple-600">Parque</h4>
+                <p class="text-gray-500 text-[10px] md:text-xs mt-1 font-medium" data-es="Turismo ecológico" data-en="Ecotourism">Turismo ecológico</p>
+                <p class="text-gray-300 text-[8px] md:text-[10px] mt-0.5">Operativo</p>
+            </div>
+        </section>
+
+        <!-- RESUMEN EJECUTIVO -->
+        <section class="mb-8 md:mb-14">
+            <h2 class="text-2xl md:text-3xl font-bold text-slate-800 text-center mb-2" data-es="Resumen Ejecutivo" data-en="Executive Summary">Resumen Ejecutivo</h2>
+            <div class="section-divider"></div>
+            <div class="bg-white rounded-xl shadow-lg p-5 md:p-8 border border-gray-100">
+                <div class="prose max-w-none">
+                    <p class="text-sm text-gray-700 leading-relaxed mb-4">
+                        El <strong>Predio Jungla Peumayen</strong> (también denominado "San Jose", Rol 112-2) es un parque de conservación privado de <strong>3.300 hectáreas</strong> ubicado en la comuna de Coihueco, Provincia de Punilla, Región de Ñuble. El predio forma parte de la zona de amortiguamiento de la <strong>Reserva de la Biosfera Corredor Biológico Nevados de Chillán - Laguna del Laja</strong> (UNESCO).
+                    </p>
+                    <p class="text-sm text-gray-700 leading-relaxed mb-4">
+                        A diferencia de los predios cordilleranos Sazo y Carrizales (ubicados a 1.400-2.800 msnm), Jungla Peumayen se encuentra en una <strong>elevación menor (400-1.900 msnm)</strong>, aproximadamente <strong>93-108 km al oeste</strong>, en la zona de transición entre el valle central y la precordillera baja.
+                    </p>
+                    <div class="bg-purple-50 rounded-lg p-4 border-l-4 border-purple-600">
+                        <p class="text-sm text-gray-700"><strong>Bosque:</strong> ~2.400 ha (73%) de bosque nativo en transición Esclerófilo → Roble-Raulí-Coigüe → Lenga. Alta biodiversidad por gradiente altitudinal.</p>
+                        <p class="text-sm text-gray-700 mt-2"><strong>Conservación:</strong> Proyecto Piloto MMA 2020-2021 para protección del <em>Huemul</em> (<em>Hippocamelus bisulcus</em>). 1 familia confirmada en el predio.</p>
+                        <p class="text-sm text-gray-700 mt-2"><strong>Uso actual:</strong> Parque turístico ecológico operativo con senderos, camping, cascadas y actividades de bajo impacto.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- MAPA -->
+        <section id="mapa" class="mb-8 md:mb-14">
+            <h2 class="text-2xl md:text-3xl font-bold text-slate-800 text-center mb-2" data-es="Ubicación del Predio" data-en="Property Location">Ubicación del Predio</h2>
+            <div class="section-divider"></div>
+            <p class="text-center text-xs md:text-sm text-gray-400 mb-6 max-w-2xl mx-auto">Polígono extraído del archivo KML proporcionado. Superficie calculada con proyección local plana desde WGS84.</p>
+
+            <div class="bg-white rounded-xl shadow-lg p-4 mb-4">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-center text-sm">
+                    <div><p class="text-[10px] text-gray-400 font-medium">Centroide</p><p class="text-sm font-bold text-purple-700">36.804°S, 71.492°W</p></div>
+                    <div><p class="text-[10px] text-gray-400 font-medium">Superficie</p><p class="text-sm font-bold text-purple-700">3.300 ha</p></div>
+                    <div><p class="text-[10px] text-gray-400 font-medium">Perímetro</p><p class="text-sm font-bold text-slate-700">31,8 km</p></div>
+                    <div><p class="text-[10px] text-gray-400 font-medium">Dimensiones</p><p class="text-sm font-bold text-slate-700">12,1 x 5,1 km</p></div>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap gap-2 mb-0 no-print bg-gray-50 p-3 rounded-t-xl border border-b-0 border-gray-200">
+                <span class="text-xs font-semibold text-gray-400 self-center mr-1 uppercase tracking-wide">Base:</span>
+                <button class="layer-btn active px-3 py-1 rounded-md text-xs font-medium border border-gray-200 bg-white" onclick="setLayer('satellite', this)">Satelital</button>
+                <button class="layer-btn px-3 py-1 rounded-md text-xs font-medium border border-gray-200" onclick="setLayer('topo', this)">Topográfico</button>
+                <button class="layer-btn px-3 py-1 rounded-md text-xs font-medium border border-gray-200" onclick="setLayer('osm', this)">OpenStreetMap</button>
+            </div>
+
+            <div style="position: relative;">
+                <div id="map"></div>
+                <div id="coord-display" class="coord-display">Lat: -- | Lon: --</div>
+            </div>
+        </section>
+
+        <!-- BOSQUE Y VEGETACIÓN -->
+        <section id="bosque" class="mb-8 md:mb-14">
+            <h2 class="text-2xl md:text-3xl font-bold text-slate-800 text-center mb-2" data-es="Bosque y Vegetación" data-en="Forest and Vegetation">Bosque y Vegetación</h2>
+            <div class="section-divider"></div>
+
+            <div class="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 rounded-2xl p-5 md:p-8 mb-8">
+                <h3 class="text-lg md:text-xl font-bold text-green-900 mb-4 text-center" data-es="Transición de Ecosistemas" data-en="Ecosystem Transition">Transición de Ecosistemas</h3>
+                <p class="text-sm text-gray-700 text-center mb-6">
+                    El predio representa una zona única de transición entre el <strong>bosque esclerófilo de la zona central</strong> y el <strong>bosque templado austral</strong>, generando <span class="font-bold text-green-700">alta biodiversidad</span> en flora, fauna y hongos.
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-white/80 rounded-xl p-4 shadow-sm">
+                        <p class="text-xs text-gray-400 uppercase font-bold mb-1">400-800 msnm</p>
+                        <p class="text-lg font-black text-amber-700">Bosque Esclerófilo</p>
+                        <p class="text-xs text-gray-600 mt-2">Peumo (Cryptocarya alba), Quillay, Boldo, Litre</p>
+                    </div>
+                    <div class="bg-white/80 rounded-xl p-4 shadow-sm">
+                        <p class="text-xs text-gray-400 uppercase font-bold mb-1">800-1.400 msnm</p>
+                        <p class="text-lg font-black text-green-700">Roble-Raulí-Coigüe</p>
+                        <p class="text-xs text-gray-600 mt-2">Roble, Raulí (alto valor), Coigüe, Avellano</p>
+                    </div>
+                    <div class="bg-white/80 rounded-xl p-4 shadow-sm">
+                        <p class="text-xs text-gray-400 uppercase font-bold mb-1">1.400-1.900 msnm</p>
+                        <p class="text-lg font-black text-emerald-700">Lenga + Ñirre</p>
+                        <p class="text-xs text-gray-600 mt-2">Lenga, Ñirre, transición subalpina</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 table-scroll">
+                <table class="w-full text-sm min-w-[500px]">
+                    <thead class="bg-gradient-to-r from-green-700 to-green-800 text-white">
+                        <tr>
+                            <th class="p-3 text-left text-xs font-semibold uppercase">Parámetro</th>
+                            <th class="p-3 text-center text-xs font-semibold uppercase">Valor</th>
+                            <th class="p-3 text-center text-xs font-semibold uppercase">Fuente/Nota</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-b border-gray-100"><td class="p-3 text-xs font-medium">Superficie total</td><td class="p-3 text-center font-bold">3.300 ha</td><td class="p-3 text-center text-xs">KML / Haversine</td></tr>
+                        <tr class="border-b border-gray-100 bg-green-50/50"><td class="p-3 text-xs font-medium">Bosque nativo estimado</td><td class="p-3 text-center font-bold text-green-700">~2.400 ha (73%)</td><td class="p-3 text-center text-xs">Por gradiente altitudinal</td></tr>
+                        <tr class="border-b border-gray-100"><td class="p-3 text-xs font-medium">Tipo forestal principal</td><td class="p-3 text-center">Esclerófilo + RRC + Lenga</td><td class="p-3 text-center text-xs">Transición única</td></tr>
+                        <tr class="border-b border-gray-100 bg-gray-50/50"><td class="p-3 text-xs font-medium">Estado del bosque</td><td class="p-3 text-center">Renoval en protección</td><td class="p-3 text-center text-xs">Conservación activa</td></tr>
+                        <tr class="border-b border-gray-100"><td class="p-3 text-xs font-medium">Elevación</td><td class="p-3 text-center">400 - 1.900 msnm</td><td class="p-3 text-center text-xs">Estimado por ubicación</td></tr>
+                        <tr class="bg-green-50"><td class="p-3 text-xs font-medium">Biodiversidad</td><td class="p-3 text-center font-bold text-green-700">Muy Alta</td><td class="p-3 text-center text-xs">Hotspot de biodiversidad</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- CONSERVACIÓN -->
+        <section id="conservacion" class="mb-8 md:mb-14">
+            <h2 class="text-2xl md:text-3xl font-bold text-slate-800 text-center mb-2" data-es="Proyecto de Conservación" data-en="Conservation Project">Proyecto de Conservación</h2>
+            <div class="section-divider"></div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div class="bg-white rounded-xl shadow-lg border-t-4 border-blue-500 p-5 md:p-6">
+                    <h3 class="text-base md:text-lg font-bold text-slate-800 mb-3" data-es="Predio Piloto MMA (2020-2021)" data-en="MMA Pilot Property (2020-2021)">Predio Piloto MMA (2020-2021)</h3>
+                    <p class="text-sm text-gray-600 mb-4">
+                        Jungla Peumayen formó parte del <strong>Proyecto para la Conservación de Especies Amenazadas</strong> del Ministerio del Medio Ambiente, enfocado en la protección del <em>Huemul</em>.
+                    </p>
+                    <div class="space-y-2">
+                        <div class="flex gap-2 text-xs text-gray-600 bg-blue-50 p-2.5 rounded-lg">
+                            <span class="text-blue-600 font-bold shrink-0">✓</span>
+                            <p>Monitoreo permanente de huemul en sitios de alta elevación</p>
+                        </div>
+                        <div class="flex gap-2 text-xs text-gray-600 bg-blue-50 p-2.5 rounded-lg">
+                            <span class="text-blue-600 font-bold shrink-0">✓</span>
+                            <p>Protocolos de exclusión de ganado doméstico</p>
+                        </div>
+                        <div class="flex gap-2 text-xs text-gray-600 bg-blue-50 p-2.5 rounded-lg">
+                            <span class="text-blue-600 font-bold shrink-0">✓</span>
+                            <p>Evaluación de carga parasitaria en animales removidos</p>
+                        </div>
+                        <div class="flex gap-2 text-xs text-gray-600 bg-blue-50 p-2.5 rounded-lg">
+                            <span class="text-blue-600 font-bold shrink-0">✓</span>
+                            <p>Planificación de actividades productivas y turísticas de mínimo impacto</p>
+                        </div>
+                        <div class="flex gap-2 text-xs text-gray-600 bg-blue-50 p-2.5 rounded-lg">
+                            <span class="text-blue-600 font-bold shrink-0">✓</span>
+                            <p>Programas de educación ambiental local</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-lg border-t-4 border-purple-500 p-5 md:p-6">
+                    <h3 class="text-base md:text-lg font-bold text-slate-800 mb-3" data-es="Contexto Territorial" data-en="Territorial Context">Contexto Territorial</h3>
+                    <div class="space-y-3">
+                        <div>
+                            <p class="text-xs font-bold text-gray-500 uppercase mb-1">Reserva de la Biosfera</p>
+                            <p class="text-sm text-gray-700">Zona de amortiguamiento del Corredor Biológico Nevados de Chillán - Laguna del Laja (UNESCO 2011)</p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-gray-500 uppercase mb-1">Áreas protegidas colindantes</p>
+                            <p class="text-sm text-gray-700">Limita con <strong>Santuario de la Naturaleza Los Huemules del Niblinto</strong> y <strong>Reserva Nacional Los Huemules del Niblinto</strong> (CODEFF/CONAF)</p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-gray-500 uppercase mb-1">Cuencas hidrográficas</p>
+                            <p class="text-sm text-gray-700">Cabeceras de <strong>Río Niblinto</strong> y <strong>Río Santa Gertrudis</strong> - sitios reconocidos de reproducción del huemul</p>
+                        </div>
+                        <div class="bg-amber-50 rounded-lg p-3 mt-4">
+                            <p class="text-xs text-amber-800"><strong>Resultado:</strong> Se detectó 1 familia de huemul en el predio. Los registros de monitoreo contribuyeron al desarrollo de protocolos de seguimiento para la región Nevados de Chillán-Laguna del Laja.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ACCESO IFM -->
+        <section id="acceso" class="mb-8 md:mb-14">
+            <h2 class="text-2xl md:text-3xl font-bold text-slate-800 text-center mb-2" data-es="Accesibilidad para Créditos IFM" data-en="Accessibility for IFM Credits">Accesibilidad para Créditos IFM</h2>
+            <div class="section-divider"></div>
+            <p class="text-center text-xs md:text-sm text-gray-400 mb-6 max-w-2xl mx-auto">Evaluación de red vial e hídrica para elegibilidad de créditos de carbono IFM (Isometric). Se requiere capacidad teórica de extracción maderera.</p>
+
+            <div class="bg-gradient-to-br from-blue-50 to-cyan-50 border-2 border-blue-200 rounded-2xl p-5 md:p-8 mb-8">
+                <div class="text-center mb-4">
+                    <p class="text-[10px] md:text-xs text-blue-600 font-semibold uppercase tracking-widest mb-2">Evaluación IFM</p>
+                    <h3 class="text-xl md:text-2xl font-black text-blue-900" data-es="Cumple requisito de accesibilidad" data-en="Meets accessibility requirement">Cumple requisito de accesibilidad</h3>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                    <div class="bg-white/80 rounded-xl p-4 shadow-sm">
+                        <p class="text-2xl md:text-3xl font-black text-green-700">✓</p>
+                        <p class="text-xs font-semibold text-gray-600 mt-1">Caminos de acceso</p>
+                        <p class="text-[10px] text-gray-400 mt-0.5">Desde Coihueco</p>
+                    </div>
+                    <div class="bg-white/80 rounded-xl p-4 shadow-sm">
+                        <p class="text-2xl md:text-3xl font-black text-green-700">✓</p>
+                        <p class="text-xs font-semibold text-gray-600 mt-1">Red interna de senderos</p>
+                        <p class="text-[10px] text-gray-400 mt-0.5">Parque operativo</p>
+                    </div>
+                    <div class="bg-white/80 rounded-xl p-4 shadow-sm">
+                        <p class="text-2xl md:text-3xl font-black text-cyan-600">✓</p>
+                        <p class="text-xs font-semibold text-gray-600 mt-1">Ríos principales</p>
+                        <p class="text-[10px] text-gray-400 mt-0.5">Niblinto + Santa Gertrudis</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-5 md:p-6 border border-gray-100">
+                <h4 class="text-sm font-bold text-gray-700 uppercase mb-3">a) Caminos de acceso</h4>
+                <div class="space-y-2 mb-5">
+                    <div class="flex gap-2 text-xs text-gray-600 bg-purple-50 p-2.5 rounded-lg">
+                        <span class="text-purple-600 font-bold shrink-0">►</span>
+                        <p>Acceso vehicular desde <strong>Coihueco</strong> hacia el sector Los Huemules del Niblinto (~25-35 km)</p>
+                    </div>
+                    <div class="flex gap-2 text-xs text-gray-600 bg-gray-50 p-2.5 rounded-lg">
+                        <span class="text-gray-400 font-bold shrink-0">►</span>
+                        <p>El parque es operativo con infraestructura turística → caminos vehiculares habilitados hasta la entrada</p>
+                    </div>
+                </div>
+
+                <h4 class="text-sm font-bold text-gray-700 uppercase mb-3">b) Caminos interiores</h4>
+                <div class="flex gap-2 text-xs text-gray-600 bg-green-50 p-2.5 rounded-lg mb-5">
+                    <span class="text-green-600 font-bold shrink-0">✓</span>
+                    <p><strong>Red de senderos internos documentada</strong> para trekking, escalada, boulder, miradores. El parque recibe visitantes regularmente → infraestructura de acceso confirmada.</p>
+                </div>
+
+                <h4 class="text-sm font-bold text-gray-700 uppercase mb-3">c) Ríos y cursos de agua</h4>
+                <div class="space-y-2">
+                    <div class="flex gap-2 text-xs text-gray-600 bg-cyan-50 p-2.5 rounded-lg">
+                        <span class="text-cyan-600 font-bold shrink-0">●</span>
+                        <p><strong>Río Niblinto</strong>: Nace en flanco W de Nevados de Chillán. <strong>Atraviesa o bordea el predio</strong>. Flujo: ~5 m³/s desviados a embalse Coihueco. Desemboca en Río Cato (afluente del Ñuble). Sitio reconocido de reproducción del huemul.</p>
+                    </div>
+                    <div class="flex gap-2 text-xs text-gray-600 bg-cyan-50/50 p-2.5 rounded-lg">
+                        <span class="text-cyan-500 font-bold shrink-0">●</span>
+                        <p><strong>Río Santa Gertrudis</strong>: Cabeceras dentro o cerca del predio. Tributario del Río Chillán. Sitio de reproducción del huemul.</p>
+                    </div>
+                    <div class="flex gap-2 text-xs text-gray-600 bg-cyan-50/50 p-2.5 rounded-lg">
+                        <span class="text-cyan-400 font-bold shrink-0">●</span>
+                        <p><strong>Cascadas, valles de origen volcánico y glaciar, pozones naturales</strong> documentados en el parque</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-amber-50 rounded-xl p-5 border-l-4 border-amber-500 mt-6">
+                <p class="text-xs font-bold text-amber-800 mb-2">CONSIDERACIÓN IMPORTANTE PARA IFM</p>
+                <p class="text-sm text-gray-700">
+                    Si bien el predio <strong>cumple con los requisitos de accesibilidad</strong> (caminos + ríos), actualmente es un <strong>Parque de Conservación activa MMA</strong>. Para IFM (Improved Forest Management) se requiere que el bosque esté en <em>riesgo de tala o degradación</em>. Un parque ya bajo protección y manejo óptimo podría <strong>NO calificar para IFM</strong> porque ya está conservado.
+                </p>
+                <p class="text-sm text-gray-700 mt-3 font-semibold">Alternativas de certificación:</p>
+                <ul class="text-sm text-gray-700 mt-2 space-y-1 ml-4">
+                    <li>• <strong>ARR</strong> (Aforestación/Reforestación) si existen áreas degradadas a restaurar</li>
+                    <li>• <strong>ACoGS</strong> (Avoided Conversion of Grasslands and Shrublands) para proteger matorrales y estepas altoandinas</li>
+                    <li>• <strong>ALM</strong> (Agricultural Land Management) si aplican prácticas sustentables</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- CONCLUSIONES -->
+        <section id="conclusiones" class="mb-8 md:mb-14">
+            <h2 class="text-2xl md:text-3xl font-bold text-slate-800 text-center mb-2" data-es="Conclusiones" data-en="Conclusions">Conclusiones</h2>
+            <div class="section-divider"></div>
+
+            <div class="bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-2xl p-5 md:p-8 mb-6">
+                <h3 class="text-lg md:text-xl font-bold text-purple-900 mb-4 text-center" data-es="Predio de Alto Valor de Conservación" data-en="High Conservation Value Property">Predio de Alto Valor de Conservación</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                    <div class="bg-white/80 rounded-xl p-4 shadow-sm">
+                        <p class="text-3xl md:text-4xl font-black text-green-700">73%</p>
+                        <p class="text-xs font-semibold text-gray-600 mt-1" data-es="Cobertura de bosque nativo" data-en="Native forest coverage">Cobertura de bosque nativo</p>
+                        <p class="text-[10px] text-gray-400 mt-0.5">~2.400 ha en protección</p>
+                    </div>
+                    <div class="bg-white/80 rounded-xl p-4 shadow-sm">
+                        <p class="text-2xl md:text-3xl font-black text-blue-700">Huemul</p>
+                        <p class="text-xs font-semibold text-gray-600 mt-1" data-es="Especie En Peligro" data-en="Endangered Species">Especie En Peligro</p>
+                        <p class="text-[10px] text-gray-400 mt-0.5">1 familia confirmada</p>
+                    </div>
+                    <div class="bg-white/80 rounded-xl p-4 shadow-sm">
+                        <p class="text-2xl md:text-3xl font-black text-purple-700">Único</p>
+                        <p class="text-xs font-semibold text-gray-600 mt-1" data-es="Transición ecosistemas" data-en="Ecosystem transition">Transición ecosistemas</p>
+                        <p class="text-[10px] text-gray-400 mt-0.5">Esclerófilo → Templado</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-5 md:p-6 border border-gray-100">
+                <ol class="space-y-4 text-sm text-gray-700">
+                    <li class="flex gap-3">
+                        <span class="font-bold text-purple-600 shrink-0">1.</span>
+                        <p><strong>Ubicación distintiva:</strong> A diferencia de los predios cordilleranos Sazo (1.800-2.800m) y Carrizales (1.400-2.200m), Jungla Peumayen se ubica en zona <strong>media-baja (400-1.900m)</strong>, ~93-108 km al oeste, en Coihueco. No son predios vecinos.</p>
+                    </li>
+                    <li class="flex gap-3">
+                        <span class="font-bold text-purple-600 shrink-0">2.</span>
+                        <p><strong>Bosque y biodiversidad:</strong> ~2.400 ha (73%) de bosque nativo en <strong>transición única</strong> entre bosque esclerófilo (Peumo, Quillay) → Roble-Raulí-Coigüe (alto valor maderero) → Lenga. Esta transición genera un <strong>hotspot de biodiversidad</strong> documentado por MMA.</p>
+                    </li>
+                    <li class="flex gap-3">
+                        <span class="font-bold text-purple-600 shrink-0">3.</span>
+                        <p><strong>Conservación activa:</strong> Predio Piloto MMA 2020-2021. Protección del huemul (1 familia detectada). Monitoreo científico, exclusión de ganado, educación ambiental. Las cabeceras de Niblinto y Santa Gertrudis son <strong>sitios reconocidos de reproducción del huemul</strong>.</p>
+                    </li>
+                    <li class="flex gap-3">
+                        <span class="font-bold text-purple-600 shrink-0">4.</span>
+                        <p><strong>Uso actual:</strong> Parque turístico ecológico operativo. Senderos, camping, cascadas, escalada. Modelo de <strong>turismo de bajo impacto compatible con conservación</strong>.</p>
+                    </li>
+                    <li class="flex gap-3">
+                        <span class="font-bold text-purple-600 shrink-0">5.</span>
+                        <p><strong>Elegibilidad IFM:</strong> ✓ Cumple requisito de accesibilidad (caminos desde Coihueco + Río Niblinto ~5 m³/s + Río Santa Gertrudis). Sin embargo, al ser un parque ya bajo protección activa, podría <strong>NO calificar para IFM</strong>. Alternativas: ARR, ACoGS, ALM.</p>
+                    </li>
+                    <li class="flex gap-3">
+                        <span class="font-bold text-purple-600 shrink-0">6.</span>
+                        <p><strong>Contexto territorial:</strong> Zona de amortiguamiento Reserva de la Biosfera UNESCO. Limita con Santuario y Reserva Nacional Los Huemules del Niblinto. <strong>Corredor biológico crítico</strong> para la conservación del huemul en Chile central.</p>
+                    </li>
+                </ol>
+            </div>
+        </section>
+
+        <!-- REFERENCIAS -->
+        <section id="referencias" class="mb-8 md:mb-14">
+            <h2 class="text-2xl md:text-3xl font-bold text-slate-800 text-center mb-2" data-es="Referencias y Fuentes" data-en="References and Sources">Referencias y Fuentes</h2>
+            <div class="section-divider"></div>
+            <p class="text-center text-xs md:text-sm text-gray-400 mb-6 max-w-2xl mx-auto">Todas las fuentes son de acceso público y fueron verificadas en febrero de 2026.</p>
+
+            <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+                <div class="p-4 bg-purple-50 border-b border-purple-100">
+                    <h3 class="font-bold text-sm text-purple-800 uppercase tracking-wider">Fuentes Oficiales</h3>
+                </div>
+                <div class="divide-y divide-gray-100">
+                    <div class="p-4 flex gap-3">
+                        <span class="text-purple-700 font-bold text-sm shrink-0 w-6">[1]</span>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">MMA - Predio Piloto Jungla Peumayén</p>
+                            <p class="text-xs text-gray-500 mt-0.5">Proyecto GEF Especies Amenazadas 2020-2021. Conservación del huemul.</p>
+                            <a href="https://gefespeciesamenazadas.mma.gob.cl/predios_piloto/predio-piloto-jungla-peumayen/" target="_blank" class="text-xs text-purple-600 hover:underline mt-1 inline-block">gefespeciesamenazadas.mma.gob.cl</a>
+                        </div>
+                    </div>
+                    <div class="p-4 flex gap-3">
+                        <span class="text-purple-700 font-bold text-sm shrink-0 w-6">[2]</span>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">Jungla Peumayen - Sitio Oficial</p>
+                            <p class="text-xs text-gray-500 mt-0.5">Parque Nevados de Chillán, Ñuble. 3.300 ha de bosque nativo, matorrales y estepas altoandinas.</p>
+                            <a href="https://junglapeumayen.cl/" target="_blank" class="text-xs text-purple-600 hover:underline mt-1 inline-block">junglapeumayen.cl</a>
+                        </div>
+                    </div>
+                    <div class="p-4 flex gap-3">
+                        <span class="text-purple-700 font-bold text-sm shrink-0 w-6">[3]</span>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">Ladera Sur - Huemules en Jungla Peumayen</p>
+                            <p class="text-xs text-gray-500 mt-0.5">Reportaje sobre la importancia del predio para la conservación del huemul en Chile central.</p>
+                            <a href="https://laderasur.com/articulo/siguiendo-las-huellas-del-huemul-en-la-jungla-peumayen-lugar-es-clave-para-proteger-su-poblacion-en-chile-central/" target="_blank" class="text-xs text-purple-600 hover:underline mt-1 inline-block">laderasur.com</a>
+                        </div>
+                    </div>
+                    <div class="p-4 flex gap-3">
+                        <span class="text-purple-700 font-bold text-sm shrink-0 w-6">[4]</span>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">Wikipedia - Río Niblinto</p>
+                            <p class="text-xs text-gray-500 mt-0.5">Hidrografía, cuenca, flujos. Embalse Coihueco. Sitio de reproducción del huemul.</p>
+                            <a href="https://es.wikipedia.org/wiki/R%C3%ADo_Niblinto" target="_blank" class="text-xs text-purple-600 hover:underline mt-1 inline-block">es.wikipedia.org/wiki/Río_Niblinto</a>
+                        </div>
+                    </div>
+                    <div class="p-4 flex gap-3">
+                        <span class="text-purple-700 font-bold text-sm shrink-0 w-6">[5]</span>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">Wikipedia - Reserva Nacional Los Huemules del Niblinto</p>
+                            <p class="text-xs text-gray-500 mt-0.5">Área protegida colindante. CONAF. Corredor Biológico Nevados de Chillán - Laguna del Laja.</p>
+                            <a href="https://es.wikipedia.org/wiki/Reserva_nacional_Los_Huemules_del_Niblinto" target="_blank" class="text-xs text-purple-600 hover:underline mt-1 inline-block">es.wikipedia.org/wiki/Reserva_nacional_Los_Huemules_del_Niblinto</a>
+                        </div>
+                    </div>
+                    <div class="p-4 flex gap-3">
+                        <span class="text-purple-700 font-bold text-sm shrink-0 w-6">[6]</span>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">UNESCO - Reserva de la Biosfera Corredor Biológico Nevados de Chillán - Laguna del Laja</p>
+                            <p class="text-xs text-gray-500 mt-0.5">Designada 2011. 641.403 ha. Jungla Peumayen en zona de amortiguamiento.</p>
+                            <a href="https://en.unesco.org/biosphere/lac/chillan-lajas" target="_blank" class="text-xs text-purple-600 hover:underline mt-1 inline-block">en.unesco.org/biosphere/lac/chillan-lajas</a>
+                        </div>
+                    </div>
+                    <div class="p-4 flex gap-3">
+                        <span class="text-purple-700 font-bold text-sm shrink-0 w-6">[7]</span>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">Archivo KML proporcionado</p>
+                            <p class="text-xs text-gray-500 mt-0.5">Predio Jungla Peumayen.kml (90 vértices). Formato KML, datum WGS84. Metadata: San Jose, Rol 112-2, 3.301 ha.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-purple-50 rounded-xl p-5 mt-6 border border-purple-200">
+                <h4 class="font-bold text-xs text-purple-800 mb-2 uppercase tracking-wider">Nota Metodológica</h4>
+                <p class="text-xs text-gray-600">
+                    Los valores de superficie, perímetro y centroide fueron calculados directamente desde coordenadas WGS84 del archivo KML mediante fórmula de Haversine (distancias) y Shoelace (áreas) con proyección local plana. Las estimaciones de cobertura vegetal por franja altitudinal son <strong>aproximaciones basadas en el gradiente altitudinal documentado</strong> (400-1.900 msnm) y la transición de ecosistemas descrita por MMA. <strong>No corresponden a procesamiento de imágenes satelitales reales</strong> de este predio. Para valores exactos se requiere procesamiento de imágenes Sentinel-2 o vuelo con drone LiDAR + multiespectral.
+                </p>
+            </div>
+        </section>
+
+        <!-- CONFIDENCIALIDAD -->
+        <section class="mb-8 text-center">
+            <div class="inline-block bg-gray-100 rounded-lg px-6 py-3 border border-gray-200">
+                <p class="text-[10px] text-gray-400 uppercase tracking-widest font-semibold" data-es="Documento Confidencial" data-en="Confidential Document">Documento Confidencial</p>
+                <p class="text-xs text-gray-500 mt-1" data-es="Prohibida su reproducción o distribución sin autorización de Cussen Consultoría Geoespacial." data-en="Reproduction or distribution without authorization from Cussen Geospatial Consulting is prohibited.">Prohibida su reproducción o distribución sin autorización de Cussen Consultoría Geoespacial.</p>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-gradient-to-b from-purple-900 to-purple-950 text-center py-8 md:py-10 px-4">
+        <a href="/index.html" class="font-black text-white text-lg md:text-xl tracking-tight no-underline hover:text-purple-200 transition">CUSSEN</a>
+        <p class="text-purple-300 text-xs md:text-sm mt-1" data-es="Servicios Profesionales de Teledetección y Geoespacial" data-en="Professional Remote Sensing and Geospatial Services">Servicios Profesionales de Teledetección y Geoespacial</p>
+        <p class="text-purple-500 text-[10px] md:text-xs mt-2" data-es="Transformando datos geoespaciales en decisiones estratégicas" data-en="Transforming geospatial data into strategic decisions">Transformando datos geoespaciales en decisiones estratégicas</p>
+        <div class="mt-4 md:mt-6 flex justify-center gap-4 md:gap-6 text-[10px] md:text-xs text-purple-600">
+            <span>contacto@cussen.cl</span>
+            <span>|</span>
+            <span>cussen.cl</span>
+        </div>
+        <p class="text-purple-800 text-[9px] md:text-[10px] mt-4 md:mt-6">IT-2026-FCH-002 | Febrero 2026 | Todos los derechos reservados</p>
+    </footer>
+
+    <!-- JAVASCRIPT -->
+    <script>
+    // Polygon data from KML (lat, lon format)
+    const peumayen = [[-36.828671,-71.552387],[-36.828080,-71.554618],[-36.827450,-71.557027],[-36.824338,-71.562098],[-36.822257,-71.566348],[-36.820290,-71.570286],[-36.819211,-71.571690],[-36.815647,-71.573869],[-36.813673,-71.575169],[-36.813089,-71.572925],[-36.812205,-71.571096],[-36.810620,-71.569924],[-36.809156,-71.568821],[-36.807534,-71.563748],[-36.805348,-71.560340],[-36.804787,-71.556182],[-36.802361,-71.553653],[-36.795951,-71.549861],[-36.793796,-71.542413],[-36.792405,-71.533012],[-36.787135,-71.529061],[-36.787284,-71.522050],[-36.787771,-71.519547],[-36.790777,-71.514248],[-36.791196,-71.508145],[-36.791195,-71.501309],[-36.790251,-71.497524],[-36.790009,-71.494074],[-36.789398,-71.485239],[-36.788846,-71.482207],[-36.785602,-71.478190],[-36.786150,-71.476184],[-36.785592,-71.473467],[-36.788130,-71.471435],[-36.790175,-71.470511],[-36.793377,-71.469625],[-36.795589,-71.468578],[-36.795884,-71.464799],[-36.794071,-71.460592],[-36.793345,-71.457210],[-36.790612,-71.452894],[-36.789083,-71.450648],[-36.785899,-71.449739],[-36.783637,-71.448660],[-36.782629,-71.445498],[-36.782782,-71.443497],[-36.782941,-71.442164],[-36.784175,-71.440932],[-36.785799,-71.440176],[-36.786763,-71.440976],[-36.789299,-71.441250],[-36.790843,-71.440950],[-36.792258,-71.439723],[-36.794077,-71.439241],[-36.796361,-71.440753],[-36.796806,-71.443736],[-36.798391,-71.444056],[-36.799898,-71.444644],[-36.800221,-71.446543],[-36.800844,-71.447773],[-36.801908,-71.448936],[-36.803056,-71.449423],[-36.804196,-71.450269],[-36.805202,-71.450571],[-36.806165,-71.453031],[-36.808313,-71.454089],[-36.810471,-71.454698],[-36.812100,-71.454660],[-36.813643,-71.453494],[-36.815336,-71.453740],[-36.817175,-71.454147],[-36.817793,-71.455473],[-36.818736,-71.456295],[-36.820554,-71.457944],[-36.821048,-71.459092],[-36.821037,-71.462483],[-36.819392,-71.464117],[-36.817162,-71.468724],[-36.815937,-71.474104],[-36.813969,-71.484630],[-36.814006,-71.489994],[-36.814816,-71.497459],[-36.814841,-71.503309],[-36.816697,-71.509922],[-36.818497,-71.516771],[-36.821135,-71.525725],[-36.824911,-71.538764],[-36.826840,-71.542097],[-36.828386,-71.547113],[-36.828671,-71.552387]];
+
+    // Map initialization
+    const map = L.map('map', { zoomControl: false }).setView([-36.804, -71.492], 12);
+    L.control.zoom({ position: 'topright' }).addTo(map);
+    L.control.scale({ metric: true, imperial: false, position: 'bottomright' }).addTo(map);
+
+    const layers = {
+        satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'ESRI World Imagery', maxZoom: 18 }),
+        topo: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { attribution: 'OpenTopoMap', maxZoom: 17 }),
+        osm: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: 'OSM', maxZoom: 19 })
+    };
+    let currentLayer = layers.satellite;
+    currentLayer.addTo(map);
+
+    const labelsLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { maxZoom: 18, pane: 'overlayPane' });
+    labelsLayer.addTo(map);
+
+    // Polygon
+    const peumayenPolygon = L.polygon(peumayen, { color: '#9333ea', weight: 3, fillColor: '#9333ea', fillOpacity: 0.2 }).addTo(map);
+    peumayenPolygon.bindTooltip('<strong>Predio Jungla Peumayen</strong><br>3.300 ha', { permanent: false, direction: 'center' });
+
+    const centroid = L.marker([-36.803711, -71.491520]).addTo(map).bindPopup('<strong>Jungla Peumayen</strong><br>3.300 ha | Coihueco<br><span style="font-family:monospace;font-size:11px">36.804°S, 71.492°W</span><br>400-1.900 msnm');
+
+    map.fitBounds(peumayenPolygon.getBounds(), { padding: [30, 30] });
+
+    // Coordinate display
+    const coordDisplay = document.getElementById('coord-display');
+    map.on('mousemove', function(e) {
+        coordDisplay.textContent = 'Lat: ' + e.latlng.lat.toFixed(5) + ' | Lon: ' + e.latlng.lng.toFixed(5);
+    });
+
+    function setLayer(layerName, btn) {
+        map.removeLayer(currentLayer);
+        if (layerName === 'satellite') { if (!map.hasLayer(labelsLayer)) labelsLayer.addTo(map); }
+        else { if (map.hasLayer(labelsLayer)) map.removeLayer(labelsLayer); }
+        currentLayer = layers[layerName];
+        currentLayer.addTo(map);
+        document.querySelectorAll('.layer-btn').forEach(b => b.classList.remove('active', 'bg-white'));
+        btn.classList.add('active', 'bg-white');
+    }
+    </script>
+    <script src="../../../assets/i18n.js"></script>
+</body>
+</html>

@@ -1,0 +1,1788 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="VinotecaCL - Gestión integral para tiendas de vino y sommeliers en Chile">
+    <meta name="theme-color" content="#450a0a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="VinotecaCL">
+
+    <title>VinotecaCL - Gestión de Vinotecas</title>
+
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%23450a0a'/><path d='M50 20 Q60 35 55 60 Q50 75 45 60 Q40 35 50 20' fill='%23d4af37'/></svg>">
+    <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22VinotecaCL%22,%22short_name%22:%22VinotecaCL%22,%22start_url%22:%22/%22,%22display%22:%22standalone%22,%22background_color%22:%22%23ffffff%22,%22theme_color%22:%22%23450a0a%22,%22scope%22:%22/%22}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: #fafaf9;
+            color: #1f2937;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        header {
+            background: linear-gradient(135deg, #450a0a 0%, #881337 100%);
+            color: white;
+            padding: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(69, 10, 10, 0.15);
+        }
+
+        header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        header p {
+            font-size: 0.875rem;
+            opacity: 0.9;
+            margin-top: 0.25rem;
+        }
+
+        .tabs {
+            display: flex;
+            background: white;
+            border-bottom: 1px solid #e5e7eb;
+            overflow-x: auto;
+            gap: 0;
+            position: sticky;
+            top: 4.5rem;
+            z-index: 99;
+        }
+
+        .tab-btn {
+            flex: 1;
+            min-width: 100px;
+            padding: 1rem 0.75rem;
+            border: none;
+            background: white;
+            color: #6b7280;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            white-space: nowrap;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .tab-btn.active {
+            color: #450a0a;
+            border-bottom-color: #881337;
+        }
+
+        .tab-btn:hover {
+            color: #450a0a;
+        }
+
+        .content {
+            flex: 1;
+            padding: 1.5rem 1rem;
+            overflow-y: auto;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section {
+            margin-bottom: 2rem;
+        }
+
+        .section h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #450a0a;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #881337;
+            padding-bottom: 0.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 0.4rem;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-size: 16px;
+            font-family: 'Inter', sans-serif;
+            background: white;
+            color: #1f2937;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #881337;
+            box-shadow: 0 0 0 3px rgba(136, 19, 55, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #881337, #d4a574);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(136, 19, 55, 0.3);
+        }
+
+        .btn-secondary {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        .btn-secondary:hover {
+            background: #d1d5db;
+        }
+
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+
+        .btn-small {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #881337;
+        }
+
+        .card h3 {
+            font-size: 1.125rem;
+            color: #450a0a;
+            margin-bottom: 0.75rem;
+        }
+
+        .card p {
+            font-size: 0.875rem;
+            color: #6b7280;
+            line-height: 1.5;
+        }
+
+        .rating {
+            display: inline-block;
+            background: #fef3c7;
+            color: #b45309;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.375rem 0.75rem;
+            border-radius: 0.375rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .badge-viña {
+            background: #dbeafe;
+            color: #0c4a6e;
+        }
+
+        .badge-cepa {
+            background: #fce7f3;
+            color: #831843;
+        }
+
+        .badge-valle {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-clasificacion {
+            background: #fef08a;
+            color: #713f12;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            margin-bottom: 1.5rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        thead {
+            background: #450a0a;
+            color: white;
+        }
+
+        th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        td {
+            padding: 0.875rem 1rem;
+            border-top: 1px solid #e5e7eb;
+            font-size: 0.875rem;
+        }
+
+        tr:hover {
+            background: #f9fafb;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #450a0a 0%, #881337 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            opacity: 0.9;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: #6b7280;
+        }
+
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: white;
+            border-radius: 0.5rem;
+            margin-bottom: 0.75rem;
+            border-left: 3px solid #881337;
+        }
+
+        .cart-item-info {
+            flex: 1;
+        }
+
+        .cart-item-name {
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 0.25rem;
+        }
+
+        .cart-item-price {
+            font-size: 0.875rem;
+            color: #881337;
+            font-weight: 600;
+        }
+
+        .quantity-control {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .quantity-control button {
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            background: white;
+            color: #450a0a;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .quantity-control button:hover {
+            background: #881337;
+            color: white;
+            border-color: #881337;
+        }
+
+        .quantity-display {
+            width: 40px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #450a0a;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #881337;
+            padding-bottom: 1rem;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .modal-buttons button {
+            flex: 1;
+        }
+
+        .success-message {
+            background: #d1fae5;
+            color: #065f46;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid #059669;
+        }
+
+        .error-message {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid #dc2626;
+        }
+
+        .footer {
+            background: #f3f4f6;
+            padding: 2rem 1rem;
+            text-align: center;
+            color: #6b7280;
+            font-size: 0.875rem;
+            border-top: 1px solid #e5e7eb;
+            margin-top: auto;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #e5e7eb;
+            border-top-color: #881337;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.25rem;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-content {
+                width: 95%;
+                padding: 1.5rem;
+            }
+
+            th, td {
+                padding: 0.75rem 0.5rem;
+                font-size: 0.8125rem;
+            }
+        }
+
+        @media (prefers-color-scheme: dark) {
+            html, body {
+                background-color: #111827;
+                color: #f3f4f6;
+            }
+
+            .tabs, input, select, textarea, table {
+                background: #1f2937;
+                color: #f3f4f6;
+            }
+
+            input, select, textarea {
+                border-color: #374151;
+            }
+
+            .card {
+                background: #1f2937;
+            }
+
+            tr:hover {
+                background: #111827;
+            }
+
+            .btn-secondary {
+                background: #374151;
+                color: #f3f4f6;
+            }
+
+            .btn-secondary:hover {
+                background: #4b5563;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🍷 VinotecaCL</h1>
+        <p>Gestión integral para tiendas de vino y sommeliers</p>
+    </header>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('bodega')">BODEGA</button>
+        <button class="tab-btn" onclick="switchTab('ventas')">VENTAS</button>
+        <button class="tab-btn" onclick="switchTab('catas')">CATAS</button>
+        <button class="tab-btn" onclick="switchTab('clientes')">CLIENTES</button>
+        <button class="tab-btn" onclick="switchTab('proveedores')">PROVEEDORES</button>
+        <button class="tab-btn" onclick="switchTab('reportes')">REPORTES</button>
+    </div>
+
+    <div class="content">
+        <!-- BODEGA TAB -->
+        <div id="bodega" class="tab-content active">
+            <div class="section">
+                <h2>Catálogo de Vinos</h2>
+                <button class="btn-primary" onclick="openModal('addWineModal')">+ Agregar Vino</button>
+            </div>
+
+            <div class="grid" id="wineGrid"></div>
+        </div>
+
+        <!-- VENTAS TAB -->
+        <div id="ventas" class="tab-content">
+            <div class="section">
+                <h2>Punto de Venta</h2>
+                <div class="form-group">
+                    <label>Buscar vino</label>
+                    <input type="text" id="salesSearch" placeholder="Nombre, viña o cepa..." oninput="filterWinesForSales()">
+                </div>
+                <div id="wineSearchResults" style="margin-bottom: 1.5rem;"></div>
+            </div>
+
+            <div class="section">
+                <h2>Carrito de Compra</h2>
+                <div id="cartItems"></div>
+                <div style="background: white; padding: 1.5rem; border-radius: 0.75rem; margin-bottom: 1rem;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem; font-weight: 600;">
+                        <span>Subtotal:</span>
+                        <span id="cartSubtotal">$0</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; color: #881337; font-weight: 600; font-size: 1.125rem;">
+                        <span>Total:</span>
+                        <span id="cartTotal">$0</span>
+                    </div>
+                    <div class="form-group">
+                        <label>Método de pago</label>
+                        <select id="paymentMethod">
+                            <option value="efectivo">Efectivo</option>
+                            <option value="tarjeta">Tarjeta de Débito/Crédito</option>
+                            <option value="transferencia">Transferencia Bancaria</option>
+                            <option value="cheque">Cheque</option>
+                        </select>
+                    </div>
+                    <button class="btn-primary" onclick="completeSale()" style="width: 100%;">Completar Venta</button>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>Registro de Ventas del Día</h2>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Hora</th>
+                                <th>Vino</th>
+                                <th>Cantidad</th>
+                                <th>Monto</th>
+                                <th>Método</th>
+                            </tr>
+                        </thead>
+                        <tbody id="salesLog"></tbody>
+                    </table>
+                </div>
+                <div class="stats-grid" id="bestSellersStats"></div>
+            </div>
+        </div>
+
+        <!-- CATAS TAB -->
+        <div id="catas" class="tab-content">
+            <div class="section">
+                <h2>Eventos de Cata</h2>
+                <button class="btn-primary" onclick="openModal('addTastingModal')">+ Crear Cata</button>
+            </div>
+
+            <div id="tastingsList"></div>
+        </div>
+
+        <!-- CLIENTES TAB -->
+        <div id="clientes" class="tab-content">
+            <div class="section">
+                <h2>Base de Clientes</h2>
+                <button class="btn-primary" onclick="openModal('addCustomerModal')">+ Agregar Cliente</button>
+            </div>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Teléfono</th>
+                            <th>Cepa Favorita</th>
+                            <th>Membresía</th>
+                            <th>Compras</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="customersList"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- PROVEEDORES TAB -->
+        <div id="proveedores" class="tab-content">
+            <div class="section">
+                <h2>Gestión de Proveedores</h2>
+                <button class="btn-primary" onclick="openModal('addSupplierModal')">+ Agregar Proveedor</button>
+            </div>
+
+            <div class="grid" id="suppliersList"></div>
+        </div>
+
+        <!-- REPORTES TAB -->
+        <div id="reportes" class="tab-content">
+            <div class="section">
+                <h2>Análisis de Ventas</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalRevenue">$0</div>
+                        <div class="stat-label">Ingresos Totales</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalMargin">0%</div>
+                        <div class="stat-label">Margen Promedio</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="inventoryValue">$0</div>
+                        <div class="stat-label">Valorización Stock</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="bottlesOutStock">0</div>
+                        <div class="stat-label">Botellas en Stock</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>Ventas por Cepa</h2>
+                <canvas id="cepaSalesChart" height="80"></canvas>
+            </div>
+
+            <div class="section">
+                <h2>Ventas por Viña</h2>
+                <canvas id="vinaSalesChart" height="80"></canvas>
+            </div>
+
+            <div class="section">
+                <h2>Ventas por Valle</h2>
+                <canvas id="valleySalesChart" height="80"></canvas>
+            </div>
+
+            <div class="section">
+                <h2>Vinos Más Antiguos (Potencial Envejecimiento)</h2>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Vino</th>
+                                <th>Año</th>
+                                <th>Viña</th>
+                                <th>Cepa</th>
+                                <th>Antigüedad</th>
+                                <th>Stock</th>
+                            </tr>
+                        </thead>
+                        <tbody id="agingReport"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODALS -->
+
+    <!-- Add Wine Modal -->
+    <div id="addWineModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Agregar Vino</div>
+            <form onsubmit="addWine(event)">
+                <div class="form-group">
+                    <label>Nombre</label>
+                    <input type="text" id="wineName" required placeholder="Ej: Almaviva">
+                </div>
+                <div class="form-group">
+                    <label>Viña</label>
+                    <select id="wineWinery" required>
+                        <option value="">Seleccionar viña...</option>
+                        <option value="Concha y Toro">Concha y Toro</option>
+                        <option value="Santa Rita">Santa Rita</option>
+                        <option value="Undurraga">Undurraga</option>
+                        <option value="Montes">Montes</option>
+                        <option value="Errázuriz">Errázuriz</option>
+                        <option value="Cono Sur">Cono Sur</option>
+                        <option value="Casillero del Diablo">Casillero del Diablo</option>
+                        <option value="Carmen">Carmen</option>
+                        <option value="San Pedro">San Pedro</option>
+                        <option value="Ventisquero">Ventisquero</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Cepa</label>
+                    <select id="wineGrape" required>
+                        <option value="">Seleccionar cepa...</option>
+                        <option value="Cabernet Sauvignon">Cabernet Sauvignon</option>
+                        <option value="Merlot">Merlot</option>
+                        <option value="Carménère">Carménère</option>
+                        <option value="Sauvignon Blanc">Sauvignon Blanc</option>
+                        <option value="Chardonnay">Chardonnay</option>
+                        <option value="Pinot Noir">Pinot Noir</option>
+                        <option value="Syrah">Syrah</option>
+                        <option value="País">País</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Año</label>
+                    <input type="number" id="wineYear" required min="1900" max="2100" placeholder="2022">
+                </div>
+                <div class="form-group">
+                    <label>Valle</label>
+                    <select id="wineValley" required>
+                        <option value="">Seleccionar valle...</option>
+                        <option value="Maipo">Maipo</option>
+                        <option value="Colchagua">Colchagua</option>
+                        <option value="Casablanca">Casablanca</option>
+                        <option value="Leyda">Leyda</option>
+                        <option value="Rapel">Rapel</option>
+                        <option value="Curicó">Curicó</option>
+                        <option value="Maule">Maule</option>
+                        <option value="Aconcagua">Aconcagua</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Clasificación</label>
+                    <select id="wineClassification" required>
+                        <option value="">Seleccionar clasificación...</option>
+                        <option value="Reserva">Reserva</option>
+                        <option value="Gran Reserva">Gran Reserva</option>
+                        <option value="Premium">Premium</option>
+                        <option value="Ícono">Ícono</option>
+                        <option value="Estándar">Estándar</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Precio (CLP)</label>
+                    <input type="number" id="winePrice" required min="0" step="1000" placeholder="50000">
+                </div>
+                <div class="form-group">
+                    <label>Stock (botellas)</label>
+                    <input type="number" id="wineStock" required min="0" placeholder="10">
+                </div>
+                <div class="form-group">
+                    <label>Puntuación (0-100)</label>
+                    <input type="number" id="wineRating" min="0" max="100" placeholder="92">
+                </div>
+                <div class="form-group">
+                    <label>Notas de Cata</label>
+                    <textarea id="wineTastingNotes" placeholder="Aroma, sabor, final..."></textarea>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn-secondary" onclick="closeModal('addWineModal')">Cancelar</button>
+                    <button type="submit" class="btn-primary">Agregar Vino</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Tasting Modal -->
+    <div id="addTastingModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Crear Cata</div>
+            <form onsubmit="addTasting(event)">
+                <div class="form-group">
+                    <label>Nombre de la Cata</label>
+                    <input type="text" id="tastingName" required placeholder="Ej: Cata Carménère Colchagua">
+                </div>
+                <div class="form-group">
+                    <label>Fecha</label>
+                    <input type="date" id="tastingDate" required>
+                </div>
+                <div class="form-group">
+                    <label>Hora</label>
+                    <input type="time" id="tastingTime" required>
+                </div>
+                <div class="form-group">
+                    <label>Precio por Persona (CLP)</label>
+                    <input type="number" id="tastingPrice" required min="0" step="1000" placeholder="25000">
+                </div>
+                <div class="form-group">
+                    <label>Máximo Asistentes</label>
+                    <input type="number" id="tastingCapacity" required min="1" placeholder="20">
+                </div>
+                <div class="form-group">
+                    <label>Vinos Seleccionados (seleccione hasta 6)</label>
+                    <div id="tastingWineSelect" style="max-height: 200px; overflow-y: auto;"></div>
+                </div>
+                <div class="form-group">
+                    <label>Descripción de la Cata</label>
+                    <textarea id="tastingDescription" placeholder="Detalles, regiones, terruño..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Materiales Necesarios</label>
+                    <textarea id="tastingMaterials" placeholder="Copas, pan blanco, agua, etc..."></textarea>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn-secondary" onclick="closeModal('addTastingModal')">Cancelar</button>
+                    <button type="submit" class="btn-primary">Crear Cata</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Customer Modal -->
+    <div id="addCustomerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Agregar Cliente</div>
+            <form onsubmit="addCustomer(event)">
+                <div class="form-group">
+                    <label>Nombre Completo</label>
+                    <input type="text" id="customerName" required placeholder="Juan Pérez">
+                </div>
+                <div class="form-group">
+                    <label>Teléfono</label>
+                    <input type="tel" id="customerPhone" required placeholder="+56912345678">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="customerEmail" placeholder="juan@email.com">
+                </div>
+                <div class="form-group">
+                    <label>Cepa Favorita</label>
+                    <select id="customerGrape">
+                        <option value="">Sin preferencia</option>
+                        <option value="Cabernet Sauvignon">Cabernet Sauvignon</option>
+                        <option value="Merlot">Merlot</option>
+                        <option value="Carménère">Carménère</option>
+                        <option value="Sauvignon Blanc">Sauvignon Blanc</option>
+                        <option value="Chardonnay">Chardonnay</option>
+                        <option value="Pinot Noir">Pinot Noir</option>
+                        <option value="Syrah">Syrah</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Rango de Precio Preferido</label>
+                    <select id="customerPriceRange">
+                        <option value="">Sin preferencia</option>
+                        <option value="Hasta $20k">Hasta $20k</option>
+                        <option value="$20k - $50k">$20k - $50k</option>
+                        <option value="$50k - $100k">$50k - $100k</option>
+                        <option value="Más de $100k">Más de $100k</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Membresía</label>
+                    <select id="customerMembership">
+                        <option value="Sin membresía">Sin membresía</option>
+                        <option value="Bronce">Bronce (5% descuento)</option>
+                        <option value="Plata">Plata (10% descuento)</option>
+                        <option value="Oro">Oro (15% descuento)</option>
+                        <option value="Platino">Platino (20% descuento)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Cumpleaños</label>
+                    <input type="date" id="customerBirthday">
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn-secondary" onclick="closeModal('addCustomerModal')">Cancelar</button>
+                    <button type="submit" class="btn-primary">Agregar Cliente</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Supplier Modal -->
+    <div id="addSupplierModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Agregar Proveedor</div>
+            <form onsubmit="addSupplier(event)">
+                <div class="form-group">
+                    <label>Nombre Viña/Distribuidor</label>
+                    <input type="text" id="supplierName" required placeholder="Santa Rita S.A.">
+                </div>
+                <div class="form-group">
+                    <label>Tipo</label>
+                    <select id="supplierType" required>
+                        <option value="">Seleccionar...</option>
+                        <option value="Viña">Viña Directa</option>
+                        <option value="Distribuidor">Distribuidor</option>
+                        <option value="Importador">Importador</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Contacto Nombre</label>
+                    <input type="text" id="supplierContact" placeholder="Carlos Martínez">
+                </div>
+                <div class="form-group">
+                    <label>Teléfono</label>
+                    <input type="tel" id="supplierPhone" placeholder="+56912345678">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="supplierEmail" placeholder="contacto@santarita.cl">
+                </div>
+                <div class="form-group">
+                    <label>Término de Pago (días)</label>
+                    <input type="number" id="supplierPaymentTerms" min="0" placeholder="30">
+                </div>
+                <div class="form-group">
+                    <label>Orden Mínima (CLP)</label>
+                    <input type="number" id="supplierMinOrder" min="0" step="1000" placeholder="500000">
+                </div>
+                <div class="form-group">
+                    <label>Vinos que Entrega</label>
+                    <textarea id="supplierWines" placeholder="Listado de vinos disponibles..."></textarea>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn-secondary" onclick="closeModal('addSupplierModal')">Cancelar</button>
+                    <button type="submit" class="btn-primary">Agregar Proveedor</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>VinotecaCL © 2026 | Sistema de Gestión para Sommeliers y Tiendas de Vino</p>
+        <p style="margin-top: 0.5rem; font-size: 0.75rem;">Datos guardados localmente en tu dispositivo</p>
+    </div>
+
+    <script>
+        // Initialize app data
+        const app = {
+            wines: [],
+            sales: [],
+            tastings: [],
+            customers: [],
+            suppliers: [],
+            cart: [],
+
+            init() {
+                this.loadFromStorage();
+                if (this.wines.length === 0) {
+                    this.seedDefaultData();
+                }
+                this.render();
+                this.registerServiceWorker();
+            },
+
+            loadFromStorage() {
+                try {
+                    const wines = localStorage.getItem('vinoteca_wines');
+                    const sales = localStorage.getItem('vinoteca_sales');
+                    const tastings = localStorage.getItem('vinoteca_tastings');
+                    const customers = localStorage.getItem('vinoteca_customers');
+                    const suppliers = localStorage.getItem('vinoteca_suppliers');
+
+                    if (wines) this.wines = JSON.parse(wines);
+                    if (sales) this.sales = JSON.parse(sales);
+                    if (tastings) this.tastings = JSON.parse(tastings);
+                    if (customers) this.customers = JSON.parse(customers);
+                    if (suppliers) this.suppliers = JSON.parse(suppliers);
+                } catch (e) {
+                    console.error('Error loading data:', e);
+                }
+            },
+
+            saveToStorage() {
+                try {
+                    localStorage.setItem('vinoteca_wines', JSON.stringify(this.wines));
+                    localStorage.setItem('vinoteca_sales', JSON.stringify(this.sales));
+                    localStorage.setItem('vinoteca_tastings', JSON.stringify(this.tastings));
+                    localStorage.setItem('vinoteca_customers', JSON.stringify(this.customers));
+                    localStorage.setItem('vinoteca_suppliers', JSON.stringify(this.suppliers));
+                } catch (e) {
+                    console.error('Error saving data:', e);
+                }
+            },
+
+            seedDefaultData() {
+                this.wines = [
+                    {
+                        id: 1,
+                        name: 'Almaviva',
+                        winery: 'Concha y Toro',
+                        grape: 'Cabernet Sauvignon',
+                        year: 2019,
+                        valley: 'Maipo',
+                        classification: 'Ícono',
+                        price: 120000,
+                        stock: 8,
+                        rating: 96,
+                        tastingNotes: 'Aromas a fruta oscura, especias y tabaco. Paladar concentrado y elegante con taninos sedosos.'
+                    },
+                    {
+                        id: 2,
+                        name: 'Casillero del Diablo Gran Reserva',
+                        winery: 'Concha y Toro',
+                        grape: 'Carménère',
+                        year: 2020,
+                        valley: 'Colchagua',
+                        classification: 'Gran Reserva',
+                        price: 45000,
+                        stock: 15,
+                        rating: 91,
+                        tastingNotes: 'Frutas rojas, pimiento rojo y especias. Estructura robusta con final especiado.'
+                    },
+                    {
+                        id: 3,
+                        name: 'Santa Rita 120',
+                        winery: 'Santa Rita',
+                        grape: 'Carménère',
+                        year: 2021,
+                        valley: 'Rapel',
+                        classification: 'Estándar',
+                        price: 12000,
+                        stock: 50,
+                        rating: 87,
+                        tastingNotes: 'Afrutado, equilibrado, accesible. Ideal para el día a día.'
+                    },
+                    {
+                        id: 4,
+                        name: 'Montes Folly',
+                        winery: 'Montes',
+                        grape: 'Syrah',
+                        year: 2018,
+                        valley: 'Colchagua',
+                        classification: 'Premium',
+                        price: 85000,
+                        stock: 5,
+                        rating: 94,
+                        tastingNotes: 'Complejo, pimienta negra, fruta oscura y minerales. Excelente envejecimiento.'
+                    },
+                    {
+                        id: 5,
+                        name: 'Cono Sur Pinot Noir Ocio',
+                        winery: 'Cono Sur',
+                        grape: 'Pinot Noir',
+                        year: 2022,
+                        valley: 'Casablanca',
+                        classification: 'Reserva',
+                        price: 35000,
+                        stock: 20,
+                        rating: 90,
+                        tastingNotes: 'Frutas rojas, sutiles especias y minerales. Elegante y balanceado.'
+                    },
+                    {
+                        id: 6,
+                        name: 'Errázuriz Aconcagua',
+                        winery: 'Errázuriz',
+                        grape: 'Cabernet Sauvignon',
+                        year: 2019,
+                        valley: 'Aconcagua',
+                        classification: 'Gran Reserva',
+                        price: 65000,
+                        stock: 12,
+                        rating: 92,
+                        tastingNotes: 'Aromas intensos, cuerpo equilibrado, final persistente.'
+                    }
+                ];
+                this.saveToStorage();
+            },
+
+            registerServiceWorker() {
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.register('data:text/javascript;base64,Ly8gU2ltcGxlIFNlcnZpY2UgV29ya2VyIGZvciBPZmZsaW5lIHN1cHBvcnQ=').catch(e => console.log('SW registration failed'));
+                }
+            },
+
+            render() {
+                this.renderWineGrid();
+                this.renderWinesForSales();
+                this.renderTastings();
+                this.renderCustomers();
+                this.renderSuppliers();
+                this.updateReports();
+            }
+        };
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+
+            if (tabName === 'reportes') {
+                setTimeout(() => {
+                    updateCharts();
+                }, 100);
+            }
+        }
+
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+
+            if (modalId === 'addTastingModal') {
+                populateTastingWineSelect();
+            }
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        function addWine(event) {
+            event.preventDefault();
+
+            const wine = {
+                id: Date.now(),
+                name: document.getElementById('wineName').value,
+                winery: document.getElementById('wineWinery').value,
+                grape: document.getElementById('wineGrape').value,
+                year: parseInt(document.getElementById('wineYear').value),
+                valley: document.getElementById('wineValley').value,
+                classification: document.getElementById('wineClassification').value,
+                price: parseInt(document.getElementById('winePrice').value),
+                stock: parseInt(document.getElementById('wineStock').value),
+                rating: parseInt(document.getElementById('wineRating').value) || 0,
+                tastingNotes: document.getElementById('wineTastingNotes').value
+            };
+
+            app.wines.push(wine);
+            app.saveToStorage();
+            app.renderWineGrid();
+            app.renderWinesForSales();
+            closeModal('addWineModal');
+            event.target.reset();
+        }
+
+        function renderWineGrid() {
+            const grid = document.getElementById('wineGrid');
+            if (app.wines.length === 0) {
+                grid.innerHTML = '<div class="empty-state" style="grid-column: 1/-1;">No hay vinos en el catálogo. ¡Agrega tu primer vino!</div>';
+                return;
+            }
+
+            grid.innerHTML = app.wines.map(wine => `
+                <div class="card">
+                    <h3>${wine.name} <span class="rating">${wine.rating} pts</span></h3>
+                    <div style="margin-bottom: 0.75rem;">
+                        <span class="badge badge-viña">${wine.winery}</span>
+                        <span class="badge badge-cepa">${wine.grape}</span>
+                        <span class="badge badge-valle">${wine.valley}</span>
+                        <span class="badge badge-clasificacion">${wine.classification}</span>
+                    </div>
+                    <p><strong>Año:</strong> ${wine.year}</p>
+                    <p><strong>Precio:</strong> $${wine.price.toLocaleString()}</p>
+                    <p><strong>Stock:</strong> ${wine.stock} botellas</p>
+                    <p style="color: #6b7280; font-size: 0.8125rem; line-height: 1.4; margin: 0.75rem 0;">${wine.tastingNotes}</p>
+                    <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
+                        <button class="btn-primary btn-small" onclick="addToCart(${wine.id})">Al Carrito</button>
+                        <button class="btn-danger btn-small" onclick="deleteWine(${wine.id})">Eliminar</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function deleteWine(id) {
+            if (confirm('¿Eliminar este vino del catálogo?')) {
+                app.wines = app.wines.filter(w => w.id !== id);
+                app.saveToStorage();
+                app.renderWineGrid();
+                app.renderWinesForSales();
+            }
+        }
+
+        function addToCart(wineId) {
+            const wine = app.wines.find(w => w.id === wineId);
+            if (!wine || wine.stock <= 0) {
+                alert('Este vino no tiene stock disponible');
+                return;
+            }
+
+            const cartItem = app.cart.find(item => item.id === wineId);
+            if (cartItem) {
+                if (cartItem.quantity < wine.stock) {
+                    cartItem.quantity++;
+                } else {
+                    alert('No hay más stock disponible');
+                }
+            } else {
+                app.cart.push({
+                    id: wineId,
+                    name: wine.name,
+                    price: wine.price,
+                    winery: wine.winery,
+                    quantity: 1
+                });
+            }
+
+            updateCart();
+            switchTab('ventas');
+        }
+
+        function filterWinesForSales() {
+            const search = document.getElementById('salesSearch').value.toLowerCase();
+            const results = document.getElementById('wineSearchResults');
+
+            const filtered = app.wines.filter(w =>
+                (w.name.toLowerCase().includes(search) ||
+                 w.winery.toLowerCase().includes(search) ||
+                 w.grape.toLowerCase().includes(search)) &&
+                w.stock > 0
+            );
+
+            if (filtered.length === 0) {
+                results.innerHTML = search ? '<p style="color: #6b7280; text-align: center; padding: 1rem;">No se encontraron vinos</p>' : '';
+                return;
+            }
+
+            results.innerHTML = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.75rem;">
+                    ${filtered.map(wine => `
+                        <button onclick="addToCart(${wine.id})" class="btn-primary" style="text-align: left; padding: 0.75rem; height: auto; white-space: normal;">
+                            <div style="font-weight: 600; margin-bottom: 0.25rem;">${wine.name}</div>
+                            <div style="font-size: 0.75rem; opacity: 0.9; margin-bottom: 0.25rem;">${wine.winery}</div>
+                            <div style="font-size: 0.875rem; font-weight: 700;">$${wine.price.toLocaleString()}</div>
+                            <div style="font-size: 0.75rem; opacity: 0.8;">Stock: ${wine.stock}</div>
+                        </button>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function renderWinesForSales() {
+            filterWinesForSales();
+        }
+
+        function updateCart() {
+            const cartContainer = document.getElementById('cartItems');
+
+            if (app.cart.length === 0) {
+                cartContainer.innerHTML = '<p style="color: #6b7280; text-align: center; padding: 2rem;">Carrito vacío</p>';
+                document.getElementById('cartSubtotal').textContent = '$0';
+                document.getElementById('cartTotal').textContent = '$0';
+                return;
+            }
+
+            let subtotal = 0;
+            cartContainer.innerHTML = app.cart.map((item, index) => {
+                const itemTotal = item.price * item.quantity;
+                subtotal += itemTotal;
+
+                return `
+                    <div class="cart-item">
+                        <div class="cart-item-info">
+                            <div class="cart-item-name">${item.name}</div>
+                            <div class="cart-item-price">$${item.price.toLocaleString()} x ${item.quantity}</div>
+                        </div>
+                        <div style="flex: 0 0 auto; text-align: right;">
+                            <div style="font-weight: 600; color: #1f2937; margin-bottom: 0.5rem;">$${itemTotal.toLocaleString()}</div>
+                            <div class="quantity-control">
+                                <button type="button" onclick="updateCartQuantity(${index}, -1)">−</button>
+                                <div class="quantity-display">${item.quantity}</div>
+                                <button type="button" onclick="updateCartQuantity(${index}, 1)">+</button>
+                            </div>
+                            <button type="button" class="btn-danger btn-small" onclick="removeFromCart(${index})" style="margin-top: 0.5rem; width: 100%;">Quitar</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            const total = subtotal;
+            document.getElementById('cartSubtotal').textContent = `$${subtotal.toLocaleString()}`;
+            document.getElementById('cartTotal').textContent = `$${total.toLocaleString()}`;
+        }
+
+        function updateCartQuantity(index, change) {
+            const wine = app.wines.find(w => w.id === app.cart[index].id);
+            if (app.cart[index].quantity + change <= 0) {
+                removeFromCart(index);
+            } else if (app.cart[index].quantity + change <= wine.stock) {
+                app.cart[index].quantity += change;
+                updateCart();
+            } else {
+                alert('No hay más stock disponible');
+            }
+        }
+
+        function removeFromCart(index) {
+            app.cart.splice(index, 1);
+            updateCart();
+        }
+
+        function completeSale() {
+            if (app.cart.length === 0) {
+                alert('El carrito está vacío');
+                return;
+            }
+
+            const paymentMethod = document.getElementById('paymentMethod').value;
+            const total = app.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+            const saleDate = new Date();
+
+            const sale = {
+                id: Date.now(),
+                date: saleDate.toLocaleString('es-CL'),
+                time: saleDate.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }),
+                items: [...app.cart],
+                total: total,
+                paymentMethod: paymentMethod
+            };
+
+            app.cart.forEach(cartItem => {
+                const wine = app.wines.find(w => w.id === cartItem.id);
+                if (wine) {
+                    wine.stock -= cartItem.quantity;
+                }
+            });
+
+            app.sales.push(sale);
+            app.saveToStorage();
+
+            app.cart = [];
+            updateCart();
+            renderSalesLog();
+            app.updateReports();
+
+            alert('¡Venta registrada exitosamente!');
+        }
+
+        function renderSalesLog() {
+            const today = new Date().toLocaleDateString('es-CL');
+            const todaySales = app.sales.filter(s => s.date.split(',')[0] === today);
+
+            const tbody = document.getElementById('salesLog');
+            if (todaySales.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #6b7280;">Sin ventas hoy</td></tr>';
+                updateBestSellers();
+                return;
+            }
+
+            tbody.innerHTML = todaySales.map(sale => sale.items.map(item => `
+                <tr>
+                    <td>${sale.time}</td>
+                    <td>${item.name}</td>
+                    <td>${item.quantity}</td>
+                    <td>$${(item.price * item.quantity).toLocaleString()}</td>
+                    <td>${sale.paymentMethod}</td>
+                </tr>
+            `).join('')).join('');
+
+            updateBestSellers();
+        }
+
+        function updateBestSellers() {
+            const today = new Date().toLocaleDateString('es-CL');
+            const todaySales = app.sales.filter(s => s.date.split(',')[0] === today);
+
+            const salesByWine = {};
+            todaySales.forEach(sale => {
+                sale.items.forEach(item => {
+                    if (!salesByWine[item.name]) {
+                        salesByWine[item.name] = { quantity: 0, revenue: 0 };
+                    }
+                    salesByWine[item.name].quantity += item.quantity;
+                    salesByWine[item.name].revenue += item.price * item.quantity;
+                });
+            });
+
+            const bestSellers = Object.entries(salesByWine)
+                .sort((a, b) => b[1].revenue - a[1].revenue)
+                .slice(0, 3);
+
+            const statsContainer = document.getElementById('bestSellersStats');
+            if (bestSellers.length === 0) {
+                statsContainer.innerHTML = '';
+                return;
+            }
+
+            statsContainer.innerHTML = bestSellers.map(([name, data]) => `
+                <div class="stat-card">
+                    <div class="stat-value">${data.quantity}</div>
+                    <div class="stat-label">${name}</div>
+                    <div style="font-size: 0.875rem; margin-top: 0.5rem;">$${data.revenue.toLocaleString()}</div>
+                </div>
+            `).join('');
+        }
+
+        function addTasting(event) {
+            event.preventDefault();
+
+            const selectedWines = Array.from(document.querySelectorAll('#tastingWineSelect input[type="checkbox"]:checked'))
+                .map(cb => parseInt(cb.value));
+
+            if (selectedWines.length === 0) {
+                alert('Selecciona al menos un vino para la cata');
+                return;
+            }
+
+            const tasting = {
+                id: Date.now(),
+                name: document.getElementById('tastingName').value,
+                date: document.getElementById('tastingDate').value,
+                time: document.getElementById('tastingTime').value,
+                price: parseInt(document.getElementById('tastingPrice').value),
+                capacity: parseInt(document.getElementById('tastingCapacity').value),
+                registered: 0,
+                wines: selectedWines,
+                description: document.getElementById('tastingDescription').value,
+                materials: document.getElementById('tastingMaterials').value,
+                attendees: []
+            };
+
+            app.tastings.push(tasting);
+            app.saveToStorage();
+            app.renderTastings();
+            closeModal('addTastingModal');
+            event.target.reset();
+        }
+
+        function populateTastingWineSelect() {
+            const select = document.getElementById('tastingWineSelect');
+            select.innerHTML = app.wines.map(wine => `
+                <label style="display: block; padding: 0.5rem; cursor: pointer; font-size: 0.875rem;">
+                    <input type="checkbox" value="${wine.id}" style="margin-right: 0.5rem;">
+                    ${wine.name} (${wine.winery} - ${wine.year}) - $${wine.price.toLocaleString()}
+                </label>
+            `).join('');
+        }
+
+        function renderTastings() {
+            const container = document.getElementById('tastingsList');
+
+            if (app.tastings.length === 0) {
+                container.innerHTML = '<div class="empty-state">Sin eventos de cata programados</div>';
+                return;
+            }
+
+            container.innerHTML = app.tastings.map(tasting => {
+                const wines = tasting.wines.map(wineId => app.wines.find(w => w.id === wineId)).filter(Boolean);
+                const totalRevenue = tasting.registered * tasting.price;
+
+                return `
+                    <div class="section">
+                        <div class="card" style="border-left-color: #d4a574;">
+                            <h3>${tasting.name}</h3>
+                            <p><strong>Fecha:</strong> ${tasting.date} a las ${tasting.time}</p>
+                            <p><strong>Capacidad:</strong> ${tasting.registered} / ${tasting.capacity} asistentes</p>
+                            <p><strong>Precio por Persona:</strong> $${tasting.price.toLocaleString()}</p>
+                            <p><strong>Ingreso Estimado:</strong> $${totalRevenue.toLocaleString()}</p>
+                            <p><strong>Vinos Seleccionados:</strong></p>
+                            <div style="margin-bottom: 1rem;">
+                                ${wines.map(w => `
+                                    <span class="badge badge-cepa">${w.name} (${w.year})</span>
+                                `).join('')}
+                            </div>
+                            <p><strong>Descripción:</strong> ${tasting.description || 'Sin descripción'}</p>
+                            <p><strong>Materiales Necesarios:</strong> ${tasting.materials || 'No especificado'}</p>
+                            <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
+                                <button class="btn-primary btn-small" onclick="registerAttendee(${tasting.id})">+ Registrar Asistente</button>
+                                <button class="btn-danger btn-small" onclick="deleteTasting(${tasting.id})">Eliminar</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function registerAttendee(tastingId) {
+            const tasting = app.tastings.find(t => t.id === tastingId);
+            if (tasting.registered >= tasting.capacity) {
+                alert('Capacidad máxima alcanzada');
+                return;
+            }
+
+            const name = prompt('Nombre del asistente:');
+            if (!name) return;
+
+            tasting.attendees.push(name);
+            tasting.registered++;
+            app.saveToStorage();
+            app.renderTastings();
+        }
+
+        function deleteTasting(id) {
+            if (confirm('¿Eliminar esta cata?')) {
+                app.tastings = app.tastings.filter(t => t.id !== id);
+                app.saveToStorage();
+                app.renderTastings();
+            }
+        }
+
+        function addCustomer(event) {
+            event.preventDefault();
+
+            const customer = {
+                id: Date.now(),
+                name: document.getElementById('customerName').value,
+                phone: document.getElementById('customerPhone').value,
+                email: document.getElementById('customerEmail').value,
+                favoriteGrape: document.getElementById('customerGrape').value,
+                priceRange: document.getElementById('customerPriceRange').value,
+                membership: document.getElementById('customerMembership').value,
+                birthday: document.getElementById('customerBirthday').value,
+                purchases: 0,
+                totalSpent: 0
+            };
+
+            app.customers.push(customer);
+            app.saveToStorage();
+            app.renderCustomers();
+            closeModal('addCustomerModal');
+            event.target.reset();
+        }
+
+        function renderCustomers() {
+            const tbody = document.getElementById('customersList');
+
+            if (app.customers.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #6b7280;">Sin clientes registrados</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = app.customers.map(customer => `
+                <tr>
+                    <td><strong>${customer.name}</strong></td>
+                    <td>${customer.phone}</td>
+                    <td>${customer.favoriteGrape || '—'}</td>
+                    <td><span class="badge">${customer.membership}</span></td>
+                    <td>${customer.purchases}</td>
+                    <td>
+                        <button class="btn-danger btn-small" onclick="deleteCustomer(${customer.id})">Eliminar</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function deleteCustomer(id) {
+            if (confirm('¿Eliminar este cliente?')) {
+                app.customers = app.customers.filter(c => c.id !== id);
+                app.saveToStorage();
+                app.renderCustomers();
+            }
+        }
+
+        function addSupplier(event) {
+            event.preventDefault();
+
+            const supplier = {
+                id: Date.now(),
+                name: document.getElementById('supplierName').value,
+                type: document.getElementById('supplierType').value,
+                contact: document.getElementById('supplierContact').value,
+                phone: document.getElementById('supplierPhone').value,
+                email: document.getElementById('supplierEmail').value,
+                paymentTerms: parseInt(document.getElementById('supplierPaymentTerms').value) || 0,
+                minOrder: parseInt(document.getElementById('supplierMinOrder').value) || 0,
+                wines: document.getElementById('supplierWines').value
+            };
+
+            app.suppliers.push(supplier);
+            app.saveToStorage();
+            app.renderSuppliers();
+            closeModal('addSupplierModal');
+            event.target.reset();
+        }
+
+        function renderSuppliers() {
+            const container = document.getElementById('suppliersList');
+
+            if (app.suppliers.length === 0) {
+                container.innerHTML = '<div class="empty-state" style="grid-column: 1/-1;">Sin proveedores registrados</div>';
+                return;
+            }
+
+            container.innerHTML = app.suppliers.map(supplier => `
+                <div class="card">
+                    <h3>${supplier.name}</h3>
+                    <p><strong>Tipo:</strong> ${supplier.type}</p>
+                    <p><strong>Contacto:</strong> ${supplier.contact}</p>
+                    <p><strong>Teléfono:</strong> ${supplier.phone}</p>
+                    <p><strong>Email:</strong> ${supplier.email}</p>
+                    <p><strong>Término de Pago:</strong> ${supplier.paymentTerms} días</p>
+                    <p><strong>Orden Mínima:</strong> $${supplier.minOrder.toLocaleString()}</p>
+                    <p><strong>Vinos:</strong> ${supplier.wines}</p>
+                    <button class="btn-danger btn-small" onclick="deleteSupplier(${supplier.id})" style="margin-top: 1rem;">Eliminar</button>
+                </div>
+            `).join('');
+        }
+
+        function deleteSupplier(id) {
+            if (confirm('¿Eliminar este proveedor?')) {
+                app.suppliers = app.suppliers.filter(s => s.id !== id);
+                app.saveToStorage();
+                app.renderSuppliers();
+            }
+        }
+
+        app.updateReports = function() {
+            const totalRevenue = this.sales.reduce((sum, sale) => sum + sale.total, 0);
+            const totalBottles = this.wines.reduce((sum, wine) => sum + wine.stock, 0);
+            const inventoryValue = this.wines.reduce((sum, wine) => sum + (wine.price * wine.stock), 0);
+
+            document.getElementById('totalRevenue').textContent = `$${totalRevenue.toLocaleString()}`;
+            document.getElementById('bottlesOutStock').textContent = totalBottles.toLocaleString();
+            document.getElementById('inventoryValue').textContent = `$${inventoryValue.toLocaleString()}`;
+
+            const avgMargin = this.sales.length > 0 ? 15 : 0;
+            document.getElementById('totalMargin').textContent = `${avgMargin}%`;
+
+            updateAgingReport();
+        };
+
+        function updateAgingReport() {
+            const tbody = document.getElementById('agingReport');
+            const currentYear = new Date().getFullYear();
+
+            const aged = app.wines
+                .map(w => ({
+                    ...w,
+                    age: currentYear - w.year
+                }))
+                .sort((a, b) => b.age - a.age)
+                .slice(0, 10);
+
+            if (aged.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #6b7280;">Sin vinos</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = aged.map(wine => `
+                <tr>
+                    <td><strong>${wine.name}</strong></td>
+                    <td>${wine.year}</td>
+                    <td>${wine.winery}</td>
+                    <td>${wine.grape}</td>
+                    <td>${wine.age} años</td>
+                    <td>${wine.stock} botellas</td>
+                </tr>
+            `).join('');
+        }
+
+        let cepaSalesChart, vinaSalesChart, valleySalesChart;
+
+        function updateCharts() {
+            const salesByGrape = {};
+            const salesByWinery = {};
+            const salesByValley = {};
+
+            app.sales.forEach(sale => {
+                sale.items.forEach(item => {
+                    const wine = app.wines.find(w => w.id === item.id);
+                    if (!wine) return;
+
+                    if (!salesByGrape[wine.grape]) salesByGrape[wine.grape] = 0;
+                    if (!salesByWinery[wine.winery]) salesByWinery[wine.winery] = 0;
+                    if (!salesByValley[wine.valley]) salesByValley[wine.valley] = 0;
+
+                    salesByGrape[wine.grape] += item.quantity;
+                    salesByWinery[wine.winery] += item.quantity;
+                    salesByValley[wine.valley] += item.quantity;
+                });
+            });
+
+            updateChart('cepaSalesChart', 'Ventas por Cepa', salesByGrape);
+            updateChart('vinaSalesChart', 'Ventas por Viña', salesByWinery);
+            updateChart('valleySalesChart', 'Ventas por Valle', salesByValley);
+        }
+
+        function updateChart(canvasId, label, data) {
+            const ctx = document.getElementById(canvasId);
+            if (!ctx) return;
+
+            const labels = Object.keys(data);
+            const values = Object.values(data);
+
+            if (window.chartInstances && window.chartInstances[canvasId]) {
+                window.chartInstances[canvasId].destroy();
+            }
+
+            if (!window.chartInstances) window.chartInstances = {};
+
+            const colors = ['#881337', '#d4a574', '#450a0a', '#6b4423', '#1f2937'];
+
+            window.chartInstances[canvasId] = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: label,
+                        data: values,
+                        backgroundColor: colors.slice(0, labels.length),
+                        borderColor: '#450a0a',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1 }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+
+        // Close modals on background click
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.classList.remove('active');
+            }
+        };
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', () => {
+            app.init();
+            renderSalesLog();
+        });
+    </script>
+</body>
+</html>

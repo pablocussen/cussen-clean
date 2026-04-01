@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0369a1">
+<title>ClimaHogar - Eficiencia Energética Chile</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{--bg:#f0f6ff;--card:#ffffff;--card2:#e8f2ff;--border:#b8d4f0;--accent:#0369a1;--text:#1e3a5f;--muted:#6b8fa5;--green:#16a34a;--yellow:#d97706;--red:#dc2626;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:15px}
+header{background:linear-gradient(90deg,#0c4a7a,#0369a1);padding:13px 18px;position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;color:white}
+header h1{font-size:1.15rem;font-weight:700;letter-spacing:.01em}
+header span{font-size:.78rem;opacity:.85}
+nav{background:#fff;border-bottom:2px solid var(--border);display:flex;overflow-x:auto;position:sticky;top:62px;z-index:40;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+.nav-btn{flex:none;padding:10px 14px;font-size:.78rem;font-weight:600;color:var(--muted);background:none;border:none;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap;font-family:inherit;transition:color .2s}
+.nav-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab{display:none;padding:14px}
+.tab.active{display:block}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px}
+.card2{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px}
+.card h3{font-size:.9rem;font-weight:700;color:var(--accent);margin-bottom:10px}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.col{flex:1;min-width:140px}
+label{display:block;font-size:.75rem;font-weight:600;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.03em}
+input,select{width:100%;padding:9px 11px;border:1.5px solid var(--border);border-radius:8px;font-size:16px;font-family:inherit;color:var(--text);background:#fff;outline:none;transition:border-color .2s}
+input:focus,select:focus{border-color:var(--accent)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 18px;background:var(--accent);color:#fff;border:none;border-radius:9px;font-size:.87rem;font-weight:600;cursor:pointer;font-family:inherit;transition:opacity .2s}
+.btn:hover{opacity:.88}
+.btn-sm{padding:7px 13px;font-size:.78rem}
+.btn-outline{background:none;color:var(--accent);border:2px solid var(--accent)}
+.btn-green{background:var(--green)}
+.btn-red{background:var(--red)}
+.semaforo{display:inline-block;padding:4px 12px;border-radius:20px;font-size:.78rem;font-weight:700;text-transform:uppercase}
+.sem-verde{background:#dcfce7;color:var(--green)}
+.sem-amarillo{background:#fef9c3;color:var(--yellow)}
+.sem-rojo{background:#fee2e2;color:var(--red)}
+.result-box{background:var(--card2);border-radius:10px;padding:12px;margin-top:8px}
+.big-num{font-size:1.6rem;font-weight:700;color:var(--accent)}
+.metric-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:.85rem}
+.metric-row:last-child{border-bottom:none}
+.metric-val{font-weight:700;color:var(--accent)}
+.metric-val.green{color:var(--green)}
+.metric-val.red{color:var(--red)}
+.metric-val.yellow{color:var(--yellow)}
+.tip-box{background:linear-gradient(135deg,#e0f2fe,#bae6fd);border-left:4px solid var(--accent);border-radius:8px;padding:10px 12px;font-size:.83rem;margin-top:8px}
+.chart-wrap{position:relative;height:220px;margin-top:8px}
+.appliance-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:.83rem;flex-wrap:wrap}
+.appliance-row:last-child{border-bottom:none}
+.aplabel{flex:1;min-width:100px;font-weight:600}
+.apcost{font-size:.78rem;color:var(--muted)}
+.btn-icon{background:none;border:none;cursor:pointer;color:var(--red);font-size:1rem;padding:2px 6px}
+.system-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:.84rem}
+.system-row:last-child{border-bottom:none}
+.system-badge{font-size:.7rem;font-weight:700;padding:3px 8px;border-radius:12px;white-space:nowrap}
+.best{background:#dcfce7;color:var(--green)}
+.mid{background:#fef9c3;color:var(--yellow)}
+.worst{background:#fee2e2;color:var(--red)}
+.solar-stat{text-align:center;background:var(--card2);border-radius:10px;padding:10px;flex:1;min-width:100px}
+.solar-stat .val{font-size:1.3rem;font-weight:700;color:var(--accent)}
+.solar-stat .lbl{font-size:.7rem;color:var(--muted);margin-top:2px}
+.quiz-q{padding:10px 0;border-bottom:1px solid var(--border)}
+.quiz-q:last-child{border-bottom:none}
+.quiz-q p{font-size:.87rem;font-weight:600;margin-bottom:8px}
+.quiz-opts{display:flex;gap:8px;flex-wrap:wrap}
+.quiz-opt{padding:6px 14px;border:2px solid var(--border);border-radius:20px;font-size:.8rem;cursor:pointer;font-family:inherit;background:#fff;color:var(--text);font-weight:500;transition:all .2s}
+.quiz-opt.selected{border-color:var(--accent);background:var(--accent);color:#fff}
+.rec-item{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);font-size:.83rem}
+.rec-item:last-child{border-bottom:none}
+.rec-badge{font-size:.7rem;font-weight:700;padding:3px 8px;border-radius:12px;white-space:nowrap;flex-shrink:0}
+.rec-green{background:#dcfce7;color:var(--green)}
+.rec-yellow{background:#fef9c3;color:var(--yellow)}
+.rec-orange{background:#ffedd5;color:#c2410c}
+.rec-red{background:#fee2e2;color:var(--red)}
+.rec-text{flex:1}
+.rec-text strong{display:block;margin-bottom:2px}
+.rec-check{width:18px;height:18px;accent-color:var(--accent);flex-shrink:0;margin-top:2px}
+.savings-total{background:linear-gradient(135deg,#0369a1,#0c4a7a);color:white;border-radius:12px;padding:14px;text-align:center;margin-top:10px}
+.savings-total .big{font-size:1.8rem;font-weight:700}
+.savings-total .sub{font-size:.8rem;opacity:.85;margin-top:2px}
+.history-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:.82rem}
+.history-row:last-child{border-bottom:none}
+.section-title{font-size:.95rem;font-weight:700;color:var(--text);margin:14px 0 8px}
+.subsidy-item{padding:7px 0;border-bottom:1px solid var(--border);font-size:.83rem}
+.subsidy-item:last-child{border-bottom:none}
+.subsidy-item strong{color:var(--accent);display:block}
+.toggle-wrap{display:flex;align-items:center;gap:8px;margin-top:8px}
+.toggle{position:relative;width:44px;height:24px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;inset:0;background:#cbd5e1;border-radius:12px;cursor:pointer;transition:.3s}
+.toggle-slider:before{content:'';position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:white;border-radius:50%;transition:.3s}
+input:checked+.toggle-slider{background:var(--accent)}
+input:checked+.toggle-slider:before{transform:translateX(20px)}
+.toggle-lbl{font-size:.85rem;font-weight:500}
+.month-input-row{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:8px}
+.month-input-row input{max-width:120px}
+.ins-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:.83rem}
+.ins-row:last-child{border-bottom:none}
+@media(max-width:480px){.big-num{font-size:1.3rem}.solar-stat .val{font-size:1.1rem}}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>ClimaHogar</h1>
+    <span>Eficiencia Energética Chile</span>
+  </div>
+  <span style="font-size:1.4rem">⚡</span>
+</header>
+
+<nav id="main-nav">
+  <button class="nav-btn active" onclick="showTab('factura',this)">MI FACTURA</button>
+  <button class="nav-btn" onclick="showTab('electro',this)">ELECTRO.</button>
+  <button class="nav-btn" onclick="showTab('calef',this)">CALEFACCIÓN</button>
+  <button class="nav-btn" onclick="showTab('solar',this)">PANELES</button>
+  <button class="nav-btn" onclick="showTab('plan',this)">PLAN AHORRO</button>
+</nav>
+
+<!-- TAB 1: MI FACTURA -->
+<div id="tab-factura" class="tab active">
+  <div class="card">
+    <h3>Ingresa tu Consumo</h3>
+    <div class="row">
+      <div class="col">
+        <label>Distribuidora</label>
+        <select id="f-dist">
+          <option value="enel">ENEL (RM / Norte)</option>
+          <option value="cge">CGE (Centro-Sur)</option>
+          <option value="chilquinta">Chilquinta (Valparaíso)</option>
+          <option value="frontel">Frontel / Edelaysen / Edelmag</option>
+        </select>
+      </div>
+      <div class="col">
+        <label>Tarifa</label>
+        <select id="f-tarifa">
+          <option value="bt1">BT1 – Residencial simple</option>
+          <option value="bt2">BT2 – Horaria</option>
+          <option value="bt43">BT4.3 – Gran consumo</option>
+        </select>
+      </div>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <div class="col">
+        <label>kWh consumidos este mes</label>
+        <input type="number" id="f-kwh" placeholder="ej. 250" min="0" max="9999" value="250">
+      </div>
+      <div class="col">
+        <label>Potencia contratada</label>
+        <select id="f-potencia">
+          <option value="3">3 kW</option>
+          <option value="5" selected>5 kW</option>
+          <option value="10">10 kW</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn" style="margin-top:12px;width:100%" onclick="calcFactura()">Calcular mi factura</button>
+  </div>
+
+  <div id="f-result" style="display:none">
+    <div class="card">
+      <h3>Resultado Estimado</h3>
+      <div id="f-semaforo-wrap" style="margin-bottom:8px"></div>
+      <div class="result-box">
+        <div class="big-num" id="f-costo-total">$0</div>
+        <div style="font-size:.78rem;color:var(--muted);margin-top:2px">Costo estimado del período (con IVA)</div>
+      </div>
+      <div style="margin-top:10px" id="f-metrics"></div>
+      <div class="tip-box" id="f-tip"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Historial de Facturas</h3>
+    <div class="month-input-row">
+      <div>
+        <label>Mes</label>
+        <input type="month" id="f-hist-mes" style="max-width:160px">
+      </div>
+      <div>
+        <label>kWh</label>
+        <input type="number" id="f-hist-kwh" placeholder="kWh" style="max-width:90px" min="0">
+      </div>
+      <div>
+        <label>Monto ($)</label>
+        <input type="number" id="f-hist-monto" placeholder="$" style="max-width:100px" min="0">
+      </div>
+      <div style="align-self:flex-end">
+        <button class="btn btn-sm btn-green" onclick="addHistorial()">+ Agregar</button>
+      </div>
+    </div>
+    <div id="f-hist-list"></div>
+    <div class="chart-wrap" id="f-chart-wrap" style="display:none">
+      <canvas id="f-chart"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 2: ELECTRODOMÉSTICOS -->
+<div id="tab-electro" class="tab">
+  <div class="card">
+    <h3>Agrega un Aparato</h3>
+    <div class="row">
+      <div class="col">
+        <label>Aparato</label>
+        <select id="ap-select">
+          <option value="200|Refrigerador 400L">Refrigerador 400L (200W)</option>
+          <option value="500|Lavadora carga frontal">Lavadora carga frontal (500W)</option>
+          <option value="150|Secadora a gas">Secadora a gas (150W)</option>
+          <option value="1800|Lavavajillas">Lavavajillas (1800W)</option>
+          <option value="1000|Microondas">Microondas (1000W)</option>
+          <option value="2000|Horno eléctrico">Horno eléctrico (2000W)</option>
+          <option value="80|TV 55'' LED">TV 55'' LED (80W)</option>
+          <option value="100|TV 55'' OLED">TV 55'' OLED (100W)</option>
+          <option value="200|PC escritorio">PC escritorio (200W)</option>
+          <option value="45|Notebook">Notebook (45W)</option>
+          <option value="1500|Aire acond. split">Aire acond. split (1500W)</option>
+          <option value="1000|Calefactor eléctrico 1kW">Calefactor eléctrico 1kW (1000W)</option>
+          <option value="2000|Calefactor eléctrico 2kW">Calefactor eléctrico 2kW (2000W)</option>
+          <option value="1500|Terma eléctrica 50L">Terma eléctrica 50L (1500W)</option>
+          <option value="400|Terma solar (apoyo)">Terma solar apoyo (400W)</option>
+          <option value="10|Ampolleta LED 10W">Ampolleta LED 10W</option>
+          <option value="60|Ampolleta incandescente 60W">Ampolleta incandescente 60W</option>
+          <option value="1200|Plancha">Plancha (1200W)</option>
+          <option value="1000|Aspiradora">Aspiradora (1000W)</option>
+        </select>
+      </div>
+      <div class="col" style="max-width:110px">
+        <label>Horas/día</label>
+        <input type="number" id="ap-hours" placeholder="ej. 4" min="0.1" max="24" step="0.5" value="4">
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+      <button class="btn btn-sm" onclick="addAppliance()">+ Agregar</button>
+      <button class="btn btn-sm btn-outline" onclick="clearAppliances()">Limpiar todo</button>
+    </div>
+  </div>
+
+  <div class="card" id="ap-card" style="display:none">
+    <h3>Mis Aparatos</h3>
+    <div id="ap-list"></div>
+    <div style="margin-top:12px;padding-top:8px;border-top:2px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;font-weight:700;font-size:.9rem">
+        <span>TOTAL MENSUAL</span>
+        <span id="ap-total" style="color:var(--accent)">$0</span>
+      </div>
+      <div style="font-size:.75rem;color:var(--muted);margin-top:2px" id="ap-kwh-total"></div>
+    </div>
+    <div class="tip-box" id="ap-led-tip" style="margin-top:10px;display:none"></div>
+    <div class="chart-wrap" style="margin-top:12px">
+      <canvas id="ap-chart"></canvas>
+    </div>
+  </div>
+
+  <div class="card2">
+    <h3>Tarifa de referencia</h3>
+    <div style="font-size:.82rem;color:var(--muted)">Cálculo basado en tarifa todo incluido aprox. <strong>$165/kWh</strong> (con IVA 19%). Ingresa tus datos en <em>Mi Factura</em> para mayor precisión.</div>
+  </div>
+</div>
+
+<!-- TAB 3: CALEFACCIÓN -->
+<div id="tab-calef" class="tab">
+  <div class="card">
+    <h3>Mi Situación</h3>
+    <div class="row">
+      <div class="col">
+        <label>Zona climática</label>
+        <select id="ca-zona">
+          <option value="0.4">Norte (Antofagasta)</option>
+          <option value="0.7">Centro (Santiago)</option>
+          <option value="0.9" selected>Centro-Sur (Concepción)</option>
+          <option value="1.2">Sur (Valdivia-Osorno)</option>
+          <option value="1.5">Austral (Punta Arenas)</option>
+        </select>
+      </div>
+      <div class="col">
+        <label>m² de la vivienda</label>
+        <input type="number" id="ca-m2" placeholder="ej. 80" min="20" max="500" value="80">
+      </div>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <div class="col">
+        <label>Aislación</label>
+        <select id="ca-aislacion">
+          <option value="1.6">Sin aislación</option>
+          <option value="1.2" selected>Regular</option>
+          <option value="0.9">Buena</option>
+          <option value="0.7">Muy buena (doble vidrio + poliestireno)</option>
+        </select>
+      </div>
+      <div class="col">
+        <label>Horas calefacción/día</label>
+        <input type="number" id="ca-horas" placeholder="ej. 8" min="4" max="16" value="8">
+      </div>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <div class="col">
+        <label>Sistema actual</label>
+        <select id="ca-sistema">
+          <option value="lena">Estufa a leña certificada</option>
+          <option value="gas_natural">Calefacción gas natural</option>
+          <option value="gas_licuado">Calefacción gas licuado</option>
+          <option value="heat_pump">Bomba de calor (heat pump)</option>
+          <option value="electrico" selected>Calefactor eléctrico</option>
+          <option value="pellet">Pellet</option>
+          <option value="parafina">Parafina</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn" style="margin-top:12px;width:100%" onclick="calcCalef()">Calcular</button>
+  </div>
+
+  <div id="ca-result" style="display:none">
+    <div class="card">
+      <h3>Costo Mensual Estimado</h3>
+      <div class="result-box">
+        <div class="big-num" id="ca-costo-actual">$0</div>
+        <div style="font-size:.78rem;color:var(--muted);margin-top:2px">con tu sistema actual</div>
+      </div>
+      <div class="section-title">Comparativa de Sistemas (para tu vivienda)</div>
+      <div id="ca-comparativa"></div>
+      <div id="ca-roi-box" style="margin-top:10px"></div>
+    </div>
+
+    <div class="card">
+      <h3>ROI de Mejoras de Aislación</h3>
+      <div id="ca-ins-result"></div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 4: PANELES SOLARES -->
+<div id="tab-solar" class="tab">
+  <div class="card">
+    <h3>Mi Instalación</h3>
+    <div class="row">
+      <div class="col">
+        <label>Región</label>
+        <select id="sol-region">
+          <option value="6.5">Arica / Tarapacá (HSP 6.5)</option>
+          <option value="6.2">Antofagasta (HSP 6.2)</option>
+          <option value="6.8">Atacama (HSP 6.8)</option>
+          <option value="5.5">Coquimbo (HSP 5.5)</option>
+          <option value="4.8">Valparaíso (HSP 4.8)</option>
+          <option value="5.0" selected>Metropolitana (HSP 5.0)</option>
+          <option value="4.6">O'Higgins (HSP 4.6)</option>
+          <option value="4.2">Maule (HSP 4.2)</option>
+          <option value="3.8">Biobío (HSP 3.8)</option>
+          <option value="3.5">Araucanía (HSP 3.5)</option>
+          <option value="3.2">Los Ríos (HSP 3.2)</option>
+          <option value="3.0">Los Lagos (HSP 3.0)</option>
+          <option value="2.8">Aysén (HSP 2.8)</option>
+          <option value="2.5">Magallanes (HSP 2.5)</option>
+        </select>
+      </div>
+      <div class="col">
+        <label>Consumo mensual (kWh)</label>
+        <input type="number" id="sol-kwh" placeholder="ej. 250" min="50" max="5000" value="250">
+      </div>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <div class="col">
+        <label>m² de techo disponible</label>
+        <input type="number" id="sol-techo" placeholder="ej. 30" min="5" max="500" value="30">
+      </div>
+      <div class="col">
+        <label>Orientación del techo</label>
+        <select id="sol-orient">
+          <option value="1.0">Norte (ideal)</option>
+          <option value="0.85">Este</option>
+          <option value="0.85">Oeste</option>
+          <option value="0.65">Sur</option>
+        </select>
+      </div>
+    </div>
+    <div class="toggle-wrap">
+      <label class="toggle">
+        <input type="checkbox" id="sol-netmetering" checked>
+        <span class="toggle-slider"></span>
+      </label>
+      <span class="toggle-lbl">Tiene net-metering (inyección a la red)</span>
+    </div>
+    <button class="btn" style="margin-top:12px;width:100%" onclick="calcSolar()">Calcular</button>
+  </div>
+
+  <div id="sol-result" style="display:none">
+    <div class="card">
+      <h3>Tu Sistema Solar</h3>
+      <div class="row" style="gap:8px" id="sol-stats"></div>
+    </div>
+    <div class="card">
+      <h3>Economía y Retorno</h3>
+      <div id="sol-economia"></div>
+    </div>
+    <div class="card">
+      <h3>Apoyos Disponibles</h3>
+      <div class="subsidy-item"><strong>FNDR Proyectos Rurales</strong> Financiamiento regional para energías renovables en zonas rurales y aisladas.</div>
+      <div class="subsidy-item"><strong>Crédito Hipotecario Verde (BancoEstado)</strong> Tasas preferenciales para viviendas con mejoras energéticas incluyendo paneles solares.</div>
+      <div class="subsidy-item"><strong>Programa SERC Chile</strong> Solar Energy Research Center — asesoría técnica y certificación de instalaciones.</div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 5: PLAN DE AHORRO -->
+<div id="tab-plan" class="tab">
+  <div class="card">
+    <h3>Diagnóstico Rápido</h3>
+    <div id="quiz-container">
+      <div class="quiz-q">
+        <p>1. ¿Cuántas personas viven en tu hogar?</p>
+        <div class="quiz-opts">
+          <button class="quiz-opt" onclick="selectQuiz(0,0,'1')">1-2 personas</button>
+          <button class="quiz-opt" onclick="selectQuiz(0,1,'2')">3-4 personas</button>
+          <button class="quiz-opt" onclick="selectQuiz(0,2,'3')">5+ personas</button>
+        </div>
+      </div>
+      <div class="quiz-q">
+        <p>2. ¿Tu casa tiene doble vidrio?</p>
+        <div class="quiz-opts">
+          <button class="quiz-opt" onclick="selectQuiz(1,0,'si')">Sí</button>
+          <button class="quiz-opt" onclick="selectQuiz(1,1,'no')">No</button>
+          <button class="quiz-opt" onclick="selectQuiz(1,2,'parcial')">Parcialmente</button>
+        </div>
+      </div>
+      <div class="quiz-q">
+        <p>3. ¿Tienes ampolletas LED en toda la casa?</p>
+        <div class="quiz-opts">
+          <button class="quiz-opt" onclick="selectQuiz(2,0,'si')">Sí, todas</button>
+          <button class="quiz-opt" onclick="selectQuiz(2,1,'parcial')">Algunas</button>
+          <button class="quiz-opt" onclick="selectQuiz(2,2,'no')">No</button>
+        </div>
+      </div>
+      <div class="quiz-q">
+        <p>4. ¿Tu refrigerador tiene más de 10 años?</p>
+        <div class="quiz-opts">
+          <button class="quiz-opt" onclick="selectQuiz(3,0,'si')">Sí</button>
+          <button class="quiz-opt" onclick="selectQuiz(3,1,'no')">No</button>
+        </div>
+      </div>
+      <div class="quiz-q">
+        <p>5. ¿Tu calefacción principal es eléctrica?</p>
+        <div class="quiz-opts">
+          <button class="quiz-opt" onclick="selectQuiz(4,0,'si')">Sí</button>
+          <button class="quiz-opt" onclick="selectQuiz(4,1,'no')">No</button>
+        </div>
+      </div>
+    </div>
+    <button class="btn" style="margin-top:14px;width:100%" onclick="calcPlan()">Ver mi plan personalizado</button>
+  </div>
+
+  <div id="plan-result" style="display:none">
+    <div class="card">
+      <h3>Acciones Recomendadas</h3>
+      <div style="font-size:.78rem;color:var(--muted);margin-bottom:8px">Marca las acciones que ya implementaste para calcular tu ahorro total.</div>
+      <div id="rec-list"></div>
+    </div>
+    <div id="savings-summary"></div>
+    <div class="card">
+      <h3>Programas de Apoyo</h3>
+      <div class="subsidy-item"><strong>Programa Eficiencia Energética MINENERGIA</strong> Auditorías energéticas gratuitas para hogares y apoyo en financiamiento de mejoras.</div>
+      <div class="subsidy-item"><strong>Programa Casa Pasiva (CORFO)</strong> Subsidio para certificación energética y mejoras en viviendas residenciales.</div>
+      <div class="subsidy-item"><strong>Subsidios FNDR Energías Renovables</strong> Financiamiento de gobiernos regionales para proyectos de eficiencia y energías limpias.</div>
+      <div class="subsidy-item"><strong>Recambio de Calefactores (SEREMI Medio Ambiente)</strong> Programa de recambio de calefactores a leña por sistemas más eficientes en zonas declaradas de saturación.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== STATE =====
+const STORAGE_KEY = 'climahogar_v1';
+let state = {
+  facturaKwh: 250,
+  historial: [],
+  appliances: [],
+  quizAnswers: [null, null, null, null, null],
+  checkedRecs: {}
+};
+
+function loadState() {
+  try {
+    const d = localStorage.getItem(STORAGE_KEY);
+    if (d) state = Object.assign(state, JSON.parse(d));
+  } catch(e) {}
+}
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+}
+
+// ===== NAV =====
+function showTab(id, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ===== FORMATTING =====
+function fmtClp(n) {
+  return '$' + Math.round(n).toLocaleString('es-CL');
+}
+function fmtKwh(n) {
+  return n.toFixed(1) + ' kWh';
+}
+
+// ===== TAB 1: FACTURA =====
+const TARIFAS = {
+  enel:       { bt1: 165, bt2: 172, bt43: 140 },
+  cge:        { bt1: 158, bt2: 165, bt43: 135 },
+  chilquinta: { bt1: 162, bt2: 170, bt43: 138 },
+  frontel:    { bt1: 175, bt2: 182, bt43: 148 }
+};
+const CARGO_FIJO = { '3': 900, '5': 1200, '10': 2100 };
+
+function calcFactura() {
+  const dist = document.getElementById('f-dist').value;
+  const tarifa = document.getElementById('f-tarifa').value;
+  const kwh = parseFloat(document.getElementById('f-kwh').value) || 0;
+  const pot = document.getElementById('f-potencia').value;
+
+  const pKwh = TARIFAS[dist][tarifa];
+  const cargoFijo = CARGO_FIJO[pot];
+  const neto = kwh * pKwh + cargoFijo;
+  const total = neto * 1.19;
+
+  state.facturaKwh = kwh;
+  saveState();
+
+  document.getElementById('f-result').style.display = 'block';
+  document.getElementById('f-costo-total').textContent = fmtClp(total);
+
+  const kwhDia = kwh / 30;
+  const promedio = 250;
+  const pct = ((kwh / promedio - 1) * 100).toFixed(0);
+  const pctTxt = kwh < promedio ? Math.abs(pct) + '% bajo promedio nacional' : (kwh == promedio ? 'igual al' : pct + '% sobre promedio nacional');
+
+  let sem = 'verde', semTxt = 'Consumo Bajo';
+  if (kwh > 350) { sem = 'rojo'; semTxt = 'Consumo Alto'; }
+  else if (kwh > 150) { sem = 'amarillo'; semTxt = 'Consumo Medio'; }
+
+  document.getElementById('f-semaforo-wrap').innerHTML =
+    `<span class="semaforo sem-${sem}">${semTxt}</span>`;
+
+  let tips = {
+    verde: 'Excelente consumo. Considera paneles solares para llegar a costo cero.',
+    amarillo: 'Revisa tu calefacción y electrodomésticos — son los mayores consumidores.',
+    rojo: 'Alto consumo. Prioriza revisar calefacción eléctrica y cambiar a bomba de calor.'
+  };
+
+  document.getElementById('f-metrics').innerHTML = `
+    <div class="metric-row"><span>kWh/día promedio</span><span class="metric-val">${kwhDia.toFixed(1)} kWh</span></div>
+    <div class="metric-row"><span>vs. promedio chileno (250 kWh)</span><span class="metric-val ${kwh<=250?'green':'red'}">${pctTxt}</span></div>
+    <div class="metric-row"><span>Cargo fijo potencia</span><span class="metric-val">${fmtClp(cargoFijo)}</span></div>
+    <div class="metric-row"><span>Precio/kWh aplicado</span><span class="metric-val">$${pKwh}/kWh</span></div>
+  `;
+  document.getElementById('f-tip').textContent = tips[sem];
+}
+
+function addHistorial() {
+  const mes = document.getElementById('f-hist-mes').value;
+  const kwh = parseFloat(document.getElementById('f-hist-kwh').value);
+  const monto = parseFloat(document.getElementById('f-hist-monto').value);
+  if (!mes || !kwh) { alert('Ingresa mes y kWh'); return; }
+  state.historial.push({ mes, kwh, monto: monto || 0 });
+  state.historial.sort((a,b) => a.mes.localeCompare(b.mes));
+  saveState();
+  renderHistorial();
+}
+
+let fChart = null;
+function renderHistorial() {
+  const list = document.getElementById('f-hist-list');
+  if (!state.historial.length) { list.innerHTML = '<div style="font-size:.82rem;color:var(--muted)">Sin datos aún.</div>'; return; }
+  list.innerHTML = state.historial.map((h,i) =>
+    `<div class="history-row">
+      <span>${h.mes}</span>
+      <span style="color:var(--accent);font-weight:600">${fmtKwh(h.kwh)}</span>
+      <span>${h.monto ? fmtClp(h.monto) : '—'}</span>
+      <button class="btn-icon" onclick="removeHistorial(${i})">✕</button>
+    </div>`
+  ).join('');
+
+  const wrap = document.getElementById('f-chart-wrap');
+  wrap.style.display = state.historial.length > 1 ? 'block' : 'none';
+  if (state.historial.length > 1) {
+    const labels = state.historial.slice(-12).map(h => h.mes.slice(5) + '/' + h.mes.slice(2,4));
+    const data = state.historial.slice(-12).map(h => h.kwh);
+    const ctx = document.getElementById('f-chart').getContext('2d');
+    if (fChart) fChart.destroy();
+    fChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{ label: 'kWh', data, backgroundColor: '#0369a1', borderRadius: 6 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, grid: { color: '#e2edf7' } }, x: { grid: { display: false } } }
+      }
+    });
+  }
+}
+
+function removeHistorial(i) {
+  state.historial.splice(i, 1);
+  saveState();
+  renderHistorial();
+}
+
+// ===== TAB 2: ELECTRODOMÉSTICOS =====
+const PRICE_PER_KWH = 165;
+let apChart = null;
+
+function addAppliance() {
+  const sel = document.getElementById('ap-select').value;
+  const [watts, name] = sel.split('|');
+  const hours = parseFloat(document.getElementById('ap-hours').value) || 1;
+  state.appliances.push({ name, watts: parseInt(watts), hours });
+  saveState();
+  renderAppliances();
+}
+
+function clearAppliances() {
+  if (confirm('¿Limpiar todos los aparatos?')) {
+    state.appliances = [];
+    saveState();
+    renderAppliances();
+  }
+}
+
+function removeAppliance(i) {
+  state.appliances.splice(i, 1);
+  saveState();
+  renderAppliances();
+}
+
+function renderAppliances() {
+  const card = document.getElementById('ap-card');
+  if (!state.appliances.length) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+
+  let totalKwh = 0;
+  let ledSavings = 0;
+  let hasIncan = false;
+
+  const rows = state.appliances.map((ap, i) => {
+    const kwhMonth = ap.watts / 1000 * ap.hours * 30;
+    const cost = kwhMonth * PRICE_PER_KWH;
+    totalKwh += kwhMonth;
+    if (ap.name.toLowerCase().includes('incandescente')) {
+      hasIncan = true;
+      const ledKwh = 10 / 1000 * ap.hours * 30;
+      ledSavings += (kwhMonth - ledKwh) * PRICE_PER_KWH;
+    }
+    return { name: ap.name, kwhMonth, cost, i };
+  });
+
+  document.getElementById('ap-list').innerHTML = rows.map(r =>
+    `<div class="appliance-row">
+      <div class="aplabel">${r.name}</div>
+      <div class="apcost">${r.kwhMonth.toFixed(1)} kWh/mes</div>
+      <div style="font-weight:700;color:var(--accent);font-size:.84rem">${fmtClp(r.cost)}</div>
+      <button class="btn-icon" onclick="removeAppliance(${r.i})">✕</button>
+    </div>`
+  ).join('');
+
+  const totalCost = totalKwh * PRICE_PER_KWH;
+  document.getElementById('ap-total').textContent = fmtClp(totalCost);
+  document.getElementById('ap-kwh-total').textContent = `Total: ${totalKwh.toFixed(1)} kWh/mes`;
+
+  const ledTip = document.getElementById('ap-led-tip');
+  if (hasIncan && ledSavings > 0) {
+    ledTip.style.display = 'block';
+    ledTip.textContent = `Potencial ahorro si cambias a LED: ${fmtClp(ledSavings)}/mes = ${fmtClp(ledSavings*12)}/año`;
+  } else {
+    ledTip.style.display = 'none';
+  }
+
+  const colors = ['#0369a1','#0ea5e9','#38bdf8','#7dd3fc','#bae6fd','#0c4a7a','#164e63','#0891b2','#06b6d4','#22d3ee','#a5f3fc','#cffafe','#e0f2fe','#f0f9ff','#fef9c3','#fde68a','#fbbf24','#d97706','#b45309'];
+  const ctx = document.getElementById('ap-chart').getContext('2d');
+  if (apChart) apChart.destroy();
+  apChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: rows.map(r => r.name),
+      datasets: [{ data: rows.map(r => parseFloat(r.kwhMonth.toFixed(2))), backgroundColor: colors.slice(0, rows.length), borderWidth: 2, borderColor: '#fff' }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } } }
+    }
+  });
+}
+
+// ===== TAB 3: CALEFACCIÓN =====
+const SISTEMAS_BASE = {
+  lena:        { nombre: 'Estufa a leña certificada', base: 45000 },
+  gas_natural: { nombre: 'Calef. gas natural', base: 85000 },
+  gas_licuado: { nombre: 'Calef. gas licuado', base: 145000 },
+  heat_pump:   { nombre: 'Bomba de calor', base: 38000 },
+  electrico:   { nombre: 'Calefactor eléctrico', base: 160000 },
+  pellet:      { nombre: 'Pellet', base: 55000 },
+  parafina:    { nombre: 'Parafina', base: 120000 }
+};
+
+function calcCalef() {
+  const zona = parseFloat(document.getElementById('ca-zona').value);
+  const m2 = parseFloat(document.getElementById('ca-m2').value) || 60;
+  const aisl = parseFloat(document.getElementById('ca-aislacion').value);
+  const horas = parseFloat(document.getElementById('ca-horas').value) || 8;
+  const sistema = document.getElementById('ca-sistema').value;
+
+  const factor = (m2 / 60) * zona * aisl * (horas / 8);
+
+  const costoActual = Math.round(SISTEMAS_BASE[sistema].base * factor);
+  document.getElementById('ca-result').style.display = 'block';
+  document.getElementById('ca-costo-actual').textContent = fmtClp(costoActual);
+
+  const ranking = Object.entries(SISTEMAS_BASE).map(([key, val]) => ({
+    key, nombre: val.nombre,
+    costo: Math.round(val.base * factor)
+  })).sort((a,b) => a.costo - b.costo);
+
+  const minCosto = ranking[0].costo;
+
+  document.getElementById('ca-comparativa').innerHTML = ranking.map((r, idx) => {
+    let badge = '';
+    if (idx === 0) badge = '<span class="system-badge best">MEJOR</span>';
+    else if (idx >= ranking.length - 2) badge = '<span class="system-badge worst">MAYOR COSTO</span>';
+    else badge = '<span class="system-badge mid">MID</span>';
+    const isCurrent = r.key === sistema;
+    return `<div class="system-row${isCurrent?' ':""}">
+      <span style="font-weight:${isCurrent?700:400}">${r.nombre}${isCurrent?' <em style="font-size:.7rem;color:var(--muted)">(actual)</em>':''}</span>
+      <div style="display:flex;align-items:center;gap:6px">${badge}<span style="font-weight:700;color:var(--accent)">${fmtClp(r.costo)}</span></div>
+    </div>`;
+  }).join('');
+
+  if (sistema !== 'heat_pump') {
+    const hpCosto = Math.round(SISTEMAS_BASE.heat_pump.base * factor);
+    const ahorro = costoActual - hpCosto;
+    const ahorroPct = ((ahorro / costoActual) * 100).toFixed(0);
+    const ahorroAnual = ahorro * 12;
+    const inversionHp = Math.round(m2 * 3500);
+    const paybackMeses = ahorro > 0 ? Math.ceil(inversionHp / ahorro) : 999;
+    const paybackAnios = (paybackMeses / 12).toFixed(1);
+    document.getElementById('ca-roi-box').innerHTML = `
+      <div class="tip-box">
+        <strong>ROI Bomba de Calor vs tu sistema actual</strong><br>
+        Ahorro mensual: ${fmtClp(ahorro)} (${ahorroPct}%) | Anual: ${fmtClp(ahorroAnual)}<br>
+        Inversion referencial (~$3.500/m²): ${fmtClp(inversionHp)}<br>
+        Recuperación estimada: ${paybackAnios > 10 ? '+10' : paybackAnios} años
+      </div>`;
+  } else {
+    document.getElementById('ca-roi-box').innerHTML = '<div class="tip-box"><strong>Ya tienes el sistema más eficiente.</strong> Considera mejorar la aislación para reducir aún más el consumo.</div>';
+  }
+
+  const ahorroAisl20 = costoActual * 0.25 * 12;
+  const ahorroAisl40 = costoActual * 0.40 * 12;
+  document.getElementById('ca-ins-result').innerHTML = `
+    <div class="ins-row"><span>Doble vidrio (por ventana)</span><span style="color:var(--muted)">$150k – $800k</span></div>
+    <div class="ins-row"><span>Aislación de techo</span><span style="color:var(--muted)">~$200.000</span></div>
+    <div class="ins-row"><span>Aislación de muro</span><span style="color:var(--muted)">~$500.000</span></div>
+    <div class="ins-row"><span>Ahorro anual estimado (20-40%)</span><span style="font-weight:700;color:var(--green)">${fmtClp(ahorroAisl20)} – ${fmtClp(ahorroAisl40)}</span></div>
+    <div class="ins-row"><span>Payback doble vidrio típico</span><span style="font-weight:700;color:var(--accent)">3-6 años</span></div>
+    <div class="ins-row"><span>Payback aislación completa</span><span style="font-weight:700;color:var(--accent)">4-8 años</span></div>
+  `;
+}
+
+// ===== TAB 4: PANELES SOLARES =====
+function calcSolar() {
+  const hsp = parseFloat(document.getElementById('sol-region').value);
+  const kwhMes = parseFloat(document.getElementById('sol-kwh').value) || 250;
+  const techo = parseFloat(document.getElementById('sol-techo').value) || 30;
+  const orient = parseFloat(document.getElementById('sol-orient').value);
+  const netmetering = document.getElementById('sol-netmetering').checked;
+
+  const kwhDia = kwhMes / 30;
+  const potRecomKw = kwhDia / (hsp * orient * 0.80);
+  const numPaneles = Math.ceil(potRecomKw / 0.3);
+  const panelesPosibles = Math.floor(techo / 1.8);
+  const panalesReales = Math.min(numPaneles, panelesPosibles);
+  const potReal = panalesReales * 0.3;
+  const genMes = potReal * hsp * orient * 0.80 * 30;
+  const autoconsumo = Math.min(100, (genMes / kwhMes * 100));
+  const costoUsdKw = 1400;
+  const usdToCLP = 950;
+  const costoSistema = potReal * costoUsdKw * usdToCLP;
+  const precioKwh = 165;
+  const ahorroMes = (netmetering ? genMes : Math.min(genMes, kwhMes)) * precioKwh;
+  const paybackAnios = costoSistema / (ahorroMes * 12);
+  const co2Mes = genMes * 0.3;
+
+  document.getElementById('sol-result').style.display = 'block';
+  document.getElementById('sol-stats').innerHTML = [
+    { val: potReal.toFixed(1) + ' kW', lbl: 'Potencia del sistema' },
+    { val: panalesReales, lbl: 'Paneles (300W c/u)' },
+    { val: Math.round(genMes) + ' kWh', lbl: 'Generación mensual' },
+    { val: autoconsumo.toFixed(0) + '%', lbl: 'Factura cubierta' }
+  ].map(s => `<div class="solar-stat"><div class="val">${s.val}</div><div class="lbl">${s.lbl}</div></div>`).join('');
+
+  document.getElementById('sol-economia').innerHTML = `
+    <div class="metric-row"><span>Costo referencial sistema</span><span class="metric-val">${fmtClp(costoSistema)}</span></div>
+    <div class="metric-row"><span>Ahorro mensual estimado</span><span class="metric-val green">${fmtClp(ahorroMes)}</span></div>
+    <div class="metric-row"><span>Ahorro anual</span><span class="metric-val green">${fmtClp(ahorroMes * 12)}</span></div>
+    <div class="metric-row"><span>Tiempo de recuperación</span><span class="metric-val">${paybackAnios.toFixed(1)} años</span></div>
+    <div class="metric-row"><span>CO2 evitado/mes</span><span class="metric-val green">${co2Mes.toFixed(0)} kg CO2</span></div>
+    <div class="metric-row"><span>Net-metering</span><span class="metric-val">${netmetering ? 'Sí (inyectas excedentes)' : 'No'}</span></div>
+  `;
+}
+
+// ===== TAB 5: PLAN DE AHORRO =====
+const quizAnswers = [null, null, null, null, null];
+
+function selectQuiz(q, optIdx, val) {
+  quizAnswers[q] = val;
+  const opts = document.querySelectorAll(`#quiz-container .quiz-q:nth-child(${q+1}) .quiz-opt`);
+  opts.forEach((o, i) => o.classList.toggle('selected', i === optIdx));
+}
+
+const ALL_RECS = [
+  { id:'standby', badge:'rec-green', badgeTxt:'Gratis', title:'Apagar equipos en standby', desc:'Regletas con interruptor. Ahorro: ~$3.000/mes.', ahorro:3000, co2:0.5, always:true },
+  { id:'lavado_frio', badge:'rec-green', badgeTxt:'Gratis', title:'Lavar ropa en frío', desc:'90% del consumo de la lavadora es calentar agua. Ahorro: ~$2.000/mes.', ahorro:2000, co2:0.3, always:true },
+  { id:'termostat', badge:'rec-green', badgeTxt:'Gratis', title:'Bajar termostato 1°C en calefacción', desc:'Ahorra 7% en calefacción. En invierno puede ser $10.000/mes.', ahorro:8000, co2:1.2, always:true },
+  { id:'led', badge:'rec-yellow', badgeTxt:'Inversión baja', title:'Cambiar todas las ampolletas a LED', desc:'Costo ~$30.000. Ahorro ~$8.000/mes. Payback: 4 meses.', ahorro:8000, co2:1.0, q:2, badAnswer:'no' },
+  { id:'regleta', badge:'rec-yellow', badgeTxt:'Inversión baja', title:'Instalar regletas con interruptor', desc:'Elimina consumo standby en TV, PC, cargadores. Costo: ~$8.000.', ahorro:4000, co2:0.6, always:true },
+  { id:'vidrio', badge:'rec-orange', badgeTxt:'Inversión media', title:'Instalar doble vidrio', desc:'Ahorra 20-30% en calefacción. Payback: 3-6 años.', ahorro:15000, co2:2.5, q:1, badAnswer:'no' },
+  { id:'frigorifico', badge:'rec-orange', badgeTxt:'Inversión media', title:'Cambiar refrigerador antiguo (+10 años)', desc:'Un refrigerador moderno A+++ consume 40% menos. Ahorro: ~$5.000/mes.', ahorro:5000, co2:0.8, q:3, badAnswer:'si' },
+  { id:'heat_pump', badge:'rec-red', badgeTxt:'Inversión mayor', title:'Cambiar a bomba de calor (heat pump)', desc:'3-4x más eficiente que calefactor eléctrico. Ahorro: 60-75% en calefacción.', ahorro:40000, co2:8, q:4, badAnswer:'si' },
+  { id:'solar', badge:'rec-red', badgeTxt:'Inversión alta', title:'Instalar paneles solares', desc:'Cubre 60-90% de tu factura eléctrica. Payback 5-8 años.', ahorro:25000, co2:10, always:true }
+];
+
+function calcPlan() {
+  const applicable = ALL_RECS.filter(r => {
+    if (r.always) return true;
+    if (r.q !== undefined && quizAnswers[r.q] === r.badAnswer) return true;
+    return false;
+  });
+
+  state.checkedRecs = state.checkedRecs || {};
+  saveState();
+
+  document.getElementById('plan-result').style.display = 'block';
+  document.getElementById('rec-list').innerHTML = applicable.map(r =>
+    `<div class="rec-item">
+      <input type="checkbox" class="rec-check" id="chk-${r.id}" ${state.checkedRecs[r.id]?'checked':''} onchange="toggleRec('${r.id}',this.checked)">
+      <div class="rec-text">
+        <strong>${r.title}</strong>
+        <span style="color:var(--muted)">${r.desc}</span>
+      </div>
+      <span class="rec-badge ${r.badge}">${r.badgeTxt}</span>
+    </div>`
+  ).join('');
+
+  updateSavings(applicable);
+}
+
+function toggleRec(id, checked) {
+  state.checkedRecs[id] = checked;
+  saveState();
+  const applicable = ALL_RECS.filter(r => r.always || (r.q !== undefined && quizAnswers[r.q] === r.badAnswer));
+  updateSavings(applicable);
+}
+
+function updateSavings(applicable) {
+  let totalMes = 0, totalCo2 = 0;
+  applicable.forEach(r => {
+    if (state.checkedRecs[r.id]) { totalMes += r.ahorro; totalCo2 += r.co2; }
+  });
+  const totalAnio = totalMes * 12;
+  document.getElementById('savings-summary').innerHTML = `
+    <div class="savings-total">
+      <div class="sub">Ahorro mensual implementado</div>
+      <div class="big">${fmtClp(totalMes)}/mes</div>
+      <div class="sub" style="margin-top:6px">${fmtClp(totalAnio)}/año • ${totalCo2.toFixed(1)} ton CO2 evitadas/año</div>
+    </div>`;
+}
+
+// ===== INIT =====
+loadState();
+renderHistorial();
+renderAppliances();
+
+// Pre-calc factura with demo data
+setTimeout(() => {
+  document.getElementById('f-kwh').value = state.facturaKwh || 250;
+  calcFactura();
+}, 100);
+</script>
+</body>
+</html>

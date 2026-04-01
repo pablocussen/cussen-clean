@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0c4a6e">
+<meta name="description" content="Calculadora de Mareas para Chile — 12 puertos, predicción harmónica, actividades costeras">
+<title>MaréasCL — Mareas Chile</title>
+<link rel="manifest" href="data:application/json,{%22name%22:%22Mar%C3%A9asCL%22,%22short_name%22:%22Mar%C3%A9as%22,%22start_url%22:%22./%22,%22display%22:%22standalone%22,%22background_color%22:%22%23f0f9ff%22,%22theme_color%22:%22%230c4a6e%22}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{--bg:#f0f9ff;--card:#ffffff;--card2:#e0f2fe;--border:#7dd3fc;--accent:#0369a1;--text:#0c4a6e;--muted:#6b8fa5;--green:#16a34a;--yellow:#d97706;--red:#dc2626;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-text-size-adjust:100%}
+header{background:linear-gradient(90deg,#0c4a6e,#0369a1);padding:13px 18px;position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;color:white;box-shadow:0 2px 8px rgba(0,0,0,0.2)}
+header h1{font-size:1.25rem;font-weight:800;letter-spacing:-0.5px}
+header span{font-size:0.75rem;opacity:0.8;margin-top:2px;display:block}
+.header-left{display:flex;flex-direction:column}
+.header-right{font-size:1.8rem}
+nav{background:#fff;border-bottom:2px solid var(--border);display:flex;overflow-x:auto;position:sticky;top:62px;z-index:40;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+.tab-btn{flex:1;min-width:80px;padding:10px 6px;border:none;background:none;color:var(--muted);font-family:'Inter',sans-serif;font-size:0.78rem;font-weight:600;cursor:pointer;border-bottom:3px solid transparent;transition:all 0.2s;white-space:nowrap;display:flex;flex-direction:column;align-items:center;gap:2px}
+.tab-btn:hover{color:var(--accent);background:#f0f9ff}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);background:#f0f9ff}
+.tab-icon{font-size:1.1rem}
+.tab-pane{display:none;padding:16px;max-width:680px;margin:0 auto}
+.tab-pane.active{display:block}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(3,105,161,0.07)}
+.card2{background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px}
+label{font-size:0.8rem;font-weight:600;color:var(--muted);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.5px}
+select,input[type=date]{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-family:'Inter',sans-serif;font-size:16px;color:var(--text);background:#fff;appearance:none;-webkit-appearance:none;cursor:pointer}
+select:focus,input[type=date]:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(3,105,161,0.15)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.current-height{text-align:center;padding:20px 16px}
+.height-number{font-size:3.5rem;font-weight:800;color:var(--accent);line-height:1;letter-spacing:-2px}
+.height-unit{font-size:1.1rem;font-weight:600;color:var(--muted);margin-left:4px}
+.tide-type{font-size:1.1rem;font-weight:700;margin-top:6px;letter-spacing:0.5px}
+.tide-type.high{color:var(--accent)}
+.tide-type.low{color:var(--muted)}
+.tide-type.rising{color:var(--green)}
+.tide-type.falling{color:var(--yellow)}
+.next-tides{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.next-item{background:var(--card2);border-radius:10px;padding:12px;text-align:center}
+.next-label{font-size:0.7rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px}
+.next-time{font-size:1.3rem;font-weight:800;color:var(--text);margin:3px 0}
+.next-height{font-size:0.9rem;color:var(--muted)}
+.next-countdown{font-size:0.75rem;color:var(--accent);font-weight:600;margin-top:3px}
+table{width:100%;border-collapse:collapse;font-size:0.88rem}
+th{background:var(--card2);color:var(--muted);font-size:0.73rem;text-transform:uppercase;letter-spacing:0.5px;padding:8px 10px;text-align:left;border-bottom:1px solid var(--border)}
+td{padding:9px 10px;border-bottom:1px solid #e0f2fe}
+tr:last-child td{border-bottom:none}
+.badge{display:inline-block;padding:3px 8px;border-radius:20px;font-size:0.73rem;font-weight:700;text-transform:uppercase;letter-spacing:0.3px}
+.badge-high{background:#dbeafe;color:#1d4ed8}
+.badge-low{background:#f1f5f9;color:#64748b}
+.chart-wrap{position:relative;height:180px;margin-top:8px}
+.moon-card{display:flex;align-items:center;gap:14px;padding:14px 16px}
+.moon-emoji{font-size:2.8rem}
+.moon-info{flex:1}
+.moon-name{font-size:1rem;font-weight:700}
+.moon-sub{font-size:0.8rem;color:var(--muted);margin-top:3px}
+.moon-type{font-size:0.75rem;font-weight:700;margin-top:6px;padding:3px 10px;border-radius:20px;display:inline-block}
+.moon-viva{background:#fef3c7;color:#d97706}
+.moon-muerta{background:#f0fdf4;color:#16a34a}
+.week-day{margin-bottom:10px}
+.week-day-header{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-radius:10px 10px 0 0;font-weight:700;font-size:0.88rem;cursor:pointer}
+.week-day-header .day-name{font-size:0.95rem}
+.week-day-header .day-summary{font-size:0.78rem;opacity:0.85}
+.day-bg-light{background:#dbeafe;color:#1e40af}
+.day-bg-med{background:#1d4ed8;color:#fff}
+.day-bg-dark{background:#1e3a5f;color:#fff}
+.week-day-body{background:#fff;border:1px solid var(--border);border-top:none;border-radius:0 0 10px 10px;overflow:hidden}
+.fishing-window{display:flex;align-items:center;gap:8px;padding:7px 10px;background:#f0fdf4;border-top:1px solid #bbf7d0;font-size:0.78rem;color:#166534;font-weight:600}
+.activity-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:10px;margin-bottom:14px}
+.activity-btn{background:#fff;border:2px solid var(--border);border-radius:12px;padding:12px 8px;text-align:center;cursor:pointer;transition:all 0.2s;font-family:'Inter',sans-serif}
+.activity-btn:hover,.activity-btn.selected{background:var(--accent);border-color:var(--accent);color:#fff;transform:translateY(-2px);box-shadow:0 4px 12px rgba(3,105,161,0.25)}
+.activity-btn .act-icon{font-size:1.5rem;display:block;margin-bottom:4px}
+.activity-btn .act-name{font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.3px}
+.windows-list{list-style:none}
+.windows-list li{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid #e0f2fe}
+.windows-list li:last-child{border-bottom:none}
+.win-time{font-weight:800;font-size:0.9rem;min-width:55px;color:var(--accent)}
+.win-desc{font-size:0.82rem;line-height:1.4}
+.win-quality{font-size:0.7rem;font-weight:700;padding:2px 7px;border-radius:20px;margin-top:3px;display:inline-block}
+.q-excelente{background:#dcfce7;color:#15803d}
+.q-bueno{background:#dbeafe;color:#1d4ed8}
+.q-regular{background:#fef9c3;color:#854d0e}
+.alert-box{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border-radius:10px;margin-bottom:14px;font-size:0.83rem;line-height:1.5}
+.alert-warn{background:#fef3c7;border:1px solid #fcd34d;color:#92400e}
+.alert-info{background:#dbeafe;border:1px solid var(--border);color:#1e40af}
+.alert-safe{background:#dcfce7;border:1px solid #86efac;color:#14532d}
+.info-section h3{font-size:0.95rem;font-weight:700;color:var(--accent);margin-bottom:8px;margin-top:14px}
+.info-section h3:first-child{margin-top:0}
+.info-section p{font-size:0.82rem;line-height:1.6;color:var(--text);margin-bottom:8px}
+.glosario-item{padding:8px 0;border-bottom:1px solid #e0f2fe}
+.glosario-item:last-child{border-bottom:none}
+.glosario-term{font-weight:700;font-size:0.85rem;color:var(--accent)}
+.glosario-def{font-size:0.8rem;color:var(--muted);margin-top:2px;line-height:1.4}
+.moon-diagram{display:block;margin:12px auto}
+.safety-list{list-style:none}
+.safety-list li{display:flex;align-items:flex-start;gap:8px;padding:6px 0;font-size:0.82rem;line-height:1.4;border-bottom:1px solid #e0f2fe}
+.safety-list li:last-child{border-bottom:none}
+.safety-list li::before{content:'⚠️';font-size:0.9rem;flex-shrink:0;margin-top:1px}
+.shoa-box{background:linear-gradient(135deg,#0c4a6e,#0369a1);color:#fff;border-radius:14px;padding:16px;text-align:center;margin-top:14px}
+.shoa-box .phone{font-size:1.8rem;font-weight:800;letter-spacing:1px;margin:6px 0}
+.loading{text-align:center;padding:40px;color:var(--muted);font-size:0.9rem}
+.section-title{font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);margin-bottom:10px}
+.divider{border:none;border-top:1px solid var(--border);margin:14px 0}
+footer{text-align:center;padding:16px;font-size:0.72rem;color:var(--muted);margin-top:8px}
+@media(max-width:360px){.height-number{font-size:2.8rem}.tab-btn{font-size:0.7rem;min-width:70px}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>🌊 MaréasCL</h1>
+    <span>Calculadora de Mareas — Chile</span>
+  </div>
+  <div class="header-right" id="headerMoon">🌊</div>
+</header>
+
+<nav id="mainNav">
+  <button class="tab-btn active" onclick="showTab('hoy',this)">
+    <span class="tab-icon">🌊</span>HOY
+  </button>
+  <button class="tab-btn" onclick="showTab('semana',this)">
+    <span class="tab-icon">📅</span>SEMANA
+  </button>
+  <button class="tab-btn" onclick="showTab('actividades',this)">
+    <span class="tab-icon">🐟</span>ACTIVIDADES
+  </button>
+  <button class="tab-btn" onclick="showTab('info',this)">
+    <span class="tab-icon">📚</span>INFO
+  </button>
+</nav>
+
+<!-- TAB HOY -->
+<div class="tab-pane active" id="tab-hoy">
+  <div class="row2">
+    <div>
+      <label>Puerto</label>
+      <select id="portSelect" onchange="onPortChange()"></select>
+    </div>
+    <div>
+      <label>Fecha</label>
+      <input type="date" id="dateInput" onchange="onDateChange()">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="current-height" id="currentDisplay">
+      <div class="height-number" id="currentH">--</div>
+      <div style="display:inline" class="height-unit">m</div>
+      <div class="tide-type" id="tideType">Calculando...</div>
+      <div class="next-tides" id="nextTides"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Mareas de Hoy</div>
+    <div id="todayTable"></div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Curva de Mareas — 24 horas</div>
+    <div class="chart-wrap">
+      <canvas id="todayChart"></canvas>
+    </div>
+  </div>
+
+  <div class="card moon-card" id="moonCard">
+    <div class="moon-emoji" id="moonEmoji">🌕</div>
+    <div class="moon-info">
+      <div class="moon-name" id="moonName">Luna llena</div>
+      <div class="moon-sub" id="moonSub">Ciclo 100%</div>
+      <div class="moon-type moon-viva" id="moonType">🌊 Marea Viva</div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB SEMANA -->
+<div class="tab-pane" id="tab-semana">
+  <div class="row2">
+    <div>
+      <label>Puerto</label>
+      <select id="portSelect2" onchange="onPortChange2()"></select>
+    </div>
+    <div style="align-self:flex-end">
+      <div id="weekRange" style="font-size:0.8rem;color:var(--muted);padding:8px 0;font-weight:600"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Curva 7 Días</div>
+    <div class="chart-wrap" style="height:160px">
+      <canvas id="weekChart"></canvas>
+    </div>
+  </div>
+
+  <div id="weekDays"></div>
+</div>
+
+<!-- TAB ACTIVIDADES -->
+<div class="tab-pane" id="tab-actividades">
+  <div class="row2">
+    <div>
+      <label>Puerto</label>
+      <select id="portSelect3" onchange="onPortChange3()"></select>
+    </div>
+    <div>
+      <label>Fecha</label>
+      <input type="date" id="dateInput3" onchange="onPortChange3()">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Selecciona Actividad</div>
+    <div class="activity-grid" id="activityGrid">
+      <button class="activity-btn selected" data-act="Pesca" onclick="selectActivity(this)">
+        <span class="act-icon">🐟</span><span class="act-name">Pesca</span>
+      </button>
+      <button class="activity-btn" data-act="Mariscar" onclick="selectActivity(this)">
+        <span class="act-icon">🦀</span><span class="act-name">Mariscar</span>
+      </button>
+      <button class="activity-btn" data-act="Buceo" onclick="selectActivity(this)">
+        <span class="act-icon">🤿</span><span class="act-name">Buceo</span>
+      </button>
+      <button class="activity-btn" data-act="Surf" onclick="selectActivity(this)">
+        <span class="act-icon">🏄</span><span class="act-name">Surf</span>
+      </button>
+      <button class="activity-btn" data-act="Kayak" onclick="selectActivity(this)">
+        <span class="act-icon">🚣</span><span class="act-name">Kayak</span>
+      </button>
+      <button class="activity-btn" data-act="Navegación" onclick="selectActivity(this)">
+        <span class="act-icon">⚓</span><span class="act-name">Navegar</span>
+      </button>
+      <button class="activity-btn" data-act="Playa" onclick="selectActivity(this)">
+        <span class="act-icon">🏖️</span><span class="act-name">Playa</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="card" id="activityResult">
+    <div class="section-title">Mejores Horarios Hoy</div>
+    <ul class="windows-list" id="windowsList"></ul>
+  </div>
+
+  <div class="alert-box alert-warn" id="actAlert">
+    ⚠️ <span id="actAlertText">Selecciona un puerto y actividad para ver recomendaciones.</span>
+  </div>
+</div>
+
+<!-- TAB INFO -->
+<div class="tab-pane" id="tab-info">
+  <div class="card info-section">
+    <h3>📖 Glosario de Mareas</h3>
+    <div class="glosario-item">
+      <div class="glosario-term">Marea Alta (Pleamar)</div>
+      <div class="glosario-def">Nivel máximo del mar en un ciclo de marea. El agua llega más lejos sobre la costa.</div>
+    </div>
+    <div class="glosario-item">
+      <div class="glosario-term">Marea Baja (Bajamar)</div>
+      <div class="glosario-def">Nivel mínimo del mar en un ciclo de marea. Quedan al descubierto roqueríos y playas.</div>
+    </div>
+    <div class="glosario-item">
+      <div class="glosario-term">Marea Viva (Sicigias)</div>
+      <div class="glosario-def">Mareas de mayor amplitud, ocurren en luna llena y luna nueva. Sol, Tierra y Luna están alineados.</div>
+    </div>
+    <div class="glosario-item">
+      <div class="glosario-term">Marea Muerta (Cuadratura)</div>
+      <div class="glosario-def">Mareas de menor amplitud, ocurren en cuartos creciente y menguante. Luna en ángulo 90° con el Sol.</div>
+    </div>
+    <div class="glosario-item">
+      <div class="glosario-term">Sicigias</div>
+      <div class="glosario-def">Alineación de Sol–Tierra–Luna que produce las mayores mareas del mes.</div>
+    </div>
+    <div class="glosario-item">
+      <div class="glosario-term">Cuadratura</div>
+      <div class="glosario-def">Posición de la Luna a 90° respecto al Sol vista desde la Tierra. Mareas de menor rango.</div>
+    </div>
+    <div class="glosario-item">
+      <div class="glosario-term">Amplitud de Marea</div>
+      <div class="glosario-def">Diferencia en altura entre la pleamar y la bajamar. En Puerto Montt puede superar los 6 metros.</div>
+    </div>
+    <div class="glosario-item">
+      <div class="glosario-term">Agua Muerta (Agua Saliente)</div>
+      <div class="glosario-def">Período de calma en el cambio de marea, antes que empiece a subir o bajar.</div>
+    </div>
+  </div>
+
+  <div class="card info-section">
+    <h3>🌙 ¿Por qué hay mareas?</h3>
+    <svg class="moon-diagram" width="300" height="140" viewBox="0 0 300 140">
+      <!-- Sun -->
+      <circle cx="30" cy="70" r="22" fill="#fbbf24" opacity="0.9"/>
+      <text x="30" y="75" text-anchor="middle" font-size="10" font-weight="bold" fill="#92400e">SOL</text>
+      <!-- Arrows from sun -->
+      <line x1="55" y1="70" x2="120" y2="70" stroke="#fbbf24" stroke-width="2" stroke-dasharray="4,3"/>
+      <!-- Earth -->
+      <circle cx="150" cy="70" r="20" fill="#3b82f6"/>
+      <circle cx="150" cy="70" r="20" fill="none" stroke="#1d4ed8" stroke-width="2"/>
+      <text x="150" y="75" text-anchor="middle" font-size="9" font-weight="bold" fill="white">TIERRA</text>
+      <!-- Tide bulges on Earth -->
+      <ellipse cx="150" cy="70" rx="32" ry="24" fill="none" stroke="#7dd3fc" stroke-width="2" stroke-dasharray="3,2" opacity="0.8"/>
+      <!-- Moon orbit -->
+      <circle cx="150" cy="70" r="60" fill="none" stroke="#c7d2fe" stroke-width="1" stroke-dasharray="3,3" opacity="0.5"/>
+      <!-- Moon -->
+      <circle cx="235" cy="70" r="13" fill="#e2e8f0"/>
+      <circle cx="240" cy="65" r="5" fill="#cbd5e1" opacity="0.6"/>
+      <text x="235" y="75" text-anchor="middle" font-size="8" font-weight="bold" fill="#475569">LUNA</text>
+      <!-- Labels -->
+      <text x="150" y="130" text-anchor="middle" font-size="9" fill="#6b7280">Fuerza gravitacional → bultos de agua en ambos lados</text>
+    </svg>
+    <p>La Luna ejerce una fuerza gravitacional sobre los océanos, creando dos "bultos" de agua: uno hacia la Luna y otro en el lado opuesto. La rotación de la Tierra hace que estos bultos pasen por cada punto costero aproximadamente cada 12 horas, generando dos mareas altas y dos bajas por día (marea semidiurna).</p>
+    <p>El Sol también ejerce fuerza, pero menor. Cuando Sol, Tierra y Luna se alinean (luna llena o nueva), las fuerzas se suman → <strong>mareas vivas</strong>. Cuando están en ángulo recto → <strong>mareas muertas</strong>.</p>
+    <p>Chile tiene costas con mareas principalmente semidiurnas, con amplitudes que van desde ~0.5m en Arica hasta más de 7m en el Canal de Chacao.</p>
+  </div>
+
+  <div class="card info-section">
+    <h3>⚠️ Seguridad en la Costa</h3>
+    <ul class="safety-list">
+      <li>Nunca le des la espalda al mar — olas gigantes pueden aparecer sin aviso, especialmente con viento sur.</li>
+      <li>No te acerques a roqueríos cuando la marea esté subiendo. El regreso puede quedar cortado en minutos.</li>
+      <li>Consulta siempre el pronóstico antes de salir a mariscar o pescar de noche.</li>
+      <li>Un tsunami NO es igual a una marea: es una ola de profundidad. Ante alarma, aléjate de la costa inmediatamente.</li>
+      <li>La zona de rompiente es peligrosa incluso con marea baja — el fondo rocoso puede herir gravemente.</li>
+      <li>Lleva teléfono cargado, comparte tu plan de salida y hora de regreso con alguien en tierra.</li>
+      <li>En kayak o bote pequeño, la marea en contra puede duplicar el tiempo de regreso — planifica con margen.</li>
+    </ul>
+  </div>
+
+  <div class="card info-section">
+    <h3>🦀 Regulaciones de Pesca y Marisqueo</h3>
+    <p>El marisqueo nocturno está <strong>prohibido en muchas zonas</strong> de Chile. Las Áreas de Manejo y Explotación de Recursos Bentónicos (AMERB) son exclusivas para pescadores artesanales inscritos.</p>
+    <p>Vedas periódicas protegen especies como el erizo, loco, almeja y ostión. Verifica con <strong>SERNAPESCA</strong> el estado de vedas en tu área antes de salir.</p>
+    <p>La extracción de choritos, picorocos y pelillo tiene restricciones estacionales. El centolla en el sur está sujeto a cuotas.</p>
+  </div>
+
+  <div class="shoa-box">
+    <div style="font-size:0.8rem;opacity:0.85;text-transform:uppercase;letter-spacing:1px;font-weight:600">🆘 SHOA — Emergencias Marítimas</div>
+    <div class="phone">32-2266666</div>
+    <div style="font-size:0.78rem;opacity:0.8">Servicio Hidrográfico y Oceanográfico de la Armada de Chile<br>Predicciones oficiales: <strong>shoa.cl</strong></div>
+  </div>
+
+  <footer>MaréasCL v1.0 — Cálculo harmónico basado en constantes SHOA aproximadas.<br>Datos educativos — consulta SHOA para predicciones oficiales.</footer>
+</div>
+
+<script>
+// ===================== HARMONIC CONSTANTS =====================
+const PUERTOS = {
+  'Arica':       {lat:-18.48, Z0:0.65, M2:[0.30,180], S2:[0.10,210], K1:[0.12,280], O1:[0.08,260]},
+  'Iquique':     {lat:-20.21, Z0:0.85, M2:[0.35,185], S2:[0.12,215], K1:[0.13,285], O1:[0.09,265]},
+  'Antofagasta': {lat:-23.65, Z0:0.90, M2:[0.40,190], S2:[0.15,220], K1:[0.15,290], O1:[0.10,270]},
+  'Coquimbo':    {lat:-29.96, Z0:1.00, M2:[0.55,200], S2:[0.18,230], K1:[0.18,300], O1:[0.12,280]},
+  'Valparaíso':  {lat:-33.05, Z0:1.20, M2:[0.60,210], S2:[0.20,240], K1:[0.20,310], O1:[0.14,290]},
+  'San Antonio': {lat:-33.59, Z0:1.15, M2:[0.58,208], S2:[0.19,238], K1:[0.19,308], O1:[0.13,288]},
+  'Constitución':{lat:-35.33, Z0:1.40, M2:[0.80,220], S2:[0.25,250], K1:[0.22,320], O1:[0.16,300]},
+  'Talcahuano':  {lat:-36.72, Z0:1.60, M2:[0.90,230], S2:[0.28,260], K1:[0.25,330], O1:[0.18,310]},
+  'Corral':      {lat:-39.87, Z0:2.00, M2:[1.10,240], S2:[0.35,270], K1:[0.30,340], O1:[0.22,320]},
+  'Puerto Montt':{lat:-41.47, Z0:3.20, M2:[1.80,250], S2:[0.55,280], K1:[0.40,350], O1:[0.30,330]},
+  'Castro':      {lat:-42.48, Z0:3.80, M2:[2.20,255], S2:[0.68,285], K1:[0.45,355], O1:[0.35,335]},
+  'Punta Arenas':{lat:-53.15, Z0:1.80, M2:[1.00,260], S2:[0.32,290], K1:[0.35,355], O1:[0.25,335]},
+};
+
+const OMEGA = {M2:28.984, S2:30.000, K1:15.041, O1:13.943};
+const RAD = Math.PI / 180;
+
+// ===================== TIDE ENGINE =====================
+function calcTide(port, date) {
+  const t = date.getTime() / 1000 / 3600; // hours since epoch
+  let h = port.Z0;
+  for (const [name, omega] of Object.entries(OMEGA)) {
+    const [amp, phase] = port[name];
+    h += amp * Math.cos((omega * t + phase) * RAD);
+  }
+  return Math.max(0, h);
+}
+
+function sampleTides(port, startDate, hours, stepMin) {
+  const step = stepMin * 60 * 1000;
+  const pts = [];
+  for (let i = 0; i <= hours * 60 / stepMin; i++) {
+    const d = new Date(startDate.getTime() + i * step);
+    pts.push({date: d, h: calcTide(port, d)});
+  }
+  return pts;
+}
+
+function findHighsLows(port, date) {
+  const pts = sampleTides(port, date, 24, 6);
+  const extremes = [];
+  for (let i = 1; i < pts.length - 1; i++) {
+    const prev = pts[i-1].h, cur = pts[i].h, next = pts[i+1].h;
+    if (cur > prev && cur > next) extremes.push({date: pts[i].date, h: cur, type:'high'});
+    else if (cur < prev && cur < next) extremes.push({date: pts[i].date, h: cur, type:'low'});
+  }
+  return extremes;
+}
+
+function findNextExtreme(port, fromDate, type) {
+  const pts = sampleTides(port, fromDate, 13, 6);
+  let prevH = pts[0].h;
+  let dir = 0; // 0=unknown, 1=rising, -1=falling
+  for (let i = 1; i < pts.length - 1; i++) {
+    const cur = pts[i].h, next = pts[i+1].h;
+    if (type === 'high' && cur > prevH && cur >= next) {
+      return {date: pts[i].date, h: cur, type:'high'};
+    }
+    if (type === 'low' && cur < prevH && cur <= next) {
+      return {date: pts[i].date, h: cur, type:'low'};
+    }
+    prevH = cur;
+  }
+  return null;
+}
+
+// ===================== MOON PHASE =====================
+function getMoonPhase(date) {
+  // Known new moon: Jan 7, 2000 18:14 UTC
+  const knownNew = new Date('2000-01-06T18:14:00Z');
+  const lunarCycle = 29.53058867;
+  const diff = (date - knownNew) / (1000 * 60 * 60 * 24);
+  const phase = ((diff % lunarCycle) + lunarCycle) % lunarCycle;
+  const pct = phase / lunarCycle;
+
+  let emoji, name, isViva;
+  if (pct < 0.0625)       { emoji='🌑'; name='Luna Nueva';         isViva=true; }
+  else if (pct < 0.1875)  { emoji='🌒'; name='Cuarto Creciente';   isViva=false; }
+  else if (pct < 0.3125)  { emoji='🌓'; name='Cuarto Creciente';   isViva=false; }
+  else if (pct < 0.4375)  { emoji='🌔'; name='Gibosa Creciente';   isViva=false; }
+  else if (pct < 0.5625)  { emoji='🌕'; name='Luna Llena';         isViva=true; }
+  else if (pct < 0.6875)  { emoji='🌖'; name='Gibosa Menguante';   isViva=false; }
+  else if (pct < 0.8125)  { emoji='🌗'; name='Cuarto Menguante';   isViva=false; }
+  else if (pct < 0.9375)  { emoji='🌘'; name='Cuarto Menguante';   isViva=false; }
+  else                     { emoji='🌑'; name='Luna Nueva';         isViva=true; }
+
+  // Days until next full / new
+  const daysToFull = lunarCycle * (pct < 0.5 ? (0.5 - pct) : (1.5 - pct));
+  const daysToNew  = lunarCycle * (1 - pct);
+
+  return {emoji, name, pct: Math.round(pct * 100), phase, isViva, daysToFull: Math.round(daysToFull), daysToNew: Math.round(daysToNew)};
+}
+
+// ===================== FORMATTING =====================
+function fmtTime(date) {
+  return date.toLocaleTimeString('es-CL', {hour:'2-digit', minute:'2-digit', hour12:false});
+}
+function fmtH(h) { return h.toFixed(2); }
+function dateToISO(d) {
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function parseLocalDate(str) {
+  const [y,m,d] = str.split('-').map(Number);
+  return new Date(y, m-1, d, 0, 0, 0);
+}
+function dayName(date) {
+  return date.toLocaleDateString('es-CL', {weekday:'long', day:'numeric', month:'short'});
+}
+function countdown(from, to) {
+  const diff = to - from;
+  if (diff <= 0) return '';
+  const h = Math.floor(diff/3600000);
+  const m = Math.floor((diff%3600000)/60000);
+  if (h > 0) return `en ${h}h ${m}m`;
+  return `en ${m}m`;
+}
+
+// ===================== STATE =====================
+let selectedPort = 'Valparaíso';
+let selectedDate = new Date();
+selectedDate.setHours(0,0,0,0);
+let selectedActivity = 'Pesca';
+let todayChartInst = null;
+let weekChartInst = null;
+
+// ===================== INIT =====================
+function init() {
+  // Populate selects
+  const portNames = Object.keys(PUERTOS);
+  ['portSelect','portSelect2','portSelect3'].forEach(id => {
+    const el = document.getElementById(id);
+    el.innerHTML = portNames.map(n => `<option value="${n}">${n}</option>`).join('');
+  });
+
+  // Load saved port
+  try {
+    const saved = localStorage.getItem('mareas_port');
+    if (saved && PUERTOS[saved]) selectedPort = saved;
+  } catch(e) {}
+
+  // Set selects
+  ['portSelect','portSelect2','portSelect3'].forEach(id => {
+    document.getElementById(id).value = selectedPort;
+  });
+
+  // Set date inputs
+  const todayStr = dateToISO(new Date());
+  document.getElementById('dateInput').value = todayStr;
+  document.getElementById('dateInput3').value = todayStr;
+
+  renderHoy();
+  renderSemana();
+  renderActividades();
+}
+
+// ===================== TAB HOY =====================
+function renderHoy() {
+  const port = PUERTOS[selectedPort];
+  const now = new Date();
+  const dayStart = new Date(selectedDate);
+  const isToday = dateToISO(selectedDate) === dateToISO(new Date());
+
+  // Current tide (use real-time if today, else noon)
+  const refTime = isToday ? now : new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), 12, 0, 0);
+  const curH = calcTide(port, refTime);
+  const prevH = calcTide(port, new Date(refTime.getTime() - 30*60000));
+  const nextH = calcTide(port, new Date(refTime.getTime() + 30*60000));
+
+  document.getElementById('currentH').textContent = fmtH(curH);
+
+  // Tide direction
+  const rising = curH > prevH;
+  const diff = Math.abs(curH - prevH);
+  const slack = diff < 0.03;
+  let typeText, typeClass;
+  if (slack) { typeText = '⚖️ Agua Tranquila'; typeClass = ''; }
+  else if (rising && curH > port.Z0 * 1.05) { typeText = '🔺 MAREA ALTA'; typeClass = 'high'; }
+  else if (!rising && curH < port.Z0 * 0.95) { typeText = '🔻 MAREA BAJA'; typeClass = 'low'; }
+  else if (rising) { typeText = '↗️ Subiendo'; typeClass = 'rising'; }
+  else { typeText = '↘️ Bajando'; typeClass = 'falling'; }
+
+  const tideTypeEl = document.getElementById('tideType');
+  tideTypeEl.textContent = typeText;
+  tideTypeEl.className = 'tide-type ' + typeClass;
+
+  // Next high / next low
+  const nextHigh = findNextExtreme(port, refTime, 'high');
+  const nextLow  = findNextExtreme(port, refTime, 'low');
+
+  let nextTidesHTML = '';
+  if (nextHigh) {
+    nextTidesHTML += `<div class="next-item">
+      <div class="next-label">🔺 Próxima Alta</div>
+      <div class="next-time">${fmtTime(nextHigh.date)}</div>
+      <div class="next-height">${fmtH(nextHigh.h)} m</div>
+      <div class="next-countdown">${countdown(refTime, nextHigh.date)}</div>
+    </div>`;
+  }
+  if (nextLow) {
+    nextTidesHTML += `<div class="next-item">
+      <div class="next-label">🔻 Próxima Baja</div>
+      <div class="next-time">${fmtTime(nextLow.date)}</div>
+      <div class="next-height">${fmtH(nextLow.h)} m</div>
+      <div class="next-countdown">${countdown(refTime, nextLow.date)}</div>
+    </div>`;
+  }
+  document.getElementById('nextTides').innerHTML = nextTidesHTML;
+
+  // Today's highs/lows table
+  const extremes = findHighsLows(port, dayStart);
+  let tableHTML = '<table><thead><tr><th>Tipo</th><th>Hora</th><th>Altura</th></tr></thead><tbody>';
+  if (extremes.length === 0) {
+    tableHTML += '<tr><td colspan="3" style="text-align:center;color:var(--muted)">Sin datos</td></tr>';
+  }
+  extremes.forEach(e => {
+    const badge = e.type === 'high'
+      ? '<span class="badge badge-high">🔺 Alta</span>'
+      : '<span class="badge badge-low">🔻 Baja</span>';
+    tableHTML += `<tr><td>${badge}</td><td><strong>${fmtTime(e.date)}</strong></td><td>${fmtH(e.h)} m</td></tr>`;
+  });
+  tableHTML += '</tbody></table>';
+  document.getElementById('todayTable').innerHTML = tableHTML;
+
+  // Chart
+  const pts = sampleTides(port, dayStart, 24, 10);
+  const labels = pts.map(p => fmtTime(p.date));
+  const data = pts.map(p => p.h);
+
+  // Find current time index
+  let currentIdx = 0;
+  if (isToday) {
+    const elapsed = (now - dayStart) / (10 * 60 * 1000);
+    currentIdx = Math.min(Math.round(elapsed), pts.length - 1);
+  }
+
+  if (todayChartInst) todayChartInst.destroy();
+  const ctx = document.getElementById('todayChart').getContext('2d');
+  const gradient = ctx.createLinearGradient(0, 0, 0, 180);
+  gradient.addColorStop(0, 'rgba(3,105,161,0.35)');
+  gradient.addColorStop(1, 'rgba(3,105,161,0.02)');
+
+  // Point colors: red dot at current time
+  const pointColors = data.map((_, i) => i === currentIdx ? '#dc2626' : 'transparent');
+  const pointRadius = data.map((_, i) => i === currentIdx ? 5 : 0);
+  const pointBorder = data.map((_, i) => i === currentIdx ? '#dc2626' : 'transparent');
+
+  todayChartInst = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        data,
+        borderColor: '#0369a1',
+        borderWidth: 2,
+        fill: true,
+        backgroundColor: gradient,
+        tension: 0.4,
+        pointBackgroundColor: pointColors,
+        pointBorderColor: pointBorder,
+        pointRadius: pointRadius,
+        pointHoverRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {display: false},
+        tooltip: {
+          callbacks: {
+            label: ctx => `${ctx.parsed.y.toFixed(2)} m`,
+            title: ctx => ctx[0].label
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: {
+            maxTicksLimit: 7,
+            font: {size: 10},
+            color: '#6b8fa5',
+            maxRotation: 0
+          },
+          grid: {color: 'rgba(125,211,252,0.3)'}
+        },
+        y: {
+          ticks: {
+            font: {size: 10},
+            color: '#6b8fa5',
+            callback: v => v.toFixed(1)+'m'
+          },
+          grid: {color: 'rgba(125,211,252,0.3)'},
+          min: 0
+        }
+      }
+    }
+  });
+
+  // Moon phase
+  const moon = getMoonPhase(isToday ? now : refTime);
+  document.getElementById('moonEmoji').textContent = moon.emoji;
+  document.getElementById('moonName').textContent = moon.name;
+  document.getElementById('headerMoon').textContent = moon.emoji;
+
+  let moonSub = `Ciclo ${moon.pct}%`;
+  if (moon.isViva) {
+    moonSub += ` — Marea Viva`;
+  } else {
+    moonSub += ` — Marea Muerta`;
+  }
+  document.getElementById('moonSub').textContent = moonSub;
+
+  const moonTypeEl = document.getElementById('moonType');
+  if (moon.isViva) {
+    moonTypeEl.textContent = '🌊 Marea Viva (sicigias)';
+    moonTypeEl.className = 'moon-type moon-viva';
+  } else {
+    moonTypeEl.textContent = '🏔️ Marea Muerta (cuadratura)';
+    moonTypeEl.className = 'moon-type moon-muerta';
+  }
+}
+
+// ===================== TAB SEMANA =====================
+function renderSemana() {
+  const port = PUERTOS[selectedPort];
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  // Week range label
+  const endDate = new Date(today);
+  endDate.setDate(endDate.getDate() + 6);
+  document.getElementById('weekRange').textContent =
+    today.toLocaleDateString('es-CL', {day:'numeric', month:'short'}) + ' – ' +
+    endDate.toLocaleDateString('es-CL', {day:'numeric', month:'short', year:'numeric'});
+
+  // 7-day chart
+  const allPts = [];
+  const allLabels = [];
+  for (let d = 0; d < 7; d++) {
+    const dayStart = new Date(today);
+    dayStart.setDate(dayStart.getDate() + d);
+    const pts = sampleTides(port, dayStart, 24, 20);
+    pts.forEach((p, i) => {
+      if (d === 0 || i > 0) {
+        allPts.push(p.h);
+        allLabels.push(d === 0 && i === 0 ? fmtTime(p.date) :
+          (i % 3 === 0 ? `D${d+1} ${fmtTime(p.date)}` : ''));
+      }
+    });
+  }
+
+  if (weekChartInst) weekChartInst.destroy();
+  const ctx2 = document.getElementById('weekChart').getContext('2d');
+  const grad2 = ctx2.createLinearGradient(0, 0, 0, 160);
+  grad2.addColorStop(0, 'rgba(3,105,161,0.3)');
+  grad2.addColorStop(1, 'rgba(3,105,161,0.01)');
+
+  weekChartInst = new Chart(ctx2, {
+    type: 'line',
+    data: {
+      labels: allLabels,
+      datasets: [{
+        data: allPts,
+        borderColor: '#0369a1',
+        borderWidth: 1.5,
+        fill: true,
+        backgroundColor: grad2,
+        tension: 0.4,
+        pointRadius: 0,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {legend:{display:false}, tooltip:{enabled:false}},
+      scales: {
+        x: {
+          ticks: {
+            maxTicksLimit: 8,
+            font:{size:9},
+            color:'#6b8fa5',
+            maxRotation:0,
+            callback: (val, idx) => allLabels[idx] || ''
+          },
+          grid:{color:'rgba(125,211,252,0.2)'}
+        },
+        y: {
+          ticks:{font:{size:9},color:'#6b8fa5',callback:v=>v.toFixed(1)+'m'},
+          grid:{color:'rgba(125,211,252,0.2)'},
+          min:0
+        }
+      }
+    }
+  });
+
+  // 7-day cards
+  let weekHTML = '';
+  for (let d = 0; d < 7; d++) {
+    const dayStart = new Date(today);
+    dayStart.setDate(dayStart.getDate() + d);
+    const extremes = findHighsLows(port, dayStart);
+
+    // Max tide height today
+    const maxH = extremes.filter(e => e.type==='high').reduce((m,e) => Math.max(m,e.h), 0);
+    let dayBg, dayLabel;
+    if (maxH < 1) { dayBg='day-bg-light'; }
+    else if (maxH < 2) { dayBg='day-bg-med'; }
+    else { dayBg='day-bg-dark'; }
+
+    const dname = dayStart.toLocaleDateString('es-CL', {weekday:'long', day:'numeric', month:'short'});
+    const dnameCap = dname.charAt(0).toUpperCase() + dname.slice(1);
+
+    // Fishing windows: 2h after low tide
+    const lows = extremes.filter(e => e.type==='low');
+    const fishingTimes = lows.map(e => {
+      const t = new Date(e.date.getTime() + 2*3600000);
+      return fmtTime(t);
+    }).join(', ');
+
+    // Warning for high tides
+    let warnHTML = '';
+    if (maxH >= 2) {
+      warnHTML = `<div class="alert-box alert-warn" style="margin:8px;font-size:0.75rem;padding:8px 10px">⚠️ Mareas altas — precaución en costa (máx ${fmtH(maxH)}m)</div>`;
+    }
+
+    let rowsHTML = '';
+    extremes.forEach(e => {
+      const badge = e.type==='high' ?
+        '<span class="badge badge-high" style="font-size:0.65rem">🔺 Alta</span>' :
+        '<span class="badge badge-low" style="font-size:0.65rem">🔻 Baja</span>';
+      rowsHTML += `<tr>
+        <td>${badge}</td>
+        <td><strong>${fmtTime(e.date)}</strong></td>
+        <td>${fmtH(e.h)} m</td>
+      </tr>`;
+    });
+
+    let fishHTML = '';
+    if (fishingTimes) {
+      fishHTML = `<div class="fishing-window">🐟 Mejor pesca: ${fishingTimes} (2h después de bajamar)</div>`;
+    }
+
+    weekHTML += `<div class="week-day">
+      <div class="week-day-header ${dayBg}">
+        <span class="day-name">${dnameCap}</span>
+        <span class="day-summary">Máx ${fmtH(maxH)} m · ${extremes.length} mareas</span>
+      </div>
+      <div class="week-day-body">
+        ${warnHTML}
+        <table style="margin:0"><thead><tr>
+          <th>Tipo</th><th>Hora</th><th>Altura</th>
+        </tr></thead><tbody>${rowsHTML}</tbody></table>
+        ${fishHTML}
+      </div>
+    </div>`;
+  }
+  document.getElementById('weekDays').innerHTML = weekHTML;
+}
+
+// ===================== TAB ACTIVIDADES =====================
+const ACTIVITY_CONFIG = {
+  'Pesca': {
+    desc: 'Mejor pesca: 2h antes y después de la marea alta (peces más activos)',
+    rule: (extremes, port) => {
+      const windows = [];
+      extremes.filter(e=>e.type==='high').forEach(e => {
+        windows.push({
+          start: new Date(e.date.getTime() - 2*3600000),
+          end: e.date,
+          label: 'Subida hacia marea alta',
+          quality: 'excelente'
+        });
+        windows.push({
+          start: e.date,
+          end: new Date(e.date.getTime() + 2*3600000),
+          label: 'Bajada desde marea alta',
+          quality: 'bueno'
+        });
+      });
+      return windows;
+    },
+    alert: 'Evita pescar en mar picado con viento sur. Las rocas con algas son resbaladizas con marea alta.',
+    alertType: 'alert-warn'
+  },
+  'Mariscar': {
+    desc: 'Mejor marisqueo: durante bajamar ±1h (roqueríos expuestos)',
+    rule: (extremes) => {
+      return extremes.filter(e=>e.type==='low').map(e => ({
+        start: new Date(e.date.getTime() - 60*60000),
+        end: new Date(e.date.getTime() + 60*60000),
+        label: `Bajamar — roqueríos expuestos (${fmtH(e.h)}m)`,
+        quality: e.h < 0.3 ? 'excelente' : 'bueno'
+      }));
+    },
+    alert: 'Verifica vedas con SERNAPESCA antes de mariscar. El marisqueo nocturno está prohibido en muchas zonas.',
+    alertType: 'alert-warn'
+  },
+  'Buceo': {
+    desc: 'Mejor buceo: agua tranquila cerca de pleamar o bajamar (mínima corriente)',
+    rule: (extremes) => {
+      return extremes.map(e => ({
+        start: new Date(e.date.getTime() - 45*60000),
+        end: new Date(e.date.getTime() + 45*60000),
+        label: `Agua tranquila en ${e.type==='high'?'pleamar':'bajamar'}`,
+        quality: e.type === 'high' ? 'excelente' : 'bueno'
+      }));
+    },
+    alert: 'Nunca bucees solo. Revisa corrientes antes de entrar al agua. Buceo nocturno requiere equipo especializado.',
+    alertType: 'alert-warn'
+  },
+  'Surf': {
+    desc: 'Mejor surf: marea subiente — olas más limpias y consistentes',
+    rule: (extremes) => {
+      const windows = [];
+      for (let i = 0; i < extremes.length - 1; i++) {
+        if (extremes[i].type === 'low' && extremes[i+1].type === 'high') {
+          const mid = new Date((extremes[i].date.getTime() + extremes[i+1].date.getTime()) / 2);
+          windows.push({
+            start: new Date(extremes[i].date.getTime() + 30*60000),
+            end: mid,
+            label: 'Marea subiente — olas más limpias',
+            quality: 'excelente'
+          });
+        }
+      }
+      return windows;
+    },
+    alert: 'Respeta las zonas de surf y la regla de prioridad. Nunca surfs solo en spots desconocidos.',
+    alertType: 'alert-info'
+  },
+  'Kayak': {
+    desc: 'Mejor kayak: marea tranquila o levemente subiente (menor corriente)',
+    rule: (extremes) => {
+      const windows = [];
+      extremes.filter(e=>e.type==='high').forEach(e => {
+        windows.push({
+          start: new Date(e.date.getTime() - 30*60000),
+          end: new Date(e.date.getTime() + 90*60000),
+          label: 'Agua tranquila cerca de pleamar',
+          quality: 'excelente'
+        });
+      });
+      return windows;
+    },
+    alert: 'Planifica el regreso a favor de la marea. Con marea en contra, el tiempo de retorno puede duplicarse.',
+    alertType: 'alert-warn'
+  },
+  'Navegación': {
+    desc: 'Mejor navegación: marea subiente — mayor profundidad en canales y fondeaderos',
+    rule: (extremes) => {
+      const windows = [];
+      for (let i = 0; i < extremes.length - 1; i++) {
+        if (extremes[i].type === 'low' && extremes[i+1].type === 'high') {
+          windows.push({
+            start: new Date(extremes[i].date.getTime() + 60*60000),
+            end: extremes[i+1].date,
+            label: 'Marea subiente — mejor calado',
+            quality: 'bueno'
+          });
+        }
+      }
+      return windows;
+    },
+    alert: 'Consulta las cartas náuticas SHOA para fondos y peligros locales. Revisa pronóstico de viento y oleaje.',
+    alertType: 'alert-info'
+  },
+  'Playa': {
+    desc: 'Mejor playa: marea media-subiente — agua limpia y zona de baño segura',
+    rule: (extremes) => {
+      const windows = [];
+      for (let i = 0; i < extremes.length - 1; i++) {
+        if (extremes[i].type === 'low' && extremes[i+1].type === 'high') {
+          const quarter = new Date(extremes[i].date.getTime() +
+            (extremes[i+1].date.getTime() - extremes[i].date.getTime()) * 0.25);
+          const threeQ = new Date(extremes[i].date.getTime() +
+            (extremes[i+1].date.getTime() - extremes[i].date.getTime()) * 0.75);
+          windows.push({
+            start: quarter,
+            end: threeQ,
+            label: 'Marea media-subiente — agua limpia',
+            quality: 'excelente'
+          });
+        }
+      }
+      return windows;
+    },
+    alert: 'Nunca le des la espalda al mar. Las olas de rompiente pueden sorprender. Respeta las señales de bandera.',
+    alertType: 'alert-warn'
+  }
+};
+
+function renderActividades() {
+  const port = PUERTOS[selectedPort];
+  const dateStr = document.getElementById('dateInput3').value;
+  if (!dateStr) return;
+  const dayStart = parseLocalDate(dateStr);
+  const extremes = findHighsLows(port, dayStart);
+  const cfg = ACTIVITY_CONFIG[selectedActivity];
+  if (!cfg) return;
+
+  const windows = cfg.rule(extremes, port);
+
+  let listHTML = '';
+  if (windows.length === 0) {
+    listHTML = '<li style="color:var(--muted);font-size:0.85rem;padding:12px 0">No hay ventanas óptimas para esta actividad hoy.<br>Intenta con otra fecha o puerto.</li>';
+  } else {
+    windows.forEach(w => {
+      const qualityClass = {
+        'excelente': 'q-excelente',
+        'bueno': 'q-bueno',
+        'regular': 'q-regular'
+      }[w.quality] || 'q-bueno';
+      const qualityText = {
+        'excelente': 'Excelente',
+        'bueno': 'Bueno',
+        'regular': 'Regular'
+      }[w.quality] || 'Bueno';
+      listHTML += `<li>
+        <div class="win-time">${fmtTime(w.start)}–${fmtTime(w.end)}</div>
+        <div>
+          <div class="win-desc">${w.label}</div>
+          <span class="win-quality ${qualityClass}">${qualityText}</span>
+        </div>
+      </li>`;
+    });
+  }
+  document.getElementById('windowsList').innerHTML = listHTML;
+
+  // Alert
+  const alertEl = document.getElementById('actAlert');
+  alertEl.className = 'alert-box ' + cfg.alertType;
+  document.getElementById('actAlertText').textContent = cfg.alert;
+
+  // Desc
+  document.querySelector('#tab-actividades .section-title').textContent = cfg.desc;
+}
+
+// ===================== EVENT HANDLERS =====================
+function onPortChange() {
+  selectedPort = document.getElementById('portSelect').value;
+  document.getElementById('portSelect2').value = selectedPort;
+  document.getElementById('portSelect3').value = selectedPort;
+  try { localStorage.setItem('mareas_port', selectedPort); } catch(e) {}
+  renderHoy();
+}
+
+function onDateChange() {
+  const val = document.getElementById('dateInput').value;
+  if (val) selectedDate = parseLocalDate(val);
+  renderHoy();
+}
+
+function onPortChange2() {
+  selectedPort = document.getElementById('portSelect2').value;
+  document.getElementById('portSelect').value = selectedPort;
+  document.getElementById('portSelect3').value = selectedPort;
+  try { localStorage.setItem('mareas_port', selectedPort); } catch(e) {}
+  renderSemana();
+}
+
+function onPortChange3() {
+  selectedPort = document.getElementById('portSelect3').value;
+  document.getElementById('portSelect').value = selectedPort;
+  document.getElementById('portSelect2').value = selectedPort;
+  try { localStorage.setItem('mareas_port', selectedPort); } catch(e) {}
+  renderActividades();
+}
+
+function selectActivity(btn) {
+  document.querySelectorAll('.activity-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedActivity = btn.dataset.act;
+  renderActividades();
+}
+
+function showTab(id, btn) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+
+  // Re-render charts when tab becomes visible
+  if (id === 'hoy') renderHoy();
+  if (id === 'semana') renderSemana();
+  if (id === 'actividades') renderActividades();
+}
+
+// ===================== AUTO-REFRESH (every 60s for current time) =====================
+setInterval(() => {
+  const activePane = document.querySelector('.tab-pane.active');
+  if (activePane && activePane.id === 'tab-hoy') {
+    const isToday = document.getElementById('dateInput').value === dateToISO(new Date());
+    if (isToday) renderHoy();
+  }
+}, 60000);
+
+// ===================== BOOTSTRAP =====================
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

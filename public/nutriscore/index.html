@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0369a1">
+<title>NutriScore — Gestión Nutricional Clínica</title>
+<link rel="manifest" href="data:application/json,{}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{--bg:#f0f6ff;--card:#ffffff;--card2:#e8f2ff;--border:#b8d4f0;--accent:#0369a1;--text:#1e3a5f;--muted:#6b8fa5;--green:#16a34a;--yellow:#d97706;--red:#dc2626;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+header{background:linear-gradient(90deg,#0c4a7a,#0369a1);padding:13px 18px;position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;color:white}
+header h1{font-size:1.15rem;font-weight:700;letter-spacing:.3px}
+header span{font-size:.75rem;opacity:.85;background:rgba(255,255,255,.18);padding:3px 9px;border-radius:20px}
+nav{background:#fff;border-bottom:2px solid var(--border);display:flex;overflow-x:auto;position:sticky;top:62px;z-index:40;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+.nav-btn{flex:0 0 auto;padding:11px 15px;font-size:.78rem;font-weight:600;color:var(--muted);border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;transition:all .2s;white-space:nowrap}
+.nav-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab{display:none;padding:16px}
+.tab.active{display:block}
+.card{background:var(--card);border-radius:14px;border:1px solid var(--border);padding:16px;margin-bottom:14px;box-shadow:0 2px 8px rgba(3,105,161,.07)}
+.card2{background:var(--card2);}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.stat-card{background:var(--card);border-radius:12px;border:1px solid var(--border);padding:14px;text-align:center}
+.stat-val{font-size:1.6rem;font-weight:700;color:var(--accent)}
+.stat-lbl{font-size:.72rem;color:var(--muted);margin-top:2px}
+label{display:block;font-size:.8rem;font-weight:600;color:var(--muted);margin-bottom:4px;margin-top:10px}
+input,select,textarea{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:9px;font-size:16px;font-family:inherit;background:#fff;color:var(--text);outline:none;transition:border .2s}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+textarea{resize:vertical;min-height:72px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:11px 20px;border-radius:10px;font-size:.9rem;font-weight:600;cursor:pointer;border:none;transition:all .2s}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:#025a8a}
+.btn-secondary{background:var(--card2);color:var(--accent);border:1.5px solid var(--border)}
+.btn-danger{background:#fee2e2;color:var(--red);border:1.5px solid #fca5a5}
+.btn-sm{padding:7px 13px;font-size:.78rem;border-radius:8px}
+.btn-full{width:100%}
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:.7rem;font-weight:700}
+.badge-green{background:#dcfce7;color:var(--green)}
+.badge-yellow{background:#fef3c7;color:var(--yellow)}
+.badge-red{background:#fee2e2;color:var(--red)}
+.badge-blue{background:#dbeafe;color:var(--accent)}
+.badge-gray{background:#f1f5f9;color:var(--muted)}
+.chip{display:inline-block;padding:5px 12px;border-radius:20px;font-size:.75rem;font-weight:600;background:var(--card2);border:1.5px solid var(--border);cursor:pointer;transition:all .2s;margin:3px}
+.chip.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.search-box{position:relative;margin-bottom:14px}
+.search-box input{padding-left:38px}
+.search-box::before{content:'🔍';position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:.9rem}
+.patient-card{background:var(--card);border-radius:14px;border:1px solid var(--border);padding:14px;margin-bottom:10px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:border .2s}
+.patient-card:hover{border-color:var(--accent)}
+.avatar{width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#0ea5e9);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:1rem;flex-shrink:0}
+.patient-info{flex:1;min-width:0}
+.patient-name{font-weight:700;font-size:.95rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.patient-sub{font-size:.75rem;color:var(--muted);margin-top:2px}
+.ns-ring{flex-shrink:0}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;align-items:flex-end;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:600px;max-height:88vh;overflow-y:auto;padding:20px}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.modal-title{font-size:1.1rem;font-weight:700;color:var(--text)}
+.close-btn{background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--muted);padding:4px}
+.section-title{font-size:.9rem;font-weight:700;color:var(--accent);margin:16px 0 8px;padding-bottom:4px;border-bottom:1.5px solid var(--border)}
+.calc-box{background:var(--card2);border-radius:10px;border:1px solid var(--border);padding:12px;margin-top:10px}
+.calc-row{display:flex;justify-content:space-between;align-items:center;font-size:.83rem;padding:4px 0;border-bottom:1px solid rgba(184,212,240,.4)}
+.calc-row:last-child{border-bottom:none;font-weight:700}
+.progress-bar{background:#e2e8f0;border-radius:20px;height:10px;overflow:hidden;margin-top:6px}
+.progress-fill{height:100%;border-radius:20px;transition:width .5s}
+.fonasa-bar .progress-fill{background:var(--accent)}
+.list-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(184,212,240,.4);font-size:.85rem}
+.list-item:last-child{border-bottom:none}
+.chart-wrap{position:relative;height:200px;margin:10px 0}
+.informe-pre{white-space:pre-wrap;font-family:'Inter',sans-serif;font-size:.8rem;line-height:1.6;background:var(--card2);border-radius:10px;padding:14px;max-height:320px;overflow-y:auto;border:1px solid var(--border)}
+.meal-slot{background:var(--card2);border-radius:10px;padding:12px;margin-bottom:10px;border:1px solid var(--border)}
+.meal-title{font-weight:700;font-size:.85rem;color:var(--accent);margin-bottom:6px}
+.macro-table{width:100%;border-collapse:collapse;font-size:.82rem;margin-top:8px}
+.macro-table th{background:var(--card2);padding:8px;text-align:left;font-weight:600;border:1px solid var(--border)}
+.macro-table td{padding:8px;border:1px solid var(--border)}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1e3a5f;color:#fff;padding:11px 22px;border-radius:30px;font-size:.85rem;font-weight:600;z-index:200;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+.counter-row{display:flex;align-items:center;gap:8px}
+.counter-btn{width:32px;height:32px;border-radius:50%;border:2px solid var(--border);background:#fff;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--accent);font-weight:700}
+.counter-val{min-width:28px;text-align:center;font-weight:700;font-size:1rem}
+.icc-display{background:var(--card2);border-radius:8px;padding:8px 12px;font-size:.82rem;margin-top:6px;border:1px solid var(--border)}
+.fab{position:fixed;bottom:24px;right:20px;z-index:45;width:52px;height:52px;border-radius:50%;background:var(--accent);color:#fff;border:none;font-size:1.5rem;cursor:pointer;box-shadow:0 4px 16px rgba(3,105,161,.4);display:flex;align-items:center;justify-content:center;transition:all .2s}
+.fab:hover{transform:scale(1.08)}
+@media(min-width:600px){.grid2{grid-template-columns:1fr 1fr}.tab{max-width:720px;margin:0 auto}}
+@media print{
+  nav,header,.fab,.btn,.modal-overlay{display:none!important}
+  .informe-pre{max-height:none;border:none;background:#fff}
+  body{background:#fff}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🥦 NutriScore</h1>
+  <span id="hdr-date"></span>
+</header>
+
+<nav id="main-nav">
+  <button class="nav-btn active" data-tab="inicio">Inicio</button>
+  <button class="nav-btn" data-tab="pacientes">Pacientes</button>
+  <button class="nav-btn" data-tab="ficha">Ficha</button>
+  <button class="nav-btn" data-tab="consulta">Consulta</button>
+  <button class="nav-btn" data-tab="evolucion">Evolución</button>
+  <button class="nav-btn" data-tab="plan">Plan</button>
+</nav>
+
+<!-- TAB: INICIO -->
+<div class="tab active" id="tab-inicio">
+  <div class="grid2" style="margin-bottom:14px">
+    <div class="stat-card"><div class="stat-val" id="s-total">0</div><div class="stat-lbl">Pacientes</div></div>
+    <div class="stat-card"><div class="stat-val" id="s-month">0</div><div class="stat-lbl">Consultas este mes</div></div>
+    <div class="stat-card"><div class="stat-val" id="s-bmi">—</div><div class="stat-lbl">IMC promedio</div></div>
+    <div class="stat-card"><div class="stat-val" id="s-ns">—</div><div class="stat-lbl">NutriScore promedio</div></div>
+  </div>
+  <div class="card">
+    <div class="section-title">Últimas consultas</div>
+    <div id="recent-list"><div style="color:var(--muted);font-size:.85rem;text-align:center;padding:16px">Sin consultas aún</div></div>
+  </div>
+  <button class="btn btn-primary btn-full" onclick="goTab('consulta')">+ Nueva consulta</button>
+</div>
+
+<!-- TAB: PACIENTES -->
+<div class="tab" id="tab-pacientes">
+  <div class="search-box">
+    <input type="text" id="search-input" placeholder="Buscar por nombre o RUT…" oninput="renderPatients()">
+  </div>
+  <div id="patient-list"></div>
+  <button class="btn btn-primary btn-full" style="margin-top:6px" onclick="goTab('ficha');clearFicha()">+ Nuevo paciente</button>
+</div>
+
+<!-- TAB: FICHA -->
+<div class="tab" id="tab-ficha">
+  <div class="card">
+    <div class="section-title">Datos personales</div>
+    <input type="hidden" id="f-id">
+    <label>Nombre completo *</label>
+    <input type="text" id="f-nombre" placeholder="Ej: María González">
+    <label>RUT</label>
+    <input type="text" id="f-rut" placeholder="12.345.678-9">
+    <label>Fecha de nacimiento</label>
+    <input type="date" id="f-dob" oninput="calcFichaAge()">
+    <div id="f-age-display" style="font-size:.8rem;color:var(--muted);margin-top:4px"></div>
+    <div class="grid2">
+      <div>
+        <label>Género</label>
+        <select id="f-genero"><option value="">—</option><option value="F">Femenino</option><option value="M">Masculino</option></select>
+      </div>
+      <div>
+        <label>Teléfono</label>
+        <input type="tel" id="f-telefono" placeholder="+56 9 XXXX XXXX">
+      </div>
+    </div>
+    <label>Previsión</label>
+    <select id="f-prevision">
+      <option value="">—</option>
+      <option value="FONASA A">FONASA A</option>
+      <option value="FONASA B">FONASA B</option>
+      <option value="FONASA C">FONASA C</option>
+      <option value="FONASA D">FONASA D</option>
+      <option value="ISAPRE">ISAPRE</option>
+      <option value="Particular">Particular</option>
+    </select>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Sesiones FONASA</div>
+    <div class="grid2">
+      <div>
+        <label>Autorizadas</label>
+        <div class="counter-row">
+          <button class="counter-btn" onclick="adjCounter('f-aut',-1)">−</button>
+          <span class="counter-val" id="f-aut-display">0</span>
+          <input type="hidden" id="f-aut" value="0">
+          <button class="counter-btn" onclick="adjCounter('f-aut',1)">+</button>
+        </div>
+      </div>
+      <div>
+        <label>Talla (cm)</label>
+        <input type="number" id="f-talla" placeholder="165">
+      </div>
+    </div>
+    <label>Peso inicial (kg)</label>
+    <input type="number" id="f-peso-ini" placeholder="70.5" step="0.1">
+  </div>
+
+  <div class="card">
+    <div class="section-title">Patologías</div>
+    <div id="patologias-chips">
+      <span class="chip" data-val="DM2" onclick="toggleChip(this)">DM2</span>
+      <span class="chip" data-val="HTA" onclick="toggleChip(this)">HTA</span>
+      <span class="chip" data-val="Dislipidemia" onclick="toggleChip(this)">Dislipidemia</span>
+      <span class="chip" data-val="Hipotiroidismo" onclick="toggleChip(this)">Hipotiroidismo</span>
+      <span class="chip" data-val="Obesidad" onclick="toggleChip(this)">Obesidad</span>
+      <span class="chip" data-val="Insuf. renal" onclick="toggleChip(this)">Insuf. renal</span>
+      <span class="chip" data-val="SII" onclick="toggleChip(this)">SII</span>
+      <span class="chip" data-val="Otros" onclick="toggleChip(this)">Otros</span>
+    </div>
+    <label>Alergias alimentarias</label>
+    <input type="text" id="f-alergias" placeholder="Ej: Nueces, mariscos, lácteos">
+    <label>Medicamentos</label>
+    <input type="text" id="f-medicamentos" placeholder="Ej: Metformina 500mg, Levotiroxina">
+  </div>
+
+  <div class="card">
+    <div class="section-title">Objetivos</div>
+    <label>Motivo de consulta</label>
+    <textarea id="f-motivo" placeholder="Descripción del motivo…"></textarea>
+    <label>Objetivo nutricional</label>
+    <textarea id="f-objetivo" placeholder="Objetivo terapéutico…"></textarea>
+  </div>
+
+  <div style="display:flex;gap:10px;margin-top:4px;margin-bottom:80px">
+    <button class="btn btn-primary" style="flex:1" onclick="saveFicha()">Guardar ficha</button>
+    <button class="btn btn-danger btn-sm" id="btn-del-ficha" style="display:none" onclick="deleteFicha()">Eliminar</button>
+  </div>
+</div>
+
+<!-- TAB: CONSULTA -->
+<div class="tab" id="tab-consulta">
+  <div class="card">
+    <div class="section-title">Registro de consulta</div>
+    <label>Paciente *</label>
+    <select id="c-paciente" onchange="updateConsultaCalcs()"><option value="">— Seleccionar —</option></select>
+    <label>Fecha</label>
+    <input type="date" id="c-fecha">
+    <div class="grid2">
+      <div>
+        <label>Peso (kg)</label>
+        <input type="number" id="c-peso" placeholder="70.5" step="0.1" oninput="updateConsultaCalcs()">
+      </div>
+      <div>
+        <label>Talla (cm)</label>
+        <input type="number" id="c-talla" placeholder="165" oninput="updateConsultaCalcs()">
+      </div>
+    </div>
+    <div class="grid2">
+      <div>
+        <label>Cintura (cm)</label>
+        <input type="number" id="c-cintura" placeholder="82" oninput="updateConsultaCalcs()">
+      </div>
+      <div>
+        <label>Cadera (cm)</label>
+        <input type="number" id="c-cadera" placeholder="96" oninput="updateConsultaCalcs()">
+      </div>
+    </div>
+    <div id="icc-display" class="icc-display" style="display:none"></div>
+    <div class="grid2">
+      <div>
+        <label>Presión sistólica (mmHg)</label>
+        <input type="number" id="c-sistolica" placeholder="120">
+      </div>
+      <div>
+        <label>Presión diastólica (mmHg)</label>
+        <input type="number" id="c-diastolica" placeholder="80">
+      </div>
+    </div>
+    <label>Glicemia (mg/dL)</label>
+    <input type="number" id="c-glicemia" placeholder="95">
+    <label>Duración consulta (min)</label>
+    <input type="number" id="c-duracion" placeholder="45">
+  </div>
+
+  <div class="card" id="bmi-result-card" style="display:none">
+    <div class="section-title">Cálculos antropométricos</div>
+    <div id="bmi-calcs"></div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Evaluación clínica</div>
+    <label>Recordatorio 24 horas</label>
+    <textarea id="c-rec24" placeholder="Describe la alimentación del día anterior…" style="min-height:90px"></textarea>
+    <label>Cumplimiento del plan</label>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+      <span class="chip" data-val="Excelente" onclick="selectCumplimiento(this)">Excelente</span>
+      <span class="chip" data-val="Bueno" onclick="selectCumplimiento(this)">Bueno</span>
+      <span class="chip" data-val="Regular" onclick="selectCumplimiento(this)">Regular</span>
+      <span class="chip" data-val="Malo" onclick="selectCumplimiento(this)">Malo</span>
+    </div>
+    <input type="hidden" id="c-cumplimiento">
+    <label>Observaciones clínicas</label>
+    <textarea id="c-obs" placeholder="Observaciones del nutricionista…"></textarea>
+    <label>Próxima cita</label>
+    <input type="date" id="c-proxima">
+  </div>
+
+  <button class="btn btn-primary btn-full" style="margin-bottom:80px" onclick="saveConsulta()">Guardar consulta</button>
+</div>
+
+<!-- TAB: EVOLUCIÓN -->
+<div class="tab" id="tab-evolucion">
+  <div class="card">
+    <label>Paciente</label>
+    <select id="e-paciente" onchange="renderEvolucion()"><option value="">— Seleccionar —</option></select>
+  </div>
+  <div id="evol-content" style="display:none">
+    <div class="card">
+      <div class="section-title">Evolución de peso</div>
+      <div class="chart-wrap"><canvas id="chart-peso"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="section-title">Evolución IMC</div>
+      <div class="chart-wrap"><canvas id="chart-imc"></canvas></div>
+    </div>
+    <div class="card" id="chart-cintura-card" style="display:none">
+      <div class="section-title">Evolución cintura (cm)</div>
+      <div class="chart-wrap"><canvas id="chart-cintura"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="section-title">Resumen</div>
+      <div id="evol-stats"></div>
+    </div>
+    <div class="card">
+      <div class="section-title">Sesiones FONASA</div>
+      <div id="fonasa-progress"></div>
+    </div>
+    <button class="btn btn-secondary btn-full" style="margin-bottom:10px" onclick="showInforme()">Generar informe</button>
+  </div>
+  <div id="evol-empty" style="display:none" class="card" style="text-align:center;color:var(--muted);padding:24px">Sin consultas registradas para este paciente.</div>
+</div>
+
+<!-- TAB: PLAN -->
+<div class="tab" id="tab-plan">
+  <div class="card">
+    <label>Paciente</label>
+    <select id="p-paciente" onchange="loadPlan()"><option value="">— Seleccionar —</option></select>
+  </div>
+  <div id="plan-content" style="display:none">
+    <div class="card">
+      <div class="section-title">Cálculo de requerimiento energético</div>
+      <label>Factor de actividad</label>
+      <select id="p-actividad" onchange="calcPlan()">
+        <option value="1.2">Sedentario (1.2)</option>
+        <option value="1.375">Levemente activo (1.375)</option>
+        <option value="1.55" selected>Moderadamente activo (1.55)</option>
+        <option value="1.725">Muy activo (1.725)</option>
+        <option value="1.9">Extra activo (1.9)</option>
+      </select>
+      <label>Objetivo calórico</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+        <span class="chip" data-val="-500" onclick="selectObjetivoCal(this)">−500 kcal (bajar peso)</span>
+        <span class="chip active" data-val="0" onclick="selectObjetivoCal(this)">Mantener</span>
+        <span class="chip" data-val="500" onclick="selectObjetivoCal(this)">+500 kcal (subir peso)</span>
+      </div>
+      <input type="hidden" id="p-kcal-adj" value="0">
+      <div class="calc-box" id="plan-calcs"></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Distribución de macros</div>
+      <div class="grid3">
+        <div>
+          <label>Prot (g/kg)</label>
+          <input type="number" id="p-prot" value="1.5" step="0.1" oninput="calcPlan()">
+        </div>
+        <div>
+          <label>Grasa (%)</label>
+          <input type="number" id="p-fat" value="30" min="15" max="45" oninput="calcPlan()">
+        </div>
+        <div>
+          <label>CHO (%)</label>
+          <input type="number" id="p-cho" value="50" min="30" max="70" oninput="calcPlan()">
+        </div>
+      </div>
+      <table class="macro-table" id="macro-table" style="margin-top:10px">
+        <thead><tr><th>Macro</th><th>Gramos</th><th>kcal</th><th>%</th></tr></thead>
+        <tbody id="macro-tbody"></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Distribución por tiempos de comida</div>
+      <div class="meal-slot">
+        <div class="meal-title">Desayuno (20%)</div>
+        <textarea id="meal-desayuno" placeholder="Descripción del desayuno…"></textarea>
+      </div>
+      <div class="meal-slot">
+        <div class="meal-title">Colación AM (10%)</div>
+        <textarea id="meal-colacion-am" placeholder="Colación de media mañana…"></textarea>
+      </div>
+      <div class="meal-slot">
+        <div class="meal-title">Almuerzo (35%)</div>
+        <textarea id="meal-almuerzo" placeholder="Descripción del almuerzo…"></textarea>
+      </div>
+      <div class="meal-slot">
+        <div class="meal-title">Once / Merienda (15%)</div>
+        <textarea id="meal-once" placeholder="Once o merienda…"></textarea>
+      </div>
+      <div class="meal-slot">
+        <div class="meal-title">Cena (20%)</div>
+        <textarea id="meal-cena" placeholder="Descripción de la cena…"></textarea>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Objetivos específicos</div>
+      <div id="obj-chips">
+        <span class="chip" data-val="Bajar de peso" onclick="toggleChip(this)">Bajar de peso</span>
+        <span class="chip" data-val="Subir de peso" onclick="toggleChip(this)">Subir de peso</span>
+        <span class="chip" data-val="Control glucémico" onclick="toggleChip(this)">Control glucémico</span>
+        <span class="chip" data-val="Reducir colesterol" onclick="toggleChip(this)">Reducir colesterol</span>
+        <span class="chip" data-val="Otros" onclick="toggleChip(this)">Otros</span>
+      </div>
+    </div>
+
+    <button class="btn btn-primary btn-full" style="margin-bottom:80px" onclick="savePlan()">Guardar plan</button>
+  </div>
+  <div id="plan-empty" class="card" style="text-align:center;color:var(--muted);padding:24px">Selecciona un paciente para crear su plan.</div>
+</div>
+
+<!-- MODAL: Patient Detail -->
+<div class="modal-overlay" id="modal-patient">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="mp-title">Ficha del paciente</span>
+      <button class="close-btn" onclick="closeModal('modal-patient')">✕</button>
+    </div>
+    <div id="mp-body"></div>
+    <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+      <button class="btn btn-secondary btn-sm" onclick="editFromModal()">Editar ficha</button>
+      <button class="btn btn-primary btn-sm" onclick="nuevaConsultaFromModal()">Nueva consulta</button>
+      <button class="btn btn-secondary btn-sm" onclick="verEvolucionFromModal()">Ver evolución</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Informe -->
+<div class="modal-overlay" id="modal-informe">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Informe clínico</span>
+      <button class="close-btn" onclick="closeModal('modal-informe')">✕</button>
+    </div>
+    <div class="informe-pre" id="informe-text"></div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn btn-primary btn-sm" onclick="shareWhatsApp()">Compartir WhatsApp</button>
+      <button class="btn btn-secondary btn-sm" onclick="window.print()">Imprimir</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── DB helpers ───────────────────────────────────────────────────
+const KEY = 'nutriscore_db';
+function loadDB(){try{return JSON.parse(localStorage.getItem(KEY))||{patients:[],consultations:[],plans:[]};}catch(e){return{patients:[],consultations:[],plans:[]};}}
+function saveDB(db){try{localStorage.setItem(KEY,JSON.stringify(db));}catch(e){showToast('Error al guardar datos',true);}}
+let DB = loadDB();
+
+// ─── Demo data ────────────────────────────────────────────────────
+function seedDemo(){
+  if(DB.patients.length>0)return;
+  const patients=[
+    {id:'p1',nombre:'María González',rut:'12.345.678-9',dob:'1985-03-22',genero:'F',telefono:'+56912345678',prevision:'FONASA B',sesionesAut:8,talla:160,pesoIni:78,patologias:['DM2','HTA'],alergias:'Nueces',medicamentos:'Metformina 500mg',motivo:'Control diabetes y baja de peso',objetivo:'Reducir 5kg en 3 meses, control glucémico'},
+    {id:'p2',nombre:'Carlos Muñoz',rut:'9.876.543-2',dob:'1972-08-15',genero:'M',telefono:'+56987654321',prevision:'ISAPRE',sesionesAut:6,talla:175,pesoIni:95,patologias:['Obesidad','Dislipidemia'],alergias:'',medicamentos:'Atorvastatina 20mg',motivo:'Bajar de peso por indicación cardiológica',objetivo:'Déficit calórico 500kcal, aumento actividad física'},
+    {id:'p3',nombre:'Ana Pérez',rut:'16.789.012-3',dob:'1998-12-10',genero:'F',telefono:'+56911223344',prevision:'Particular',sesionesAut:4,talla:163,pesoIni:58,patologias:['Hipotiroidismo'],alergias:'Gluten',medicamentos:'Levotiroxina 50mcg',motivo:'Consulta nutricional integral',objetivo:'Mantener peso, mejorar hábitos alimentarios'}
+  ];
+  const now=new Date();
+  const fmt=d=>d.toISOString().split('T')[0];
+  const d=(n)=>{const x=new Date();x.setDate(x.getDate()-n);return fmt(x);};
+  const consultations=[
+    {id:'c1',patientId:'p1',fecha:d(60),peso:78,talla:160,cintura:95,cadera:105,sistolica:135,diastolica:88,glicemia:148,duracion:45,rec24:'Desayuno: pan integral con palta. Almuerzo: arroz con pollo y ensalada.',cumplimiento:'Bueno',obs:'Glicemia elevada, reforzar restricción de azúcares simples.',proxima:d(-30)},
+    {id:'c2',patientId:'p1',fecha:d(30),peso:76.5,talla:160,cintura:93,cadera:104,sistolica:130,diastolica:85,glicemia:132,duracion:40,rec24:'Desayuno: avena con fruta. Almuerzo: legumbres con ensalada.',cumplimiento:'Excelente',obs:'Buen progreso. Glicemia bajando.',proxima:d(-14)},
+    {id:'c3',patientId:'p1',fecha:d(7),peso:75.2,talla:160,cintura:91,cadera:103,sistolica:128,diastolica:82,glicemia:118,duracion:45,rec24:'Plan bien seguido.',cumplimiento:'Excelente',obs:'Excelente adherencia. Continuar plan.',proxima:''},
+    {id:'c4',patientId:'p2',fecha:d(45),peso:95,talla:175,cintura:108,cadera:112,sistolica:145,diastolica:92,glicemia:105,duracion:50,rec24:'Desayuno: té con galletas. Almuerzo: cazuela.',cumplimiento:'Regular',obs:'Necesita reducir sodio y grasas saturadas.',proxima:d(-20)},
+    {id:'c5',patientId:'p2',fecha:d(10),peso:93,talla:175,cintura:105,cadera:110,sistolica:138,diastolica:88,glicemia:98,duracion:45,rec24:'Sigue mejor el plan.',cumplimiento:'Bueno',obs:'Buena reducción de peso. Continuar.',proxima:''},
+    {id:'c6',patientId:'p3',fecha:d(20),peso:58.5,talla:163,cintura:70,cadera:95,sistolica:110,diastolica:72,glicemia:88,duracion:40,rec24:'Sin gluten, bien tolerado.',cumplimiento:'Excelente',obs:'Paciente muy adherente.',proxima:''}
+  ];
+  DB.patients=patients;
+  DB.consultations=consultations;
+  saveDB(DB);
+}
+seedDemo();
+
+// ─── Utilities ────────────────────────────────────────────────────
+function uid(){return 'x'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
+function calcAge(dob){if(!dob)return'—';const b=new Date(dob),n=new Date();let a=n.getFullYear()-b.getFullYear();if(n<new Date(n.getFullYear(),b.getMonth(),b.getDate()))a--;return a;}
+function calcBMI(peso,talla){if(!peso||!talla)return null;return peso/((talla/100)**2);}
+function bmiCategory(bmi){
+  if(bmi<16)return{cat:'Delgadez severa',cls:'badge-red'};
+  if(bmi<17)return{cat:'Delgadez moderada',cls:'badge-red'};
+  if(bmi<18.5)return{cat:'Delgadez leve',cls:'badge-yellow'};
+  if(bmi<25)return{cat:'Normal',cls:'badge-green'};
+  if(bmi<27)return{cat:'Sobrepeso grado I',cls:'badge-yellow'};
+  if(bmi<30)return{cat:'Sobrepeso grado II',cls:'badge-yellow'};
+  if(bmi<35)return{cat:'Obesidad grado I',cls:'badge-red'};
+  if(bmi<40)return{cat:'Obesidad grado II',cls:'badge-red'};
+  return{cat:'Obesidad grado III',cls:'badge-red'};
+}
+function deurenberg(bmi,age,sex){if(!bmi||!age)return null;const s=sex==='M'?1:0;return(1.20*bmi)+(0.23*age)-(10.8*s)-5.4;}
+function hamwi(talla,sex){
+  if(!talla)return null;
+  const base=sex==='M'?48:45.5;
+  const extra=(talla-152.4)*((sex==='M'?2.7:2.3)/2.54);
+  const ideal=base+extra;
+  return{min:(ideal*0.9).toFixed(1),max:(ideal*1.1).toFixed(1)};
+}
+function nutriScore(patientId){
+  const p=DB.patients.find(x=>x.id===patientId);
+  if(!p)return 0;
+  const cs=DB.consultations.filter(x=>x.patientId===patientId).sort((a,b)=>a.fecha<b.fecha?-1:1);
+  if(!cs.length)return 0;
+  let score=0;
+  // BMI (30pts)
+  const last=cs[cs.length-1];
+  const bmi=calcBMI(last.peso,last.talla||p.talla);
+  if(bmi){
+    if(bmi>=18.5&&bmi<25)score+=30;
+    else if((bmi>=25&&bmi<27)||(bmi>=17&&bmi<18.5))score+=20;
+    else if((bmi>=27&&bmi<30)||(bmi>=16&&bmi<17))score+=10;
+  }
+  // Adherence last 5 (25pts)
+  const last5=cs.slice(-5);
+  const good=last5.filter(c=>c.cumplimiento==='Excelente'||c.cumplimiento==='Bueno').length;
+  score+=Math.round((good/Math.max(last5.length,1))*25);
+  // Attendance last 90d (max 25pts)
+  const cutoff=new Date();cutoff.setDate(cutoff.getDate()-90);
+  const recent=cs.filter(c=>new Date(c.fecha)>=cutoff).length;
+  score+=Math.min(recent*8,25);
+  // Weight goal (20pts)
+  if(cs.length>=2&&p.pesoIni){
+    const delta=p.pesoIni-last.peso;
+    const pesoObj=p.objetivo||'';
+    if(pesoObj.toLowerCase().includes('baj')&&delta>0)score+=20;
+    else if(pesoObj.toLowerCase().includes('sub')&&delta<0)score+=20;
+    else if(Math.abs(delta)<2)score+=10;
+  }
+  return Math.min(score,100);
+}
+function nsColor(s){return s>=70?'#16a34a':s>=40?'#d97706':'#dc2626';}
+function nsRing(score,size=44){
+  const r=18,c=22,circ=2*Math.PI*r;
+  const fill=(score/100)*circ;
+  const col=nsColor(score);
+  return `<svg width="${size}" height="${size}" viewBox="0 0 44 44"><circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="#e2e8f0" stroke-width="4"/><circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="${col}" stroke-width="4" stroke-dasharray="${fill} ${circ}" stroke-dashoffset="${circ/4}" stroke-linecap="round"/><text x="${c}" y="${c+4}" text-anchor="middle" font-size="9" font-weight="700" fill="${col}">${score}</text></svg>`;
+}
+
+function showToast(msg,err=false){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.style.background=err?'#dc2626':'#1e3a5f';
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2400);
+}
+
+function goTab(name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  document.querySelector('[data-tab="'+name+'"]').classList.add('active');
+  if(name==='inicio')renderDashboard();
+  if(name==='pacientes')renderPatients();
+  if(name==='consulta')populatePatientDropdowns();
+  if(name==='evolucion')populatePatientDropdowns();
+  if(name==='plan')populatePatientDropdowns();
+}
+document.querySelectorAll('.nav-btn').forEach(b=>b.addEventListener('click',()=>goTab(b.dataset.tab)));
+
+// ─── DASHBOARD ────────────────────────────────────────────────────
+function renderDashboard(){
+  document.getElementById('s-total').textContent=DB.patients.length;
+  const now=new Date();
+  const thisMonth=DB.consultations.filter(c=>{const d=new Date(c.fecha);return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();});
+  document.getElementById('s-month').textContent=thisMonth.length;
+  const bmis=DB.patients.map(p=>{
+    const cs=DB.consultations.filter(x=>x.patientId===p.id);
+    if(!cs.length)return null;
+    const last=cs[cs.length-1];
+    return calcBMI(last.peso,last.talla||p.talla);
+  }).filter(Boolean);
+  document.getElementById('s-bmi').textContent=bmis.length?(bmis.reduce((a,b)=>a+b,0)/bmis.length).toFixed(1):'—';
+  const scores=DB.patients.map(p=>nutriScore(p.id));
+  document.getElementById('s-ns').textContent=scores.length?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(0):'—';
+  const recent=DB.consultations.slice().sort((a,b)=>b.fecha.localeCompare(a.fecha)).slice(0,5);
+  const rl=document.getElementById('recent-list');
+  if(!recent.length){rl.innerHTML='<div style="color:var(--muted);font-size:.85rem;text-align:center;padding:16px">Sin consultas aún</div>';return;}
+  rl.innerHTML=recent.map(c=>{
+    const p=DB.patients.find(x=>x.id===c.patientId);
+    return `<div class="list-item"><div><div style="font-weight:600">${p?p.nombre:'—'}</div><div style="font-size:.75rem;color:var(--muted)">${c.fecha}</div></div><div style="text-align:right"><div style="font-weight:700">${c.peso} kg</div></div></div>`;
+  }).join('');
+}
+
+// ─── PATIENTS ─────────────────────────────────────────────────────
+function renderPatients(){
+  const q=(document.getElementById('search-input').value||'').toLowerCase();
+  const list=document.getElementById('patient-list');
+  const filtered=DB.patients.filter(p=>p.nombre.toLowerCase().includes(q)||(p.rut||'').includes(q));
+  if(!filtered.length){list.innerHTML='<div style="text-align:center;color:var(--muted);padding:20px">No se encontraron pacientes</div>';return;}
+  list.innerHTML=filtered.map(p=>{
+    const cs=DB.consultations.filter(c=>c.patientId===p.id).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+    const last=cs[0];
+    const bmi=last?calcBMI(last.peso,last.talla||p.talla):calcBMI(p.pesoIni,p.talla);
+    const bc=bmi?bmiCategory(bmi):{cat:'Sin datos',cls:'badge-gray'};
+    const score=nutriScore(p.id);
+    const age=calcAge(p.dob);
+    return `<div class="patient-card" onclick="openPatientModal('${p.id}')">
+      <div class="avatar">${p.nombre.charAt(0)}</div>
+      <div class="patient-info">
+        <div class="patient-name">${p.nombre}</div>
+        <div class="patient-sub">${age!='—'?age+' años • ':''}<span class="badge ${bc.cls}">${bmi?bmi.toFixed(1)+' — '+bc.cat:'Sin IMC'}</span></div>
+        <div class="patient-sub" style="margin-top:2px">${last?'Última consulta: '+last.fecha:'Sin consultas'}</div>
+      </div>
+      <div class="ns-ring">${nsRing(score,48)}</div>
+    </div>`;
+  }).join('');
+}
+
+let _modalPatientId=null;
+function openPatientModal(pid){
+  _modalPatientId=pid;
+  const p=DB.patients.find(x=>x.id===pid);
+  if(!p)return;
+  const cs=DB.consultations.filter(c=>c.patientId===pid).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  const last=cs[0];
+  const bmi=last?calcBMI(last.peso,last.talla||p.talla):calcBMI(p.pesoIni,p.talla);
+  const bc=bmi?bmiCategory(bmi):{cat:'Sin datos',cls:'badge-gray'};
+  const score=nutriScore(pid);
+  const age=calcAge(p.dob);
+  const used=cs.length;
+  document.getElementById('mp-title').textContent=p.nombre;
+  document.getElementById('mp-body').innerHTML=`
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px">
+      <div class="avatar" style="width:58px;height:58px;font-size:1.3rem">${p.nombre.charAt(0)}</div>
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:1rem">${p.nombre}</div>
+        <div style="color:var(--muted);font-size:.8rem">${p.rut||'Sin RUT'} • ${age!='—'?age+' años':'—'} • ${p.genero==='F'?'Femenino':p.genero==='M'?'Masculino':'—'}</div>
+        <div style="margin-top:4px">${nsRing(score,52)}</div>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="stat-card"><div class="stat-val">${bmi?bmi.toFixed(1):'—'}</div><div class="stat-lbl"><span class="badge ${bc.cls}">${bc.cat}</span></div></div>
+      <div class="stat-card"><div class="stat-val">${score}</div><div class="stat-lbl">NutriScore</div></div>
+    </div>
+    <div class="calc-box" style="margin-top:10px">
+      <div class="calc-row"><span>Previsión</span><span>${p.prevision||'—'}</span></div>
+      <div class="calc-row"><span>Teléfono</span><span>${p.telefono||'—'}</span></div>
+      <div class="calc-row"><span>Talla</span><span>${p.talla?p.talla+' cm':'—'}</span></div>
+      <div class="calc-row"><span>Peso inicial</span><span>${p.pesoIni?p.pesoIni+' kg':'—'}</span></div>
+      <div class="calc-row"><span>Sesiones FONASA</span><span>${used} / ${p.sesionesAut||0} autorizadas</span></div>
+      <div class="calc-row"><span>Patologías</span><span>${(p.patologias||[]).join(', ')||'Ninguna'}</span></div>
+      <div class="calc-row"><span>Alergias</span><span>${p.alergias||'—'}</span></div>
+      <div class="calc-row"><span>Medicamentos</span><span>${p.medicamentos||'—'}</span></div>
+    </div>
+    ${p.objetivo?`<div style="margin-top:8px;font-size:.82rem;color:var(--muted)">${p.objetivo}</div>`:''}
+    ${last?`<div style="margin-top:10px;font-size:.8rem;color:var(--muted)">Última consulta: <b>${last.fecha}</b> — ${last.peso} kg — ${last.cumplimiento}</div>`:''}
+  `;
+  document.getElementById('modal-patient').classList.add('open');
+}
+function editFromModal(){closeModal('modal-patient');if(_modalPatientId)loadFicha(_modalPatientId);}
+function nuevaConsultaFromModal(){closeModal('modal-patient');goTab('consulta');if(_modalPatientId){document.getElementById('c-paciente').value=_modalPatientId;updateConsultaCalcs();}}
+function verEvolucionFromModal(){closeModal('modal-patient');goTab('evolucion');if(_modalPatientId){document.getElementById('e-paciente').value=_modalPatientId;renderEvolucion();}}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+// ─── FICHA ────────────────────────────────────────────────────────
+function clearFicha(){
+  document.getElementById('f-id').value='';
+  ['f-nombre','f-rut','f-dob','f-telefono','f-alergias','f-medicamentos','f-motivo','f-objetivo'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-genero').value='';
+  document.getElementById('f-prevision').value='';
+  document.getElementById('f-age-display').textContent='';
+  document.getElementById('f-aut').value='0';
+  document.getElementById('f-aut-display').textContent='0';
+  document.getElementById('f-talla').value='';
+  document.getElementById('f-peso-ini').value='';
+  document.getElementById('btn-del-ficha').style.display='none';
+  document.querySelectorAll('#patologias-chips .chip').forEach(c=>c.classList.remove('active'));
+}
+function loadFicha(pid){
+  const p=DB.patients.find(x=>x.id===pid);
+  if(!p)return;
+  goTab('ficha');
+  document.getElementById('f-id').value=p.id;
+  document.getElementById('f-nombre').value=p.nombre||'';
+  document.getElementById('f-rut').value=p.rut||'';
+  document.getElementById('f-dob').value=p.dob||'';
+  document.getElementById('f-genero').value=p.genero||'';
+  document.getElementById('f-telefono').value=p.telefono||'';
+  document.getElementById('f-prevision').value=p.prevision||'';
+  document.getElementById('f-aut').value=p.sesionesAut||0;
+  document.getElementById('f-aut-display').textContent=p.sesionesAut||0;
+  document.getElementById('f-talla').value=p.talla||'';
+  document.getElementById('f-peso-ini').value=p.pesoIni||'';
+  document.getElementById('f-alergias').value=p.alergias||'';
+  document.getElementById('f-medicamentos').value=p.medicamentos||'';
+  document.getElementById('f-motivo').value=p.motivo||'';
+  document.getElementById('f-objetivo').value=p.objetivo||'';
+  document.getElementById('btn-del-ficha').style.display='inline-flex';
+  calcFichaAge();
+  document.querySelectorAll('#patologias-chips .chip').forEach(c=>{
+    c.classList.toggle('active',(p.patologias||[]).includes(c.dataset.val));
+  });
+  window.scrollTo(0,0);
+}
+function calcFichaAge(){
+  const dob=document.getElementById('f-dob').value;
+  const age=calcAge(dob);
+  document.getElementById('f-age-display').textContent=age!='—'?age+' años':'';
+}
+function adjCounter(fid,delta){
+  const inp=document.getElementById(fid);
+  const disp=document.getElementById(fid+'-display');
+  let v=parseInt(inp.value||0)+delta;
+  if(v<0)v=0;
+  inp.value=v;
+  disp.textContent=v;
+}
+function toggleChip(el){el.classList.toggle('active');}
+function saveFicha(){
+  const nombre=document.getElementById('f-nombre').value.trim();
+  if(!nombre){showToast('El nombre es obligatorio',true);return;}
+  const id=document.getElementById('f-id').value||uid();
+  const pats=getActiveChips('#patologias-chips');
+  const p={id,nombre,rut:document.getElementById('f-rut').value.trim(),dob:document.getElementById('f-dob').value,genero:document.getElementById('f-genero').value,telefono:document.getElementById('f-telefono').value.trim(),prevision:document.getElementById('f-prevision').value,sesionesAut:parseInt(document.getElementById('f-aut').value)||0,talla:parseFloat(document.getElementById('f-talla').value)||null,pesoIni:parseFloat(document.getElementById('f-peso-ini').value)||null,patologias:pats,alergias:document.getElementById('f-alergias').value.trim(),medicamentos:document.getElementById('f-medicamentos').value.trim(),motivo:document.getElementById('f-motivo').value.trim(),objetivo:document.getElementById('f-objetivo').value.trim()};
+  const idx=DB.patients.findIndex(x=>x.id===id);
+  if(idx>=0)DB.patients[idx]=p;else DB.patients.push(p);
+  saveDB(DB);
+  showToast('Ficha guardada');
+  document.getElementById('f-id').value=id;
+  document.getElementById('btn-del-ficha').style.display='inline-flex';
+}
+function deleteFicha(){
+  const id=document.getElementById('f-id').value;
+  if(!id)return;
+  if(!confirm('¿Eliminar este paciente y todas sus consultas?'))return;
+  DB.patients=DB.patients.filter(p=>p.id!==id);
+  DB.consultations=DB.consultations.filter(c=>c.patientId!==id);
+  DB.plans=(DB.plans||[]).filter(pl=>pl.patientId!==id);
+  saveDB(DB);
+  clearFicha();
+  showToast('Paciente eliminado');
+}
+function getActiveChips(sel){return Array.from(document.querySelectorAll(sel+' .chip.active')).map(c=>c.dataset.val);}
+
+// ─── CONSULTA ─────────────────────────────────────────────────────
+function populatePatientDropdowns(){
+  ['c-paciente','e-paciente','p-paciente'].forEach(id=>{
+    const sel=document.getElementById(id);
+    if(!sel)return;
+    const cur=sel.value;
+    sel.innerHTML='<option value="">— Seleccionar —</option>'+DB.patients.map(p=>`<option value="${p.id}">${p.nombre}</option>`).join('');
+    if(cur)sel.value=cur;
+  });
+}
+document.getElementById('c-fecha').value=new Date().toISOString().split('T')[0];
+
+function updateConsultaCalcs(){
+  const pid=document.getElementById('c-paciente').value;
+  const p=pid?DB.patients.find(x=>x.id===pid):null;
+  const peso=parseFloat(document.getElementById('c-peso').value);
+  const tallaIn=parseFloat(document.getElementById('c-talla').value);
+  const talla=tallaIn||(p&&p.talla)||null;
+  if(!tallaIn&&talla&&p){document.getElementById('c-talla').placeholder=talla+' (de ficha)';}
+  const cintura=parseFloat(document.getElementById('c-cintura').value);
+  const cadera=parseFloat(document.getElementById('c-cadera').value);
+  // ICC
+  const iccD=document.getElementById('icc-display');
+  if(cintura&&cadera){
+    const icc=(cintura/cadera).toFixed(2);
+    const genero=p?p.genero:'';
+    let riesgoICC='';
+    if(genero==='M')riesgoICC=parseFloat(icc)>=0.95?'Riesgo alto':'Sin riesgo';
+    else if(genero==='F')riesgoICC=parseFloat(icc)>=0.85?'Riesgo alto':'Sin riesgo';
+    iccD.style.display='block';
+    iccD.innerHTML=`ICC: <b>${icc}</b>${riesgoICC?' — <span style="color:'+(riesgoICC.includes('alto')?'var(--red)':'var(--green)')+'">'+riesgoICC+'</span>':''}`;
+  }else{iccD.style.display='none';}
+  // BMI calcs
+  const card=document.getElementById('bmi-result-card');
+  if(!peso||!talla){card.style.display='none';return;}
+  card.style.display='block';
+  const bmi=calcBMI(peso,talla);
+  const bc=bmiCategory(bmi);
+  const age=p?calcAge(p.dob):null;
+  const genero=p?p.genero:'';
+  const bf=deurenberg(bmi,age,genero);
+  const hw=hamwi(talla,genero);
+  const cinturaRiesgo=cintura?(genero==='F'?cintura>88:genero==='M'?cintura>102:null):null;
+  let html=`<div class="calc-row"><span>IMC</span><span><b>${bmi.toFixed(1)}</b> <span class="badge ${bc.cls}">${bc.cat}</span></span></div>`;
+  if(bf!==null)html+=`<div class="calc-row"><span>% grasa corporal (Deurenberg)</span><span>${bf.toFixed(1)}%</span></div>`;
+  if(hw)html+=`<div class="calc-row"><span>Peso ideal (Hamwi)</span><span>${hw.min}–${hw.max} kg</span></div>`;
+  if(cintura&&cinturaRiesgo!==null)html+=`<div class="calc-row"><span>Riesgo cintura</span><span style="color:${cinturaRiesgo?'var(--red)':'var(--green)'}">${cinturaRiesgo?'Riesgo elevado':'Sin riesgo'}</span></div>`;
+  document.getElementById('bmi-calcs').innerHTML=html;
+}
+function selectCumplimiento(el){
+  document.querySelectorAll('#tab-consulta [data-val]').forEach(c=>{
+    if(['Excelente','Bueno','Regular','Malo'].includes(c.dataset.val))c.classList.remove('active');
+  });
+  el.classList.add('active');
+  document.getElementById('c-cumplimiento').value=el.dataset.val;
+}
+function saveConsulta(){
+  const pid=document.getElementById('c-paciente').value;
+  if(!pid){showToast('Selecciona un paciente',true);return;}
+  const peso=parseFloat(document.getElementById('c-peso').value);
+  if(!peso){showToast('Ingresa el peso',true);return;}
+  const p=DB.patients.find(x=>x.id===pid);
+  const talla=parseFloat(document.getElementById('c-talla').value)||(p&&p.talla)||null;
+  const c={id:uid(),patientId:pid,fecha:document.getElementById('c-fecha').value||new Date().toISOString().split('T')[0],peso,talla,cintura:parseFloat(document.getElementById('c-cintura').value)||null,cadera:parseFloat(document.getElementById('c-cadera').value)||null,sistolica:parseInt(document.getElementById('c-sistolica').value)||null,diastolica:parseInt(document.getElementById('c-diastolica').value)||null,glicemia:parseInt(document.getElementById('c-glicemia').value)||null,duracion:parseInt(document.getElementById('c-duracion').value)||null,rec24:document.getElementById('c-rec24').value.trim(),cumplimiento:document.getElementById('c-cumplimiento').value,obs:document.getElementById('c-obs').value.trim(),proxima:document.getElementById('c-proxima').value};
+  DB.consultations.push(c);
+  saveDB(DB);
+  showToast('Consulta guardada');
+  document.getElementById('c-peso').value='';
+  document.getElementById('c-cintura').value='';
+  document.getElementById('c-cadera').value='';
+  document.getElementById('c-sistolica').value='';
+  document.getElementById('c-diastolica').value='';
+  document.getElementById('c-glicemia').value='';
+  document.getElementById('c-duracion').value='';
+  document.getElementById('c-rec24').value='';
+  document.getElementById('c-obs').value='';
+  document.getElementById('c-proxima').value='';
+  document.getElementById('c-cumplimiento').value='';
+  document.querySelectorAll('#tab-consulta [data-val]').forEach(c=>c.classList.remove('active'));
+  document.getElementById('bmi-result-card').style.display='none';
+  document.getElementById('icc-display').style.display='none';
+}
+
+// ─── EVOLUCIÓN ────────────────────────────────────────────────────
+let chartPeso=null,chartIMC=null,chartCintura=null;
+function renderEvolucion(){
+  const pid=document.getElementById('e-paciente').value;
+  const content=document.getElementById('evol-content');
+  const empty=document.getElementById('evol-empty');
+  if(!pid){content.style.display='none';empty.style.display='none';return;}
+  const p=DB.patients.find(x=>x.id===pid);
+  const cs=DB.consultations.filter(c=>c.patientId===pid).sort((a,b)=>a.fecha.localeCompare(b.fecha));
+  if(!cs.length){content.style.display='none';empty.style.display='block';return;}
+  content.style.display='block';empty.style.display='none';
+  const labels=cs.map(c=>c.fecha.slice(5));
+  const pesos=cs.map(c=>c.peso);
+  const bmis=cs.map(c=>c.talla?calcBMI(c.peso,c.talla):calcBMI(c.peso,p.talla));
+  const cinturas=cs.map(c=>c.cintura).filter(Boolean);
+  // Peso chart
+  if(chartPeso)chartPeso.destroy();
+  chartPeso=new Chart(document.getElementById('chart-peso'),{type:'line',data:{labels,datasets:[{label:'Peso (kg)',data:pesos,borderColor:'#0369a1',backgroundColor:'rgba(3,105,161,.1)',tension:.35,fill:true,pointRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{grid:{color:'rgba(184,212,240,.4)'}}}}});
+  // IMC chart
+  if(chartIMC)chartIMC.destroy();
+  chartIMC=new Chart(document.getElementById('chart-imc'),{type:'line',data:{labels,datasets:[{label:'IMC',data:bmis.map(b=>b?+b.toFixed(1):null),borderColor:'#d97706',backgroundColor:'rgba(217,119,6,.1)',tension:.35,fill:true,pointRadius:4,spanGaps:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{grid:{color:'rgba(184,212,240,.4)'}}}}});
+  // Cintura chart
+  const cinCard=document.getElementById('chart-cintura-card');
+  if(cinturas.length>=2){
+    cinCard.style.display='block';
+    if(chartCintura)chartCintura.destroy();
+    chartCintura=new Chart(document.getElementById('chart-cintura'),{type:'line',data:{labels:cs.filter(c=>c.cintura).map(c=>c.fecha.slice(5)),datasets:[{label:'Cintura (cm)',data:cinturas,borderColor:'#dc2626',backgroundColor:'rgba(220,38,38,.1)',tension:.35,fill:true,pointRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{grid:{color:'rgba(184,212,240,.4)'}}}}});
+  }else{cinCard.style.display='none';}
+  // Stats
+  const first=cs[0],last=cs[cs.length-1];
+  const varPeso=(last.peso-(p.pesoIni||first.peso)).toFixed(1);
+  const used=cs.length;
+  const score=nutriScore(pid);
+  document.getElementById('evol-stats').innerHTML=`
+    <div class="calc-row"><span>Peso inicial</span><span>${p.pesoIni||first.peso} kg</span></div>
+    <div class="calc-row"><span>Peso actual</span><span>${last.peso} kg</span></div>
+    <div class="calc-row"><span>Variación total</span><span style="color:${varPeso<0?'var(--green)':varPeso>0?'var(--red)':'var(--muted)'}">${varPeso>0?'+':''}${varPeso} kg</span></div>
+    <div class="calc-row"><span>Consultas registradas</span><span>${used}</span></div>
+    <div class="calc-row"><span>NutriScore</span><span>${nsRing(score,36)} ${score}/100</span></div>
+  `;
+  // FONASA
+  const aut=p.sesionesAut||0;
+  const pct=aut>0?Math.min((used/aut)*100,100):0;
+  document.getElementById('fonasa-progress').innerHTML=`
+    <div style="font-size:.83rem;margin-bottom:6px">Sesiones usadas: <b>${used}</b> de <b>${aut||'—'}</b> autorizadas</div>
+    <div class="progress-bar fonasa-bar"><div class="progress-fill" style="width:${pct}%;background:${pct>=90?'var(--red)':pct>=70?'var(--yellow)':'var(--accent)'}"></div></div>
+    <div style="font-size:.75rem;color:var(--muted);margin-top:4px">${aut>0?Math.round(pct)+'% utilizado':''}</div>
+  `;
+}
+
+function showInforme(){
+  const pid=document.getElementById('e-paciente').value;
+  if(!pid){showToast('Selecciona un paciente',true);return;}
+  const p=DB.patients.find(x=>x.id===pid);
+  const cs=DB.consultations.filter(c=>c.patientId===pid).sort((a,b)=>a.fecha.localeCompare(b.fecha));
+  const last=cs[cs.length-1];
+  const bmi=last?calcBMI(last.peso,last.talla||p.talla):null;
+  const bc=bmi?bmiCategory(bmi):{cat:'Sin datos'};
+  const score=nutriScore(pid);
+  const today=new Date().toLocaleDateString('es-CL');
+  let txt=`INFORME NUTRICIONAL CLÍNICO\n${'═'.repeat(40)}\nFecha de emisión: ${today}\n\nPACIENTE\nNombre: ${p.nombre}\nRUT: ${p.rut||'—'}\nEdad: ${calcAge(p.dob)!='—'?calcAge(p.dob)+' años':'—'}\nGénero: ${p.genero==='F'?'Femenino':p.genero==='M'?'Masculino':'—'}\nPrevisión: ${p.prevision||'—'}\n\nANTECEDENTES\nPatologías: ${(p.patologias||[]).join(', ')||'Ninguna'}\nAlergias: ${p.alergias||'—'}\nMedicamentos: ${p.medicamentos||'—'}\nMotivo de consulta: ${p.motivo||'—'}\nObjetivo nutricional: ${p.objetivo||'—'}\n`;
+  if(last){
+    const varPeso=last.peso-(p.pesoIni||cs[0].peso);
+    txt+=`\nEVALUACIÓN ACTUAL (${last.fecha})\nPeso: ${last.peso} kg\nTalla: ${last.talla||p.talla||'—'} cm\nIMC: ${bmi?bmi.toFixed(1):'—'} — ${bc.cat}\n`;
+    if(last.cintura)txt+=`Cintura: ${last.cintura} cm\n`;
+    if(last.sistolica)txt+=`Presión arterial: ${last.sistolica}/${last.diastolica} mmHg\n`;
+    if(last.glicemia)txt+=`Glicemia: ${last.glicemia} mg/dL\n`;
+    txt+=`\nEVOLUCIÓN\nPeso inicial: ${p.pesoIni||cs[0].peso} kg\nPeso actual: ${last.peso} kg\nVariación: ${varPeso>0?'+':''}${varPeso.toFixed(1)} kg\nConsultas realizadas: ${cs.length}\nNutriScore: ${score}/100\n`;
+    if(last.cumplimiento)txt+=`Adherencia última consulta: ${last.cumplimiento}\n`;
+    if(last.obs)txt+=`\nOBSERVACIONES\n${last.obs}\n`;
+  }
+  txt+=`\n${'─'.repeat(40)}\nInforme generado por NutriScore — Gestión Nutricional Clínica`;
+  document.getElementById('informe-text').textContent=txt;
+  document.getElementById('modal-informe').classList.add('open');
+}
+function shareWhatsApp(){
+  const txt=document.getElementById('informe-text').textContent;
+  const url='https://wa.me/?text='+encodeURIComponent(txt);
+  window.open(url,'_blank');
+}
+
+// ─── PLAN ─────────────────────────────────────────────────────────
+let _planPid=null;
+function loadPlan(){
+  const pid=document.getElementById('p-paciente').value;
+  _planPid=pid;
+  const content=document.getElementById('plan-content');
+  const empty=document.getElementById('plan-empty');
+  if(!pid){content.style.display='none';empty.style.display='block';return;}
+  content.style.display='block';empty.style.display='none';
+  const pl=(DB.plans||[]).find(x=>x.patientId===pid);
+  document.getElementById('p-actividad').value=pl?pl.actividad:'1.55';
+  document.getElementById('p-kcal-adj').value=pl?pl.kcalAdj:0;
+  document.getElementById('p-prot').value=pl?pl.prot:1.5;
+  document.getElementById('p-fat').value=pl?pl.fat:30;
+  document.getElementById('p-cho').value=pl?pl.cho:50;
+  document.getElementById('meal-desayuno').value=pl?pl.desayuno||'':'';
+  document.getElementById('meal-colacion-am').value=pl?pl.colacionAm||'':'';
+  document.getElementById('meal-almuerzo').value=pl?pl.almuerzo||'':'';
+  document.getElementById('meal-once').value=pl?pl.once||'':'';
+  document.getElementById('meal-cena').value=pl?pl.cena||'':'';
+  document.querySelectorAll('#obj-chips .chip').forEach(c=>{
+    c.classList.toggle('active',pl&&(pl.objetivos||[]).includes(c.dataset.val));
+  });
+  // Select adj button
+  document.querySelectorAll('#tab-plan .chip[data-val="-500"],[data-val="0"],[data-val="500"]').forEach(c=>{
+    if(c.closest('#tab-plan'))c.classList.toggle('active',String(pl?pl.kcalAdj:0)===c.dataset.val);
+  });
+  calcPlan();
+}
+function selectObjetivoCal(el){
+  document.querySelectorAll('#tab-plan [data-val="-500"],[data-val="0"],[data-val="500"]').forEach(c=>{
+    if(c.closest('#tab-plan'))c.classList.remove('active');
+  });
+  el.classList.add('active');
+  document.getElementById('p-kcal-adj').value=el.dataset.val;
+  calcPlan();
+}
+function calcPlan(){
+  const pid=document.getElementById('p-paciente').value;
+  if(!pid)return;
+  const p=DB.patients.find(x=>x.id===pid);
+  const cs=DB.consultations.filter(c=>c.patientId===pid).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  const last=cs[0];
+  const peso=last?last.peso:p.pesoIni;
+  const talla=last?(last.talla||p.talla):p.talla;
+  const age=calcAge(p.dob);
+  const genero=p.genero;
+  const act=parseFloat(document.getElementById('p-actividad').value)||1.55;
+  const adj=parseInt(document.getElementById('p-kcal-adj').value)||0;
+  const prot=parseFloat(document.getElementById('p-prot').value)||1.5;
+  const fat=parseFloat(document.getElementById('p-fat').value)||30;
+  const cho=parseFloat(document.getElementById('p-cho').value)||50;
+  if(!peso||!talla||age==='—'){
+    document.getElementById('plan-calcs').innerHTML='<div style="color:var(--muted);font-size:.82rem">Datos insuficientes en ficha del paciente</div>';
+    return;
+  }
+  // Harris-Benedict
+  let geb;
+  if(genero==='M')geb=88.362+(13.397*peso)+(4.799*talla)-(5.677*age);
+  else geb=447.593+(9.247*peso)+(3.098*talla)-(4.330*age);
+  const get=geb*act;
+  const obj=get+adj;
+  const protG=prot*peso;
+  const fatG=(fat/100*obj)/9;
+  const choG=(cho/100*obj)/4;
+  const protPct=Math.round((protG*4/obj)*100);
+  document.getElementById('plan-calcs').innerHTML=`
+    <div class="calc-row"><span>GEB (Harris-Benedict)</span><span>${Math.round(geb)} kcal/día</span></div>
+    <div class="calc-row"><span>GET (×${act})</span><span>${Math.round(get)} kcal/día</span></div>
+    <div class="calc-row"><span>Objetivo calórico</span><span><b>${Math.round(obj)} kcal/día</b></span></div>
+  `;
+  document.getElementById('macro-tbody').innerHTML=`
+    <tr><td>Proteínas</td><td>${protG.toFixed(0)} g</td><td>${(protG*4).toFixed(0)}</td><td>${protPct}%</td></tr>
+    <tr><td>Grasas</td><td>${fatG.toFixed(0)} g</td><td>${(fatG*9).toFixed(0)}</td><td>${fat}%</td></tr>
+    <tr><td>Carbohidratos</td><td>${choG.toFixed(0)} g</td><td>${(choG*4).toFixed(0)}</td><td>${cho}%</td></tr>
+    <tr><td><b>Total</b></td><td></td><td><b>${Math.round(obj)}</b></td><td><b>100%</b></td></tr>
+  `;
+}
+function savePlan(){
+  const pid=document.getElementById('p-paciente').value;
+  if(!pid){showToast('Selecciona un paciente',true);return;}
+  const pl={patientId:pid,actividad:document.getElementById('p-actividad').value,kcalAdj:parseInt(document.getElementById('p-kcal-adj').value)||0,prot:parseFloat(document.getElementById('p-prot').value)||1.5,fat:parseFloat(document.getElementById('p-fat').value)||30,cho:parseFloat(document.getElementById('p-cho').value)||50,desayuno:document.getElementById('meal-desayuno').value,colacionAm:document.getElementById('meal-colacion-am').value,almuerzo:document.getElementById('meal-almuerzo').value,once:document.getElementById('meal-once').value,cena:document.getElementById('meal-cena').value,objetivos:getActiveChips('#obj-chips')};
+  if(!DB.plans)DB.plans=[];
+  const idx=DB.plans.findIndex(x=>x.patientId===pid);
+  if(idx>=0)DB.plans[idx]=pl;else DB.plans.push(pl);
+  saveDB(DB);
+  showToast('Plan guardado');
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────
+function init(){
+  const today=new Date();
+  document.getElementById('hdr-date').textContent=today.toLocaleDateString('es-CL',{day:'2-digit',month:'short',year:'numeric'});
+  document.getElementById('c-fecha').value=today.toISOString().split('T')[0];
+  renderDashboard();
+  populatePatientDropdowns();
+  document.getElementById('plan-empty').style.display='block';
+  document.getElementById('plan-content').style.display='none';
+}
+init();
+</script>
+</body>
+</html>

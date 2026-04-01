@@ -1,0 +1,1773 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>FotógrafoCL — Gestión de Estudio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
+<link rel="manifest" href="data:application/json,{&quot;name&quot;:&quot;FotógrafoCL&quot;,&quot;short_name&quot;:&quot;FotoCL&quot;,&quot;theme_color&quot;:&quot;#d97706&quot;,&quot;background_color&quot;:&quot;#1c1917&quot;,&quot;display&quot;:&quot;standalone&quot;,&quot;start_url&quot;:&quot;.&quot;}">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#1c1917;
+  --bg2:#292524;
+  --bg3:#3c3836;
+  --amber:#d97706;
+  --amber2:#f59e0b;
+  --amber3:#fbbf24;
+  --text:#f5f5f4;
+  --text2:#a8a29e;
+  --text3:#78716c;
+  --border:#3c3836;
+  --red:#ef4444;
+  --green:#22c55e;
+  --blue:#3b82f6;
+  --purple:#a855f7;
+  --nav-h:64px;
+  --header-h:60px;
+  --radius:12px;
+  --radius-sm:8px;
+  --shadow:0 4px 24px rgba(0,0,0,.4);
+  --transition:.18s ease;
+}
+html,body{height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.5;}
+body{display:flex;flex-direction:column;}
+#app{flex:1;display:flex;flex-direction:column;height:100vh;height:100dvh;}
+
+/* HEADER */
+#header{
+  height:var(--header-h);
+  background:var(--bg2);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;
+  flex-shrink:0;
+  position:sticky;top:0;z-index:100;
+}
+#header .logo{display:flex;align-items:center;gap:8px;}
+#header .logo-icon{width:32px;height:32px;background:var(--amber);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;}
+#header .logo-text{font-weight:800;font-size:17px;letter-spacing:-.3px;}
+#header .logo-text span{color:var(--amber);}
+#header-actions{display:flex;align-items:center;gap:8px;}
+.icon-btn{
+  width:36px;height:36px;border-radius:var(--radius-sm);
+  background:var(--bg3);border:none;color:var(--text2);
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-size:18px;transition:var(--transition);
+}
+.icon-btn:hover{background:var(--amber);color:#000;}
+
+/* CONTENT */
+#content{flex:1;overflow-y:auto;overflow-x:auto;padding-bottom:calc(var(--nav-h) + 8px);}
+.tab-panel{display:none;min-height:100%;animation:fadeIn .2s ease;}
+.tab-panel.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+/* BOTTOM NAV */
+#nav{
+  height:var(--nav-h);
+  background:var(--bg2);
+  border-top:1px solid var(--border);
+  display:flex;align-items:stretch;
+  position:fixed;bottom:0;left:0;right:0;z-index:100;
+  padding-bottom:env(safe-area-inset-bottom,0);
+}
+.nav-item{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:2px;border:none;background:transparent;color:var(--text3);
+  cursor:pointer;transition:var(--transition);font-family:inherit;
+  padding:0;font-size:10px;font-weight:500;
+}
+.nav-item .nav-icon{font-size:22px;line-height:1;transition:var(--transition);}
+.nav-item.active{color:var(--amber);}
+.nav-item.active .nav-icon{transform:scale(1.15);}
+.nav-item:hover{color:var(--text);}
+
+/* CARDS */
+.card{background:var(--bg2);border-radius:var(--radius);border:1px solid var(--border);padding:16px;}
+.card-sm{padding:12px;}
+.card+.card{margin-top:12px;}
+
+/* SECTION */
+.section{padding:16px;}
+.section-title{font-size:13px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px;}
+
+/* GRID */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+
+/* STAT CARDS */
+.stat-card{background:var(--bg2);border-radius:var(--radius);border:1px solid var(--border);padding:14px 16px;}
+.stat-label{font-size:11px;color:var(--text3);font-weight:500;text-transform:uppercase;letter-spacing:.5px;}
+.stat-value{font-size:22px;font-weight:800;margin-top:2px;line-height:1.1;}
+.stat-sub{font-size:11px;color:var(--text3);margin-top:3px;}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;}
+.badge-amber{background:rgba(217,119,6,.2);color:var(--amber3);}
+.badge-green{background:rgba(34,197,94,.15);color:var(--green);}
+.badge-red{background:rgba(239,68,68,.15);color:var(--red);}
+.badge-blue{background:rgba(59,130,246,.15);color:var(--blue);}
+.badge-purple{background:rgba(168,85,247,.15);color:var(--purple);}
+.badge-gray{background:var(--bg3);color:var(--text2);}
+
+/* BUTTONS */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  padding:10px 18px;border-radius:var(--radius-sm);font-family:inherit;
+  font-size:14px;font-weight:600;cursor:pointer;border:none;
+  transition:var(--transition);white-space:nowrap;
+}
+.btn-primary{background:var(--amber);color:#000;}
+.btn-primary:hover{background:var(--amber2);}
+.btn-secondary{background:var(--bg3);color:var(--text);}
+.btn-secondary:hover{background:#57534e;}
+.btn-danger{background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.3);}
+.btn-danger:hover{background:var(--red);color:#fff;}
+.btn-sm{padding:6px 12px;font-size:13px;}
+.btn-xs{padding:4px 8px;font-size:12px;}
+.btn-full{width:100%;}
+
+/* FORMS */
+.form-group{margin-bottom:14px;}
+.form-label{display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px;}
+.form-control{
+  width:100%;padding:10px 12px;
+  background:var(--bg3);border:1px solid var(--border);
+  border-radius:var(--radius-sm);color:var(--text);
+  font-family:inherit;font-size:14px;
+  transition:var(--transition);outline:none;
+}
+.form-control:focus{border-color:var(--amber);box-shadow:0 0 0 3px rgba(217,119,6,.15);}
+.form-control::placeholder{color:var(--text3);}
+select.form-control option{background:var(--bg2);}
+textarea.form-control{resize:vertical;min-height:80px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+/* MODAL */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.7);
+  z-index:200;display:flex;align-items:flex-end;justify-content:center;
+  opacity:0;pointer-events:none;transition:.2s ease;
+  backdrop-filter:blur(4px);
+}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal{
+  background:var(--bg2);border-radius:20px 20px 0 0;
+  width:100%;max-width:600px;max-height:92vh;
+  overflow-y:auto;padding:20px 16px;
+  transform:translateY(100%);transition:.25s cubic-bezier(.32,.72,0,1);
+}
+.modal-overlay.open .modal{transform:translateY(0);}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.modal-title{font-size:17px;font-weight:700;}
+.modal-close{background:var(--bg3);border:none;color:var(--text2);width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;}
+.modal-close:hover{background:var(--border);color:var(--text);}
+
+/* LIST ITEMS */
+.list-item{
+  background:var(--bg2);border-radius:var(--radius);border:1px solid var(--border);
+  padding:14px;display:flex;align-items:center;gap:12px;
+  transition:var(--transition);cursor:pointer;
+}
+.list-item:hover{border-color:var(--amber);background:rgba(217,119,6,.05);}
+.list-item+.list-item{margin-top:8px;}
+.list-item-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.list-item-body{flex:1;min-width:0;}
+.list-item-title{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.list-item-sub{font-size:12px;color:var(--text2);margin-top:1px;}
+.list-item-right{text-align:right;flex-shrink:0;}
+
+/* SEARCH */
+.search-bar{
+  display:flex;align-items:center;gap:8px;
+  background:var(--bg3);border-radius:var(--radius-sm);
+  padding:0 12px;border:1px solid var(--border);
+  transition:var(--transition);
+}
+.search-bar:focus-within{border-color:var(--amber);}
+.search-bar input{
+  flex:1;background:transparent;border:none;color:var(--text);
+  font-family:inherit;font-size:14px;padding:10px 0;outline:none;
+}
+.search-bar input::placeholder{color:var(--text3);}
+.search-icon{color:var(--text3);font-size:16px;}
+
+/* AVATAR */
+.avatar{
+  width:40px;height:40px;border-radius:50%;
+  background:var(--bg3);display:flex;align-items:center;justify-content:center;
+  font-size:16px;font-weight:700;color:var(--amber);flex-shrink:0;
+}
+
+/* EMPTY STATE */
+.empty-state{text-align:center;padding:48px 24px;}
+.empty-state .empty-icon{font-size:56px;margin-bottom:12px;opacity:.4;}
+.empty-state h3{font-size:16px;font-weight:600;color:var(--text2);margin-bottom:6px;}
+.empty-state p{font-size:13px;color:var(--text3);max-width:240px;margin:0 auto 20px;}
+
+/* CHART CONTAINER */
+.chart-wrap{position:relative;height:180px;}
+
+/* TOGGLE TABS */
+.toggle-tabs{display:flex;background:var(--bg3);border-radius:var(--radius-sm);padding:3px;gap:2px;margin-bottom:16px;}
+.toggle-tab{flex:1;padding:7px;border:none;background:transparent;color:var(--text2);font-family:inherit;font-size:13px;font-weight:500;border-radius:6px;cursor:pointer;transition:var(--transition);}
+.toggle-tab.active{background:var(--bg2);color:var(--text);font-weight:600;}
+
+/* CHIPS */
+.chip{display:inline-flex;align-items:center;gap:4px;padding:5px 10px;border-radius:999px;font-size:12px;font-weight:500;border:1px solid var(--border);background:var(--bg3);color:var(--text2);cursor:pointer;transition:var(--transition);}
+.chip.active{background:var(--amber);color:#000;border-color:var(--amber);}
+.chip:hover:not(.active){border-color:var(--text2);}
+.chips-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;}
+
+/* CALENDAR */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+.cal-header-row{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px;}
+.cal-day-name{text-align:center;font-size:11px;font-weight:600;color:var(--text3);padding:4px 0;}
+.cal-day{
+  aspect-ratio:1;border-radius:6px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;font-size:12px;font-weight:500;
+  cursor:pointer;transition:var(--transition);position:relative;
+  border:1px solid transparent;
+}
+.cal-day:hover{background:var(--bg3);}
+.cal-day.today{background:rgba(217,119,6,.2);color:var(--amber);font-weight:700;border-color:var(--amber);}
+.cal-day.has-event::after{content:'';width:4px;height:4px;border-radius:50%;background:var(--amber);position:absolute;bottom:3px;}
+.cal-day.other-month{opacity:.3;}
+.cal-day.selected{background:var(--amber);color:#000;}
+
+/* GALLERY */
+.gallery-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+.gallery-item{
+  aspect-ratio:1;border-radius:var(--radius-sm);
+  background:var(--bg3);display:flex;align-items:center;justify-content:center;
+  font-size:32px;cursor:pointer;position:relative;overflow:hidden;
+  transition:var(--transition);border:2px solid transparent;
+}
+.gallery-item:hover{border-color:var(--amber);transform:scale(.97);}
+.gallery-overlay{
+  position:absolute;inset:0;background:rgba(0,0,0,.6);
+  display:flex;align-items:flex-end;padding:6px;
+  opacity:0;transition:var(--transition);
+}
+.gallery-item:hover .gallery-overlay{opacity:1;}
+.gallery-label{font-size:10px;font-weight:600;color:#fff;line-height:1.2;}
+
+/* FINANCE */
+.fin-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);}
+.fin-row:last-child{border-bottom:none;}
+.fin-amount{font-size:15px;font-weight:700;}
+.fin-amount.income{color:var(--green);}
+.fin-amount.expense{color:var(--red);}
+
+/* SCROLL */
+#content::-webkit-scrollbar{width:4px;}
+#content::-webkit-scrollbar-track{background:transparent;}
+#content::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:2px;}
+
+/* SESSION TYPE COLORS */
+.type-matrimonio{background:rgba(168,85,247,.2);color:#c084fc;}
+.type-retrato{background:rgba(59,130,246,.2);color:#60a5fa;}
+.type-producto{background:rgba(34,197,94,.2);color:#4ade80;}
+.type-evento{background:rgba(217,119,6,.2);color:var(--amber3);}
+.type-paisaje{background:rgba(20,184,166,.2);color:#2dd4bf;}
+.type-recien{background:rgba(244,63,94,.2);color:#fb7185;}
+
+/* INVOICE */
+.invoice-card{
+  background:var(--bg2);border-radius:var(--radius);border:1px solid var(--border);
+  padding:16px;margin-bottom:10px;
+}
+.invoice-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;}
+.invoice-num{font-size:12px;font-weight:600;color:var(--text2);}
+.invoice-total{font-size:20px;font-weight:800;color:var(--amber);}
+.invoice-line{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;}
+.invoice-line:last-child{border-bottom:none;}
+
+/* WEEK VIEW */
+.week-col{flex:1;min-width:0;}
+.week-day-header{text-align:center;padding:6px 2px;font-size:11px;font-weight:600;color:var(--text3);cursor:pointer;}
+.week-day-header.today-wk{color:var(--amber);}
+.week-event{
+  background:rgba(217,119,6,.2);border-left:2px solid var(--amber);
+  border-radius:4px;padding:4px 6px;margin:2px 0;
+  font-size:10px;font-weight:600;color:var(--amber3);cursor:pointer;
+}
+
+/* CONFIRM */
+.confirm-dialog{
+  position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:300;
+  display:flex;align-items:center;justify-content:center;padding:20px;
+}
+.confirm-box{background:var(--bg2);border-radius:var(--radius);padding:24px;max-width:320px;width:100%;border:1px solid var(--border);}
+.confirm-title{font-size:16px;font-weight:700;margin-bottom:8px;}
+.confirm-text{font-size:14px;color:var(--text2);margin-bottom:20px;}
+.confirm-actions{display:flex;gap:10px;}
+.confirm-actions .btn{flex:1;}
+
+/* TOAST */
+#toast{
+  position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-80px);
+  background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);
+  padding:10px 18px;font-size:13px;font-weight:600;z-index:400;
+  transition:.3s cubic-bezier(.32,.72,0,1);white-space:nowrap;
+  box-shadow:var(--shadow);
+}
+#toast.show{transform:translateX(-50%) translateY(0);}
+#toast.success{border-color:var(--green);color:var(--green);}
+#toast.error{border-color:var(--red);color:var(--red);}
+#toast.info{border-color:var(--amber);color:var(--amber);}
+
+/* DETAIL */
+.detail-hero{
+  height:140px;background:linear-gradient(135deg,var(--bg3),var(--bg2));
+  border-radius:var(--radius);display:flex;align-items:center;justify-content:center;
+  font-size:64px;margin-bottom:16px;
+}
+.detail-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);}
+.detail-row:last-child{border-bottom:none;}
+.detail-key{font-size:12px;color:var(--text3);font-weight:500;}
+.detail-val{font-size:13px;font-weight:600;text-align:right;max-width:60%;}
+
+/* PAGE HEADER */
+.page-header{
+  padding:16px 16px 0;display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:4px;
+}
+.page-title{font-size:20px;font-weight:800;}
+
+/* SECTION HEADER */
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+
+/* RESPONSIVE */
+@media(min-width:480px){
+  .gallery-grid{grid-template-columns:repeat(4,1fr);}
+}
+@media(min-width:600px){
+  .modal{border-radius:20px;margin:auto;margin-bottom:0;}
+  .modal-overlay{align-items:center;}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- HEADER -->
+  <header id="header">
+    <div class="logo">
+      <div class="logo-icon">📷</div>
+      <div class="logo-text">Fotógrafo<span>CL</span></div>
+    </div>
+    <div id="header-actions">
+      <button class="icon-btn" id="btn-demo" title="Generar datos de demo">🎲</button>
+      <button class="icon-btn" id="btn-notify" title="Notificaciones">🔔</button>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <main id="content">
+
+    <!-- TAB 1: DASHBOARD -->
+    <div id="tab-dashboard" class="tab-panel active">
+      <div class="section">
+        <div class="section-header">
+          <span class="section-title">Resumen</span>
+          <span id="dash-date" style="font-size:12px;color:var(--text3);"></span>
+        </div>
+        <div class="grid-2" style="margin-bottom:12px;" id="stat-cards"></div>
+        <div class="card" style="margin-bottom:12px;">
+          <div class="section-header">
+            <span style="font-size:13px;font-weight:600;">Ingresos últimos 6 meses</span>
+          </div>
+          <div class="chart-wrap"><canvas id="chart-revenue"></canvas></div>
+        </div>
+        <div class="card" style="margin-bottom:12px;">
+          <div class="section-header">
+            <span style="font-size:13px;font-weight:600;">Sesiones por tipo</span>
+          </div>
+          <div class="chart-wrap"><canvas id="chart-types"></canvas></div>
+        </div>
+        <div class="section-header" style="margin-top:16px;">
+          <span class="section-title">Próximas sesiones</span>
+          <button class="btn btn-sm btn-secondary" onclick="switchTab('sesiones')">Ver todas</button>
+        </div>
+        <div id="upcoming-list"></div>
+      </div>
+    </div>
+
+    <!-- TAB 2: SESIONES -->
+    <div id="tab-sesiones" class="tab-panel">
+      <div class="page-header">
+        <span class="page-title">Sesiones</span>
+        <button class="btn btn-sm btn-primary" onclick="openSesionModal()">+ Nueva</button>
+      </div>
+      <div class="section">
+        <div class="search-bar" style="margin-bottom:12px;">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="search-sesiones" placeholder="Buscar sesiones..." oninput="renderSesiones()">
+        </div>
+        <div class="chips-row" id="filter-chips-sesiones"></div>
+        <div id="sesiones-list"></div>
+      </div>
+    </div>
+
+    <!-- TAB 3: CLIENTES -->
+    <div id="tab-clientes" class="tab-panel">
+      <div class="page-header">
+        <span class="page-title">Clientes</span>
+        <button class="btn btn-sm btn-primary" onclick="openClienteModal()">+ Nuevo</button>
+      </div>
+      <div class="section">
+        <div class="search-bar" style="margin-bottom:12px;">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="search-clientes" placeholder="Buscar clientes..." oninput="renderClientes()">
+        </div>
+        <div id="clientes-list"></div>
+      </div>
+    </div>
+
+    <!-- TAB 4: GALERIA -->
+    <div id="tab-galeria" class="tab-panel">
+      <div class="page-header">
+        <span class="page-title">Galería</span>
+        <button class="btn btn-sm btn-primary" onclick="openGaleriaModal()">+ Subir</button>
+      </div>
+      <div class="section">
+        <div class="chips-row" id="filter-chips-galeria"></div>
+        <div class="gallery-grid" id="gallery-grid"></div>
+        <div id="gallery-empty"></div>
+      </div>
+    </div>
+
+    <!-- TAB 5: FINANZAS -->
+    <div id="tab-finanzas" class="tab-panel">
+      <div class="page-header">
+        <span class="page-title">Finanzas</span>
+        <button class="btn btn-sm btn-primary" onclick="openFinanzaModal()">+ Registrar</button>
+      </div>
+      <div class="section">
+        <div class="grid-2" style="margin-bottom:16px;" id="fin-stat-cards"></div>
+        <div class="card" style="margin-bottom:16px;">
+          <div class="section-header">
+            <span style="font-size:13px;font-weight:600;">Flujo mensual</span>
+          </div>
+          <div class="chart-wrap"><canvas id="chart-finanzas"></canvas></div>
+        </div>
+        <div class="toggle-tabs" id="fin-tabs">
+          <button class="toggle-tab active" onclick="setFinTab('movimientos')">Movimientos</button>
+          <button class="toggle-tab" onclick="setFinTab('facturas')">Facturas</button>
+        </div>
+        <div id="fin-movimientos"></div>
+        <div id="fin-facturas" style="display:none;"></div>
+      </div>
+    </div>
+
+    <!-- TAB 6: AGENDA -->
+    <div id="tab-agenda" class="tab-panel">
+      <div class="page-header">
+        <span class="page-title">Agenda</span>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-sm btn-secondary" onclick="calNav(-1)">‹</button>
+          <button class="btn btn-sm btn-secondary" onclick="calNav(1)">›</button>
+        </div>
+      </div>
+      <div class="section">
+        <div class="toggle-tabs" id="cal-view-tabs">
+          <button class="toggle-tab active" onclick="setCalView('mes')">Mes</button>
+          <button class="toggle-tab" onclick="setCalView('semana')">Semana</button>
+        </div>
+        <div style="text-align:center;margin-bottom:12px;">
+          <span id="cal-title" style="font-size:15px;font-weight:700;"></span>
+        </div>
+        <div id="cal-container"></div>
+        <div style="margin-top:20px;">
+          <div class="section-header">
+            <span class="section-title" id="cal-day-label">Sesiones</span>
+            <button class="btn btn-sm btn-primary" onclick="openSesionModal()">+ Agendar</button>
+          </div>
+          <div id="cal-day-sessions"></div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- BOTTOM NAV -->
+  <nav id="nav">
+    <button class="nav-item active" data-tab="dashboard" onclick="switchTab('dashboard')">
+      <span class="nav-icon">📊</span>
+      <span>Dashboard</span>
+    </button>
+    <button class="nav-item" data-tab="sesiones" onclick="switchTab('sesiones')">
+      <span class="nav-icon">📸</span>
+      <span>Sesiones</span>
+    </button>
+    <button class="nav-item" data-tab="clientes" onclick="switchTab('clientes')">
+      <span class="nav-icon">👤</span>
+      <span>Clientes</span>
+    </button>
+    <button class="nav-item" data-tab="galeria" onclick="switchTab('galeria')">
+      <span class="nav-icon">🖼️</span>
+      <span>Galería</span>
+    </button>
+    <button class="nav-item" data-tab="finanzas" onclick="switchTab('finanzas')">
+      <span class="nav-icon">💰</span>
+      <span>Finanzas</span>
+    </button>
+    <button class="nav-item" data-tab="agenda" onclick="switchTab('agenda')">
+      <span class="nav-icon">📅</span>
+      <span>Agenda</span>
+    </button>
+  </nav>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- MODAL: SESION -->
+<div class="modal-overlay" id="modal-sesion">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-sesion-title">Nueva Sesión</span>
+      <button class="modal-close" onclick="closeModal('modal-sesion')">✕</button>
+    </div>
+    <form id="form-sesion" onsubmit="saveSesion(event)">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Tipo *</label>
+          <select class="form-control" id="ses-tipo" required>
+            <option value="">Seleccionar</option>
+            <option value="Matrimonio">💒 Matrimonio</option>
+            <option value="Retrato">🧑 Retrato</option>
+            <option value="Producto">📦 Producto</option>
+            <option value="Evento">🎉 Evento</option>
+            <option value="Paisaje">🌄 Paisaje</option>
+            <option value="Recién Nacido">👶 Recién Nacido</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Estado *</label>
+          <select class="form-control" id="ses-estado" required>
+            <option value="Pendiente">Pendiente</option>
+            <option value="Confirmada">Confirmada</option>
+            <option value="En progreso">En progreso</option>
+            <option value="Completada">Completada</option>
+            <option value="Cancelada">Cancelada</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Cliente *</label>
+        <select class="form-control" id="ses-cliente" required>
+          <option value="">Seleccionar cliente</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Fecha *</label>
+          <input type="date" class="form-control" id="ses-fecha" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Hora *</label>
+          <input type="time" class="form-control" id="ses-hora" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Ubicación</label>
+        <input type="text" class="form-control" id="ses-ubicacion" placeholder="Ej: Parque Forestal, Santiago">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Precio (CLP) *</label>
+          <input type="number" class="form-control" id="ses-precio" placeholder="150000" required min="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Anticipo (CLP)</label>
+          <input type="number" class="form-control" id="ses-anticipo" placeholder="0" min="0">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notas</label>
+        <textarea class="form-control" id="ses-notas" placeholder="Detalles, requerimientos especiales..."></textarea>
+      </div>
+      <input type="hidden" id="ses-id">
+      <div style="display:flex;gap:10px;margin-top:8px;">
+        <button type="button" class="btn btn-secondary btn-full" onclick="closeModal('modal-sesion')">Cancelar</button>
+        <button type="submit" class="btn btn-primary btn-full">Guardar Sesión</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: CLIENTE -->
+<div class="modal-overlay" id="modal-cliente">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-cliente-title">Nuevo Cliente</span>
+      <button class="modal-close" onclick="closeModal('modal-cliente')">✕</button>
+    </div>
+    <form id="form-cliente" onsubmit="saveCliente(event)">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Nombre *</label>
+          <input type="text" class="form-control" id="cli-nombre" placeholder="María" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Apellido *</label>
+          <input type="text" class="form-control" id="cli-apellido" placeholder="González" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">RUT</label>
+        <input type="text" class="form-control" id="cli-rut" placeholder="12.345.678-9" oninput="formatRut(this)">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Teléfono *</label>
+          <input type="tel" class="form-control" id="cli-telefono" placeholder="+56 9 XXXX XXXX" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-control" id="cli-email" placeholder="correo@ejemplo.cl">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Instagram</label>
+        <input type="text" class="form-control" id="cli-instagram" placeholder="@usuario">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Preferencias / Estilo</label>
+        <textarea class="form-control" id="cli-prefs" placeholder="Ej: Prefiere fotos naturales, le gusta el blanco y negro..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Cómo nos conoció</label>
+        <select class="form-control" id="cli-origen">
+          <option value="">Seleccionar</option>
+          <option value="Instagram">Instagram</option>
+          <option value="Referido">Referido</option>
+          <option value="Google">Google</option>
+          <option value="Facebook">Facebook</option>
+          <option value="Otro">Otro</option>
+        </select>
+      </div>
+      <input type="hidden" id="cli-id">
+      <div style="display:flex;gap:10px;margin-top:8px;">
+        <button type="button" class="btn btn-secondary btn-full" onclick="closeModal('modal-cliente')">Cancelar</button>
+        <button type="submit" class="btn btn-primary btn-full">Guardar Cliente</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: GALERIA -->
+<div class="modal-overlay" id="modal-galeria">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Subir Fotografía</span>
+      <button class="modal-close" onclick="closeModal('modal-galeria')">✕</button>
+    </div>
+    <form id="form-galeria" onsubmit="saveGaleria(event)">
+      <div class="form-group">
+        <label class="form-label">Título *</label>
+        <input type="text" class="form-control" id="gal-titulo" placeholder="Ej: Puesta de sol Atacama" required>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Categoría *</label>
+          <select class="form-control" id="gal-categoria" required>
+            <option value="">Seleccionar</option>
+            <option value="Matrimonio">Matrimonio</option>
+            <option value="Retrato">Retrato</option>
+            <option value="Producto">Producto</option>
+            <option value="Evento">Evento</option>
+            <option value="Paisaje">Paisaje</option>
+            <option value="Recién Nacido">Recién Nacido</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Icono</label>
+          <select class="form-control" id="gal-emoji">
+            <option value="📷">📷 Cámara</option>
+            <option value="💒">💒 Matrimonio</option>
+            <option value="🌅">🌅 Amanecer</option>
+            <option value="🌄">🌄 Paisaje</option>
+            <option value="👶">👶 Recién Nacido</option>
+            <option value="🎉">🎉 Evento</option>
+            <option value="📦">📦 Producto</option>
+            <option value="🧑">🧑 Retrato</option>
+            <option value="🌊">🌊 Playa</option>
+            <option value="🏔️">🏔️ Montaña</option>
+            <option value="🌺">🌺 Floral</option>
+            <option value="🌃">🌃 Nocturna</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Descripción</label>
+        <textarea class="form-control" id="gal-desc" placeholder="Descripción de la fotografía..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Cliente (si aplica)</label>
+        <select class="form-control" id="gal-cliente">
+          <option value="">Sin cliente</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:16px;margin-bottom:14px;">
+        <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;">
+          <input type="checkbox" id="gal-favorito"> Favorita ⭐
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;">
+          <input type="checkbox" id="gal-antes-despues"> Antes/Después
+        </label>
+      </div>
+      <input type="hidden" id="gal-id">
+      <div style="display:flex;gap:10px;margin-top:8px;">
+        <button type="button" class="btn btn-secondary btn-full" onclick="closeModal('modal-galeria')">Cancelar</button>
+        <button type="submit" class="btn btn-primary btn-full">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: FINANZA -->
+<div class="modal-overlay" id="modal-finanza">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-fin-title">Nuevo Movimiento</span>
+      <button class="modal-close" onclick="closeModal('modal-finanza')">✕</button>
+    </div>
+    <form id="form-finanza" onsubmit="saveFinanza(event)">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Tipo *</label>
+          <select class="form-control" id="fin-tipo" required onchange="updateFinFields()">
+            <option value="ingreso">💚 Ingreso</option>
+            <option value="gasto">🔴 Gasto</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Categoría *</label>
+          <select class="form-control" id="fin-categoria" required>
+            <option value="Sesión">Sesión</option>
+            <option value="Edición">Edición</option>
+            <option value="Anticipo">Anticipo</option>
+            <option value="Equipo">Equipo</option>
+            <option value="Transporte">Transporte</option>
+            <option value="Software">Software</option>
+            <option value="Marketing">Marketing</option>
+            <option value="Arriendo">Arriendo</option>
+            <option value="Otro">Otro</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Descripción *</label>
+        <input type="text" class="form-control" id="fin-descripcion" placeholder="Ej: Sesión matrimonio Fernández" required>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Monto (CLP) *</label>
+          <input type="number" class="form-control" id="fin-monto" placeholder="150000" required min="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fecha *</label>
+          <input type="date" class="form-control" id="fin-fecha" required>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Estado pago</label>
+          <select class="form-control" id="fin-estado-pago">
+            <option value="Pagado">Pagado</option>
+            <option value="Pendiente">Pendiente</option>
+            <option value="Parcial">Parcial</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Método</label>
+          <select class="form-control" id="fin-metodo">
+            <option value="Transferencia">Transferencia</option>
+            <option value="Efectivo">Efectivo</option>
+            <option value="Tarjeta">Tarjeta</option>
+            <option value="Webpay">Webpay</option>
+            <option value="Otro">Otro</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Cliente</label>
+        <select class="form-control" id="fin-cliente">
+          <option value="">Sin cliente</option>
+        </select>
+      </div>
+      <input type="hidden" id="fin-id">
+      <div style="display:flex;gap:10px;margin-top:8px;">
+        <button type="button" class="btn btn-secondary btn-full" onclick="closeModal('modal-finanza')">Cancelar</button>
+        <button type="submit" class="btn btn-primary btn-full">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: DETALLE SESION -->
+<div class="modal-overlay" id="modal-detalle-sesion">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Detalle Sesión</span>
+      <button class="modal-close" onclick="closeModal('modal-detalle-sesion')">✕</button>
+    </div>
+    <div id="detalle-sesion-content"></div>
+  </div>
+</div>
+
+<!-- MODAL: DETALLE CLIENTE -->
+<div class="modal-overlay" id="modal-detalle-cliente">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Perfil Cliente</span>
+      <button class="modal-close" onclick="closeModal('modal-detalle-cliente')">✕</button>
+    </div>
+    <div id="detalle-cliente-content"></div>
+  </div>
+</div>
+
+<!-- CONFIRM DIALOG -->
+<div id="confirm-dialog" style="display:none;" class="confirm-dialog">
+  <div class="confirm-box">
+    <div class="confirm-title" id="confirm-title">¿Confirmar acción?</div>
+    <div class="confirm-text" id="confirm-text">Esta acción no se puede deshacer.</div>
+    <div class="confirm-actions">
+      <button class="btn btn-secondary" onclick="closeConfirm()">Cancelar</button>
+      <button class="btn btn-danger" id="confirm-ok">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// DATA STORE
+// ============================================================
+const STORE_KEY = 'fotografocl_v2';
+let DB = { sesiones:[], clientes:[], galeria:[], finanzas:[] };
+
+function loadDB(){
+  try{ const raw=localStorage.getItem(STORE_KEY); if(raw) DB=JSON.parse(raw); }catch(e){}
+}
+function saveDB(){ localStorage.setItem(STORE_KEY,JSON.stringify(DB)); }
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+
+// ============================================================
+// UTILITIES
+// ============================================================
+function clp(n){
+  if(isNaN(n)||n===null||n===undefined) return '$0';
+  return '$'+Math.round(n).toLocaleString('es-CL');
+}
+function fdate(str){
+  if(!str) return '—';
+  const [y,m,d]=str.split('-');
+  return (d||'?')+'/'+(m||'?')+'/'+(y||'?');
+}
+function today(){ return new Date().toISOString().slice(0,10); }
+function formatRut(input){
+  let v=input.value.replace(/[^0-9kK]/g,'').toUpperCase();
+  if(v.length>1){
+    const body=v.slice(0,-1), dv=v.slice(-1);
+    let fmt='', i=body.length;
+    while(i>3){fmt='.'+body.slice(i-3,i)+fmt;i-=3;}
+    input.value=body.slice(0,i)+fmt+'-'+dv;
+  } else { input.value=v; }
+}
+function initials(name){
+  if(!name) return '?';
+  return name.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
+}
+function getDaysInMonth(y,m){ return new Date(y,m+1,0).getDate(); }
+function getFirstDayOfMonth(y,m){ return new Date(y,m,1).getDay(); }
+
+const STATUS_BADGE={
+  'Pendiente':'badge-amber','Confirmada':'badge-blue',
+  'En progreso':'badge-purple','Completada':'badge-green','Cancelada':'badge-gray'
+};
+const TYPE_EMOJI={
+  'Matrimonio':'💒','Retrato':'🧑','Producto':'📦',
+  'Evento':'🎉','Paisaje':'🌄','Recién Nacido':'👶'
+};
+const TYPE_CLASS={
+  'Matrimonio':'type-matrimonio','Retrato':'type-retrato','Producto':'type-producto',
+  'Evento':'type-evento','Paisaje':'type-paisaje','Recién Nacido':'type-recien'
+};
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+let currentTab='dashboard';
+function switchTab(tab){
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  const navBtn=document.querySelector('[data-tab="'+tab+'"]');
+  if(navBtn) navBtn.classList.add('active');
+  currentTab=tab;
+  const renders={
+    dashboard:renderDashboard, sesiones:renderSesiones,
+    clientes:renderClientes, galeria:renderGaleria,
+    finanzas:renderFinanzas, agenda:renderAgenda
+  };
+  if(renders[tab]) renders[tab]();
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+let toastTimer;
+function toast(msg,type='info'){
+  const t=document.getElementById('toast');
+  t.className='show '+type; t.textContent=msg;
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>{t.className='';},2800);
+}
+
+// ============================================================
+// MODAL
+// ============================================================
+function openModal(id){ document.getElementById(id).classList.add('open'); }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(o=>{
+  o.addEventListener('click',e=>{ if(e.target===o) closeModal(o.id); });
+});
+
+// ============================================================
+// CONFIRM
+// ============================================================
+let confirmCb=null;
+function showConfirm(title,text,cb){
+  document.getElementById('confirm-title').textContent=title;
+  document.getElementById('confirm-text').textContent=text;
+  document.getElementById('confirm-dialog').style.display='flex';
+  confirmCb=cb;
+}
+function closeConfirm(){
+  document.getElementById('confirm-dialog').style.display='none';
+  confirmCb=null;
+}
+document.getElementById('confirm-ok').addEventListener('click',()=>{
+  if(confirmCb) confirmCb();
+  closeConfirm();
+});
+
+// ============================================================
+// DEMO DATA
+// ============================================================
+document.getElementById('btn-demo').addEventListener('click',generateDemo);
+function generateDemo(){
+  showConfirm('Generar datos de demo','Se agregarán clientes, sesiones, galería y finanzas de ejemplo. ¿Continuar?',()=>{
+    DB.clientes=[
+      {id:'c1',nombre:'Valentina',apellido:'Morales',rut:'15.234.567-8',telefono:'+56 9 8712 3456',email:'vale.morales@gmail.com',instagram:'@valemora',prefs:'Fotos naturales, luz cálida, exteriores',origen:'Instagram',createdAt:'2025-01-10'},
+      {id:'c2',nombre:'Felipe',apellido:'Contreras',rut:'12.876.543-2',telefono:'+56 9 9821 7654',email:'fcontreras@empresa.cl',instagram:'@fcontreras',prefs:'Producto sobre fondo neutro, alta resolución',origen:'Google',createdAt:'2025-02-14'},
+      {id:'c3',nombre:'Camila',apellido:'Rodríguez',rut:'17.654.321-K',telefono:'+56 9 7632 9871',email:'cami.rod@hotmail.com',instagram:'@camirod',prefs:'Romántico, filtros cálidos, playa',origen:'Referido',createdAt:'2025-03-01'},
+      {id:'c4',nombre:'Andrés',apellido:'Soto',rut:'14.567.890-3',telefono:'+56 9 6523 4512',email:'andres.soto@gmail.com',instagram:'',prefs:'Fotos familiares, niños, exterior parques',origen:'Facebook',createdAt:'2025-04-20'},
+      {id:'c5',nombre:'Daniela',apellido:'Vega',rut:'19.012.345-7',telefono:'+56 9 5412 8963',email:'dani.vega@live.cl',instagram:'@danivegaph',prefs:'Editorial, moda, colores fuertes',origen:'Instagram',createdAt:'2025-05-05'},
+      {id:'c6',nombre:'Sebastián',apellido:'Muñoz',rut:'11.234.567-4',telefono:'+56 9 4523 6741',email:'sebas.munoz@gmail.com',instagram:'@sebasmunoz',prefs:'Paisajes, larga exposición, amanecer',origen:'Referido',createdAt:'2025-06-12'},
+    ];
+    const now=new Date();
+    const y=now.getFullYear();
+    const cm=String(now.getMonth()+1).padStart(2,'0');
+    const nm=String(now.getMonth()+2>12?1:now.getMonth()+2).padStart(2,'0');
+    const ny=now.getMonth()+2>12?y+1:y;
+    DB.sesiones=[
+      {id:'s1',tipo:'Matrimonio',estado:'Completada',clienteId:'c3',fecha:`${y}-${cm}-02`,hora:'16:00',ubicacion:'Viña del Mar, playa Reñaca',precio:350000,anticipo:175000,notas:'Puesta de sol, 3 horas de cobertura',createdAt:`${y}-${cm}-02`},
+      {id:'s2',tipo:'Producto',estado:'Completada',clienteId:'c2',fecha:`${y}-${cm}-05`,hora:'10:00',ubicacion:'Estudio, Providencia',precio:120000,anticipo:60000,notas:'30 productos, fondo blanco y negro',createdAt:`${y}-${cm}-05`},
+      {id:'s3',tipo:'Retrato',estado:'Confirmada',clienteId:'c1',fecha:`${y}-${cm}-28`,hora:'15:30',ubicacion:'Parque Bicentenario, Vitacura',precio:80000,anticipo:0,notas:'Sesión profesional LinkedIn',createdAt:`${y}-${cm}-10`},
+      {id:'s4',tipo:'Evento',estado:'Pendiente',clienteId:'c5',fecha:`${y}-${cm}-30`,hora:'20:00',ubicacion:'Hotel W, Santiago',precio:200000,anticipo:100000,notas:'Lanzamiento marca moda',createdAt:`${y}-${cm}-12`},
+      {id:'s5',tipo:'Paisaje',estado:'Confirmada',clienteId:'c6',fecha:`${ny}-${nm}-05`,hora:'06:30',ubicacion:'Torres del Paine, Patagonia',precio:280000,anticipo:140000,notas:'4 días, expedición',createdAt:`${y}-${cm}-15`},
+      {id:'s6',tipo:'Recién Nacido',estado:'Completada',clienteId:'c4',fecha:`${y}-${cm}-08`,hora:'11:00',ubicacion:'Domicilio cliente, Las Condes',precio:95000,anticipo:47500,notas:'Bebé 2 semanas, accesorios incluidos',createdAt:`${y}-${cm}-08`},
+      {id:'s7',tipo:'Matrimonio',estado:'Pendiente',clienteId:'c1',fecha:`${ny}-${nm}-15`,hora:'13:00',ubicacion:'Cajón del Maipo',precio:420000,anticipo:210000,notas:'Día completo, civil+celebración',createdAt:`${y}-${cm}-18`},
+    ];
+    DB.galeria=[
+      {id:'g1',titulo:'Atardecer Atacama',categoria:'Paisaje',emoji:'🌅',desc:'Puesta de sol en el desierto de Atacama',clienteId:'',favorito:true,antesDespues:false,createdAt:'2025-01-15'},
+      {id:'g2',titulo:'Boda en Viña',categoria:'Matrimonio',emoji:'💒',desc:'Ceremonia playa Reñaca al atardecer',clienteId:'c3',favorito:true,antesDespues:false,createdAt:'2025-02-20'},
+      {id:'g3',titulo:'Retrato editorial',categoria:'Retrato',emoji:'🧑',desc:'Sesión moda Santiago centro',clienteId:'c5',favorito:false,antesDespues:true,createdAt:'2025-03-10'},
+      {id:'g4',titulo:'Torres del Paine',categoria:'Paisaje',emoji:'🏔️',desc:'Madrugada con larga exposición',clienteId:'c6',favorito:true,antesDespues:false,createdAt:'2025-04-02'},
+      {id:'g5',titulo:'Bebé Luna',categoria:'Recién Nacido',emoji:'👶',desc:'Newborn 10 días, colores pastel',clienteId:'c4',favorito:false,antesDespues:false,createdAt:'2025-04-18'},
+      {id:'g6',titulo:'Productos tech',categoria:'Producto',emoji:'📦',desc:'Fotografía e-commerce fondo blanco',clienteId:'c2',favorito:false,antesDespues:true,createdAt:'2025-05-05'},
+      {id:'g7',titulo:'Festival Santiago',categoria:'Evento',emoji:'🎉',desc:'Cobertura festival de música',clienteId:'',favorito:true,antesDespues:false,createdAt:'2025-05-20'},
+      {id:'g8',titulo:'Amanecer Villarrica',categoria:'Paisaje',emoji:'🌄',desc:'Volcán al amanecer, reflejo lago',clienteId:'',favorito:false,antesDespues:false,createdAt:'2025-06-01'},
+      {id:'g9',titulo:'Campaña primavera',categoria:'Retrato',emoji:'🌺',desc:'Sesión exterior primavera floral',clienteId:'c1',favorito:true,antesDespues:true,createdAt:'2025-06-15'},
+    ];
+    const months=[];
+    for(let i=5;i>=0;i--){
+      const d=new Date(y,now.getMonth()-i,1);
+      months.push({y:d.getFullYear(),m:String(d.getMonth()+1).padStart(2,'0')});
+    }
+    const inMonths=[350000,420000,280000,380000,310000,400000];
+    const inMonths2=[120000,90000,150000,110000,140000,125000];
+    const exMonths=[45000,28000,35000,89000,55000,120000];
+    const exDesc=['Filtros ND','Tarjetas SD','Batería extra','Flash externo','Trípode','Disco externo'];
+    DB.finanzas=[
+      ...months.map((mo,i)=>[
+        {id:'f'+i+'a',tipo:'ingreso',categoria:'Sesión',descripcion:'Sesión matrimonio '+['García','López','Pérez','Soto','Muñoz','Vega'][i],monto:inMonths[i],fecha:`${mo.y}-${mo.m}-05`,estadoPago:'Pagado',metodo:'Transferencia',clienteId:'c3',createdAt:`${mo.y}-${mo.m}-05`},
+        {id:'f'+i+'b',tipo:'ingreso',categoria:'Sesión',descripcion:'Sesión producto comercial',monto:inMonths2[i],fecha:`${mo.y}-${mo.m}-12`,estadoPago:'Pagado',metodo:'Transferencia',clienteId:'c2',createdAt:`${mo.y}-${mo.m}-12`},
+        {id:'f'+i+'c',tipo:'gasto',categoria:'Equipo',descripcion:exDesc[i],monto:exMonths[i],fecha:`${mo.y}-${mo.m}-18`,estadoPago:'Pagado',metodo:'Tarjeta',clienteId:'',createdAt:`${mo.y}-${mo.m}-18`},
+        {id:'f'+i+'d',tipo:'gasto',categoria:'Software',descripcion:'Lightroom / Adobe CC',monto:19990,fecha:`${mo.y}-${mo.m}-01`,estadoPago:'Pagado',metodo:'Tarjeta',clienteId:'',createdAt:`${mo.y}-${mo.m}-01`},
+      ]).flat(),
+      {id:'fx1',tipo:'ingreso',categoria:'Sesión',descripcion:'Sesión recién nacido familia Soto',monto:95000,fecha:`${y}-${cm}-08`,estadoPago:'Pagado',metodo:'Transferencia',clienteId:'c4',createdAt:`${y}-${cm}-08`},
+      {id:'fx2',tipo:'ingreso',categoria:'Anticipo',descripcion:'Anticipo sesión evento Vega',monto:100000,fecha:`${y}-${cm}-12`,estadoPago:'Pagado',metodo:'Transferencia',clienteId:'c5',createdAt:`${y}-${cm}-12`},
+      {id:'fx3',tipo:'gasto',categoria:'Transporte',descripcion:'Arriendo camioneta expedición Patagonia',monto:85000,fecha:`${y}-${cm}-20`,estadoPago:'Pendiente',metodo:'Efectivo',clienteId:'',createdAt:`${y}-${cm}-20`},
+    ];
+    saveDB();
+    toast('Datos de demo generados correctamente','success');
+    switchTab(currentTab);
+  });
+}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+let dashCharts={};
+function renderDashboard(){
+  const now=new Date();
+  document.getElementById('dash-date').textContent=
+    now.toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long'});
+  const todayStr=today();
+  const upcoming=DB.sesiones
+    .filter(s=>s.fecha>=todayStr&&s.estado!=='Cancelada')
+    .sort((a,b)=>a.fecha.localeCompare(b.fecha));
+  const thisMonth=DB.finanzas.filter(f=>{
+    const d=new Date(f.fecha);
+    return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();
+  });
+  const ingresos=thisMonth.filter(f=>f.tipo==='ingreso').reduce((a,b)=>a+b.monto,0);
+  const gastos=thisMonth.filter(f=>f.tipo==='gasto').reduce((a,b)=>a+b.monto,0);
+  const completadas=DB.sesiones.filter(s=>s.estado==='Completada').length;
+  const pendientes=DB.sesiones.filter(s=>s.estado==='Pendiente'||s.estado==='Confirmada').length;
+
+  document.getElementById('stat-cards').innerHTML=`
+    <div class="stat-card">
+      <div class="stat-label">Ingresos mes</div>
+      <div class="stat-value" style="color:var(--green)">${clp(ingresos)}</div>
+      <div class="stat-sub">Neto: ${clp(ingresos-gastos)}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Gastos mes</div>
+      <div class="stat-value" style="color:var(--red)">${clp(gastos)}</div>
+      <div class="stat-sub">Margen: ${ingresos>0?Math.round((1-gastos/ingresos)*100):0}%</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Próximas</div>
+      <div class="stat-value" style="color:var(--amber)">${upcoming.length}</div>
+      <div class="stat-sub">sesiones agendadas</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Completadas</div>
+      <div class="stat-value">${completadas}</div>
+      <div class="stat-sub">${pendientes} pendientes</div>
+    </div>`;
+
+  const ul=document.getElementById('upcoming-list');
+  if(upcoming.length===0){
+    ul.innerHTML=`<div class="empty-state"><div class="empty-icon">📅</div><h3>Sin sesiones próximas</h3><p>Agenda tu próxima sesión fotográfica</p></div>`;
+  } else {
+    ul.innerHTML=upcoming.slice(0,4).map(s=>{
+      const cli=DB.clientes.find(c=>c.id===s.clienteId);
+      const diff=Math.ceil((new Date(s.fecha)-new Date(todayStr))/86400000);
+      const label=diff===0?'Hoy':diff===1?'Mañana':'En '+diff+'d';
+      return `<div class="list-item" onclick="openDetalleSesion('${s.id}')">
+        <div class="list-item-icon" style="background:var(--bg3)">${TYPE_EMOJI[s.tipo]||'📷'}</div>
+        <div class="list-item-body">
+          <div class="list-item-title">${s.tipo} — ${cli?cli.nombre+' '+cli.apellido:'Sin cliente'}</div>
+          <div class="list-item-sub">${fdate(s.fecha)} · ${s.hora||''} · ${s.ubicacion||'Sin ubicación'}</div>
+        </div>
+        <div class="list-item-right">
+          <div style="font-size:12px;font-weight:700;color:var(--amber)">${label}</div>
+          <div class="badge ${STATUS_BADGE[s.estado]||'badge-gray'}" style="margin-top:4px">${s.estado}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  setTimeout(()=>{ renderRevenueChart(); renderTypesChart(); },120);
+}
+
+function renderRevenueChart(){
+  const ctx=document.getElementById('chart-revenue');
+  if(!ctx||!window.Chart) return;
+  if(dashCharts.revenue) dashCharts.revenue.destroy();
+  const now=new Date();
+  const labels=[],inData=[],exData=[];
+  for(let i=5;i>=0;i--){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    const y=d.getFullYear(),m=d.getMonth();
+    labels.push(d.toLocaleDateString('es-CL',{month:'short'}));
+    const mf=DB.finanzas.filter(f=>{ const fd=new Date(f.fecha); return fd.getFullYear()===y&&fd.getMonth()===m; });
+    inData.push(mf.filter(f=>f.tipo==='ingreso').reduce((a,b)=>a+b.monto,0));
+    exData.push(mf.filter(f=>f.tipo==='gasto').reduce((a,b)=>a+b.monto,0));
+  }
+  dashCharts.revenue=new Chart(ctx,{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'Ingresos',data:inData,backgroundColor:'rgba(34,197,94,.7)',borderRadius:4},
+      {label:'Gastos',data:exData,backgroundColor:'rgba(239,68,68,.5)',borderRadius:4},
+    ]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#a8a29e',font:{size:11}}}},
+      scales:{
+        x:{ticks:{color:'#78716c'},grid:{color:'rgba(255,255,255,.04)'}},
+        y:{ticks:{color:'#78716c',callback:v=>'$'+Math.round(v/1000)+'k'},grid:{color:'rgba(255,255,255,.04)'}},
+      }
+    }
+  });
+}
+
+function renderTypesChart(){
+  const ctx=document.getElementById('chart-types');
+  if(!ctx||!window.Chart) return;
+  if(dashCharts.types) dashCharts.types.destroy();
+  const types=['Matrimonio','Retrato','Producto','Evento','Paisaje','Recién Nacido'];
+  const counts=types.map(t=>DB.sesiones.filter(s=>s.tipo===t).length);
+  const colors=['rgba(168,85,247,.8)','rgba(59,130,246,.8)','rgba(34,197,94,.8)','rgba(217,119,6,.8)','rgba(20,184,166,.8)','rgba(244,63,94,.8)'];
+  dashCharts.types=new Chart(ctx,{
+    type:'doughnut',
+    data:{labels:types,datasets:[{data:counts,backgroundColor:colors,borderWidth:0}]},
+    options:{
+      responsive:true,maintainAspectRatio:false,cutout:'60%',
+      plugins:{legend:{position:'right',labels:{color:'#a8a29e',font:{size:11},padding:8}}}
+    }
+  });
+}
+
+// ============================================================
+// SESIONES
+// ============================================================
+let sesionFilter='all';
+function openSesionModal(id=null){
+  populateSelect('ses-cliente',DB.clientes,c=>c.nombre+' '+c.apellido);
+  document.getElementById('form-sesion').reset();
+  document.getElementById('ses-id').value='';
+  document.getElementById('modal-sesion-title').textContent=id?'Editar Sesión':'Nueva Sesión';
+  if(id){
+    const s=DB.sesiones.find(x=>x.id===id); if(!s) return;
+    document.getElementById('ses-id').value=s.id;
+    document.getElementById('ses-tipo').value=s.tipo;
+    document.getElementById('ses-estado').value=s.estado;
+    document.getElementById('ses-cliente').value=s.clienteId||'';
+    document.getElementById('ses-fecha').value=s.fecha;
+    document.getElementById('ses-hora').value=s.hora||'';
+    document.getElementById('ses-ubicacion').value=s.ubicacion||'';
+    document.getElementById('ses-precio').value=s.precio||'';
+    document.getElementById('ses-anticipo').value=s.anticipo||'';
+    document.getElementById('ses-notas').value=s.notas||'';
+  } else {
+    document.getElementById('ses-fecha').value=today();
+    document.getElementById('ses-hora').value='10:00';
+  }
+  openModal('modal-sesion');
+}
+function saveSesion(e){
+  e.preventDefault();
+  const id=document.getElementById('ses-id').value||uid();
+  const prev=DB.sesiones.find(x=>x.id===id);
+  const s={
+    id,tipo:document.getElementById('ses-tipo').value,
+    estado:document.getElementById('ses-estado').value,
+    clienteId:document.getElementById('ses-cliente').value,
+    fecha:document.getElementById('ses-fecha').value,
+    hora:document.getElementById('ses-hora').value,
+    ubicacion:document.getElementById('ses-ubicacion').value,
+    precio:+document.getElementById('ses-precio').value||0,
+    anticipo:+document.getElementById('ses-anticipo').value||0,
+    notas:document.getElementById('ses-notas').value,
+    createdAt:prev?prev.createdAt:today(),
+  };
+  const idx=DB.sesiones.findIndex(x=>x.id===id);
+  if(idx>=0) DB.sesiones[idx]=s; else DB.sesiones.push(s);
+  saveDB(); closeModal('modal-sesion');
+  toast('Sesión guardada correctamente','success');
+  renderSesiones();
+}
+function deleteSesion(id){
+  showConfirm('Eliminar sesión','¿Seguro que deseas eliminar esta sesión?',()=>{
+    DB.sesiones=DB.sesiones.filter(s=>s.id!==id);
+    saveDB(); closeModal('modal-detalle-sesion');
+    toast('Sesión eliminada','info'); renderSesiones();
+  });
+}
+
+function renderSesiones(){
+  const filters=['all','Pendiente','Confirmada','Completada','Cancelada'];
+  const labels=['Todas','Pendientes','Confirmadas','Completadas','Canceladas'];
+  document.getElementById('filter-chips-sesiones').innerHTML=
+    filters.map((f,i)=>`<div class="chip ${sesionFilter===f?'active':''}" onclick="setSesionFilter('${f}')">${labels[i]}</div>`).join('');
+
+  const q=document.getElementById('search-sesiones').value.toLowerCase();
+  let list=DB.sesiones.filter(s=>{
+    if(sesionFilter!=='all'&&s.estado!==sesionFilter) return false;
+    if(q){
+      const cli=DB.clientes.find(c=>c.id===s.clienteId);
+      const text=(s.tipo+' '+s.estado+' '+(cli?cli.nombre+' '+cli.apellido:'')+' '+(s.ubicacion||'')).toLowerCase();
+      if(!text.includes(q)) return false;
+    }
+    return true;
+  }).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+
+  const container=document.getElementById('sesiones-list');
+  if(list.length===0){
+    container.innerHTML=`<div class="empty-state"><div class="empty-icon">📸</div><h3>Sin sesiones</h3><p>Crea tu primera sesión o ajusta los filtros</p><button class="btn btn-primary" onclick="openSesionModal()">+ Nueva sesión</button></div>`;
+    return;
+  }
+  container.innerHTML=list.map(s=>{
+    const cli=DB.clientes.find(c=>c.id===s.clienteId);
+    return `<div class="list-item" onclick="openDetalleSesion('${s.id}')">
+      <div class="list-item-icon" style="background:var(--bg3)">${TYPE_EMOJI[s.tipo]||'📷'}</div>
+      <div class="list-item-body">
+        <div class="list-item-title">${s.tipo} — ${cli?cli.nombre+' '+cli.apellido:'Sin cliente'}</div>
+        <div class="list-item-sub">📅 ${fdate(s.fecha)} ${s.hora?'· '+s.hora:''} ${s.ubicacion?'· 📍'+s.ubicacion:''}</div>
+      </div>
+      <div class="list-item-right">
+        <div style="font-size:13px;font-weight:700;color:var(--amber)">${clp(s.precio)}</div>
+        <div class="badge ${STATUS_BADGE[s.estado]||'badge-gray'}" style="margin-top:4px">${s.estado}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function setSesionFilter(f){ sesionFilter=f; renderSesiones(); }
+
+function openDetalleSesion(id){
+  const s=DB.sesiones.find(x=>x.id===id); if(!s) return;
+  const cli=DB.clientes.find(c=>c.id===s.clienteId);
+  const saldo=s.precio-(s.anticipo||0);
+  document.getElementById('detalle-sesion-content').innerHTML=`
+    <div class="detail-hero">${TYPE_EMOJI[s.tipo]||'📷'}</div>
+    <div class="card" style="margin-bottom:12px;">
+      <div class="detail-row"><span class="detail-key">Tipo</span><span class="badge ${TYPE_CLASS[s.tipo]||'badge-gray'}">${s.tipo}</span></div>
+      <div class="detail-row"><span class="detail-key">Estado</span><span class="badge ${STATUS_BADGE[s.estado]||'badge-gray'}">${s.estado}</span></div>
+      <div class="detail-row"><span class="detail-key">Cliente</span><span class="detail-val">${cli?cli.nombre+' '+cli.apellido:'Sin cliente'}</span></div>
+      <div class="detail-row"><span class="detail-key">Fecha</span><span class="detail-val">${fdate(s.fecha)} ${s.hora?'a las '+s.hora:''}</span></div>
+      <div class="detail-row"><span class="detail-key">Ubicación</span><span class="detail-val">${s.ubicacion||'—'}</span></div>
+    </div>
+    <div class="card" style="margin-bottom:12px;">
+      <div class="detail-row"><span class="detail-key">Precio total</span><span class="detail-val" style="color:var(--amber)">${clp(s.precio)}</span></div>
+      <div class="detail-row"><span class="detail-key">Anticipo recibido</span><span class="detail-val" style="color:var(--green)">${clp(s.anticipo||0)}</span></div>
+      <div class="detail-row"><span class="detail-key">Saldo pendiente</span><span class="detail-val" style="color:${saldo>0?'var(--red)':'var(--green)'}">${clp(saldo)}</span></div>
+    </div>
+    ${s.notas?`<div class="card" style="margin-bottom:12px;"><div class="section-title">Notas</div><p style="font-size:13px;color:var(--text2);margin-top:6px">${s.notas}</p></div>`:''}
+    <div style="display:flex;gap:10px;margin-top:8px;">
+      <button class="btn btn-secondary btn-full" onclick="closeModal('modal-detalle-sesion');openSesionModal('${id}')">✏️ Editar</button>
+      <button class="btn btn-danger btn-full" onclick="deleteSesion('${id}')">🗑️ Eliminar</button>
+    </div>`;
+  openModal('modal-detalle-sesion');
+}
+
+// ============================================================
+// CLIENTES
+// ============================================================
+function openClienteModal(id=null){
+  document.getElementById('form-cliente').reset();
+  document.getElementById('cli-id').value='';
+  document.getElementById('modal-cliente-title').textContent=id?'Editar Cliente':'Nuevo Cliente';
+  if(id){
+    const c=DB.clientes.find(x=>x.id===id); if(!c) return;
+    document.getElementById('cli-id').value=c.id;
+    document.getElementById('cli-nombre').value=c.nombre;
+    document.getElementById('cli-apellido').value=c.apellido;
+    document.getElementById('cli-rut').value=c.rut||'';
+    document.getElementById('cli-telefono').value=c.telefono||'';
+    document.getElementById('cli-email').value=c.email||'';
+    document.getElementById('cli-instagram').value=c.instagram||'';
+    document.getElementById('cli-prefs').value=c.prefs||'';
+    document.getElementById('cli-origen').value=c.origen||'';
+  }
+  openModal('modal-cliente');
+}
+function saveCliente(e){
+  e.preventDefault();
+  const id=document.getElementById('cli-id').value||uid();
+  const prev=DB.clientes.find(x=>x.id===id);
+  const c={
+    id,nombre:document.getElementById('cli-nombre').value,
+    apellido:document.getElementById('cli-apellido').value,
+    rut:document.getElementById('cli-rut').value,
+    telefono:document.getElementById('cli-telefono').value,
+    email:document.getElementById('cli-email').value,
+    instagram:document.getElementById('cli-instagram').value,
+    prefs:document.getElementById('cli-prefs').value,
+    origen:document.getElementById('cli-origen').value,
+    createdAt:prev?prev.createdAt:today(),
+  };
+  const idx=DB.clientes.findIndex(x=>x.id===id);
+  if(idx>=0) DB.clientes[idx]=c; else DB.clientes.push(c);
+  saveDB(); closeModal('modal-cliente');
+  toast('Cliente guardado correctamente','success');
+  renderClientes();
+}
+function deleteCliente(id){
+  showConfirm('Eliminar cliente','¿Seguro que deseas eliminar este cliente?',()=>{
+    DB.clientes=DB.clientes.filter(c=>c.id!==id);
+    saveDB(); closeModal('modal-detalle-cliente');
+    toast('Cliente eliminado','info'); renderClientes();
+  });
+}
+
+function renderClientes(){
+  const q=document.getElementById('search-clientes').value.toLowerCase();
+  let list=DB.clientes.filter(c=>{
+    if(!q) return true;
+    return (c.nombre+' '+c.apellido+(c.email||'')+(c.telefono||'')).toLowerCase().includes(q);
+  }).sort((a,b)=>a.nombre.localeCompare(b.nombre));
+
+  const container=document.getElementById('clientes-list');
+  if(list.length===0){
+    container.innerHTML=`<div class="empty-state"><div class="empty-icon">👤</div><h3>Sin clientes</h3><p>Agrega tu primer cliente para comenzar</p><button class="btn btn-primary" onclick="openClienteModal()">+ Nuevo cliente</button></div>`;
+    return;
+  }
+  container.innerHTML=list.map(c=>{
+    const sessions=DB.sesiones.filter(s=>s.clienteId===c.id).length;
+    const total=DB.finanzas.filter(f=>f.clienteId===c.id&&f.tipo==='ingreso').reduce((a,b)=>a+b.monto,0);
+    return `<div class="list-item" onclick="openDetalleCliente('${c.id}')">
+      <div class="avatar">${initials(c.nombre+' '+c.apellido)}</div>
+      <div class="list-item-body">
+        <div class="list-item-title">${c.nombre} ${c.apellido}</div>
+        <div class="list-item-sub">${c.telefono||''} ${c.email?'· '+c.email:''}</div>
+      </div>
+      <div class="list-item-right">
+        <div style="font-size:13px;font-weight:700;color:var(--amber)">${clp(total)}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px">${sessions} sesión${sessions!==1?'es':''}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openDetalleCliente(id){
+  const c=DB.clientes.find(x=>x.id===id); if(!c) return;
+  const sessions=DB.sesiones.filter(s=>s.clienteId===id).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  const total=DB.finanzas.filter(f=>f.clienteId===id&&f.tipo==='ingreso').reduce((a,b)=>a+b.monto,0);
+  document.getElementById('detalle-cliente-content').innerHTML=`
+    <div style="text-align:center;padding:16px 0 20px;">
+      <div class="avatar" style="width:64px;height:64px;font-size:24px;margin:0 auto 10px;">${initials(c.nombre+' '+c.apellido)}</div>
+      <div style="font-size:18px;font-weight:800;">${c.nombre} ${c.apellido}</div>
+      ${c.instagram?`<div style="font-size:13px;color:var(--amber);margin-top:2px">${c.instagram}</div>`:''}
+    </div>
+    <div class="card" style="margin-bottom:12px;">
+      ${c.rut?`<div class="detail-row"><span class="detail-key">RUT</span><span class="detail-val">${c.rut}</span></div>`:''}
+      <div class="detail-row"><span class="detail-key">Teléfono</span><span class="detail-val">${c.telefono||'—'}</span></div>
+      <div class="detail-row"><span class="detail-key">Email</span><span class="detail-val">${c.email||'—'}</span></div>
+      <div class="detail-row"><span class="detail-key">Cómo llegó</span><span class="detail-val">${c.origen||'—'}</span></div>
+      <div class="detail-row"><span class="detail-key">Cliente desde</span><span class="detail-val">${fdate(c.createdAt)}</span></div>
+    </div>
+    <div class="grid-2" style="margin-bottom:12px;">
+      <div class="stat-card"><div class="stat-label">Sesiones</div><div class="stat-value">${sessions.length}</div></div>
+      <div class="stat-card"><div class="stat-label">Facturado</div><div class="stat-value" style="font-size:15px;color:var(--amber)">${clp(total)}</div></div>
+    </div>
+    ${c.prefs?`<div class="card" style="margin-bottom:12px;"><div class="section-title">Preferencias</div><p style="font-size:13px;color:var(--text2);margin-top:6px">${c.prefs}</p></div>`:''}
+    ${sessions.length>0?`<div class="section-title" style="margin-bottom:8px">Historial</div>`+sessions.slice(0,4).map(s=>`
+      <div class="list-item" style="margin-bottom:8px">
+        <div class="list-item-icon" style="background:var(--bg3)">${TYPE_EMOJI[s.tipo]||'📷'}</div>
+        <div class="list-item-body"><div class="list-item-title">${s.tipo}</div><div class="list-item-sub">${fdate(s.fecha)}</div></div>
+        <div class="list-item-right"><span class="badge ${STATUS_BADGE[s.estado]||''}">${s.estado}</span></div>
+      </div>`).join(''):''}
+    <div style="display:flex;gap:10px;margin-top:8px;">
+      <button class="btn btn-secondary btn-full" onclick="closeModal('modal-detalle-cliente');openClienteModal('${id}')">✏️ Editar</button>
+      <button class="btn btn-danger btn-full" onclick="deleteCliente('${id}')">🗑️ Eliminar</button>
+    </div>`;
+  openModal('modal-detalle-cliente');
+}
+
+// ============================================================
+// GALERIA
+// ============================================================
+let galeriaFilter='all';
+function openGaleriaModal(id=null){
+  populateSelect('gal-cliente',DB.clientes,c=>c.nombre+' '+c.apellido);
+  document.getElementById('form-galeria').reset();
+  document.getElementById('gal-id').value='';
+  if(id){
+    const g=DB.galeria.find(x=>x.id===id); if(!g) return;
+    document.getElementById('gal-id').value=g.id;
+    document.getElementById('gal-titulo').value=g.titulo;
+    document.getElementById('gal-categoria').value=g.categoria;
+    document.getElementById('gal-emoji').value=g.emoji||'📷';
+    document.getElementById('gal-desc').value=g.desc||'';
+    document.getElementById('gal-cliente').value=g.clienteId||'';
+    document.getElementById('gal-favorito').checked=g.favorito||false;
+    document.getElementById('gal-antes-despues').checked=g.antesDespues||false;
+  }
+  openModal('modal-galeria');
+}
+function saveGaleria(e){
+  e.preventDefault();
+  const id=document.getElementById('gal-id').value||uid();
+  const prev=DB.galeria.find(x=>x.id===id);
+  const g={
+    id,titulo:document.getElementById('gal-titulo').value,
+    categoria:document.getElementById('gal-categoria').value,
+    emoji:document.getElementById('gal-emoji').value,
+    desc:document.getElementById('gal-desc').value,
+    clienteId:document.getElementById('gal-cliente').value,
+    favorito:document.getElementById('gal-favorito').checked,
+    antesDespues:document.getElementById('gal-antes-despues').checked,
+    createdAt:prev?prev.createdAt:today(),
+  };
+  const idx=DB.galeria.findIndex(x=>x.id===id);
+  if(idx>=0) DB.galeria[idx]=g; else DB.galeria.push(g);
+  saveDB(); closeModal('modal-galeria');
+  toast('Fotografía guardada','success'); renderGaleria();
+}
+function deleteGaleria(id){
+  showConfirm('Eliminar fotografía','¿Eliminar esta fotografía del portafolio?',()=>{
+    DB.galeria=DB.galeria.filter(g=>g.id!==id);
+    saveDB(); toast('Fotografía eliminada','info'); renderGaleria();
+  });
+}
+
+function renderGaleria(){
+  const cats=['all','Matrimonio','Retrato','Producto','Evento','Paisaje','Recién Nacido','Favoritas'];
+  const catLabels=['Todas','Matrimonio','Retrato','Producto','Evento','Paisaje','Recién Nacido','⭐ Favs'];
+  document.getElementById('filter-chips-galeria').innerHTML=
+    cats.map((c,i)=>`<div class="chip ${galeriaFilter===c?'active':''}" onclick="setGaleriaFilter('${c}')">${catLabels[i]}</div>`).join('');
+
+  let list=DB.galeria.filter(g=>{
+    if(galeriaFilter==='all') return true;
+    if(galeriaFilter==='Favoritas') return g.favorito;
+    return g.categoria===galeriaFilter;
+  });
+
+  const grid=document.getElementById('gallery-grid');
+  const empty=document.getElementById('gallery-empty');
+  if(list.length===0){
+    grid.style.display='none';
+    empty.innerHTML=`<div class="empty-state"><div class="empty-icon">🖼️</div><h3>Sin fotografías</h3><p>Sube tus mejores trabajos al portafolio</p><button class="btn btn-primary" onclick="openGaleriaModal()">+ Subir foto</button></div>`;
+    return;
+  }
+  grid.style.display='grid'; empty.innerHTML='';
+  grid.innerHTML=list.map(g=>`
+    <div class="gallery-item ${g.favorito?'fav':''}" onclick="openGaleriaModal('${g.id}')">
+      <span style="font-size:36px">${g.emoji||'📷'}</span>
+      ${g.antesDespues?`<span style="position:absolute;top:4px;left:4px;font-size:10px;background:var(--amber);color:#000;border-radius:4px;padding:1px 4px;font-weight:700">A/D</span>`:''}
+      ${g.favorito?`<span style="position:absolute;top:4px;right:4px;font-size:12px">⭐</span>`:''}
+      <div class="gallery-overlay">
+        <div class="gallery-label">${g.titulo}<br><span style="opacity:.7;font-weight:400">${g.categoria}</span></div>
+      </div>
+    </div>`).join('');
+}
+function setGaleriaFilter(f){ galeriaFilter=f; renderGaleria(); }
+
+// ============================================================
+// FINANZAS
+// ============================================================
+let finTab='movimientos', finCharts={};
+function setFinTab(t){
+  finTab=t;
+  document.querySelectorAll('#fin-tabs .toggle-tab').forEach((el,i)=>{
+    el.classList.toggle('active',['movimientos','facturas'][i]===t);
+  });
+  document.getElementById('fin-movimientos').style.display=t==='movimientos'?'block':'none';
+  document.getElementById('fin-facturas').style.display=t==='facturas'?'block':'none';
+}
+function openFinanzaModal(id=null){
+  populateSelect('fin-cliente',DB.clientes,c=>c.nombre+' '+c.apellido);
+  document.getElementById('form-finanza').reset();
+  document.getElementById('fin-id').value='';
+  document.getElementById('fin-fecha').value=today();
+  document.getElementById('modal-fin-title').textContent=id?'Editar Movimiento':'Nuevo Movimiento';
+  if(id){
+    const f=DB.finanzas.find(x=>x.id===id); if(!f) return;
+    document.getElementById('fin-id').value=f.id;
+    document.getElementById('fin-tipo').value=f.tipo;
+    document.getElementById('fin-categoria').value=f.categoria;
+    document.getElementById('fin-descripcion').value=f.descripcion;
+    document.getElementById('fin-monto').value=f.monto;
+    document.getElementById('fin-fecha').value=f.fecha;
+    document.getElementById('fin-estado-pago').value=f.estadoPago||'Pagado';
+    document.getElementById('fin-metodo').value=f.metodo||'Transferencia';
+    document.getElementById('fin-cliente').value=f.clienteId||'';
+  }
+  openModal('modal-finanza');
+}
+function saveFinanza(e){
+  e.preventDefault();
+  const id=document.getElementById('fin-id').value||uid();
+  const prev=DB.finanzas.find(x=>x.id===id);
+  const f={
+    id,tipo:document.getElementById('fin-tipo').value,
+    categoria:document.getElementById('fin-categoria').value,
+    descripcion:document.getElementById('fin-descripcion').value,
+    monto:+document.getElementById('fin-monto').value||0,
+    fecha:document.getElementById('fin-fecha').value,
+    estadoPago:document.getElementById('fin-estado-pago').value,
+    metodo:document.getElementById('fin-metodo').value,
+    clienteId:document.getElementById('fin-cliente').value,
+    createdAt:prev?prev.createdAt:today(),
+  };
+  const idx=DB.finanzas.findIndex(x=>x.id===id);
+  if(idx>=0) DB.finanzas[idx]=f; else DB.finanzas.push(f);
+  saveDB(); closeModal('modal-finanza');
+  toast('Movimiento guardado','success'); renderFinanzas();
+}
+function deleteFinanza(id){
+  showConfirm('Eliminar movimiento','¿Eliminar este movimiento?',()=>{
+    DB.finanzas=DB.finanzas.filter(f=>f.id!==id);
+    saveDB(); toast('Movimiento eliminado','info'); renderFinanzas();
+  });
+}
+function updateFinFields(){
+  const t=document.getElementById('fin-tipo').value;
+  const cats=t==='ingreso'?['Sesión','Edición','Anticipo','Otro']:['Equipo','Transporte','Software','Marketing','Arriendo','Otro'];
+  document.getElementById('fin-categoria').innerHTML=cats.map(c=>`<option>${c}</option>`).join('');
+}
+
+function renderFinanzas(){
+  const now=new Date();
+  const tm=DB.finanzas.filter(f=>{
+    const d=new Date(f.fecha);
+    return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();
+  });
+  const ingresos=tm.filter(f=>f.tipo==='ingreso').reduce((a,b)=>a+b.monto,0);
+  const gastos=tm.filter(f=>f.tipo==='gasto').reduce((a,b)=>a+b.monto,0);
+  const pendiente=DB.finanzas.filter(f=>f.tipo==='ingreso'&&f.estadoPago==='Pendiente').reduce((a,b)=>a+b.monto,0);
+
+  document.getElementById('fin-stat-cards').innerHTML=`
+    <div class="stat-card">
+      <div class="stat-label">Ingresos mes</div>
+      <div class="stat-value" style="color:var(--green);font-size:18px">${clp(ingresos)}</div>
+      <div class="stat-sub">Neto: ${clp(ingresos-gastos)}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Gastos mes</div>
+      <div class="stat-value" style="color:var(--red);font-size:18px">${clp(gastos)}</div>
+      <div class="stat-sub" style="color:${pendiente>0?'var(--amber)':'var(--text3)'}">Por cobrar: ${clp(pendiente)}</div>
+    </div>`;
+
+  setTimeout(()=>renderFinChart(),50);
+
+  const sorted=[...DB.finanzas].sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  const movDiv=document.getElementById('fin-movimientos');
+  if(sorted.length===0){
+    movDiv.innerHTML=`<div class="empty-state"><div class="empty-icon">💰</div><h3>Sin movimientos</h3><p>Registra tus ingresos y gastos para llevar el control</p><button class="btn btn-primary" onclick="openFinanzaModal()">+ Registrar</button></div>`;
+  } else {
+    movDiv.innerHTML=sorted.map(f=>`
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="openFinanzaModal('${f.id}')">
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:600">${f.descripcion}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px">${fdate(f.fecha)} · ${f.categoria} · ${f.metodo}</div>
+          <span class="badge ${f.estadoPago==='Pagado'?'badge-green':f.estadoPago==='Pendiente'?'badge-amber':'badge-blue'}" style="margin-top:4px">${f.estadoPago}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+          <div style="font-size:14px;font-weight:700;color:${f.tipo==='ingreso'?'var(--green)':'var(--red)'}">${f.tipo==='ingreso'?'+':'-'}${clp(f.monto)}</div>
+          <button class="btn btn-xs btn-danger" onclick="event.stopPropagation();deleteFinanza('${f.id}')">🗑️</button>
+        </div>
+      </div>`).join('');
+  }
+
+  const factDiv=document.getElementById('fin-facturas');
+  const invoices=DB.finanzas.filter(f=>f.tipo==='ingreso').sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  if(invoices.length===0){
+    factDiv.innerHTML=`<div class="empty-state"><div class="empty-icon">🧾</div><h3>Sin facturas</h3><p>Las facturas aparecerán aquí al registrar ingresos</p></div>`;
+  } else {
+    factDiv.innerHTML=invoices.slice(0,8).map((f,i)=>{
+      const cli=DB.clientes.find(c=>c.id===f.clienteId);
+      const iva=Math.round(f.monto*0.19/1.19);
+      return `<div class="invoice-card">
+        <div class="invoice-header">
+          <div>
+            <div class="invoice-num">FCHL-${String(i+1).padStart(4,'0')}</div>
+            <div style="font-size:13px;font-weight:600;margin-top:2px">${f.descripcion}</div>
+            <div style="font-size:11px;color:var(--text3)">${cli?cli.nombre+' '+cli.apellido:'Cliente general'}</div>
+          </div>
+          <div style="text-align:right">
+            <div class="invoice-total">${clp(f.monto)}</div>
+            <span class="badge ${f.estadoPago==='Pagado'?'badge-green':f.estadoPago==='Pendiente'?'badge-amber':'badge-blue'}">${f.estadoPago}</span>
+          </div>
+        </div>
+        <div class="invoice-line"><span>Fecha emisión</span><span>${fdate(f.fecha)}</span></div>
+        <div class="invoice-line"><span>Forma de pago</span><span>${f.metodo}</span></div>
+        <div class="invoice-line"><span>Neto</span><span>${clp(f.monto-iva)}</span></div>
+        <div class="invoice-line"><span>IVA (19%)</span><span>${clp(iva)}</span></div>
+        <div class="invoice-line" style="font-weight:700;color:var(--text)"><span>Total</span><span>${clp(f.monto)}</span></div>
+      </div>`;
+    }).join('');
+  }
+}
+
+function renderFinChart(){
+  const ctx=document.getElementById('chart-finanzas');
+  if(!ctx||!window.Chart) return;
+  if(finCharts.main) finCharts.main.destroy();
+  const now=new Date();
+  const labels=[],inData=[],exData=[];
+  for(let i=5;i>=0;i--){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    const y=d.getFullYear(),m=d.getMonth();
+    labels.push(d.toLocaleDateString('es-CL',{month:'short'}));
+    const mf=DB.finanzas.filter(f=>{ const fd=new Date(f.fecha); return fd.getFullYear()===y&&fd.getMonth()===m; });
+    inData.push(mf.filter(f=>f.tipo==='ingreso').reduce((a,b)=>a+b.monto,0));
+    exData.push(mf.filter(f=>f.tipo==='gasto').reduce((a,b)=>a+b.monto,0));
+  }
+  finCharts.main=new Chart(ctx,{
+    type:'line',
+    data:{labels,datasets:[
+      {label:'Ingresos',data:inData,borderColor:'rgba(34,197,94,.9)',backgroundColor:'rgba(34,197,94,.1)',fill:true,tension:.4,pointRadius:4},
+      {label:'Gastos',data:exData,borderColor:'rgba(239,68,68,.9)',backgroundColor:'rgba(239,68,68,.1)',fill:true,tension:.4,pointRadius:4},
+    ]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#a8a29e',font:{size:11}}}},
+      scales:{
+        x:{ticks:{color:'#78716c'},grid:{color:'rgba(255,255,255,.04)'}},
+        y:{ticks:{color:'#78716c',callback:v=>'$'+Math.round(v/1000)+'k'},grid:{color:'rgba(255,255,255,.04)'}},
+      }
+    }
+  });
+}
+
+// ============================================================
+// AGENDA
+// ============================================================
+let calYear, calMonth, calView='mes', calSelectedDay=null;
+function initCal(){
+  const n=new Date(); calYear=n.getFullYear(); calMonth=n.getMonth(); calSelectedDay=today();
+}
+function calNav(dir){
+  if(calView==='mes'){
+    calMonth+=dir;
+    if(calMonth<0){calMonth=11;calYear--;}
+    if(calMonth>11){calMonth=0;calYear++;}
+  } else {
+    const d=new Date(calSelectedDay||today()); d.setDate(d.getDate()+dir*7);
+    calSelectedDay=d.toISOString().slice(0,10);
+    calYear=d.getFullYear(); calMonth=d.getMonth();
+  }
+  renderAgenda();
+}
+function setCalView(v){
+  calView=v;
+  document.querySelectorAll('#cal-view-tabs .toggle-tab').forEach((el,i)=>el.classList.toggle('active',['mes','semana'][i]===v));
+  renderAgenda();
+}
+function renderAgenda(){
+  const months=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  if(calView==='mes'){
+    document.getElementById('cal-title').textContent=months[calMonth]+' '+calYear;
+    renderMonthView();
+  } else {
+    renderWeekView();
+  }
+  renderDaySessions();
+}
+function renderMonthView(){
+  const todayStr=today();
+  const firstDay=getFirstDayOfMonth(calYear,calMonth);
+  const daysInMonth=getDaysInMonth(calYear,calMonth);
+  const offset=(firstDay+6)%7;
+  const prevDays=getDaysInMonth(calYear,calMonth===0?11:calMonth-1);
+  const sessionDays=new Set(
+    DB.sesiones.filter(s=>s.estado!=='Cancelada').map(s=>{
+      const d=new Date(s.fecha);
+      if(d.getFullYear()===calYear&&d.getMonth()===calMonth) return d.getDate();
+      return null;
+    }).filter(Boolean)
+  );
+  const dayNames=['Lu','Ma','Mi','Ju','Vi','Sa','Do'];
+  let html=`<div class="cal-header-row">${dayNames.map(d=>`<div class="cal-day-name">${d}</div>`).join('')}</div><div class="cal-grid">`;
+  for(let i=offset-1;i>=0;i--) html+=`<div class="cal-day other-month">${prevDays-i}</div>`;
+  for(let d=1;d<=daysInMonth;d++){
+    const ds=calYear+'-'+String(calMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    const isT=ds===todayStr, isSel=ds===calSelectedDay, hasEv=sessionDays.has(d);
+    html+=`<div class="cal-day ${isSel?'selected':isT?'today':''} ${hasEv&&!isSel?'has-event':''}" onclick="selectCalDay('${ds}')">${d}</div>`;
+  }
+  const total=offset+daysInMonth, rem=(7-total%7)%7;
+  for(let d=1;d<=rem;d++) html+=`<div class="cal-day other-month">${d}</div>`;
+  html+='</div>';
+  document.getElementById('cal-container').innerHTML=html;
+}
+function renderWeekView(){
+  const ref=new Date(calSelectedDay||today());
+  const dow=(ref.getDay()+6)%7;
+  const mon=new Date(ref); mon.setDate(ref.getDate()-dow);
+  const days=[];
+  for(let i=0;i<7;i++){ const d=new Date(mon); d.setDate(mon.getDate()+i); days.push(d); }
+  const todayStr=today();
+  const dayNames=['Lu','Ma','Mi','Ju','Vi','Sa','Do'];
+  const fmt=d=>d.toLocaleDateString('es-CL',{day:'numeric',month:'short'});
+  document.getElementById('cal-title').textContent=fmt(days[0])+' — '+fmt(days[6])+' '+days[0].getFullYear();
+  let html=`<div style="display:flex;gap:4px;">`;
+  days.forEach((d,i)=>{
+    const ds=d.toISOString().slice(0,10);
+    const isT=ds===todayStr, isSel=ds===calSelectedDay;
+    const daySes=DB.sesiones.filter(s=>s.fecha===ds&&s.estado!=='Cancelada');
+    html+=`<div class="week-col">
+      <div class="week-day-header ${isT?'today-wk':''}" style="${isSel?'color:var(--amber);font-weight:800':''}" onclick="selectCalDay('${ds}')">
+        <div>${dayNames[i]}</div>
+        <div style="font-size:14px;font-weight:700;padding:2px 0">${d.getDate()}</div>
+      </div>
+      <div style="min-height:60px;">
+        ${daySes.map(s=>`<div class="week-event" onclick="openDetalleSesion('${s.id}')">${TYPE_EMOJI[s.tipo]||'📷'} ${s.hora||''}</div>`).join('')}
+      </div>
+    </div>`;
+  });
+  html+='</div>';
+  document.getElementById('cal-container').innerHTML=html;
+}
+function selectCalDay(ds){
+  calSelectedDay=ds;
+  const d=new Date(ds); calYear=d.getFullYear(); calMonth=d.getMonth();
+  renderAgenda();
+}
+function renderDaySessions(){
+  const sel=calSelectedDay||today();
+  const sessions=DB.sesiones.filter(s=>s.fecha===sel&&s.estado!=='Cancelada').sort((a,b)=>(a.hora||'').localeCompare(b.hora||''));
+  document.getElementById('cal-day-label').textContent='Sesiones del '+fdate(sel);
+  const container=document.getElementById('cal-day-sessions');
+  if(sessions.length===0){
+    container.innerHTML=`<div style="text-align:center;padding:20px;color:var(--text3);font-size:13px;">Sin sesiones para este día</div>`;
+    return;
+  }
+  container.innerHTML=sessions.map(s=>{
+    const cli=DB.clientes.find(c=>c.id===s.clienteId);
+    return `<div class="list-item" style="margin-bottom:8px" onclick="openDetalleSesion('${s.id}')">
+      <div class="list-item-icon" style="background:var(--bg3)">${TYPE_EMOJI[s.tipo]||'📷'}</div>
+      <div class="list-item-body">
+        <div class="list-item-title">${s.tipo} — ${cli?cli.nombre+' '+cli.apellido:'Sin cliente'}</div>
+        <div class="list-item-sub">${s.hora||''} · ${s.ubicacion||'Sin ubicación'}</div>
+      </div>
+      <div class="list-item-right">
+        <div style="font-size:13px;font-weight:700;color:var(--amber)">${clp(s.precio)}</div>
+        <span class="badge ${STATUS_BADGE[s.estado]||''}" style="margin-top:4px">${s.estado}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+function populateSelect(id,data,labelFn){
+  const sel=document.getElementById(id);
+  const prevVal=sel.value;
+  const first=sel.options[0];
+  sel.innerHTML='';
+  sel.appendChild(first);
+  data.forEach(item=>{
+    const o=document.createElement('option');
+    o.value=item.id; o.textContent=labelFn(item); sel.appendChild(o);
+  });
+  if(prevVal) sel.value=prevVal;
+}
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded',()=>{
+  loadDB(); initCal(); renderDashboard();
+});
+window.addEventListener('load',()=>{
+  if(currentTab==='dashboard') renderDashboard();
+});
+document.getElementById('btn-notify').addEventListener('click',()=>
+  toast('No tienes notificaciones nuevas','info')
+);
+</script>
+</body>
+</html>

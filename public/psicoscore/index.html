@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0c4a7a">
+<title>PsicoScore — Gestión Clínica</title>
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{--bg:#f0f6ff;--card:#ffffff;--card2:#e8f2ff;--border:#b8d4f0;--accent:#0369a1;--text:#2d5a7a;--muted:#6b8fa5;--green:#16a34a;--yellow:#d97706;--red:#dc2626;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:#1e3a5f;min-height:100vh}
+header{background:linear-gradient(90deg,#0c4a7a,#0369a1);padding:13px 18px;position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between}
+header h1{color:#fff;font-size:1.1rem;font-weight:700;letter-spacing:.3px}
+header span{color:#b0d4f0;font-size:.75rem}
+nav{background:#fff;border-bottom:2px solid var(--border);display:flex;overflow-x:auto;position:sticky;top:62px;z-index:40;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+nav button{flex:none;padding:10px 14px;font-size:.78rem;font-weight:600;color:var(--muted);background:none;border:none;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap;transition:.2s;font-family:inherit}
+nav button.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab{display:none;padding:16px;max-width:860px;margin:0 auto}
+.tab.active{display:block}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px}
+.card2{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px}
+.card h3{font-size:.9rem;font-weight:700;color:var(--accent);margin-bottom:10px}
+.stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}
+@media(min-width:540px){.stats-grid{grid-template-columns:repeat(4,1fr)}}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center}
+.stat-card .num{font-size:1.8rem;font-weight:700;color:var(--accent)}
+.stat-card .lbl{font-size:.7rem;color:var(--muted);margin-top:2px}
+.alert-item{background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:10px 12px;margin-bottom:8px;display:flex;align-items:flex-start;gap:8px;font-size:.82rem}
+.alert-item.red{background:#fff0f0;border-color:#fca5a5}
+.alert-dot{width:8px;height:8px;border-radius:50%;background:var(--yellow);flex-shrink:0;margin-top:3px}
+.alert-dot.red{background:var(--red)}
+label{display:block;font-size:.8rem;font-weight:600;color:var(--text);margin-bottom:4px;margin-top:10px}
+input,select,textarea{width:100%;padding:9px 11px;font-size:16px;border:1.5px solid var(--border);border-radius:8px;background:#fff;color:#1e3a5f;font-family:inherit;transition:.2s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(3,105,161,.12)}
+textarea{resize:vertical;min-height:80px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 18px;border-radius:8px;font-size:.85rem;font-weight:600;cursor:pointer;border:none;font-family:inherit;transition:.2s}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:#0c5a8c}
+.btn-danger{background:#fee2e2;color:var(--red);border:1px solid #fca5a5}
+.btn-danger:hover{background:#fca5a5}
+.btn-ghost{background:var(--card2);color:var(--accent);border:1px solid var(--border)}
+.btn-ghost:hover{background:var(--border)}
+.btn-green{background:#dcfce7;color:var(--green);border:1px solid #86efac}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.chip{padding:5px 11px;border-radius:20px;font-size:.76rem;font-weight:600;background:var(--card2);color:var(--text);border:1.5px solid var(--border);cursor:pointer;transition:.2s}
+.chip.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.slider-wrap{display:flex;align-items:center;gap:10px;margin-top:6px}
+.slider-wrap input[type=range]{flex:1;height:6px;accent-color:var(--accent)}
+.slider-val{font-size:1.1rem;font-weight:700;color:var(--accent);min-width:28px;text-align:center}
+.risk-btns{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.risk-btn{padding:6px 12px;border-radius:6px;font-size:.78rem;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:var(--card2);color:var(--text);transition:.2s}
+.risk-btn.active-none{background:#dcfce7;color:var(--green);border-color:#86efac}
+.risk-btn.active-bajo{background:#fef9c3;color:#a16207;border-color:#fde047}
+.risk-btn.active-medio{background:#fff7ed;color:var(--yellow);border-color:#fed7aa}
+.risk-btn.active-alto{background:#fee2e2;color:var(--red);border-color:#fca5a5}
+.scale-q{margin-bottom:14px}
+.scale-q p{font-size:.82rem;color:var(--text);margin-bottom:6px;line-height:1.45}
+.scale-opts{display:flex;gap:5px;flex-wrap:wrap}
+.scale-opt{padding:5px 10px;border-radius:6px;font-size:.75rem;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:var(--card2);color:var(--text);transition:.2s}
+.scale-opt.sel{background:var(--accent);color:#fff;border-color:var(--accent)}
+.score-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;font-size:.82rem;font-weight:700}
+.score-min{background:#dcfce7;color:var(--green)}
+.score-leve{background:#fef9c3;color:#a16207}
+.score-mod{background:#fff7ed;color:var(--yellow)}
+.score-msev{background:#fee2e2;color:var(--red)}
+.score-sev{background:#fecaca;color:var(--red)}
+.patient-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:.2s}
+.patient-card:hover{border-color:var(--accent);box-shadow:0 2px 12px rgba(3,105,161,.1)}
+.psico-ring{flex-shrink:0}
+.patient-info{flex:1;min-width:0}
+.patient-info h4{font-size:.9rem;font-weight:700;margin-bottom:2px}
+.patient-info p{font-size:.75rem;color:var(--muted)}
+.psico-score-num{font-size:1.1rem;font-weight:800;color:var(--accent)}
+.fonasa-bar{height:8px;border-radius:4px;background:#e2ecf7;margin-top:4px;overflow:hidden}
+.fonasa-fill{height:100%;border-radius:4px;background:var(--accent);transition:.4s}
+.fonasa-fill.warn{background:var(--yellow)}
+.fonasa-fill.danger{background:var(--red)}
+.session-item{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.session-item .meta{font-size:.75rem;color:var(--muted)}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;align-items:center;justify-content:center;padding:16px}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:16px;max-width:560px;width:100%;max-height:85vh;overflow-y:auto;padding:20px}
+.modal h3{font-size:1rem;font-weight:700;color:var(--accent);margin-bottom:14px}
+.report-body{font-size:.82rem;line-height:1.7;white-space:pre-wrap;border:1px solid var(--border);border-radius:8px;padding:12px;background:var(--bg);min-height:120px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:480px){.form-row{grid-template-columns:1fr}}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.7rem;font-weight:700}
+.badge-fonasa{background:#dbeafe;color:#1d4ed8}
+.badge-isapre{background:#ede9fe;color:#6d28d9}
+.badge-priv{background:#dcfce7;color:var(--green)}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1e3a5f;color:#fff;padding:10px 20px;border-radius:20px;font-size:.82rem;font-weight:600;z-index:200;opacity:0;transition:.3s;pointer-events:none}
+.toast.show{opacity:1}
+.upcoming-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+.upcoming-item:last-child{border:none}
+.upcoming-dot{width:10px;height:10px;border-radius:50%;background:var(--accent);flex-shrink:0}
+.upcoming-info{flex:1}
+.upcoming-info strong{font-size:.83rem;font-weight:700}
+.upcoming-info span{font-size:.73rem;color:var(--muted);display:block}
+.empty-state{text-align:center;padding:32px 16px;color:var(--muted);font-size:.85rem}
+.empty-state .ico{font-size:2.4rem;margin-bottom:8px}
+.pcl-section{font-size:.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin:14px 0 6px}
+.del-confirm{background:#fff0f0;border:1px solid #fca5a5;border-radius:8px;padding:12px;margin-top:10px;font-size:.82rem}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🧠 PsicoScore</h1>
+  <span id="hdr-date"></span>
+</header>
+
+<nav id="main-nav">
+  <button class="active" onclick="showTab('inicio')">Inicio</button>
+  <button onclick="showTab('sesion')">Sesión</button>
+  <button onclick="showTab('escalas')">Escalas</button>
+  <button onclick="showTab('pacientes')">Pacientes</button>
+  <button onclick="showTab('ficha')">Ficha</button>
+  <button onclick="showTab('historial')">Historial</button>
+</nav>
+
+<!-- TAB 1: INICIO -->
+<div class="tab active" id="tab-inicio">
+  <div class="stats-grid" id="stats-grid"></div>
+  <div class="card" id="alerts-card">
+    <h3>⚠️ Alertas clínicas</h3>
+    <div id="alerts-list"><div class="empty-state" style="padding:8px"><div class="ico">✅</div>Sin alertas activas</div></div>
+  </div>
+  <div class="card">
+    <h3>📅 Próximas sesiones</h3>
+    <div id="upcoming-list"></div>
+  </div>
+  <div class="card">
+    <h3>🏥 FONASA — Sesiones por paciente</h3>
+    <div id="fonasa-list"></div>
+  </div>
+</div>
+
+<!-- TAB 2: SESIÓN -->
+<div class="tab" id="tab-sesion">
+  <div class="card">
+    <h3>Nueva sesión</h3>
+    <label>Paciente</label>
+    <select id="ses-patient"></select>
+    <div class="form-row">
+      <div><label>Fecha</label><input type="date" id="ses-date"></div>
+      <div><label>Duración (min)</label><input type="number" id="ses-dur" value="50" min="15" max="180"></div>
+    </div>
+    <label>Técnicas utilizadas</label>
+    <div class="chips" id="ses-tecnicas">
+      <span class="chip" onclick="toggleChip(this,'ses-tec')">TCC</span>
+      <span class="chip" onclick="toggleChip(this,'ses-tec')">Mindfulness</span>
+      <span class="chip" onclick="toggleChip(this,'ses-tec')">ACT</span>
+      <span class="chip" onclick="toggleChip(this,'ses-tec')">EMDR</span>
+      <span class="chip" onclick="toggleChip(this,'ses-tec')">T. Narrativa</span>
+      <span class="chip" onclick="toggleChip(this,'ses-tec')">Sistémica</span>
+      <span class="chip" onclick="toggleChip(this,'ses-tec')">Psicoeducación</span>
+      <span class="chip" onclick="toggleChip(this,'ses-tec')">Exposición</span>
+      <span class="chip" onclick="toggleChip(this,'ses-tec')">Relajación</span>
+    </div>
+    <label>Estado emocional del paciente <span id="emo-emoji">😐</span></label>
+    <div class="slider-wrap">
+      <span style="font-size:.85rem">😞</span>
+      <input type="range" id="ses-emo" min="1" max="10" value="5" oninput="updateEmo(this.value)">
+      <span style="font-size:.85rem">🙂</span>
+      <span class="slider-val" id="emo-val">5</span>
+    </div>
+    <label>Adherencia a tareas</label>
+    <div class="risk-btns" id="adherencia-btns">
+      <button class="risk-btn" onclick="selectAdh(this,'Excelente')">Excelente</button>
+      <button class="risk-btn" onclick="selectAdh(this,'Buena')">Buena</button>
+      <button class="risk-btn" onclick="selectAdh(this,'Regular')">Regular</button>
+      <button class="risk-btn" onclick="selectAdh(this,'No realizó')">No realizó</button>
+    </div>
+    <label>Nivel de riesgo</label>
+    <div class="risk-btns" id="risk-btns">
+      <button class="risk-btn" onclick="selectRisk(this,'none')">Sin riesgo</button>
+      <button class="risk-btn" onclick="selectRisk(this,'bajo')">Bajo</button>
+      <button class="risk-btn" onclick="selectRisk(this,'medio')">Medio</button>
+      <button class="risk-btn" onclick="selectRisk(this,'alto')">Alto</button>
+    </div>
+    <div id="seg-plan-wrap" style="display:none">
+      <label>Plan de seguridad</label>
+      <textarea id="ses-segplan" placeholder="Describa el plan de seguridad acordado con el paciente..."></textarea>
+    </div>
+    <label>Observaciones clínicas</label>
+    <textarea id="ses-obs" placeholder="Evolución, intervenciones, respuesta del paciente..."></textarea>
+    <label>Próxima sesión (fecha)</label>
+    <input type="date" id="ses-next">
+    <div style="margin-top:14px;display:flex;gap:8px">
+      <button class="btn btn-primary" onclick="saveSesion()">💾 Guardar sesión</button>
+      <button class="btn btn-ghost" onclick="clearSesionForm()">✕ Limpiar</button>
+    </div>
+  </div>
+  <div class="card" id="ses-history-card">
+    <h3>📋 Sesiones guardadas</h3>
+    <div id="ses-history-list"></div>
+  </div>
+</div>
+
+<!-- TAB 3: ESCALAS -->
+<div class="tab" id="tab-escalas">
+  <div class="card2" style="margin-bottom:14px">
+    <label>Paciente</label>
+    <select id="esc-patient" onchange="loadScaleHistory()"></select>
+  </div>
+  <div class="card" id="phq-card">
+    <h3>📊 PHQ-9 — Depresión</h3>
+    <p style="font-size:.78rem;color:var(--muted);margin-bottom:12px">Últimas 2 semanas — 0=Nunca / 1=Varios días / 2=Más de la mitad / 3=Casi todos los días</p>
+    <div id="phq-items"></div>
+    <div style="margin-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span style="font-weight:700;font-size:.9rem">Puntaje: <span id="phq-score-val">0</span>/27</span>
+      <span id="phq-score-badge"></span>
+    </div>
+    <button class="btn btn-primary" style="margin-top:10px" onclick="saveScale('PHQ-9')">Guardar PHQ-9</button>
+  </div>
+  <div class="card" id="gad-card">
+    <h3>📊 GAD-7 — Ansiedad</h3>
+    <p style="font-size:.78rem;color:var(--muted);margin-bottom:12px">Últimas 2 semanas — 0=Nunca / 1=Varios días / 2=Más de la mitad / 3=Casi todos los días</p>
+    <div id="gad-items"></div>
+    <div style="margin-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span style="font-weight:700;font-size:.9rem">Puntaje: <span id="gad-score-val">0</span>/21</span>
+      <span id="gad-score-badge"></span>
+    </div>
+    <button class="btn btn-primary" style="margin-top:10px" onclick="saveScale('GAD-7')">Guardar GAD-7</button>
+  </div>
+  <div class="card" id="pcl-card">
+    <h3>📊 PCL-5 — TEPT</h3>
+    <p style="font-size:.78rem;color:var(--muted);margin-bottom:12px">Último mes — 0=Nada / 1=Poco / 2=Moderado / 3=Bastante / 4=Extremadamente</p>
+    <div id="pcl-items"></div>
+    <div style="margin-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span style="font-weight:700;font-size:.9rem">Puntaje: <span id="pcl-score-val">0</span>/80</span>
+      <span id="pcl-score-badge"></span>
+    </div>
+    <button class="btn btn-primary" style="margin-top:10px" onclick="saveScale('PCL-5')">Guardar PCL-5</button>
+  </div>
+  <div class="card">
+    <h3>📁 Historial de escalas</h3>
+    <div id="scale-history-list"></div>
+  </div>
+</div>
+
+<!-- TAB 4: PACIENTES -->
+<div class="tab" id="tab-pacientes">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <h2 style="font-size:1rem;font-weight:700;color:var(--accent)">Mis pacientes</h2>
+    <button class="btn btn-primary" onclick="showTab('ficha');newFicha()">+ Nuevo</button>
+  </div>
+  <div id="patients-list"></div>
+</div>
+
+<!-- TAB 5: FICHA -->
+<div class="tab" id="tab-ficha">
+  <div class="card">
+    <h3 id="ficha-title">Nueva ficha clínica</h3>
+    <input type="hidden" id="ficha-id">
+    <div class="form-row">
+      <div><label>Nombre completo *</label><input type="text" id="f-nombre" placeholder="Nombre Apellido"></div>
+      <div><label>RUT *</label><input type="text" id="f-rut" placeholder="12.345.678-9" oninput="formatRut(this)" maxlength="12"></div>
+    </div>
+    <div class="form-row">
+      <div><label>Fecha de nacimiento</label><input type="date" id="f-fnac"></div>
+      <div><label>Género</label>
+        <select id="f-genero">
+          <option value="">Seleccionar</option>
+          <option>Masculino</option><option>Femenino</option><option>No binario</option><option>Prefiero no indicar</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div><label>Teléfono</label><input type="tel" id="f-tel" placeholder="+56 9 XXXX XXXX"></div>
+      <div><label>Contacto emergencia</label><input type="text" id="f-emerg" placeholder="Nombre — Teléfono"></div>
+    </div>
+    <div class="form-row">
+      <div><label>Previsión</label>
+        <select id="f-prev">
+          <option value="">Seleccionar</option>
+          <option value="FONASA A">FONASA A</option><option value="FONASA B">FONASA B</option>
+          <option value="FONASA C">FONASA C</option><option value="FONASA D">FONASA D</option>
+          <option value="ISAPRE">ISAPRE</option><option value="Privado">Privado</option>
+        </select>
+      </div>
+      <div><label>Sesiones FONASA autorizadas</label><input type="number" id="f-fonasa" value="0" min="0" max="100"></div>
+    </div>
+    <div class="form-row">
+      <div><label>Establecimiento</label>
+        <select id="f-estab">
+          <option value="">Seleccionar</option>
+          <option>CESFAM</option><option>Hospital</option><option>Clínica</option><option>Privado</option><option>Domicilio</option>
+        </select>
+      </div>
+      <div><label>Médico derivador</label><input type="text" id="f-medico" placeholder="Nombre del médico"></div>
+    </div>
+    <div class="form-row">
+      <div><label>Diagnóstico DSM-5</label><input type="text" id="f-dsm" placeholder="p.ej. Trastorno de ansiedad generalizada"></div>
+      <div><label>Código CIE-10</label><input type="text" id="f-cie" placeholder="p.ej. F41.1"></div>
+    </div>
+    <label>Motivo de consulta inicial</label>
+    <textarea id="f-motivo" placeholder="Descripción del motivo de consulta referido por el paciente..."></textarea>
+    <label>Áreas de intervención</label>
+    <div class="chips" id="f-areas">
+      <span class="chip" onclick="toggleChip(this,'f-area')">Ansiedad</span>
+      <span class="chip" onclick="toggleChip(this,'f-area')">Depresión</span>
+      <span class="chip" onclick="toggleChip(this,'f-area')">TEPT</span>
+      <span class="chip" onclick="toggleChip(this,'f-area')">Duelo</span>
+      <span class="chip" onclick="toggleChip(this,'f-area')">Relaciones</span>
+      <span class="chip" onclick="toggleChip(this,'f-area')">Autoestima</span>
+      <span class="chip" onclick="toggleChip(this,'f-area')">Estrés</span>
+      <span class="chip" onclick="toggleChip(this,'f-area')">Alimentación</span>
+      <span class="chip" onclick="toggleChip(this,'f-area')">Sueño</span>
+      <span class="chip" onclick="toggleChip(this,'f-area')">Violencia</span>
+    </div>
+    <label>Plan de tratamiento</label>
+    <textarea id="f-plan" placeholder="Objetivos terapéuticos, estrategias, frecuencia..."></textarea>
+    <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="saveFicha()">💾 Guardar ficha</button>
+      <button class="btn btn-ghost" onclick="newFicha()">+ Nueva ficha</button>
+      <button class="btn btn-danger" id="btn-del-ficha" style="display:none" onclick="confirmDelFicha()">🗑 Eliminar</button>
+    </div>
+    <div id="del-confirm-wrap" class="del-confirm" style="display:none">
+      <strong>¿Eliminar esta ficha?</strong> Esta acción eliminará también todas sus sesiones y escalas.<br>
+      <div style="margin-top:8px;display:flex;gap:8px">
+        <button class="btn btn-danger" onclick="deleteFicha()">Sí, eliminar</button>
+        <button class="btn btn-ghost" onclick="document.getElementById('del-confirm-wrap').style.display='none'">Cancelar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 6: HISTORIAL -->
+<div class="tab" id="tab-historial">
+  <div class="card2" style="margin-bottom:14px">
+    <label>Paciente</label>
+    <select id="hist-patient" onchange="loadHistorial()"></select>
+  </div>
+  <div class="card">
+    <h3>Estado emocional — evolución</h3>
+    <canvas id="chart-emo" height="160"></canvas>
+  </div>
+  <div class="card" id="phq-chart-card">
+    <h3>PHQ-9 — evolución</h3>
+    <canvas id="chart-phq" height="140"></canvas>
+  </div>
+  <div class="card">
+    <h3>Sesiones FONASA</h3>
+    <div id="hist-fonasa"></div>
+  </div>
+  <div style="margin-bottom:14px">
+    <button class="btn btn-primary" onclick="openReport()">📄 Informe clínico</button>
+  </div>
+</div>
+
+<!-- MODAL INFORME -->
+<div class="modal-overlay" id="report-modal">
+  <div class="modal">
+    <h3>Informe clínico</h3>
+    <div class="report-body" id="report-body"></div>
+    <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-green" onclick="shareWhatsApp()">📱 Compartir WhatsApp</button>
+      <button class="btn btn-ghost" onclick="window.print()">🖨 Imprimir</button>
+      <button class="btn btn-ghost" onclick="closeReport()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ====== DATA ======
+const KEY = 'psico_patients';
+let patients = [];
+let selectedRisk = 'none';
+let selectedAdh = '';
+let emoChartInst = null;
+let phqChartInst = null;
+
+function saveData() {
+  try { localStorage.setItem(KEY, JSON.stringify(patients)); } catch(e){}
+}
+function loadData() {
+  try {
+    const d = localStorage.getItem(KEY);
+    if (d) patients = JSON.parse(d);
+  } catch(e){ patients = []; }
+}
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+// ====== DEMO DATA ======
+function initDemo() {
+  if (patients.length > 0) return;
+  const today = new Date();
+  const twoWeeksAgo = new Date(today - 14*86400000).toISOString().split('T')[0];
+  const oneWeekAgo = new Date(today - 7*86400000).toISOString().split('T')[0];
+  const tomorrow = new Date(today.getTime() + 86400000).toISOString().split('T')[0];
+  patients = [
+    {
+      id:'p1', nombre:'María González', rut:'12.345.678-9', fnac:'1985-03-14', genero:'Femenino',
+      tel:'+56 9 8765 4321', emerg:'Juan González — +56 9 1234 5678',
+      prev:'FONASA B', fonasaAuth:12, estab:'CESFAM', medico:'Dr. Pedro Rojas',
+      dsm:'Trastorno de ansiedad generalizada', cie:'F41.1', motivo:'Paciente refiere ansiedad persistente, dificultad para dormir y preocupaciones excesivas por trabajo y familia.',
+      areas:['Ansiedad','Sueño','Estrés'], plan:'Intervención TCC enfocada en reestructuración cognitiva y técnicas de relajación. Frecuencia semanal.',
+      sessions:[
+        {id:'s1',date:twoWeeksAgo,dur:50,tecnicas:['TCC','Relajación'],emo:5,adh:'Buena',risk:'bajo',obs:'Primera sesión. Buena alianza terapéutica.',segplan:'',next:oneWeekAgo},
+        {id:'s2',date:oneWeekAgo,dur:50,tecnicas:['TCC','Mindfulness'],emo:6,adh:'Buena',risk:'none',obs:'Mejora leve. Practica respiración.',segplan:'',next:tomorrow}
+      ],
+      scales:[
+        {id:'sc1',type:'GAD-7',date:twoWeeksAgo,score:14,interpretation:'Moderada'},
+        {id:'sc2',type:'GAD-7',date:oneWeekAgo,score:11,interpretation:'Moderada'}
+      ]
+    },
+    {
+      id:'p2', nombre:'Rodrigo Muñoz', rut:'9.876.543-K', fnac:'1978-07-22', genero:'Masculino',
+      tel:'+56 9 9876 5432', emerg:'Carmen Muñoz — +56 9 8765 0000',
+      prev:'ISAPRE', fonasaAuth:0, estab:'Clínica', medico:'Dra. Ana Torres',
+      dsm:'Episodio depresivo mayor', cie:'F32.1', motivo:'Derivado por médico tratante por ánimo deprimido, anhedonia y alteraciones del sueño desde hace 4 meses.',
+      areas:['Depresión','Autoestima','Sueño'], plan:'TCC para depresión. Activación conductual, programación de actividades placenteras. Frecuencia quincenal.',
+      sessions:[
+        {id:'s3',date:twoWeeksAgo,dur:60,tecnicas:['TCC'],emo:3,adh:'Regular',risk:'medio',obs:'Ánimo muy bajo. Ideación pasiva.',segplan:'Red de apoyo activada. Contactar familiar si empeora.',next:oneWeekAgo},
+        {id:'s4',date:oneWeekAgo,dur:60,tecnicas:['TCC','Psicoeducación'],emo:4,adh:'Buena',risk:'bajo',obs:'Leve mejoría. Realizó algunas actividades.',segplan:'',next:tomorrow}
+      ],
+      scales:[
+        {id:'sc3',type:'PHQ-9',date:twoWeeksAgo,score:19,interpretation:'Mod-Severa'},
+        {id:'sc4',type:'PHQ-9',date:oneWeekAgo,score:16,interpretation:'Mod-Severa'}
+      ]
+    }
+  ];
+  saveData();
+}
+
+// ====== UTILS ======
+function formatDate(d) {
+  if (!d) return '—';
+  const [y,m,day] = d.split('-');
+  return `${day}/${m}/${y}`;
+}
+function today() { return new Date().toISOString().split('T')[0]; }
+function toast(msg, ms=2200) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), ms);
+}
+
+// ====== TABS ======
+function showTab(name) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('#main-nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  const tabs=['inicio','sesion','escalas','pacientes','ficha','historial'];
+  const idx=tabs.indexOf(name);
+  document.querySelectorAll('#main-nav button')[idx].classList.add('active');
+  if(name==='inicio') renderInicio();
+  if(name==='sesion') renderSesionSelects();
+  if(name==='escalas') { renderScaleSelects(); buildScaleItems(); }
+  if(name==='pacientes') renderPatients();
+  if(name==='historial') { renderHistSelects(); }
+}
+
+// ====== HEADER DATE ======
+function setHeaderDate() {
+  const d = new Date();
+  const opts = {weekday:'short',day:'numeric',month:'short'};
+  document.getElementById('hdr-date').textContent = d.toLocaleDateString('es-CL',opts);
+}
+
+// ====== CHIPS ======
+function toggleChip(el, group) { el.classList.toggle('active'); }
+function getActiveChips(containerId) {
+  return [...document.querySelectorAll('#'+containerId+' .chip.active')].map(c=>c.textContent.trim());
+}
+function setActiveChips(containerId, arr) {
+  document.querySelectorAll('#'+containerId+' .chip').forEach(c=>{
+    if(arr.includes(c.textContent.trim())) c.classList.add('active');
+    else c.classList.remove('active');
+  });
+}
+
+// ====== INICIO ======
+function renderInicio() {
+  // Stats
+  const now = new Date();
+  const weekAgo = new Date(now - 7*86400000).toISOString().split('T')[0];
+  let totalSes = 0, sesWeek = 0, scalesCount = 0;
+  patients.forEach(p => {
+    totalSes += p.sessions.length;
+    sesWeek += p.sessions.filter(s=>s.date >= weekAgo).length;
+    scalesCount += p.scales.length;
+  });
+  // Alerts
+  const twoWeekAgo = new Date(now - 14*86400000).toISOString().split('T')[0];
+  let alerts = [];
+  patients.forEach(p => {
+    const lastSes = p.sessions.length ? [...p.sessions].sort((a,b)=>b.date.localeCompare(a.date))[0] : null;
+    if (!lastSes || lastSes.date < twoWeekAgo) alerts.push({type:'warn',msg:`<b>${p.nombre}</b> — sin sesión en ≥2 semanas`});
+    const lastPhq = [...p.scales].filter(s=>s.type==='PHQ-9').sort((a,b)=>b.date.localeCompare(a.date))[0];
+    if (lastPhq && lastPhq.score >= 15) alerts.push({type:'red',msg:`<b>${p.nombre}</b> — PHQ-9 ≥15 (${lastPhq.score} pts, ${lastPhq.interpretation})`});
+    if (p.prev && p.prev.startsWith('FONASA') && p.fonasaAuth > 0) {
+      const used = p.sessions.length;
+      if (used / p.fonasaAuth >= 0.8) alerts.push({type:'warn',msg:`<b>${p.nombre}</b> — ${used}/${p.fonasaAuth} sesiones FONASA usadas`});
+    }
+  });
+
+  document.getElementById('stats-grid').innerHTML = `
+    <div class="stat-card"><div class="num">${patients.length}</div><div class="lbl">Total pacientes</div></div>
+    <div class="stat-card"><div class="num">${sesWeek}</div><div class="lbl">Sesiones esta semana</div></div>
+    <div class="stat-card"><div class="num">${scalesCount}</div><div class="lbl">Escalas aplicadas</div></div>
+    <div class="stat-card"><div class="num" style="color:${alerts.length?'var(--red)':'var(--green)'}">${alerts.length}</div><div class="lbl">Alertas</div></div>
+  `;
+
+  const al = document.getElementById('alerts-list');
+  if (alerts.length === 0) {
+    al.innerHTML = '<div style="font-size:.82rem;color:var(--green);padding:4px">✅ Sin alertas activas</div>';
+  } else {
+    al.innerHTML = alerts.map(a=>`<div class="alert-item ${a.type}"><div class="alert-dot ${a.type}"></div><span>${a.msg}</span></div>`).join('');
+  }
+
+  // Upcoming sessions
+  const upcoming = [];
+  patients.forEach(p => {
+    if (p.sessions.length) {
+      const last = [...p.sessions].sort((a,b)=>b.date.localeCompare(a.date))[0];
+      if (last.next && last.next >= today()) upcoming.push({name:p.nombre, date:last.next, dsm:p.dsm});
+    }
+  });
+  upcoming.sort((a,b)=>a.date.localeCompare(b.date));
+  const ul = document.getElementById('upcoming-list');
+  if (upcoming.length === 0) { ul.innerHTML = '<div class="empty-state"><div class="ico">📅</div>Sin próximas sesiones agendadas</div>'; }
+  else {
+    ul.innerHTML = upcoming.slice(0,5).map(u=>`<div class="upcoming-item"><div class="upcoming-dot"></div><div class="upcoming-info"><strong>${u.name}</strong><span>${formatDate(u.date)} — ${u.dsm||'Sin diagnóstico'}</span></div></div>`).join('');
+  }
+
+  // FONASA bars
+  const fl = document.getElementById('fonasa-list');
+  const fonasaPats = patients.filter(p=>p.prev&&p.prev.startsWith('FONASA')&&p.fonasaAuth>0);
+  if (fonasaPats.length === 0) { fl.innerHTML = '<div class="empty-state" style="padding:8px;font-size:.8rem">Sin pacientes FONASA con sesiones autorizadas</div>'; }
+  else {
+    fl.innerHTML = fonasaPats.map(p => {
+      const pct = Math.min(100, Math.round(p.sessions.length / p.fonasaAuth * 100));
+      const cls = pct >= 90 ? 'danger' : pct >= 70 ? 'warn' : '';
+      return `<div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;font-size:.8rem;margin-bottom:3px">
+          <span><b>${p.nombre}</b> <span class="badge badge-fonasa">${p.prev}</span></span>
+          <span style="color:var(--muted)">${p.sessions.length}/${p.fonasaAuth}</span>
+        </div>
+        <div class="fonasa-bar"><div class="fonasa-fill ${cls}" style="width:${pct}%"></div></div>
+      </div>`;
+    }).join('');
+  }
+}
+
+// ====== SESIÓN ======
+function renderSesionSelects() {
+  const sel = document.getElementById('ses-patient');
+  sel.innerHTML = patients.map(p=>`<option value="${p.id}">${p.nombre}</option>`).join('');
+  if (!sel.value && patients.length) sel.value = patients[0].id;
+  if (!document.getElementById('ses-date').value) document.getElementById('ses-date').value = today();
+  renderSesHistory();
+}
+
+function updateEmo(v) {
+  document.getElementById('emo-val').textContent = v;
+  const emojis = ['','😞','😟','😔','😕','😐','🙂','😊','😄','😁','🤩'];
+  document.getElementById('emo-emoji').textContent = emojis[parseInt(v)];
+}
+
+function selectRisk(el, risk) {
+  selectedRisk = risk;
+  document.querySelectorAll('#risk-btns .risk-btn').forEach(b=>b.className='risk-btn');
+  el.classList.add('active-'+risk);
+  document.getElementById('seg-plan-wrap').style.display = (risk==='medio'||risk==='alto') ? 'block' : 'none';
+}
+
+function selectAdh(el, adh) {
+  selectedAdh = adh;
+  document.querySelectorAll('#adherencia-btns .risk-btn').forEach(b=>b.className='risk-btn');
+  el.style.background='var(--accent)'; el.style.color='#fff'; el.style.borderColor='var(--accent)';
+}
+
+function saveSesion() {
+  const pid = document.getElementById('ses-patient').value;
+  const date = document.getElementById('ses-date').value;
+  if (!pid || !date) { toast('Seleccione paciente y fecha'); return; }
+  const p = patients.find(x=>x.id===pid);
+  if (!p) return;
+  const s = {
+    id: uid(),
+    date,
+    dur: parseInt(document.getElementById('ses-dur').value)||50,
+    tecnicas: getActiveChips('ses-tecnicas'),
+    emo: parseInt(document.getElementById('ses-emo').value),
+    adh: selectedAdh,
+    risk: selectedRisk,
+    obs: document.getElementById('ses-obs').value.trim(),
+    segplan: document.getElementById('ses-segplan').value.trim(),
+    next: document.getElementById('ses-next').value
+  };
+  p.sessions.push(s);
+  saveData();
+  toast('✅ Sesión guardada');
+  clearSesionForm();
+  renderSesHistory();
+}
+
+function clearSesionForm() {
+  document.getElementById('ses-date').value = today();
+  document.getElementById('ses-dur').value = 50;
+  document.getElementById('ses-obs').value = '';
+  document.getElementById('ses-segplan').value = '';
+  document.getElementById('ses-next').value = '';
+  document.getElementById('ses-emo').value = 5;
+  updateEmo(5);
+  selectedRisk = 'none'; selectedAdh = '';
+  document.querySelectorAll('#risk-btns .risk-btn').forEach(b=>b.className='risk-btn');
+  document.querySelectorAll('#adherencia-btns .risk-btn').forEach(b=>{b.style.background=''; b.style.color=''; b.style.borderColor='';});
+  document.querySelectorAll('#ses-tecnicas .chip').forEach(c=>c.classList.remove('active'));
+  document.getElementById('seg-plan-wrap').style.display='none';
+}
+
+function renderSesHistory() {
+  const pid = document.getElementById('ses-patient').value;
+  const p = patients.find(x=>x.id===pid);
+  const list = document.getElementById('ses-history-list');
+  if (!p || !p.sessions.length) { list.innerHTML='<div class="empty-state"><div class="ico">📋</div>Sin sesiones registradas</div>'; return; }
+  const sorted = [...p.sessions].sort((a,b)=>b.date.localeCompare(a.date));
+  list.innerHTML = sorted.map(s=>`
+    <div class="session-item">
+      <div>
+        <div style="font-size:.83rem;font-weight:700">${formatDate(s.date)} — ${s.dur} min</div>
+        <div class="meta">${s.tecnicas.join(', ')||'Sin técnicas'} | Ánimo: ${s.emo}/10 | Riesgo: ${s.risk} ${s.adh?'| Adh: '+s.adh:''}</div>
+        ${s.obs?`<div style="font-size:.78rem;margin-top:3px;color:var(--text)">${s.obs.substring(0,100)}${s.obs.length>100?'...':''}</div>`:''}
+      </div>
+      ${s.next?`<div class="meta" style="text-align:right;white-space:nowrap">Próx:<br>${formatDate(s.next)}</div>`:''}
+    </div>`).join('');
+}
+
+document.getElementById('ses-patient').addEventListener('change', renderSesHistory);
+
+// ====== ESCALAS ======
+const PHQ9_ITEMS = [
+  'Poco interés o placer en hacer las cosas',
+  'Se ha sentido decaído(a), deprimido(a) o sin esperanzas',
+  'Ha tenido dificultad para quedarse dormido(a) o ha dormido demasiado',
+  'Se ha sentido cansado(a) o con poca energía',
+  'Sin apetito o comiendo en exceso',
+  'Sintiéndose mal consigo mismo(a), o que es un(a) fracasado(a)',
+  'Dificultad para concentrarse en actividades como leer el periódico o ver televisión',
+  'Se ha movido o hablado tan lento que otras personas lo notaron, o lo contrario',
+  'Ha tenido pensamientos de que estaría mejor muerto(a) o de hacerse daño de alguna manera'
+];
+const GAD7_ITEMS = [
+  'Sentirse nervioso(a), ansioso(a) o con los nervios de punta',
+  'No ser capaz de parar o controlar la preocupación',
+  'Preocuparse demasiado por diferentes cosas',
+  'Dificultad para relajarse',
+  'Estar tan inquieto(a) que es difícil permanecer sentado(a) tranquilo(a)',
+  'Molestarse o ponerse irritable fácilmente',
+  'Sentir miedo, como si algo terrible fuera a ocurrir'
+];
+const PCL5_ITEMS = [
+  ['Recuerdos angustiantes repetitivos, involuntarios del evento traumático','Criterio B'],
+  ['Sueños perturbadores relacionados con el evento traumático','Criterio B'],
+  ['Reacciones disociativas (flashbacks) como si el evento estuviera ocurriendo nuevamente','Criterio B'],
+  ['Sentirse muy angustiado(a) cuando algo le recuerda el evento traumático','Criterio B'],
+  ['Reacciones físicas intensas (corazón acelerado, dificultad al respirar) ante recordatorios','Criterio B'],
+  ['Evitar pensamientos o sentimientos relacionados con el evento','Criterio C'],
+  ['Evitar personas, lugares, conversaciones u objetos que le recuerden el evento','Criterio C'],
+  ['No poder recordar partes importantes del evento traumático','Criterio D'],
+  ['Creencias negativas persistentes sobre uno mismo, los demás o el mundo','Criterio D'],
+  ['Culparse a sí mismo(a) o a otros por el evento o sus consecuencias','Criterio D'],
+  ['Sentirse distante de las personas que le rodean','Criterio D'],
+  ['Poco interés o participación en actividades que antes disfrutaba','Criterio D'],
+  ['Sentirse emocionalmente entumecido(a) o incapaz de tener sentimientos positivos','Criterio D'],
+  ['Irritabilidad, arrebatos de cólera o comportamiento agresivo','Criterio E'],
+  ['Asumir riesgos o actuar de manera autodestructiva','Criterio E'],
+  ['Estar "en alerta máxima" o en estado de guardia constante','Criterio E'],
+  ['Sobresaltarse fácilmente con ruidos u otras cosas','Criterio E'],
+  ['Dificultad para concentrarse','Criterio E'],
+  ['Dificultad para conciliar o mantener el sueño','Criterio E'],
+  ['Sentir que las cosas a su alrededor no son reales o que usted está fuera de su cuerpo','Criterio D']
+];
+
+const SCALE_OPTS_3 = ['Nunca (0)','Varios días (1)','Más de la mitad (2)','Casi todos los días (3)'];
+const SCALE_OPTS_4 = ['Nada (0)','Un poco (1)','Moderadamente (2)','Bastante (3)','Extremadamente (4)'];
+
+function renderScaleSelects() {
+  ['esc-patient'].forEach(id=>{
+    const sel = document.getElementById(id);
+    sel.innerHTML = patients.map(p=>`<option value="${p.id}">${p.nombre}</option>`).join('');
+    if (!sel.value && patients.length) sel.value = patients[0].id;
+  });
+}
+
+function buildScaleItems() {
+  // PHQ-9
+  const phqDiv = document.getElementById('phq-items');
+  phqDiv.innerHTML = PHQ9_ITEMS.map((q,i)=>`
+    <div class="scale-q">
+      <p><b>${i+1}.</b> ${q}</p>
+      <div class="scale-opts">
+        ${SCALE_OPTS_3.map((o,v)=>`<span class="scale-opt" data-scale="phq" data-idx="${i}" data-val="${v}" onclick="selectOpt(this)">${o}</span>`).join('')}
+      </div>
+    </div>`).join('');
+  // GAD-7
+  const gadDiv = document.getElementById('gad-items');
+  gadDiv.innerHTML = GAD7_ITEMS.map((q,i)=>`
+    <div class="scale-q">
+      <p><b>${i+1}.</b> ${q}</p>
+      <div class="scale-opts">
+        ${SCALE_OPTS_3.map((o,v)=>`<span class="scale-opt" data-scale="gad" data-idx="${i}" data-val="${v}" onclick="selectOpt(this)">${o}</span>`).join('')}
+      </div>
+    </div>`).join('');
+  // PCL-5
+  let pclHtml = '';
+  let lastSection = '';
+  PCL5_ITEMS.forEach((item,i)=>{
+    const [q,sec]=item;
+    if(sec!==lastSection){pclHtml+=`<div class="pcl-section">${sec}</div>`;lastSection=sec;}
+    pclHtml+=`<div class="scale-q"><p><b>${i+1}.</b> ${q}</p><div class="scale-opts">${SCALE_OPTS_4.map((o,v)=>`<span class="scale-opt" data-scale="pcl" data-idx="${i}" data-val="${v}" onclick="selectOpt(this)">${o}</span>`).join('')}</div></div>`;
+  });
+  document.getElementById('pcl-items').innerHTML = pclHtml;
+}
+
+function selectOpt(el) {
+  const scale = el.dataset.scale;
+  const idx = el.dataset.idx;
+  document.querySelectorAll(`.scale-opt[data-scale="${scale}"][data-idx="${idx}"]`).forEach(o=>o.classList.remove('sel'));
+  el.classList.add('sel');
+  calcScoreDisplay(scale);
+}
+
+function getScaleScore(scale) {
+  const items = scale==='phq' ? PHQ9_ITEMS : scale==='gad' ? GAD7_ITEMS : PCL5_ITEMS;
+  let score = 0, filled = 0;
+  items.forEach((_,i)=>{
+    const sel = document.querySelector(`.scale-opt[data-scale="${scale}"][data-idx="${i}"].sel`);
+    if(sel){ score += parseInt(sel.dataset.val); filled++; }
+  });
+  return {score, filled, total:items.length};
+}
+
+function phqInterp(s){ if(s<=4)return['Mínima','score-min']; if(s<=9)return['Leve','score-leve']; if(s<=14)return['Moderada','score-mod']; if(s<=19)return['Mod-Severa','score-msev']; return['Severa','score-sev']; }
+function gadInterp(s){ if(s<=4)return['Mínima','score-min']; if(s<=9)return['Leve','score-leve']; if(s<=14)return['Moderada','score-mod']; return['Severa','score-sev']; }
+function pclInterp(s){ return s>=31?['Probable TEPT','score-sev']:['Por debajo del umbral','score-min']; }
+
+function calcScoreDisplay(scale) {
+  const {score} = getScaleScore(scale);
+  if(scale==='phq'){
+    document.getElementById('phq-score-val').textContent=score;
+    const [i,c]=phqInterp(score);
+    document.getElementById('phq-score-badge').innerHTML=`<span class="score-badge ${c}">${i}</span>`;
+  } else if(scale==='gad'){
+    document.getElementById('gad-score-val').textContent=score;
+    const [i,c]=gadInterp(score);
+    document.getElementById('gad-score-badge').innerHTML=`<span class="score-badge ${c}">${i}</span>`;
+  } else {
+    document.getElementById('pcl-score-val').textContent=score;
+    const [i,c]=pclInterp(score);
+    document.getElementById('pcl-score-badge').innerHTML=`<span class="score-badge ${c}">${i}</span>`;
+  }
+}
+
+function saveScale(type) {
+  const pid = document.getElementById('esc-patient').value;
+  const p = patients.find(x=>x.id===pid);
+  if(!p){ toast('Seleccione un paciente'); return; }
+  const scaleKey = type==='PHQ-9'?'phq':type==='GAD-7'?'gad':'pcl';
+  const {score,filled,total} = getScaleScore(scaleKey);
+  if(filled < total){ toast('Complete todos los ítems'); return; }
+  const interp = type==='PHQ-9'?phqInterp(score)[0]:type==='GAD-7'?gadInterp(score)[0]:pclInterp(score)[0];
+  const entry = {id:uid(), type, date:today(), score, interpretation:interp};
+  p.scales.push(entry);
+  saveData();
+  toast(`✅ ${type} guardado — ${score} pts (${interp})`);
+  loadScaleHistory();
+}
+
+function loadScaleHistory() {
+  const pid = document.getElementById('esc-patient').value;
+  const p = patients.find(x=>x.id===pid);
+  const list = document.getElementById('scale-history-list');
+  if(!p||!p.scales.length){ list.innerHTML='<div class="empty-state"><div class="ico">📊</div>Sin escalas registradas</div>'; return; }
+  const sorted = [...p.scales].sort((a,b)=>b.date.localeCompare(a.date));
+  list.innerHTML = sorted.map(s=>{
+    const cls = s.type==='PHQ-9'?phqInterp(s.score)[1]:s.type==='GAD-7'?gadInterp(s.score)[1]:pclInterp(s.score)[1];
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:.82rem"><b>${s.type}</b> — ${formatDate(s.date)}</span>
+      <span class="score-badge ${cls}">${s.score} — ${s.interpretation}</span>
+    </div>`;
+  }).join('');
+}
+
+// ====== PACIENTES ======
+function calcPsicoScore(p) {
+  const totalSes = p.sessions.length;
+  if(totalSes===0) return 0;
+  // Attendance % (vs FONASA auth or assume weekly attendance)
+  const weeks = p.fonasaAuth > 0 ? p.fonasaAuth : 12;
+  const attendPct = Math.min(1, totalSes / weeks);
+  // Emotional avg
+  const emoAvg = p.sessions.reduce((a,s)=>a+s.emo,0) / totalSes;
+  // PHQ-9 inverse: last score
+  const lastPhq = [...p.scales].filter(s=>s.type==='PHQ-9').sort((a,b)=>b.date.localeCompare(a.date))[0];
+  const phqNorm = lastPhq ? 1 - lastPhq.score/27 : 0.7;
+  const score = Math.round(attendPct*0.3*100 + (emoAvg/10)*100*0.3 + phqNorm*100*0.4);
+  return Math.min(100, Math.max(0, score));
+}
+
+function renderPatients() {
+  const list = document.getElementById('patients-list');
+  if(!patients.length){ list.innerHTML='<div class="empty-state"><div class="ico">👤</div>Sin pacientes. <button class="btn btn-primary" style="margin-top:8px" onclick="showTab(\'ficha\');newFicha()">Agregar paciente</button></div>'; return; }
+  list.innerHTML = patients.map(p=>{
+    const score = calcPsicoScore(p);
+    const lastSes = p.sessions.length ? [...p.sessions].sort((a,b)=>b.date.localeCompare(a.date))[0] : null;
+    const prev = p.prev || '—';
+    const badgeCls = prev.startsWith('FONASA')?'badge-fonasa':prev==='ISAPRE'?'badge-isapre':'badge-priv';
+    return `<div class="patient-card" onclick="editFicha('${p.id}')">
+      ${psicoRing(score, p.id)}
+      <div class="patient-info">
+        <h4>${p.nombre}</h4>
+        <p>${p.dsm||'Sin diagnóstico'}</p>
+        <p>Última sesión: ${lastSes?formatDate(lastSes.date):'—'} <span class="badge ${badgeCls}" style="margin-left:4px">${prev}</span></p>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function psicoRing(score, pid) {
+  const r=22, circ=2*Math.PI*r;
+  const color = score>=70?'#16a34a':score>=40?'#d97706':'#dc2626';
+  const dash = (score/100)*circ;
+  return `<div class="psico-ring">
+    <svg width="56" height="56" viewBox="0 0 56 56">
+      <circle cx="28" cy="28" r="${r}" fill="none" stroke="#e2ecf7" stroke-width="4"/>
+      <circle cx="28" cy="28" r="${r}" fill="none" stroke="${color}" stroke-width="4"
+        stroke-dasharray="${dash.toFixed(1)} ${circ.toFixed(1)}"
+        stroke-dashoffset="${(circ/4).toFixed(1)}" stroke-linecap="round"
+        style="transition:stroke-dasharray .6s ease"/>
+      <text x="28" y="33" text-anchor="middle" font-size="11" font-weight="800" fill="${color}">${score}</text>
+    </svg>
+  </div>`;
+}
+
+// ====== FICHA ======
+function newFicha() {
+  document.getElementById('ficha-id').value = '';
+  document.getElementById('ficha-title').textContent = 'Nueva ficha clínica';
+  document.getElementById('btn-del-ficha').style.display = 'none';
+  document.getElementById('del-confirm-wrap').style.display = 'none';
+  ['f-nombre','f-rut','f-tel','f-emerg','f-dsm','f-cie','f-motivo','f-plan','f-medico'].forEach(id=>document.getElementById(id).value='');
+  ['f-fnac','f-prev','f-genero','f-estab'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-fonasa').value=0;
+  document.querySelectorAll('#f-areas .chip').forEach(c=>c.classList.remove('active'));
+}
+
+function editFicha(pid) {
+  showTab('ficha');
+  const p = patients.find(x=>x.id===pid);
+  if(!p) return;
+  document.getElementById('ficha-id').value = p.id;
+  document.getElementById('ficha-title').textContent = 'Editar ficha: '+p.nombre;
+  document.getElementById('btn-del-ficha').style.display = 'inline-flex';
+  document.getElementById('del-confirm-wrap').style.display = 'none';
+  document.getElementById('f-nombre').value = p.nombre||'';
+  document.getElementById('f-rut').value = p.rut||'';
+  document.getElementById('f-fnac').value = p.fnac||'';
+  document.getElementById('f-genero').value = p.genero||'';
+  document.getElementById('f-tel').value = p.tel||'';
+  document.getElementById('f-emerg').value = p.emerg||'';
+  document.getElementById('f-prev').value = p.prev||'';
+  document.getElementById('f-fonasa').value = p.fonasaAuth||0;
+  document.getElementById('f-estab').value = p.estab||'';
+  document.getElementById('f-medico').value = p.medico||'';
+  document.getElementById('f-dsm').value = p.dsm||'';
+  document.getElementById('f-cie').value = p.cie||'';
+  document.getElementById('f-motivo').value = p.motivo||'';
+  document.getElementById('f-plan').value = p.plan||'';
+  setActiveChips('f-areas', p.areas||[]);
+}
+
+function saveFicha() {
+  const nombre = document.getElementById('f-nombre').value.trim();
+  const rut = document.getElementById('f-rut').value.trim();
+  if(!nombre){ toast('Ingrese el nombre del paciente'); return; }
+  if(rut && !validarRut(rut)){ toast('RUT inválido'); return; }
+  const id = document.getElementById('ficha-id').value;
+  const data = {
+    nombre, rut,
+    fnac: document.getElementById('f-fnac').value,
+    genero: document.getElementById('f-genero').value,
+    tel: document.getElementById('f-tel').value,
+    emerg: document.getElementById('f-emerg').value,
+    prev: document.getElementById('f-prev').value,
+    fonasaAuth: parseInt(document.getElementById('f-fonasa').value)||0,
+    estab: document.getElementById('f-estab').value,
+    medico: document.getElementById('f-medico').value,
+    dsm: document.getElementById('f-dsm').value,
+    cie: document.getElementById('f-cie').value,
+    motivo: document.getElementById('f-motivo').value,
+    plan: document.getElementById('f-plan').value,
+    areas: getActiveChips('f-areas')
+  };
+  if(id) {
+    const p = patients.find(x=>x.id===id);
+    if(p) Object.assign(p, data);
+  } else {
+    const np = {id:uid(), sessions:[], scales:[], ...data};
+    patients.push(np);
+    document.getElementById('ficha-id').value = np.id;
+    document.getElementById('ficha-title').textContent = 'Editar ficha: '+nombre;
+    document.getElementById('btn-del-ficha').style.display = 'inline-flex';
+  }
+  saveData();
+  toast('✅ Ficha guardada');
+  updateAllSelects();
+}
+
+function confirmDelFicha() {
+  document.getElementById('del-confirm-wrap').style.display = 'block';
+}
+
+function deleteFicha() {
+  const id = document.getElementById('ficha-id').value;
+  patients = patients.filter(p=>p.id!==id);
+  saveData();
+  toast('🗑 Ficha eliminada');
+  newFicha();
+  updateAllSelects();
+}
+
+// ====== RUT VALIDATION ======
+function formatRut(input) {
+  let v = input.value.replace(/[^0-9kK]/g,'');
+  if(v.length>1){ v=v.slice(0,-1)+'-'+v.slice(-1); }
+  if(v.length>5){ v=v.slice(0,v.length-5)+'.'+v.slice(v.length-5); }
+  if(v.length>9){ v=v.slice(0,v.length-9)+'.'+v.slice(v.length-9); }
+  input.value=v;
+}
+function validarRut(rut) {
+  const clean = rut.replace(/[.\-]/g,'').toUpperCase();
+  if(clean.length<2) return false;
+  const body = clean.slice(0,-1);
+  const dv = clean.slice(-1);
+  let sum=0, mult=2;
+  for(let i=body.length-1;i>=0;i--){
+    sum+=parseInt(body[i])*mult;
+    mult=mult===7?2:mult+1;
+  }
+  const expected = 11-(sum%11);
+  const dvCalc = expected===11?'0':expected===10?'K':String(expected);
+  return dv===dvCalc;
+}
+
+// ====== HISTORIAL ======
+function renderHistSelects() {
+  const sel = document.getElementById('hist-patient');
+  sel.innerHTML = patients.map(p=>`<option value="${p.id}">${p.nombre}</option>`).join('');
+  if(!sel.value && patients.length) sel.value = patients[0].id;
+  loadHistorial();
+}
+
+function loadHistorial() {
+  const pid = document.getElementById('hist-patient').value;
+  const p = patients.find(x=>x.id===pid);
+  if(!p) return;
+
+  // Emotional chart
+  const emoSes = [...p.sessions].sort((a,b)=>a.date.localeCompare(b.date));
+  const emoLabels = emoSes.map(s=>formatDate(s.date));
+  const emoData = emoSes.map(s=>s.emo);
+
+  if(emoChartInst) emoChartInst.destroy();
+  emoChartInst = new Chart(document.getElementById('chart-emo').getContext('2d'), {
+    type:'line',
+    data:{labels:emoLabels,datasets:[{label:'Estado emocional',data:emoData,borderColor:'#0369a1',backgroundColor:'rgba(3,105,161,.08)',tension:.4,fill:true,pointRadius:4,pointBackgroundColor:'#0369a1'}]},
+    options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{min:1,max:10,ticks:{stepSize:1}},x:{ticks:{maxTicksLimit:6}}}}
+  });
+
+  // PHQ-9 chart
+  const phqScales = [...p.scales].filter(s=>s.type==='PHQ-9').sort((a,b)=>a.date.localeCompare(b.date));
+  const phqCard = document.getElementById('phq-chart-card');
+  if(phqScales.length>=2){
+    phqCard.style.display='block';
+    if(phqChartInst) phqChartInst.destroy();
+    phqChartInst = new Chart(document.getElementById('chart-phq').getContext('2d'), {
+      type:'line',
+      data:{labels:phqScales.map(s=>formatDate(s.date)),datasets:[{label:'PHQ-9',data:phqScales.map(s=>s.score),borderColor:'#dc2626',backgroundColor:'rgba(220,38,38,.07)',tension:.4,fill:true,pointRadius:4,pointBackgroundColor:'#dc2626'},{label:'Corte clínico (10)',data:phqScales.map(()=>10),borderColor:'#d97706',borderDash:[5,5],pointRadius:0}]},
+      options:{responsive:true,plugins:{legend:{display:true,labels:{font:{size:11}}}},scales:{y:{min:0,max:27,ticks:{stepSize:5}},x:{ticks:{maxTicksLimit:6}}}}
+    });
+  } else { phqCard.style.display = phqScales.length ? 'block' : 'none'; }
+
+  // FONASA
+  const hf = document.getElementById('hist-fonasa');
+  if(p.prev&&p.prev.startsWith('FONASA')&&p.fonasaAuth>0){
+    const used=p.sessions.length;
+    const pct=Math.min(100,Math.round(used/p.fonasaAuth*100));
+    const cls=pct>=90?'danger':pct>=70?'warn':'';
+    hf.innerHTML=`<div style="font-size:.85rem;margin-bottom:6px">${p.prev} — <b>${used}</b> de <b>${p.fonasaAuth}</b> sesiones usadas (${pct}%)</div>
+      <div class="fonasa-bar" style="height:14px"><div class="fonasa-fill ${cls}" style="width:${pct}%"></div></div>`;
+  } else {
+    hf.innerHTML=`<div style="font-size:.82rem;color:var(--muted)">Paciente no tiene plan FONASA activo o sesiones autorizadas.</div>`;
+  }
+}
+
+// ====== INFORME CLÍNICO ======
+function openReport() {
+  const pid = document.getElementById('hist-patient').value;
+  const p = patients.find(x=>x.id===pid);
+  if(!p){ toast('Seleccione un paciente'); return; }
+  const lastPhq = [...p.scales].filter(s=>s.type==='PHQ-9').sort((a,b)=>b.date.localeCompare(a.date))[0];
+  const lastGad = [...p.scales].filter(s=>s.type==='GAD-7').sort((a,b)=>b.date.localeCompare(a.date))[0];
+  const lastPcl = [...p.scales].filter(s=>s.type==='PCL-5').sort((a,b)=>b.date.localeCompare(a.date))[0];
+  const lastSes = p.sessions.length ? [...p.sessions].sort((a,b)=>b.date.localeCompare(a.date))[0] : null;
+  const pScore = calcPsicoScore(p);
+  const report = `INFORME CLÍNICO PSICOLÓGICO
+════════════════════════════════════════
+Fecha: ${formatDate(today())}
+
+DATOS DEL PACIENTE
+Nombre: ${p.nombre}
+RUT: ${p.rut||'—'}
+Fecha de nacimiento: ${p.fnac?formatDate(p.fnac):'—'}
+Género: ${p.genero||'—'}
+Teléfono: ${p.tel||'—'}
+Previsión: ${p.prev||'—'}
+Establecimiento: ${p.estab||'—'}
+Médico derivador: ${p.medico||'—'}
+
+DIAGNÓSTICO
+DSM-5: ${p.dsm||'—'}
+CIE-10: ${p.cie||'—'}
+
+MOTIVO DE CONSULTA
+${p.motivo||'—'}
+
+SESIONES
+Total sesiones realizadas: ${p.sessions.length}${p.fonasaAuth>0?`\nSesiones FONASA autorizadas: ${p.fonasaAuth}`:''}
+Última sesión: ${lastSes?formatDate(lastSes.date):'—'}
+Próxima sesión: ${lastSes&&lastSes.next?formatDate(lastSes.next):'—'}
+
+ESCALAS PSICOMÉTRICAS
+PHQ-9: ${lastPhq?`${lastPhq.score}/27 — ${lastPhq.interpretation} (${formatDate(lastPhq.date)})`:'No aplicada'}
+GAD-7: ${lastGad?`${lastGad.score}/21 — ${lastGad.interpretation} (${formatDate(lastGad.date)})`:'No aplicada'}
+PCL-5: ${lastPcl?`${lastPcl.score}/80 — ${lastPcl.interpretation} (${formatDate(lastPcl.date)})`:'No aplicada'}
+
+PsicoScore: ${pScore}/100
+
+ÁREAS DE INTERVENCIÓN
+${(p.areas||[]).join(', ')||'—'}
+
+PLAN DE TRATAMIENTO
+${p.plan||'—'}
+
+OBSERVACIONES ÚLTIMA SESIÓN
+${lastSes&&lastSes.obs?lastSes.obs:'—'}
+
+────────────────────────────────────────
+Generado por PsicoScore | ${new Date().toLocaleDateString('es-CL')}`;
+
+  document.getElementById('report-body').textContent = report;
+  document.getElementById('report-modal').classList.add('open');
+}
+
+function closeReport() { document.getElementById('report-modal').classList.remove('open'); }
+
+function shareWhatsApp() {
+  const text = document.getElementById('report-body').textContent;
+  window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank');
+}
+
+// ====== UPDATE SELECTS ======
+function updateAllSelects() {
+  const opts = patients.map(p=>`<option value="${p.id}">${p.nombre}</option>`).join('');
+  ['ses-patient','esc-patient','hist-patient'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el){ el.innerHTML = opts; }
+  });
+}
+
+// ====== INIT ======
+function init() {
+  loadData();
+  initDemo();
+  setHeaderDate();
+  updateAllSelects();
+  renderInicio();
+  updateEmo(5);
+  // Set today's date in session form
+  const sesDate = document.getElementById('ses-date');
+  if(sesDate && !sesDate.value) sesDate.value = today();
+}
+
+// Close modal on overlay click
+document.getElementById('report-modal').addEventListener('click', function(e){ if(e.target===this) closeReport(); });
+
+init();
+</script>
+</body>
+</html>

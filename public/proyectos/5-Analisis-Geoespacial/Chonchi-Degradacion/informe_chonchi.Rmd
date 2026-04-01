@@ -1,0 +1,226 @@
+---
+title: "Informe Profesional: Potencial de Remoción de Carbono"
+subtitle: "Predio Chonchi (11.048 ha) - Caso de Estudio para Inversión"
+author: "Pablo Cussen"
+date: "`r format(Sys.Date(), '%d de %B de %Y')`"
+output:
+  html_document:
+    toc: yes
+    toc_float: yes
+    theme: cosmo
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+# Chunk 1: Setup - Carga de librerías
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, fig.align = 'center')
+library(terra)
+library(sf)
+library(viridis)
+library(dplyr)
+```
+
+# 1. Resumen Ejecutivo
+
+Este informe presenta el análisis geoespacial del predio "Chonchi" (11.048 ha) para cuantificar su potencial de desarrollo de proyectos de remoción de carbono. El análisis se alinea con la tesis de inversión de Aviva Investors, que busca un portafolio mixto (Ingeniería y Naturaleza) y co-beneficios medibles.
+
+Basado en el análisis de 10 capas de datos satelitales, el predio se zonificó en tres áreas estratégicas. El potencial total de generación de créditos del proyecto se estima en **~20.338 tCO2e por año**.
+
+# 2. Metodología y Datos
+
+El análisis se realizó en R utilizando el paquete `terra`. Los datos de entrada provienen de un stack GeoTIFF (30m) generado en Google Earth Engine (GEE).
+
+## 2.1. Carga y Preparación de Datos
+
+Se cargó el stack de 10 capas y se enmascaró usando el polígono oficial (AOI) del predio.
+
+```{r carga_datos}
+# Paso 1: Cargar y Preparar los Datos
+path_to_tif <- "Stack_Datos_Predio_Chonchi_v10.tif"
+raster_stack_terra <- terra::rast(path_to_tif)
+
+names(raster_stack_terra) <- c(
+  "S2_B2_Blue", "S2_B3_Green", "S2_B4_Red", "S2_B8_NIR", "NDVI",
+  "TreeCover_Percent",
+  "SOC_0_30cm_t_ha",
+  "Landcover",
+  "WaterOccurrence",
+  "Slope"
+)
+
+# Definir Polígono AOI
+aoi_coords <- list(
+  c(-74.16247078067119, -42.87104102500514),
+  c(-73.9769060627673, -42.89402942069692),
+  c(-73.9605554182468, -42.82941814435743),
+  c(-74.15041692608338, -42.81005140158594),
+  c(-74.16552735455591, -42.82709509660673),
+  c(-74.15211807782127, -42.8503041726282),
+  c(-74.16247078067119, -42.87104102500514)
+)
+aoi_sf <- sf::st_polygon(list(do.call(rbind, aoi_coords))) %>% 
+  sf::st_sfc(crs = 4326)
+aoi_terra <- terra::vect(aoi_sf)
+
+# Enmascarar
+raster_stack_masked <- terra::mask(raster_stack_terra, aoi_terra)
+
+print(raster_stack_masked)
+```
+
+## 2.2. Análisis Visual de Capas Clave
+
+Se generaron mapas de las tres capas determinantes para la zonificación:
+
+```{r visualizacion, fig.width=10, fig.height=12}
+par(mfrow = c(3, 1))
+
+# 2.1 Cobertura Arbórea
+terra::plot(raster_stack_masked[["TreeCover_Percent"]],
+            main = "Capa 1: Cobertura Arbórea (%)",
+            col = terrain.colors(100), range = c(0, 100))
+terra::plot(aoi_terra, add = TRUE, border = "red", lwd = 2)
+
+# 2.2 Carbono Orgánico del Suelo
+terra::plot(raster_stack_masked[["SOC_0_30cm_t_ha"]],
+            main = "Capa 2: Carbono Orgánico del Suelo (t/ha)",
+            col = viridis(100, direction = -1),
+            stretch = "log", range = c(1, 1000))
+terra::plot(aoi_terra, add = TRUE, border = "red", lwd = 2)
+
+# 2.3 Pendiente
+terra::plot(raster_stack_masked[["Slope"]],
+            main = "Capa 3: Pendiente (grados)",
+            col = heat.colors(100), range = c(0, 45))
+terra::plot(aoi_terra, add = TRUE, border = "red", lwd = 2)
+```
+
+# 3. Zonificación y Cuantificación
+
+## 3.1. Lógica de Zonificación
+
+Se aplicó Álgebra de Mapas (Paquete `terra`) para clasificar el predio. La Zona 3 (Protección) tiene prioridad máxima sobre cualquier otra asignación.
+
+- **Zona 3 (Protección)**: Áreas de Agua (WaterOccurrence > 20%) O Pendientes Fuertes (Slope > 30°) O Alto Carbono en Suelo (SOC > 150 t/ha).
+- **Zona 1 (Biochar/Nuevas Plant.)**: Áreas de Matorral (TreeCover < 30%) que NO sean Zona 3.
+- **Zona 2 (Reforestación/Manejo)**: Áreas de Bosque (TreeCover > 60%) que NO sean Zona 3.
+
+```{r zonificacion}
+# Paso 3: Aplicar Lógica de Zonificación
+m_slope <- matrix(c(0, 30, 0, 30, 90, 3), ncol = 3, byrow = TRUE)
+zona_slope <- terra::classify(raster_stack_masked[["Slope"]], m_slope, right = TRUE)
+
+m_soc <- matrix(c(0, 150, 0, 150, 1000, 3), ncol = 3, byrow = TRUE)
+zona_soc <- terra::classify(raster_stack_masked[["SOC_0_30cm_t_ha"]], m_soc, right = TRUE)
+
+m_water <- matrix(c(0, 20, 0, 20, 100, 3), ncol = 3, byrow = TRUE)
+zona_water <- terra::classify(raster_stack_masked[["WaterOccurrence"]], m_water, right = TRUE)
+
+m_treecover <- matrix(c(0, 30, 1, 30, 60, 0, 60, 100, 2), ncol = 3, byrow = TRUE)
+zona_treecover <- terra::classify(raster_stack_masked[["TreeCover_Percent"]], m_treecover, right = TRUE)
+
+# Aplicar Lógica (Protección gana)
+zonificacion_final <- zona_treecover
+zonificacion_final[zona_slope == 3 | zona_soc == 3 | zona_water == 3] <- 3
+```
+
+## 3.2. Mapa de Zonificación Final
+
+El siguiente mapa muestra la distribución de las tres zonas de intervención en el predio:
+
+```{r mapa_zonificacion, echo=FALSE, fig.width=10, fig.height=8}
+zonas_colores <- c("#FFC107", "#4CAF50", "#2196F3")
+zonas_etiquetas <- c("Zona 1: Biochar/Nuevas Plant.", 
+                     "Zona 2: Reforestación/Manejo", 
+                     "Zona 3: Protección")
+
+terra::plot(zonificacion_final,
+            type = "classes",
+            col = zonas_colores,
+            levels = zonas_etiquetas,
+            main = "Mapa de Zonificación Final del Proyecto (Mosaico de Carbono)",
+            plg = list(x = "bottomleft", title = "Zonificación", cex = 0.9))
+terra::plot(aoi_terra, add = TRUE, border = "red", lwd = 2)
+```
+
+## 3.3. Cálculo de Áreas (Hectáreas)
+
+El cálculo de áreas se realizó usando `terra::cellSize` para asegurar precisión en coordenadas geográficas (WGS84).
+
+```{r calculo_areas}
+# Paso 4: Cálculo de Áreas (Hectáreas)
+area_raster_m2 <- terra::cellSize(zonificacion_final, unit = "m")
+reporte_areas_m2 <- terra::zonal(area_raster_m2, zonificacion_final, fun = "sum", na.rm = TRUE)
+
+reporte_areas <- as.data.frame(reporte_areas_m2) %>%
+  rename(value = 1, sum_m2 = 2) %>%
+  filter(!is.na(value)) %>%
+  mutate(Zona = case_when(
+    value == 0 ~ "Otro (Intermedia)",
+    value == 1 ~ "Zona 1: Biochar/Nuevas Plant.",
+    value == 2 ~ "Zona 2: Reforestación/Manejo",
+    value == 3 ~ "Zona 3: Protección",
+    TRUE       ~ "Otro"
+  )) %>%
+  mutate(Hectareas = sum_m2 / 10000) %>%
+  select(Zona, Hectareas) %>%
+  arrange(Zona)
+
+knitr::kable(reporte_areas,
+             digits = 2,
+             caption = "Tabla 1: Distribución de Hectáreas por Zona")
+
+total_ha_calculadas <- sum(reporte_areas$Hectareas)
+```
+
+**Total Hectáreas Zonificadas:** `r round(total_ha_calculadas, 2)` ha
+
+# 4. Potencial de Remoción y Conclusión
+
+El potencial de generación de créditos de carbono se calculó aplicando tasas de remoción conservadoras a las hectáreas operables (Zonas 1 y 2).
+
+```{r potencial_carbono}
+# Paso 5: Estimación del Potencial de Carbono
+tasa_zona1 <- 8
+tasa_zona2 <- 13650 / 6548
+
+ha_zona1 <- ifelse(any(reporte_areas$Zona == "Zona 1: Biochar/Nuevas Plant."),
+                   reporte_areas$Hectareas[reporte_areas$Zona == "Zona 1: Biochar/Nuevas Plant."], 0)
+ha_zona2 <- ifelse(any(reporte_areas$Zona == "Zona 2: Reforestación/Manejo"),
+                   reporte_areas$Hectareas[reporte_areas$Zona == "Zona 2: Reforestación/Manejo"], 0)
+ha_zona3 <- ifelse(any(reporte_areas$Zona == "Zona 3: Protección"),
+                   reporte_areas$Hectareas[reporte_areas$Zona == "Zona 3: Protección"], 0)
+
+creditos_zona1 <- ha_zona1 * tasa_zona1
+creditos_zona2 <- ha_zona2 * tasa_zona2
+total_creditos <- creditos_zona1 + creditos_zona2
+
+reporte_final <- data.frame(
+  Zona = c("Zona 1 (Biochar/Nuevas Plant.)", 
+           "Zona 2 (Reforestación/Manejo)", 
+           "Zona 3 (Protección)", 
+           "TOTAL PROYECTO"),
+  Hectareas = c(ha_zona1, ha_zona2, ha_zona3, total_ha_calculadas),
+  Potencial_tCO2e_Anual = c(creditos_zona1, creditos_zona2, 0, total_creditos)
+)
+```
+
+## 4.1. Reporte Final de Potencial Anual
+
+La siguiente tabla resume el potencial total del proyecto:
+
+```{r tabla_final, echo=FALSE}
+knitr::kable(reporte_final,
+             digits = 0,
+             format.args = list(big.mark = "."),
+             col.names = c("Zona de Intervención", "Hectáreas", "Potencial (tCO2e/año)"),
+             caption = "Tabla 2: Reporte Final de Potencial de Remoción de Carbono")
+```
+
+## 4.2. Conclusión
+
+El análisis confirma que el predio Chonchi es altamente viable para un proyecto de remoción de carbono de tipo "mosaico". El proyecto se centra en un componente principal de **Manejo Forestal (8.480 ha)**, complementado por un proyecto de **Biochar/Nuevas Plantaciones (333 ha)**.
+
+Crucialmente, el proyecto reserva **280 hectáreas** (incluyendo cuerpos de agua y pendientes) para Protección Estricta, cumpliendo así con el requisito indispensable de co-beneficios (biodiversidad y agua) solicitado por el inversionista.
+
+**El potencial total estimado es de ~20.338 tCO2e/año.**

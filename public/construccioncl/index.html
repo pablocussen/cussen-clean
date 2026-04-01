@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0369a1">
+<title>ConstruccionCL — Calculadora de Materiales</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f0f6ff;--card:#ffffff;--card2:#e8f2ff;--border:#b8d4f0;--accent:#0369a1;--text:#1e3a5f;--muted:#6b8fa5;--green:#16a34a;--yellow:#d97706;--red:#dc2626;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:15px}
+header{background:linear-gradient(90deg,#0c4a7a,#0369a1);padding:13px 18px;position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;color:white;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+header h1{font-size:1.05rem;font-weight:700;letter-spacing:.01em}
+header span{font-size:.75rem;opacity:.8;display:block;margin-top:1px}
+nav{background:#fff;border-bottom:2px solid var(--border);display:flex;overflow-x:auto;position:sticky;top:62px;z-index:40;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+.tab-btn{flex-shrink:0;padding:10px 14px;font-size:.78rem;font-weight:600;border:none;background:none;cursor:pointer;color:var(--muted);border-bottom:3px solid transparent;white-space:nowrap;transition:all .2s;font-family:inherit}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-btn:hover{color:var(--accent)}
+.tab-panel{display:none;padding:16px;max-width:680px;margin:0 auto}
+.tab-panel.active{display:block}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.card-title{font-size:.85rem;font-weight:700;color:var(--accent);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+label{font-size:.8rem;font-weight:600;color:var(--text);display:block;margin-bottom:4px}
+input[type=number],input[type=text],select{width:100%;padding:9px 11px;border:1.5px solid var(--border);border-radius:8px;font-size:16px;font-family:inherit;background:#fff;color:var(--text);outline:none;transition:border .2s}
+input[type=number]:focus,input[type=text]:focus,select:focus{border-color:var(--accent)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
+.mb10{margin-bottom:10px}
+.mb12{margin-bottom:12px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 18px;border:none;border-radius:8px;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .2s;font-family:inherit}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:#0258a1;transform:translateY(-1px)}
+.btn-secondary{background:var(--card2);color:var(--accent);border:1.5px solid var(--border)}
+.btn-secondary:hover{background:#d6eaff}
+.btn-green{background:var(--green);color:#fff}
+.btn-green:hover{background:#138a3e}
+.btn-red{background:var(--red);color:#fff;padding:6px 12px;font-size:.75rem}
+.btn-full{width:100%;margin-top:4px}
+.result-box{background:var(--card2);border:1.5px solid var(--border);border-radius:10px;padding:14px;margin-top:12px}
+.result-title{font-size:.8rem;font-weight:700;color:var(--accent);margin-bottom:10px}
+.result-item{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:.82rem}
+.result-item:last-child{border-bottom:none}
+.result-item .val{font-weight:600;color:var(--text)}
+.result-total{background:var(--accent);color:#fff;border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-weight:700;font-size:.9rem}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:.72rem;font-weight:600}
+.badge-blue{background:#dbeafe;color:#1d4ed8}
+.badge-green{background:#dcfce7;color:#15803d}
+.badge-yellow{background:#fef9c3;color:#854d0e}
+.info-box{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 12px;font-size:.78rem;color:#1e40af;margin-bottom:10px}
+.warn-box{background:#fefce8;border:1px solid #fde047;border-radius:8px;padding:10px 12px;font-size:.78rem;color:#854d0e;margin-bottom:10px}
+.section-label{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:8px;margin-top:14px}
+.toggle-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.toggle-row label{margin:0;font-size:.82rem;cursor:pointer}
+input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);cursor:pointer}
+.opening-row{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end;margin-bottom:8px}
+.opening-row input{margin-bottom:0}
+.small-label{font-size:.72rem;color:var(--muted);margin-bottom:3px;display:block}
+.area-row{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end;margin-bottom:8px}
+.presup-table{width:100%;border-collapse:collapse;font-size:.8rem}
+.presup-table th{background:var(--card2);padding:7px 8px;text-align:left;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);border-bottom:2px solid var(--border)}
+.presup-table td{padding:7px 8px;border-bottom:1px solid var(--border);vertical-align:middle}
+.presup-table tr:last-child td{border-bottom:none}
+.empty-msg{text-align:center;color:var(--muted);font-size:.82rem;padding:24px 0}
+.mix-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.mix-card{border:2px solid var(--border);border-radius:10px;padding:10px;cursor:pointer;transition:all .2s;text-align:center}
+.mix-card:hover{border-color:var(--accent);background:var(--card2)}
+.mix-card.selected{border-color:var(--accent);background:#dbeafe}
+.mix-card .mix-name{font-size:.9rem;font-weight:700;color:var(--text)}
+.mix-card .mix-use{font-size:.7rem;color:var(--muted);margin-top:2px}
+.mix-card .mix-ratio{font-size:.72rem;font-weight:600;color:var(--accent);margin-top:4px;background:#e0f2fe;border-radius:4px;padding:2px 6px;display:inline-block}
+.helper-section{border-top:2px dashed var(--border);padding-top:14px;margin-top:14px}
+.tabs-inner{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.tab-inner-btn{padding:5px 12px;border:1.5px solid var(--border);border-radius:20px;font-size:.75rem;font-weight:600;cursor:pointer;background:#fff;color:var(--muted);font-family:inherit;transition:all .2s}
+.tab-inner-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.wall-visual{background:#f8faff;border:1.5px solid var(--border);border-radius:8px;padding:14px;margin-top:10px;min-height:80px;position:relative;overflow:hidden}
+.wall-bar{background:#93c5fd;border-radius:4px;height:60px;position:relative;margin:0 auto}
+.opening-bar{background:#fff;border:2px solid #60a5fa;border-radius:3px;position:absolute;top:10px}
+.cost-breakdown{margin-top:8px}
+.cost-item{display:flex;justify-content:space-between;font-size:.78rem;padding:4px 0;border-bottom:1px dashed var(--border)}
+.cost-item:last-child{border-bottom:none}
+@media(max-width:400px){.mix-grid{grid-template-columns:1fr 1fr}.row3{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>🏗️ ConstruccionCL</h1>
+    <span>Calculadora de Materiales</span>
+  </div>
+  <div style="font-size:.75rem;opacity:.7;text-align:right">Precios CLP<br>2024-2025</div>
+</header>
+
+<nav id="mainNav">
+  <button class="tab-btn active" onclick="switchTab('hormigon',this)">🧱 Hormigón</button>
+  <button class="tab-btn" onclick="switchTab('muros',this)">⚒️ Muros</button>
+  <button class="tab-btn" onclick="switchTab('pavimentos',this)">🪟 Pavimentos</button>
+  <button class="tab-btn" onclick="switchTab('pintura',this)">🪣 Pintura</button>
+  <button class="tab-btn" onclick="switchTab('presupuesto',this)">🔩 Presupuesto</button>
+</nav>
+
+<!-- TAB 1: HORMIGON -->
+<div id="tab-hormigon" class="tab-panel active">
+  <div class="card">
+    <div class="card-title">🧱 Tipo de Mezcla</div>
+    <div class="mix-grid">
+      <div class="mix-card selected" id="mix-H15" onclick="selMix('H15')">
+        <div class="mix-name">H15</div>
+        <div class="mix-ratio">1 : 3 : 3</div>
+        <div class="mix-use">Bodegas, veredas, sobrecimientos</div>
+      </div>
+      <div class="mix-card" id="mix-H20" onclick="selMix('H20')">
+        <div class="mix-name">H20</div>
+        <div class="mix-ratio">1 : 2 : 3</div>
+        <div class="mix-use">Losas, pilares, fundaciones</div>
+      </div>
+      <div class="mix-card" id="mix-H25" onclick="selMix('H25')">
+        <div class="mix-name">H25</div>
+        <div class="mix-ratio">1 : 2 : 2</div>
+        <div class="mix-use">Hormigón resistente, vigas</div>
+      </div>
+      <div class="mix-card" id="mix-H30" onclick="selMix('H30')">
+        <div class="mix-name">H30</div>
+        <div class="mix-ratio">1 : 1.5 : 2</div>
+        <div class="mix-use">Estructural, alta resistencia</div>
+      </div>
+    </div>
+    <div class="mb12">
+      <label>Volumen necesario (m³)</label>
+      <input type="number" id="horm-vol" value="1" min="0.1" step="0.1" oninput="calcHormigon()">
+    </div>
+    <button class="btn btn-primary btn-full" onclick="calcHormigon()">Calcular materiales</button>
+    <div id="horm-result"></div>
+    <div id="horm-add-btn"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📐 ¿Cuántos m³ necesito?</div>
+    <div class="tabs-inner">
+      <button class="tab-inner-btn active" id="helper-btn-vereda" onclick="selHelper('vereda')">Vereda</button>
+      <button class="tab-inner-btn" id="helper-btn-losa" onclick="selHelper('losa')">Losa</button>
+      <button class="tab-inner-btn" id="helper-btn-pilar" onclick="selHelper('pilar')">Pilar circular</button>
+    </div>
+    <div id="helper-vereda">
+      <div class="row">
+        <div><label>Largo (m)</label><input type="number" id="h-v-largo" value="5" step="0.1" oninput="calcHelper()"></div>
+        <div><label>Ancho (m)</label><input type="number" id="h-v-ancho" value="1.2" step="0.1" oninput="calcHelper()"></div>
+      </div>
+      <div class="info-box">Espesor estándar vereda: <strong>8 cm</strong></div>
+    </div>
+    <div id="helper-losa" style="display:none">
+      <div class="row">
+        <div><label>Largo (m)</label><input type="number" id="h-l-largo" value="6" step="0.1" oninput="calcHelper()"></div>
+        <div><label>Ancho (m)</label><input type="number" id="h-l-ancho" value="4" step="0.1" oninput="calcHelper()"></div>
+      </div>
+      <div class="info-box">Espesor estándar losa: <strong>12 cm</strong></div>
+    </div>
+    <div id="helper-pilar" style="display:none">
+      <div class="row">
+        <div><label>Diámetro (m)</label><input type="number" id="h-p-diam" value="0.3" step="0.05" oninput="calcHelper()"></div>
+        <div><label>Altura (m)</label><input type="number" id="h-p-alt" value="2.5" step="0.1" oninput="calcHelper()"></div>
+      </div>
+      <div class="info-box">Volumen = π/4 × Ø² × altura</div>
+    </div>
+    <div id="helper-result"></div>
+  </div>
+</div>
+
+<!-- TAB 2: MUROS -->
+<div id="tab-muros" class="tab-panel">
+  <div class="card">
+    <div class="card-title">⚒️ Material del Muro</div>
+    <div class="mb12">
+      <label>Tipo de unidad</label>
+      <select id="muro-tipo" onchange="calcMuro()">
+        <option value="ladrillo">Ladrillo corriente (6×12×25 cm)</option>
+        <option value="bloque19">Bloque cemento 19×19×39 cm</option>
+        <option value="bloque14">Bloque cemento 14×19×39 cm</option>
+      </select>
+    </div>
+    <div class="row">
+      <div><label>Largo del muro (m)</label><input type="number" id="muro-largo" value="5" step="0.1" oninput="calcMuro()"></div>
+      <div><label>Alto del muro (m)</label><input type="number" id="muro-alto" value="2.5" step="0.1" oninput="calcMuro()"></div>
+    </div>
+    <div class="toggle-row">
+      <input type="checkbox" id="muro-revoque" onchange="calcMuro()">
+      <label for="muro-revoque">Incluir revoque / estuque</label>
+    </div>
+    <div class="section-label">Ventanas y Puertas (restar)</div>
+    <div id="openings-container"></div>
+    <button class="btn btn-secondary" onclick="addOpening()" style="margin-bottom:10px;font-size:.78rem;padding:7px 14px">+ Agregar vano</button>
+    <button class="btn btn-primary btn-full" onclick="calcMuro()">Calcular muro</button>
+    <div id="muro-result"></div>
+    <div id="muro-add-btn"></div>
+    <div id="muro-visual" class="wall-visual" style="display:none"></div>
+  </div>
+</div>
+
+<!-- TAB 3: PAVIMENTOS -->
+<div id="tab-pavimentos" class="tab-panel">
+  <div class="card">
+    <div class="card-title">🪟 Áreas a Pavimentar</div>
+    <div id="areas-container"></div>
+    <button class="btn btn-secondary" onclick="addArea()" style="font-size:.78rem;padding:7px 14px;margin-bottom:12px">+ Agregar área</button>
+    <div class="mb12">
+      <label>Material</label>
+      <select id="pav-material" onchange="calcPavimentos()">
+        <option value="ceramica30">Cerámica 30×30 cm</option>
+        <option value="ceramica45">Cerámica 45×45 cm</option>
+        <option value="ceramica60">Cerámica 60×60 cm</option>
+        <option value="porcelanato60">Porcelanato 60×60 cm</option>
+        <option value="porcelanato60120">Porcelanato 60×120 cm</option>
+        <option value="parquet">Parquet (m²)</option>
+        <option value="flexit">Flexit / Vinílico (m²)</option>
+        <option value="hormigon">Hormigón pulido (m²)</option>
+      </select>
+    </div>
+    <div class="mb12">
+      <label>Desperdicio</label>
+      <select id="pav-desperdicio" onchange="calcPavimentos()">
+        <option value="5">5% — Ambientes regulares, cortes simples</option>
+        <option value="10" selected>10% — Estándar recomendado</option>
+        <option value="15">15% — Cortes en diagonal, muchos ángulos</option>
+      </select>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="calcPavimentos()">Calcular pavimento</button>
+    <div id="pav-result"></div>
+    <div id="pav-add-btn"></div>
+  </div>
+</div>
+
+<!-- TAB 4: PINTURA -->
+<div id="tab-pintura" class="tab-panel">
+  <div class="card">
+    <div class="card-title">🪣 Tipo de Pintura</div>
+    <div class="mb12">
+      <label>Superficie</label>
+      <select id="pin-tipo" onchange="calcPintura()">
+        <option value="latex">Interior — Látex (8–10 m²/L)</option>
+        <option value="esmalte">Exterior — Esmalte (10–12 m²/L)</option>
+        <option value="cielo">Cielo — Látex (1 mano, 9 m²/L)</option>
+        <option value="metal">Metal — Anticorrosivo (6–8 m²/L)</option>
+      </select>
+    </div>
+    <div class="row">
+      <div>
+        <label>Manos de pintura</label>
+        <select id="pin-manos" onchange="calcPintura()">
+          <option value="1">1 mano</option>
+          <option value="2" selected>2 manos</option>
+          <option value="3">3 manos</option>
+        </select>
+      </div>
+      <div>
+        <label>¿Incluir sellador?</label>
+        <select id="pin-sellador" onchange="calcPintura()">
+          <option value="0">No</option>
+          <option value="1">Sí (1 mano)</option>
+        </select>
+      </div>
+    </div>
+    <div class="section-label">Superficies a pintar</div>
+    <div id="pin-areas-container"></div>
+    <button class="btn btn-secondary" onclick="addPinArea()" style="font-size:.78rem;padding:7px 14px;margin-bottom:12px">+ Agregar superficie</button>
+    <div class="toggle-row">
+      <input type="checkbox" id="pin-restar" onchange="calcPintura()">
+      <label for="pin-restar">Restar ventanas/puertas (promedio 1.8 m² c/u)</label>
+    </div>
+    <div id="pin-restar-cont" style="display:none;margin-bottom:10px">
+      <label>Cantidad de vanos (ventanas + puertas)</label>
+      <input type="number" id="pin-vanos" value="2" min="0" oninput="calcPintura()">
+    </div>
+    <button class="btn btn-primary btn-full" onclick="calcPintura()">Calcular pintura</button>
+    <div id="pin-result"></div>
+    <div id="pin-add-btn"></div>
+  </div>
+</div>
+
+<!-- TAB 5: PRESUPUESTO -->
+<div id="tab-presupuesto" class="tab-panel">
+  <div class="card">
+    <div class="card-title">🔩 Presupuesto del Proyecto</div>
+    <div id="presup-table-wrap">
+      <p class="empty-msg">Agrega materiales desde cada pestaña usando el botón<br><strong>"Agregar al presupuesto"</strong></p>
+    </div>
+    <div id="presup-total-box" style="display:none" class="result-total">
+      <span>TOTAL PROYECTO</span>
+      <span id="presup-grand-total">$0</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">➕ Agregar Material Manualmente</div>
+    <div class="mb10">
+      <label>Nombre del material</label>
+      <input type="text" id="manual-nombre" placeholder="Ej: Fierro 10mm">
+    </div>
+    <div class="row">
+      <div><label>Cantidad</label><input type="number" id="manual-qty" value="1" min="0" step="0.1"></div>
+      <div><label>Precio unitario (CLP)</label><input type="number" id="manual-precio" value="0" min="0"></div>
+    </div>
+    <div class="mb10">
+      <label>Unidad</label>
+      <input type="text" id="manual-unit" placeholder="m², kg, und, saco..." value="und">
+    </div>
+    <button class="btn btn-primary btn-full" onclick="addManual()">Agregar al presupuesto</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📊 Estimador con Gastos Generales</div>
+    <div class="mb12">
+      <label>Overhead / margen contratista (%)</label>
+      <select id="margin-pct" onchange="updatePresupTotal()">
+        <option value="0">Sin overhead (solo materiales)</option>
+        <option value="10">+10% — Imprevistos</option>
+        <option value="20" selected>+20% — Contratista estándar</option>
+        <option value="30">+30% — Contratista + utilidad</option>
+        <option value="40">+40% — Proyecto llave en mano</option>
+        <option value="custom">Personalizado</option>
+      </select>
+    </div>
+    <div id="custom-margin-cont" style="display:none;margin-bottom:12px">
+      <label>Porcentaje personalizado</label>
+      <input type="number" id="custom-margin-val" value="25" min="0" max="200" oninput="updatePresupTotal()">
+    </div>
+    <div id="margin-result" class="result-box" style="display:none"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📤 Exportar Presupuesto</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+      <button class="btn btn-secondary" onclick="copyPresup()">📋 Copiar lista</button>
+      <button class="btn btn-green" onclick="sendWhatsApp()">📱 WhatsApp</button>
+    </div>
+    <button class="btn btn-secondary btn-full" onclick="window.print()">🖨️ Imprimir</button>
+  </div>
+</div>
+
+<script>
+// ─── PRECIOS ────────────────────────────────────────────────
+const PRECIOS = {
+  cemento_saco_25kg: 8500,
+  arena_m3: 28000,
+  grava_m3: 32000,
+  ladrillo_corriente: 320,
+  bloque_cemento_19x19x39: 1800,
+  bloque_cemento_14x19x39: 1500,
+  ceramica_m2: 8500,
+  ceramica_porcelanato_m2: 18000,
+  pintura_latex_galon: 14000,
+  pintura_esmalte_galon: 22000,
+  pintura_metal_galon: 28000,
+  adhesivo_ceramica_saco25kg: 6500,
+  fragüe_kg: 350,
+  yeso_saco_20kg: 5500,
+  estuco_saco_25kg: 6800,
+  sellador_galon: 11000,
+  parquet_m2: 12000,
+  flexit_m2: 5500,
+};
+
+const clp = n => '$' + Math.round(n).toLocaleString('es-CL');
+
+// ─── TABS ─────────────────────────────────────────────────
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ─── TAB 1: HORMIGON ──────────────────────────────────────
+const MIX = {
+  H15: { c:1, a:3, g:3, label:'H15 (1:3:3)', agua:0.6 },
+  H20: { c:1, a:2, g:3, label:'H20 (1:2:3)', agua:0.55 },
+  H25: { c:1, a:2, g:2, label:'H25 (1:2:2)', agua:0.5 },
+  H30: { c:1, a:1.5, g:2, label:'H30 (1:1.5:2)', agua:0.45 },
+};
+let selMixKey = 'H15';
+
+function selMix(k) {
+  selMixKey = k;
+  document.querySelectorAll('.mix-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('mix-' + k).classList.add('selected');
+  calcHormigon();
+}
+
+function calcHormigon() {
+  const vol = parseFloat(document.getElementById('horm-vol').value) || 0;
+  const m = MIX[selMixKey];
+  const total_parts = m.c + m.a + m.g;
+  // Factor de compactación aprox 1.3
+  const factor = 1.3;
+  const cemento_m3 = (vol * m.c / total_parts) * factor;
+  const arena_m3 = (vol * m.a / total_parts) * factor;
+  const grava_m3 = (vol * m.g / total_parts) * factor;
+  // 1m³ cemento = ~1400kg → 1 saco 25kg = 0.01786 m³ → sacos = m3/0.01786
+  const sacos = Math.ceil(cemento_m3 / 0.01786);
+  const agua_l = Math.round(vol * m.agua * 1000);
+  const costo_cemento = sacos * PRECIOS.cemento_saco_25kg;
+  const costo_arena = arena_m3 * PRECIOS.arena_m3;
+  const costo_grava = grava_m3 * PRECIOS.grava_m3;
+  const total = costo_cemento + costo_arena + costo_grava;
+
+  const html = `
+    <div class="result-box">
+      <div class="result-title">Resultados — ${m.label} — ${vol} m³</div>
+      <div class="result-item"><span>🏭 Cemento</span><span class="val">${sacos} sacos 25kg</span></div>
+      <div class="result-item"><span>🟡 Arena</span><span class="val">${arena_m3.toFixed(2)} m³</span></div>
+      <div class="result-item"><span>⚫ Grava / Ripio</span><span class="val">${grava_m3.toFixed(2)} m³</span></div>
+      <div class="result-item"><span>💧 Agua aprox.</span><span class="val">${agua_l} litros</span></div>
+      <div class="section-label" style="margin-top:10px">Desglose de costos</div>
+      <div class="cost-item"><span>Cemento (${sacos} sacos × ${clp(PRECIOS.cemento_saco_25kg)})</span><span>${clp(costo_cemento)}</span></div>
+      <div class="cost-item"><span>Arena (${arena_m3.toFixed(2)} m³ × ${clp(PRECIOS.arena_m3)})</span><span>${clp(costo_arena)}</span></div>
+      <div class="cost-item"><span>Grava (${grava_m3.toFixed(2)} m³ × ${clp(PRECIOS.grava_m3)})</span><span>${clp(costo_grava)}</span></div>
+      <div class="result-total">
+        <span>TOTAL MATERIALES</span><span>${clp(total)}</span>
+      </div>
+    </div>`;
+  document.getElementById('horm-result').innerHTML = html;
+
+  const addBtn = `<button class="btn btn-green btn-full" style="margin-top:8px" onclick="addToPresup([
+    {nombre:'Cemento (saco 25kg)',qty:${sacos},unit:'saco',precio:${PRECIOS.cemento_saco_25kg}},
+    {nombre:'Arena',qty:${arena_m3.toFixed(2)},unit:'m³',precio:${PRECIOS.arena_m3}},
+    {nombre:'Grava/Ripio',qty:${grava_m3.toFixed(2)},unit:'m³',precio:${PRECIOS.grava_m3}}
+  ])">➕ Agregar al presupuesto</button>`;
+  document.getElementById('horm-add-btn').innerHTML = addBtn;
+}
+
+// Helper de volumen
+let helperMode = 'vereda';
+function selHelper(m) {
+  helperMode = m;
+  ['vereda','losa','pilar'].forEach(k => {
+    document.getElementById('helper-' + k).style.display = k === m ? 'block' : 'none';
+    document.getElementById('helper-btn-' + k).classList.toggle('active', k === m);
+  });
+  calcHelper();
+}
+function calcHelper() {
+  let vol = 0;
+  if (helperMode === 'vereda') {
+    const l = parseFloat(document.getElementById('h-v-largo').value) || 0;
+    const a = parseFloat(document.getElementById('h-v-ancho').value) || 0;
+    vol = l * a * 0.08;
+  } else if (helperMode === 'losa') {
+    const l = parseFloat(document.getElementById('h-l-largo').value) || 0;
+    const a = parseFloat(document.getElementById('h-l-ancho').value) || 0;
+    vol = l * a * 0.12;
+  } else {
+    const d = parseFloat(document.getElementById('h-p-diam').value) || 0;
+    const h = parseFloat(document.getElementById('h-p-alt').value) || 0;
+    vol = Math.PI / 4 * d * d * h;
+  }
+  document.getElementById('helper-result').innerHTML = `
+    <div class="result-box" style="margin-top:10px">
+      <div class="result-item"><span>Volumen calculado</span><span class="val">${vol.toFixed(3)} m³</span></div>
+      <div style="margin-top:8px">
+        <button class="btn btn-primary btn-full" onclick="document.getElementById('horm-vol').value=${vol.toFixed(3)};calcHormigon()">Usar este volumen ↑</button>
+      </div>
+    </div>`;
+}
+
+// ─── TAB 2: MUROS ─────────────────────────────────────────
+let openings = [];
+
+function addOpening() {
+  openings.push({ id: Date.now(), ancho: 0.9, alto: 2.1 });
+  renderOpenings();
+}
+
+function removeOpening(id) {
+  openings = openings.filter(o => o.id !== id);
+  renderOpenings();
+  calcMuro();
+}
+
+function renderOpenings() {
+  const c = document.getElementById('openings-container');
+  if (openings.length === 0) { c.innerHTML = ''; return; }
+  c.innerHTML = openings.map((o, i) => `
+    <div class="opening-row">
+      <div><span class="small-label">Ancho vano ${i+1} (m)</span>
+        <input type="number" value="${o.ancho}" step="0.1" onchange="openings[${i}].ancho=parseFloat(this.value)||0;calcMuro()"></div>
+      <div><span class="small-label">Alto vano ${i+1} (m)</span>
+        <input type="number" value="${o.alto}" step="0.1" onchange="openings[${i}].alto=parseFloat(this.value)||0;calcMuro()"></div>
+      <button class="btn btn-red" onclick="removeOpening(${o.id})">✕</button>
+    </div>`).join('');
+}
+
+const MURO_DATA = {
+  ladrillo:  { label:'Ladrillo corriente', por_m2: 32, precio: PRECIOS.ladrillo_corriente },
+  bloque19:  { label:'Bloque 19×19×39 cm', por_m2: 12.5, precio: PRECIOS.bloque_cemento_19x19x39 },
+  bloque14:  { label:'Bloque 14×19×39 cm', por_m2: 12.5, precio: PRECIOS.bloque_cemento_14x19x39 },
+};
+
+function calcMuro() {
+  const largo = parseFloat(document.getElementById('muro-largo').value) || 0;
+  const alto = parseFloat(document.getElementById('muro-alto').value) || 0;
+  const tipo = document.getElementById('muro-tipo').value;
+  const revoque = document.getElementById('muro-revoque').checked;
+  const areaTotal = largo * alto;
+  const areaVanos = openings.reduce((s, o) => s + (o.ancho * o.alto), 0);
+  const areaNeta = Math.max(0, areaTotal - areaVanos);
+  const mat = MURO_DATA[tipo];
+  const unidades = Math.ceil(areaNeta * mat.por_m2 * 1.05); // 5% desperdicio
+  // Mortero: 1m² muro ~ 12kg cemento + 36kg arena (aprox proporcion 1:3 peso)
+  const cemento_kg = Math.round(areaNeta * 12);
+  const arena_kg = Math.round(areaNeta * 36);
+  const sacos_cemento = Math.ceil(cemento_kg / 25);
+  // Costos
+  const costo_mat = unidades * mat.precio;
+  const costo_cemento = sacos_cemento * PRECIOS.cemento_saco_25kg;
+  const arena_m3 = arena_kg / (1600); // densidad arena ~1600 kg/m3
+  const costo_arena = arena_m3 * PRECIOS.arena_m3;
+  let html_rev = '';
+  let costo_rev = 0;
+  if (revoque) {
+    // Yeso 2mm: ~3.5 kg/m², estuco 1cm: ~15 kg/m²
+    const yeso_kg = Math.ceil(areaNeta * 3.5);
+    const estuco_kg = Math.ceil(areaNeta * 15);
+    const sacos_yeso = Math.ceil(yeso_kg / 20);
+    const sacos_estuco = Math.ceil(estuco_kg / 25);
+    costo_rev = sacos_yeso * PRECIOS.yeso_saco_20kg + sacos_estuco * PRECIOS.estuco_saco_25kg;
+    html_rev = `
+      <div class="result-item"><span>🪚 Yeso (saco 20kg)</span><span class="val">${sacos_yeso} sacos</span></div>
+      <div class="result-item"><span>🟤 Estuco (saco 25kg)</span><span class="val">${sacos_estuco} sacos</span></div>`;
+  }
+  const total = costo_mat + costo_cemento + costo_arena + costo_rev;
+
+  document.getElementById('muro-result').innerHTML = `
+    <div class="result-box">
+      <div class="result-title">Resultados — ${mat.label}</div>
+      <div class="result-item"><span>📐 Área bruta</span><span class="val">${areaTotal.toFixed(2)} m²</span></div>
+      <div class="result-item"><span>🔲 Área vanos</span><span class="val">−${areaVanos.toFixed(2)} m²</span></div>
+      <div class="result-item"><span>✅ Área neta muro</span><span class="val"><strong>${areaNeta.toFixed(2)} m²</strong></span></div>
+      <div class="result-item"><span>🧱 ${mat.label} (+5%)</span><span class="val">${unidades.toLocaleString('es-CL')} und.</span></div>
+      <div class="result-item"><span>🏭 Cemento mortero</span><span class="val">${sacos_cemento} sacos 25kg</span></div>
+      <div class="result-item"><span>🟡 Arena mortero</span><span class="val">${arena_m3.toFixed(2)} m³</span></div>
+      ${html_rev}
+      <div class="cost-item" style="margin-top:8px"><span>${mat.label} (${unidades} × ${clp(mat.precio)})</span><span>${clp(costo_mat)}</span></div>
+      <div class="cost-item"><span>Cemento mortero (${sacos_cemento} sacos)</span><span>${clp(costo_cemento)}</span></div>
+      <div class="cost-item"><span>Arena mortero</span><span>${clp(costo_arena)}</span></div>
+      ${revoque ? `<div class="cost-item"><span>Revoque (yeso + estuco)</span><span>${clp(costo_rev)}</span></div>` : ''}
+      <div class="result-total"><span>TOTAL MATERIALES</span><span>${clp(total)}</span></div>
+    </div>`;
+
+  const addItems = [
+    `{nombre:'${mat.label}',qty:${unidades},unit:'und',precio:${mat.precio}}`,
+    `{nombre:'Cemento mortero (25kg)',qty:${sacos_cemento},unit:'saco',precio:${PRECIOS.cemento_saco_25kg}}`,
+    `{nombre:'Arena mortero',qty:${arena_m3.toFixed(2)},unit:'m³',precio:${PRECIOS.arena_m3}}`,
+  ];
+  document.getElementById('muro-add-btn').innerHTML = `<button class="btn btn-green btn-full" style="margin-top:8px" onclick="addToPresup([${addItems.join(',')}])">➕ Agregar al presupuesto</button>`;
+
+  // Visual
+  drawWallVisual(largo, alto);
+}
+
+function drawWallVisual(largo, alto) {
+  const vis = document.getElementById('muro-visual');
+  vis.style.display = 'block';
+  const maxW = Math.min(300, window.innerWidth - 80);
+  const scale = maxW / Math.max(largo, 0.1);
+  const wallW = largo * scale;
+  const wallH = Math.min(150, alto * scale * 1.5);
+  let bars = openings.map(o => {
+    const ow = Math.round(o.ancho * scale);
+    const oh = Math.round(o.alto / alto * wallH * 0.8);
+    const ox = Math.round(Math.random() * (wallW - ow - 10) + 5);
+    return `<div class="opening-bar" style="width:${ow}px;height:${oh}px;left:${ox}px;bottom:0"></div>`;
+  }).join('');
+  vis.innerHTML = `<div style="font-size:.72rem;color:var(--muted);margin-bottom:6px">Vista esquemática del muro</div>
+    <div class="wall-bar" style="width:${wallW}px;height:${wallH}px">${bars}</div>
+    <div style="font-size:.7rem;color:var(--muted);text-align:center;margin-top:4px">${largo}m × ${alto}m</div>`;
+}
+
+// ─── TAB 3: PAVIMENTOS ────────────────────────────────────
+let areas = [];
+
+function addArea() {
+  areas.push({ id: Date.now(), largo: 0, ancho: 0 });
+  renderAreas();
+}
+
+function removeArea(id) {
+  areas = areas.filter(a => a.id !== id);
+  renderAreas();
+  calcPavimentos();
+}
+
+function renderAreas() {
+  const c = document.getElementById('areas-container');
+  if (areas.length === 0) {
+    c.innerHTML = '<div class="warn-box">Agrega al menos un área para calcular.</div>';
+    return;
+  }
+  c.innerHTML = areas.map((a, i) => `
+    <div class="area-row">
+      <div><span class="small-label">Largo ${i+1} (m)</span>
+        <input type="number" value="${a.largo || ''}" placeholder="ej: 4.5" step="0.1" oninput="areas[${i}].largo=parseFloat(this.value)||0;calcPavimentos()"></div>
+      <div><span class="small-label">Ancho ${i+1} (m)</span>
+        <input type="number" value="${a.ancho || ''}" placeholder="ej: 3.2" step="0.1" oninput="areas[${i}].ancho=parseFloat(this.value)||0;calcPavimentos()"></div>
+      <button class="btn btn-red" onclick="removeArea(${a.id})">✕</button>
+    </div>`).join('');
+}
+
+const PAV_DATA = {
+  ceramica30:      { label:'Cerámica 30×30', tam:0.3*0.3, precio: PRECIOS.ceramica_m2, tipo:'ceramica' },
+  ceramica45:      { label:'Cerámica 45×45', tam:0.45*0.45, precio: PRECIOS.ceramica_m2 * 1.1, tipo:'ceramica' },
+  ceramica60:      { label:'Cerámica 60×60', tam:0.6*0.6, precio: PRECIOS.ceramica_m2 * 1.3, tipo:'ceramica' },
+  porcelanato60:   { label:'Porcelanato 60×60', tam:0.6*0.6, precio: PRECIOS.ceramica_porcelanato_m2, tipo:'ceramica' },
+  porcelanato60120:{ label:'Porcelanato 60×120', tam:0.6*1.2, precio: PRECIOS.ceramica_porcelanato_m2 * 1.2, tipo:'ceramica' },
+  parquet:         { label:'Parquet', tam:1, precio: PRECIOS.parquet_m2, tipo:'m2' },
+  flexit:          { label:'Flexit / Vinílico', tam:1, precio: PRECIOS.flexit_m2, tipo:'m2' },
+  hormigon:        { label:'Hormigón pulido', tam:1, precio: 18000, tipo:'m2' },
+};
+
+function calcPavimentos() {
+  const areaTotal = areas.reduce((s, a) => s + (a.largo * a.ancho), 0);
+  const despPct = parseInt(document.getElementById('pav-desperdicio').value) / 100;
+  const matKey = document.getElementById('pav-material').value;
+  const mat = PAV_DATA[matKey];
+  const areaConDesp = areaTotal * (1 + despPct);
+  const unidades = mat.tipo === 'ceramica' ? Math.ceil(areaConDesp / mat.tam) : null;
+  const costo_mat = areaConDesp * mat.precio;
+  // Adhesivo: 1 saco 25kg cubre 4m²
+  const sacos_adhesivo = mat.tipo === 'ceramica' ? Math.ceil(areaConDesp / 4) : 0;
+  const costo_adhesivo = sacos_adhesivo * PRECIOS.adhesivo_ceramica_saco25kg;
+  // Fragüe: ~0.5 kg/m² (junta 3mm)
+  const frague_kg = mat.tipo === 'ceramica' ? Math.ceil(areaConDesp * 0.5) : 0;
+  const costo_frague = frague_kg * PRECIOS.fragüe_kg;
+  const total = costo_mat + costo_adhesivo + costo_frague;
+
+  let html_und = mat.tipo === 'ceramica' ? `<div class="result-item"><span>🔲 Piezas (${mat.label})</span><span class="val">${unidades.toLocaleString('es-CL')} und.</span></div>` : '';
+  let html_adh = mat.tipo === 'ceramica' ? `
+    <div class="result-item"><span>🟦 Adhesivo cerámico (saco 25kg)</span><span class="val">${sacos_adhesivo} sacos</span></div>
+    <div class="result-item"><span>⬜ Fragüe</span><span class="val">${frague_kg} kg</span></div>` : '';
+
+  document.getElementById('pav-result').innerHTML = `
+    <div class="result-box">
+      <div class="result-title">Resultados — ${mat.label}</div>
+      <div class="result-item"><span>📐 Área neta total</span><span class="val">${areaTotal.toFixed(2)} m²</span></div>
+      <div class="result-item"><span>📦 Con desperdicio (+${Math.round(despPct*100)}%)</span><span class="val"><strong>${areaConDesp.toFixed(2)} m²</strong></span></div>
+      ${html_und}${html_adh}
+      <div class="cost-item" style="margin-top:8px"><span>${mat.label} (${areaConDesp.toFixed(2)} m² × ${clp(mat.precio)})</span><span>${clp(costo_mat)}</span></div>
+      ${mat.tipo === 'ceramica' ? `<div class="cost-item"><span>Adhesivo cerámico (${sacos_adhesivo} sacos)</span><span>${clp(costo_adhesivo)}</span></div>
+      <div class="cost-item"><span>Fragüe (${frague_kg} kg)</span><span>${clp(costo_frague)}</span></div>` : ''}
+      <div class="result-total"><span>TOTAL MATERIALES</span><span>${clp(total)}</span></div>
+    </div>`;
+
+  const addItems = [`{nombre:'${mat.label}',qty:${areaConDesp.toFixed(2)},unit:'m²',precio:${mat.precio}}`];
+  if (mat.tipo === 'ceramica') {
+    addItems.push(`{nombre:'Adhesivo cerámico (25kg)',qty:${sacos_adhesivo},unit:'saco',precio:${PRECIOS.adhesivo_ceramica_saco25kg}}`);
+    addItems.push(`{nombre:'Fragüe',qty:${frague_kg},unit:'kg',precio:${PRECIOS.fragüe_kg}}`);
+  }
+  document.getElementById('pav-add-btn').innerHTML = `<button class="btn btn-green btn-full" style="margin-top:8px" onclick="addToPresup([${addItems.join(',')}])">➕ Agregar al presupuesto</button>`;
+}
+
+// ─── TAB 4: PINTURA ────────────────────────────────────────
+let pinAreas = [];
+
+function addPinArea() {
+  pinAreas.push({ id: Date.now(), largo: 0, alto: 0 });
+  renderPinAreas();
+}
+
+function removePinArea(id) {
+  pinAreas = pinAreas.filter(a => a.id !== id);
+  renderPinAreas();
+  calcPintura();
+}
+
+function renderPinAreas() {
+  const c = document.getElementById('pin-areas-container');
+  if (pinAreas.length === 0) {
+    c.innerHTML = '<div class="warn-box">Agrega al menos una superficie para calcular.</div>';
+    return;
+  }
+  c.innerHTML = pinAreas.map((a, i) => `
+    <div class="area-row">
+      <div><span class="small-label">Largo/base ${i+1} (m)</span>
+        <input type="number" value="${a.largo || ''}" placeholder="ej: 4" step="0.1" oninput="pinAreas[${i}].largo=parseFloat(this.value)||0;calcPintura()"></div>
+      <div><span class="small-label">Alto ${i+1} (m)</span>
+        <input type="number" value="${a.alto || ''}" placeholder="ej: 2.5" step="0.1" oninput="pinAreas[${i}].alto=parseFloat(this.value)||0;calcPintura()"></div>
+      <button class="btn btn-red" onclick="removePinArea(${a.id})">✕</button>
+    </div>`).join('');
+}
+
+document.getElementById('pin-restar').addEventListener('change', function() {
+  document.getElementById('pin-restar-cont').style.display = this.checked ? 'block' : 'none';
+  calcPintura();
+});
+
+document.getElementById('margin-pct').addEventListener('change', function() {
+  document.getElementById('custom-margin-cont').style.display = this.value === 'custom' ? 'block' : 'none';
+  updatePresupTotal();
+});
+
+const PIN_TIPOS = {
+  latex:   { label:'Látex interior', rendL: 9, precio: PRECIOS.pintura_latex_galon },
+  esmalte: { label:'Esmalte exterior', rendL: 11, precio: PRECIOS.pintura_esmalte_galon },
+  cielo:   { label:'Látex cielo (1 mano)', rendL: 9, precio: PRECIOS.pintura_latex_galon },
+  metal:   { label:'Anticorrosivo metal', rendL: 7, precio: PRECIOS.pintura_metal_galon },
+};
+
+function calcPintura() {
+  const tipo = document.getElementById('pin-tipo').value;
+  const manos = parseInt(document.getElementById('pin-manos').value);
+  const sellador = parseInt(document.getElementById('pin-sellador').value);
+  const restar = document.getElementById('pin-restar').checked;
+  const vanos = restar ? (parseInt(document.getElementById('pin-vanos').value) || 0) : 0;
+  const mat = PIN_TIPOS[tipo];
+  const areaTotal = pinAreas.reduce((s, a) => s + (a.largo * a.alto), 0);
+  const areaVanos = vanos * 1.8;
+  const areaNeta = Math.max(0, areaTotal - areaVanos);
+  const litros_pintura = (areaNeta / mat.rendL) * manos;
+  const galones = Math.ceil(litros_pintura / 4);
+  const litros_sell = sellador ? Math.ceil(areaNeta / 9) : 0;
+  const galones_sell = sellador ? Math.ceil(litros_sell / 4) : 0;
+  const costo_pintura = galones * mat.precio;
+  const costo_sell = galones_sell * PRECIOS.sellador_galon;
+  const total = costo_pintura + costo_sell;
+
+  document.getElementById('pin-result').innerHTML = `
+    <div class="result-box">
+      <div class="result-title">Resultados — ${mat.label}</div>
+      <div class="result-item"><span>📐 Área total</span><span class="val">${areaTotal.toFixed(2)} m²</span></div>
+      ${restar ? `<div class="result-item"><span>🔲 Menos vanos (${vanos} × 1.8m²)</span><span class="val">−${areaVanos.toFixed(2)} m²</span></div>` : ''}
+      <div class="result-item"><span>✅ Área neta</span><span class="val"><strong>${areaNeta.toFixed(2)} m²</strong></span></div>
+      <div class="result-item"><span>💧 Litros pintura (${manos} mano${manos>1?'s':''})</span><span class="val">${litros_pintura.toFixed(1)} L</span></div>
+      <div class="result-item"><span>🪣 Galones (4L) necesarios</span><span class="val">${galones} galones</span></div>
+      ${sellador ? `<div class="result-item"><span>🟡 Sellador (galones)</span><span class="val">${galones_sell} galones</span></div>` : ''}
+      <div class="cost-item" style="margin-top:8px"><span>${mat.label} (${galones} gal × ${clp(mat.precio)})</span><span>${clp(costo_pintura)}</span></div>
+      ${sellador ? `<div class="cost-item"><span>Sellador (${galones_sell} gal × ${clp(PRECIOS.sellador_galon)})</span><span>${clp(costo_sell)}</span></div>` : ''}
+      <div class="result-total"><span>TOTAL MATERIALES</span><span>${clp(total)}</span></div>
+    </div>`;
+
+  const addItems = [`{nombre:'${mat.label} (galón 4L)',qty:${galones},unit:'galón',precio:${mat.precio}}`];
+  if (sellador) addItems.push(`{nombre:'Sellador (galón)',qty:${galones_sell},unit:'galón',precio:${PRECIOS.sellador_galon}}`);
+  document.getElementById('pin-add-btn').innerHTML = `<button class="btn btn-green btn-full" style="margin-top:8px" onclick="addToPresup([${addItems.join(',')}])">➕ Agregar al presupuesto</button>`;
+}
+
+// ─── TAB 5: PRESUPUESTO ────────────────────────────────────
+let presupItems = [];
+
+function addToPresup(items) {
+  items.forEach(item => {
+    presupItems.push({
+      id: Date.now() + Math.random(),
+      nombre: item.nombre,
+      qty: parseFloat(item.qty),
+      unit: item.unit,
+      precio: parseFloat(item.precio),
+    });
+  });
+  renderPresup();
+  savePresup();
+  // Flash feedback
+  const tabs = document.querySelectorAll('.tab-btn');
+  tabs[4].style.background = '#dcfce7';
+  setTimeout(() => tabs[4].style.background = '', 800);
+}
+
+function removePresupItem(id) {
+  presupItems = presupItems.filter(i => i.id !== id);
+  renderPresup();
+  savePresup();
+}
+
+function addManual() {
+  const nombre = document.getElementById('manual-nombre').value.trim();
+  const qty = parseFloat(document.getElementById('manual-qty').value) || 0;
+  const precio = parseFloat(document.getElementById('manual-precio').value) || 0;
+  const unit = document.getElementById('manual-unit').value.trim() || 'und';
+  if (!nombre) { alert('Ingresa el nombre del material.'); return; }
+  addToPresup([{ nombre, qty, unit, precio }]);
+  document.getElementById('manual-nombre').value = '';
+}
+
+function renderPresup() {
+  const wrap = document.getElementById('presup-table-wrap');
+  if (presupItems.length === 0) {
+    wrap.innerHTML = '<p class="empty-msg">Agrega materiales desde cada pestaña usando el botón<br><strong>"Agregar al presupuesto"</strong></p>';
+    document.getElementById('presup-total-box').style.display = 'none';
+    document.getElementById('margin-result').style.display = 'none';
+    return;
+  }
+  const rows = presupItems.map(i => {
+    const sub = i.qty * i.precio;
+    return `<tr>
+      <td>${i.nombre}</td>
+      <td style="text-align:right">${parseFloat(i.qty).toLocaleString('es-CL',{maximumFractionDigits:2})} ${i.unit}</td>
+      <td style="text-align:right">${clp(i.precio)}</td>
+      <td style="text-align:right;font-weight:600">${clp(sub)}</td>
+      <td style="text-align:center"><button class="btn btn-red" onclick="removePresupItem(${i.id})">✕</button></td>
+    </tr>`;
+  }).join('');
+  wrap.innerHTML = `<div style="overflow-x:auto"><table class="presup-table">
+    <thead><tr><th>Material</th><th style="text-align:right">Cantidad</th><th style="text-align:right">P. Unit.</th><th style="text-align:right">Subtotal</th><th></th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div>`;
+  document.getElementById('presup-total-box').style.display = 'flex';
+  updatePresupTotal();
+}
+
+function updatePresupTotal() {
+  const total = presupItems.reduce((s, i) => s + i.qty * i.precio, 0);
+  document.getElementById('presup-grand-total').textContent = clp(total);
+  const sel = document.getElementById('margin-pct').value;
+  const pct = sel === 'custom' ? (parseFloat(document.getElementById('custom-margin-val').value) || 0) : parseFloat(sel);
+  const overhead = total * pct / 100;
+  const grand = total + overhead;
+  const mr = document.getElementById('margin-result');
+  if (presupItems.length > 0) {
+    mr.style.display = 'block';
+    mr.innerHTML = `
+      <div class="result-item"><span>Materiales (neto)</span><span class="val">${clp(total)}</span></div>
+      <div class="result-item"><span>Overhead / margen (${pct}%)</span><span class="val">${clp(overhead)}</span></div>
+      <div class="result-total" style="margin-top:8px"><span>TOTAL PROYECTO</span><span>${clp(grand)}</span></div>`;
+  }
+}
+
+function copyPresup() {
+  if (presupItems.length === 0) { alert('No hay materiales en el presupuesto.'); return; }
+  const sel = document.getElementById('margin-pct').value;
+  const pct = sel === 'custom' ? (parseFloat(document.getElementById('custom-margin-val').value) || 0) : parseFloat(sel);
+  const total = presupItems.reduce((s, i) => s + i.qty * i.precio, 0);
+  const grand = total * (1 + pct / 100);
+  let txt = 'PRESUPUESTO CONSTRUCCIÓN CL\n';
+  txt += '─'.repeat(36) + '\n';
+  presupItems.forEach(i => {
+    txt += `${i.nombre.padEnd(24)} ${String(i.qty.toFixed(2) + ' ' + i.unit).padStart(10)}  ${clp(i.qty * i.precio)}\n`;
+  });
+  txt += '─'.repeat(36) + '\n';
+  txt += `TOTAL MATERIALES: ${clp(total)}\n`;
+  if (pct > 0) txt += `TOTAL CON OVERHEAD +${pct}%: ${clp(grand)}\n`;
+  txt += `\nGenerado por ConstruccionCL`;
+  navigator.clipboard.writeText(txt).then(() => alert('Lista copiada al portapapeles.')).catch(() => alert('No se pudo copiar. Intenta manualmente.'));
+}
+
+function sendWhatsApp() {
+  if (presupItems.length === 0) { alert('No hay materiales en el presupuesto.'); return; }
+  const total = presupItems.reduce((s, i) => s + i.qty * i.precio, 0);
+  let msg = '*Presupuesto ConstruccionCL*\n\n';
+  presupItems.forEach(i => {
+    msg += `• ${i.nombre}: ${i.qty.toFixed(2)} ${i.unit} → ${clp(i.qty * i.precio)}\n`;
+  });
+  msg += `\n*Total materiales: ${clp(total)}*`;
+  window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+}
+
+function savePresup() {
+  try { localStorage.setItem('construccioncl_v1', JSON.stringify(presupItems)); } catch(e) {}
+}
+
+function loadPresup() {
+  try {
+    const d = localStorage.getItem('construccioncl_v1');
+    if (d) { presupItems = JSON.parse(d); renderPresup(); }
+  } catch(e) {}
+}
+
+// ─── INIT ─────────────────────────────────────────────────
+(function init() {
+  // Add initial area rows
+  areas.push({ id: 1, largo: 4, ancho: 3 });
+  renderAreas();
+  pinAreas.push({ id: 1, largo: 4, ancho: 2.5 });
+  renderPinAreas();
+  addOpening();
+  openings = []; // clear default
+  renderOpenings();
+  // Run initial calcs
+  calcHormigon();
+  calcHelper();
+  calcMuro();
+  calcPavimentos();
+  calcPintura();
+  loadPresup();
+})();
+</script>
+
+<style>
+@media print {
+  header, nav, .btn, button { display: none !important; }
+  .tab-panel { display: block !important; }
+  .card { page-break-inside: avoid; border: 1px solid #999; }
+}
+</style>
+
+</body>
+</html>

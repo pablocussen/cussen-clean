@@ -1,0 +1,1378 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0c4a7a">
+<title>FonoScore — Gestión Clínica</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{--bg:#f0f6ff;--card:#ffffff;--card2:#e8f2ff;--border:#b8d4f0;--accent:#0369a1;--text:#1e3a5f;--muted:#6b8fa5;--green:#16a34a;--yellow:#d97706;--red:#dc2626;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+header{background:linear-gradient(90deg,#0c4a7a,#0369a1);padding:13px 18px;position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;color:white}
+header h1{font-size:1.1rem;font-weight:700;letter-spacing:.5px}
+header span{font-size:.8rem;opacity:.8}
+nav{background:#fff;border-bottom:2px solid var(--border);display:flex;overflow-x:auto;position:sticky;top:62px;z-index:40;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+nav button{flex-shrink:0;padding:12px 16px;border:none;background:none;color:var(--muted);font-size:.82rem;font-weight:500;cursor:pointer;border-bottom:3px solid transparent;transition:.2s;font-family:'Inter',sans-serif;white-space:nowrap}
+nav button.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:700}
+.tab{display:none;padding:16px;max-width:900px;margin:0 auto}
+.tab.active{display:block}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px}
+.card2{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px}
+h2{font-size:1rem;font-weight:700;margin-bottom:12px;color:var(--text)}
+h3{font-size:.9rem;font-weight:600;margin-bottom:8px;color:var(--text)}
+label{font-size:.82rem;font-weight:500;color:var(--muted);display:block;margin-bottom:4px;margin-top:10px}
+input,select,textarea{width:100%;padding:9px 11px;border:1.5px solid var(--border);border-radius:8px;font-size:16px;font-family:'Inter',sans-serif;color:var(--text);background:#fff;transition:.2s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
+textarea{resize:vertical;min-height:70px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:8px;border:none;font-size:.85rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:.2s}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:#0c4a7a}
+.btn-secondary{background:var(--card2);color:var(--accent);border:1.5px solid var(--border)}
+.btn-danger{background:var(--red);color:#fff}
+.btn-green{background:var(--green);color:#fff}
+.btn-sm{padding:6px 12px;font-size:.78rem}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.stat-card{background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:16px;text-align:center}
+.stat-num{font-size:1.8rem;font-weight:700;color:var(--accent)}
+.stat-label{font-size:.78rem;color:var(--muted);margin-top:2px}
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:.72rem;font-weight:600;letter-spacing:.3px}
+.badge-lenguaje{background:#dbeafe;color:#1d4ed8}
+.badge-habla{background:#fef9c3;color:#92400e}
+.badge-voz{background:#fce7f3;color:#9d174d}
+.badge-deglucion{background:#d1fae5;color:#065f46}
+.badge-audicion{background:#ede9fe;color:#6b21a8}
+.badge-green{background:#dcfce7;color:var(--green)}
+.badge-yellow{background:#fef3c7;color:var(--yellow)}
+.badge-red{background:#fee2e2;color:var(--red)}
+.patient-card{background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;cursor:pointer;transition:.15s}
+.patient-card:hover{border-color:var(--accent);box-shadow:0 2px 8px rgba(3,105,161,.1)}
+.patient-card .name{font-weight:700;font-size:.95rem}
+.patient-card .meta{font-size:.78rem;color:var(--muted);margin-top:3px}
+.ring-container{position:relative;width:56px;height:56px;flex-shrink:0}
+.ring-container canvas{width:56px!important;height:56px!important}
+.ring-score{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:var(--accent)}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:6px}
+.chip{padding:5px 12px;border-radius:20px;border:1.5px solid var(--border);font-size:.78rem;cursor:pointer;background:#fff;color:var(--muted);font-family:'Inter',sans-serif;transition:.15s;font-weight:500}
+.chip.selected{background:var(--accent);color:#fff;border-color:var(--accent)}
+.chip-comor{padding:4px 10px;border-radius:16px;border:1.5px solid var(--border);font-size:.75rem;cursor:pointer;background:#fff;color:var(--muted);font-family:'Inter',sans-serif;transition:.15s}
+.chip-comor.selected{background:#7c3aed;color:#fff;border-color:#7c3aed}
+.progress-bar{height:10px;background:#e2e8f0;border-radius:6px;overflow:hidden;margin-top:4px}
+.progress-fill{height:100%;border-radius:6px;transition:width .4s}
+.divider{border:none;border-top:1px solid var(--border);margin:14px 0}
+.flex{display:flex;align-items:center;gap:8px}
+.flex-between{display:flex;align-items:center;justify-content:space-between}
+.search-box{position:relative;margin-bottom:14px}
+.search-box input{padding-left:34px}
+.search-box::before{content:'🔍';position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:.85rem}
+.slider-row{display:flex;align-items:center;gap:10px;margin:6px 0}
+.slider-row label{margin:0;min-width:90px;font-size:.8rem}
+.slider-row input[type=range]{flex:1;padding:0;height:4px;border:none;background:transparent}
+.slider-val{min-width:22px;text-align:center;font-weight:700;color:var(--accent);font-size:.9rem}
+input[type=range]{-webkit-appearance:none;appearance:none;height:4px;background:#b8d4f0;border-radius:2px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;background:var(--accent);border-radius:50%;cursor:pointer}
+.alert-box{background:#fff7ed;border:1.5px solid #fed7aa;border-radius:10px;padding:12px 14px;margin-bottom:12px;font-size:.83rem;color:#92400e}
+.alert-box strong{display:block;margin-bottom:4px}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.8rem}
+th{background:var(--card2);padding:8px 10px;text-align:left;color:var(--muted);font-weight:600;white-space:nowrap}
+td{padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:flex-end;justify-content:center}
+.modal-overlay.center{align-items:center}
+.modal{background:#fff;border-radius:16px 16px 0 0;padding:20px;max-height:85vh;overflow-y:auto;width:100%;max-width:600px}
+.modal.center{border-radius:16px;margin:16px}
+.modal h2{margin-bottom:14px}
+.close-btn{background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--muted);line-height:1}
+.section-title{font-size:.72rem;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin:18px 0 8px}
+.milestone-row{display:flex;align-items:flex-start;gap:8px;padding:8px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px}
+.milestone-status{padding:3px 8px;border-radius:12px;font-size:.72rem;font-weight:600;cursor:pointer;border:none;font-family:'Inter',sans-serif}
+.ms-pendiente{background:#fef3c7;color:var(--yellow)}
+.ms-proceso{background:#dbeafe;color:#1d4ed8}
+.ms-logrado{background:#dcfce7;color:var(--green)}
+#chartContainer{position:relative;height:220px}
+.empty-state{text-align:center;padding:40px 20px;color:var(--muted)}
+.empty-state .icon{font-size:2.5rem;margin-bottom:8px}
+.report-box{background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:14px;font-size:.82rem;line-height:1.7;white-space:pre-wrap;font-family:monospace;max-height:400px;overflow-y:auto}
+@media(min-width:600px){.grid2{grid-template-columns:1fr 1fr}.grid3{grid-template-columns:1fr 1fr 1fr}}
+@media(max-width:599px){.grid2,.grid3{grid-template-columns:1fr}.stat-card .stat-num{font-size:1.4rem}}
+.fonasa-bar{height:14px;background:#e2e8f0;border-radius:8px;overflow:hidden;margin-top:6px}
+.fonasa-fill{height:100%;border-radius:8px;transition:width .4s}
+.tag-area{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:12px;font-size:.72rem;font-weight:600}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>🎙 FonoScore</h1>
+    <span>Gestión Clínica Fonoaudiológica</span>
+  </div>
+  <div style="font-size:.78rem;opacity:.85">Chile 🇨🇱</div>
+</header>
+
+<nav id="mainNav">
+  <button class="active" onclick="showTab('inicio',this)">🏠 Inicio</button>
+  <button onclick="showTab('ficha',this)">📋 Ficha Paciente</button>
+  <button onclick="showTab('sesiones',this)">📝 Sesiones</button>
+  <button onclick="showTab('evaluaciones',this)">🧪 Evaluaciones</button>
+  <button onclick="showTab('progreso',this)">📈 Progreso</button>
+</nav>
+
+<!-- TAB 1: INICIO -->
+<div id="tab-inicio" class="tab active">
+  <div class="grid3" id="statsGrid" style="margin-bottom:14px"></div>
+  <div id="alertBox"></div>
+  <div class="flex-between" style="margin-bottom:10px">
+    <h2 style="margin:0">Pacientes</h2>
+    <button class="btn btn-primary btn-sm" onclick="openNewPatient()">+ Nuevo Paciente</button>
+  </div>
+  <div class="search-box">
+    <input id="searchInput" type="text" placeholder="Buscar por nombre o RUT..." oninput="renderPatientList()">
+  </div>
+  <div id="patientList"></div>
+</div>
+
+<!-- TAB 2: FICHA PACIENTE -->
+<div id="tab-ficha" class="tab">
+  <div class="flex-between" style="margin-bottom:14px">
+    <h2 style="margin:0" id="fichaTitle">Nueva Ficha</h2>
+    <div class="flex">
+      <button class="btn btn-secondary btn-sm" onclick="showTab('inicio',document.querySelector('nav button'))">← Volver</button>
+      <button class="btn btn-danger btn-sm" id="btnDeletePatient" style="display:none" onclick="deleteCurrentPatient()">🗑 Eliminar</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Datos Personales</div>
+    <div class="grid2">
+      <div><label>Nombre completo *</label><input id="f_nombre" type="text" placeholder="Nombre Apellido"></div>
+      <div><label>RUT</label><input id="f_rut" type="text" placeholder="12.345.678-9"></div>
+    </div>
+    <div class="grid2">
+      <div><label>Fecha de nacimiento</label><input id="f_fnac" type="date" onchange="calcAge()"></div>
+      <div><label>Edad calculada</label><input id="f_edad" type="text" readonly placeholder="Auto" style="background:var(--card2)"></div>
+    </div>
+    <div class="grid2">
+      <div>
+        <label>Género</label>
+        <select id="f_genero">
+          <option value="">Seleccionar</option>
+          <option>Masculino</option><option>Femenino</option><option>No binario</option><option>Prefiero no decir</option>
+        </select>
+      </div>
+      <div><label>Teléfono paciente</label><input id="f_tel" type="tel" placeholder="+569..."></div>
+    </div>
+    <div><label>Teléfono apoderado/familiar</label><input id="f_telap" type="tel" placeholder="+569..."></div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Previsión y Derivación</div>
+    <div class="grid2">
+      <div>
+        <label>Previsión</label>
+        <select id="f_prevision">
+          <option value="">Seleccionar</option>
+          <option>FONASA A</option><option>FONASA B</option><option>FONASA C</option><option>FONASA D</option>
+          <option>ISAPRE</option><option>Particular</option>
+        </select>
+      </div>
+      <div>
+        <label>Sesiones FONASA autorizadas</label>
+        <div class="flex">
+          <input id="f_sesiones_auth" type="number" min="0" value="12" style="flex:1">
+        </div>
+      </div>
+    </div>
+    <div class="grid2">
+      <div>
+        <label>Derivación</label>
+        <select id="f_derivacion">
+          <option value="">Sin derivación</option>
+          <option>Médico general</option><option>Neurólogo</option><option>Otorrinolaringólogo</option>
+          <option>Pediatra</option><option>Psicólogo</option><option>Otro</option>
+        </select>
+      </div>
+      <div>
+        <label>Establecimiento</label>
+        <select id="f_establecimiento">
+          <option value="">Seleccionar</option>
+          <option>CESFAM</option><option>Hospital</option><option>Clínica</option><option>Centro privado</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Área Clínica Principal</div>
+    <div class="chips" id="chips_area">
+      <button class="chip" data-val="Lenguaje" onclick="toggleChip(this,'chips_area')">🗣️ Lenguaje</button>
+      <button class="chip" data-val="Habla" onclick="toggleChip(this,'chips_area')">💬 Habla</button>
+      <button class="chip" data-val="Voz" onclick="toggleChip(this,'chips_area')">🎤 Voz</button>
+      <button class="chip" data-val="Deglución" onclick="toggleChip(this,'chips_area')">🍽️ Deglución</button>
+      <button class="chip" data-val="Audición" onclick="toggleChip(this,'chips_area')">👂 Audición</button>
+    </div>
+    <label style="margin-top:12px">Diagnóstico CIE-10</label>
+    <input id="f_cie10" type="text" placeholder="Ej: F80.1 Trastorno del lenguaje expresivo">
+    <div class="section-title">Comorbilidades</div>
+    <div class="chips" id="chips_comor">
+      <button class="chip-comor" data-val="TEA" onclick="toggleChipComor(this)">TEA</button>
+      <button class="chip-comor" data-val="TDAH" onclick="toggleChipComor(this)">TDAH</button>
+      <button class="chip-comor" data-val="PC" onclick="toggleChipComor(this)">PC</button>
+      <button class="chip-comor" data-val="Síndrome Down" onclick="toggleChipComor(this)">Síndrome Down</button>
+      <button class="chip-comor" data-val="Hipoacusia" onclick="toggleChipComor(this)">Hipoacusia</button>
+      <button class="chip-comor" data-val="Déficit cognitivo" onclick="toggleChipComor(this)">Déficit cognitivo</button>
+      <button class="chip-comor" data-val="Otro" onclick="toggleChipComor(this)">Otro</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Información Clínica</div>
+    <label>Medicamentos</label>
+    <input id="f_medicamentos" type="text" placeholder="Ej: Metilfenidato 10mg">
+    <label>Alergias</label>
+    <input id="f_alergias" type="text" placeholder="Ej: Sin alergias conocidas">
+    <label>Motivo de consulta</label>
+    <textarea id="f_motivo" placeholder="Describa el motivo de consulta..."></textarea>
+    <label>Objetivos terapéuticos</label>
+    <textarea id="f_objetivos" placeholder="Objetivos generales del tratamiento..."></textarea>
+  </div>
+
+  <div style="display:flex;gap:10px;margin-top:4px">
+    <button class="btn btn-primary" style="flex:1" onclick="savePatient()">💾 Guardar Ficha</button>
+  </div>
+  <input type="hidden" id="f_pid">
+</div>
+
+<!-- TAB 3: SESIONES -->
+<div id="tab-sesiones" class="tab">
+  <h2>Registrar Sesión</h2>
+  <div class="card">
+    <div class="grid2">
+      <div>
+        <label>Paciente *</label>
+        <select id="s_paciente" onchange="updateFonasaInfo()"></select>
+      </div>
+      <div>
+        <label>Fecha *</label>
+        <input id="s_fecha" type="date">
+      </div>
+    </div>
+    <div id="fonasaInfo" style="display:none" class="card2" style="margin-top:8px">
+      <div class="flex-between"><span id="fonasaInfoText" style="font-size:.82rem"></span></div>
+      <div class="fonasa-bar"><div class="fonasa-fill" id="fonasaFill" style="width:0%;background:var(--green)"></div></div>
+    </div>
+    <div class="grid2">
+      <div>
+        <label>Duración (min)</label>
+        <select id="s_duracion">
+          <option value="30">30 min</option>
+          <option value="45" selected>45 min</option>
+          <option value="60">60 min</option>
+        </select>
+      </div>
+      <div>
+        <label>Tipo de sesión</label>
+        <select id="s_tipo">
+          <option>Terapia</option>
+          <option>Evaluación inicial</option>
+          <option>Reevaluación</option>
+          <option>Alta</option>
+          <option>Control</option>
+        </select>
+      </div>
+    </div>
+    <label>Área trabajada</label>
+    <div class="chips" id="chips_sesion_area">
+      <button class="chip" data-val="Lenguaje" onclick="toggleChip(this,'chips_sesion_area')">🗣️ Lenguaje</button>
+      <button class="chip" data-val="Habla" onclick="toggleChip(this,'chips_sesion_area')">💬 Habla</button>
+      <button class="chip" data-val="Voz" onclick="toggleChip(this,'chips_sesion_area')">🎤 Voz</button>
+      <button class="chip" data-val="Deglución" onclick="toggleChip(this,'chips_sesion_area')">🍽️ Deglución</button>
+      <button class="chip" data-val="Audición" onclick="toggleChip(this,'chips_sesion_area')">👂 Audición</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <label>Actividades realizadas</label>
+    <textarea id="s_actividades" placeholder="Describe las actividades desarrolladas en la sesión..."></textarea>
+    <label>Objetivos de la sesión</label>
+    <textarea id="s_objsesion" placeholder="Objetivos trabajados en esta sesión..."></textarea>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Logros por objetivo (0 = sin avance, 5 = logrado)</div>
+    <div id="sliders_logros">
+      <div class="slider-row">
+        <label>Objetivo 1</label>
+        <input type="range" min="0" max="5" value="3" oninput="this.nextElementSibling.textContent=this.value;calcSessionScore()">
+        <span class="slider-val">3</span>
+      </div>
+      <div class="slider-row">
+        <label>Objetivo 2</label>
+        <input type="range" min="0" max="5" value="3" oninput="this.nextElementSibling.textContent=this.value;calcSessionScore()">
+        <span class="slider-val">3</span>
+      </div>
+      <div class="slider-row">
+        <label>Objetivo 3</label>
+        <input type="range" min="0" max="5" value="3" oninput="this.nextElementSibling.textContent=this.value;calcSessionScore()">
+        <span class="slider-val">3</span>
+      </div>
+    </div>
+    <div class="flex-between" style="margin-top:10px;padding:8px;background:var(--card2);border-radius:8px">
+      <span style="font-size:.85rem;font-weight:600">Puntaje sesión:</span>
+      <span id="sessionScoreDisplay" style="font-size:1.1rem;font-weight:700;color:var(--accent)">60</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="grid2">
+      <div>
+        <label>Conducta/Atención</label>
+        <select id="s_conducta">
+          <option>Excelente</option><option>Buena</option><option>Regular</option><option>Difícil</option>
+        </select>
+      </div>
+      <div>
+        <label>Participación familiar</label>
+        <select id="s_familia">
+          <option>Presente</option><option>Ausente</option><option>Con dificultades</option>
+        </select>
+      </div>
+    </div>
+    <label>Indicaciones al hogar</label>
+    <textarea id="s_hogar" placeholder="Tareas y ejercicios para realizar en casa..."></textarea>
+    <label>Próxima sesión</label>
+    <input id="s_proxima" type="date">
+  </div>
+
+  <button class="btn btn-primary" style="width:100%;margin-top:4px" onclick="saveSession()">💾 Guardar Sesión</button>
+
+  <hr class="divider">
+  <div class="flex-between" style="margin-bottom:10px">
+    <h2 style="margin:0">Historial de Sesiones</h2>
+    <select id="filterSesionPaciente" style="width:auto;padding:6px 10px;font-size:.8rem" onchange="renderSessionHistory()">
+      <option value="">Todos</option>
+    </select>
+  </div>
+  <div id="sessionHistory"></div>
+</div>
+
+<!-- TAB 4: EVALUACIONES -->
+<div id="tab-evaluaciones" class="tab">
+  <h2>Registrar Evaluación</h2>
+  <div class="card">
+    <div class="grid2">
+      <div>
+        <label>Paciente *</label>
+        <select id="e_paciente"></select>
+      </div>
+      <div>
+        <label>Fecha *</label>
+        <input id="e_fecha" type="date">
+      </div>
+    </div>
+    <label>Test / Escala aplicada *</label>
+    <select id="e_test">
+      <option value="">Seleccionar instrumento...</option>
+      <option>TEPROSIF-R (Articulación, 2-6 años)</option>
+      <option>TECAL (Comprensión lenguaje, 3-7 años)</option>
+      <option>BLOC-S (Habilidades lingüísticas)</option>
+      <option>PLON-R (Lenguaje oral, 3-6 años)</option>
+      <option>PEABODY PPVT (Vocabulario receptivo)</option>
+      <option>ELA-ALBOR (Alteraciones lenguaje adultos)</option>
+      <option>GFTA-3 (Articulación)</option>
+      <option>Diadococinesia</option>
+      <option>Escala GRBAS (Voz)</option>
+      <option>EAT-10 (Deglución)</option>
+      <option>Otro</option>
+    </select>
+    <div id="e_otroWrap" style="display:none">
+      <label>Nombre del test</label>
+      <input id="e_otro" type="text" placeholder="Nombre del instrumento...">
+    </div>
+    <div class="grid3">
+      <div><label>Puntaje bruto</label><input id="e_puntaje" type="number" placeholder="0"></div>
+      <div><label>Percentil</label><input id="e_percentil" type="number" placeholder="0"></div>
+      <div><label>Equivalente edad</label><input id="e_edadequiv" type="text" placeholder="Ej: 4a 2m"></div>
+    </div>
+    <label>Interpretación</label>
+    <select id="e_interpretacion">
+      <option>Normal</option>
+      <option>Retraso leve</option>
+      <option>Retraso moderado</option>
+      <option>Retraso severo</option>
+    </select>
+    <label>Notas cualitativas</label>
+    <textarea id="e_notas" placeholder="Observaciones, comportamiento, contexto de evaluación..."></textarea>
+  </div>
+  <button class="btn btn-primary" style="width:100%" onclick="saveEvaluation()">💾 Guardar Evaluación</button>
+
+  <hr class="divider">
+  <div class="flex-between" style="margin-bottom:10px">
+    <h2 style="margin:0">Historial de Evaluaciones</h2>
+    <select id="filterEvalPaciente" style="width:auto;padding:6px 10px;font-size:.8rem" onchange="renderEvalHistory()">
+      <option value="">Todos</option>
+    </select>
+  </div>
+  <div id="evalHistory"></div>
+</div>
+
+<!-- TAB 5: PROGRESO -->
+<div id="tab-progreso" class="tab">
+  <div class="flex-between" style="margin-bottom:14px">
+    <h2 style="margin:0">Progreso del Paciente</h2>
+    <select id="p_paciente" style="width:auto;padding:8px 12px;font-size:.85rem" onchange="renderProgress()"></select>
+  </div>
+  <div id="progressContent">
+    <div class="empty-state"><div class="icon">📈</div><p>Selecciona un paciente para ver su progreso</p></div>
+  </div>
+</div>
+
+<!-- MODAL INFORME -->
+<div id="reportModal" class="modal-overlay center" style="display:none" onclick="if(event.target===this)closeReport()">
+  <div class="modal center">
+    <div class="flex-between" style="margin-bottom:14px">
+      <h2 id="reportTitle">Informe</h2>
+      <button class="close-btn" onclick="closeReport()">✕</button>
+    </div>
+    <div class="report-box" id="reportContent"></div>
+    <div style="margin-top:12px;display:flex;gap:8px">
+      <button class="btn btn-secondary" style="flex:1" onclick="copyReport()">📋 Copiar</button>
+      <button class="btn btn-primary" style="flex:1" onclick="closeReport()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NUEVA SESIÓN QUICK -->
+<div id="quickSessionModal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeQuickSession()">
+  <div class="modal">
+    <div class="flex-between" style="margin-bottom:14px">
+      <h2>Nueva Sesión Rápida</h2>
+      <button class="close-btn" onclick="closeQuickSession()">✕</button>
+    </div>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:12px">Ir al módulo completo de sesiones para el paciente seleccionado.</p>
+    <button class="btn btn-primary" style="width:100%" onclick="goToSessions()">Ir a Sesiones →</button>
+  </div>
+</div>
+
+<script>
+// ===================== DATA LAYER =====================
+const DB_KEY = 'fonoscore_db';
+let db = {patients:[], sessions:[], evaluations:[]};
+
+function loadDB(){
+  try{
+    const raw = localStorage.getItem(DB_KEY);
+    if(raw) db = JSON.parse(raw);
+    db.patients = db.patients||[];
+    db.sessions = db.sessions||[];
+    db.evaluations = db.evaluations||[];
+  }catch(e){console.warn('DB load error',e)}
+}
+
+function saveDB(){
+  try{ localStorage.setItem(DB_KEY, JSON.stringify(db)); }
+  catch(e){console.warn('DB save error',e)}
+}
+
+function genId(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+
+// ===================== DEMO DATA =====================
+function loadDemo(){
+  if(db.patients.length > 0) return;
+  const p1 = {
+    id:'demo1', nombre:'Martín González', rut:'12.345.678-9',
+    fnac:'2021-03-10', genero:'Masculino', tel:'+56912345678', telap:'+56987654321',
+    prevision:'FONASA B', sesiones_auth:12, sesiones_used:5,
+    derivacion:'Pediatra', establecimiento:'CESFAM',
+    areas:['Lenguaje'], cie10:'F80.1 Trastorno del lenguaje expresivo',
+    comorbilidades:['TDAH'],
+    medicamentos:'Metilfenidato 5mg',alergias:'Sin alergias conocidas',
+    motivo:'Dificultad para expresarse verbalmente. Vocabulario reducido para su edad.',
+    objetivos:'Incrementar vocabulario expresivo. Mejorar estructuras morfosintácticas.',
+    milestones:[
+      {id:'m1',desc:'Produce oraciones de 3 palabras',fecha:'2026-05-01',estado:'En proceso'},
+      {id:'m2',desc:'Nombra 50 palabras funcionales',fecha:'2026-06-01',estado:'Pendiente'},
+      {id:'m3',desc:'Usa plural correctamente',fecha:'2026-07-01',estado:'Pendiente'}
+    ],
+    createdAt:'2026-01-15'
+  };
+  const p2 = {
+    id:'demo2', nombre:'Elena Muñoz', rut:'9.876.543-2',
+    fnac:'1991-08-22', genero:'Femenino', tel:'+56911223344', telap:'',
+    prevision:'ISAPRE', sesiones_auth:10, sesiones_used:7,
+    derivacion:'Otorrinolaringólogo', establecimiento:'Clínica',
+    areas:['Voz'], cie10:'R49.0 Disfonía',
+    comorbilidades:[],
+    medicamentos:'Sin medicamentos',alergias:'Penicilina',
+    motivo:'Disfonía persistente por 3 meses. Docente de colegio.',
+    objetivos:'Reducir tensión laríngea. Técnica de voz proyectada sin esfuerzo.',
+    milestones:[
+      {id:'m4',desc:'Voz sin esfuerzo 10 min seguidos',fecha:'2026-04-15',estado:'En proceso'},
+      {id:'m5',desc:'Higiene vocal: 8/10 conductas',fecha:'2026-05-15',estado:'Pendiente'},
+      {id:'m6',desc:'Alta fonoaudiológica',fecha:'2026-06-30',estado:'Pendiente'}
+    ],
+    createdAt:'2026-01-28'
+  };
+  db.patients.push(p1,p2);
+
+  // Sessions for demo1
+  const sesBase = ['2026-01-20','2026-01-27','2026-02-03','2026-02-10','2026-02-24'];
+  sesBase.forEach((d,i)=>{
+    db.sessions.push({
+      id:genId(), patientId:'demo1', fecha:d, duracion:45,
+      tipo:'Terapia', areas:['Lenguaje'],
+      actividades:'Lectura de pictogramas, juego de denominación, repetición de frases modelo.',
+      objsesion:'Aumentar vocabulario de objetos del hogar. Repetir frases de 2-3 palabras.',
+      logros:[3+i%3, 2+(i%2), 3],
+      score: Math.round(((3+i%3+2+i%2+3)/3)*20),
+      conducta:'Buena', familia:'Presente',
+      hogar:'Practicar nombrar objetos durante comidas. 10 minutos diarios.',
+      proxima: sesBase[i+1]||'2026-03-10',
+      createdAt:d
+    });
+  });
+
+  // Sessions for demo2
+  const sesBase2 = ['2026-01-30','2026-02-06','2026-02-13','2026-02-20','2026-02-27','2026-03-05','2026-03-12'];
+  sesBase2.forEach((d,i)=>{
+    db.sessions.push({
+      id:genId(), patientId:'demo2', fecha:d, duracion:45,
+      tipo:'Terapia', areas:['Voz'],
+      actividades:'Higiene vocal, ejercicios de relajación laríngea, resonancia vocal, técnica semiosluida.',
+      objsesion:'Reducir tensión muscular supraglótica. Voz resonante sin esfuerzo.',
+      logros:[2+i%3, 3+i%2, 2+i%3],
+      score: Math.round(((2+i%3+3+i%2+2+i%3)/3)*20),
+      conducta:'Excelente', familia:'Ausente',
+      hogar:'Nebulización con suero fisiológico. Evitar susurros. Ejercicios de straw phonation.',
+      proxima: sesBase2[i+1]||'2026-03-19',
+      createdAt:d
+    });
+  });
+
+  // Evaluations demo1
+  db.evaluations.push({
+    id:genId(), patientId:'demo1', fecha:'2026-01-16',
+    test:'TECAL (Comprensión lenguaje, 3-7 años)', testCustom:'',
+    puntaje:42, percentil:12, edadequiv:'3a 2m',
+    interpretacion:'Retraso moderado',
+    notas:'Comprensión de oraciones simples presente. Dificultad con conceptos relacionales.',
+    createdAt:'2026-01-16'
+  });
+  db.evaluations.push({
+    id:genId(), patientId:'demo1', fecha:'2026-02-20',
+    test:'TEPROSIF-R (Articulación, 2-6 años)', testCustom:'',
+    puntaje:68, percentil:30, edadequiv:'3a 8m',
+    interpretacion:'Retraso leve',
+    notas:'Fonemas /r/ vibrante simple y /d/ en posición intervocálica logrados. Pendiente /rr/ vibrante múltiple.',
+    createdAt:'2026-02-20'
+  });
+
+  // Evaluations demo2
+  db.evaluations.push({
+    id:genId(), patientId:'demo2', fecha:'2026-01-29',
+    test:'Escala GRBAS (Voz)', testCustom:'',
+    puntaje:7, percentil:null, edadequiv:'',
+    interpretacion:'Retraso moderado',
+    notas:'G2R2B1A0S1. Voz áspera con esfuerzo. Strain moderado. Fatiga vocal al final del día.',
+    createdAt:'2026-01-29'
+  });
+  db.evaluations.push({
+    id:genId(), patientId:'demo2', fecha:'2026-03-10',
+    test:'Escala GRBAS (Voz)', testCustom:'',
+    puntaje:3, percentil:null, edadequiv:'',
+    interpretacion:'Retraso leve',
+    notas:'G1R1B0A0S0. Mejora significativa. Voz más limpia. Refiere menos cansancio vocal.',
+    createdAt:'2026-03-10'
+  });
+
+  saveDB();
+}
+
+// ===================== NAV =====================
+function showTab(name, btn){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  if(btn) btn.classList.add('active');
+  if(name==='inicio') renderDashboard();
+  if(name==='sesiones'){ populatePatientSelects(); setTodayDates(); renderSessionHistory(); }
+  if(name==='evaluaciones'){ populatePatientSelects(); setTodayDates(); renderEvalHistory(); }
+  if(name==='progreso'){ populatePatientSelects(); renderProgress(); }
+  if(name==='ficha' && !document.getElementById('f_pid').value) clearFichaForm();
+}
+
+// ===================== DASHBOARD =====================
+function renderDashboard(){
+  const today = new Date().toISOString().split('T')[0];
+  const thisMonth = today.slice(0,7);
+  const twoWeeksAgo = new Date(Date.now()-14*86400000).toISOString().split('T')[0];
+
+  const totalPacientes = db.patients.length;
+  const sesionesEsteMes = db.sessions.filter(s=>s.fecha&&s.fecha.startsWith(thisMonth)).length;
+  const proximasHoy = db.sessions.filter(s=>s.proxima===today).length;
+
+  let fonasaAvg = 0;
+  if(db.patients.length){
+    const vals = db.patients.map(p=>{
+      const auth = p.sesiones_auth||0;
+      const used = getUsedSessions(p.id);
+      return auth>0?Math.round(used/auth*100):0;
+    });
+    fonasaAvg = Math.round(vals.reduce((a,b)=>a+b,0)/vals.length);
+  }
+
+  document.getElementById('statsGrid').innerHTML = `
+    <div class="stat-card"><div class="stat-num">${totalPacientes}</div><div class="stat-label">Total pacientes</div></div>
+    <div class="stat-card"><div class="stat-num">${sesionesEsteMes}</div><div class="stat-label">Sesiones este mes</div></div>
+    <div class="stat-card"><div class="stat-num">${proximasHoy}</div><div class="stat-label">Citas hoy</div></div>
+  `;
+
+  // Overdue alert
+  const overdue = db.patients.filter(p=>{
+    const lastSes = db.sessions.filter(s=>s.patientId===p.id).sort((a,b)=>b.fecha.localeCompare(a.fecha))[0];
+    return lastSes && lastSes.fecha < twoWeeksAgo;
+  });
+  let alertHtml = '';
+  if(overdue.length){
+    alertHtml = `<div class="alert-box"><strong>⚠️ Pacientes sin sesión en +2 semanas:</strong>${overdue.map(p=>`<span style="margin-right:8px">• ${p.nombre}</span>`).join('')}</div>`;
+  }
+  document.getElementById('alertBox').innerHTML = alertHtml;
+
+  renderPatientList();
+}
+
+function getUsedSessions(pid){ return db.sessions.filter(s=>s.patientId===pid).length; }
+
+function calcFonoScore(pid){
+  const sessions = db.sessions.filter(s=>s.patientId===pid).sort((a,b)=>a.fecha.localeCompare(b.fecha));
+  if(!sessions.length) return 0;
+
+  // Attendance last 30 days
+  const thirtyAgo = new Date(Date.now()-30*86400000).toISOString().split('T')[0];
+  const recent = sessions.filter(s=>s.fecha>=thirtyAgo).length;
+  const attendance = Math.min(40, recent*10);
+
+  // Session achievement avg
+  const lastN = sessions.slice(-5);
+  const avgScore = lastN.length ? lastN.reduce((a,s)=>a+(s.score||0),0)/lastN.length : 0;
+  const achievementPts = Math.round(avgScore*0.4);
+
+  // Assessment improvement
+  const evals = db.evaluations.filter(e=>e.patientId===pid).sort((a,b)=>a.fecha.localeCompare(b.fecha));
+  let evalPts = 0;
+  if(evals.length>=2){
+    const order = {Normal:0,'Retraso leve':1,'Retraso moderado':2,'Retraso severo':3};
+    const first = order[evals[0].interpretacion]??2;
+    const last_ = order[evals[evals.length-1].interpretacion]??2;
+    if(last_<first) evalPts=30; else if(last_===first) evalPts=15;
+  } else if(evals.length===1) evalPts=10;
+
+  return Math.min(100, attendance+achievementPts+evalPts);
+}
+
+function renderPatientList(){
+  const q = (document.getElementById('searchInput')?.value||'').toLowerCase();
+  const list = document.getElementById('patientList');
+  const filtered = db.patients.filter(p=>
+    p.nombre.toLowerCase().includes(q)||(p.rut&&p.rut.toLowerCase().includes(q))
+  );
+  if(!filtered.length){
+    list.innerHTML = `<div class="empty-state"><div class="icon">👤</div><p>${q?'Sin resultados':'Sin pacientes registrados'}</p><button class="btn btn-primary btn-sm" onclick="openNewPatient()" style="margin-top:12px">+ Agregar paciente</button></div>`;
+    return;
+  }
+  list.innerHTML = filtered.map(p=>{
+    const age = calcAgeStr(p.fnac);
+    const used = getUsedSessions(p.id);
+    const auth = p.sesiones_auth||0;
+    const score = calcFonoScore(p.id);
+    const lastSes = db.sessions.filter(s=>s.patientId===p.id).sort((a,b)=>b.fecha.localeCompare(a.fecha))[0];
+    const lastDate = lastSes ? formatDate(lastSes.fecha) : 'Sin sesiones';
+    const areasBadges = (p.areas||[]).map(a=>`<span class="badge badge-${a.toLowerCase()}">${a}</span>`).join(' ');
+    const fonasaPct = auth>0?Math.min(100,Math.round(used/auth*100)):0;
+    const fonasaColor = fonasaPct>85?'var(--red)':fonasaPct>60?'var(--yellow)':'var(--green)';
+    return `<div class="patient-card" onclick="openPatient('${p.id}')">
+      <div class="flex-between">
+        <div style="flex:1">
+          <div class="flex" style="gap:6px;flex-wrap:wrap;align-items:center">
+            <span class="name">${p.nombre}</span>
+            ${areasBadges}
+          </div>
+          <div class="meta">${age} · ${p.prevision||'Sin previsión'} · Última sesión: ${lastDate}</div>
+          <div style="margin-top:6px;font-size:.75rem;color:var(--muted)">FONASA: ${used}/${auth} sesiones</div>
+          <div class="fonasa-bar" style="margin-top:3px"><div class="fonasa-fill" style="width:${fonasaPct}%;background:${fonasaColor}"></div></div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-left:12px">
+          <div class="ring-container"><canvas id="ring_${p.id}"></canvas><div class="ring-score">${score}</div></div>
+          <span style="font-size:.67rem;color:var(--muted)">FonoScore</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();quickSession('${p.id}')">+ Sesión</button>
+        <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();viewProgress('${p.id}')">Ver progreso</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Draw mini rings
+  setTimeout(()=>{
+    filtered.forEach(p=>{
+      const score = calcFonoScore(p.id);
+      drawRing('ring_'+p.id, score);
+    });
+  },50);
+}
+
+function drawRing(canvasId, value){
+  const canvas = document.getElementById(canvasId);
+  if(!canvas) return;
+  if(canvas._chart) canvas._chart.destroy();
+  const color = value>=70?'#16a34a':value>=40?'#d97706':'#dc2626';
+  canvas._chart = new Chart(canvas, {
+    type:'doughnut',
+    data:{datasets:[{data:[value,100-value],backgroundColor:[color,'#e2e8f0'],borderWidth:0,hoverBorderWidth:0}]},
+    options:{cutout:'75%',plugins:{legend:{display:false},tooltip:{enabled:false}},animation:{duration:600},events:[]}
+  });
+}
+
+// ===================== PATIENT FORM =====================
+let currentPatientId = null;
+
+function openNewPatient(){
+  currentPatientId = null;
+  clearFichaForm();
+  showTab('ficha', document.querySelectorAll('nav button')[1]);
+}
+
+function openPatient(id){
+  const p = db.patients.find(x=>x.id===id);
+  if(!p) return;
+  currentPatientId = id;
+  fillFichaForm(p);
+  showTab('ficha', document.querySelectorAll('nav button')[1]);
+}
+
+function clearFichaForm(){
+  ['f_nombre','f_rut','f_fnac','f_edad','f_tel','f_telap','f_cie10','f_medicamentos','f_alergias','f_motivo','f_objetivos','f_pid'].forEach(id=>{
+    const el = document.getElementById(id); if(el) el.value='';
+  });
+  document.getElementById('f_genero').value='';
+  document.getElementById('f_prevision').value='';
+  document.getElementById('f_sesiones_auth').value='12';
+  document.getElementById('f_derivacion').value='';
+  document.getElementById('f_establecimiento').value='';
+  document.querySelectorAll('#chips_area .chip').forEach(c=>c.classList.remove('selected'));
+  document.querySelectorAll('#chips_comor .chip-comor').forEach(c=>c.classList.remove('selected'));
+  document.getElementById('fichaTitle').textContent = 'Nueva Ficha';
+  document.getElementById('btnDeletePatient').style.display='none';
+}
+
+function fillFichaForm(p){
+  document.getElementById('f_pid').value = p.id;
+  document.getElementById('f_nombre').value = p.nombre||'';
+  document.getElementById('f_rut').value = p.rut||'';
+  document.getElementById('f_fnac').value = p.fnac||'';
+  document.getElementById('f_edad').value = calcAgeStr(p.fnac);
+  document.getElementById('f_genero').value = p.genero||'';
+  document.getElementById('f_tel').value = p.tel||'';
+  document.getElementById('f_telap').value = p.telap||'';
+  document.getElementById('f_prevision').value = p.prevision||'';
+  document.getElementById('f_sesiones_auth').value = p.sesiones_auth||12;
+  document.getElementById('f_derivacion').value = p.derivacion||'';
+  document.getElementById('f_establecimiento').value = p.establecimiento||'';
+  document.getElementById('f_cie10').value = p.cie10||'';
+  document.getElementById('f_medicamentos').value = p.medicamentos||'';
+  document.getElementById('f_alergias').value = p.alergias||'';
+  document.getElementById('f_motivo').value = p.motivo||'';
+  document.getElementById('f_objetivos').value = p.objetivos||'';
+  // chips
+  document.querySelectorAll('#chips_area .chip').forEach(c=>{
+    c.classList.toggle('selected',(p.areas||[]).includes(c.dataset.val));
+  });
+  document.querySelectorAll('#chips_comor .chip-comor').forEach(c=>{
+    c.classList.toggle('selected',(p.comorbilidades||[]).includes(c.dataset.val));
+  });
+  document.getElementById('fichaTitle').textContent = 'Ficha: '+p.nombre;
+  document.getElementById('btnDeletePatient').style.display='inline-flex';
+}
+
+function savePatient(){
+  const nombre = document.getElementById('f_nombre').value.trim();
+  if(!nombre){ alert('El nombre es obligatorio.'); return; }
+  const pid = document.getElementById('f_pid').value || genId();
+  const areas = Array.from(document.querySelectorAll('#chips_area .chip.selected')).map(c=>c.dataset.val);
+  const comorbilidades = Array.from(document.querySelectorAll('#chips_comor .chip-comor.selected')).map(c=>c.dataset.val);
+  const existing = db.patients.find(p=>p.id===pid);
+  const data = {
+    id:pid, nombre, rut:document.getElementById('f_rut').value.trim(),
+    fnac:document.getElementById('f_fnac').value,
+    genero:document.getElementById('f_genero').value,
+    tel:document.getElementById('f_tel').value.trim(),
+    telap:document.getElementById('f_telap').value.trim(),
+    prevision:document.getElementById('f_prevision').value,
+    sesiones_auth:parseInt(document.getElementById('f_sesiones_auth').value)||12,
+    derivacion:document.getElementById('f_derivacion').value,
+    establecimiento:document.getElementById('f_establecimiento').value,
+    areas, cie10:document.getElementById('f_cie10').value.trim(),
+    comorbilidades,
+    medicamentos:document.getElementById('f_medicamentos').value.trim(),
+    alergias:document.getElementById('f_alergias').value.trim(),
+    motivo:document.getElementById('f_motivo').value.trim(),
+    objetivos:document.getElementById('f_objetivos').value.trim(),
+    milestones: existing?.milestones||[
+      {id:genId(),desc:'',fecha:'',estado:'Pendiente'},
+      {id:genId(),desc:'',fecha:'',estado:'Pendiente'},
+      {id:genId(),desc:'',fecha:'',estado:'Pendiente'}
+    ],
+    createdAt: existing?.createdAt || new Date().toISOString().split('T')[0]
+  };
+  if(existing){ Object.assign(existing,data); }
+  else{ db.patients.push(data); }
+  saveDB();
+  document.getElementById('f_pid').value = pid;
+  currentPatientId = pid;
+  document.getElementById('fichaTitle').textContent = 'Ficha: '+nombre;
+  document.getElementById('btnDeletePatient').style.display='inline-flex';
+  showToast('Ficha guardada correctamente');
+}
+
+function deleteCurrentPatient(){
+  const pid = document.getElementById('f_pid').value;
+  if(!pid) return;
+  if(!confirm('¿Eliminar este paciente y todas sus sesiones y evaluaciones?')) return;
+  db.patients = db.patients.filter(p=>p.id!==pid);
+  db.sessions = db.sessions.filter(s=>s.patientId!==pid);
+  db.evaluations = db.evaluations.filter(e=>e.patientId!==pid);
+  saveDB();
+  clearFichaForm();
+  showTab('inicio', document.querySelectorAll('nav button')[0]);
+}
+
+function calcAge(){
+  const val = document.getElementById('f_fnac').value;
+  document.getElementById('f_edad').value = calcAgeStr(val);
+}
+
+function calcAgeStr(fnac){
+  if(!fnac) return '';
+  const birth = new Date(fnac);
+  const now = new Date();
+  let years = now.getFullYear()-birth.getFullYear();
+  let months = now.getMonth()-birth.getMonth();
+  if(months<0){ years--; months+=12; }
+  if(years<3) return `${years}a ${months}m`;
+  return `${years} años`;
+}
+
+function toggleChip(el, groupId){
+  el.classList.toggle('selected');
+}
+
+function toggleChipComor(el){
+  el.classList.toggle('selected');
+}
+
+// ===================== SESSIONS =====================
+function populatePatientSelects(){
+  const selects = ['s_paciente','filterSesionPaciente','e_paciente','filterEvalPaciente','p_paciente'];
+  selects.forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    const val = el.value;
+    const hasAll = id.startsWith('filter')||id==='p_paciente';
+    el.innerHTML = (hasAll?'<option value="">Todos los pacientes</option>':'<option value="">Seleccionar paciente...</option>') +
+      db.patients.map(p=>`<option value="${p.id}">${p.nombre}</option>`).join('');
+    if(val) el.value=val;
+  });
+}
+
+function setTodayDates(){
+  const today = new Date().toISOString().split('T')[0];
+  ['s_fecha','e_fecha'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el&&!el.value) el.value=today;
+  });
+}
+
+function updateFonasaInfo(){
+  const pid = document.getElementById('s_paciente').value;
+  const box = document.getElementById('fonasaInfo');
+  if(!pid){ box.style.display='none'; return; }
+  const p = db.patients.find(x=>x.id===pid);
+  if(!p){ box.style.display='none'; return; }
+  const used = getUsedSessions(pid);
+  const auth = p.sesiones_auth||0;
+  const pct = auth>0?Math.min(100,Math.round(used/auth*100)):0;
+  const color = pct>85?'var(--red)':pct>60?'var(--yellow)':'var(--green)';
+  document.getElementById('fonasaInfoText').textContent = `FONASA: ${used}/${auth} sesiones usadas (${pct}%)`;
+  document.getElementById('fonasaFill').style.width = pct+'%';
+  document.getElementById('fonasaFill').style.background = color;
+  box.style.display='block';
+}
+
+function calcSessionScore(){
+  const sliders = document.querySelectorAll('#sliders_logros input[type=range]');
+  const vals = Array.from(sliders).map(s=>parseInt(s.value));
+  const avg = vals.reduce((a,b)=>a+b,0)/vals.length;
+  const score = Math.round(avg*20);
+  document.getElementById('sessionScoreDisplay').textContent = score;
+  return score;
+}
+
+function saveSession(){
+  const pid = document.getElementById('s_paciente').value;
+  if(!pid){ alert('Selecciona un paciente.'); return; }
+  const fecha = document.getElementById('s_fecha').value;
+  if(!fecha){ alert('Selecciona una fecha.'); return; }
+  const sliders = document.querySelectorAll('#sliders_logros input[type=range]');
+  const logros = Array.from(sliders).map(s=>parseInt(s.value));
+  const score = calcSessionScore();
+  const areas = Array.from(document.querySelectorAll('#chips_sesion_area .chip.selected')).map(c=>c.dataset.val);
+  const ses = {
+    id:genId(), patientId:pid,
+    fecha, duracion:document.getElementById('s_duracion').value,
+    tipo:document.getElementById('s_tipo').value,
+    areas,
+    actividades:document.getElementById('s_actividades').value.trim(),
+    objsesion:document.getElementById('s_objsesion').value.trim(),
+    logros, score,
+    conducta:document.getElementById('s_conducta').value,
+    familia:document.getElementById('s_familia').value,
+    hogar:document.getElementById('s_hogar').value.trim(),
+    proxima:document.getElementById('s_proxima').value,
+    createdAt:new Date().toISOString()
+  };
+  db.sessions.push(ses);
+  saveDB();
+  showToast('Sesión guardada. FONASA actualizado.');
+  // reset form partially
+  document.getElementById('s_actividades').value='';
+  document.getElementById('s_objsesion').value='';
+  document.getElementById('s_hogar').value='';
+  document.getElementById('s_proxima').value='';
+  sliders.forEach(s=>{s.value=3;s.nextElementSibling.textContent='3';});
+  document.getElementById('sessionScoreDisplay').textContent='60';
+  document.querySelectorAll('#chips_sesion_area .chip').forEach(c=>c.classList.remove('selected'));
+  updateFonasaInfo();
+  renderSessionHistory();
+}
+
+function renderSessionHistory(){
+  const filterPid = document.getElementById('filterSesionPaciente').value;
+  const box = document.getElementById('sessionHistory');
+  let sessions = [...db.sessions].sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  if(filterPid) sessions = sessions.filter(s=>s.patientId===filterPid);
+  if(!sessions.length){ box.innerHTML=`<div class="empty-state"><div class="icon">📋</div><p>Sin sesiones registradas</p></div>`; return; }
+  box.innerHTML = sessions.slice(0,30).map(s=>{
+    const p = db.patients.find(x=>x.id===s.patientId);
+    const areas = (s.areas||[]).map(a=>`<span class="badge badge-${a.toLowerCase()}">${a}</span>`).join(' ');
+    const scoreColor = s.score>=70?'var(--green)':s.score>=40?'var(--yellow)':'var(--red)';
+    return `<div class="card2" style="margin-bottom:10px">
+      <div class="flex-between">
+        <div>
+          <span style="font-weight:700;font-size:.9rem">${p?p.nombre:'Paciente eliminado'}</span>
+          <span style="font-size:.75rem;color:var(--muted);margin-left:8px">${formatDate(s.fecha)} · ${s.duracion}min · ${s.tipo}</span>
+        </div>
+        <span style="font-weight:700;font-size:1rem;color:${scoreColor}">${s.score||0}</span>
+      </div>
+      <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">${areas}</div>
+      ${s.actividades?`<div style="margin-top:6px;font-size:.8rem;color:var(--muted)">${s.actividades.slice(0,120)}${s.actividades.length>120?'...':''}</div>`:''}
+      ${s.proxima?`<div style="font-size:.75rem;color:var(--accent);margin-top:4px">Próxima: ${formatDate(s.proxima)}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+// ===================== EVALUACIONES =====================
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('e_test').addEventListener('change',function(){
+    document.getElementById('e_otroWrap').style.display = this.value==='Otro'?'block':'none';
+  });
+});
+
+function saveEvaluation(){
+  const pid = document.getElementById('e_paciente').value;
+  if(!pid){ alert('Selecciona un paciente.'); return; }
+  const test = document.getElementById('e_test').value;
+  if(!test){ alert('Selecciona un test.'); return; }
+  const fecha = document.getElementById('e_fecha').value;
+  const ev = {
+    id:genId(), patientId:pid, fecha,
+    test, testCustom:document.getElementById('e_otro').value.trim(),
+    puntaje:document.getElementById('e_puntaje').value,
+    percentil:document.getElementById('e_percentil').value,
+    edadequiv:document.getElementById('e_edadequiv').value.trim(),
+    interpretacion:document.getElementById('e_interpretacion').value,
+    notas:document.getElementById('e_notas').value.trim(),
+    createdAt:new Date().toISOString()
+  };
+  db.evaluations.push(ev);
+  saveDB();
+  showToast('Evaluación guardada');
+  ['e_puntaje','e_percentil','e_edadequiv','e_notas','e_otro'].forEach(id=>{ const el=document.getElementById(id); if(el)el.value=''; });
+  document.getElementById('e_test').value='';
+  document.getElementById('e_otroWrap').style.display='none';
+  renderEvalHistory();
+}
+
+function renderEvalHistory(){
+  const filterPid = document.getElementById('filterEvalPaciente').value;
+  const box = document.getElementById('evalHistory');
+  let evals = [...db.evaluations].sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  if(filterPid) evals = evals.filter(e=>e.patientId===filterPid);
+  if(!evals.length){ box.innerHTML=`<div class="empty-state"><div class="icon">🧪</div><p>Sin evaluaciones registradas</p></div>`; return; }
+  box.innerHTML = `<div class="table-wrap"><table>
+    <thead><tr><th>Paciente</th><th>Fecha</th><th>Test</th><th>Percentil</th><th>Interpretación</th><th></th></tr></thead>
+    <tbody>${evals.map(e=>{
+      const p = db.patients.find(x=>x.id===e.patientId);
+      const testName = e.test==='Otro'?e.testCustom:e.test;
+      const intrColor = e.interpretacion==='Normal'?'badge-green':e.interpretacion==='Retraso leve'?'badge-yellow':'badge-red';
+      return `<tr>
+        <td style="font-weight:600">${p?p.nombre:'-'}</td>
+        <td>${formatDate(e.fecha)}</td>
+        <td style="max-width:160px;white-space:normal;font-size:.78rem">${testName}</td>
+        <td>${e.percentil||'-'}</td>
+        <td><span class="badge ${intrColor}">${e.interpretacion}</span></td>
+        <td><button class="btn btn-secondary btn-sm" onclick="genEvalReport('${e.id}')">📄 Informe</button></td>
+      </tr>`;
+    }).join('')}</tbody></table></div>`;
+}
+
+function genEvalReport(eid){
+  const e = db.evaluations.find(x=>x.id===eid);
+  if(!e) return;
+  const p = db.patients.find(x=>x.id===e.patientId);
+  const testName = e.test==='Otro'?e.testCustom:e.test;
+  const report = `INFORME DE EVALUACIÓN FONOAUDIOLÓGICA
+═══════════════════════════════════════
+
+DATOS DEL PACIENTE
+─────────────────────────────────────
+Nombre: ${p?.nombre||'N/A'}
+RUT: ${p?.rut||'N/A'}
+Edad: ${calcAgeStr(p?.fnac)}
+Previsión: ${p?.prevision||'N/A'}
+Establecimiento: ${p?.establecimiento||'N/A'}
+
+EVALUACIÓN APLICADA
+─────────────────────────────────────
+Instrumento: ${testName}
+Fecha: ${formatDate(e.fecha)}
+Puntaje bruto: ${e.puntaje||'-'}
+Percentil: ${e.percentil||'-'}
+Equivalente de edad: ${e.edadequiv||'-'}
+Interpretación: ${e.interpretacion}
+
+ANTECEDENTES CLÍNICOS
+─────────────────────────────────────
+Área principal: ${(p?.areas||[]).join(', ')||'N/A'}
+Diagnóstico CIE-10: ${p?.cie10||'N/A'}
+Comorbilidades: ${(p?.comorbilidades||[]).join(', ')||'Ninguna'}
+Motivo de consulta: ${p?.motivo||'N/A'}
+
+OBSERVACIONES CUALITATIVAS
+─────────────────────────────────────
+${e.notas||'Sin observaciones adicionales.'}
+
+CONCLUSIÓN
+─────────────────────────────────────
+El/la paciente presenta resultados en rango de ${e.interpretacion.toLowerCase()} según el instrumento aplicado.
+Se sugiere continuar proceso terapéutico con los objetivos establecidos.
+
+─────────────────────────────────────
+Fonoaudiólogo/a clínico/a
+Fecha de emisión: ${formatDate(new Date().toISOString().split('T')[0])}`;
+
+  document.getElementById('reportTitle').textContent = 'Informe de Evaluación';
+  document.getElementById('reportContent').textContent = report;
+  document.getElementById('reportModal').style.display='flex';
+}
+
+// ===================== PROGRESO =====================
+let progressChart = null;
+
+function viewProgress(pid){
+  document.getElementById('p_paciente').value = pid;
+  showTab('progreso', document.querySelectorAll('nav button')[4]);
+}
+
+function renderProgress(){
+  const pid = document.getElementById('p_paciente').value;
+  const box = document.getElementById('progressContent');
+  if(!pid){ box.innerHTML=`<div class="empty-state"><div class="icon">📈</div><p>Selecciona un paciente</p></div>`; return; }
+  const p = db.patients.find(x=>x.id===pid);
+  if(!p){ box.innerHTML=`<div class="empty-state"><p>Paciente no encontrado</p></div>`; return; }
+  const sessions = db.sessions.filter(s=>s.patientId===pid).sort((a,b)=>a.fecha.localeCompare(b.fecha));
+  const evals = db.evaluations.filter(e=>e.patientId===pid).sort((a,b)=>a.fecha.localeCompare(b.fecha));
+  const fonoScore = calcFonoScore(pid);
+  const used = getUsedSessions(pid);
+  const auth = p.sesiones_auth||0;
+  const fonasaPct = auth>0?Math.min(100,Math.round(used/auth*100)):0;
+  const fonasaColor = fonasaPct>85?'var(--red)':fonasaPct>60?'var(--yellow)':'var(--green)';
+
+  let trend = 'Sin datos';
+  if(sessions.length>=3){
+    const last3 = sessions.slice(-3).map(s=>s.score||0);
+    const avg1 = (last3[0]+last3[1])/2;
+    const avg2 = last3[2];
+    trend = avg2>avg1+5?'⬆️ Mejorando':avg2<avg1-5?'⬇️ Regresando':'➡️ Estable';
+  }
+
+  const avgScore = sessions.length ? Math.round(sessions.reduce((a,s)=>a+(s.score||0),0)/sessions.length) : 0;
+
+  box.innerHTML = `
+    <div class="grid2" style="margin-bottom:12px">
+      <div class="stat-card"><div class="stat-num" style="color:${fonoScore>=70?'var(--green)':fonoScore>=40?'var(--yellow)':'var(--red)'}">${fonoScore}</div><div class="stat-label">FonoScore</div></div>
+      <div class="stat-card"><div class="stat-num">${sessions.length}</div><div class="stat-label">Sesiones totales</div></div>
+    </div>
+    <div class="grid2" style="margin-bottom:14px">
+      <div class="stat-card"><div class="stat-num" style="font-size:1.1rem">${avgScore}</div><div class="stat-label">Puntaje promedio sesiones</div></div>
+      <div class="stat-card"><div class="stat-num" style="font-size:1.1rem">${trend}</div><div class="stat-label">Tendencia</div></div>
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <div class="flex-between" style="margin-bottom:8px">
+        <h3>FONASA: ${used}/${auth} sesiones</h3>
+        <span style="font-size:.8rem;font-weight:700;color:${fonasaColor}">${fonasaPct}%</span>
+      </div>
+      <div class="fonasa-bar"><div class="fonasa-fill" style="width:${fonasaPct}%;background:${fonasaColor}"></div></div>
+    </div>
+
+    ${sessions.length>0?`
+    <div class="card" style="margin-bottom:12px">
+      <h3>Evolución de puntajes de sesión</h3>
+      <div id="chartContainer"><canvas id="progressChart"></canvas></div>
+    </div>`:''}
+
+    ${evals.length>0?`
+    <div class="card" style="margin-bottom:12px">
+      <h3>Historial de evaluaciones</h3>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Test</th><th>Fecha</th><th>Percentil</th><th>Interpretación</th></tr></thead>
+        <tbody>${evals.map(e=>{
+          const ic=e.interpretacion==='Normal'?'badge-green':e.interpretacion==='Retraso leve'?'badge-yellow':'badge-red';
+          return `<tr><td style="font-size:.77rem">${(e.test==='Otro'?e.testCustom:e.test).slice(0,30)}</td><td>${formatDate(e.fecha)}</td><td>${e.percentil||'-'}</td><td><span class="badge ${ic}">${e.interpretacion}</span></td></tr>`;
+        }).join('')}</tbody>
+      </table></div>
+    </div>`:''}
+
+    <div class="card" style="margin-bottom:12px">
+      <div class="flex-between" style="margin-bottom:10px">
+        <h3>Hitos terapéuticos</h3>
+        <button class="btn btn-secondary btn-sm" onclick="saveMilestones('${pid}')">💾 Guardar</button>
+      </div>
+      <div id="milestonesBox">${renderMilestones(p)}</div>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-top:4px">
+      <button class="btn btn-primary" style="flex:1" onclick="genProgressReport('${pid}')">📄 Generar Informe de Progreso</button>
+    </div>
+  `;
+
+  if(sessions.length>0){
+    setTimeout(()=>{
+      const ctx = document.getElementById('progressChart');
+      if(!ctx) return;
+      if(progressChart){ progressChart.destroy(); progressChart=null; }
+      progressChart = new Chart(ctx,{
+        type:'line',
+        data:{
+          labels: sessions.map(s=>formatDate(s.fecha)),
+          datasets:[{
+            label:'Puntaje sesión',
+            data: sessions.map(s=>s.score||0),
+            borderColor:'#0369a1',
+            backgroundColor:'rgba(3,105,161,.1)',
+            tension:.3,fill:true,
+            pointRadius:4,pointBackgroundColor:'#0369a1'
+          }]
+        },
+        options:{
+          responsive:true,maintainAspectRatio:false,
+          scales:{
+            y:{min:0,max:100,ticks:{font:{size:11}},grid:{color:'rgba(184,212,240,.4)'}},
+            x:{ticks:{font:{size:10},maxRotation:30}}
+          },
+          plugins:{legend:{display:false}}
+        }
+      });
+    },80);
+  }
+}
+
+function renderMilestones(p){
+  const ms = p.milestones||[];
+  return ms.map((m,i)=>`
+    <div class="milestone-row">
+      <div style="flex:1">
+        <input type="text" placeholder="Descripción del hito..." value="${esc(m.desc)}" id="ms_desc_${m.id}" style="margin-bottom:6px;font-size:15px">
+        <div class="flex">
+          <input type="date" value="${m.fecha||''}" id="ms_fecha_${m.id}" style="flex:1;font-size:15px">
+        </div>
+      </div>
+      <button class="milestone-status ms-${m.estado.toLowerCase().replace(' ','-')}" onclick="cycleMilestone(this,'${m.id}')">${m.estado}</button>
+    </div>`).join('');
+}
+
+const MILESTONE_STATES = ['Pendiente','En proceso','Logrado'];
+function cycleMilestone(btn, mid){
+  const cur = btn.textContent.trim();
+  const next = MILESTONE_STATES[(MILESTONE_STATES.indexOf(cur)+1)%3];
+  btn.textContent = next;
+  btn.className = 'milestone-status ms-'+next.toLowerCase().replace(' ','-');
+}
+
+function saveMilestones(pid){
+  const p = db.patients.find(x=>x.id===pid);
+  if(!p) return;
+  p.milestones = (p.milestones||[]).map(m=>{
+    const descEl = document.getElementById('ms_desc_'+m.id);
+    const fechaEl = document.getElementById('ms_fecha_'+m.id);
+    const btn = document.querySelector(`.milestone-row button[onclick*="${m.id}"]`);
+    return {
+      id:m.id,
+      desc: descEl?descEl.value:m.desc,
+      fecha: fechaEl?fechaEl.value:m.fecha,
+      estado: btn?btn.textContent.trim():m.estado
+    };
+  });
+  saveDB();
+  showToast('Hitos guardados');
+}
+
+function genProgressReport(pid){
+  const p = db.patients.find(x=>x.id===pid);
+  if(!p) return;
+  const sessions = db.sessions.filter(s=>s.patientId===pid).sort((a,b)=>a.fecha.localeCompare(b.fecha));
+  const evals = db.evaluations.filter(e=>e.patientId===pid).sort((a,b)=>a.fecha.localeCompare(b.fecha));
+  const fonoScore = calcFonoScore(pid);
+  const used = getUsedSessions(pid);
+  const avgScore = sessions.length ? Math.round(sessions.reduce((a,s)=>a+(s.score||0),0)/sessions.length) : 0;
+  let trend = 'Sin datos suficientes';
+  if(sessions.length>=3){
+    const last3 = sessions.slice(-3).map(s=>s.score||0);
+    const a1 = (last3[0]+last3[1])/2;
+    trend = last3[2]>a1+5?'Mejorando':last3[2]<a1-5?'Regresando':'Estable';
+  }
+
+  const msLines = (p.milestones||[]).filter(m=>m.desc).map(m=>`  • ${m.desc} | Objetivo: ${m.fecha?formatDate(m.fecha):'-'} | Estado: ${m.estado}`).join('\n');
+
+  const report = `INFORME DE PROGRESO FONOAUDIOLÓGICO
+═══════════════════════════════════════
+
+DATOS DEL PACIENTE
+─────────────────────────────────────
+Nombre: ${p.nombre}
+RUT: ${p.rut||'N/A'}
+Edad: ${calcAgeStr(p.fnac)}
+Previsión: ${p.prevision||'N/A'}
+Establecimiento: ${p.establecimiento||'N/A'}
+Derivación: ${p.derivacion||'N/A'}
+
+DIAGNÓSTICO
+─────────────────────────────────────
+Área(s): ${(p.areas||[]).join(', ')||'N/A'}
+CIE-10: ${p.cie10||'N/A'}
+Comorbilidades: ${(p.comorbilidades||[]).join(', ')||'Ninguna'}
+Motivo de consulta: ${p.motivo||'N/A'}
+
+PROCESO TERAPÉUTICO
+─────────────────────────────────────
+Sesiones realizadas: ${used} / ${p.sesiones_auth||'N/A'} autorizadas
+Puntaje promedio de logro: ${avgScore}/100
+FonoScore: ${fonoScore}/100
+Tendencia: ${trend}
+
+OBJETIVOS TERAPÉUTICOS
+─────────────────────────────────────
+${p.objetivos||'Sin objetivos registrados.'}
+
+HITOS TERAPÉUTICOS
+─────────────────────────────────────
+${msLines||'Sin hitos registrados.'}
+
+EVALUACIONES REALIZADAS
+─────────────────────────────────────
+${evals.map(e=>`  • ${formatDate(e.fecha)}: ${e.test==='Otro'?e.testCustom:e.test} — Percentil ${e.percentil||'-'} (${e.interpretacion})`).join('\n')||'Sin evaluaciones registradas.'}
+
+SESIONES RECIENTES (últimas 5)
+─────────────────────────────────────
+${sessions.slice(-5).map(s=>`  • ${formatDate(s.fecha)}: ${s.tipo} — Puntaje ${s.score||0}/100 — Conducta: ${s.conducta}`).join('\n')||'Sin sesiones.'}
+
+CONCLUSIÓN Y RECOMENDACIONES
+─────────────────────────────────────
+El/la paciente ${p.nombre} ha completado ${used} sesiones de fonoaudiología.
+La tendencia de progreso se presenta como: ${trend.toLowerCase()}.
+Se recomienda continuar el proceso terapéutico según los objetivos establecidos.
+
+─────────────────────────────────────
+Fonoaudiólogo/a clínico/a
+Fecha de emisión: ${formatDate(new Date().toISOString().split('T')[0])}`;
+
+  document.getElementById('reportTitle').textContent = 'Informe de Progreso — '+p.nombre;
+  document.getElementById('reportContent').textContent = report;
+  document.getElementById('reportModal').style.display='flex';
+}
+
+// ===================== QUICK SESSION =====================
+let quickPid = null;
+function quickSession(pid){
+  quickPid = pid;
+  document.getElementById('quickSessionModal').style.display='flex';
+}
+function closeQuickSession(){ document.getElementById('quickSessionModal').style.display='none'; }
+function goToSessions(){
+  closeQuickSession();
+  populatePatientSelects();
+  setTodayDates();
+  if(quickPid){ document.getElementById('s_paciente').value=quickPid; updateFonasaInfo(); }
+  showTab('sesiones', document.querySelectorAll('nav button')[2]);
+}
+
+// ===================== REPORT MODAL =====================
+function closeReport(){ document.getElementById('reportModal').style.display='none'; }
+function copyReport(){
+  const text = document.getElementById('reportContent').textContent;
+  navigator.clipboard.writeText(text).then(()=>showToast('Informe copiado al portapapeles'));
+}
+
+// ===================== UTILS =====================
+function formatDate(str){
+  if(!str) return '-';
+  try{
+    const [y,m,d] = str.split('-');
+    return `${d}/${m}/${y}`;
+  }catch(e){return str;}
+}
+
+function esc(str){ return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function showToast(msg){
+  const t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1e3a5f;color:#fff;padding:10px 20px;border-radius:20px;font-size:.85rem;z-index:999;box-shadow:0 4px 12px rgba(0,0,0,.2);white-space:nowrap';
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(),2500);
+}
+
+// ===================== INIT =====================
+loadDB();
+loadDemo();
+renderDashboard();
+populatePatientSelects();
+setTodayDates();
+calcSessionScore();
+
+// Pre-select today on session/eval date fields
+window.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('e_test').addEventListener('change',function(){
+    document.getElementById('e_otroWrap').style.display=this.value==='Otro'?'block':'none';
+  });
+});
+</script>
+</body>
+</html>

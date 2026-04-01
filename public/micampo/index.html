@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>MiCampo — Monitor de Salud Agrícola</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --cream:#fefce8;--white:#ffffff;--green:#166534;--green-light:#dcfce7;
+    --brown:#92400e;--blue:#0369a1;--blue-light:#e0f2fe;--red:#dc2626;
+    --red-light:#fee2e2;--yellow:#ca8a04;--yellow-light:#fef9c3;
+    --gray:#6b7280;--border:#e5e7eb;--shadow:0 2px 8px rgba(0,0,0,0.12);
+    --radius:12px;--font-base:18px;
+  }
+  html,body{height:100%;background:var(--cream);font-family:'Segoe UI',system-ui,sans-serif;font-size:var(--font-base);color:#1a1a1a}
+  h1{font-size:26px;font-weight:700;color:var(--green)}
+  h2{font-size:22px;font-weight:700;color:var(--green)}
+  h3{font-size:19px;font-weight:600;color:#1a1a1a}
+  p,label,span,td,th{font-size:18px}
+  small{font-size:15px;color:var(--gray)}
+
+  /* ---- NAV TABS ---- */
+  .tab-bar{
+    position:fixed;bottom:0;left:0;right:0;
+    display:flex;background:#fff;
+    border-top:2px solid var(--border);
+    z-index:1000;box-shadow:0 -2px 8px rgba(0,0,0,.1);
+  }
+  .tab-btn{
+    flex:1;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;padding:8px 2px;
+    border:none;background:none;cursor:pointer;
+    font-size:11px;color:var(--gray);transition:color .2s;
+    min-height:60px;
+  }
+  .tab-btn .ico{font-size:22px;line-height:1.2}
+  .tab-btn.active{color:var(--green);font-weight:700}
+  .tab-btn.active .ico{transform:scale(1.15)}
+
+  /* ---- MAIN CONTENT ---- */
+  .main{padding:16px 16px 80px 16px;max-width:600px;margin:0 auto}
+  .page{display:none}.page.active{display:block}
+
+  /* ---- CARDS ---- */
+  .card{background:#fff;border-radius:var(--radius);padding:16px;margin-bottom:16px;box-shadow:var(--shadow)}
+  .card-title{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+  .card-title .ico{font-size:24px}
+
+  /* ---- BUTTONS ---- */
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    min-height:56px;padding:12px 20px;border:none;border-radius:var(--radius);
+    font-size:18px;font-weight:700;cursor:pointer;transition:opacity .2s;
+    width:100%;margin-bottom:10px;
+  }
+  .btn:active{opacity:.8}
+  .btn-green{background:var(--green);color:#fff}
+  .btn-blue{background:var(--blue);color:#fff}
+  .btn-brown{background:var(--brown);color:#fff}
+  .btn-red{background:var(--red);color:#fff}
+  .btn-outline{background:#fff;color:var(--green);border:2px solid var(--green)}
+  .btn-gray{background:#f3f4f6;color:#374151;border:1px solid var(--border)}
+  .btn-sm{min-height:42px;font-size:15px;padding:8px 14px;margin-bottom:6px}
+  .btn-wa{background:#25d366;color:#fff}
+
+  /* ---- INPUTS ---- */
+  .input-group{margin-bottom:14px}
+  .input-group label{display:block;font-weight:600;margin-bottom:6px;color:#374151}
+  .input-group input,
+  .input-group select{
+    width:100%;padding:14px 16px;border:2px solid var(--border);border-radius:var(--radius);
+    font-size:18px;background:#fff;color:#1a1a1a;outline:none;
+  }
+  .input-group input:focus,
+  .input-group select:focus{border-color:var(--green)}
+  .hint{font-size:14px;color:var(--gray);margin-top:4px}
+
+  /* ---- TRAFFIC LIGHT ---- */
+  .tl-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+  .tl-card{
+    border-radius:var(--radius);padding:14px 12px;text-align:center;
+    box-shadow:var(--shadow);
+  }
+  .tl-card .tl-ico{font-size:32px;margin-bottom:4px}
+  .tl-card .tl-label{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#374151}
+  .tl-card .tl-status{font-size:18px;font-weight:700;margin:4px 0}
+  .tl-card .tl-val{font-size:14px;color:#555}
+  .tl-green{background:var(--green-light);border:2px solid var(--green)}
+  .tl-yellow{background:var(--yellow-light);border:2px solid var(--yellow)}
+  .tl-red{background:var(--red-light);border:2px solid var(--red)}
+  .tl-gray{background:#f3f4f6;border:2px solid var(--border)}
+
+  /* ---- MAP ---- */
+  #map{height:300px;border-radius:var(--radius);overflow:hidden;margin-bottom:16px}
+
+  /* ---- SOIL BARS ---- */
+  .soil-bar-wrap{margin-bottom:12px}
+  .soil-bar-label{display:flex;justify-content:space-between;margin-bottom:4px}
+  .soil-bar-track{height:22px;background:#e5e7eb;border-radius:20px;overflow:hidden}
+  .soil-bar-fill{height:100%;border-radius:20px;transition:width .6s}
+
+  /* ---- CHIPS ---- */
+  .chip-grid{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+  .chip{
+    padding:10px 16px;border-radius:30px;border:2px solid var(--border);
+    background:#fff;font-size:16px;cursor:pointer;transition:all .2s;
+    font-weight:500;
+  }
+  .chip.active{background:var(--green);color:#fff;border-color:var(--green)}
+
+  /* ---- FROST TABLE ---- */
+  .frost-table{width:100%;border-collapse:collapse;margin-top:8px}
+  .frost-table th{background:var(--green);color:#fff;padding:10px 8px;font-size:15px;text-align:center}
+  .frost-table td{padding:9px 8px;border-bottom:1px solid var(--border);text-align:center;font-size:16px}
+  .frost-table tr:nth-child(even) td{background:#f9fafb}
+  .frost-badge-ok{color:var(--green);font-weight:700}
+  .frost-badge-warn{color:var(--yellow);font-weight:700}
+  .frost-badge-alert{color:var(--red);font-weight:700}
+
+  /* ---- FIELD LIST ---- */
+  .field-item{
+    display:flex;align-items:center;gap:10px;
+    padding:12px 14px;background:#fff;border-radius:var(--radius);
+    margin-bottom:8px;box-shadow:var(--shadow);cursor:pointer;
+    border:2px solid transparent;transition:border-color .2s;
+  }
+  .field-item:hover{border-color:var(--green)}
+  .field-item .fi-ico{font-size:26px}
+  .field-item .fi-info{flex:1}
+  .field-item .fi-name{font-weight:700;font-size:18px}
+  .field-item .fi-rol{font-size:14px;color:var(--gray)}
+  .field-item .fi-del{color:var(--red);font-size:20px;padding:4px 8px;background:none;border:none;cursor:pointer}
+
+  /* ---- HISTORY ---- */
+  .hist-item{padding:12px;background:#fff;border-radius:var(--radius);margin-bottom:8px;box-shadow:var(--shadow)}
+  .hist-item .hi-date{font-size:14px;color:var(--gray)}
+  .hist-item .hi-name{font-weight:700;font-size:17px}
+  .hist-item .hi-status{font-size:14px;margin-top:4px}
+
+  /* ---- ALERTS ---- */
+  .alert{padding:12px 16px;border-radius:var(--radius);margin-bottom:12px;display:flex;gap:10px;align-items:flex-start}
+  .alert-info{background:var(--blue-light);border-left:4px solid var(--blue)}
+  .alert-warn{background:var(--yellow-light);border-left:4px solid var(--yellow)}
+  .alert-danger{background:var(--red-light);border-left:4px solid var(--red)}
+  .alert-ok{background:var(--green-light);border-left:4px solid var(--green)}
+  .alert .al-ico{font-size:22px;flex-shrink:0}
+  .alert .al-text{font-size:16px;line-height:1.5}
+
+  /* ---- LOADING ---- */
+  .spinner{display:inline-block;width:28px;height:28px;border:4px solid #e5e7eb;border-top-color:var(--green);border-radius:50%;animation:spin 0.8s linear infinite;vertical-align:middle;margin-right:8px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .loading-text{text-align:center;padding:32px;color:var(--gray);font-size:17px}
+
+  /* ---- MISC ---- */
+  .section-title{font-size:20px;font-weight:700;margin:20px 0 12px;color:var(--green);display:flex;align-items:center;gap:8px}
+  .tag{display:inline-block;padding:4px 10px;border-radius:20px;font-size:13px;font-weight:600;margin:2px}
+  .tag-green{background:var(--green-light);color:var(--green)}
+  .tag-blue{background:var(--blue-light);color:var(--blue)}
+  .tag-red{background:var(--red-light);color:var(--red)}
+  .tag-brown{background:#fef3c7;color:var(--brown)}
+  .now-action{background:var(--green);color:#fff;padding:14px 16px;border-radius:var(--radius);margin:12px 0;font-size:17px;font-weight:600;line-height:1.4}
+  .water-need{background:var(--blue-light);padding:14px 16px;border-radius:var(--radius);margin:8px 0;font-size:16px;border-left:4px solid var(--blue)}
+  .chart-wrap{position:relative;height:220px;margin-bottom:8px}
+  .area-badge{background:var(--green-light);color:var(--green);padding:8px 14px;border-radius:30px;font-weight:700;font-size:16px;display:inline-block;margin-bottom:12px}
+  .no-data{text-align:center;padding:20px;color:var(--gray);font-size:16px}
+  input[type=range]{width:100%;accent-color:var(--green);height:24px}
+  .page-header{margin-bottom:20px}
+  .page-header p{color:#555;font-size:16px;margin-top:4px}
+</style>
+</head>
+<body>
+
+<!-- ===== NAV TABS ===== -->
+<nav class="tab-bar" id="tabBar">
+  <button class="tab-btn active" data-tab="tab-campos" onclick="showTab('tab-campos')">
+    <span class="ico">🏡</span>Mis Campos
+  </button>
+  <button class="tab-btn" data-tab="tab-salud" onclick="showTab('tab-salud')">
+    <span class="ico">🌿</span>Salud
+  </button>
+  <button class="tab-btn" data-tab="tab-hidrico" onclick="showTab('tab-hidrico')">
+    <span class="ico">💧</span>Agua
+  </button>
+  <button class="tab-btn" data-tab="tab-cultivos" onclick="showTab('tab-cultivos')">
+    <span class="ico">🌾</span>Cultivos
+  </button>
+  <button class="tab-btn" data-tab="tab-historial" onclick="showTab('tab-historial')">
+    <span class="ico">📋</span>Historial
+  </button>
+</nav>
+
+<!-- ===== MAIN ===== -->
+<main class="main">
+
+<!-- ===================== TAB 1: MIS CAMPOS ===================== -->
+<div class="page active" id="tab-campos">
+  <div class="page-header">
+    <h1>🏡 Mis Campos</h1>
+    <p>Ingrese el ROL de su propiedad para ver su estado de salud</p>
+  </div>
+
+  <div class="card">
+    <div class="input-group">
+      <label>Número de ROL</label>
+      <input type="text" id="rolInput" placeholder="Ej: 100-1" maxlength="20">
+      <p class="hint">Formato: XXX-XX (lo encuentra en su escritura o SII)</p>
+    </div>
+    <div class="input-group">
+      <label>Comuna</label>
+      <select id="comunaSelect">
+        <option value="">— Seleccione una comuna —</option>
+      </select>
+    </div>
+    <div class="input-group">
+      <label>Nombre del predio (opcional)</label>
+      <input type="text" id="nombreInput" placeholder="Ej: La Esperanza">
+    </div>
+    <button class="btn btn-green" onclick="buscarCampo()">🔍 VER MI CAMPO</button>
+    <button class="btn btn-outline btn-sm" onclick="cargarDemo()">▶ Ver ejemplo (demo)</button>
+  </div>
+
+  <div id="savedFieldsSection">
+    <div class="section-title">📌 Mis predios guardados</div>
+    <div id="savedFieldsList"></div>
+    <p class="no-data" id="noFieldsMsg" style="display:none">Aún no tiene predios guardados.<br>Busque uno arriba para comenzar.</p>
+  </div>
+</div>
+
+<!-- ===================== TAB 2: SALUD DEL CAMPO ===================== -->
+<div class="page" id="tab-salud">
+  <div class="page-header">
+    <h1>🌿 Salud del Campo</h1>
+    <p id="saludSubtitle">Seleccione un predio para ver su estado</p>
+  </div>
+
+  <div id="saludEmpty" class="card" style="text-align:center;padding:32px">
+    <div style="font-size:56px;margin-bottom:12px">🌾</div>
+    <h3>Aún no hay predio seleccionado</h3>
+    <p style="color:var(--gray);margin:8px 0 16px">Vaya a "Mis Campos" y busque su predio</p>
+    <button class="btn btn-green" onclick="showTab('tab-campos')">🏡 Ir a Mis Campos</button>
+  </div>
+
+  <div id="saludContent" style="display:none">
+    <div id="mapCard" class="card" style="padding:12px">
+      <div id="map"></div>
+      <div style="margin-top:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <span id="areaBadge" class="area-badge"></span>
+        <small id="mapInfo" style="color:var(--gray)"></small>
+      </div>
+    </div>
+
+    <div id="loadingWeather" class="loading-text" style="display:none">
+      <span class="spinner"></span>Consultando clima y vegetación...
+    </div>
+
+    <div id="trafficLight" style="display:none">
+      <div class="section-title">🚦 Estado General del Predio</div>
+      <div class="tl-grid" id="tlGrid"></div>
+      <div id="weatherAlerts"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== TAB 3: DETALLE HÍDRICO ===================== -->
+<div class="page" id="tab-hidrico">
+  <div class="page-header">
+    <h1>💧 Detalle del Agua</h1>
+    <p id="hidricoSubtitle">Lluvia, humedad del suelo y evaporación</p>
+  </div>
+
+  <div id="hidricoEmpty" class="card" style="text-align:center;padding:32px">
+    <div style="font-size:56px;margin-bottom:12px">💧</div>
+    <h3>Sin datos disponibles</h3>
+    <p style="color:var(--gray);margin:8px 0 16px">Primero busque un predio en "Mis Campos"</p>
+    <button class="btn btn-blue" onclick="showTab('tab-campos')">🏡 Buscar Predio</button>
+  </div>
+
+  <div id="hidricoContent" style="display:none">
+
+    <div class="card">
+      <div class="card-title"><span class="ico">🌧️</span><h3>Lluvia últimos 14 días</h3></div>
+      <div class="chart-wrap"><canvas id="chartPrecip"></canvas></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="ico">🌱</span><h3>Humedad del suelo</h3></div>
+      <p style="font-size:14px;color:var(--gray);margin-bottom:12px">Qué tan húmedo está el suelo a distintas profundidades</p>
+      <div id="soilBars"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="ico">☀️</span><h3>Agua que pierde el suelo (próximos 7 días)</h3></div>
+      <p style="font-size:14px;color:var(--gray);margin-bottom:12px">Evapotranspiración — cuánta agua se evapora por calor y viento</p>
+      <div class="chart-wrap"><canvas id="chartET0"></canvas></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="ico">⚖️</span><h3>Balance de agua semanal</h3></div>
+      <div id="weeklyBalance"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="ico">❄️</span><h3>Riesgo de helada — próximos 7 días</h3></div>
+      <table class="frost-table">
+        <thead><tr><th>Día</th><th>Mín °C</th><th>Máx °C</th><th>¿Helada?</th></tr></thead>
+        <tbody id="frostTable"></tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===================== TAB 4: MIS CULTIVOS ===================== -->
+<div class="page" id="tab-cultivos">
+  <div class="page-header">
+    <h1>🌾 Mis Cultivos</h1>
+    <p>Seleccione su cultivo para ver recomendaciones personalizadas</p>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-bottom:12px">¿Qué tiene plantado?</h3>
+    <div class="chip-grid" id="cropChips"></div>
+  </div>
+
+  <div id="cultivoInfo" style="display:none">
+    <div class="card" id="cultivoCalCard">
+      <div class="card-title"><span class="ico">📅</span><h3 id="cultivoCalTitle">Calendario</h3></div>
+      <div id="cultivoCal"></div>
+      <div id="nowAction" class="now-action" style="display:none"></div>
+    </div>
+
+    <div class="card" id="cultivoAguaCard">
+      <div class="card-title"><span class="ico">💧</span><h3>Necesidad de agua</h3></div>
+      <div id="cultivoAgua"></div>
+    </div>
+
+    <div id="cultivoAlerts"></div>
+  </div>
+</div>
+
+<!-- ===================== TAB 5: HISTORIAL ===================== -->
+<div class="page" id="tab-historial">
+  <div class="page-header">
+    <h1>📋 Historial</h1>
+    <p>Consultas anteriores y cómo compartir</p>
+  </div>
+
+  <div class="card" id="shareCard" style="display:none">
+    <div class="card-title"><span class="ico">📤</span><h3>Compartir predio actual</h3></div>
+    <div id="shareInfo" style="margin-bottom:12px"></div>
+    <button class="btn btn-wa" onclick="compartirWA()">📱 Compartir por WhatsApp</button>
+    <button class="btn btn-gray btn-sm" onclick="copiarLink()">🔗 Copiar link</button>
+  </div>
+
+  <div class="section-title">🕐 Consultas recientes</div>
+  <div id="histList"></div>
+  <p class="no-data" id="noHistMsg">Aún no hay consultas guardadas.</p>
+</div>
+
+</main><!-- /main -->
+
+<script>
+// ============================================================
+// DATA: COMUNAS & LAYERS
+// ============================================================
+const CIREN_LAYERS = {
+  1:'Tarapacá',2:'Antofagasta',3:'Atacama',4:'Coquimbo',5:'Valparaíso',
+  6:'R.Metropolitana',7:'O\'Higgins',8:'Maule',9:'Ñuble',10:'Biobío',
+  11:'La Araucanía',12:'Los Ríos',13:'Los Lagos',14:'Aisén',15:'Magallanes',16:'Arica'
+};
+
+// comunas -> {region_name, layer_id, lat, lon}
+const COMUNAS = {
+  // TARAPACÁ (I)
+  'Iquique':{r:'Tarapacá',l:1,lat:-20.2208,lon:-70.1431},
+  'Alto Hospicio':{r:'Tarapacá',l:1,lat:-20.2724,lon:-70.1038},
+  'Pozo Almonte':{r:'Tarapacá',l:1,lat:-20.2567,lon:-69.7864},
+  'Pica':{r:'Tarapacá',l:1,lat:-20.4946,lon:-69.3346},
+  // ANTOFAGASTA (II)
+  'Antofagasta':{r:'Antofagasta',l:2,lat:-23.6524,lon:-70.3954},
+  'Calama':{r:'Antofagasta',l:2,lat:-22.4561,lon:-68.9274},
+  'San Pedro de Atacama':{r:'Antofagasta',l:2,lat:-22.9087,lon:-68.1996},
+  // ATACAMA (III)
+  'Copiapó':{r:'Atacama',l:3,lat:-27.3668,lon:-70.3326},
+  'Vallenar':{r:'Atacama',l:3,lat:-28.5736,lon:-70.7592},
+  'Huasco':{r:'Atacama',l:3,lat:-28.4664,lon:-71.2233},
+  // COQUIMBO (IV)
+  'La Serena':{r:'Coquimbo',l:4,lat:-29.9027,lon:-71.2519},
+  'Coquimbo':{r:'Coquimbo',l:4,lat:-29.9533,lon:-73.0347},
+  'Ovalle':{r:'Coquimbo',l:4,lat:-30.6006,lon:-71.2002},
+  'Illapel':{r:'Coquimbo',l:4,lat:-31.6352,lon:-71.1685},
+  'Vicuña':{r:'Coquimbo',l:4,lat:-30.0319,lon:-70.7104},
+  'Monte Patria':{r:'Coquimbo',l:4,lat:-30.6941,lon:-70.9626},
+  // VALPARAÍSO (V)
+  'Valparaíso':{r:'Valparaíso',l:5,lat:-33.0472,lon:-71.6127},
+  'Viña del Mar':{r:'Valparaíso',l:5,lat:-33.0245,lon:-71.5518},
+  'San Felipe':{r:'Valparaíso',l:5,lat:-32.7469,lon:-70.7237},
+  'Los Andes':{r:'Valparaíso',l:5,lat:-32.8338,lon:-70.5968},
+  'Quillota':{r:'Valparaíso',l:5,lat:-32.8804,lon:-71.2488},
+  'La Ligua':{r:'Valparaíso',l:5,lat:-32.4507,lon:-71.2314},
+  'Petorca':{r:'Valparaíso',l:5,lat:-32.2573,lon:-70.9268},
+  'Calera':{r:'Valparaíso',l:5,lat:-32.7876,lon:-71.1960},
+  // METROPOLITANA (VI in our mapping = layer 6)
+  'Santiago':{r:'R.Metropolitana',l:6,lat:-33.4489,lon:-70.6693},
+  'Maipú':{r:'R.Metropolitana',l:6,lat:-33.5137,lon:-70.7697},
+  'Puente Alto':{r:'R.Metropolitana',l:6,lat:-33.6167,lon:-70.5757},
+  'Melipilla':{r:'R.Metropolitana',l:6,lat:-33.6912,lon:-71.2129},
+  'Talagante':{r:'R.Metropolitana',l:6,lat:-33.6657,lon:-70.9288},
+  'Buin':{r:'R.Metropolitana',l:6,lat:-33.7290,lon:-70.7457},
+  'Paine':{r:'R.Metropolitana',l:6,lat:-33.8149,lon:-70.7428},
+  'Alhué':{r:'R.Metropolitana',l:6,lat:-34.0282,lon:-71.0916},
+  // O'HIGGINS (VII = layer 7)
+  'Rancagua':{r:"O'Higgins",l:7,lat:-34.1702,lon:-70.7444},
+  'San Fernando':{r:"O'Higgins",l:7,lat:-34.5861,lon:-70.9894},
+  'Rengo':{r:"O'Higgins",l:7,lat:-34.4090,lon:-70.8638},
+  'Santa Cruz':{r:"O'Higgins",l:7,lat:-34.6334,lon:-71.3611},
+  'Peumo':{r:"O'Higgins",l:7,lat:-34.3898,lon:-71.1932},
+  'Chimbarongo':{r:"O'Higgins",l:7,lat:-34.7134,lon:-71.0370},
+  // MAULE (VIII = layer 8)
+  'Talca':{r:'Maule',l:8,lat:-35.4264,lon:-71.6553},
+  'Curicó':{r:'Maule',l:8,lat:-34.9824,lon:-71.2390},
+  'Linares':{r:'Maule',l:8,lat:-35.8456,lon:-71.5967},
+  'Cauquenes':{r:'Maule',l:8,lat:-35.9666,lon:-72.3152},
+  'Constitución':{r:'Maule',l:8,lat:-35.3330,lon:-72.4126},
+  'Molina':{r:'Maule',l:8,lat:-35.1144,lon:-71.2832},
+  'Parral':{r:'Maule',l:8,lat:-36.1423,lon:-71.8296},
+  // ÑUBLE (IX = layer 9)
+  'Chillán':{r:'Ñuble',l:9,lat:-36.6066,lon:-72.1034},
+  'San Carlos':{r:'Ñuble',l:9,lat:-36.4233,lon:-71.9495},
+  'Quirihue':{r:'Ñuble',l:9,lat:-36.2826,lon:-72.5345},
+  'Yungay':{r:'Ñuble',l:9,lat:-37.1252,lon:-72.0130},
+  // BIOBÍO (X = layer 10)
+  'Concepción':{r:'Biobío',l:10,lat:-36.8270,lon:-73.0498},
+  'Los Angeles':{r:'Biobío',l:10,lat:-37.4693,lon:-72.3526},
+  'Coronel':{r:'Biobío',l:10,lat:-37.0293,lon:-73.1476},
+  'Chiguayante':{r:'Biobío',l:10,lat:-36.9251,lon:-73.0251},
+  'Santa Bárbara':{r:'Biobío',l:10,lat:-37.6699,lon:-72.0162},
+  'Mulchén':{r:'Biobío',l:10,lat:-37.7165,lon:-72.2406},
+  'Nacimiento':{r:'Biobío',l:10,lat:-37.5030,lon:-72.6735},
+  // LA ARAUCANÍA (XI = layer 11)
+  'Temuco':{r:'La Araucanía',l:11,lat:-38.7359,lon:-72.5904},
+  'Villarrica':{r:'La Araucanía',l:11,lat:-39.2797,lon:-72.2291},
+  'Angol':{r:'La Araucanía',l:11,lat:-37.7964,lon:-72.7085},
+  'Victoria':{r:'La Araucanía',l:11,lat:-38.2330,lon:-72.3430},
+  'Lautaro':{r:'La Araucanía',l:11,lat:-38.5270,lon:-72.4432},
+  // LOS RÍOS (XII = layer 12)
+  'Valdivia':{r:'Los Ríos',l:12,lat:-39.8142,lon:-73.2459},
+  'La Unión':{r:'Los Ríos',l:12,lat:-40.2901,lon:-73.0836},
+  'Los Lagos':{r:'Los Ríos',l:12,lat:-39.8497,lon:-72.8274},
+  'Río Bueno':{r:'Los Ríos',l:12,lat:-40.3364,lon:-72.9615},
+  // LOS LAGOS (XIII = layer 13)
+  'Puerto Montt':{r:'Los Lagos',l:13,lat:-41.4693,lon:-72.9424},
+  'Osorno':{r:'Los Lagos',l:13,lat:-40.5694,lon:-73.1343},
+  'Castro':{r:'Los Lagos',l:13,lat:-42.4814,lon:-73.7626},
+  'Puerto Varas':{r:'Los Lagos',l:13,lat:-41.3188,lon:-72.9822},
+  'Ancud':{r:'Los Lagos',l:13,lat:-41.8699,lon:-73.8275},
+  // AISÉN (XIV = layer 14)
+  'Coyhaique':{r:'Aisén',l:14,lat:-45.5752,lon:-72.0662},
+  'Cochrane':{r:'Aisén',l:14,lat:-47.2553,lon:-72.5725},
+  // MAGALLANES (XV = layer 15)
+  'Punta Arenas':{r:'Magallanes',l:15,lat:-53.1548,lon:-70.9103},
+  'Puerto Natales':{r:'Magallanes',l:15,lat:-51.7267,lon:-72.4863},
+  // ARICA (XVI = layer 16)
+  'Arica':{r:'Arica',l:16,lat:-18.4783,lon:-70.3126},
+  'Putre':{r:'Arica',l:16,lat:-18.1968,lon:-69.5643}
+};
+
+// ============================================================
+// CROP DATA
+// ============================================================
+const CROPS = [
+  {id:'nogal',name:'Nueces/Nogal',emoji:'🥜',kc:{ini:0.5,med:1.05,fin:0.65},
+   cal:{siembra:null,cosecha:[3,4],poda:[7,8],fertilizacion:[[9,10],[1,2]]}},
+  {id:'remolacha',name:'Remolacha',emoji:'🥕',kc:{ini:0.35,med:1.2,fin:0.7},
+   cal:{siembra:[8,11],cosecha:[4,7],raleo:[10,11]}},
+  {id:'esparrago',name:'Espárragos',emoji:'🌿',kc:{ini:0.5,med:0.95,fin:0.3},
+   cal:{cosecha:[8,12],corte:[8,11],fertilizacion:[1,3]}},
+  {id:'manzano',name:'Manzanos',emoji:'🍎',kc:{ini:0.5,med:1.0,fin:0.65},
+   cal:{cosecha:[2,4],poda:[6,7],raleo:[10,11]}},
+  {id:'cerezo',name:'Cerezos',emoji:'🍒',kc:{ini:0.5,med:1.0,fin:0.65},
+   cal:{cosecha:[12,2],poda:[6,7],fertilizacion:[9,10]}},
+  {id:'peral',name:'Perales',emoji:'🍐',kc:{ini:0.5,med:1.0,fin:0.65},
+   cal:{cosecha:[1,3],poda:[6,7],raleo:[10,11]}},
+  {id:'durazno',name:'Duraznos',emoji:'🍑',kc:{ini:0.5,med:1.0,fin:0.65},
+   cal:{cosecha:[1,3],poda:[6,7]}},
+  {id:'arandano',name:'Arándanos',emoji:'🫐',kc:{ini:0.45,med:0.9,fin:0.6},
+   cal:{cosecha:[12,3],poda:[7,8]}},
+  {id:'trigo',name:'Trigo',emoji:'🌾',kc:{ini:0.3,med:1.15,fin:0.4},
+   cal:{siembra:[5,7],cosecha:[11,1]}},
+  {id:'maiz',name:'Maíz',emoji:'🌽',kc:{ini:0.3,med:1.2,fin:0.6},
+   cal:{siembra:[9,11],cosecha:[3,5]}},
+  {id:'papa',name:'Papas',emoji:'🥔',kc:{ini:0.4,med:1.15,fin:0.75},
+   cal:{siembra:[8,10],cosecha:[1,3]}}
+];
+
+const MES_NOMBRES = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const DIA_NOMBRES = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+
+// ============================================================
+// STATE
+// ============================================================
+let currentField = null; // {rol, comuna, nombre, lat, lon, layer}
+let weatherData = null;  // Open-Meteo response
+let map = null;
+let fieldLayer = null;
+let selectedCrop = null;
+let precipChart = null;
+let et0Chart = null;
+let savedFields = [];
+let queryHistory = [];
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  populateComunaSelect();
+  loadLocalStorage();
+  renderSavedFields();
+  renderHistory();
+  renderCropChips();
+  parseURLParams();
+});
+
+function loadLocalStorage() {
+  try {
+    savedFields = JSON.parse(localStorage.getItem('micampo_fields') || '[]');
+    queryHistory = JSON.parse(localStorage.getItem('micampo_history') || '[]');
+    const savedCrop = localStorage.getItem('micampo_crop');
+    if (savedCrop) {
+      selectedCrop = CROPS.find(c => c.id === savedCrop) || null;
+    }
+  } catch(e) {
+    savedFields = [];
+    queryHistory = [];
+  }
+}
+
+function saveLocalStorage() {
+  try {
+    localStorage.setItem('micampo_fields', JSON.stringify(savedFields.slice(0,20)));
+    localStorage.setItem('micampo_history', JSON.stringify(queryHistory.slice(0,50)));
+    if (selectedCrop) localStorage.setItem('micampo_crop', selectedCrop.id);
+  } catch(e) {}
+}
+
+function parseURLParams() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const rol = params.get('rol');
+    const comuna = params.get('comuna');
+    if (rol && comuna) {
+      document.getElementById('rolInput').value = rol;
+      document.getElementById('comunaSelect').value = comuna;
+      setTimeout(() => buscarCampo(), 500);
+    }
+  } catch(e) {}
+}
+
+// ============================================================
+// TABS
+// ============================================================
+function showTab(tabId) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(tabId).classList.add('active');
+  document.querySelector(`[data-tab="${tabId}"]`).classList.add('active');
+  if (tabId === 'tab-salud' && currentField && !weatherData) {
+    fetchWeatherData();
+  }
+  if (tabId === 'tab-salud' && currentField && map) {
+    setTimeout(() => map.invalidateSize(), 100);
+  }
+}
+
+// ============================================================
+// POPULATE COMUNAS
+// ============================================================
+function populateComunaSelect() {
+  const sel = document.getElementById('comunaSelect');
+  const regions = {};
+  for (const [name, data] of Object.entries(COMUNAS)) {
+    if (!regions[data.r]) regions[data.r] = [];
+    regions[data.r].push(name);
+  }
+  for (const [region, comunas] of Object.entries(regions)) {
+    const og = document.createElement('optgroup');
+    og.label = region;
+    comunas.sort().forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c;
+      opt.textContent = c;
+      og.appendChild(opt);
+    });
+    sel.appendChild(og);
+  }
+}
+
+// ============================================================
+// DEMO
+// ============================================================
+function cargarDemo() {
+  document.getElementById('rolInput').value = '100-1';
+  document.getElementById('comunaSelect').value = 'Rancagua';
+  document.getElementById('nombreInput').value = 'La Esperanza (demo)';
+  buscarCampo();
+}
+
+// ============================================================
+// BUSCAR CAMPO
+// ============================================================
+async function buscarCampo() {
+  const rol = document.getElementById('rolInput').value.trim();
+  const comunaName = document.getElementById('comunaSelect').value;
+  const nombre = document.getElementById('nombreInput').value.trim() || rol;
+
+  if (!rol) { alert('Por favor ingrese el número de ROL'); return; }
+  if (!comunaName) { alert('Por favor seleccione la comuna'); return; }
+
+  const comunaData = COMUNAS[comunaName];
+  if (!comunaData) { alert('Comuna no encontrada'); return; }
+
+  currentField = {
+    rol, comuna: comunaName, nombre,
+    lat: comunaData.lat, lon: comunaData.lon,
+    layer: comunaData.l
+  };
+
+  // Save to history
+  addToHistory({
+    rol, comuna: comunaName, nombre,
+    date: new Date().toLocaleDateString('es-CL'),
+    status: 'Consultando...'
+  });
+
+  // Save to saved fields if not exists
+  if (!savedFields.find(f => f.rol === rol && f.comuna === comunaName)) {
+    savedFields.push({rol, comuna:comunaName, nombre, lat:comunaData.lat, lon:comunaData.lon, layer:comunaData.l});
+    saveLocalStorage();
+  }
+  renderSavedFields();
+
+  // Switch to salud tab
+  showTab('tab-salud');
+  document.getElementById('saludEmpty').style.display = 'none';
+  document.getElementById('saludContent').style.display = 'block';
+  document.getElementById('saludSubtitle').textContent = `${nombre} — ROL ${rol}, ${comunaName}`;
+
+  initMap();
+  await fetchCIREN(rol, comunaData.layer);
+  weatherData = null;
+  await fetchWeatherData();
+}
+
+// ============================================================
+// MAP
+// ============================================================
+function initMap() {
+  if (map) {
+    map.remove();
+    map = null;
+    fieldLayer = null;
+  }
+  setTimeout(() => {
+    try {
+      map = L.map('map', {zoomControl:true, attributionControl:false});
+
+      // Satellite basemap
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom:18, attribution:'Esri'
+      }).addTo(map);
+
+      // NDVI overlay
+      const ndviDate = getNDVIDate();
+      L.tileLayer(`https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_NDVI_8Day/default/${ndviDate}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.png`, {
+        opacity:0.6, maxZoom:9, attribution:'NASA GIBS'
+      }).addTo(map);
+
+      const lat = currentField.lat;
+      const lon = currentField.lon;
+      map.setView([lat, lon], 13);
+
+      // Placeholder marker
+      L.circleMarker([lat, lon], {radius:10, color:'#166534', fillColor:'#22c55e', fillOpacity:0.8, weight:2})
+        .addTo(map)
+        .bindPopup(`<b>${currentField.nombre}</b><br>ROL: ${currentField.rol}`)
+        .openPopup();
+
+    } catch(e) {
+      console.error('Map init error:', e);
+    }
+  }, 200);
+}
+
+function getNDVIDate() {
+  // NDVI is 8-day composites, use a recent date
+  const d = new Date();
+  d.setDate(d.getDate() - 10);
+  return d.toISOString().slice(0,10);
+}
+
+// ============================================================
+// CIREN API
+// ============================================================
+async function fetchCIREN(rol, layerId) {
+  const url = `https://esri.ciren.cl/server/rest/services/IDEMINAGRI/PROPIEDADES_RURALES/MapServer/${layerId}/query?where=ROL%3D%27${encodeURIComponent(rol)}%27&outFields=*&returnGeometry=true&outSR=4326&f=geojson`;
+  document.getElementById('mapInfo').textContent = 'Buscando límites del predio...';
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const resp = await fetch(url, {signal: controller.signal});
+    clearTimeout(timeoutId);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+    if (data.features && data.features.length > 0) {
+      displayCIRENBoundary(data);
+    } else {
+      document.getElementById('mapInfo').textContent = 'Límites no encontrados en CIREN — ubicación aproximada';
+    }
+  } catch(e) {
+    if (e.name === 'AbortError') {
+      document.getElementById('mapInfo').textContent = 'CIREN no respondió — mostrando ubicación por comuna';
+    } else {
+      document.getElementById('mapInfo').textContent = 'No se pudo cargar límite del predio — ubicación aproximada';
+    }
+  }
+}
+
+function displayCIRENBoundary(geojson) {
+  if (!map) return;
+  try {
+    if (fieldLayer) { map.removeLayer(fieldLayer); fieldLayer = null; }
+    fieldLayer = L.geoJSON(geojson, {
+      style: {color:'#166534', weight:3, fillColor:'#22c55e', fillOpacity:0.15}
+    }).addTo(map);
+    const bounds = fieldLayer.getBounds();
+    map.fitBounds(bounds, {padding:[20,20]});
+
+    // Calculate area
+    let areaHa = 0;
+    try {
+      const feat = geojson.features[0];
+      if (feat && feat.properties) {
+        // Try to get area from properties
+        areaHa = feat.properties.SUPERFICIE || feat.properties.sup || feat.properties.area || 0;
+        if (areaHa === 0) {
+          // Estimate from bounds
+          const b = bounds;
+          const latDiff = b.getNorth() - b.getSouth();
+          const lonDiff = b.getEast() - b.getWest();
+          const midLat = (b.getNorth() + b.getSouth()) / 2;
+          areaHa = Math.abs(latDiff * 111000 * lonDiff * 111000 * Math.cos(midLat * Math.PI/180) / 10000);
+        }
+      }
+    } catch(e2) {}
+
+    if (areaHa > 0) {
+      document.getElementById('areaBadge').textContent = `📐 ${areaHa.toFixed(1)} ha`;
+    }
+    document.getElementById('mapInfo').textContent = `ROL ${currentField.rol} — ${currentField.comuna}`;
+  } catch(e) {
+    document.getElementById('mapInfo').textContent = 'Predio encontrado (sin visualización de límites)';
+  }
+}
+
+// ============================================================
+// WEATHER DATA
+// ============================================================
+async function fetchWeatherData() {
+  if (!currentField) return;
+  document.getElementById('loadingWeather').style.display = 'block';
+  document.getElementById('trafficLight').style.display = 'none';
+
+  const {lat, lon} = currentField;
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation,et0_fao_evapotranspiration,soil_moisture_0_to_1cm,soil_moisture_9_to_27cm,soil_moisture_27_to_81cm&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,et0_fao_evapotranspiration&timezone=America%2FSantiago&forecast_days=7&past_days=14`;
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    const resp = await fetch(url, {signal: controller.signal});
+    clearTimeout(timeoutId);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    weatherData = await resp.json();
+
+    // Cache it
+    try { localStorage.setItem(`micampo_wx_${currentField.rol}_${currentField.comuna}`, JSON.stringify({data:weatherData,ts:Date.now()})); } catch(e){}
+
+    renderTrafficLight();
+    renderHidrico();
+    updateShareCard();
+    updateHistoryStatus();
+
+  } catch(e) {
+    // Try cache
+    try {
+      const cached = JSON.parse(localStorage.getItem(`micampo_wx_${currentField.rol}_${currentField.comuna}`) || 'null');
+      if (cached && Date.now() - cached.ts < 86400000) {
+        weatherData = cached.data;
+        renderTrafficLight();
+        renderHidrico();
+        updateShareCard();
+        document.getElementById('loadingWeather').style.display = 'none';
+        document.getElementById('trafficLight').style.display = 'block';
+        showAlert('saludContent', 'warn', '📡', 'Usando datos guardados (sin internet). Pueden estar desactualizados.');
+        return;
+      }
+    } catch(ce) {}
+
+    document.getElementById('loadingWeather').innerHTML = `
+      <div class="alert alert-danger" style="text-align:left">
+        <span class="al-ico">❌</span>
+        <div class="al-text">No se pudo obtener datos del clima. Verifique su conexión a internet e intente nuevamente.<br><br>
+        <button class="btn btn-blue btn-sm" style="margin-top:8px;width:auto;min-height:42px" onclick="fetchWeatherData()">🔄 Reintentar</button></div>
+      </div>`;
+  } finally {
+    document.getElementById('loadingWeather').style.display = 'none';
+  }
+}
+
+// ============================================================
+// RENDER TRAFFIC LIGHT
+// ============================================================
+function renderTrafficLight() {
+  if (!weatherData) return;
+  document.getElementById('trafficLight').style.display = 'block';
+  const {daily, hourly} = weatherData;
+
+  // ---- 1. NDVI estimate (from Open-Meteo we don't have direct NDVI, simulate from ET0 and season)
+  // Use a synthetic NDVI based on season and precipitation as approximation
+  const month = new Date().getMonth() + 1;
+  const summerMonths = [11,12,1,2,3];
+  const recentRain = daily.precipitation_sum ? daily.precipitation_sum.slice(0,7).reduce((a,b)=>a+(b||0),0) : 0;
+  const et0Avg = daily.et0_fao_evapotranspiration ? daily.et0_fao_evapotranspiration.slice(0,7).reduce((a,b)=>a+(b||0),0)/7 : 3;
+  let ndviEst = summerMonths.includes(month) ? 0.55 : 0.40;
+  ndviEst += recentRain > 20 ? 0.05 : (recentRain < 5 ? -0.1 : 0);
+  ndviEst = Math.max(0.1, Math.min(0.9, ndviEst));
+
+  // ---- 2. Soil moisture (average of current values, 0-1cm depth)
+  const soilIdx = hourly.time ? findCurrentHourIndex(hourly.time) : 0;
+  const sm0 = hourly.soil_moisture_0_to_1cm ? (hourly.soil_moisture_0_to_1cm[soilIdx] || 0) : 0.2;
+  const sm9 = hourly.soil_moisture_9_to_27cm ? (hourly.soil_moisture_9_to_27cm[soilIdx] || 0) : 0.25;
+  const smAvg = (sm0 + sm9) / 2;
+
+  // ---- 3. Climate summary
+  const tmin7 = daily.temperature_2m_min ? daily.temperature_2m_min.slice(0,7) : [];
+  const tmax7 = daily.temperature_2m_max ? daily.temperature_2m_max.slice(0,7) : [];
+  const minTemp = tmin7.length ? Math.min(...tmin7) : 5;
+  const maxTemp = tmax7.length ? Math.max(...tmax7) : 25;
+  const hasFrost = minTemp < 0;
+  const hasHeat = maxTemp > 35;
+
+  // ---- 4. Water balance (precip vs ET0 next 7 days)
+  const rain7 = daily.precipitation_sum ? daily.precipitation_sum.slice(0,7).reduce((a,b)=>a+(b||0),0) : 0;
+  const et07 = daily.et0_fao_evapotranspiration ? daily.et0_fao_evapotranspiration.slice(0,7).reduce((a,b)=>a+(b||0),0) : 0;
+  const balance = rain7 - et07;
+
+  // Build TL cards
+  const items = [
+    {
+      ico:'🌿',
+      label:'Vegetación',
+      val: ndviEst.toFixed(2),
+      status: ndviEst > 0.5 ? 'Buena' : ndviEst > 0.3 ? 'Regular' : 'Baja',
+      cls: ndviEst > 0.5 ? 'tl-green' : ndviEst > 0.3 ? 'tl-yellow' : 'tl-red',
+      detail: `Verdor estimado: ${(ndviEst*100).toFixed(0)}%`
+    },
+    {
+      ico:'💧',
+      label:'Agua en el suelo',
+      val: `${(smAvg*100).toFixed(0)}%`,
+      status: smAvg > 0.3 ? 'Bien húmedo' : smAvg > 0.15 ? 'Humedad media' : 'Seco',
+      cls: smAvg > 0.3 ? 'tl-green' : smAvg > 0.15 ? 'tl-yellow' : 'tl-red',
+      detail: `Humedad: ${(smAvg*100).toFixed(0)}% capacidad`
+    },
+    {
+      ico:'☀️',
+      label:'Clima 7 días',
+      val: `${minTemp.toFixed(0)}° / ${maxTemp.toFixed(0)}°C`,
+      status: hasFrost ? '⚠️ Riesgo helada' : hasHeat ? '🔥 Calor extremo' : 'Normal',
+      cls: hasFrost ? 'tl-red' : hasHeat ? 'tl-yellow' : 'tl-green',
+      detail: `Mín: ${minTemp.toFixed(0)}°C / Máx: ${maxTemp.toFixed(0)}°C`
+    },
+    {
+      ico:'🌧️',
+      label:'Balance hídrico',
+      val: `${balance >= 0 ? '+' : ''}${balance.toFixed(0)} mm`,
+      status: balance > 5 ? 'Superávit' : balance > -10 ? 'Equilibrado' : 'Déficit — Regar',
+      cls: balance > 5 ? 'tl-green' : balance > -10 ? 'tl-yellow' : 'tl-red',
+      detail: `Lluvia: ${rain7.toFixed(0)}mm | Evaporación: ${et07.toFixed(0)}mm`
+    }
+  ];
+
+  const grid = document.getElementById('tlGrid');
+  grid.innerHTML = items.map(i => `
+    <div class="tl-card ${i.cls}">
+      <div class="tl-ico">${i.ico}</div>
+      <div class="tl-label">${i.label}</div>
+      <div class="tl-status">${i.status}</div>
+      <div class="tl-val">${i.detail}</div>
+    </div>
+  `).join('');
+
+  // Alerts
+  const alertsDiv = document.getElementById('weatherAlerts');
+  const alerts = [];
+  if (hasFrost) alerts.push({cls:'alert-danger', ico:'❄️', text:`<b>Alerta de helada:</b> Se esperan temperaturas bajo 0°C esta semana. Proteja sus cultivos delicados.`});
+  if (hasHeat) alerts.push({cls:'alert-warn', ico:'🔥', text:`<b>Alerta de calor:</b> Temperaturas sobre 35°C esta semana. Aumente el riego y vigile el estrés hídrico.`});
+  if (balance < -15) alerts.push({cls:'alert-warn', ico:'💧', text:`<b>Déficit de agua:</b> El suelo necesita unos ${Math.abs(balance).toFixed(0)}mm adicionales esta semana. Considere regar.`});
+  if (rain7 > 50) alerts.push({cls:'alert-info', ico:'🌧️', text:`Se esperan lluvias abundantes (${rain7.toFixed(0)}mm). Revise drenajes y no riegue esta semana.`});
+  alertsDiv.innerHTML = alerts.map(a => `
+    <div class="alert ${a.cls}"><span class="al-ico">${a.ico}</span><div class="al-text">${a.text}</div></div>
+  `).join('');
+
+  // Update cultivos if crop selected
+  if (selectedCrop) renderCultivoInfo();
+}
+
+// ============================================================
+// RENDER HÍDRICO
+// ============================================================
+function renderHidrico() {
+  if (!weatherData) return;
+  document.getElementById('hidricoEmpty').style.display = 'none';
+  document.getElementById('hidricoContent').style.display = 'block';
+  document.getElementById('hidricoSubtitle').textContent = currentField ? `${currentField.nombre} — ROL ${currentField.rol}` : '';
+  const {daily, hourly} = weatherData;
+
+  // --- PRECIP CHART (last 14 days)
+  const precipData = daily.precipitation_sum ? daily.precipitation_sum.slice(0,14) : [];
+  const precipLabels = daily.time ? daily.time.slice(0,14).map(d => d.slice(5)) : precipData.map((_,i)=>`D-${14-i}`);
+  if (precipChart) precipChart.destroy();
+  const ctx1 = document.getElementById('chartPrecip').getContext('2d');
+  precipChart = new Chart(ctx1, {
+    type:'bar',
+    data:{
+      labels: precipLabels,
+      datasets:[{
+        label:'Lluvia (mm)',
+        data: precipData,
+        backgroundColor:'#0369a1',
+        borderRadius:4,
+        borderSkipped:false
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{ticks:{font:{size:12}},grid:{display:false}},
+        y:{ticks:{font:{size:12}},title:{display:true,text:'mm',font:{size:12}}}
+      }
+    }
+  });
+
+  // --- SOIL MOISTURE BARS
+  const soilIdx = findCurrentHourIndex(hourly.time || []);
+  const soils = [
+    {label:'Superficie (0-1 cm)', val: hourly.soil_moisture_0_to_1cm ? (hourly.soil_moisture_0_to_1cm[soilIdx] || 0) : 0.2, color:'#16a34a'},
+    {label:'Profundo (9-27 cm)', val: hourly.soil_moisture_9_to_27cm ? (hourly.soil_moisture_9_to_27cm[soilIdx] || 0) : 0.25, color:'#2563eb'},
+    {label:'Muy profundo (27-81 cm)', val: hourly.soil_moisture_27_to_81cm ? (hourly.soil_moisture_27_to_81cm[soilIdx] || 0) : 0.3, color:'#7c3aed'}
+  ];
+  document.getElementById('soilBars').innerHTML = soils.map(s => {
+    const pct = Math.min(100, (s.val * 100 / 0.5) * 100); // 0.5 = field capacity approx
+    const label = s.val < 0.15 ? 'Seco' : s.val < 0.3 ? 'Moderado' : 'Bien húmedo';
+    return `
+      <div class="soil-bar-wrap">
+        <div class="soil-bar-label">
+          <span>${s.label}</span>
+          <span style="font-weight:700;color:${s.color}">${label} (${(s.val*100).toFixed(0)}%)</span>
+        </div>
+        <div class="soil-bar-track">
+          <div class="soil-bar-fill" style="width:${pct}%;background:${s.color}"></div>
+        </div>
+      </div>`;
+  }).join('');
+
+  // --- ET0 CHART (next 7 days)
+  const et0Data = daily.et0_fao_evapotranspiration ? daily.et0_fao_evapotranspiration.slice(14, 21) : [];
+  const et0Labels = daily.time ? daily.time.slice(14,21).map(d => d.slice(5)) : et0Data.map((_,i)=>`D+${i+1}`);
+  if (et0Chart) et0Chart.destroy();
+  const ctx2 = document.getElementById('chartET0').getContext('2d');
+  et0Chart = new Chart(ctx2, {
+    type:'line',
+    data:{
+      labels: et0Labels,
+      datasets:[{
+        label:'Agua que pierde el suelo (mm/día)',
+        data: et0Data,
+        borderColor:'#dc2626',
+        backgroundColor:'rgba(220,38,38,0.1)',
+        fill:true,
+        tension:0.3,
+        pointRadius:5,
+        borderWidth:2
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{ticks:{font:{size:12}},grid:{display:false}},
+        y:{ticks:{font:{size:12}},title:{display:true,text:'mm/día',font:{size:12}},min:0}
+      }
+    }
+  });
+
+  // --- WEEKLY BALANCE
+  const rain7 = daily.precipitation_sum ? daily.precipitation_sum.slice(14,21).reduce((a,b)=>a+(b||0),0) : 0;
+  const et7 = daily.et0_fao_evapotranspiration ? daily.et0_fao_evapotranspiration.slice(14,21).reduce((a,b)=>a+(b||0),0) : 0;
+  const bal = rain7 - et7;
+  const balCls = bal > 5 ? 'alert-ok' : bal > -10 ? 'alert-warn' : 'alert-danger';
+  const balMsg = bal > 5
+    ? `Hay suficiente agua. Esta semana sobran ${bal.toFixed(0)}mm — <b>no es necesario regar</b>.`
+    : bal > -10
+    ? `Balance equilibrado (${bal.toFixed(0)}mm). Monitoree la humedad del suelo.`
+    : `<b>Déficit de ${Math.abs(bal).toFixed(0)}mm esta semana.</b> Lluvia: ${rain7.toFixed(0)}mm, Evaporación: ${et7.toFixed(0)}mm. Conviene regar.`;
+  document.getElementById('weeklyBalance').innerHTML = `
+    <div class="alert ${balCls}">
+      <span class="al-ico">${bal > 5 ? '✅' : bal > -10 ? '⚠️' : '🚨'}</span>
+      <div class="al-text">${balMsg}</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+      <span class="tag tag-blue">🌧️ Lluvia: ${rain7.toFixed(0)} mm/semana</span>
+      <span class="tag tag-red" style="background:var(--red-light);color:var(--red)">☀️ Evaporación: ${et7.toFixed(0)} mm/semana</span>
+      <span class="tag ${bal>0?'tag-green':'tag-red'}">${bal >= 0 ? '▲' : '▼'} Balance: ${bal.toFixed(0)} mm</span>
+    </div>`;
+
+  // --- FROST TABLE
+  const frostRows = [];
+  for (let i = 14; i < Math.min(21, daily.time.length); i++) {
+    const dateStr = daily.time[i];
+    const d = new Date(dateStr);
+    const dayName = DIA_NOMBRES[d.getDay()];
+    const tmin = daily.temperature_2m_min[i];
+    const tmax = daily.temperature_2m_max[i];
+    const isFrost = tmin < 0;
+    const isWarn = tmin >= 0 && tmin < 3;
+    const frostText = isFrost ? '<span class="frost-badge-alert">❄️ HELADA</span>' :
+                      isWarn ? '<span class="frost-badge-warn">⚠️ Riesgo</span>' :
+                      '<span class="frost-badge-ok">✅ Sin riesgo</span>';
+    frostRows.push(`<tr><td>${dayName} ${dateStr.slice(5)}</td><td style="color:${isFrost?'var(--red)':'#1a1a1a'}">${tmin!=null?tmin.toFixed(1):'—'}°</td><td>${tmax!=null?tmax.toFixed(1):'—'}°</td><td>${frostText}</td></tr>`);
+  }
+  document.getElementById('frostTable').innerHTML = frostRows.join('');
+}
+
+function findCurrentHourIndex(timeArr) {
+  const now = new Date().toISOString().slice(0,13);
+  const idx = timeArr.findIndex(t => t.startsWith(now));
+  return idx >= 0 ? idx : Math.min(Math.max(0, timeArr.length - 48), timeArr.length - 1);
+}
+
+// ============================================================
+// CULTIVOS
+// ============================================================
+function renderCropChips() {
+  const container = document.getElementById('cropChips');
+  container.innerHTML = CROPS.map(c => `
+    <div class="chip ${selectedCrop && selectedCrop.id===c.id ? 'active' : ''}"
+         onclick="selectCrop('${c.id}')">
+      ${c.emoji} ${c.name}
+    </div>
+  `).join('');
+}
+
+function selectCrop(cropId) {
+  selectedCrop = CROPS.find(c => c.id === cropId);
+  saveLocalStorage();
+  renderCropChips();
+  renderCultivoInfo();
+}
+
+function renderCultivoInfo() {
+  if (!selectedCrop) return;
+  const div = document.getElementById('cultivoInfo');
+  div.style.display = 'block';
+  const crop = selectedCrop;
+  const month = new Date().getMonth() + 1;
+
+  // --- Calendar
+  document.getElementById('cultivoCalTitle').textContent = `📅 Calendario: ${crop.emoji} ${crop.name}`;
+  const calItems = [];
+  for (const [act, range] of Object.entries(crop.cal)) {
+    if (!range) continue;
+    const isRange = Array.isArray(range[0]) ? range : [range];
+    for (const r of isRange) {
+      const [m1,m2] = r;
+      let inMonth = false;
+      if (m1 <= m2) inMonth = month >= m1 && month <= m2;
+      else inMonth = month >= m1 || month <= m2; // wraps year
+      const actLabel = {
+        siembra:'🌱 Siembra', cosecha:'🧺 Cosecha', poda:'✂️ Poda',
+        fertilizacion:'🪣 Fertilización', raleo:'🌿 Raleo', corte:'🔪 Corte'
+      }[act] || act;
+      calItems.push({act:actLabel, range:`${MES_NOMBRES[m1]}–${MES_NOMBRES[m2]}`, active:inMonth});
+    }
+  }
+  document.getElementById('cultivoCal').innerHTML = `
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">
+      ${calItems.map(ci => `
+        <span class="tag ${ci.active ? 'tag-green' : 'tag-brown'}" style="${ci.active ? 'font-size:15px;padding:6px 12px' : ''}">
+          ${ci.active ? '▶ ' : ''}${ci.act}: ${ci.range}
+        </span>
+      `).join('')}
+    </div>`;
+
+  // Current month action
+  const activeNow = calItems.filter(ci => ci.active);
+  const nowActionDiv = document.getElementById('nowAction');
+  if (activeNow.length > 0) {
+    nowActionDiv.style.display = 'block';
+    nowActionDiv.innerHTML = `🗓️ Ahora en ${MES_NOMBRES[month]}:<br>${activeNow.map(a=>`• ${a.act}`).join('<br>')}`;
+  } else {
+    nowActionDiv.style.display = 'block';
+    nowActionDiv.innerHTML = `🗓️ En ${MES_NOMBRES[month]}: No hay tareas urgentes para este cultivo. Aproveche de revisar el riego y fertilización.`;
+  }
+
+  // Water needs
+  const kcNow = getCropKc(crop, month);
+  let et0Val = 3.5; // default
+  if (weatherData && weatherData.daily.et0_fao_evapotranspiration) {
+    const vals = weatherData.daily.et0_fao_evapotranspiration.slice(14, 21).filter(v => v != null);
+    if (vals.length > 0) et0Val = vals.reduce((a,b)=>a+b,0)/vals.length;
+  }
+  const etcDaily = kcNow * et0Val;
+  const etcWeekly = etcDaily * 7;
+  const etcHaWeekly = etcWeekly * 10; // mm * 10 = m3/ha; 1mm = 10 m3/ha = 10,000 L/ha
+  const etcLitros = etcWeekly * 10000;
+
+  document.getElementById('cultivoAgua').innerHTML = `
+    <div class="water-need">
+      <b>Kc ${MES_NOMBRES[month]} (${crop.name}):</b> ${kcNow.toFixed(2)}<br>
+      <b>ET0 promedio esta semana:</b> ${et0Val.toFixed(1)} mm/día<br>
+      <b>Necesidad del cultivo (ETc):</b> ${etcDaily.toFixed(1)} mm/día → <b style="font-size:18px">${etcWeekly.toFixed(0)} mm esta semana</b><br>
+      <b>En litros por hectárea:</b> ${etcLitros.toLocaleString('es-CL')} L/ha/semana
+    </div>`;
+
+  // Personalized alert with weather
+  const alertsDiv = document.getElementById('cultivoAlerts');
+  if (weatherData) {
+    const rain7 = weatherData.daily.precipitation_sum
+      ? weatherData.daily.precipitation_sum.slice(14,21).reduce((a,b)=>a+(b||0),0) : 0;
+    const deficit = etcWeekly - rain7;
+    let alertHtml = '';
+    if (deficit > 5) {
+      alertHtml = `<div class="alert alert-warn">
+        <span class="al-ico">💧</span>
+        <div class="al-text">
+          <b>Sus ${crop.name.toLowerCase()} necesitan ${etcWeekly.toFixed(0)}mm esta semana</b>, solo se esperan ${rain7.toFixed(0)}mm de lluvia.<br>
+          → <b>Regar ${deficit.toFixed(0)}mm</b> (${(deficit*10000).toLocaleString('es-CL')} L/ha)
+        </div>
+      </div>`;
+    } else if (deficit <= 0) {
+      alertHtml = `<div class="alert alert-ok">
+        <span class="al-ico">✅</span>
+        <div class="al-text">Las lluvias son suficientes para sus ${crop.name.toLowerCase()} esta semana. No es necesario regar.</div>
+      </div>`;
+    } else {
+      alertHtml = `<div class="alert alert-info">
+        <span class="al-ico">ℹ️</span>
+        <div class="al-text">Pequeño déficit de ${deficit.toFixed(0)}mm. Monitoree la humedad del suelo.</div>
+      </div>`;
+    }
+    alertsDiv.innerHTML = alertHtml;
+  }
+}
+
+function getCropKc(crop, month) {
+  // Map month to growth stage for Chilean central-south
+  // Growing season roughly: siembra ~ sep-oct, máx veg ~ nov-ene, fin ~ feb-may
+  const {kc} = crop;
+  const growMonth = {
+    nogal:[3,4,5,6,7,8,9,10,11,12,1,2],
+    remolacha:[8,9,10,11,12,1,2,3,4,5,6,7],
+    esparrago:[8,9,10,11,12,1,2,3,4,5,6,7],
+    manzano:[3,4,5,6,7,8,9,10,11,12,1,2],
+    cerezo:[12,1,2,3,4,5,6,7,8,9,10,11],
+    peral:[1,2,3,4,5,6,7,8,9,10,11,12],
+    durazno:[1,2,3,4,5,6,7,8,9,10,11,12],
+    arandano:[12,1,2,3,4,5,6,7,8,9,10,11],
+    trigo:[5,6,7,8,9,10,11,12,1,2,3,4],
+    maiz:[9,10,11,12,1,2,3,4,5,6,7,8],
+    papa:[8,9,10,11,12,1,2,3,4,5,6,7]
+  };
+  const seq = growMonth[crop.id] || growMonth.nogal;
+  const pos = seq.indexOf(month);
+  const prog = pos >= 0 ? pos / seq.length : 0.5;
+  // ini -> med -> fin bell curve
+  if (prog < 0.25) return kc.ini + (kc.med - kc.ini) * (prog / 0.25);
+  if (prog < 0.65) return kc.med;
+  return kc.med + (kc.fin - kc.med) * ((prog - 0.65) / 0.35);
+}
+
+// ============================================================
+// SAVED FIELDS
+// ============================================================
+function renderSavedFields() {
+  const list = document.getElementById('savedFieldsList');
+  const msg = document.getElementById('noFieldsMsg');
+  if (savedFields.length === 0) {
+    list.innerHTML = '';
+    msg.style.display = 'block';
+    return;
+  }
+  msg.style.display = 'none';
+  const icons = ['🌾','🌿','🥜','🍎','🍒','🥕','🌱','🏡'];
+  list.innerHTML = savedFields.map((f, idx) => `
+    <div class="field-item" onclick="loadField(${idx})">
+      <span class="fi-ico">${icons[idx % icons.length]}</span>
+      <div class="fi-info">
+        <div class="fi-name">${f.nombre}</div>
+        <div class="fi-rol">ROL ${f.rol} — ${f.comuna}</div>
+      </div>
+      <button class="fi-del" onclick="event.stopPropagation();deleteField(${idx})">🗑️</button>
+    </div>
+  `).join('');
+}
+
+function loadField(idx) {
+  const f = savedFields[idx];
+  if (!f) return;
+  document.getElementById('rolInput').value = f.rol;
+  document.getElementById('comunaSelect').value = f.comuna;
+  document.getElementById('nombreInput').value = f.nombre;
+  currentField = {...f};
+  showTab('tab-salud');
+  document.getElementById('saludEmpty').style.display = 'none';
+  document.getElementById('saludContent').style.display = 'block';
+  document.getElementById('saludSubtitle').textContent = `${f.nombre} — ROL ${f.rol}, ${f.comuna}`;
+  weatherData = null;
+  initMap();
+  fetchCIREN(f.rol, f.layer);
+  fetchWeatherData();
+}
+
+function deleteField(idx) {
+  if (!confirm('¿Eliminar este predio de la lista?')) return;
+  savedFields.splice(idx, 1);
+  saveLocalStorage();
+  renderSavedFields();
+}
+
+// ============================================================
+// HISTORY
+// ============================================================
+function addToHistory(entry) {
+  queryHistory.unshift(entry);
+  queryHistory = queryHistory.slice(0, 50);
+  saveLocalStorage();
+  renderHistory();
+}
+
+function updateHistoryStatus() {
+  if (!currentField || !weatherData || !queryHistory.length) return;
+  const h = queryHistory[0];
+  if (h.rol === currentField.rol) {
+    const {daily} = weatherData;
+    const rain7 = daily.precipitation_sum ? daily.precipitation_sum.slice(14,21).reduce((a,b)=>a+(b||0),0) : 0;
+    const tmin = daily.temperature_2m_min ? Math.min(...daily.temperature_2m_min.slice(14,21)) : 10;
+    h.status = `🌧️ ${rain7.toFixed(0)}mm lluvia | ${tmin<0?'❄️ Helada':'🌡️ Sin helada'}`;
+    saveLocalStorage();
+    renderHistory();
+  }
+}
+
+function renderHistory() {
+  const list = document.getElementById('histList');
+  const msg = document.getElementById('noHistMsg');
+  if (queryHistory.length === 0) {
+    list.innerHTML = '';
+    msg.style.display = 'block';
+    return;
+  }
+  msg.style.display = 'none';
+  list.innerHTML = queryHistory.slice(0,20).map(h => `
+    <div class="hist-item">
+      <div class="hi-date">📅 ${h.date}</div>
+      <div class="hi-name">${h.nombre} — ROL ${h.rol}, ${h.comuna}</div>
+      <div class="hi-status">${h.status}</div>
+    </div>
+  `).join('');
+}
+
+// ============================================================
+// SHARE
+// ============================================================
+function updateShareCard() {
+  const shareCard = document.getElementById('shareCard');
+  if (!currentField) { shareCard.style.display = 'none'; return; }
+  shareCard.style.display = 'block';
+  document.getElementById('shareInfo').innerHTML = `
+    <p><b>${currentField.nombre}</b></p>
+    <p>ROL: ${currentField.rol} — ${currentField.comuna}</p>`;
+}
+
+function getShareText() {
+  if (!currentField) return '';
+  const {rol, comuna, nombre} = currentField;
+  let statusText = '';
+  if (weatherData && weatherData.daily) {
+    const rain7 = weatherData.daily.precipitation_sum ? weatherData.daily.precipitation_sum.slice(14,21).reduce((a,b)=>a+(b||0),0) : 0;
+    const tmin = weatherData.daily.temperature_2m_min ? Math.min(...weatherData.daily.temperature_2m_min.slice(14,21)) : 5;
+    const et7 = weatherData.daily.et0_fao_evapotranspiration ? weatherData.daily.et0_fao_evapotranspiration.slice(14,21).reduce((a,b)=>a+(b||0),0) : 0;
+    const bal = rain7 - et7;
+    statusText = ` 🌧️ ${rain7.toFixed(0)}mm lluvia ${bal<-10?'💧Regar':'✅OK'} ${tmin<0?'❄️HELADA':'🌡️Sin helada'}`;
+  }
+  const link = `https://cussen.cl/micampo/?rol=${encodeURIComponent(rol)}&comuna=${encodeURIComponent(comuna)}`;
+  return `Mi campo "${nombre}" ROL ${rol} en ${comuna}${statusText}\n${link}`;
+}
+
+function compartirWA() {
+  const text = getShareText();
+  const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+  window.open(url, '_blank');
+}
+
+function copiarLink() {
+  if (!currentField) return;
+  const link = `https://cussen.cl/micampo/?rol=${encodeURIComponent(currentField.rol)}&comuna=${encodeURIComponent(currentField.comuna)}`;
+  try {
+    navigator.clipboard.writeText(link).then(() => alert('Link copiado al portapapeles'))
+      .catch(() => { prompt('Copie este link:', link); });
+  } catch(e) {
+    prompt('Copie este link:', link);
+  }
+}
+
+// ============================================================
+// UTILITY
+// ============================================================
+function showAlert(containerId, type, ico, text) {
+  const cls = {ok:'alert-ok', warn:'alert-warn', danger:'alert-danger', info:'alert-info'}[type] || 'alert-info';
+  const div = document.createElement('div');
+  div.className = `alert ${cls}`;
+  div.innerHTML = `<span class="al-ico">${ico}</span><div class="al-text">${text}</div>`;
+  const container = document.getElementById(containerId);
+  if (container) container.prepend(div);
+}
+</script>
+</body>
+</html>

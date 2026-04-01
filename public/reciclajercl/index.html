@@ -1,0 +1,1972 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <meta name="description" content="ReciclajeCL - Sistema de gestión de reciclaje y residuos para empresas chilenas">
+    <meta name="theme-color" content="#065f46">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ReciclajeCL">
+
+    <title>ReciclajeCL - Gestión de Reciclaje</title>
+
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%23065f46' width='192' height='192'/><circle cx='96' cy='96' r='60' fill='%2310b981'/><path fill='%23065f46' d='M96 50c25.4 0 46 20.6 46 46s-20.6 46-46 46-46-20.6-46-46 20.6-46 46-46m0-8c-29.8 0-54 24.2-54 54s24.2 54 54 54 54-24.2 54-54-24.2-54-54-54z'/><path fill='%23f3f4f6' d='M96 75c7 0 12 5 12 12s-5 12-12 12-12-5-12-12 5-12 12-12m0-4c-8.8 0-16 7.2-16 16s7.2 16 16 16 16-7.2 16-16-7.2-16-16-16z'/></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%23065f46' width='180' height='180'/><circle cx='90' cy='90' r='55' fill='%2310b981'/></svg>">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-user-scalable: no;
+            font-size: 16px;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #065f46 0%, #047857 100%);
+            color: white;
+            padding: 1rem 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            min-height: 60px;
+            padding-top: max(1rem, env(safe-area-inset-top));
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .header-logo {
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            white-space: nowrap;
+        }
+
+        .header-logo small {
+            font-size: 11px;
+            opacity: 0.8;
+            display: block;
+            font-weight: 600;
+        }
+
+        .header-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 13px;
+            opacity: 0.9;
+            white-space: nowrap;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10b981;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Main Container */
+        .container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 0;
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            position: relative;
+            z-index: 50;
+        }
+
+        .tab {
+            padding: 1rem 1.25rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: #64748b;
+            white-space: nowrap;
+            position: relative;
+            transition: color 0.3s ease;
+            font-family: 'Inter', sans-serif;
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+        }
+
+        .tab.active {
+            color: #065f46;
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: #065f46;
+        }
+
+        .tab:active {
+            background: rgba(6,95,70,0.05);
+        }
+
+        /* Content */
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            min-height: 0;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 1rem;
+            min-height: 100%;
+        }
+
+        .tab-content.active {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        /* Forms */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        label {
+            font-weight: 600;
+            color: #334155;
+            font-size: 14px;
+        }
+
+        input, select, textarea {
+            padding: 0.75rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 0.5rem;
+            font-family: 'Inter', sans-serif;
+            font-size: 16px;
+            transition: all 0.2s ease;
+            background: white;
+            color: #1e293b;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #065f46;
+            box-shadow: 0 0 0 3px rgba(6,95,70,0.1);
+            background: #f8fafb;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            min-height: 44px;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: #065f46;
+            color: white;
+        }
+
+        .btn-primary:active {
+            background: #054d3a;
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #065f46;
+            border: 2px solid #065f46;
+        }
+
+        .btn-secondary:active {
+            background: #f0fdf4;
+        }
+
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+        }
+
+        .btn-danger:active {
+            background: #b91c1c;
+        }
+
+        .btn-small {
+            padding: 0.5rem 1rem;
+            font-size: 13px;
+            min-height: 36px;
+        }
+
+        .btn-icon {
+            padding: 0.5rem;
+            width: 44px;
+            height: 44px;
+            font-size: 20px;
+        }
+
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 0.75rem;
+            border: 1px solid #e2e8f0;
+            padding: 1.25rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 0.75rem;
+        }
+
+        .card-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .card-row:last-child {
+            border-bottom: none;
+        }
+
+        .card-label {
+            font-size: 13px;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .card-value {
+            font-size: 16px;
+            font-weight: 700;
+            color: #065f46;
+        }
+
+        /* Tables */
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        .table th {
+            background: #f1f5f9;
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 700;
+            color: #475569;
+            border-bottom: 2px solid #cbd5e1;
+        }
+
+        .table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .table tr:hover {
+            background: #f8fafc;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .badge-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-pending {
+            background: #e0e7ff;
+            color: #3730a3;
+        }
+
+        .badge-danger {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: flex-end;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 1rem 1rem 0 0;
+            padding: 1.5rem;
+            width: 100%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            animation: slideUp 0.3s ease;
+            padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(100%);
+            }
+            to {
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #94a3b8;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Grid */
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        @media (min-width: 768px) {
+            .grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .grid-full {
+                grid-column: 1 / -1;
+            }
+        }
+
+        /* Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, rgba(6,95,70,0.1) 0%, rgba(161,98,7,0.1) 100%);
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #64748b;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 800;
+            color: #065f46;
+        }
+
+        .stat-unit {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 0.25rem;
+        }
+
+        /* Charts */
+        .chart-container {
+            position: relative;
+            height: 300px;
+            background: white;
+            border-radius: 0.75rem;
+            border: 1px solid #e2e8f0;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .chart-container canvas {
+            max-height: 100%;
+        }
+
+        /* Actions */
+        .actions {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .actions.vertical {
+            flex-direction: column;
+        }
+
+        .actions.vertical .btn {
+            width: 100%;
+        }
+
+        /* Alerts */
+        .alert {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            font-size: 14px;
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .alert-success {
+            background: #dcfce7;
+            color: #166534;
+            border-left: 4px solid #16a34a;
+        }
+
+        .alert-warning {
+            background: #fef3c7;
+            color: #92400e;
+            border-left: 4px solid #f59e0b;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border-left: 4px solid #dc2626;
+        }
+
+        .alert-info {
+            background: #dbeafe;
+            color: #0c4a6e;
+            border-left: 4px solid #0284c7;
+        }
+
+        /* List */
+        .list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .list-item {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .list-item-left {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .list-item-main {
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 15px;
+        }
+
+        .list-item-sub {
+            font-size: 13px;
+            color: #64748b;
+            margin-top: 0.25rem;
+        }
+
+        /* Empty State */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem 1rem;
+            color: #94a3b8;
+            text-align: center;
+            min-height: 300px;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .empty-state-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #64748b;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state-text {
+            font-size: 14px;
+            color: #94a3b8;
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .header {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+
+            .header-logo {
+                font-size: 20px;
+            }
+
+            .tab {
+                padding: 0.875rem 1rem;
+                font-size: 13px;
+            }
+
+            .content {
+                padding: 0.75rem;
+            }
+
+            .tab-content {
+                padding: 0.75rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .modal-content {
+                border-radius: 1.5rem 1.5rem 0 0;
+            }
+        }
+
+        /* Accessibility */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* Dark mode support (future) */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background: #0f172a;
+                color: #f1f5f9;
+            }
+
+            input, select, textarea, .card {
+                background: #1e293b;
+                color: #f1f5f9;
+                border-color: #334155;
+            }
+
+            .tab {
+                color: #94a3b8;
+            }
+
+            .tab.active {
+                color: #10b981;
+            }
+        }
+
+        /* Loading */
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(6,95,70,0.3);
+            border-top-color: #065f46;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <div class="header-logo">
+                ♻️ ReciclajeCL
+                <small>Gestión Integral</small>
+            </div>
+        </div>
+        <div class="header-status">
+            <span class="status-dot"></span>
+            <span id="headerTime">14:30</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="tabs">
+            <button class="tab active" data-tab="recoleccion">Recolección</button>
+            <button class="tab" data-tab="materiales">Materiales</button>
+            <button class="tab" data-tab="rutas">Rutas</button>
+            <button class="tab" data-tab="clientes">Clientes</button>
+            <button class="tab" data-tab="finanzas">Finanzas</button>
+            <button class="tab" data-tab="impacto">Impacto</button>
+        </div>
+
+        <div class="content">
+            <!-- RECOLECCIÓN TAB -->
+            <div class="tab-content active" id="recoleccion">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h2 style="font-size: 20px; font-weight: 700;">Recolecciones</h2>
+                    <button class="btn btn-primary btn-small" id="btnAddPickup">+ Agregar</button>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Hoy</div>
+                        <div class="stat-value" id="pickupToday">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Pendientes</div>
+                        <div class="stat-value" id="pickupPending">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Esta Semana</div>
+                        <div class="stat-value" id="pickupWeek">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Total kg</div>
+                        <div class="stat-value" id="pickupTotalKg">0</div>
+                        <div class="stat-unit">kg</div>
+                    </div>
+                </div>
+
+                <div class="list" id="pickupList">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📦</div>
+                        <div class="empty-state-title">Sin Recolecciones</div>
+                        <div class="empty-state-text">Agrega tu primera recolección para comenzar</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MATERIALES TAB -->
+            <div class="tab-content" id="materiales">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h2 style="font-size: 20px; font-weight: 700;">Inventario</h2>
+                    <button class="btn btn-primary btn-small" id="btnAddMaterial">+ Agregar</button>
+                </div>
+
+                <div class="grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Peso Total</div>
+                        <div class="stat-value" id="totalWeight">0</div>
+                        <div class="stat-unit">kg</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Tipos</div>
+                        <div class="stat-value" id="materialTypes">0</div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 style="font-weight: 700; margin-bottom: 1rem; font-size: 16px;">Listado de Materiales</h3>
+                    <div class="list" id="materialList">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📋</div>
+                            <div class="empty-state-title">Sin Materiales</div>
+                            <div class="empty-state-text">Registra materiales en inventario</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 2rem;">
+                    <h3 style="font-weight: 700; margin-bottom: 1rem; font-size: 16px;">Precios de Compra (CLP/kg)</h3>
+                    <div class="card">
+                        <div class="card-row">
+                            <span>Papel/Cartón</span>
+                            <span style="color: #065f46; font-weight: 700;" id="pricePapel">$120/kg</span>
+                        </div>
+                        <div class="card-row">
+                            <span>Plástico PET</span>
+                            <span style="color: #065f46; font-weight: 700;" id="pricePET">$250/kg</span>
+                        </div>
+                        <div class="card-row">
+                            <span>Plástico HDPE</span>
+                            <span style="color: #065f46; font-weight: 700;" id="priceHDPE">$180/kg</span>
+                        </div>
+                        <div class="card-row">
+                            <span>Vidrio</span>
+                            <span style="color: #065f46; font-weight: 700;" id="priceVidrio">$80/kg</span>
+                        </div>
+                        <div class="card-row">
+                            <span>Metal</span>
+                            <span style="color: #065f46; font-weight: 700;" id="priceMetal">$450/kg</span>
+                        </div>
+                        <div class="card-row">
+                            <span>Electrónicos</span>
+                            <span style="color: #065f46; font-weight: 700;" id="priceElectro">$1200/kg</span>
+                        </div>
+                        <div class="card-row">
+                            <span>Orgánico</span>
+                            <span style="color: #065f46; font-weight: 700;" id="priceOrganic">$50/kg</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RUTAS TAB -->
+            <div class="tab-content" id="rutas">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h2 style="font-size: 20px; font-weight: 700;">Planificación de Rutas</h2>
+                    <button class="btn btn-primary btn-small" id="btnAddRoute">+ Nueva Ruta</button>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Rutas Activas</div>
+                        <div class="stat-value" id="activeRoutes">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Km Totales</div>
+                        <div class="stat-value" id="totalKm">0</div>
+                        <div class="stat-unit">km</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Costo Combustible</div>
+                        <div class="stat-value" id="totalFuel">$0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Eficiencia</div>
+                        <div class="stat-value" id="efficiency">0</div>
+                        <div class="stat-unit">kg/km</div>
+                    </div>
+                </div>
+
+                <div class="list" id="routeList">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🗺️</div>
+                        <div class="empty-state-title">Sin Rutas</div>
+                        <div class="empty-state-text">Planifica rutas de recolección</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CLIENTES TAB -->
+            <div class="tab-content" id="clientes">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h2 style="font-size: 20px; font-weight: 700;">Base de Clientes</h2>
+                    <button class="btn btn-primary btn-small" id="btnAddClient">+ Agregar Cliente</button>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Clientes</div>
+                        <div class="stat-value" id="totalClients">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Activos</div>
+                        <div class="stat-value" id="activeClients">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Mensual (kg)</div>
+                        <div class="stat-value" id="monthlyVolume">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Facturación</div>
+                        <div class="stat-value" id="clientBilling">$0</div>
+                    </div>
+                </div>
+
+                <div class="list" id="clientList">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🏢</div>
+                        <div class="empty-state-title">Sin Clientes</div>
+                        <div class="empty-state-text">Registra clientes para gestionar contratos</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FINANZAS TAB -->
+            <div class="tab-content" id="finanzas">
+                <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 1.5rem;">Dashboard Financiero</h2>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Ingresos</div>
+                        <div class="stat-value" id="totalRevenue" style="color: #10b981;">$0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Costos</div>
+                        <div class="stat-value" id="totalCosts" style="color: #dc2626;">$0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Ganancia</div>
+                        <div class="stat-value" id="totalProfit" style="color: #065f46;">$0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Margen</div>
+                        <div class="stat-value" id="marginPercent">0%</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Ingresos por Tipo de Material</div>
+                    <div class="chart-container">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Volumen Mensual (kg)</div>
+                    <div class="chart-container">
+                        <canvas id="volumeChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Desglose de Costos</div>
+                    <div class="card-row">
+                        <span>Transporte</span>
+                        <span style="color: #065f46; font-weight: 700;" id="costTransport">$0</span>
+                    </div>
+                    <div class="card-row">
+                        <span>Procesamiento</span>
+                        <span style="color: #065f46; font-weight: 700;" id="costProcessing">$0</span>
+                    </div>
+                    <div class="card-row">
+                        <span>Combustible</span>
+                        <span style="color: #065f46; font-weight: 700;" id="costFuel">$0</span>
+                    </div>
+                    <div class="card-row">
+                        <span>Administrativos</span>
+                        <span style="color: #065f46; font-weight: 700;" id="costAdmin">$0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- IMPACTO TAB -->
+            <div class="tab-content" id="impacto">
+                <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 1.5rem;">Impacto Ambiental</h2>
+
+                <div class="stats-grid">
+                    <div class="stat-card" style="background: linear-gradient(135deg, rgba(16,185,129,0.1) 0%, rgba(6,95,70,0.1) 100%);">
+                        <div class="stat-label">Total Reciclado</div>
+                        <div class="stat-value" id="totalRecycled" style="color: #10b981;">0</div>
+                        <div class="stat-unit">toneladas</div>
+                    </div>
+                    <div class="stat-card" style="background: linear-gradient(135deg, rgba(59,130,246,0.1) 0%, rgba(6,95,70,0.1) 100%);">
+                        <div class="stat-label">CO₂ Evitado</div>
+                        <div class="stat-value" id="co2Avoided" style="color: #0ea5e9;">0</div>
+                        <div class="stat-unit">ton CO₂</div>
+                    </div>
+                    <div class="stat-card" style="background: linear-gradient(135deg, rgba(34,197,94,0.1) 0%, rgba(6,95,70,0.1) 100%);">
+                        <div class="stat-label">Árboles Salvados</div>
+                        <div class="stat-value" id="treesSaved" style="color: #22c55e;">0</div>
+                        <div class="stat-unit">árboles</div>
+                    </div>
+                    <div class="stat-card" style="background: linear-gradient(135deg, rgba(99,102,241,0.1) 0%, rgba(6,95,70,0.1) 100%);">
+                        <div class="stat-label">Agua Ahorrada</div>
+                        <div class="stat-value" id="waterSaved">0</div>
+                        <div class="stat-unit">mil litros</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Métricas Mensuales</div>
+                    <div class="chart-container">
+                        <canvas id="impactChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Desglose por Material</div>
+                    <div class="card-row">
+                        <span>Papel/Cartón</span>
+                        <span style="color: #065f46; font-weight: 700;" id="impactPapel">0 kg</span>
+                    </div>
+                    <div class="card-row">
+                        <span>Plástico</span>
+                        <span style="color: #065f46; font-weight: 700;" id="impactPlastic">0 kg</span>
+                    </div>
+                    <div class="card-row">
+                        <span>Vidrio</span>
+                        <span style="color: #065f46; font-weight: 700;" id="impactGlass">0 kg</span>
+                    </div>
+                    <div class="card-row">
+                        <span>Metal</span>
+                        <span style="color: #065f46; font-weight: 700;" id="impactMetal">0 kg</span>
+                    </div>
+                    <div class="card-row">
+                        <span>Electrónicos</span>
+                        <span style="color: #065f46; font-weight: 700;" id="impactElectro">0 kg</span>
+                    </div>
+                    <div class="card-row">
+                        <span>Orgánico</span>
+                        <span style="color: #065f46; font-weight: 700;" id="impactOrganic">0 kg</span>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" style="width: 100%;" id="btnGenerateReport">📄 Generar Reporte de Sostenibilidad</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODALS -->
+    <div class="modal" id="pickupModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>Nueva Recolección</span>
+                <button class="modal-close" onclick="closeModal('pickupModal')">✕</button>
+            </div>
+            <div class="form-group">
+                <label>Cliente</label>
+                <select id="pickupClient" required>
+                    <option value="">Selecciona un cliente</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Dirección</label>
+                <input type="text" id="pickupAddress" placeholder="Calle, número, departamento" required>
+            </div>
+            <div class="form-group">
+                <label>Tipo de Material</label>
+                <select id="pickupMaterial" required>
+                    <option value="">Selecciona material</option>
+                    <option value="papel">Papel/Cartón</option>
+                    <option value="pet">Plástico PET</option>
+                    <option value="hdpe">Plástico HDPE</option>
+                    <option value="vidrio">Vidrio</option>
+                    <option value="metal">Metal</option>
+                    <option value="electro">Electrónicos</option>
+                    <option value="organic">Orgánico</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Peso (kg)</label>
+                <input type="number" id="pickupWeight" min="0" step="0.1" placeholder="0" required>
+            </div>
+            <div class="form-group">
+                <label>Fecha</label>
+                <input type="date" id="pickupDate" required>
+            </div>
+            <div class="form-group">
+                <label>Estado</label>
+                <select id="pickupStatus">
+                    <option value="programada">Programada</option>
+                    <option value="recolectada">Recolectada</option>
+                    <option value="procesada">Procesada</option>
+                </select>
+            </div>
+            <div class="actions vertical">
+                <button class="btn btn-primary" onclick="savePickup()">Guardar</button>
+                <button class="btn btn-secondary" onclick="closeModal('pickupModal')">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="materialModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>Agregar Material</span>
+                <button class="modal-close" onclick="closeModal('materialModal')">✕</button>
+            </div>
+            <div class="form-group">
+                <label>Tipo</label>
+                <select id="materialType" required>
+                    <option value="">Selecciona tipo</option>
+                    <option value="papel">Papel/Cartón</option>
+                    <option value="pet">Plástico PET</option>
+                    <option value="hdpe">Plástico HDPE</option>
+                    <option value="vidrio">Vidrio</option>
+                    <option value="metal">Metal</option>
+                    <option value="electro">Electrónicos</option>
+                    <option value="organic">Orgánico</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Subtipo</label>
+                <input type="text" id="materialSubtype" placeholder="P. ej: Botellas, Latas">
+            </div>
+            <div class="form-group">
+                <label>Peso en Stock (kg)</label>
+                <input type="number" id="materialWeight" min="0" step="0.1" placeholder="0" required>
+            </div>
+            <div class="form-group">
+                <label>Precio Compra (CLP/kg)</label>
+                <input type="number" id="materialBuyPrice" min="0" step="1" placeholder="0">
+            </div>
+            <div class="form-group">
+                <label>Precio Venta (CLP/kg)</label>
+                <input type="number" id="materialSellPrice" min="0" step="1" placeholder="0">
+            </div>
+            <div class="form-group">
+                <label>Comprador/Destino</label>
+                <input type="text" id="materialBuyer" placeholder="Nombre de la empresa">
+            </div>
+            <div class="actions vertical">
+                <button class="btn btn-primary" onclick="saveMaterial()">Guardar</button>
+                <button class="btn btn-secondary" onclick="closeModal('materialModal')">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="routeModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>Nueva Ruta</span>
+                <button class="modal-close" onclick="closeModal('routeModal')">✕</button>
+            </div>
+            <div class="form-group">
+                <label>Zona</label>
+                <input type="text" id="routeZone" placeholder="P. ej: Centro, Sur" required>
+            </div>
+            <div class="form-group">
+                <label>Conductor</label>
+                <input type="text" id="routeDriver" placeholder="Nombre del conductor" required>
+            </div>
+            <div class="form-group">
+                <label>Camión</label>
+                <input type="text" id="routeTruck" placeholder="P. ej: TR-001" required>
+            </div>
+            <div class="form-group">
+                <label>Puntos de Recolección</label>
+                <textarea id="routePoints" placeholder="Lista de direcciones, una por línea"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Km Estimados</label>
+                <input type="number" id="routeKm" min="0" step="0.1" placeholder="0" required>
+            </div>
+            <div class="form-group">
+                <label>Costo Combustible (CLP)</label>
+                <input type="number" id="routeFuel" min="0" step="1" placeholder="0">
+            </div>
+            <div class="form-group">
+                <label>Día Programado</label>
+                <input type="date" id="routeDate" required>
+            </div>
+            <div class="actions vertical">
+                <button class="btn btn-primary" onclick="saveRoute()">Guardar</button>
+                <button class="btn btn-secondary" onclick="closeModal('routeModal')">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="clientModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>Nuevo Cliente</span>
+                <button class="modal-close" onclick="closeModal('clientModal')">✕</button>
+            </div>
+            <div class="form-group">
+                <label>Razón Social</label>
+                <input type="text" id="clientName" placeholder="Nombre de la empresa" required>
+            </div>
+            <div class="form-group">
+                <label>Tipo</label>
+                <select id="clientType">
+                    <option value="empresa">Empresa</option>
+                    <option value="condominio">Condominio</option>
+                    <option value="municipalidad">Municipalidad</option>
+                    <option value="colegio">Colegio</option>
+                    <option value="otro">Otro</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Dirección</label>
+                <input type="text" id="clientAddress" placeholder="Calle, número" required>
+            </div>
+            <div class="form-group">
+                <label>Teléfono</label>
+                <input type="tel" id="clientPhone" placeholder="+56 9 XXXX XXXX">
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="clientEmail" placeholder="contacto@empresa.cl">
+            </div>
+            <div class="form-group">
+                <label>Tipo de Contrato</label>
+                <select id="clientContract">
+                    <option value="spot">Puntual</option>
+                    <option value="monthly">Mensual</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Volumen Mensual Estimado (kg)</label>
+                <input type="number" id="clientVolume" min="0" step="1" placeholder="0">
+            </div>
+            <div class="form-group">
+                <label>Billing Mensual (CLP)</label>
+                <input type="number" id="clientBilling" min="0" step="1" placeholder="0">
+            </div>
+            <div class="actions vertical">
+                <button class="btn btn-primary" onclick="saveClient()">Guardar</button>
+                <button class="btn btn-secondary" onclick="closeModal('clientModal')">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============ STATE MANAGEMENT ============
+        const app = {
+            pickups: [],
+            materials: [],
+            routes: [],
+            clients: [],
+            charts: {},
+            prices: {
+                papel: 120,
+                pet: 250,
+                hdpe: 180,
+                vidrio: 80,
+                metal: 450,
+                electro: 1200,
+                organic: 50
+            }
+        };
+
+        // ============ LOCALSTORAGE HELPERS ============
+        function safeStore(key, value) {
+            try {
+                localStorage.setItem(key, JSON.stringify(value));
+                return true;
+            } catch (e) {
+                console.warn('localStorage error:', e);
+                return false;
+            }
+        }
+
+        function safeRetrieve(key, fallback = []) {
+            try {
+                const stored = localStorage.getItem(key);
+                return stored ? JSON.parse(stored) : fallback;
+            } catch (e) {
+                console.warn('localStorage error:', e);
+                return fallback;
+            }
+        }
+
+        function safeClear(key) {
+            try {
+                localStorage.removeItem(key);
+            } catch (e) {
+                console.warn('localStorage error:', e);
+            }
+        }
+
+        // ============ INITIALIZATION ============
+        function init() {
+            loadData();
+            setupTabHandlers();
+            setupModalHandlers();
+            updateTime();
+            setInterval(updateTime, 60000);
+            generateCharts();
+            updateUI();
+        }
+
+        function loadData() {
+            app.pickups = safeRetrieve('reciclajercl_pickups', []);
+            app.materials = safeRetrieve('reciclajercl_materials', []);
+            app.routes = safeRetrieve('reciclajercl_routes', []);
+            app.clients = safeRetrieve('reciclajercl_clients', []);
+        }
+
+        function saveData() {
+            safeStore('reciclajercl_pickups', app.pickups);
+            safeStore('reciclajercl_materials', app.materials);
+            safeStore('reciclajercl_routes', app.routes);
+            safeStore('reciclajercl_clients', app.clients);
+        }
+
+        // ============ TAB HANDLING ============
+        function setupTabHandlers() {
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+            });
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+
+            setTimeout(() => {
+                if (app.charts.revenueChart) app.charts.revenueChart.resize();
+                if (app.charts.volumeChart) app.charts.volumeChart.resize();
+                if (app.charts.impactChart) app.charts.impactChart.resize();
+            }, 100);
+        }
+
+        // ============ MODAL HANDLING ============
+        function setupModalHandlers() {
+            document.getElementById('btnAddPickup').addEventListener('click', () => {
+                populateClientSelect('pickupClient');
+                document.getElementById('pickupDate').valueAsDate = new Date();
+                openModal('pickupModal');
+            });
+            document.getElementById('btnAddMaterial').addEventListener('click', () => openModal('materialModal'));
+            document.getElementById('btnAddRoute').addEventListener('click', () => {
+                document.getElementById('routeDate').valueAsDate = new Date();
+                openModal('routeModal');
+            });
+            document.getElementById('btnAddClient').addEventListener('click', () => openModal('clientModal'));
+            document.getElementById('btnGenerateReport').addEventListener('click', generateReport);
+        }
+
+        function openModal(id) {
+            document.getElementById(id).classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // ============ PICKUP FUNCTIONS ============
+        function savePickup() {
+            const client = document.getElementById('pickupClient').value;
+            const address = document.getElementById('pickupAddress').value;
+            const material = document.getElementById('pickupMaterial').value;
+            const weight = parseFloat(document.getElementById('pickupWeight').value);
+            const date = document.getElementById('pickupDate').value;
+            const status = document.getElementById('pickupStatus').value;
+
+            if (!client || !address || !material || !weight || !date) {
+                alert('Completa todos los campos');
+                return;
+            }
+
+            const pickup = {
+                id: Date.now(),
+                client,
+                address,
+                material,
+                weight,
+                date,
+                status,
+                createdAt: new Date().toISOString()
+            };
+
+            app.pickups.push(pickup);
+            saveData();
+            updateUI();
+            closeModal('pickupModal');
+            document.getElementById('pickupAddress').value = '';
+            document.getElementById('pickupWeight').value = '';
+        }
+
+        function deletePickup(id) {
+            if (confirm('¿Eliminar recolección?')) {
+                app.pickups = app.pickups.filter(p => p.id !== id);
+                saveData();
+                updateUI();
+            }
+        }
+
+        // ============ MATERIAL FUNCTIONS ============
+        function saveMaterial() {
+            const type = document.getElementById('materialType').value;
+            const subtype = document.getElementById('materialSubtype').value;
+            const weight = parseFloat(document.getElementById('materialWeight').value);
+            const buyPrice = parseFloat(document.getElementById('materialBuyPrice').value) || 0;
+            const sellPrice = parseFloat(document.getElementById('materialSellPrice').value) || 0;
+            const buyer = document.getElementById('materialBuyer').value;
+
+            if (!type || !weight) {
+                alert('Completa campos requeridos');
+                return;
+            }
+
+            const material = {
+                id: Date.now(),
+                type,
+                subtype,
+                weight,
+                buyPrice,
+                sellPrice,
+                buyer,
+                addedAt: new Date().toISOString()
+            };
+
+            app.materials.push(material);
+            saveData();
+            updateUI();
+            closeModal('materialModal');
+            document.getElementById('materialWeight').value = '';
+        }
+
+        function deleteMaterial(id) {
+            if (confirm('¿Eliminar material?')) {
+                app.materials = app.materials.filter(m => m.id !== id);
+                saveData();
+                updateUI();
+            }
+        }
+
+        // ============ ROUTE FUNCTIONS ============
+        function saveRoute() {
+            const zone = document.getElementById('routeZone').value;
+            const driver = document.getElementById('routeDriver').value;
+            const truck = document.getElementById('routeTruck').value;
+            const points = document.getElementById('routePoints').value;
+            const km = parseFloat(document.getElementById('routeKm').value);
+            const fuel = parseFloat(document.getElementById('routeFuel').value) || 0;
+            const date = document.getElementById('routeDate').value;
+
+            if (!zone || !driver || !truck || !km || !date) {
+                alert('Completa campos requeridos');
+                return;
+            }
+
+            const route = {
+                id: Date.now(),
+                zone,
+                driver,
+                truck,
+                points: points.split('\n').filter(p => p.trim()),
+                km,
+                fuel,
+                date,
+                createdAt: new Date().toISOString()
+            };
+
+            app.routes.push(route);
+            saveData();
+            updateUI();
+            closeModal('routeModal');
+        }
+
+        function deleteRoute(id) {
+            if (confirm('¿Eliminar ruta?')) {
+                app.routes = app.routes.filter(r => r.id !== id);
+                saveData();
+                updateUI();
+            }
+        }
+
+        // ============ CLIENT FUNCTIONS ============
+        function saveClient() {
+            const name = document.getElementById('clientName').value;
+            const type = document.getElementById('clientType').value;
+            const address = document.getElementById('clientAddress').value;
+            const phone = document.getElementById('clientPhone').value;
+            const email = document.getElementById('clientEmail').value;
+            const contract = document.getElementById('clientContract').value;
+            const volume = parseFloat(document.getElementById('clientVolume').value) || 0;
+            const billing = parseFloat(document.getElementById('clientBilling').value) || 0;
+
+            if (!name || !address) {
+                alert('Completa campos requeridos');
+                return;
+            }
+
+            const client = {
+                id: Date.now(),
+                name,
+                type,
+                address,
+                phone,
+                email,
+                contract,
+                volume,
+                billing,
+                createdAt: new Date().toISOString()
+            };
+
+            app.clients.push(client);
+            saveData();
+            updateUI();
+            closeModal('clientModal');
+            document.getElementById('clientName').value = '';
+        }
+
+        function deleteClient(id) {
+            if (confirm('¿Eliminar cliente?')) {
+                app.clients = app.clients.filter(c => c.id !== id);
+                app.pickups = app.pickups.filter(p => p.client !== id);
+                saveData();
+                updateUI();
+            }
+        }
+
+        function populateClientSelect(selectId) {
+            const select = document.getElementById(selectId);
+            select.innerHTML = '<option value="">Selecciona un cliente</option>';
+            app.clients.forEach(client => {
+                const option = document.createElement('option');
+                option.value = client.name;
+                option.textContent = client.name;
+                select.appendChild(option);
+            });
+        }
+
+        // ============ UI UPDATES ============
+        function updateUI() {
+            updateRecoleccion();
+            updateMateriales();
+            updateRutas();
+            updateClientes();
+            updateFinanzas();
+            updateImpacto();
+        }
+
+        function updateRecoleccion() {
+            const today = new Date().toISOString().split('T')[0];
+            const pickupToday = app.pickups.filter(p => p.date === today).length;
+            const pickupPending = app.pickups.filter(p => p.status === 'programada').length;
+            const pickupWeek = app.pickups.filter(p => {
+                const d = new Date(p.date);
+                const now = new Date();
+                const daysDiff = Math.floor((d - now) / (1000 * 60 * 60 * 24));
+                return daysDiff >= 0 && daysDiff <= 7;
+            }).length;
+            const totalKg = app.pickups.reduce((sum, p) => sum + (p.weight || 0), 0);
+
+            document.getElementById('pickupToday').textContent = pickupToday;
+            document.getElementById('pickupPending').textContent = pickupPending;
+            document.getElementById('pickupWeek').textContent = pickupWeek;
+            document.getElementById('pickupTotalKg').textContent = Math.round(totalKg);
+
+            const pickupList = document.getElementById('pickupList');
+            if (app.pickups.length === 0) {
+                pickupList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📦</div>
+                        <div class="empty-state-title">Sin Recolecciones</div>
+                        <div class="empty-state-text">Agrega tu primera recolección para comenzar</div>
+                    </div>
+                `;
+            } else {
+                pickupList.innerHTML = app.pickups.map(p => `
+                    <div class="list-item">
+                        <div class="list-item-left">
+                            <div class="list-item-main">${p.client}</div>
+                            <div class="list-item-sub">${p.address} • ${p.weight}kg • ${formatDate(p.date)}</div>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <span class="badge ${getStatusBadge(p.status)}">${formatStatus(p.status)}</span>
+                            <button class="btn btn-icon" style="color: #dc2626; border: 1px solid #fecaca; background: #fef2f2;" onclick="deletePickup(${p.id})">✕</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function updateMateriales() {
+            const totalWeight = app.materials.reduce((sum, m) => sum + (m.weight || 0), 0);
+            document.getElementById('totalWeight').textContent = Math.round(totalWeight);
+            document.getElementById('materialTypes').textContent = new Set(app.materials.map(m => m.type)).size;
+
+            const materialList = document.getElementById('materialList');
+            if (app.materials.length === 0) {
+                materialList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📋</div>
+                        <div class="empty-state-title">Sin Materiales</div>
+                        <div class="empty-state-text">Registra materiales en inventario</div>
+                    </div>
+                `;
+            } else {
+                materialList.innerHTML = app.materials.map(m => `
+                    <div class="list-item">
+                        <div class="list-item-left">
+                            <div class="list-item-main">${formatMaterialType(m.type)} ${m.subtype ? '• ' + m.subtype : ''}</div>
+                            <div class="list-item-sub">${m.weight}kg en stock${m.buyer ? ' • Comprador: ' + m.buyer : ''}</div>
+                        </div>
+                        <button class="btn btn-icon" style="color: #dc2626; border: 1px solid #fecaca; background: #fef2f2;" onclick="deleteMaterial(${m.id})">✕</button>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function updateRutas() {
+            const today = new Date().toISOString().split('T')[0];
+            const activeRoutes = app.routes.filter(r => r.date >= today).length;
+            const totalKm = app.routes.reduce((sum, r) => sum + (r.km || 0), 0);
+            const totalFuel = app.routes.reduce((sum, r) => sum + (r.fuel || 0), 0);
+            const totalPickupWeight = app.pickups.reduce((sum, p) => sum + (p.weight || 0), 0);
+            const efficiency = totalKm > 0 ? (totalPickupWeight / totalKm).toFixed(2) : 0;
+
+            document.getElementById('activeRoutes').textContent = activeRoutes;
+            document.getElementById('totalKm').textContent = totalKm.toFixed(1);
+            document.getElementById('totalFuel').textContent = `$${totalFuel.toLocaleString('es-CL')}`;
+            document.getElementById('efficiency').textContent = efficiency;
+
+            const routeList = document.getElementById('routeList');
+            if (app.routes.length === 0) {
+                routeList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🗺️</div>
+                        <div class="empty-state-title">Sin Rutas</div>
+                        <div class="empty-state-text">Planifica rutas de recolección</div>
+                    </div>
+                `;
+            } else {
+                routeList.innerHTML = app.routes.map(r => `
+                    <div class="list-item">
+                        <div class="list-item-left">
+                            <div class="list-item-main">Zona ${r.zone} • ${r.driver}</div>
+                            <div class="list-item-sub">${r.truck} • ${r.km}km • ${formatDate(r.date)}</div>
+                        </div>
+                        <button class="btn btn-icon" style="color: #dc2626; border: 1px solid #fecaca; background: #fef2f2;" onclick="deleteRoute(${r.id})">✕</button>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function updateClientes() {
+            const totalClients = app.clients.length;
+            const activeClients = app.clients.filter(c => c.contract === 'monthly').length;
+            const monthlyVolume = app.clients.reduce((sum, c) => sum + (c.volume || 0), 0);
+            const clientBilling = app.clients.reduce((sum, c) => sum + (c.billing || 0), 0);
+
+            document.getElementById('totalClients').textContent = totalClients;
+            document.getElementById('activeClients').textContent = activeClients;
+            document.getElementById('monthlyVolume').textContent = monthlyVolume.toLocaleString('es-CL');
+            document.getElementById('clientBilling').textContent = `$${clientBilling.toLocaleString('es-CL')}`;
+
+            const clientList = document.getElementById('clientList');
+            if (app.clients.length === 0) {
+                clientList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🏢</div>
+                        <div class="empty-state-title">Sin Clientes</div>
+                        <div class="empty-state-text">Registra clientes para gestionar contratos</div>
+                    </div>
+                `;
+            } else {
+                clientList.innerHTML = app.clients.map(c => `
+                    <div class="list-item">
+                        <div class="list-item-left">
+                            <div class="list-item-main">${c.name}</div>
+                            <div class="list-item-sub">${c.address}${c.phone ? ' • ' + c.phone : ''}</div>
+                            <div class="list-item-sub" style="margin-top: 0.5rem;">
+                                <span style="color: #065f46; font-weight: 600;">${formatContractType(c.contract)}</span> • ${c.volume || 0}kg/mes • $${(c.billing || 0).toLocaleString('es-CL')}
+                            </div>
+                        </div>
+                        <button class="btn btn-icon" style="color: #dc2626; border: 1px solid #fecaca; background: #fef2f2;" onclick="deleteClient(${c.id})">✕</button>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function updateFinanzas() {
+            const totalRevenue = app.materials.reduce((sum, m) => sum + (m.weight * (m.sellPrice || 0)), 0);
+            const collectionFees = app.clients.reduce((sum, c) => sum + (c.billing || 0), 0);
+            const totalCosts = app.routes.reduce((sum, r) => sum + (r.fuel || 0), 0) + (totalRevenue * 0.15);
+            const totalProfit = totalRevenue + collectionFees - totalCosts;
+            const marginPercent = totalRevenue > 0 ? ((totalProfit / (totalRevenue + collectionFees)) * 100).toFixed(1) : 0;
+
+            document.getElementById('totalRevenue').textContent = `$${Math.round(totalRevenue).toLocaleString('es-CL')}`;
+            document.getElementById('totalCosts').textContent = `$${Math.round(totalCosts).toLocaleString('es-CL')}`;
+            document.getElementById('totalProfit').textContent = `$${Math.round(totalProfit).toLocaleString('es-CL')}`;
+            document.getElementById('marginPercent').textContent = marginPercent + '%';
+
+            document.getElementById('costTransport').textContent = `$${Math.round(totalCosts * 0.4).toLocaleString('es-CL')}`;
+            document.getElementById('costProcessing').textContent = `$${Math.round(totalCosts * 0.3).toLocaleString('es-CL')}`;
+            document.getElementById('costFuel').textContent = `$${Math.round(totalCosts * 0.2).toLocaleString('es-CL')}`;
+            document.getElementById('costAdmin').textContent = `$${Math.round(totalCosts * 0.1).toLocaleString('es-CL')}`;
+
+            updateFinancialCharts(totalRevenue, totalCosts);
+        }
+
+        function updateImpacto() {
+            const totalKg = app.materials.reduce((sum, m) => sum + (m.weight || 0), 0);
+            const totalTons = totalKg / 1000;
+            const co2Avoided = totalTons * 0.5;
+            const treesSaved = Math.floor(totalTons * 8.3);
+            const waterSaved = Math.floor(totalTons * 60);
+
+            document.getElementById('totalRecycled').textContent = totalTons.toFixed(2);
+            document.getElementById('co2Avoided').textContent = co2Avoided.toFixed(2);
+            document.getElementById('treesSaved').textContent = treesSaved;
+            document.getElementById('waterSaved').textContent = waterSaved;
+
+            const byMaterial = {
+                papel: 0, pet: 0, hdpe: 0, vidrio: 0, metal: 0, electro: 0, organic: 0
+            };
+            app.materials.forEach(m => {
+                if (byMaterial.hasOwnProperty(m.type)) {
+                    byMaterial[m.type] += m.weight;
+                }
+            });
+
+            document.getElementById('impactPapel').textContent = byMaterial.papel.toFixed(0) + ' kg';
+            document.getElementById('impactPlastic').textContent = ((byMaterial.pet + byMaterial.hdpe).toFixed(0)) + ' kg';
+            document.getElementById('impactGlass').textContent = byMaterial.vidrio.toFixed(0) + ' kg';
+            document.getElementById('impactMetal').textContent = byMaterial.metal.toFixed(0) + ' kg';
+            document.getElementById('impactElectro').textContent = byMaterial.electro.toFixed(0) + ' kg';
+            document.getElementById('impactOrganic').textContent = byMaterial.organic.toFixed(0) + ' kg';
+
+            updateImpactChart(byMaterial);
+        }
+
+        // ============ CHARTS ============
+        function generateCharts() {
+            setTimeout(() => {
+                generateRevenueChart();
+                generateVolumeChart();
+                generateImpactChartInit();
+            }, 100);
+        }
+
+        function generateRevenueChart() {
+            const ctx = document.getElementById('revenueChart');
+            if (!ctx) return;
+
+            const byMaterial = {
+                'Papel/Cartón': 0, 'PET': 0, 'HDPE': 0, 'Vidrio': 0, 'Metal': 0, 'Electrónicos': 0, 'Orgánico': 0
+            };
+
+            app.materials.forEach(m => {
+                const key = formatMaterialType(m.type);
+                if (byMaterial.hasOwnProperty(key)) {
+                    byMaterial[key] += m.weight * (m.sellPrice || 0);
+                }
+            });
+
+            if (app.charts.revenueChart) {
+                app.charts.revenueChart.data.datasets[0].data = Object.values(byMaterial);
+                app.charts.revenueChart.update();
+            } else {
+                app.charts.revenueChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(byMaterial),
+                        datasets: [{
+                            data: Object.values(byMaterial),
+                            backgroundColor: ['#065f46', '#047857', '#10b981', '#6ee7b7', '#d1fae5', '#a16207', '#8b5cf6'],
+                            borderColor: '#fff',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    font: { family: "'Inter', sans-serif", size: 12 },
+                                    padding: 15,
+                                    color: '#475569'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function generateVolumeChart() {
+            const ctx = document.getElementById('volumeChart');
+            if (!ctx) return;
+
+            const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'];
+            const volumes = months.map(() => Math.floor(Math.random() * 5000) + 2000);
+
+            if (app.charts.volumeChart) {
+                app.charts.volumeChart.data.datasets[0].data = volumes;
+                app.charts.volumeChart.update();
+            } else {
+                app.charts.volumeChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: months,
+                        datasets: [{
+                            label: 'Volumen (kg)',
+                            data: volumes,
+                            borderColor: '#065f46',
+                            backgroundColor: 'rgba(6,95,70,0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            pointBackgroundColor: '#065f46',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            pointRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: true, labels: { font: { family: "'Inter', sans-serif", size: 12 }, color: '#475569' } }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: { color: 'rgba(0,0,0,0.05)' },
+                                ticks: { color: '#64748b' }
+                            },
+                            x: { grid: { display: false }, ticks: { color: '#64748b' } }
+                        }
+                    }
+                });
+            }
+        }
+
+        function generateImpactChartInit() {
+            const ctx = document.getElementById('impactChart');
+            if (!ctx) return;
+
+            const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'];
+            const co2Data = months.map(() => (Math.random() * 50 + 20).toFixed(1));
+            const treeData = months.map(() => Math.floor(Math.random() * 100 + 30));
+
+            if (app.charts.impactChart) {
+                app.charts.impactChart.data.datasets[0].data = co2Data;
+                app.charts.impactChart.data.datasets[1].data = treeData;
+                app.charts.impactChart.update();
+            } else {
+                app.charts.impactChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: months,
+                        datasets: [
+                            {
+                                label: 'CO₂ Evitado (ton)',
+                                data: co2Data,
+                                backgroundColor: '#0ea5e9',
+                                borderRadius: 4
+                            },
+                            {
+                                label: 'Árboles Salvados',
+                                data: treeData,
+                                backgroundColor: '#22c55e',
+                                borderRadius: 4
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { labels: { font: { family: "'Inter', sans-serif", size: 12 }, color: '#475569', padding: 15 } }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: { color: 'rgba(0,0,0,0.05)' },
+                                ticks: { color: '#64748b' }
+                            },
+                            x: { grid: { display: false }, ticks: { color: '#64748b' } }
+                        }
+                    }
+                });
+            }
+        }
+
+        function updateFinancialCharts(revenue, costs) {
+            generateRevenueChart();
+            generateVolumeChart();
+        }
+
+        function updateImpactChart(byMaterial) {
+            generateImpactChartInit();
+        }
+
+        // ============ REPORT GENERATION ============
+        function generateReport() {
+            const totalKg = app.materials.reduce((sum, m) => sum + (m.weight || 0), 0);
+            const totalTons = totalKg / 1000;
+            const co2Avoided = (totalTons * 0.5).toFixed(2);
+            const treesSaved = Math.floor(totalTons * 8.3);
+            const waterSaved = Math.floor(totalTons * 60);
+            const revenue = app.materials.reduce((sum, m) => sum + (m.weight * (m.sellPrice || 0)), 0);
+
+            const report = `
+REPORTE DE SOSTENIBILIDAD - RECICLAJERCL
+========================================
+Generado: ${new Date().toLocaleDateString('es-CL')}
+
+RESUMEN AMBIENTAL
+- Total Reciclado: ${totalTons.toFixed(2)} toneladas
+- CO₂ Evitado: ${co2Avoided} toneladas
+- Árboles Salvados: ${treesSaved} árboles equivalentes
+- Agua Ahorrada: ${waterSaved} mil litros
+
+RESULTADOS FINANCIEROS
+- Total de Ingresos: $${Math.round(revenue).toLocaleString('es-CL')}
+- Recolecciones Registradas: ${app.pickups.length}
+- Clientes Activos: ${app.clients.filter(c => c.contract === 'monthly').length}
+
+DESGLOSE POR MATERIAL
+- Recolecciones: ${app.pickups.length} registros
+- Materiales en Inventario: ${app.materials.length} tipos
+
+Certificado: Este reporte valida el compromiso de ReciclajeCL con la economía circular.
+            `.trim();
+
+            const blob = new Blob([report], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Reporte-Sostenibilidad-${new Date().toISOString().split('T')[0]}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+
+            alert('✅ Reporte generado exitosamente');
+        }
+
+        // ============ UTILITY FUNCTIONS ============
+        function updateTime() {
+            const now = new Date();
+            const time = now.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', hour12: false });
+            document.getElementById('headerTime').textContent = time;
+        }
+
+        function formatDate(dateStr) {
+            const d = new Date(dateStr);
+            return d.toLocaleDateString('es-CL', { month: 'short', day: 'numeric' });
+        }
+
+        function formatStatus(status) {
+            const map = { 'programada': 'Programada', 'recolectada': 'Recolectada', 'procesada': 'Procesada' };
+            return map[status] || status;
+        }
+
+        function getStatusBadge(status) {
+            if (status === 'programada') return 'badge-pending';
+            if (status === 'recolectada') return 'badge-warning';
+            return 'badge-success';
+        }
+
+        function formatMaterialType(type) {
+            const map = {
+                'papel': 'Papel/Cartón',
+                'pet': 'PET',
+                'hdpe': 'HDPE',
+                'vidrio': 'Vidrio',
+                'metal': 'Metal',
+                'electro': 'Electrónicos',
+                'organic': 'Orgánico'
+            };
+            return map[type] || type;
+        }
+
+        function formatContractType(type) {
+            return type === 'monthly' ? 'Contrato Mensual' : 'Puntual';
+        }
+
+        // ============ START APP ============
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="es" style="scroll-behavior:smooth;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interpolación Espacial con Kriging | Pablo Cussen Eltit</title>
+    <meta name="description" content="Comparación de métodos geoestadísticos: Kriging Ordinario vs Regression-Kriging aplicado a datos ambientales.">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../../assets/style.css">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Georgia', 'Times New Roman', serif;
+            line-height: 1.8;
+            color: #2c3e50;
+            background: #f5f7fa;
+            padding: 0 20px 40px;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 20px auto 0;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: white;
+            padding: 40px 60px;
+            border-bottom: none;
+        }
+
+        h1 {
+            font-size: 2.4em;
+            font-weight: 800;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            font-size: 1.15em;
+            opacity: 0.85;
+            font-weight: 300;
+            font-style: italic;
+        }
+
+        .meta {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.3);
+            font-size: 0.95em;
+        }
+
+        .meta-item {
+            opacity: 0.9;
+        }
+
+        .meta-item strong {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        main {
+            padding: 50px 60px;
+        }
+
+        h2 {
+            font-size: 2em;
+            color: #2c3e50;
+            margin: 50px 0 20px 0;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #3498db;
+            font-weight: 700;
+        }
+
+        h3 {
+            font-size: 1.4em;
+            color: #34495e;
+            margin: 30px 0 15px 0;
+            font-weight: 600;
+        }
+
+        p {
+            margin: 15px 0;
+            text-align: justify;
+            font-size: 1.05em;
+        }
+
+        .abstract {
+            background: #ecf0f1;
+            padding: 30px;
+            border-left: 5px solid #3498db;
+            margin: 30px 0;
+            font-style: italic;
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .metric-box {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .metric-number {
+            font-size: 2.5em;
+            font-weight: 700;
+            display: block;
+            font-family: 'Arial', sans-serif;
+        }
+
+        .metric-label {
+            font-size: 0.9em;
+            opacity: 0.95;
+            margin-top: 8px;
+            font-weight: 300;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 30px 0;
+            font-size: 0.95em;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .comparison-table thead {
+            background: #34495e;
+            color: white;
+        }
+
+        .comparison-table th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .comparison-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+        .comparison-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        .winner {
+            background: #d5f4e6;
+        }
+
+        .highlight-box {
+            background: #fff9e6;
+            padding: 25px;
+            border-left: 5px solid #f39c12;
+            margin: 25px 0;
+            border-radius: 0 5px 5px 0;
+        }
+
+        .result-box {
+            background: #e8f8f5;
+            padding: 20px 25px;
+            border-left: 5px solid #16a085;
+            margin: 25px 0;
+            border-radius: 0 5px 5px 0;
+        }
+
+        .result-box strong {
+            color: #16a085;
+            font-size: 1.1em;
+        }
+
+        ul {
+            margin: 20px 0 20px 40px;
+        }
+
+        li {
+            margin: 12px 0;
+            line-height: 1.7;
+        }
+
+        /* Sistema de Grid para Imágenes */
+        .figure-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin: 40px 0;
+        }
+
+        figure {
+            margin: 0;
+            background: #fafafa;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.12);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        figure:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+
+        figure img {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+            display: block;
+        }
+
+        figcaption {
+            padding: 15px;
+            text-align: center;
+            color: #555;
+            font-size: 0.9em;
+            background: white;
+            font-family: 'Arial', sans-serif;
+            line-height: 1.4;
+        }
+
+        .figure-full {
+            margin: 40px 0;
+        }
+
+        .figure-full img {
+            height: 350px;
+        }
+
+        .section-divider {
+            height: 3px;
+            background: linear-gradient(to right, #3498db, transparent);
+            margin: 60px 0 40px 0;
+        }
+
+        footer {
+            background: #2c3e50;
+            color: white;
+            padding: 30px 60px;
+            text-align: center;
+            font-size: 0.9em;
+        }
+
+        @media (max-width: 768px) {
+            header, main, footer {
+                padding: 30px 25px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            .meta {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .figure-row {
+                grid-template-columns: 1fr;
+            }
+
+            figure img {
+                height: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav style="position:sticky;top:0;z-index:50;background:rgba(255,255,255,0.95);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 1px 3px rgba(0,0,0,0.08);height:48px;display:flex;align-items:center;padding:0 16px;">
+        <a href="/index.html" style="font-weight:900;color:#064e3b;font-size:14px;letter-spacing:-0.5px;text-decoration:none;flex-shrink:0;">CUSSEN</a>
+        <div style="display:flex;gap:16px;margin-left:20px;font-size:12px;font-weight:500;color:#6b7280;overflow-x:auto;white-space:nowrap;flex:1;-webkit-overflow-scrolling:touch;">
+            <a href="#introduccion" style="color:inherit;text-decoration:none;" data-es="Introduccion" data-en="Introduction">Introduccion</a>
+            <a href="#caso-cobre" style="color:inherit;text-decoration:none;" data-es="Caso Cobre" data-en="Copper Case">Caso Cobre</a>
+            <a href="#caso-temperatura" style="color:inherit;text-decoration:none;" data-es="Caso Temperatura" data-en="Temperature Case">Caso Temperatura</a>
+            <a href="#conclusiones" style="color:inherit;text-decoration:none;" data-es="Conclusiones" data-en="Conclusions">Conclusiones</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <header>
+            <h1 data-es="Interpolación Espacial con Kriging" data-en="Spatial Interpolation with Kriging">Interpolación Espacial con Kriging</h1>
+            <p class="subtitle" data-es="Análisis Comparativo de Métodos Geoestadísticos en R" data-en="Comparative Analysis of Geostatistical Methods in R">Análisis Comparativo de Métodos Geoestadísticos en R</p>
+
+            <div class="meta">
+                <div class="meta-item">
+                    <strong data-es="Autor" data-en="Author">Autor</strong>
+                    Pablo Cussen
+                </div>
+                <div class="meta-item">
+                    <strong data-es="Programa" data-en="Program">Programa</strong>
+                    <span data-es="Magíster en Teledetección" data-en="M.Sc. in Remote Sensing">Magíster en Teledetección</span>
+                </div>
+                <div class="meta-item">
+                    <strong data-es="Herramientas" data-en="Tools">Herramientas</strong>
+                    R, gstat, sp, automap
+                </div>
+                <div class="meta-item">
+                    <strong data-es="Curso" data-en="Course">Curso</strong>
+                    METE1305 - <span data-es="Programación R" data-en="R Programming">Programación R</span>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <div class="abstract">
+                <strong data-es="Resumen:" data-en="Abstract:">Resumen:</strong> <span data-es="Este estudio presenta una evaluación comparativa entre dos técnicas de interpolación espacial: Kriging Ordinario (OK) y Regression-Kriging (RK). Se analizaron dos casos de estudio: (1) concentración de cobre en el valle del río Meuse, Países Bajos, y (2) temperatura ambiental en función del gradiente altitudinal. Los resultados demuestran que la elección del método debe basarse en la fuerza de la relación entre la variable de interés y las covariables disponibles." data-en="This study presents a comparative evaluation of two spatial interpolation techniques: Ordinary Kriging (OK) and Regression-Kriging (RK). Two case studies were analyzed: (1) copper concentration in the Meuse River valley, Netherlands, and (2) ambient temperature as a function of altitudinal gradient. Results demonstrate that method selection should be based on the strength of the relationship between the variable of interest and available covariates.">Este estudio presenta una evaluación comparativa entre dos técnicas de interpolación espacial: Kriging Ordinario (OK) y Regression-Kriging (RK). Se analizaron dos casos de estudio: (1) concentración de cobre en el valle del río Meuse, Países Bajos, y (2) temperatura ambiental en función del gradiente altitudinal. Los resultados demuestran que la elección del método debe basarse en la fuerza de la relación entre la variable de interés y las covariables disponibles.</span>
+            </div>
+
+            <h2 id="introduccion" data-es="1. Introducción" data-en="1. Introduction">1. Introducción</h2>
+            <p data-es="La interpolación espacial es fundamental en ciencias ambientales para estimar valores de variables en ubicaciones no muestreadas. El &lt;strong&gt;Kriging&lt;/strong&gt; es un método geoestadístico que utiliza la autocorrelación espacial para realizar predicciones óptimas, mientras que el &lt;strong&gt;Regression-Kriging&lt;/strong&gt; combina un modelo de regresión con la interpolación de los residuos mediante kriging." data-en="Spatial interpolation is fundamental in environmental sciences for estimating variable values at unsampled locations. &lt;strong&gt;Kriging&lt;/strong&gt; is a geostatistical method that uses spatial autocorrelation for optimal predictions, while &lt;strong&gt;Regression-Kriging&lt;/strong&gt; combines a regression model with residual interpolation through kriging.">
+                La interpolación espacial es fundamental en ciencias ambientales para estimar valores de variables en ubicaciones no muestreadas. El <strong>Kriging</strong> es un método geoestadístico que utiliza la autocorrelación espacial para realizar predicciones óptimas, mientras que el <strong>Regression-Kriging</strong> combina un modelo de regresión con la interpolación de los residuos mediante kriging.
+            </p>
+            <p data-es="El objetivo de este trabajo es determinar bajo qué condiciones cada método ofrece mejor desempeño predictivo, utilizando validación cruzada leave-one-out (LOOCV) y métricas estadísticas (R², RMSE, MAE)." data-en="The objective of this work is to determine under which conditions each method offers better predictive performance, using leave-one-out cross-validation (LOOCV) and statistical metrics (R², RMSE, MAE).">
+                El objetivo de este trabajo es determinar bajo qué condiciones cada método ofrece mejor desempeño predictivo, utilizando validación cruzada leave-one-out (LOOCV) y métricas estadísticas (R², RMSE, MAE).
+            </p>
+
+            <div class="section-divider"></div>
+
+            <h2 id="caso-cobre" data-es="2. Estudio de Caso 1: Contaminación por Cobre (Dataset Meuse)" data-en="2. Case Study 1: Copper Contamination (Meuse Dataset)">2. Estudio de Caso 1: Contaminación por Cobre (Dataset Meuse)</h2>
+
+            <h3 data-es="2.1. Contexto del Estudio" data-en="2.1. Study Context">2.1. Contexto del Estudio</h3>
+            <p data-es="El dataset Meuse contiene mediciones de metales pesados en el valle del río Meuse, donde la contaminación histórica por actividades industriales ha generado patrones espaciales complejos. Se utilizó la distancia al río como covariable ambiental, asumiendo que la proximidad al cauce influye en la concentración de contaminantes." data-en="The Meuse dataset contains heavy metal measurements in the Meuse River valley, where historical industrial contamination has generated complex spatial patterns. Distance to the river was used as an environmental covariate, assuming that proximity to the channel influences contaminant concentration.">
+                El dataset Meuse contiene mediciones de metales pesados en el valle del río Meuse, donde la contaminación histórica por actividades industriales ha generado patrones espaciales complejos. Se utilizó la distancia al río como covariable ambiental, asumiendo que la proximidad al cauce influye en la concentración de contaminantes.
+            </p>
+
+            <div class="metrics">
+                <div class="metric-box">
+                    <span class="metric-number">155</span>
+                    <span class="metric-label" data-es="Puntos de Muestreo" data-en="Sampling Points">Puntos de Muestreo</span>
+                </div>
+                <div class="metric-box">
+                    <span class="metric-number">0.568</span>
+                    <span class="metric-label" data-es="R² Kriging Ordinario" data-en="R² Ordinary Kriging">R² Kriging Ordinario</span>
+                </div>
+                <div class="metric-box">
+                    <span class="metric-number">0.537</span>
+                    <span class="metric-label">R² Regression-Kriging</span>
+                </div>
+            </div>
+
+            <h3 data-es="2.2. Análisis Exploratorio" data-en="2.2. Exploratory Analysis">2.2. Análisis Exploratorio</h3>
+            <p data-es="El primer paso consistió en evaluar la relación entre la concentración de cobre y la distancia al río mediante análisis de regresión lineal. Los resultados muestran una correlación moderada (R² = 0.376), lo que sugiere que otros factores no capturados por esta variable también influyen en la distribución espacial del contaminante." data-en="The first step was to evaluate the relationship between copper concentration and distance to the river through linear regression analysis. Results show a moderate correlation (R² = 0.376), suggesting that other factors not captured by this variable also influence the spatial distribution of the contaminant.">
+                El primer paso consistió en evaluar la relación entre la concentración de cobre y la distancia al río mediante análisis de regresión lineal. Los resultados muestran una correlación moderada (R² = 0.376), lo que sugiere que otros factores no capturados por esta variable también influyen en la distribución espacial del contaminante.
+            </p>
+
+            <figure class="figure-full">
+                <img src="./img/01_copper_distance_scatter.png" alt="Gráfico de dispersión">
+                <figcaption data-es="&lt;strong&gt;Figura 1.&lt;/strong&gt; Dispersión entre concentración de cobre y distancia al río Meuse (R² = 0.376)" data-en="&lt;strong&gt;Figure 1.&lt;/strong&gt; Scatter plot of copper concentration vs. distance to the Meuse River (R² = 0.376)"><strong>Figura 1.</strong> Dispersión entre concentración de cobre y distancia al río Meuse (R² = 0.376)</figcaption>
+            </figure>
+
+            <h3 data-es="2.3. Resultados Comparativos" data-en="2.3. Comparative Results">2.3. Resultados Comparativos</h3>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th data-es="Métrica" data-en="Metric">Métrica</th>
+                        <th data-es="Kriging Ordinario (OK)" data-en="Ordinary Kriging (OK)">Kriging Ordinario (OK)</th>
+                        <th>Regression-Kriging (RK)</th>
+                        <th data-es="Mejor Método" data-en="Best Method">Mejor Método</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="winner">
+                        <td data-es="R² (Coef. Determinación)" data-en="R² (Determination Coeff.)">R² (Coef. Determinación)</td>
+                        <td><strong>0.568</strong></td>
+                        <td>0.537</td>
+                        <td>OK</td>
+                    </tr>
+                    <tr class="winner">
+                        <td>RMSE (mg/kg)</td>
+                        <td><strong>15.73</strong></td>
+                        <td>16.09</td>
+                        <td>OK</td>
+                    </tr>
+                    <tr class="winner">
+                        <td>MAE (mg/kg)</td>
+                        <td><strong>11.59</strong></td>
+                        <td>12.04</td>
+                        <td>OK</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="result-box">
+                <strong data-es="Resultado Principal:" data-en="Main Result:">Resultado Principal:</strong> <span data-es="El Kriging Ordinario superó consistentemente al Regression-Kriging en todas las métricas de validación (R² +5.8%, RMSE -2.2%, MAE -3.7%)." data-en="Ordinary Kriging consistently outperformed Regression-Kriging across all validation metrics (R² +5.8%, RMSE -2.2%, MAE -3.7%).">El Kriging Ordinario superó consistentemente al Regression-Kriging en todas las métricas de validación (R² +5.8%, RMSE -2.2%, MAE -3.7%).</span>
+            </div>
+
+            <figure class="figure-full">
+                <img src="./img/05_comparison_3maps.png" alt="Comparación tres mapas">
+                <figcaption data-es="&lt;strong&gt;Figura 2.&lt;/strong&gt; Comparación visual: mapa de distancia al río (covariable), predicción Kriging Ordinario y predicción Regression-Kriging" data-en="&lt;strong&gt;Figure 2.&lt;/strong&gt; Visual comparison: distance to river map (covariate), Ordinary Kriging prediction, and Regression-Kriging prediction"><strong>Figura 2.</strong> Comparación visual: mapa de distancia al río (covariable), predicción Kriging Ordinario y predicción Regression-Kriging</figcaption>
+            </figure>
+
+            <h3 data-es="2.4. Discusión" data-en="2.4. Discussion">2.4. Discusión</h3>
+            <div class="highlight-box">
+                <h3 data-es="¿Por qué el Kriging Ordinario fue superior?" data-en="Why was Ordinary Kriging superior?">¿Por qué el Kriging Ordinario fue superior?</h3>
+                <ul>
+                    <li data-es="&lt;strong&gt;Correlación insuficiente:&lt;/strong&gt; La relación lineal entre cobre y distancia al río (R² = 0.376) no fue lo suficientemente fuerte como para que el componente de regresión aportara valor predictivo." data-en="&lt;strong&gt;Insufficient correlation:&lt;/strong&gt; The linear relationship between copper and distance to the river (R² = 0.376) was not strong enough for the regression component to add predictive value."><strong>Correlación insuficiente:</strong> La relación lineal entre cobre y distancia al río (R² = 0.376) no fue lo suficientemente fuerte como para que el componente de regresión aportara valor predictivo.</li>
+                    <li data-es="&lt;strong&gt;Complejidad espacial:&lt;/strong&gt; La distribución de cobre es producto de múltiples fuentes de contaminación (deposición atmosférica, escorrentía superficial, lixiviación), no solo la proximidad al río." data-en="&lt;strong&gt;Spatial complexity:&lt;/strong&gt; Copper distribution is the product of multiple contamination sources (atmospheric deposition, surface runoff, leaching), not just river proximity."><strong>Complejidad espacial:</strong> La distribución de cobre es producto de múltiples fuentes de contaminación (deposición atmosférica, escorrentía superficial, lixiviación), no solo la proximidad al río.</li>
+                    <li data-es="&lt;strong&gt;Autocorrelación espacial:&lt;/strong&gt; El semivariograma captura eficientemente la estructura espacial subyacente sin necesidad de covariables externas." data-en="&lt;strong&gt;Spatial autocorrelation:&lt;/strong&gt; The semivariogram efficiently captures the underlying spatial structure without the need for external covariates."><strong>Autocorrelación espacial:</strong> El semivariograma captura eficientemente la estructura espacial subyacente sin necesidad de covariables externas.</li>
+                    <li data-es="&lt;strong&gt;Overfitting potencial:&lt;/strong&gt; RK puede introducir ruido cuando el modelo de tendencia es débil, reduciendo la precisión predictiva." data-en="&lt;strong&gt;Potential overfitting:&lt;/strong&gt; RK can introduce noise when the trend model is weak, reducing predictive precision."><strong>Overfitting potencial:</strong> RK puede introducir ruido cuando el modelo de tendencia es débil, reduciendo la precisión predictiva.</li>
+                </ul>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <h2 id="caso-temperatura" data-es="3. Estudio de Caso 2: Temperatura y Gradiente Altitudinal" data-en="3. Case Study 2: Temperature and Altitudinal Gradient">3. Estudio de Caso 2: Temperatura y Gradiente Altitudinal</h2>
+
+            <h3 data-es="3.1. Contexto del Estudio" data-en="3.1. Study Context">3.1. Contexto del Estudio</h3>
+            <p data-es="Se analizó la distribución espacial de temperatura ambiental utilizando elevación como covariable. La relación temperatura-elevación está regida por el gradiente adiabático atmosférico (~0.65°C/100m), lo que representa un caso ideal para Regression-Kriging debido a la fuerte relación física entre variables." data-en="The spatial distribution of ambient temperature was analyzed using elevation as a covariate. The temperature-elevation relationship is governed by the atmospheric adiabatic gradient (~0.65°C/100m), making it an ideal case for Regression-Kriging due to the strong physical relationship between variables.">
+                Se analizó la distribución espacial de temperatura ambiental utilizando elevación como covariable. La relación temperatura-elevación está regida por el gradiente adiabático atmosférico (~0.65°C/100m), lo que representa un caso ideal para Regression-Kriging debido a la fuerte relación física entre variables.
+            </p>
+
+            <div class="metrics">
+                <div class="metric-box">
+                    <span class="metric-number">0.837</span>
+                    <span class="metric-label" data-es="R² (obs vs pred)" data-en="R² (obs vs pred)">R² (obs vs pred)</span>
+                </div>
+                <div class="metric-box">
+                    <span class="metric-number">0.72°C</span>
+                    <span class="metric-label">RMSE</span>
+                </div>
+                <div class="metric-box">
+                    <span class="metric-number">-0.928</span>
+                    <span class="metric-label" data-es="Correlación Temp-Elevación" data-en="Temp-Elevation Correlation">Correlación Temp-Elevación</span>
+                </div>
+                <div class="metric-box">
+                    <span class="metric-number">0.002°C</span>
+                    <span class="metric-label" data-es="Sesgo (ME)" data-en="Bias (ME)">Sesgo (ME)</span>
+                </div>
+            </div>
+
+            <h3 data-es="3.2. Validación Física del Modelo" data-en="3.2. Physical Validation of the Model">3.2. Validación Física del Modelo</h3>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th data-es="Métrica" data-en="Metric">Métrica</th>
+                        <th data-es="Valor Observado" data-en="Observed Value">Valor Observado</th>
+                        <th data-es="Interpretación" data-en="Interpretation">Interpretación</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>R² (obs vs pred)</td>
+                        <td>0.837</td>
+                        <td data-es="83.7% de la varianza explicada - Ajuste excelente" data-en="83.7% of variance explained - Excellent fit">83.7% de la varianza explicada - Ajuste excelente</td>
+                    </tr>
+                    <tr>
+                        <td>RMSE</td>
+                        <td>0.717°C</td>
+                        <td data-es="Error promedio &lt; 1°C - Alta precisión" data-en="Average error &lt; 1°C - High precision">Error promedio < 1°C - Alta precisión</td>
+                    </tr>
+                    <tr>
+                        <td data-es="Sesgo (ME)" data-en="Bias (ME)">Sesgo (ME)</td>
+                        <td>0.002°C</td>
+                        <td data-es="Ausencia de sesgo sistemático" data-en="No systematic bias">Ausencia de sesgo sistemático</td>
+                    </tr>
+                    <tr>
+                        <td data-es="Correlación Temp-Elevación" data-en="Temp-Elevation Correlation">Correlación Temp-Elevación</td>
+                        <td>-0.928</td>
+                        <td data-es="Relación muy fuerte y negativa (físicamente coherente)" data-en="Very strong and negative relationship (physically coherent)">Relación muy fuerte y negativa (físicamente coherente)</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="result-box">
+                <strong data-es="Hallazgo Crítico:" data-en="Critical Finding:">Hallazgo Crítico:</strong> <span data-es="Se detectó y corrigió un error en el código (signo negativo en coordenadas de longitud) que invertía el gradiente altitudinal. Este debugging ilustra la importancia de la validación física en análisis espaciales." data-en="A code error was detected and corrected (negative sign in longitude coordinates) that inverted the altitudinal gradient. This debugging illustrates the importance of physical validation in spatial analysis.">Se detectó y corrigió un error en el código (signo negativo en coordenadas de longitud) que invertía el gradiente altitudinal. Este debugging ilustra la importancia de la validación física en análisis espaciales.</span>
+            </div>
+
+            <div class="figure-row">
+                <figure>
+                    <img src="./img/06_DEM_elevation.png" alt="DEM elevación">
+                    <figcaption data-es="&lt;strong&gt;Figura 3.&lt;/strong&gt; Modelo Digital de Elevación (DEM) utilizado como covariable" data-en="&lt;strong&gt;Figure 3.&lt;/strong&gt; Digital Elevation Model (DEM) used as covariate"><strong>Figura 3.</strong> Modelo Digital de Elevación (DEM) utilizado como covariable</figcaption>
+                </figure>
+                <figure>
+                    <img src="./img/07_DEM_slope.png" alt="Pendiente">
+                    <figcaption data-es="&lt;strong&gt;Figura 4.&lt;/strong&gt; Pendiente topográfica derivada del DEM" data-en="&lt;strong&gt;Figure 4.&lt;/strong&gt; Topographic slope derived from DEM"><strong>Figura 4.</strong> Pendiente topográfica derivada del DEM</figcaption>
+                </figure>
+                <figure>
+                    <img src="./img/08_DEM_stations.png" alt="Estaciones">
+                    <figcaption data-es="&lt;strong&gt;Figura 5.&lt;/strong&gt; Ubicación espacial de estaciones meteorológicas" data-en="&lt;strong&gt;Figure 5.&lt;/strong&gt; Spatial location of weather stations"><strong>Figura 5.</strong> Ubicación espacial de estaciones meteorológicas</figcaption>
+                </figure>
+            </div>
+
+            <figure class="figure-full">
+                <img src="./img/09_temperature_kriging.png" alt="Temperatura final">
+                <figcaption data-es="&lt;strong&gt;Figura 6.&lt;/strong&gt; Interpolación final de temperatura mediante Regression-Kriging con elevación como predictor" data-en="&lt;strong&gt;Figure 6.&lt;/strong&gt; Final temperature interpolation using Regression-Kriging with elevation as predictor"><strong>Figura 6.</strong> Interpolación final de temperatura mediante Regression-Kriging con elevación como predictor</figcaption>
+            </figure>
+
+            <h3 data-es="3.3. Coherencia con Principios Físicos" data-en="3.3. Coherence with Physical Principles">3.3. Coherencia con Principios Físicos</h3>
+            <div class="highlight-box">
+                <ul>
+                    <li data-es="&lt;strong&gt;Gradiente adiabático:&lt;/strong&gt; El modelo captura correctamente la disminución de temperatura con la elevación (~0.65°C por 100m)." data-en="&lt;strong&gt;Adiabatic gradient:&lt;/strong&gt; The model correctly captures the temperature decrease with elevation (~0.65°C per 100m)."><strong>Gradiente adiabático:</strong> El modelo captura correctamente la disminución de temperatura con la elevación (~0.65°C por 100m).</li>
+                    <li data-es="&lt;strong&gt;Patrón espacial realista:&lt;/strong&gt; Temperaturas cálidas en valles (16-17°C) y frías en zonas montañosas (12-13°C)." data-en="&lt;strong&gt;Realistic spatial pattern:&lt;/strong&gt; Warm temperatures in valleys (16-17°C) and cold in mountainous zones (12-13°C)."><strong>Patrón espacial realista:</strong> Temperaturas cálidas en valles (16-17°C) y frías en zonas montañosas (12-13°C).</li>
+                    <li data-es="&lt;strong&gt;Influencia oceánica:&lt;/strong&gt; El patrón respeta la moderación térmica del océano Pacífico en zonas costeras." data-en="&lt;strong&gt;Oceanic influence:&lt;/strong&gt; The pattern respects the thermal moderation of the Pacific Ocean in coastal zones."><strong>Influencia oceánica:</strong> El patrón respeta la moderación térmica del océano Pacífico en zonas costeras.</li>
+                    <li data-es="&lt;strong&gt;Variabilidad local:&lt;/strong&gt; Los residuos krigeados capturan microvariaciones no explicadas por el modelo lineal (efectos de exposición, albedo, cobertura vegetal)." data-en="&lt;strong&gt;Local variability:&lt;/strong&gt; Kriged residuals capture micro-variations not explained by the linear model (aspect effects, albedo, vegetation cover)."><strong>Variabilidad local:</strong> Los residuos krigeados capturan microvariaciones no explicadas por el modelo lineal (efectos de exposición, albedo, cobertura vegetal).</li>
+                </ul>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <h2 id="conclusiones" data-es="4. Conclusiones Generales" data-en="4. General Conclusions">4. Conclusiones Generales</h2>
+
+            <h3 data-es="4.1. Implicaciones Metodológicas" data-en="4.1. Methodological Implications">4.1. Implicaciones Metodológicas</h3>
+            <div class="highlight-box">
+                <ul>
+                    <li data-es="&lt;strong&gt;Selección basada en evidencia:&lt;/strong&gt; Regression-Kriging solo supera a Kriging Ordinario cuando existe una relación fuerte (R² > 0.6-0.7) entre la variable de interés y las covariables." data-en="&lt;strong&gt;Evidence-based selection:&lt;/strong&gt; Regression-Kriging only outperforms Ordinary Kriging when a strong relationship (R² > 0.6-0.7) exists between the variable of interest and covariates."><strong>Selección basada en evidencia:</strong> Regression-Kriging solo supera a Kriging Ordinario cuando existe una relación fuerte (R² > 0.6-0.7) entre la variable de interés y las covariables.</li>
+                    <li data-es="&lt;strong&gt;Importancia de la validación cruzada:&lt;/strong&gt; Las métricas LOOCV (R², RMSE, MAE) son esenciales para comparar objetivamente métodos." data-en="&lt;strong&gt;Importance of cross-validation:&lt;/strong&gt; LOOCV metrics (R², RMSE, MAE) are essential for objective method comparison."><strong>Importancia de la validación cruzada:</strong> Las métricas LOOCV (R², RMSE, MAE) son esenciales para comparar objetivamente métodos.</li>
+                    <li data-es="&lt;strong&gt;Validación física obligatoria:&lt;/strong&gt; Los resultados deben ser coherentes con el conocimiento del dominio (gradientes atmosféricos, dispersión de contaminantes, etc.)." data-en="&lt;strong&gt;Mandatory physical validation:&lt;/strong&gt; Results must be coherent with domain knowledge (atmospheric gradients, contaminant dispersion, etc.)."><strong>Validación física obligatoria:</strong> Los resultados deben ser coherentes con el conocimiento del dominio (gradientes atmosféricos, dispersión de contaminantes, etc.).</li>
+                    <li data-es="&lt;strong&gt;Autocorrelación vs tendencia:&lt;/strong&gt; En fenómenos con estructura espacial compleja y baja dependencia de covariables externas, OK puede ser más robusto que RK." data-en="&lt;strong&gt;Autocorrelation vs trend:&lt;/strong&gt; In phenomena with complex spatial structure and low dependence on external covariates, OK can be more robust than RK."><strong>Autocorrelación vs tendencia:</strong> En fenómenos con estructura espacial compleja y baja dependencia de covariables externas, OK puede ser más robusto que RK.</li>
+                </ul>
+            </div>
+
+            <h3 data-es="4.2. Lecciones Prácticas" data-en="4.2. Practical Lessons">4.2. Lecciones Prácticas</h3>
+            <div class="result-box">
+                <ul>
+                    <li data-es="&lt;strong&gt;Análisis exploratorio primero:&lt;/strong&gt; Evaluar la relación con covariables antes de elegir el método." data-en="&lt;strong&gt;Exploratory analysis first:&lt;/strong&gt; Evaluate the relationship with covariates before choosing the method."><strong>Análisis exploratorio primero:</strong> Evaluar la relación con covariables antes de elegir el método.</li>
+                    <li data-es="&lt;strong&gt;Visualización temprana:&lt;/strong&gt; Generar mapas preliminares permite detectar errores antes de análisis complejos." data-en="&lt;strong&gt;Early visualization:&lt;/strong&gt; Generating preliminary maps allows detecting errors before complex analyses."><strong>Visualización temprana:</strong> Generar mapas preliminares permite detectar errores antes de análisis complejos.</li>
+                    <li data-es="&lt;strong&gt;No asumir complejidad = mejor:&lt;/strong&gt; Métodos más sofisticados no garantizan mejores resultados sin las condiciones adecuadas." data-en="&lt;strong&gt;Don't assume complexity = better:&lt;/strong&gt; More sophisticated methods don't guarantee better results without adequate conditions."><strong>No asumir complejidad = mejor:</strong> Métodos más sofisticados no garantizan mejores resultados sin las condiciones adecuadas.</li>
+                    <li data-es="&lt;strong&gt;Debugging crítico:&lt;/strong&gt; Errores en coordenadas o transformaciones pueden invalidar completamente el análisis espacial." data-en="&lt;strong&gt;Critical debugging:&lt;/strong&gt; Errors in coordinates or transformations can completely invalidate spatial analysis."><strong>Debugging crítico:</strong> Errores en coordenadas o transformaciones pueden invalidar completamente el análisis espacial.</li>
+                </ul>
+            </div>
+
+            <h3 data-es="4.3. Recomendaciones para Futuros Estudios" data-en="4.3. Recommendations for Future Studies">4.3. Recomendaciones para Futuros Estudios</h3>
+            <p data-es="Para el caso de contaminación por cobre, se recomienda explorar modelos con múltiples covariables (tipo de suelo, uso de suelo, topografía) o métodos no lineales (Random Forest Kriging, Machine Learning Spatial). En estudios de temperatura, la incorporación de covariables adicionales como exposición solar, distancia a cuerpos de agua y cobertura vegetal podría mejorar aún más la precisión predictiva." data-en="For the copper contamination case, it is recommended to explore models with multiple covariates (soil type, land use, topography) or nonlinear methods (Random Forest Kriging, Spatial Machine Learning). In temperature studies, incorporating additional covariates such as solar exposure, distance to water bodies, and vegetation cover could further improve predictive precision.">
+                Para el caso de contaminación por cobre, se recomienda explorar modelos con múltiples covariables (tipo de suelo, uso de suelo, topografía) o métodos no lineales (Random Forest Kriging, Machine Learning Spatial). En estudios de temperatura, la incorporación de covariables adicionales como exposición solar, distancia a cuerpos de agua y cobertura vegetal podría mejorar aún más la precisión predictiva.
+            </p>
+        </main>
+
+        <footer>
+            <p data-es="&lt;strong&gt;Pablo Cussen Eltit&lt;/strong&gt; | Magíster en Teledetección | METE1305 - Programación R" data-en="&lt;strong&gt;Pablo Cussen Eltit&lt;/strong&gt; | M.Sc. in Remote Sensing | METE1305 - R Programming"><strong>Pablo Cussen Eltit</strong> | Magíster en Teledetección | METE1305 - Programación R</p>
+            <p data-es="Análisis realizado con R (gstat, sp, automap) | 2025" data-en="Analysis performed with R (gstat, sp, automap) | 2025">Análisis realizado con R (gstat, sp, automap) | 2025</p>
+        </footer>
+    </div>
+
+    <script src="../../../assets/i18n.js"></script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Usuarios - solo pueden leer/escribir sus propios datos
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Proyectos - solo el dueño puede acceder
+    match /projects/{projectId} {
+      allow read, write: if request.auth != null &&
+                           request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null;
+    }
+
+    // Planes de suscripción (público para lectura)
+    match /plans/{planId} {
+      allow read: if true;
+      allow write: if false; // Solo admin desde consola
+    }
+
+    // Analytics (solo escritura para usuarios autenticados)
+    match /analytics/{docId} {
+      allow read: if false; // Solo admin
+      allow create: if request.auth != null;
+    }
+  }
+}

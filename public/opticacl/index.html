@@ -1,0 +1,1845 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="OpticaCL - Sistema de gestión para ópticas chilenas">
+    <meta name="theme-color" content="#1e40af">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="OpticaCL">
+    <title>OpticaCL - Gestión Óptica</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='35' cy='35' r='15' fill='%231e40af' stroke='%23dbeafe' stroke-width='2'/><circle cx='65' cy='35' r='15' fill='%231e40af' stroke='%23dbeafe' stroke-width='2'/><path d='M 50 50 Q 50 60 50 65' stroke='%231e40af' stroke-width='2' fill='none'/></svg>">
+    <link rel="manifest" href="data:application/manifest+json,{\"name\":\"OpticaCL\",\"short_name\":\"OpticaCL\",\"start_url\":\"/\",\"display\":\"standalone\",\"background_color\":\"#ffffff\",\"theme_color\":\"#1e40af\",\"icons\":[{\"src\":\"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%231e40af' width='192' height='192'/><circle cx='67' cy='67' r='25' fill='%23dbeafe'/><circle cx='125' cy='67' r='25' fill='%23dbeafe'/></svg>\",\"sizes\":\"192x192\",\"type\":\"image/svg+xml\"}]}">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #ffffff;
+            color: #1f2937;
+            -webkit-font-smoothing: antialiased;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+
+        input, textarea, select {
+            font-size: 16px;
+            font-family: inherit;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+            color: white;
+            padding: 1rem;
+            box-shadow: 0 2px 8px rgba(30, 64, 175, 0.1);
+            z-index: 100;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .header-icon {
+            font-size: 1.8rem;
+        }
+
+        .container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #e5e7eb;
+            background: #f9fafb;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+        }
+
+        .tab {
+            flex: 0 0 auto;
+            padding: 1rem;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #6b7280;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .tab:hover {
+            color: #1e40af;
+        }
+
+        .tab.active {
+            color: #1e40af;
+            font-weight: 600;
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: #1e40af;
+        }
+
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+            display: none;
+        }
+
+        .content.active {
+            display: block;
+        }
+
+        .section {
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1e40af;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #dbeafe;
+            padding-bottom: 0.5rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: #1e40af;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1e3a8a;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
+        }
+
+        .btn-secondary {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .btn-secondary:hover {
+            background: #bfdbfe;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.75rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.875rem;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #1e40af;
+            box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .form-row-3 {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        @media (max-width: 768px) {
+            .form-row, .form-row-3 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            padding: 1rem;
+            overflow-y: auto;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding-top: 2rem;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 2rem;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 25px rgba(0, 0, 0, 0.15);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 1rem;
+        }
+
+        .modal-header h2 {
+            font-size: 1.25rem;
+            color: #1e40af;
+            margin: 0;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #6b7280;
+            transition: color 0.3s ease;
+        }
+
+        .modal-close:hover {
+            color: #1f2937;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        thead {
+            background: #f3f4f6;
+        }
+
+        th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.875rem;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 0.875rem;
+        }
+
+        tr:hover {
+            background: #f9fafb;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.35rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .badge-success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .badge-danger {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #9ca3af;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state h3 {
+            font-size: 1.125rem;
+            color: #6b7280;
+            margin-bottom: 0.5rem;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-subtitle {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-bottom: 1rem;
+        }
+
+        .stat-box {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid #1e40af;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: #1e40af;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1e40af;
+            margin-top: 0.5rem;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .pill {
+            display: inline-block;
+            background: #f3f4f6;
+            color: #374151;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            margin: 0.25rem;
+        }
+
+        .rx-box {
+            background: #f0f9ff;
+            border-left: 4px solid #1e40af;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+        }
+
+        .rx-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.25rem;
+            }
+
+            .tab {
+                padding: 0.75rem 0.5rem;
+                font-size: 0.75rem;
+            }
+
+            .content {
+                padding: 1rem;
+            }
+
+            .rx-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stat-value {
+                font-size: 1.5rem;
+            }
+
+            .modal-content {
+                padding: 1.5rem;
+            }
+        }
+
+        .loading {
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid #dbeafe;
+            border-top-color: #1e40af;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .success-message {
+            background: #d1fae5;
+            color: #065f46;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid #10b981;
+        }
+
+        .error-message {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid #ef4444;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .input-group input {
+            flex: 1;
+        }
+
+        .input-group button {
+            width: auto;
+        }
+
+        @media print {
+            .tabs, .btn, .action-buttons {
+                display: none !important;
+            }
+
+            body {
+                background: white;
+            }
+
+            .content {
+                padding: 0;
+                display: block !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><span class="header-icon">👁️</span>OpticaCL - Gestión Óptica</h1>
+    </div>
+
+    <div class="container">
+        <div class="tabs">
+            <button class="tab active" data-tab="pacientes">👤 Pacientes</button>
+            <button class="tab" data-tab="lentes">🕶️ Lentes</button>
+            <button class="tab" data-tab="pedidos">📋 Pedidos</button>
+            <button class="tab" data-tab="ventas">💳 Ventas</button>
+            <button class="tab" data-tab="finanzas">📊 Finanzas</button>
+            <button class="tab" data-tab="agenda">📅 Agenda</button>
+        </div>
+
+        <!-- PACIENTES TAB -->
+        <div id="pacientes" class="content active">
+            <div class="section">
+                <h2 class="section-title">Gestión de Pacientes</h2>
+                <button class="btn btn-primary" id="btn-add-paciente">+ Agregar Paciente</button>
+            </div>
+
+            <div id="pacientes-list" class="section">
+                <div class="empty-state">
+                    <div class="empty-state-icon">👤</div>
+                    <h3>Sin pacientes registrados</h3>
+                    <p>Comienza agregando tu primer paciente</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- LENTES TAB -->
+        <div id="lentes" class="content">
+            <div class="section">
+                <h2 class="section-title">Inventario de Lentes</h2>
+                <button class="btn btn-primary" id="btn-add-lente">+ Agregar Lente</button>
+            </div>
+
+            <div id="lentes-list" class="section">
+                <div class="empty-state">
+                    <div class="empty-state-icon">🕶️</div>
+                    <h3>Sin lentes en inventario</h3>
+                    <p>Agrega lentes a tu inventario</p>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">Resumen de Inventario</h2>
+                <div class="stat-box">
+                    <div class="stat-label">Valor Total de Inventario</div>
+                    <div class="stat-value" id="inventory-value">$0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Unidades en Stock</div>
+                    <div class="stat-value" id="inventory-units">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PEDIDOS TAB -->
+        <div id="pedidos" class="content">
+            <div class="section">
+                <h2 class="section-title">Gestión de Pedidos</h2>
+                <button class="btn btn-primary" id="btn-add-pedido">+ Nuevo Pedido</button>
+            </div>
+
+            <div id="pedidos-list" class="section">
+                <div class="empty-state">
+                    <div class="empty-state-icon">📋</div>
+                    <h3>Sin pedidos registrados</h3>
+                    <p>Crea tu primer pedido</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- VENTAS TAB -->
+        <div id="ventas" class="content">
+            <div class="section">
+                <h2 class="section-title">Sistema POS</h2>
+                <button class="btn btn-primary" id="btn-new-sale">+ Nueva Venta</button>
+            </div>
+
+            <div id="ventas-list" class="section">
+                <div class="empty-state">
+                    <div class="empty-state-icon">💳</div>
+                    <h3>Sin ventas registradas</h3>
+                    <p>Registra tu primera venta</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- FINANZAS TAB -->
+        <div id="finanzas" class="content">
+            <div class="section">
+                <h2 class="section-title">Resumen Financiero</h2>
+                <div class="stat-box">
+                    <div class="stat-label">Ingresos Totales</div>
+                    <div class="stat-value" id="total-revenue">$0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Valor Pedidos Pendientes</div>
+                    <div class="stat-value" id="pending-value">$0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Total Inventario</div>
+                    <div class="stat-value" id="fin-inventory-value">$0</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">Gráfico de Ingresos</h2>
+                <canvas id="revenue-chart" style="max-height: 300px;"></canvas>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">Detalles de Ventas por Mes</h2>
+                <div id="monthly-breakdown"></div>
+            </div>
+        </div>
+
+        <!-- AGENDA TAB -->
+        <div id="agenda" class="content">
+            <div class="section">
+                <h2 class="section-title">Agenda de Citas</h2>
+                <button class="btn btn-primary" id="btn-add-cita">+ Nueva Cita</button>
+            </div>
+
+            <div id="agenda-list" class="section">
+                <div class="empty-state">
+                    <div class="empty-state-icon">📅</div>
+                    <h3>Sin citas agendadas</h3>
+                    <p>Agrega tu primera cita</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODALS -->
+
+    <!-- Paciente Modal -->
+    <div id="modal-paciente" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-paciente-title">Nuevo Paciente</h2>
+                <button class="modal-close" onclick="closeModal('modal-paciente')">✕</button>
+            </div>
+            <form id="form-paciente" onsubmit="return savePaciente(event)">
+                <div class="form-group">
+                    <label>Nombre Completo *</label>
+                    <input type="text" name="nombre" required>
+                </div>
+                <div class="form-group">
+                    <label>RUT *</label>
+                    <input type="text" name="rut" required placeholder="12.345.678-9">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Edad</label>
+                        <input type="number" name="edad" min="0" max="150">
+                    </div>
+                    <div class="form-group">
+                        <label>Teléfono</label>
+                        <input type="tel" name="telefono" placeholder="+56 9 ...">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Oftalmólogo</label>
+                    <input type="text" name="oculista" placeholder="Nombre del especialista">
+                </div>
+                <div class="form-group">
+                    <label>Fecha de Prescripción</label>
+                    <input type="date" name="fechaPrescripcion">
+                </div>
+
+                <h3 style="margin-top: 1.5rem; margin-bottom: 1rem; color: #1e40af;">Prescripción Ojo Derecho (OD)</h3>
+                <div class="form-row-3">
+                    <div class="form-group">
+                        <label>Esfera (Sph)</label>
+                        <input type="number" name="odEsfera" step="0.25" placeholder="-2.50">
+                    </div>
+                    <div class="form-group">
+                        <label>Cilindro (Cyl)</label>
+                        <input type="number" name="odCilindro" step="0.25" placeholder="-1.00">
+                    </div>
+                    <div class="form-group">
+                        <label>Eje (Axis)</label>
+                        <input type="number" name="odEje" min="0" max="180" placeholder="180">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Adición (Add)</label>
+                        <input type="number" name="odAdicion" step="0.25" placeholder="1.00">
+                    </div>
+                    <div class="form-group">
+                        <label>DIP (mm)</label>
+                        <input type="number" name="odDip" step="0.5" placeholder="64">
+                    </div>
+                </div>
+
+                <h3 style="margin-top: 1.5rem; margin-bottom: 1rem; color: #1e40af;">Prescripción Ojo Izquierdo (OI)</h3>
+                <div class="form-row-3">
+                    <div class="form-group">
+                        <label>Esfera (Sph)</label>
+                        <input type="number" name="oiEsfera" step="0.25" placeholder="-2.50">
+                    </div>
+                    <div class="form-group">
+                        <label>Cilindro (Cyl)</label>
+                        <input type="number" name="oiCilindro" step="0.25" placeholder="-1.00">
+                    </div>
+                    <div class="form-group">
+                        <label>Eje (Axis)</label>
+                        <input type="number" name="oiEje" min="0" max="180" placeholder="180">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Adición (Add)</label>
+                        <input type="number" name="oiAdicion" step="0.25" placeholder="1.00">
+                    </div>
+                    <div class="form-group">
+                        <label>DIP (mm)</label>
+                        <input type="number" name="oiDip" step="0.5" placeholder="64">
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 0.5rem; margin-top: 2rem;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Guardar Paciente</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modal-paciente')" style="flex: 1;">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Lente Modal -->
+    <div id="modal-lente" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Nuevo Lente</h2>
+                <button class="modal-close" onclick="closeModal('modal-lente')">✕</button>
+            </div>
+            <form id="form-lente" onsubmit="return saveLente(event)">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Tipo *</label>
+                        <select name="tipo" required>
+                            <option value="">-- Seleccionar --</option>
+                            <option value="armazon">Armazón</option>
+                            <option value="sol">Lentes de Sol</option>
+                            <option value="contacto">Lentes de Contacto</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Marca *</label>
+                        <select name="marca" required>
+                            <option value="">-- Seleccionar --</option>
+                            <option value="Ray-Ban">Ray-Ban</option>
+                            <option value="Oakley">Oakley</option>
+                            <option value="Carolina Herrera">Carolina Herrera</option>
+                            <option value="Guess">Guess</option>
+                            <option value="Vogue">Vogue</option>
+                            <option value="Nacional">Nacional</option>
+                            <option value="Otra">Otra</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Material</label>
+                        <select name="material">
+                            <option value="">-- Seleccionar --</option>
+                            <option value="acetato">Acetato</option>
+                            <option value="metal">Metal</option>
+                            <option value="titanio">Titanio</option>
+                            <option value="TR90">TR90</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Color</label>
+                        <input type="text" name="color" placeholder="Ej: Negro, Carey">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Descripción</label>
+                    <textarea name="descripcion" placeholder="Características especiales" rows="2"></textarea>
+                </div>
+
+                <h3 style="margin-top: 1.5rem; margin-bottom: 1rem; color: #1e40af;">Dimensiones (mm)</h3>
+                <div class="form-row-3">
+                    <div class="form-group">
+                        <label>Calibre</label>
+                        <input type="number" name="calibre" step="0.5" placeholder="54">
+                    </div>
+                    <div class="form-group">
+                        <label>Puente</label>
+                        <input type="number" name="puente" step="0.5" placeholder="18">
+                    </div>
+                    <div class="form-group">
+                        <label>Varilla</label>
+                        <input type="number" name="varilla" step="0.5" placeholder="140">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Stock *</label>
+                        <input type="number" name="stock" required min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Precio Compra ($) *</label>
+                        <input type="number" name="precioCompra" required min="0" step="100">
+                    </div>
+                    <div class="form-group">
+                        <label>Precio Venta ($) *</label>
+                        <input type="number" name="precioVenta" required min="0" step="100">
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 0.5rem; margin-top: 2rem;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Guardar Lente</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modal-lente')" style="flex: 1;">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Pedido Modal -->
+    <div id="modal-pedido" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Nuevo Pedido</h2>
+                <button class="modal-close" onclick="closeModal('modal-pedido')">✕</button>
+            </div>
+            <form id="form-pedido" onsubmit="return savePedido(event)">
+                <div class="form-group">
+                    <label>Paciente *</label>
+                    <select name="pacienteId" id="select-paciente-pedido" required>
+                        <option value="">-- Seleccionar --</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Lente *</label>
+                    <select name="lenteId" id="select-lente-pedido" required>
+                        <option value="">-- Seleccionar --</option>
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Tipo de Lente *</label>
+                        <select name="tipoLente" required>
+                            <option value="">-- Seleccionar --</option>
+                            <option value="monofocal">Monofocal</option>
+                            <option value="bifocal">Bifocal</option>
+                            <option value="progresivo">Progresivo</option>
+                            <option value="transicion">Transición</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Tratamiento</label>
+                        <select name="tratamiento">
+                            <option value="">Sin tratamiento</option>
+                            <option value="antirreflejo">Antirreflejo</option>
+                            <option value="fotocromatic">Fotocromático</option>
+                            <option value="blue-filter">Blue Filter</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Laboratorio Óptico</label>
+                    <input type="text" name="laboratorio" placeholder="Nombre del laboratorio">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Estado *</label>
+                        <select name="estado" required>
+                            <option value="pedido">Pedido</option>
+                            <option value="en-lab">En Laboratorio</option>
+                            <option value="listo">Listo para Entregar</option>
+                            <option value="entregado">Entregado</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha de Entrega</label>
+                        <input type="date" name="fechaEntrega">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Notas</label>
+                    <textarea name="notas" placeholder="Observaciones adicionales" rows="2"></textarea>
+                </div>
+
+                <div style="display: flex; gap: 0.5rem; margin-top: 2rem;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Crear Pedido</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modal-pedido')" style="flex: 1;">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Venta Modal -->
+    <div id="modal-venta" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Nueva Venta</h2>
+                <button class="modal-close" onclick="closeModal('modal-venta')">✕</button>
+            </div>
+            <form id="form-venta" onsubmit="return saveVenta(event)">
+                <div class="form-group">
+                    <label>Paciente (Opcional)</label>
+                    <select name="pacienteId">
+                        <option value="">-- Seleccionar --</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Lente/Producto *</label>
+                    <select name="lenteId" id="select-lente-venta" required>
+                        <option value="">-- Seleccionar --</option>
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Cantidad *</label>
+                        <input type="number" name="cantidad" required min="1" value="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Precio Unitario ($)</label>
+                        <input type="number" name="precioUnitario" min="0" step="100">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Accesorios</label>
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                        <label style="display: flex; align-items: center; font-weight: 400; margin: 0;">
+                            <input type="checkbox" name="accesorios" value="estuche" style="margin-right: 0.5rem;"> Estuche ($5.000)
+                        </label>
+                        <label style="display: flex; align-items: center; font-weight: 400; margin: 0;">
+                            <input type="checkbox" name="accesorios" value="pano" style="margin-right: 0.5rem;"> Paño ($3.000)
+                        </label>
+                        <label style="display: flex; align-items: center; font-weight: 400; margin: 0;">
+                            <input type="checkbox" name="accesorios" value="solucion" style="margin-right: 0.5rem;"> Solución ($8.000)
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Método de Pago *</label>
+                    <select name="metodoPago" required>
+                        <option value="">-- Seleccionar --</option>
+                        <option value="efectivo">Efectivo</option>
+                        <option value="debito">Débito</option>
+                        <option value="credito">Crédito</option>
+                        <option value="transferencia">Transferencia</option>
+                        <option value="otro">Otro</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Notas</label>
+                    <textarea name="notas" placeholder="Observaciones de la venta" rows="2"></textarea>
+                </div>
+
+                <div class="stat-box" style="margin: 1rem 0;">
+                    <div class="stat-label">Total a Pagar</div>
+                    <div class="stat-value" id="venta-total">$0</div>
+                </div>
+
+                <div style="display: flex; gap: 0.5rem; margin-top: 2rem;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Registrar Venta</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modal-venta')" style="flex: 1;">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Cita Modal -->
+    <div id="modal-cita" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Nueva Cita</h2>
+                <button class="modal-close" onclick="closeModal('modal-cita')">✕</button>
+            </div>
+            <form id="form-cita" onsubmit="return saveCita(event)">
+                <div class="form-group">
+                    <label>Paciente *</label>
+                    <select name="pacienteId" id="select-paciente-cita" required>
+                        <option value="">-- Seleccionar --</option>
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Fecha *</label>
+                        <input type="date" name="fecha" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Hora *</label>
+                        <input type="time" name="hora" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Tipo de Cita *</label>
+                    <select name="tipo" required>
+                        <option value="">-- Seleccionar --</option>
+                        <option value="examen">Examen Visual</option>
+                        <option value="entrega">Entrega de Pedido</option>
+                        <option value="seguimiento">Seguimiento</option>
+                        <option value="ajuste">Ajuste de Marco</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Notas</label>
+                    <textarea name="notas" placeholder="Detalles de la cita" rows="2"></textarea>
+                </div>
+
+                <div style="display: flex; gap: 0.5rem; margin-top: 2rem;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Guardar Cita</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modal-cita')" style="flex: 1;">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- View Paciente Modal -->
+    <div id="modal-view-paciente" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="view-paciente-nombre"></h2>
+                <button class="modal-close" onclick="closeModal('modal-view-paciente')">✕</button>
+            </div>
+            <div id="view-paciente-content"></div>
+            <div style="display: flex; gap: 0.5rem; margin-top: 2rem;">
+                <button class="btn btn-secondary" onclick="closeModal('modal-view-paciente')" style="flex: 1;">Cerrar</button>
+                <button class="btn btn-danger btn-sm" onclick="deletePaciente()" style="flex: 1;">Eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
+    <script>
+        // ==================== DATA MANAGEMENT ====================
+        class DataManager {
+            constructor() {
+                this.init();
+            }
+
+            init() {
+                try {
+                    const data = localStorage.getItem('opticaCL');
+                    if (data) {
+                        this.data = JSON.parse(data);
+                    } else {
+                        this.data = this.getDefaultData();
+                        this.save();
+                    }
+                } catch (e) {
+                    console.error('Error loading data:', e);
+                    this.data = this.getDefaultData();
+                }
+            }
+
+            getDefaultData() {
+                return {
+                    pacientes: [],
+                    lentes: [],
+                    pedidos: [],
+                    ventas: [],
+                    citas: [],
+                    nextId: 1000
+                };
+            }
+
+            save() {
+                try {
+                    localStorage.setItem('opticaCL', JSON.stringify(this.data));
+                } catch (e) {
+                    console.error('Error saving data:', e);
+                }
+            }
+
+            getNextId() {
+                return this.data.nextId++;
+            }
+        }
+
+        const dm = new DataManager();
+        let currentEditingPacienteId = null;
+        let revenueChart = null;
+
+        // ==================== UI MANAGEMENT ====================
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.add('active');
+            }
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.remove('active');
+            }
+        }
+
+        function showTab(tabName) {
+            document.querySelectorAll('.content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+
+            const content = document.getElementById(tabName);
+            const tab = document.querySelector(`[data-tab="${tabName}"]`);
+
+            if (content) content.classList.add('active');
+            if (tab) tab.classList.add('active');
+
+            if (tabName === 'finanzas') {
+                setTimeout(updateFinanzas, 100);
+            }
+        }
+
+        // ==================== PACIENTES ====================
+        document.getElementById('btn-add-paciente')?.addEventListener('click', () => {
+            currentEditingPacienteId = null;
+            document.getElementById('modal-paciente-title').textContent = 'Nuevo Paciente';
+            document.getElementById('form-paciente').reset();
+            openModal('modal-paciente');
+        });
+
+        function savePaciente(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+
+            const paciente = {
+                id: currentEditingPacienteId || dm.getNextId(),
+                nombre: formData.get('nombre'),
+                rut: formData.get('rut'),
+                edad: formData.get('edad') ? parseInt(formData.get('edad')) : null,
+                telefono: formData.get('telefono'),
+                oculista: formData.get('oculista'),
+                fechaPrescripcion: formData.get('fechaPrescripcion'),
+                prescripcionOD: {
+                    esfera: formData.get('odEsfera') ? parseFloat(formData.get('odEsfera')) : null,
+                    cilindro: formData.get('odCilindro') ? parseFloat(formData.get('odCilindro')) : null,
+                    eje: formData.get('odEje') ? parseInt(formData.get('odEje')) : null,
+                    adicion: formData.get('odAdicion') ? parseFloat(formData.get('odAdicion')) : null,
+                    dip: formData.get('odDip') ? parseFloat(formData.get('odDip')) : null
+                },
+                prescripcionOI: {
+                    esfera: formData.get('oiEsfera') ? parseFloat(formData.get('oiEsfera')) : null,
+                    cilindro: formData.get('oiCilindro') ? parseFloat(formData.get('oiCilindro')) : null,
+                    eje: formData.get('oiEje') ? parseInt(formData.get('oiEje')) : null,
+                    adicion: formData.get('oiAdicion') ? parseFloat(formData.get('oiAdicion')) : null,
+                    dip: formData.get('oiDip') ? parseFloat(formData.get('oiDip')) : null
+                },
+                historialPrescripciones: [],
+                fechaCreacion: new Date().toISOString()
+            };
+
+            if (currentEditingPacienteId) {
+                const idx = dm.data.pacientes.findIndex(p => p.id === currentEditingPacienteId);
+                if (idx !== -1) {
+                    dm.data.pacientes[idx] = paciente;
+                }
+            } else {
+                dm.data.pacientes.push(paciente);
+            }
+
+            dm.save();
+            closeModal('modal-paciente');
+            renderPacientes();
+            updateSelectOptions();
+
+            return false;
+        }
+
+        function renderPacientes() {
+            const list = document.getElementById('pacientes-list');
+            if (dm.data.pacientes.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">👤</div>
+                        <h3>Sin pacientes registrados</h3>
+                        <p>Comienza agregando tu primer paciente</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '<div class="table-responsive"><table><thead><tr><th>Nombre</th><th>RUT</th><th>Edad</th><th>Teléfono</th><th>Acciones</th></tr></thead><tbody>';
+
+            dm.data.pacientes.forEach(p => {
+                html += `<tr>
+                    <td>${p.nombre}</td>
+                    <td>${p.rut}</td>
+                    <td>${p.edad || '-'}</td>
+                    <td>${p.telefono || '-'}</td>
+                    <td>
+                        <button class="btn btn-sm btn-secondary" onclick="viewPaciente(${p.id})">Ver</button>
+                        <button class="btn btn-sm btn-secondary" onclick="editPaciente(${p.id})">Editar</button>
+                    </td>
+                </tr>`;
+            });
+
+            html += '</tbody></table></div>';
+            list.innerHTML = html;
+        }
+
+        function viewPaciente(pacienteId) {
+            const paciente = dm.data.pacientes.find(p => p.id === pacienteId);
+            if (!paciente) return;
+
+            currentEditingPacienteId = pacienteId;
+            document.getElementById('view-paciente-nombre').textContent = paciente.nombre;
+
+            let content = `
+                <div class="card">
+                    <div class="card-title">Información Personal</div>
+                    <p><strong>RUT:</strong> ${paciente.rut}</p>
+                    <p><strong>Edad:</strong> ${paciente.edad || 'No especificada'}</p>
+                    <p><strong>Teléfono:</strong> ${paciente.telefono || 'No especificado'}</p>
+                    <p><strong>Oftalmólogo:</strong> ${paciente.oculista || 'No especificado'}</p>
+                    <p><strong>Fecha Prescripción:</strong> ${paciente.fechaPrescripcion || 'No especificada'}</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Prescripción Actual</div>
+                    <div class="rx-grid">
+                        <div class="rx-box">
+                            <strong>OD (Ojo Derecho)</strong><br>
+                            Esfera: ${paciente.prescripcionOD.esfera || '-'}<br>
+                            Cilindro: ${paciente.prescripcionOD.cilindro || '-'}<br>
+                            Eje: ${paciente.prescripcionOD.eje || '-'}°<br>
+                            Adición: ${paciente.prescripcionOD.adicion || '-'}<br>
+                            DIP: ${paciente.prescripcionOD.dip || '-'}mm
+                        </div>
+                        <div class="rx-box">
+                            <strong>OI (Ojo Izquierdo)</strong><br>
+                            Esfera: ${paciente.prescripcionOI.esfera || '-'}<br>
+                            Cilindro: ${paciente.prescripcionOI.cilindro || '-'}<br>
+                            Eje: ${paciente.prescripcionOI.eje || '-'}°<br>
+                            Adición: ${paciente.prescripcionOI.adicion || '-'}<br>
+                            DIP: ${paciente.prescripcionOI.dip || '-'}mm
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Historial de Pedidos</div>
+                    ${renderPacientePedidos(pacienteId)}
+                </div>
+            `;
+
+            document.getElementById('view-paciente-content').innerHTML = content;
+            openModal('modal-view-paciente');
+        }
+
+        function renderPacientePedidos(pacienteId) {
+            const pedidos = dm.data.pedidos.filter(p => p.pacienteId === pacienteId);
+            if (pedidos.length === 0) {
+                return '<p style="color: #9ca3af;">Sin pedidos registrados</p>';
+            }
+
+            let html = '<table style="width: 100%; font-size: 0.875rem;"><thead><tr><th>Fecha</th><th>Estado</th><th>Tipo</th></tr></thead><tbody>';
+            pedidos.forEach(p => {
+                html += `<tr><td>${p.fechaCreacion.split('T')[0]}</td><td><span class="badge badge-${p.estado === 'entregado' ? 'success' : 'warning'}">${p.estado}</span></td><td>${p.tipoLente}</td></tr>`;
+            });
+            html += '</tbody></table>';
+            return html;
+        }
+
+        function editPaciente(pacienteId) {
+            const paciente = dm.data.pacientes.find(p => p.id === pacienteId);
+            if (!paciente) return;
+
+            currentEditingPacienteId = pacienteId;
+            document.getElementById('modal-paciente-title').textContent = 'Editar Paciente';
+
+            const form = document.getElementById('form-paciente');
+            form.nombre.value = paciente.nombre;
+            form.rut.value = paciente.rut;
+            form.edad.value = paciente.edad || '';
+            form.telefono.value = paciente.telefono || '';
+            form.oculista.value = paciente.oculista || '';
+            form.fechaPrescripcion.value = paciente.fechaPrescripcion || '';
+            form.odEsfera.value = paciente.prescripcionOD.esfera || '';
+            form.odCilindro.value = paciente.prescripcionOD.cilindro || '';
+            form.odEje.value = paciente.prescripcionOD.eje || '';
+            form.odAdicion.value = paciente.prescripcionOD.adicion || '';
+            form.odDip.value = paciente.prescripcionOD.dip || '';
+            form.oiEsfera.value = paciente.prescripcionOI.esfera || '';
+            form.oiCilindro.value = paciente.prescripcionOI.cilindro || '';
+            form.oiEje.value = paciente.prescripcionOI.eje || '';
+            form.oiAdicion.value = paciente.prescripcionOI.adicion || '';
+            form.oiDip.value = paciente.prescripcionOI.dip || '';
+
+            openModal('modal-paciente');
+        }
+
+        function deletePaciente() {
+            if (!currentEditingPacienteId) return;
+            if (!confirm('¿Eliminar este paciente? Se eliminarán también sus pedidos relacionados.')) return;
+
+            dm.data.pacientes = dm.data.pacientes.filter(p => p.id !== currentEditingPacienteId);
+            dm.data.pedidos = dm.data.pedidos.filter(p => p.pacienteId !== currentEditingPacienteId);
+            dm.data.ventas = dm.data.ventas.filter(v => v.pacienteId !== currentEditingPacienteId);
+            dm.data.citas = dm.data.citas.filter(c => c.pacienteId !== currentEditingPacienteId);
+            dm.save();
+
+            closeModal('modal-view-paciente');
+            renderPacientes();
+            updateSelectOptions();
+        }
+
+        // ==================== LENTES ====================
+        document.getElementById('btn-add-lente')?.addEventListener('click', () => {
+            document.getElementById('form-lente').reset();
+            openModal('modal-lente');
+        });
+
+        function saveLente(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+
+            const lente = {
+                id: dm.getNextId(),
+                tipo: formData.get('tipo'),
+                marca: formData.get('marca'),
+                material: formData.get('material'),
+                color: formData.get('color'),
+                descripcion: formData.get('descripcion'),
+                calibre: formData.get('calibre') ? parseFloat(formData.get('calibre')) : null,
+                puente: formData.get('puente') ? parseFloat(formData.get('puente')) : null,
+                varilla: formData.get('varilla') ? parseFloat(formData.get('varilla')) : null,
+                stock: parseInt(formData.get('stock')),
+                precioCompra: parseInt(formData.get('precioCompra')),
+                precioVenta: parseInt(formData.get('precioVenta')),
+                fechaCreacion: new Date().toISOString()
+            };
+
+            dm.data.lentes.push(lente);
+            dm.save();
+            closeModal('modal-lente');
+            renderLentes();
+            updateSelectOptions();
+
+            return false;
+        }
+
+        function renderLentes() {
+            const list = document.getElementById('lentes-list');
+            if (dm.data.lentes.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🕶️</div>
+                        <h3>Sin lentes en inventario</h3>
+                        <p>Agrega lentes a tu inventario</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '<div class="table-responsive"><table><thead><tr><th>Marca</th><th>Tipo</th><th>Color</th><th>Stock</th><th>Precio Venta</th><th>Acciones</th></tr></thead><tbody>';
+
+            dm.data.lentes.forEach(l => {
+                html += `<tr>
+                    <td>${l.marca}</td>
+                    <td>${l.tipo}</td>
+                    <td>${l.color || '-'}</td>
+                    <td>${l.stock}</td>
+                    <td>$${l.precioVenta.toLocaleString()}</td>
+                    <td><button class="btn btn-sm btn-danger" onclick="deleteLente(${l.id})">Eliminar</button></td>
+                </tr>`;
+            });
+
+            html += '</tbody></table></div>';
+            list.innerHTML = html;
+            updateInventorySummary();
+        }
+
+        function deleteLente(lenteId) {
+            if (!confirm('¿Eliminar este lente del inventario?')) return;
+            dm.data.lentes = dm.data.lentes.filter(l => l.id !== lenteId);
+            dm.save();
+            renderLentes();
+            updateSelectOptions();
+        }
+
+        function updateInventorySummary() {
+            const totalValue = dm.data.lentes.reduce((sum, l) => sum + (l.stock * l.precioCompra), 0);
+            const totalUnits = dm.data.lentes.reduce((sum, l) => sum + l.stock, 0);
+
+            document.getElementById('inventory-value').textContent = `$${totalValue.toLocaleString()}`;
+            document.getElementById('inventory-units').textContent = totalUnits;
+        }
+
+        // ==================== PEDIDOS ====================
+        document.getElementById('btn-add-pedido')?.addEventListener('click', () => {
+            document.getElementById('form-pedido').reset();
+            openModal('modal-pedido');
+        });
+
+        function savePedido(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+
+            const pedido = {
+                id: dm.getNextId(),
+                pacienteId: parseInt(formData.get('pacienteId')),
+                lenteId: parseInt(formData.get('lenteId')),
+                tipoLente: formData.get('tipoLente'),
+                tratamiento: formData.get('tratamiento'),
+                laboratorio: formData.get('laboratorio'),
+                estado: formData.get('estado'),
+                fechaEntrega: formData.get('fechaEntrega'),
+                notas: formData.get('notas'),
+                fechaCreacion: new Date().toISOString()
+            };
+
+            dm.data.pedidos.push(pedido);
+            dm.save();
+            closeModal('modal-pedido');
+            renderPedidos();
+
+            return false;
+        }
+
+        function renderPedidos() {
+            const list = document.getElementById('pedidos-list');
+            if (dm.data.pedidos.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📋</div>
+                        <h3>Sin pedidos registrados</h3>
+                        <p>Crea tu primer pedido</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '<div class="table-responsive"><table><thead><tr><th>Paciente</th><th>Tipo Lente</th><th>Estado</th><th>Fecha Entrega</th><th>Acciones</th></tr></thead><tbody>';
+
+            dm.data.pedidos.forEach(p => {
+                const paciente = dm.data.pacientes.find(pat => pat.id === p.pacienteId);
+                const estadoColor = p.estado === 'entregado' ? 'success' : p.estado === 'listo' ? 'info' : 'warning';
+                html += `<tr>
+                    <td>${paciente?.nombre || 'Desconocido'}</td>
+                    <td>${p.tipoLente}</td>
+                    <td><span class="badge badge-${estadoColor}">${p.estado}</span></td>
+                    <td>${p.fechaEntrega || '-'}</td>
+                    <td><button class="btn btn-sm btn-danger" onclick="deletePedido(${p.id})">Eliminar</button></td>
+                </tr>`;
+            });
+
+            html += '</tbody></table></div>';
+            list.innerHTML = html;
+        }
+
+        function deletePedido(pedidoId) {
+            if (!confirm('¿Eliminar este pedido?')) return;
+            dm.data.pedidos = dm.data.pedidos.filter(p => p.id !== pedidoId);
+            dm.save();
+            renderPedidos();
+        }
+
+        // ==================== VENTAS ====================
+        document.getElementById('btn-new-sale')?.addEventListener('click', () => {
+            document.getElementById('form-venta').reset();
+            openModal('modal-venta');
+        });
+
+        function saveVenta(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+            const lenteId = parseInt(formData.get('lenteId'));
+            const lente = dm.data.lentes.find(l => l.id === lenteId);
+
+            if (!lente) return;
+
+            const cantidad = parseInt(formData.get('cantidad'));
+            const precioUnitario = formData.get('precioUnitario') ? parseInt(formData.get('precioUnitario')) : lente.precioVenta;
+
+            let accesoriosTotal = 0;
+            const accesorios = [];
+            document.querySelectorAll('input[name="accesorios"]:checked').forEach(input => {
+                accesorios.push(input.value);
+                if (input.value === 'estuche') accesoriosTotal += 5000;
+                if (input.value === 'pano') accesoriosTotal += 3000;
+                if (input.value === 'solucion') accesoriosTotal += 8000;
+            });
+
+            const venta = {
+                id: dm.getNextId(),
+                pacienteId: formData.get('pacienteId') ? parseInt(formData.get('pacienteId')) : null,
+                lenteId: lenteId,
+                cantidad: cantidad,
+                precioUnitario: precioUnitario,
+                subtotal: precioUnitario * cantidad,
+                accesorios: accesorios,
+                accesoriosTotal: accesoriosTotal,
+                total: (precioUnitario * cantidad) + accesoriosTotal,
+                metodoPago: formData.get('metodoPago'),
+                notas: formData.get('notas'),
+                fechaCreacion: new Date().toISOString()
+            };
+
+            // Decrease inventory
+            lente.stock -= cantidad;
+            dm.data.ventas.push(venta);
+            dm.save();
+            closeModal('modal-venta');
+            renderVentas();
+            updateSelectOptions();
+
+            return false;
+        }
+
+        function renderVentas() {
+            const list = document.getElementById('ventas-list');
+            if (dm.data.ventas.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">💳</div>
+                        <h3>Sin ventas registradas</h3>
+                        <p>Registra tu primera venta</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '<div class="table-responsive"><table><thead><tr><th>Fecha</th><th>Cliente</th><th>Cantidad</th><th>Total</th><th>Método</th></tr></thead><tbody>';
+
+            dm.data.ventas.forEach(v => {
+                const paciente = v.pacienteId ? dm.data.pacientes.find(p => p.id === v.pacienteId) : null;
+                html += `<tr>
+                    <td>${v.fechaCreacion.split('T')[0]}</td>
+                    <td>${paciente?.nombre || 'Cliente General'}</td>
+                    <td>${v.cantidad}</td>
+                    <td>$${v.total.toLocaleString()}</td>
+                    <td>${v.metodoPago}</td>
+                </tr>`;
+            });
+
+            html += '</tbody></table></div>';
+            list.innerHTML = html;
+        }
+
+        // ==================== CITAS ====================
+        document.getElementById('btn-add-cita')?.addEventListener('click', () => {
+            document.getElementById('form-cita').reset();
+            openModal('modal-cita');
+        });
+
+        function saveCita(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+
+            const cita = {
+                id: dm.getNextId(),
+                pacienteId: parseInt(formData.get('pacienteId')),
+                fecha: formData.get('fecha'),
+                hora: formData.get('hora'),
+                tipo: formData.get('tipo'),
+                notas: formData.get('notas'),
+                completada: false,
+                fechaCreacion: new Date().toISOString()
+            };
+
+            dm.data.citas.push(cita);
+            dm.save();
+            closeModal('modal-cita');
+            renderCitas();
+
+            return false;
+        }
+
+        function renderCitas() {
+            const list = document.getElementById('agenda-list');
+            if (dm.data.citas.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📅</div>
+                        <h3>Sin citas agendadas</h3>
+                        <p>Agrega tu primera cita</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const sortedCitas = [...dm.data.citas].sort((a, b) => new Date(a.fecha + ' ' + a.hora) - new Date(b.fecha + ' ' + b.hora));
+            let html = '<div class="table-responsive"><table><thead><tr><th>Paciente</th><th>Fecha</th><th>Hora</th><th>Tipo</th><th>Acciones</th></tr></thead><tbody>';
+
+            sortedCitas.forEach(c => {
+                const paciente = dm.data.pacientes.find(p => p.id === c.pacienteId);
+                html += `<tr>
+                    <td>${paciente?.nombre || 'Desconocido'}</td>
+                    <td>${c.fecha}</td>
+                    <td>${c.hora}</td>
+                    <td>${c.tipo}</td>
+                    <td><button class="btn btn-sm btn-danger" onclick="deleteCita(${c.id})">Eliminar</button></td>
+                </tr>`;
+            });
+
+            html += '</tbody></table></div>';
+            list.innerHTML = html;
+        }
+
+        function deleteCita(citaId) {
+            if (!confirm('¿Eliminar esta cita?')) return;
+            dm.data.citas = dm.data.citas.filter(c => c.id !== citaId);
+            dm.save();
+            renderCitas();
+        }
+
+        // ==================== FINANZAS ====================
+        function updateFinanzas() {
+            const totalRevenue = dm.data.ventas.reduce((sum, v) => sum + v.total, 0);
+            const pendingOrdersValue = dm.data.pedidos
+                .filter(p => p.estado !== 'entregado')
+                .reduce((sum, p) => {
+                    const lente = dm.data.lentes.find(l => l.id === p.lenteId);
+                    return sum + (lente ? lente.precioVenta : 0);
+                }, 0);
+            const inventoryValue = dm.data.lentes.reduce((sum, l) => sum + (l.stock * l.precioCompra), 0);
+
+            document.getElementById('total-revenue').textContent = `$${totalRevenue.toLocaleString()}`;
+            document.getElementById('pending-value').textContent = `$${pendingOrdersValue.toLocaleString()}`;
+            document.getElementById('fin-inventory-value').textContent = `$${inventoryValue.toLocaleString()}`;
+
+            updateRevenueChart();
+            updateMonthlyBreakdown();
+        }
+
+        function updateRevenueChart() {
+            const monthlyData = {};
+            dm.data.ventas.forEach(v => {
+                const date = new Date(v.fechaCreacion);
+                const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                monthlyData[month] = (monthlyData[month] || 0) + v.total;
+            });
+
+            const months = Object.keys(monthlyData).sort();
+            const values = months.map(m => monthlyData[m]);
+
+            const ctx = document.getElementById('revenue-chart');
+            if (!ctx) return;
+
+            if (revenueChart) revenueChart.destroy();
+
+            revenueChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: 'Ingresos Mensuales',
+                        data: values,
+                        backgroundColor: '#1e40af',
+                        borderColor: '#1e3a8a',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: { font: { family: "'Inter', sans-serif" } }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateMonthlyBreakdown() {
+            const monthlyData = {};
+            dm.data.ventas.forEach(v => {
+                const date = new Date(v.fechaCreacion);
+                const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                if (!monthlyData[month]) {
+                    monthlyData[month] = { ingresos: 0, transacciones: 0, inventario: 0 };
+                }
+                monthlyData[month].ingresos += v.total;
+                monthlyData[month].transacciones += 1;
+            });
+
+            let html = '';
+            Object.keys(monthlyData).sort().reverse().forEach(month => {
+                const data = monthlyData[month];
+                html += `<div class="card">
+                    <div class="card-title">${month}</div>
+                    <p><strong>Transacciones:</strong> ${data.transacciones}</p>
+                    <p><strong>Ingresos:</strong> $${data.ingresos.toLocaleString()}</p>
+                    <p><strong>Promedio por Transacción:</strong> $${Math.round(data.ingresos / data.transacciones).toLocaleString()}</p>
+                </div>`;
+            });
+
+            document.getElementById('monthly-breakdown').innerHTML = html || '<p style="color: #9ca3af;">Sin datos</p>';
+        }
+
+        // ==================== HELPERS ====================
+        function updateSelectOptions() {
+            // Pacientes
+            const pacientesSelects = document.querySelectorAll('#select-paciente-pedido, #select-paciente-cita');
+            pacientesSelects.forEach(select => {
+                select.innerHTML = '<option value="">-- Seleccionar --</option>';
+                dm.data.pacientes.forEach(p => {
+                    select.innerHTML += `<option value="${p.id}">${p.nombre}</option>`;
+                });
+            });
+
+            // Lentes en Pedidos
+            const lenteSelectPedido = document.getElementById('select-lente-pedido');
+            if (lenteSelectPedido) {
+                lenteSelectPedido.innerHTML = '<option value="">-- Seleccionar --</option>';
+                dm.data.lentes.forEach(l => {
+                    lenteSelectPedido.innerHTML += `<option value="${l.id}">${l.marca} - ${l.tipo}</option>`;
+                });
+            }
+
+            // Lentes en Ventas
+            const lenteSelectVenta = document.getElementById('select-lente-venta');
+            if (lenteSelectVenta) {
+                lenteSelectVenta.innerHTML = '<option value="">-- Seleccionar --</option>';
+                dm.data.lentes.forEach(l => {
+                    lenteSelectVenta.innerHTML += `<option value="${l.id}">${l.marca} - ${l.tipo} ($${l.precioVenta})</option>`;
+                });
+            }
+
+            // Pacientes en Venta
+            document.querySelector('#form-venta select[name="pacienteId"]').innerHTML = '<option value="">-- Seleccionar (Opcional) --</option>' +
+                dm.data.pacientes.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('');
+        }
+
+        // ==================== TAB NAVIGATION ====================
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                showTab(tab.dataset.tab);
+            });
+        });
+
+        // ==================== VENTA TOTAL CALCULATION ====================
+        const ventaForm = document.getElementById('form-venta');
+        if (ventaForm) {
+            ventaForm.addEventListener('change', () => {
+                const lenteId = parseInt(ventaForm.querySelector('select[name="lenteId"]').value);
+                const cantidad = parseInt(ventaForm.querySelector('input[name="cantidad"]').value) || 1;
+                const lente = dm.data.lentes.find(l => l.id === lenteId);
+                const precioUnitario = ventaForm.querySelector('input[name="precioUnitario"]').value
+                    ? parseInt(ventaForm.querySelector('input[name="precioUnitario"]').value)
+                    : (lente ? lente.precioVenta : 0);
+
+                let accesoriosTotal = 0;
+                document.querySelectorAll('input[name="accesorios"]:checked').forEach(input => {
+                    if (input.value === 'estuche') accesoriosTotal += 5000;
+                    if (input.value === 'pano') accesoriosTotal += 3000;
+                    if (input.value === 'solucion') accesoriosTotal += 8000;
+                });
+
+                const total = (precioUnitario * cantidad) + accesoriosTotal;
+                document.getElementById('venta-total').textContent = `$${total.toLocaleString()}`;
+            });
+        }
+
+        // ==================== INITIALIZATION ====================
+        function init() {
+            renderPacientes();
+            renderLentes();
+            renderPedidos();
+            renderVentas();
+            renderCitas();
+            updateSelectOptions();
+            updateInventorySummary();
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('data:text/javascript,self.addEventListener("install",e=>self.skipWaiting());self.addEventListener("activate",e=>e.waitUntil(clients.matchAll().then(c=>Promise.all(c.map(client=>client.navigate(client.url))))));').catch(err => console.log('SW registration failed'));
+        }
+    </script>
+</body>
+</html>

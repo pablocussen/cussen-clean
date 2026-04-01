@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#14532d">
+<meta name="description" content="AguaCL - Asesor de Riego Inteligente para agricultores chilenos">
+<title>AguaCL 💧 Asesor de Riego</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#fefce8;--card:#ffffff;--card2:#fef9c3;--border:#d4a92a;
+  --accent:#166534;--text:#1a2e05;--muted:#6b7280;--blue:#0369a1;
+  --red:#dc2626;--yellow:#d97706;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+header{background:linear-gradient(90deg,#14532d,#166534);padding:13px 18px;position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;color:white}
+header h1{font-size:1.15rem;font-weight:800;letter-spacing:-.3px}
+header span{font-size:.75rem;opacity:.8}
+nav{background:#fff;border-bottom:2px solid var(--border);display:flex;overflow-x:auto;position:sticky;top:62px;z-index:40;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+nav button{padding:11px 14px;background:none;border:none;color:var(--muted);font-size:.77rem;font-weight:500;cursor:pointer;white-space:nowrap;border-bottom:3px solid transparent;font-family:inherit;transition:color .2s}
+nav button.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:700}
+.container{padding:16px;max-width:900px;margin:0 auto}
+.tab{display:none}.tab.active{display:block}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:14px}
+.card2{background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:14px}
+.btn{padding:12px 20px;border-radius:9px;border:none;font-size:.88rem;font-weight:600;cursor:pointer;font-family:inherit;transition:opacity .2s}
+.btn:active{opacity:.8}
+.btn-primary{background:var(--accent);color:#fff;width:100%;font-size:1rem;min-height:56px}
+.btn-secondary{background:var(--card2);color:var(--accent);border:1.5px solid var(--border);font-size:.82rem;padding:8px 14px}
+.btn-danger{background:var(--red);color:#fff;font-size:.78rem;padding:6px 10px}
+label{display:block;font-size:.8rem;color:var(--text);margin-bottom:5px;font-weight:600}
+input,select{width:100%;background:#fffde7;border:1.5px solid var(--border);border-radius:9px;padding:10px 13px;font-size:16px;font-family:inherit;color:var(--text);outline:none}
+input:focus,select:focus{border-color:var(--accent);background:#fff}
+.form-group{margin-bottom:14px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.result-box{background:linear-gradient(135deg,#14532d,#166534);color:#fff;border-radius:14px;padding:22px;margin-bottom:14px;text-align:center}
+.result-box h2{font-size:1.1rem;font-weight:800;margin-bottom:16px;letter-spacing:.5px}
+.result-main{font-size:2.8rem;font-weight:800;line-height:1}
+.result-sub{font-size:.85rem;opacity:.85;margin-top:6px}
+.result-details{background:rgba(255,255,255,.15);border-radius:10px;padding:14px;margin-top:14px;text-align:left}
+.result-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.1);font-size:.88rem}
+.result-row:last-child{border-bottom:none;font-weight:700;font-size:.95rem}
+.semaforo{font-size:1.3rem;font-weight:700;margin-top:12px;padding:10px;border-radius:9px;background:rgba(255,255,255,.2)}
+.alert-box{border-radius:10px;padding:12px 15px;margin-bottom:10px;font-size:.85rem;font-weight:600;display:flex;align-items:center;gap:8px}
+.alert-helada{background:#dbeafe;color:#1e40af;border:1px solid #93c5fd}
+.alert-calor{background:#fef3c7;color:#92400e;border:1px solid #fcd34d}
+.alert-good{background:#dcfce7;color:#166534;border:1px solid #86efac}
+.loading{text-align:center;padding:30px;color:var(--muted);font-size:.9rem}
+.spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.clima-table{width:100%;border-collapse:collapse;font-size:.82rem}
+.clima-table th{background:var(--card2);color:var(--accent);padding:8px 6px;text-align:center;border-bottom:2px solid var(--border);font-size:.75rem}
+.clima-table td{padding:8px 6px;text-align:center;border-bottom:1px solid #f3f4f6}
+.clima-table tr:hover td{background:#fefce8}
+.frost-cell{color:var(--blue);font-weight:700}
+.chart-wrap{position:relative;height:220px;margin-top:14px}
+.moisture-bar{background:#e5e7eb;border-radius:20px;height:22px;overflow:hidden;margin-top:6px}
+.moisture-fill{height:100%;border-radius:20px;transition:width .5s;background:linear-gradient(90deg,#d97706,#166534)}
+.moisture-label{display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted);margin-top:4px}
+.crop-grid{display:grid;grid-template-columns:1fr;gap:10px}
+.crop-card{background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:14px;cursor:pointer;transition:border-color .2s,box-shadow .2s}
+.crop-card:hover{border-color:var(--accent);box-shadow:0 2px 12px rgba(22,101,52,.12)}
+.crop-card.expanded{border-color:var(--accent);background:var(--card2)}
+.crop-header{display:flex;align-items:center;justify-content:space-between}
+.crop-name{font-size:1rem;font-weight:700}
+.crop-badge{background:var(--accent);color:#fff;border-radius:20px;padding:2px 10px;font-size:.72rem;font-weight:600}
+.crop-details{margin-top:12px;display:none}
+.crop-card.expanded .crop-details{display:block}
+.kc-bars{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin:10px 0}
+.kc-bar{text-align:center}
+.kc-bar-fill{background:linear-gradient(180deg,#166534,#4ade80);border-radius:4px;margin:0 auto 3px;width:28px}
+.kc-bar-label{font-size:.65rem;color:var(--muted)}
+.kc-bar-val{font-size:.78rem;font-weight:700;color:var(--accent)}
+.stress-box{background:#fef3c7;border:1px solid #fcd34d;border-radius:8px;padding:10px;margin-top:8px;font-size:.8rem;color:#92400e}
+.info-row{display:flex;align-items:center;gap:6px;font-size:.82rem;margin:4px 0;color:var(--muted)}
+.info-row span:first-child{font-weight:600;color:var(--text)}
+.predio-card{background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.predio-info h3{font-size:.95rem;font-weight:700;margin-bottom:4px}
+.predio-info p{font-size:.78rem;color:var(--muted)}
+.predio-actions{display:flex;gap:6px;flex-shrink:0}
+.empty-state{text-align:center;padding:40px 20px;color:var(--muted)}
+.empty-state .icon{font-size:3rem;margin-bottom:12px}
+.empty-state p{font-size:.88rem}
+.tip-box{background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:12px;font-size:.82rem;color:#166534;margin-top:12px}
+.section-title{font-size:1rem;font-weight:700;color:var(--accent);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.stat-card{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center}
+.stat-val{font-size:1.6rem;font-weight:800;color:var(--accent)}
+.stat-label{font-size:.72rem;color:var(--muted);margin-top:3px}
+.offline-banner{background:#fef3c7;border-bottom:2px solid #fcd34d;padding:8px 16px;font-size:.8rem;color:#92400e;text-align:center;display:none}
+.save-form{background:var(--card2);border:1.5px dashed var(--border);border-radius:12px;padding:16px;margin-bottom:14px}
+@media(min-width:600px){
+  .crop-grid{grid-template-columns:1fr 1fr}
+  .stat-grid{grid-template-columns:1fr 1fr 1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="offline-banner" id="offlineBanner">
+  ⚠️ Sin conexión — mostrando datos en caché
+</div>
+
+<header>
+  <h1>💧 AguaCL</h1>
+  <span>Asesor de Riego Inteligente</span>
+</header>
+
+<nav id="mainNav">
+  <button class="active" onclick="showTab('riego',this)">🌾 MI RIEGO</button>
+  <button onclick="showTab('clima',this)">☀️ CLIMA</button>
+  <button onclick="showTab('cultivos',this)">🥬 CULTIVOS</button>
+  <button onclick="showTab('predios',this)">🏡 MIS PREDIOS</button>
+</nav>
+
+<div class="container">
+
+  <!-- TAB 1: MI RIEGO -->
+  <div id="tab-riego" class="tab active">
+    <div class="card">
+      <div class="section-title">🌾 Configurar mi riego</div>
+
+      <div class="form-group">
+        <label>📍 Comuna</label>
+        <select id="riego-comuna">
+          <option value="">— Seleccionar comuna —</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>🌱 Cultivo</label>
+        <select id="riego-cultivo">
+          <option value="">— Seleccionar cultivo —</option>
+        </select>
+      </div>
+
+      <div class="row2">
+        <div class="form-group">
+          <label>📅 Fase del cultivo</label>
+          <select id="riego-fase">
+            <option value="0">Inicial</option>
+            <option value="1">Desarrollo</option>
+            <option value="2" selected>Media</option>
+            <option value="3">Final</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>🪨 Tipo de suelo</label>
+          <select id="riego-suelo">
+            <option value="1.2">Arenoso</option>
+            <option value="1.0" selected>Franco</option>
+            <option value="0.85">Arcilloso</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row2">
+        <div class="form-group">
+          <label>💦 Método de riego</label>
+          <select id="riego-metodo">
+            <option value="0.95">Goteo</option>
+            <option value="0.80" selected>Aspersión</option>
+            <option value="0.60">Surcos</option>
+            <option value="0.55">Manta</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>📐 Superficie (ha)</label>
+          <input type="number" id="riego-ha" value="1" min="0.1" step="0.1" placeholder="1.0">
+        </div>
+      </div>
+
+      <button class="btn btn-primary" onclick="calcularRiego()">💧 CALCULAR RIEGO</button>
+    </div>
+
+    <div id="riego-loading" style="display:none">
+      <div class="loading">
+        <div class="spinner"></div>
+        Consultando datos climáticos...
+      </div>
+    </div>
+
+    <div id="riego-resultado" style="display:none"></div>
+    <div id="riego-alertas" style="display:none"></div>
+  </div>
+
+  <!-- TAB 2: CLIMA -->
+  <div id="tab-clima" class="tab">
+    <div class="card">
+      <div class="form-group">
+        <label>📍 Ver clima para</label>
+        <select id="clima-comuna" onchange="cargarClima()">
+          <option value="">— Seleccionar comuna —</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="clima-loading" style="display:none">
+      <div class="loading">
+        <div class="spinner"></div>
+        Cargando datos climáticos...
+      </div>
+    </div>
+
+    <div id="clima-contenido" style="display:none">
+      <div class="card">
+        <div class="section-title">🌡️ Pronóstico 7 días</div>
+        <div style="overflow-x:auto">
+          <table class="clima-table" id="climaTable"></table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">📊 Lluvia vs Evapotranspiración (14 días)</div>
+        <div class="chart-wrap">
+          <canvas id="climaChart"></canvas>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">💧 Humedad del suelo (0-1 cm)</div>
+        <div id="moistureGauge"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: CULTIVOS -->
+  <div id="tab-cultivos" class="tab">
+    <div class="card2">
+      <div class="section-title">🌾 Guía de Cultivos</div>
+      <p style="font-size:.82rem;color:var(--muted)">Temporada actual: Otoño 🍂 (Marzo — hemisferio sur). Tap en un cultivo para ver detalles.</p>
+    </div>
+    <div class="crop-grid" id="cropGrid"></div>
+  </div>
+
+  <!-- TAB 4: MIS PREDIOS -->
+  <div id="tab-predios" class="tab">
+    <div class="save-form" id="saveForm">
+      <div class="section-title">💾 Guardar predio actual</div>
+      <div class="form-group">
+        <label>Nombre del predio</label>
+        <input type="text" id="predio-nombre" placeholder="Ej: Fundo El Arrayán" maxlength="40">
+      </div>
+      <button class="btn btn-secondary" onclick="guardarPredio()" style="width:100%">💾 Guardar configuración actual</button>
+    </div>
+
+    <div class="section-title">🏡 Mis predios guardados</div>
+    <div id="prediosList"></div>
+  </div>
+
+</div>
+
+<script>
+const COMUNAS = [
+  {n:'Rancagua',lat:-34.17,lon:-70.74},{n:'San Fernando',lat:-34.59,lon:-70.97},
+  {n:'Curicó',lat:-34.98,lon:-71.24},{n:'Talca',lat:-35.43,lon:-71.66},
+  {n:'Linares',lat:-35.85,lon:-71.60},{n:'Chillán',lat:-36.61,lon:-72.10},
+  {n:'Los Ángeles',lat:-37.47,lon:-72.35},{n:'Angol',lat:-37.80,lon:-72.71},
+  {n:'Temuco',lat:-38.73,lon:-72.59},{n:'Osorno',lat:-40.57,lon:-73.13},
+  {n:'La Serena',lat:-29.90,lon:-71.25},{n:'Ovalle',lat:-30.60,lon:-71.20},
+  {n:'Illapel',lat:-31.63,lon:-71.16},{n:'Santiago',lat:-33.45,lon:-70.67},
+  {n:'Melipilla',lat:-33.70,lon:-71.21},{n:'San Antonio',lat:-33.59,lon:-71.62},
+  {n:'Valparaíso',lat:-33.05,lon:-71.62},{n:'Quillota',lat:-32.88,lon:-71.25},
+  {n:'Copiapó',lat:-27.37,lon:-70.33},{n:'Antofagasta',lat:-23.65,lon:-70.40}
+];
+
+const CULTIVOS = {
+  'Remolacha 🥕':{kc:[0.35,0.75,1.2,0.7],aguaAnual:750,raiz:'30-60 cm',estres:'Hojas flácidas, amarillamiento de bordes'},
+  'Espárragos 🌿':{kc:[0.5,0.7,0.95,0.3],aguaAnual:900,raiz:'60-150 cm',estres:'Tallos delgados, follaje amarillo'},
+  'Nogal 🥜':{kc:[0.5,0.85,1.05,0.65],aguaAnual:1000,raiz:'100-200 cm',estres:'Quemadura de bordes, caída prematura'},
+  'Manzano 🍎':{kc:[0.5,0.8,1.0,0.65],aguaAnual:900,raiz:'80-150 cm',estres:'Fruta pequeña, quemadura solar'},
+  'Cerezo 🍒':{kc:[0.5,0.8,1.0,0.65],aguaAnual:850,raiz:'60-120 cm',estres:'Rajado de fruta, gomosis'},
+  'Peral 🍐':{kc:[0.5,0.8,1.0,0.65],aguaAnual:900,raiz:'80-150 cm',estres:'Fruta corchosa, caída anticipada'},
+  'Duraznero 🍑':{kc:[0.5,0.8,1.0,0.65],aguaAnual:850,raiz:'60-120 cm',estres:'Gomosis, fruta sin calibre'},
+  'Arándano 🫐':{kc:[0.3,0.7,1.1,0.6],aguaAnual:700,raiz:'20-40 cm',estres:'Hoja roja, bayas pequeñas'},
+  'Trigo 🌾':{kc:[0.3,0.75,1.15,0.4],aguaAnual:450,raiz:'60-120 cm',estres:'Enrollado de hoja, espigas vanas'},
+  'Maíz 🌽':{kc:[0.3,0.7,1.2,0.6],aguaAnual:700,raiz:'80-150 cm',estres:'Enrollado diurno, choclos mal llenados'},
+  'Papa 🥔':{kc:[0.4,0.75,1.15,0.75],aguaAnual:500,raiz:'30-60 cm',estres:'Tubérculos agrietados, sarna'},
+  'Cebolla 🧅':{kc:[0.5,0.75,1.05,0.75],aguaAnual:500,raiz:'20-40 cm',estres:'Bulbos partidos, cuello grueso'},
+  'Uva 🍇':{kc:[0.3,0.7,0.85,0.45],aguaAnual:600,raiz:'100-200 cm',estres:'Quemadura de racimo, defoliación'},
+  'Tomate 🍅':{kc:[0.4,0.75,1.15,0.8],aguaAnual:600,raiz:'40-80 cm',estres:'Pudrición apical, fruta sin color'},
+  'Pasto 🌱':{kc:[1.0,1.0,1.0,1.0],aguaAnual:1200,raiz:'10-30 cm',estres:'Amarillamiento, dormancia prematura'}
+};
+
+const FASES = ['Inicial','Desarrollo','Media','Final'];
+const FASES_CONSEJO = {
+  0:'Mantener humedad uniforme. Riegos frecuentes y superficiales.',
+  1:'Aumentar volumen de riego. Raíces en expansión.',
+  2:'Demanda máxima de agua. No permitir déficit hídrico.',
+  3:'Reducir gradualmente. Favorecer maduración.'
+};
+
+const ESTACION_CONSEJO = {
+  'Remolacha 🥕':'Otoño: iniciar cosecha. Reducir riegos.',
+  'Espárragos 🌿':'Otoño: poscosecha. Mínimo riego de mantención.',
+  'Nogal 🥜':'Otoño: cosecha activa. Regar post-cosecha.',
+  'Manzano 🍎':'Otoño: cosecha. Suspender riego gradualmente.',
+  'Cerezo 🍒':'Otoño: reposo vegetativo. Riego mínimo.',
+  'Peral 🍐':'Otoño: poscosecha. Preparar para invierno.',
+  'Duraznero 🍑':'Otoño: reposo. Reducir riegos para endurecer.',
+  'Arándano 🫐':'Otoño: fin temporada. Mantener mínima humedad.',
+  'Trigo 🌾':'Otoño: siembra. Riego de establecimiento 2-3 veces.',
+  'Maíz 🌽':'Otoño: cosecha tardía o grano seco.',
+  'Papa 🥔':'Otoño: cosecha. Suspender riego 2 semanas antes.',
+  'Cebolla 🧅':'Otoño: siembra de variedades tardías.',
+  'Uva 🍇':'Otoño: cosecha y poscosecha. Riego de lavado.',
+  'Tomate 🍅':'Otoño: últimos frutos. Reducir riegos.',
+  'Pasto 🌱':'Otoño: crecimiento activo. Buen momento para riego.'
+};
+
+let climaChart = null;
+let lastClimaComunaIdx = null;
+let weatherCache = {};
+
+// Init selects
+function initSelects(){
+  ['riego-comuna','clima-comuna'].forEach(id=>{
+    const sel = document.getElementById(id);
+    COMUNAS.forEach((c,i)=>{
+      const o = document.createElement('option');
+      o.value = i;
+      o.textContent = c.n;
+      sel.appendChild(o);
+    });
+  });
+  const rCult = document.getElementById('riego-cultivo');
+  Object.keys(CULTIVOS).forEach(k=>{
+    const o = document.createElement('option');
+    o.value = k;
+    o.textContent = k;
+    rCult.appendChild(o);
+  });
+}
+
+function showTab(name, btn){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  if(btn) btn.classList.add('active');
+}
+
+// Offline detection
+window.addEventListener('offline',()=>{ document.getElementById('offlineBanner').style.display='block'; });
+window.addEventListener('online',()=>{ document.getElementById('offlineBanner').style.display='none'; });
+
+// Cache helpers
+function cacheKey(lat,lon){ return `agua_cache_${lat}_${lon}`; }
+function getCache(lat,lon){
+  try{
+    const raw = localStorage.getItem(cacheKey(lat,lon));
+    if(!raw) return null;
+    const {data,ts} = JSON.parse(raw);
+    if(Date.now()-ts < 6*3600*1000) return data;
+    localStorage.removeItem(cacheKey(lat,lon));
+    return null;
+  }catch(e){ return null; }
+}
+function setCache(lat,lon,data){
+  try{ localStorage.setItem(cacheKey(lat,lon), JSON.stringify({data,ts:Date.now()})); }catch(e){}
+}
+
+async function fetchWeather(lat,lon){
+  const cached = getCache(lat,lon);
+  if(cached) return cached;
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=precipitation_sum,et0_fao_evapotranspiration,temperature_2m_max,temperature_2m_min&hourly=soil_moisture_0_to_1cm&timezone=America%2FSantiago&forecast_days=7&past_days=7`;
+  const ctrl = new AbortController();
+  const tid = setTimeout(()=>ctrl.abort(), 10000);
+  try{
+    const resp = await fetch(url, {signal: ctrl.signal});
+    clearTimeout(tid);
+    if(!resp.ok) throw new Error('HTTP '+resp.status);
+    const data = await resp.json();
+    setCache(lat,lon,data);
+    return data;
+  }catch(e){
+    clearTimeout(tid);
+    throw e;
+  }
+}
+
+function fmt1(n){ return typeof n==='number'?n.toFixed(1):'—'; }
+function fmt0(n){ return typeof n==='number'?Math.round(n):'—'; }
+
+// ===================== TAB 1: CALCULAR RIEGO =====================
+async function calcularRiego(){
+  const comunaIdx = document.getElementById('riego-comuna').value;
+  const cultivoKey = document.getElementById('riego-cultivo').value;
+  const faseIdx = parseInt(document.getElementById('riego-fase').value);
+  const sueloFactor = parseFloat(document.getElementById('riego-suelo').value);
+  const eficiencia = parseFloat(document.getElementById('riego-metodo').value);
+  const ha = parseFloat(document.getElementById('riego-ha').value) || 1;
+
+  if(!comunaIdx){ showToast('Selecciona una comuna'); return; }
+  if(!cultivoKey){ showToast('Selecciona un cultivo'); return; }
+
+  const comuna = COMUNAS[comunaIdx];
+  const cultivo = CULTIVOS[cultivoKey];
+  const kc = cultivo.kc[faseIdx];
+
+  document.getElementById('riego-loading').style.display='block';
+  document.getElementById('riego-resultado').style.display='none';
+  document.getElementById('riego-alertas').style.display='none';
+
+  let data;
+  try{
+    data = await fetchWeather(comuna.lat, comuna.lon);
+    lastClimaComunaIdx = parseInt(comunaIdx);
+  }catch(e){
+    document.getElementById('riego-loading').style.display='none';
+    document.getElementById('riego-resultado').innerHTML = `<div class="alert-box alert-helada">⚠️ Error al obtener datos: ${e.message === 'The user aborted a request.' ? 'Tiempo de espera agotado' : e.message}. Verifica tu conexión.</div>`;
+    document.getElementById('riego-resultado').style.display='block';
+    return;
+  }
+
+  document.getElementById('riego-loading').style.display='none';
+
+  const today = new Date();
+  const todayStr = today.toISOString().split('T')[0];
+  const dates = data.daily.time;
+  const todayIdx = dates.findIndex(d=>d>=todayStr);
+  const startIdx = todayIdx >= 0 ? todayIdx : 0;
+  const next7 = [0,1,2,3,4,5,6].map(i=>startIdx+i).filter(i=>i<dates.length);
+
+  const et0_arr = data.daily.et0_fao_evapotranspiration;
+  const prec_arr = data.daily.precipitation_sum;
+  const tmax_arr = data.daily.temperature_2m_max;
+  const tmin_arr = data.daily.temperature_2m_min;
+
+  const ET0_semana = next7.reduce((s,i)=>s+(et0_arr[i]||0),0);
+  const lluvia_prev = next7.reduce((s,i)=>s+(prec_arr[i]||0),0);
+  const ETc = ET0_semana * kc;
+  const deficit = Math.max(0, ETc - lluvia_prev);
+  const deficit_suelo = deficit * sueloFactor;
+  const volume_ha = (deficit_suelo * 10) / eficiencia;
+  const volume_total = volume_ha * ha;
+  const volume_L = volume_total * 1000;
+
+  let semaforo, semaforoClass, semaforoBg;
+  if(deficit_suelo < 5){
+    semaforo='🟢 Sin urgencia — lluvias cubren la necesidad';
+    semaforoClass=''; semaforoBg='rgba(134,239,172,.3)';
+  } else if(deficit_suelo <= 20){
+    semaforo='🟡 Regar pronto — déficit moderado';
+    semaforoClass=''; semaforoBg='rgba(252,211,77,.3)';
+  } else {
+    semaforo='🔴 Regar HOY — déficit crítico';
+    semaforoClass=''; semaforoBg='rgba(252,165,165,.3)';
+  }
+
+  const metodoNombre = {'0.95':'Goteo','0.80':'Aspersión','0.60':'Surcos','0.55':'Manta'}[document.getElementById('riego-metodo').value] || '';
+  const sueloNombre = {'1.2':'Arenoso','1.0':'Franco','0.85':'Arcilloso'}[document.getElementById('riego-suelo').value] || '';
+
+  document.getElementById('riego-resultado').innerHTML = `
+    <div class="result-box">
+      <h2>💧 RIEGO ESTA SEMANA</h2>
+      <div class="result-main">${fmt1(deficit_suelo)} mm</div>
+      <div class="result-sub">${cultivoKey} · Fase ${FASES[faseIdx]} · Kc ${kc}</div>
+      <div class="result-details">
+        <div class="result-row"><span>Evapotranspiración (ET0 semana)</span><span>${fmt1(ET0_semana)} mm</span></div>
+        <div class="result-row"><span>Kc fase ${FASES[faseIdx]}</span><span>× ${kc}</span></div>
+        <div class="result-row"><span>Demanda del cultivo (ETc)</span><span>${fmt1(ETc)} mm</span></div>
+        <div class="result-row"><span>Lluvia pronosticada</span><span>− ${fmt1(lluvia_prev)} mm</span></div>
+        <div class="result-row"><span>Déficit base</span><span>${fmt1(deficit)} mm</span></div>
+        <div class="result-row"><span>Factor suelo (${sueloNombre})</span><span>× ${sueloFactor}</span></div>
+        <div class="result-row"><span>🟰 REGAR</span><span>${fmt1(deficit_suelo)} mm</span></div>
+      </div>
+      <div class="semaforo" style="background:${semaforoBg}">${semaforo}</div>
+    </div>
+    <div class="card">
+      <div class="section-title">📐 En tu predio (${ha} ha)</div>
+      <div class="stat-grid" style="margin-bottom:0">
+        <div class="stat-card">
+          <div class="stat-val">${fmt0(volume_ha)}</div>
+          <div class="stat-label">m³/ha necesarios</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val">${fmt0(volume_total)}</div>
+          <div class="stat-label">m³ totales</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val">${(volume_L>=1000?(volume_L/1000).toFixed(1)+'k':fmt0(volume_L))}</div>
+          <div class="stat-label">litros totales</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val">${eficiencia*100|0}%</div>
+          <div class="stat-label">Eficiencia ${metodoNombre}</div>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById('riego-resultado').style.display='block';
+
+  // Alertas
+  let alertsHtml = '';
+  const next3 = [0,1,2].map(i=>startIdx+i).filter(i=>i<dates.length);
+  const hayHelada = next3.some(i=>(tmin_arr[i]||99) < 2);
+  const hayCalor = next7.some(i=>(tmax_arr[i]||0) > 35);
+  if(hayHelada) alertsHtml += `<div class="alert-box alert-helada">⚠️ HELADA próxima (T° &lt; 2°C) — suspender riego nocturno y proteger cultivos</div>`;
+  if(hayCalor) alertsHtml += `<div class="alert-box alert-calor">☀️ Ola de calor (T° &gt; 35°C) — aumentar frecuencia de riego y regar en horas frescas</div>`;
+  if(!hayHelada && !hayCalor && deficit_suelo < 5) alertsHtml += `<div class="alert-box alert-good">✅ Condiciones favorables — lluvias cubren la demanda esta semana</div>`;
+  document.getElementById('riego-alertas').innerHTML = alertsHtml;
+  document.getElementById('riego-alertas').style.display = alertsHtml ? 'block' : 'none';
+}
+
+// ===================== TAB 2: CLIMA =====================
+async function cargarClima(){
+  const idx = document.getElementById('clima-comuna').value;
+  if(!idx) return;
+  lastClimaComunaIdx = parseInt(idx);
+  const comuna = COMUNAS[idx];
+
+  document.getElementById('clima-loading').style.display='block';
+  document.getElementById('clima-contenido').style.display='none';
+
+  let data;
+  try{
+    data = await fetchWeather(comuna.lat, comuna.lon);
+  }catch(e){
+    document.getElementById('clima-loading').style.display='none';
+    document.getElementById('clima-contenido').innerHTML = `<div class="alert-box alert-helada">⚠️ Error: ${e.message}. Verifica tu conexión.</div>`;
+    document.getElementById('clima-contenido').style.display='block';
+    return;
+  }
+  document.getElementById('clima-loading').style.display='none';
+
+  const dates = data.daily.time;
+  const tmax = data.daily.temperature_2m_max;
+  const tmin = data.daily.temperature_2m_min;
+  const prec = data.daily.precipitation_sum;
+  const et0 = data.daily.et0_fao_evapotranspiration;
+
+  const todayStr = new Date().toISOString().split('T')[0];
+  const todayIdx = dates.findIndex(d=>d>=todayStr);
+  const startForecast = todayIdx >= 0 ? todayIdx : 0;
+
+  // Table: next 7 days
+  let tbl = '<thead><tr><th>Día</th><th>Máx°C</th><th>Mín°C</th><th>Lluvia mm</th><th>ET0 mm</th><th>Helada?</th></tr></thead><tbody>';
+  const DIAS = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const MESES_SHORT = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  for(let k=0;k<7;k++){
+    const i = startForecast+k;
+    if(i>=dates.length) break;
+    const d = new Date(dates[i]+'T12:00:00');
+    const dia = `${DIAS[d.getDay()]} ${d.getDate()} ${MESES_SHORT[d.getMonth()]}`;
+    const esHelada = (tmin[i]||99)<2;
+    const esCritico = (tmax[i]||0)>35;
+    tbl += `<tr>
+      <td style="text-align:left;font-weight:600">${dia}${k===0?' (hoy)':''}</td>
+      <td style="${esCritico?'color:var(--red);font-weight:700':''}">${fmt1(tmax[i])}°</td>
+      <td class="${esHelada?'frost-cell':''}">${fmt1(tmin[i])}°</td>
+      <td style="color:var(--blue)">${fmt1(prec[i])}</td>
+      <td style="color:var(--yellow)">${fmt1(et0[i])}</td>
+      <td>${esHelada?'❄️ Sí':'—'}</td>
+    </tr>`;
+  }
+  tbl += '</tbody>';
+  document.getElementById('climaTable').innerHTML = tbl;
+
+  // Chart: all 14 days (past 7 + next 7)
+  const allDates = dates.slice(0, Math.min(14, dates.length));
+  const allPrec = allDates.map((_,i)=>prec[i]||0);
+  const allEt0 = allDates.map((_,i)=>et0[i]||0);
+  const labels = allDates.map(d=>{
+    const dd = new Date(d+'T12:00:00');
+    return `${dd.getDate()}/${dd.getMonth()+1}`;
+  });
+
+  if(climaChart){ climaChart.destroy(); climaChart=null; }
+  const ctx = document.getElementById('climaChart').getContext('2d');
+  climaChart = new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels,
+      datasets:[
+        {label:'Lluvia (mm)',data:allPrec,backgroundColor:'rgba(3,105,161,.6)',borderRadius:4},
+        {label:'ET0 (mm)',data:allEt0,backgroundColor:'rgba(217,119,6,.6)',borderRadius:4}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom',labels:{font:{size:11},boxWidth:12}}},
+      scales:{
+        x:{ticks:{font:{size:10}},grid:{display:false}},
+        y:{ticks:{font:{size:10}},beginAtZero:true,title:{display:true,text:'mm',font:{size:10}}}
+      }
+    }
+  });
+
+  // Soil moisture gauge
+  const hourlyMoisture = data.hourly.soil_moisture_0_to_1cm;
+  const latestMoisture = hourlyMoisture ? (hourlyMoisture.filter(v=>v!=null).slice(-1)[0] || 0) : 0;
+  const moistPct = Math.min(100, Math.round(latestMoisture * 100));
+  let moistColor = moistPct < 20 ? '#dc2626' : moistPct < 50 ? '#d97706' : '#166534';
+  let moistLabel = moistPct < 20 ? '⚠️ Suelo muy seco' : moistPct < 50 ? '🟡 Humedad moderada' : '✅ Buena humedad';
+  document.getElementById('moistureGauge').innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <span style="font-size:.85rem;font-weight:600">${moistLabel}</span>
+      <span style="font-size:1.1rem;font-weight:800;color:${moistColor}">${moistPct}%</span>
+    </div>
+    <div class="moisture-bar">
+      <div class="moisture-fill" style="width:${moistPct}%;background:${moistColor}"></div>
+    </div>
+    <div class="moisture-label"><span>0% (seco)</span><span>100% (saturado)</span></div>
+    <div class="tip-box" style="margin-top:10px">💡 Lectura en los primeros 10 mm del suelo. Ideal: 40-70% capacidad de campo.</div>`;
+
+  document.getElementById('clima-contenido').style.display='block';
+}
+
+// ===================== TAB 3: CULTIVOS =====================
+function renderCultivos(){
+  const grid = document.getElementById('cropGrid');
+  grid.innerHTML = '';
+  Object.entries(CULTIVOS).forEach(([nombre,data])=>{
+    const div = document.createElement('div');
+    div.className = 'crop-card';
+    const kcBars = data.kc.map((v,i)=>{
+      const h = Math.round(v*60);
+      return `<div class="kc-bar">
+        <div class="kc-bar-val">${v}</div>
+        <div class="kc-bar-fill" style="height:${h}px"></div>
+        <div class="kc-bar-label">${FASES[i].substring(0,4)}.</div>
+      </div>`;
+    }).join('');
+    div.innerHTML = `
+      <div class="crop-header" onclick="toggleCrop(this.parentElement)">
+        <span class="crop-name">${nombre}</span>
+        <span class="crop-badge">${data.aguaAnual} mm/año</span>
+      </div>
+      <div class="crop-details">
+        <div class="info-row"><span>💧 Agua anual</span><span>${data.aguaAnual} mm</span></div>
+        <div class="info-row"><span>🌱 Profundidad raíz</span><span>${data.raiz}</span></div>
+        <div style="margin:10px 0 4px;font-size:.75rem;font-weight:700;color:var(--muted)">Coeficiente Kc por fase</div>
+        <div class="kc-bars">${kcBars}</div>
+        <div class="info-row" style="margin-top:6px"><span>🍂 Ahora (Otoño)</span><span style="color:var(--accent);text-align:right;max-width:70%">${ESTACION_CONSEJO[nombre]||''}</span></div>
+        <div class="stress-box">
+          <strong>⚠️ Señales de estrés hídrico:</strong><br>${data.estres}
+        </div>
+      </div>`;
+    grid.appendChild(div);
+  });
+}
+
+function toggleCrop(card){
+  const isExp = card.classList.contains('expanded');
+  document.querySelectorAll('.crop-card.expanded').forEach(c=>c.classList.remove('expanded'));
+  if(!isExp) card.classList.add('expanded');
+}
+
+// ===================== TAB 4: MIS PREDIOS =====================
+function loadPredios(){
+  let predios = [];
+  try{ predios = JSON.parse(localStorage.getItem('agua_fields')||'[]'); }catch(e){}
+  const list = document.getElementById('prediosList');
+  if(!predios.length){
+    list.innerHTML = `<div class="empty-state"><div class="icon">🏡</div><p>No tienes predios guardados.<br>Configura un riego y guárdalo aquí.</p></div>`;
+    return;
+  }
+  list.innerHTML = predios.map((p,i)=>`
+    <div class="predio-card">
+      <div class="predio-info">
+        <h3>${p.nombre || 'Predio '+(i+1)}</h3>
+        <p>📍 ${p.comunaNombre} · ${p.cultivo}</p>
+        <p>Fase: ${FASES[p.faseIdx]} · ${p.ha} ha · ${{'1.2':'Arenoso','1.0':'Franco','0.85':'Arcilloso'}[p.sueloFactor]||''}</p>
+      </div>
+      <div class="predio-actions">
+        <button class="btn btn-secondary" onclick="cargarPredio(${i})">📂 Cargar</button>
+        <button class="btn btn-danger" onclick="eliminarPredio(${i})">🗑️</button>
+      </div>
+    </div>`).join('');
+}
+
+function guardarPredio(){
+  const comunaIdx = document.getElementById('riego-comuna').value;
+  const cultivoKey = document.getElementById('riego-cultivo').value;
+  const nombre = document.getElementById('predio-nombre').value.trim();
+  if(!comunaIdx||!cultivoKey){ showToast('Primero configura tu riego'); return; }
+  let predios = [];
+  try{ predios = JSON.parse(localStorage.getItem('agua_fields')||'[]'); }catch(e){}
+  if(predios.length >= 15){ showToast('Máximo 15 predios guardados'); return; }
+  predios.push({
+    nombre: nombre || `Predio ${predios.length+1}`,
+    comunaIdx: parseInt(comunaIdx),
+    comunaNombre: COMUNAS[comunaIdx].n,
+    cultivo: cultivoKey,
+    faseIdx: parseInt(document.getElementById('riego-fase').value),
+    sueloFactor: document.getElementById('riego-suelo').value,
+    metodo: document.getElementById('riego-metodo').value,
+    ha: parseFloat(document.getElementById('riego-ha').value)||1
+  });
+  try{ localStorage.setItem('agua_fields', JSON.stringify(predios)); }catch(e){ showToast('Error al guardar'); return; }
+  document.getElementById('predio-nombre').value = '';
+  loadPredios();
+  showTab('predios', document.querySelectorAll('nav button')[3]);
+  showToast('Predio guardado ✅');
+}
+
+function cargarPredio(idx){
+  let predios = [];
+  try{ predios = JSON.parse(localStorage.getItem('agua_fields')||'[]'); }catch(e){}
+  const p = predios[idx];
+  if(!p) return;
+  document.getElementById('riego-comuna').value = p.comunaIdx;
+  document.getElementById('riego-cultivo').value = p.cultivo;
+  document.getElementById('riego-fase').value = p.faseIdx;
+  document.getElementById('riego-suelo').value = p.sueloFactor;
+  document.getElementById('riego-metodo').value = p.metodo;
+  document.getElementById('riego-ha').value = p.ha;
+  showTab('riego', document.querySelectorAll('nav button')[0]);
+  showToast(`${p.nombre} cargado`);
+}
+
+function eliminarPredio(idx){
+  let predios = [];
+  try{ predios = JSON.parse(localStorage.getItem('agua_fields')||'[]'); }catch(e){}
+  predios.splice(idx,1);
+  try{ localStorage.setItem('agua_fields', JSON.stringify(predios)); }catch(e){}
+  loadPredios();
+}
+
+// Toast notification
+function showToast(msg){
+  let t = document.getElementById('toast');
+  if(!t){
+    t = document.createElement('div');
+    t.id = 'toast';
+    t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a2e05;color:#fff;padding:10px 22px;border-radius:24px;font-size:.85rem;font-weight:600;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;max-width:90vw';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  setTimeout(()=>{ t.style.opacity='0'; }, 2500);
+}
+
+// Tab switching with clima auto-load
+const origShowTab = showTab;
+window.showTab = function(name, btn){
+  origShowTab(name, btn);
+  if(name === 'clima'){
+    const climaSel = document.getElementById('clima-comuna');
+    if(lastClimaComunaIdx !== null && !climaSel.value){
+      climaSel.value = lastClimaComunaIdx;
+    }
+    if(climaSel.value && document.getElementById('clima-contenido').style.display === 'none'
+       && document.getElementById('clima-loading').style.display === 'none'){
+      cargarClima();
+    }
+  }
+  if(name === 'predios') loadPredios();
+};
+
+// PWA manifest inline
+const manifest = {
+  name:'AguaCL - Asesor de Riego',
+  short_name:'AguaCL',
+  description:'Asesor de riego inteligente para agricultores chilenos',
+  start_url:'/aguacl/',
+  display:'standalone',
+  background_color:'#fefce8',
+  theme_color:'#14532d',
+  icons:[{src:'https://via.placeholder.com/192x192/166534/ffffff?text=💧',sizes:'192x192',type:'image/png'}]
+};
+const blob = new Blob([JSON.stringify(manifest)],{type:'application/json'});
+const mUrl = URL.createObjectURL(blob);
+const mLink = document.createElement('link');
+mLink.rel='manifest'; mLink.href=mUrl;
+document.head.appendChild(mLink);
+
+// Service worker (basic cache)
+if('serviceWorker' in navigator){
+  const swCode = `
+    const CACHE='aguacl-v1';
+    self.addEventListener('install',e=>{ self.skipWaiting(); });
+    self.addEventListener('fetch',e=>{
+      if(e.request.url.includes('open-meteo.com')) return;
+      e.respondWith(caches.open(CACHE).then(c=>
+        c.match(e.request).then(r=>r||fetch(e.request).then(nr=>{ c.put(e.request,nr.clone()); return nr; }))
+      ).catch(()=>fetch(e.request)));
+    });`;
+  const swBlob = new Blob([swCode],{type:'application/javascript'});
+  const swUrl = URL.createObjectURL(swBlob);
+  navigator.serviceWorker.register(swUrl).catch(()=>{});
+}
+
+// Init
+initSelects();
+renderCultivos();
+loadPredios();
+</script>
+</body>
+</html>

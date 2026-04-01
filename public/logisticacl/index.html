@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="description" content="LogisticaCL - Gestion profesional de carga y logistica para Chile">
+<title>LogisticaCL - Gestion de Carga</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚚</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+--bg:#0f172a;--card:#1e293b;--card2:#263548;--border:#334155;
+--amber:#f59e0b;--sky:#38bdf8;--green:#22c55e;--red:#ef4444;--orange:#f97316;--purple:#a78bfa;
+--text:#f1f5f9;--text2:#94a3b8;--text3:#64748b;
+--radius:12px;--shadow:0 4px 24px rgba(0,0,0,.3);
+}
+html{font-family:'Inter',system-ui,sans-serif;font-size:16px;background:var(--bg);color:var(--text);-webkit-text-size-adjust:100%}
+body{min-height:100vh;padding-bottom:80px;background:var(--bg)}
+input,select,textarea,button{font-family:inherit;font-size:16px;border:none;outline:none;background:none;color:inherit}
+input,select,textarea{background:var(--bg);border:1.5px solid var(--border);border-radius:8px;padding:10px 14px;width:100%;transition:border-color .2s}
+input:focus,select:focus,textarea:focus{border-color:var(--amber)}
+select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2394a3b8' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+textarea{resize:vertical;min-height:60px}
+button{cursor:pointer}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 20px;border-radius:8px;font-weight:600;font-size:.875rem;transition:all .2s;white-space:nowrap}
+.btn-primary{background:var(--amber);color:#0f172a}.btn-primary:hover{background:#eab308}
+.btn-secondary{background:var(--card2);color:var(--text);border:1px solid var(--border)}.btn-secondary:hover{background:var(--border)}
+.btn-sky{background:var(--sky);color:#0f172a}.btn-sky:hover{opacity:.9}
+.btn-green{background:var(--green);color:#fff}.btn-green:hover{opacity:.9}
+.btn-red{background:var(--red);color:#fff}.btn-red:hover{opacity:.9}
+.btn-sm{padding:6px 12px;font-size:.8rem;border-radius:6px}
+.btn-icon{width:36px;height:36px;padding:0;border-radius:8px;display:inline-flex;align-items:center;justify-content:center}
+
+/* Header */
+header{background:linear-gradient(135deg,#0f172a,#1e293b);border-bottom:1px solid var(--border);padding:16px 20px;position:sticky;top:0;z-index:100}
+header h1{font-size:1.25rem;font-weight:800;display:flex;align-items:center;gap:8px}
+header h1 span.logo{color:var(--amber)}
+header .subtitle{font-size:.75rem;color:var(--text3);margin-top:2px}
+
+/* Bottom nav */
+nav.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--border);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom)}
+nav.bottom-nav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 0;font-size:.65rem;color:var(--text3);font-weight:500;transition:color .2s;background:none}
+nav.bottom-nav button.active{color:var(--amber)}
+nav.bottom-nav button svg{width:22px;height:22px}
+
+/* Tabs */
+.tab-content{display:none;padding:16px;max-width:900px;margin:0 auto}
+.tab-content.active{display:block}
+
+/* Cards */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px;box-shadow:var(--shadow)}
+.card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.card-title{font-size:.95rem;font-weight:700}
+
+/* Summary bar */
+.summary-bar{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;margin-bottom:16px;-webkit-overflow-scrolling:touch}
+.summary-item{flex:0 0 auto;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 16px;text-align:center;min-width:90px}
+.summary-item .num{font-size:1.4rem;font-weight:800;color:var(--amber)}
+.summary-item .label{font-size:.65rem;color:var(--text3);margin-top:2px}
+
+/* Form grid */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-grid.cols-3{grid-template-columns:1fr 1fr 1fr}
+.form-group{display:flex;flex-direction:column;gap:4px}
+.form-group.full{grid-column:1/-1}
+.form-group label{font-size:.75rem;font-weight:600;color:var(--text2)}
+
+/* List items */
+.list-item{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px;cursor:pointer;transition:border-color .2s}
+.list-item:hover{border-color:var(--amber)}
+.list-item .top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px}
+.list-item .code{font-weight:700;color:var(--amber);font-size:.85rem}
+.list-item .meta{font-size:.75rem;color:var(--text3)}
+.list-item .route{font-size:.85rem;font-weight:600;margin-bottom:4px}
+
+/* Status badges */
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.7rem;font-weight:700;text-transform:uppercase}
+.badge-recibido{background:#3b82f620;color:#60a5fa;border:1px solid #3b82f640}
+.badge-bodega{background:#8b5cf620;color:#a78bfa;border:1px solid #8b5cf640}
+.badge-transito{background:#f59e0b20;color:#fbbf24;border:1px solid #f59e0b40}
+.badge-destino{background:#06b6d420;color:#22d3ee;border:1px solid #06b6d440}
+.badge-entregado{background:#22c55e20;color:#4ade80;border:1px solid #22c55e40}
+.badge-disponible{background:#22c55e20;color:#4ade80;border:1px solid #22c55e40}
+.badge-enruta{background:#f59e0b20;color:#fbbf24;border:1px solid #f59e0b40}
+.badge-mantencion{background:#f9731620;color:#fb923c;border:1px solid #f9731640}
+.badge-fueraservicio{background:#ef444420;color:#f87171;border:1px solid #ef444440}
+.badge-normal{background:#64748b20;color:#94a3b8;border:1px solid #64748b40}
+.badge-urgente{background:#f9731620;color:#fb923c;border:1px solid #f9731640}
+.badge-express{background:#ef444420;color:#f87171;border:1px solid #ef444440}
+.badge-pagado{background:#22c55e20;color:#4ade80;border:1px solid #22c55e40}
+.badge-pendiente{background:#f59e0b20;color:#fbbf24;border:1px solid #f59e0b40}
+.badge-vencido{background:#ef444420;color:#f87171;border:1px solid #ef444440}
+
+/* Timeline */
+.timeline{display:flex;align-items:center;gap:0;margin:10px 0}
+.timeline .step{flex:1;text-align:center;position:relative}
+.timeline .step .dot{width:18px;height:18px;border-radius:50%;background:var(--border);margin:0 auto 4px;position:relative;z-index:1;transition:all .3s}
+.timeline .step.done .dot{background:var(--green)}
+.timeline .step.current .dot{background:var(--amber);box-shadow:0 0 12px var(--amber)}
+.timeline .step .lbl{font-size:.55rem;color:var(--text3);line-height:1.2}
+.timeline .step.done .lbl,.timeline .step.current .lbl{color:var(--text)}
+.timeline .line{flex:1;height:2px;background:var(--border);margin:0 -4px;margin-bottom:16px}
+.timeline .line.done{background:var(--green)}
+
+/* Search */
+.search-bar{display:flex;gap:8px;margin-bottom:16px}
+.search-bar input{flex:1}
+
+/* Modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:flex-end;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--card);border-radius:16px 16px 0 0;width:100%;max-width:600px;max-height:85vh;overflow-y:auto;padding:24px 20px;animation:slideUp .3s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-title{font-size:1.1rem;font-weight:700;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center}
+.modal-actions{display:flex;gap:8px;margin-top:16px}
+
+/* Charts */
+.chart-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px}
+.chart-wrap canvas{max-height:250px}
+
+/* Invoice */
+.invoice-preview{background:#fff;color:#111;border-radius:8px;padding:20px;font-size:.8rem;line-height:1.5}
+.invoice-preview h2{color:#0f172a;border-bottom:2px solid #f59e0b;padding-bottom:8px;margin-bottom:12px}
+.invoice-preview table{width:100%;border-collapse:collapse;margin:12px 0}
+.invoice-preview th,.invoice-preview td{padding:6px 8px;text-align:left;border-bottom:1px solid #e2e8f0}
+.invoice-preview th{font-weight:600;color:#475569}
+
+/* Alerts */
+.alert{padding:10px 14px;border-radius:8px;font-size:.8rem;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.alert-warn{background:#f59e0b18;border:1px solid #f59e0b40;color:#fbbf24}
+.alert-danger{background:#ef444418;border:1px solid #ef444440;color:#f87171}
+.alert-info{background:#38bdf818;border:1px solid #38bdf840;color:#38bdf8}
+
+/* Tabs inner */
+.inner-tabs{display:flex;gap:4px;margin-bottom:16px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.inner-tab{padding:8px 16px;border-radius:8px;font-size:.8rem;font-weight:600;color:var(--text3);background:var(--card);border:1px solid var(--border);white-space:nowrap;cursor:pointer;transition:all .2s}
+.inner-tab.active{background:var(--amber);color:#0f172a;border-color:var(--amber)}
+
+/* Responsive */
+@media(max-width:480px){
+.form-grid{grid-template-columns:1fr}
+.form-grid.cols-3{grid-template-columns:1fr 1fr}
+.summary-item{min-width:75px;padding:8px 12px}
+.summary-item .num{font-size:1.1rem}
+}
+@media(min-width:768px){
+.modal{border-radius:16px;margin-bottom:40px}
+.modal-overlay{align-items:center}
+}
+
+/* Print */
+@media print{
+nav.bottom-nav,header,.btn,.search-bar,.summary-bar,.modal-overlay{display:none!important}
+.tab-content{display:block!important;padding:0}
+body{background:#fff;color:#111;padding:0}
+.card,.list-item{border:1px solid #ccc;box-shadow:none;page-break-inside:avoid}
+}
+</style>
+</head>
+<body>
+
+<header>
+<h1><span class="logo">&#x1F69A;</span> Logistica<span class="logo">CL</span></h1>
+<div class="subtitle">Gestion profesional de carga y logistica</div>
+</header>
+
+<!-- TAB: ENVIOS -->
+<div id="tab-envios" class="tab-content active">
+<div class="summary-bar" id="shipment-summary"></div>
+<div class="search-bar">
+<input type="text" id="shipment-search" placeholder="Buscar por codigo, cliente, destino...">
+<select id="shipment-filter" style="width:auto;min-width:120px">
+<option value="">Todos</option>
+<option value="Recibido">Recibido</option>
+<option value="En Bodega">En Bodega</option>
+<option value="En Transito">En Transito</option>
+<option value="En Destino">En Destino</option>
+<option value="Entregado">Entregado</option>
+</select>
+<button class="btn btn-primary btn-sm" onclick="openShipmentModal()">+ Nuevo</button>
+</div>
+<div id="shipment-list"></div>
+</div>
+
+<!-- TAB: FLOTA -->
+<div id="tab-flota" class="tab-content">
+<div class="inner-tabs">
+<div class="inner-tab active" onclick="switchFlotaTab('vehicles',this)">Vehiculos</div>
+<div class="inner-tab" onclick="switchFlotaTab('maintenance',this)">Mantencion</div>
+<div class="inner-tab" onclick="switchFlotaTab('fuel',this)">Combustible</div>
+<div class="inner-tab" onclick="switchFlotaTab('docs',this)">Documentos</div>
+</div>
+<div id="flota-vehicles" class="flota-section">
+<div class="search-bar">
+<input type="text" id="vehicle-search" placeholder="Buscar patente, marca, modelo...">
+<button class="btn btn-primary btn-sm" onclick="openVehicleModal()">+ Vehiculo</button>
+</div>
+<div id="vehicle-list"></div>
+</div>
+<div id="flota-maintenance" class="flota-section" style="display:none">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+<span style="font-weight:700">Registro de Mantencion</span>
+<button class="btn btn-primary btn-sm" onclick="openMaintenanceModal()">+ Registro</button>
+</div>
+<div id="maintenance-list"></div>
+</div>
+<div id="flota-fuel" class="flota-section" style="display:none">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+<span style="font-weight:700">Registro de Combustible</span>
+<button class="btn btn-primary btn-sm" onclick="openFuelModal()">+ Carga</button>
+</div>
+<div id="fuel-list"></div>
+</div>
+<div id="flota-docs" class="flota-section" style="display:none">
+<div id="docs-alerts"></div>
+</div>
+</div>
+
+<!-- TAB: RUTAS -->
+<div id="tab-rutas" class="tab-content">
+<div class="inner-tabs">
+<div class="inner-tab active" onclick="switchRutasTab('calculator',this)">Calculadora</div>
+<div class="inner-tab" onclick="switchRutasTab('saved',this)">Historial</div>
+</div>
+<div id="rutas-calculator" class="rutas-section">
+<div class="card">
+<div class="card-title" style="margin-bottom:12px">Planificador de Ruta</div>
+<div class="form-grid">
+<div class="form-group"><label>Origen</label><select id="route-origin"></select></div>
+<div class="form-group"><label>Destino</label><select id="route-dest"></select></div>
+<div class="form-group"><label>Rendimiento (km/L)</label><input type="number" id="route-kml" value="6" step="0.5" min="1"></div>
+<div class="form-group"><label>Precio combustible ($/L)</label><input type="number" id="route-fuel-price" value="1200" step="50"></div>
+<div class="form-group"><label>Viaticos ($)</label><input type="number" id="route-viaticos" value="30000" step="5000"></div>
+<div class="form-group"><label>Vehiculo</label><select id="route-vehicle"><option value="">Sin asignar</option></select></div>
+</div>
+<div style="margin-top:12px">
+<button class="btn btn-primary" onclick="calculateRoute()" style="width:100%">Calcular Costo de Ruta</button>
+</div>
+<div id="route-result" style="display:none;margin-top:16px"></div>
+</div>
+<div class="card" style="margin-top:12px">
+<div class="card-title" style="margin-bottom:12px">Rutas Frecuentes Chile</div>
+<div id="common-routes"></div>
+</div>
+</div>
+<div id="rutas-saved" class="rutas-section" style="display:none">
+<div id="route-history-list"></div>
+</div>
+</div>
+
+<!-- TAB: CLIENTES -->
+<div id="tab-clientes" class="tab-content">
+<div class="search-bar">
+<input type="text" id="client-search" placeholder="Buscar empresa, RUT, contacto...">
+<button class="btn btn-primary btn-sm" onclick="openClientModal()">+ Cliente</button>
+</div>
+<div id="client-list"></div>
+</div>
+
+<!-- TAB: FINANZAS -->
+<div id="tab-finanzas" class="tab-content">
+<div class="inner-tabs">
+<div class="inner-tab active" onclick="switchFinTab('overview',this)">Resumen</div>
+<div class="inner-tab" onclick="switchFinTab('income',this)">Ingresos</div>
+<div class="inner-tab" onclick="switchFinTab('expenses',this)">Gastos</div>
+<div class="inner-tab" onclick="switchFinTab('invoice',this)">Facturar</div>
+</div>
+<div id="fin-overview" class="fin-section">
+<div class="summary-bar" id="fin-summary"></div>
+<div class="chart-wrap"><canvas id="chart-revenue"></canvas></div>
+<div class="chart-wrap"><canvas id="chart-expenses"></canvas></div>
+</div>
+<div id="fin-income" class="fin-section" style="display:none">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+<span style="font-weight:700">Ingresos</span>
+<button class="btn btn-primary btn-sm" onclick="openIncomeModal()">+ Ingreso</button>
+</div>
+<div id="income-list"></div>
+</div>
+<div id="fin-expenses" class="fin-section" style="display:none">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+<span style="font-weight:700">Gastos</span>
+<button class="btn btn-primary btn-sm" onclick="openExpenseModal()">+ Gasto</button>
+</div>
+<div id="expense-list"></div>
+</div>
+<div id="fin-invoice" class="fin-section" style="display:none">
+<div class="card">
+<div class="card-title" style="margin-bottom:12px">Generar Documento</div>
+<div class="form-grid">
+<div class="form-group"><label>Cliente</label><select id="inv-client"></select></div>
+<div class="form-group"><label>Tipo</label><select id="inv-type"><option>Factura</option><option>Boleta</option><option>Guia de Despacho</option></select></div>
+<div class="form-group"><label>Envio (opcional)</label><select id="inv-shipment"><option value="">Sin envio</option></select></div>
+<div class="form-group"><label>Monto Neto ($)</label><input type="number" id="inv-amount" placeholder="0"></div>
+<div class="form-group full"><label>Descripcion</label><textarea id="inv-desc" rows="2" placeholder="Servicio de transporte..."></textarea></div>
+</div>
+<button class="btn btn-primary" onclick="generateInvoice()" style="margin-top:12px;width:100%">Generar Documento</button>
+</div>
+<div id="invoice-preview" style="display:none;margin-top:16px"></div>
+</div>
+</div>
+
+<!-- MODAL CONTAINER -->
+<div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)closeModal()">
+<div class="modal" id="modal-body"></div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+<button class="active" onclick="switchTab('envios',this)">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="6" width="22" height="15" rx="2"/><path d="M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/><path d="M12 11v4"/></svg>
+Envios
+</button>
+<button onclick="switchTab('flota',this)">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 17h2l2-7h10l4 7h4"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
+Flota
+</button>
+<button onclick="switchTab('rutas',this)">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+Rutas
+</button>
+<button onclick="switchTab('clientes',this)">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+Clientes
+</button>
+<button onclick="switchTab('finanzas',this)">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+Finanzas
+</button>
+</nav>
+
+<script>
+// ========== STORAGE HELPERS ==========
+function sGet(k,d){try{const v=localStorage.getItem('lcl_'+k);return v?JSON.parse(v):d}catch(e){return d}}
+function sSet(k,v){try{localStorage.setItem('lcl_'+k,JSON.stringify(v))}catch(e){}}
+function genId(){return Date.now().toString(36)+Math.random().toString(36).substr(2,5)}
+function genTrackCode(){const d=new Date();const pad=n=>String(n).padStart(2,'0');const seq=String(sGet('shipments',[]).length+1).padStart(3,'0');return`LOG-${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}-${seq}`}
+function fmt$(n){return'$'+Number(n||0).toLocaleString('es-CL')}
+function fmtDate(d){return d?new Date(d).toLocaleDateString('es-CL',{day:'2-digit',month:'short',year:'numeric'}):''}
+function today(){return new Date().toISOString().split('T')[0]}
+
+// ========== CITIES & ROUTES ==========
+const CITIES=['Santiago','Valparaiso','Vina del Mar','Concepcion','La Serena','Coquimbo','Temuco','Puerto Montt','Antofagasta','Iquique','Arica','Punta Arenas','Rancagua','Talca','Chillan','Osorno','Valdivia','Copiapo','Calama','Los Angeles','Curico','Linares','San Fernando','Ovalle','Constitucion','Quillota','San Antonio','Melipilla','Talagante','Puerto Natales','Coyhaique'];
+
+const ROUTES=[
+{from:'Santiago',to:'Valparaiso',km:120,hrs:1.5,toll:8500},
+{from:'Santiago',to:'Vina del Mar',km:130,hrs:1.7,toll:8500},
+{from:'Santiago',to:'Rancagua',km:87,hrs:1,toll:4200},
+{from:'Santiago',to:'San Antonio',km:110,hrs:1.3,toll:3800},
+{from:'Santiago',to:'Talca',km:255,hrs:3,toll:12500},
+{from:'Santiago',to:'Chillan',km:400,hrs:4.5,toll:18600},
+{from:'Santiago',to:'Concepcion',km:500,hrs:5.5,toll:23800},
+{from:'Santiago',to:'Los Angeles',km:510,hrs:5.7,toll:24200},
+{from:'Santiago',to:'Temuco',km:680,hrs:7.5,toll:31500},
+{from:'Santiago',to:'Valdivia',km:840,hrs:9,toll:36200},
+{from:'Santiago',to:'Osorno',km:920,hrs:10,toll:38500},
+{from:'Santiago',to:'Puerto Montt',km:1016,hrs:11,toll:41200},
+{from:'Santiago',to:'La Serena',km:470,hrs:5.5,toll:16800},
+{from:'Santiago',to:'Copiapo',km:800,hrs:9,toll:22500},
+{from:'Santiago',to:'Antofagasta',km:1340,hrs:15,toll:28900},
+{from:'Santiago',to:'Calama',km:1570,hrs:17,toll:30200},
+{from:'Santiago',to:'Iquique',km:1850,hrs:20,toll:32500},
+{from:'Santiago',to:'Arica',km:2060,hrs:22,toll:34800},
+{from:'Santiago',to:'Punta Arenas',km:3100,hrs:35,toll:52000},
+{from:'Santiago',to:'Coyhaique',km:1640,hrs:20,toll:45200},
+{from:'Santiago',to:'Curico',km:190,hrs:2.2,toll:9800},
+{from:'Santiago',to:'San Fernando',km:140,hrs:1.7,toll:7500},
+{from:'Santiago',to:'Ovalle',km:410,hrs:4.8,toll:14500},
+{from:'Santiago',to:'Linares',km:305,hrs:3.5,toll:14200},
+{from:'Valparaiso',to:'La Serena',km:440,hrs:5,toll:12800},
+{from:'Valparaiso',to:'Concepcion',km:610,hrs:7,toll:28500},
+{from:'Concepcion',to:'Temuco',km:280,hrs:3,toll:12600},
+{from:'Concepcion',to:'Puerto Montt',km:530,hrs:6,toll:22400},
+{from:'Temuco',to:'Puerto Montt',km:340,hrs:4,toll:14500},
+{from:'Temuco',to:'Valdivia',km:160,hrs:2,toll:7200},
+{from:'Puerto Montt',to:'Coyhaique',km:650,hrs:10,toll:8500},
+{from:'Antofagasta',to:'Iquique',km:420,hrs:5,toll:4500},
+{from:'Iquique',to:'Arica',km:310,hrs:3.5,toll:3200},
+{from:'Puerto Montt',to:'Punta Arenas',km:2100,hrs:28,toll:12500},
+];
+
+const STATUSES=['Recibido','En Bodega','En Transito','En Destino','Entregado'];
+const STATUS_CSS=['recibido','bodega','transito','destino','entregado'];
+const VEHICLE_TYPES=['Camion','Furgon','Van','Moto','Semi-remolque','Pickup'];
+const VEHICLE_BRANDS=['Mercedes-Benz','Volvo','Scania','Hyundai','Chevrolet','Toyota','Ford','Fuso','JAC','Foton','Hino','Isuzu','Dongfeng','Renault','MAN'];
+const MAINT_TYPES=['Aceite y filtros','Neumaticos','Frenos','Revision tecnica','Correa distribucion','Embrague','Suspension','Electrico','Carroceria','Otro'];
+const EXPENSE_CATS=['Combustible','Peajes','Mantencion','Seguros','Patente','Viaticos','Arriendo','Sueldo','Otro'];
+
+// ========== TAB SWITCHING ==========
+function switchTab(tab,btn){
+document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+document.getElementById('tab-'+tab).classList.add('active');
+document.querySelectorAll('.bottom-nav button').forEach(b=>b.classList.remove('active'));
+btn.classList.add('active');
+if(tab==='finanzas')renderFinOverview();
+if(tab==='flota')renderDocsAlerts();
+if(tab==='rutas')populateRouteSelects();
+}
+function switchFlotaTab(sub,btn){
+document.querySelectorAll('.flota-section').forEach(s=>s.style.display='none');
+document.getElementById('flota-'+sub).style.display='block';
+btn.parentElement.querySelectorAll('.inner-tab').forEach(t=>t.classList.remove('active'));
+btn.classList.add('active');
+if(sub==='docs')renderDocsAlerts();
+}
+function switchRutasTab(sub,btn){
+document.querySelectorAll('.rutas-section').forEach(s=>s.style.display='none');
+document.getElementById('rutas-'+sub).style.display='block';
+btn.parentElement.querySelectorAll('.inner-tab').forEach(t=>t.classList.remove('active'));
+btn.classList.add('active');
+if(sub==='saved')renderRouteHistory();
+}
+function switchFinTab(sub,btn){
+document.querySelectorAll('.fin-section').forEach(s=>s.style.display='none');
+document.getElementById('fin-'+sub).style.display='block';
+btn.parentElement.querySelectorAll('.inner-tab').forEach(t=>t.classList.remove('active'));
+btn.classList.add('active');
+if(sub==='overview')renderFinOverview();
+if(sub==='income')renderIncomeList();
+if(sub==='expenses')renderExpenseList();
+if(sub==='invoice')populateInvoiceSelects();
+}
+
+// ========== MODAL ==========
+function openModal(html){document.getElementById('modal-body').innerHTML=html;document.getElementById('modal-overlay').classList.add('open')}
+function closeModal(){document.getElementById('modal-overlay').classList.remove('open')}
+
+// ========== SHIPMENTS ==========
+function getShipments(){return sGet('shipments',[])}
+function saveShipments(s){sSet('shipments',s)}
+
+function renderShipmentSummary(){
+const s=getShipments();
+const counts={};STATUSES.forEach(st=>counts[st]=0);
+s.forEach(sh=>counts[sh.status]=(counts[sh.status]||0)+1);
+document.getElementById('shipment-summary').innerHTML=STATUSES.map((st,i)=>`<div class="summary-item"><div class="num">${counts[st]}</div><div class="label">${st}</div></div>`).join('')+`<div class="summary-item"><div class="num" style="color:var(--sky)">${s.length}</div><div class="label">Total</div></div>`;
+}
+
+function renderShipmentList(){
+const s=getShipments();const q=(document.getElementById('shipment-search').value||'').toLowerCase();
+const f=document.getElementById('shipment-filter').value;
+const filtered=s.filter(sh=>{
+if(f&&sh.status!==f)return false;
+if(q&&!(sh.code+sh.client+sh.origin+sh.destination+sh.description).toLowerCase().includes(q))return false;
+return true;
+}).sort((a,b)=>new Date(b.created)-new Date(a.created));
+const statusIdx=st=>STATUSES.indexOf(st);
+document.getElementById('shipment-list').innerHTML=filtered.length?filtered.map(sh=>{
+const si=statusIdx(sh.status);
+const timeline=STATUSES.map((st,i)=>{
+const cls=i<si?'done':i===si?'current':'';
+return`<div class="step ${cls}"><div class="dot"></div><div class="lbl">${st.replace('En ','')}</div></div>${i<4?`<div class="line ${i<si?'done':''}"></div>`:''}`;
+}).join('');
+return`<div class="list-item" onclick="viewShipment('${sh.id}')">
+<div class="top"><span class="code">${sh.code}</span><span class="badge badge-${sh.priority?sh.priority.toLowerCase():'normal'}">${sh.priority||'Normal'}</span></div>
+<div class="route">${sh.origin} → ${sh.destination}</div>
+<div class="meta">${sh.client} | ${sh.weight?sh.weight+'kg ':''} ${sh.volume?sh.volume+'m3 ':''} | ${fmtDate(sh.created)}</div>
+<div class="timeline">${timeline}</div>
+<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
+${si<4?`<button class="btn btn-green btn-sm" onclick="event.stopPropagation();advanceShipment('${sh.id}')">Avanzar → ${STATUSES[si+1]}</button>`:''}
+<button class="btn btn-sky btn-sm" onclick="event.stopPropagation();waNotifyShipment('${sh.id}')">WhatsApp</button>
+<button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();printWaybill('${sh.id}')">Guia</button>
+</div></div>`;
+}).join(''):'<div class="card" style="text-align:center;color:var(--text3);padding:40px">No hay envios. Crea tu primer envio con el boton + Nuevo</div>';
+renderShipmentSummary();
+}
+
+function openShipmentModal(id){
+const sh=id?getShipments().find(s=>s.id===id):null;
+const cityOpts=CITIES.map(c=>`<option ${sh&&sh.origin===c?'selected':''}>${c}</option>`).join('');
+const cityOpts2=CITIES.map(c=>`<option ${sh&&sh.destination===c?'selected':''}>${c}</option>`).join('');
+openModal(`<div class="modal-title">${sh?'Editar':'Nuevo'} Envio<button class="btn-icon btn-secondary" onclick="closeModal()">&times;</button></div>
+<div class="form-grid">
+<div class="form-group"><label>Origen</label><select id="m-sh-origin">${cityOpts}</select></div>
+<div class="form-group"><label>Destino</label><select id="m-sh-dest">${cityOpts2}</select></div>
+<div class="form-group full"><label>Cliente</label><input id="m-sh-client" value="${sh?sh.client:''}" placeholder="Nombre empresa o persona" list="client-datalist"><datalist id="client-datalist">${getClients().map(c=>`<option value="${c.name}">`).join('')}</datalist></div>
+<div class="form-group full"><label>Descripcion carga</label><input id="m-sh-desc" value="${sh?sh.description:''}" placeholder="Ej: 10 pallets electronica"></div>
+<div class="form-group"><label>Peso (kg)</label><input type="number" id="m-sh-weight" value="${sh?sh.weight:''}" placeholder="0"></div>
+<div class="form-group"><label>Volumen (m3)</label><input type="number" id="m-sh-vol" step="0.1" value="${sh?sh.volume:''}" placeholder="0"></div>
+<div class="form-group"><label>Prioridad</label><select id="m-sh-priority"><option ${sh&&sh.priority==='Normal'?'selected':''}>Normal</option><option ${sh&&sh.priority==='Urgente'?'selected':''}>Urgente</option><option ${sh&&sh.priority==='Express'?'selected':''}>Express</option></select></div>
+${sh?`<div class="form-group"><label>Estado</label><select id="m-sh-status">${STATUSES.map(s=>`<option ${sh.status===s?'selected':''}>${s}</option>`).join('')}</select></div>`:''}
+</div>
+<div class="modal-actions">
+<button class="btn btn-primary" style="flex:1" onclick="saveShipment('${sh?sh.id:''}')">${sh?'Guardar':'Crear Envio'}</button>
+${sh?`<button class="btn btn-red" onclick="deleteShipment('${sh.id}')">Eliminar</button>`:''}
+</div>`);
+}
+
+function saveShipment(id){
+const s=getShipments();
+const data={
+origin:document.getElementById('m-sh-origin').value,
+destination:document.getElementById('m-sh-dest').value,
+client:document.getElementById('m-sh-client').value.trim(),
+description:document.getElementById('m-sh-desc').value.trim(),
+weight:document.getElementById('m-sh-weight').value,
+volume:document.getElementById('m-sh-vol').value,
+priority:document.getElementById('m-sh-priority').value,
+};
+if(!data.client){alert('Ingresa el nombre del cliente');return}
+if(id){
+const idx=s.findIndex(x=>x.id===id);
+const st=document.getElementById('m-sh-status');
+if(st)data.status=st.value;
+s[idx]={...s[idx],...data};
+}else{
+s.push({id:genId(),code:genTrackCode(),status:'Recibido',created:new Date().toISOString(),...data});
+}
+saveShipments(s);closeModal();renderShipmentList();
+}
+
+function deleteShipment(id){if(!confirm('Eliminar este envio?'))return;const s=getShipments().filter(x=>x.id!==id);saveShipments(s);closeModal();renderShipmentList()}
+function advanceShipment(id){const s=getShipments();const sh=s.find(x=>x.id===id);const i=STATUSES.indexOf(sh.status);if(i<4){sh.status=STATUSES[i+1];if(sh.status==='Entregado')sh.delivered=new Date().toISOString();saveShipments(s);renderShipmentList()}}
+
+function viewShipment(id){openShipmentModal(id)}
+
+function waNotifyShipment(id){
+const sh=getShipments().find(x=>x.id===id);
+const cl=getClients().find(c=>c.name===sh.client);
+const phone=cl?cl.phone:'';
+const msg=encodeURIComponent(`*LogisticaCL - Actualizacion de Envio*\n\nCodigo: ${sh.code}\nEstado: ${sh.status}\nOrigen: ${sh.origin}\nDestino: ${sh.destination}\nCarga: ${sh.description||'N/A'}\n\nGracias por confiar en nosotros.`);
+const url=phone?`https://wa.me/56${phone.replace(/\D/g,'')}?text=${msg}`:`https://wa.me/?text=${msg}`;
+window.open(url,'_blank');
+}
+
+function printWaybill(id){
+const sh=getShipments().find(x=>x.id===id);
+const w=window.open('','_blank','width=800,height=600');
+w.document.write(`<html><head><title>Guia de Despacho - ${sh.code}</title><style>body{font-family:Arial,sans-serif;padding:40px;color:#111}h1{border-bottom:3px solid #f59e0b;padding-bottom:10px}table{width:100%;border-collapse:collapse;margin:20px 0}td,th{padding:8px 12px;border:1px solid #ccc;text-align:left}th{background:#f1f5f9;font-weight:600}.sig{margin-top:60px;display:flex;justify-content:space-between}.sig div{border-top:1px solid #111;width:200px;text-align:center;padding-top:5px}</style></head>
+<body><h1>GUIA DE DESPACHO</h1><p><strong>LogisticaCL</strong> | Fecha: ${fmtDate(new Date())}</p>
+<table><tr><th>Codigo</th><td>${sh.code}</td><th>Prioridad</th><td>${sh.priority||'Normal'}</td></tr>
+<tr><th>Origen</th><td>${sh.origin}</td><th>Destino</th><td>${sh.destination}</td></tr>
+<tr><th>Cliente</th><td>${sh.client}</td><th>Estado</th><td>${sh.status}</td></tr>
+<tr><th>Descripcion</th><td colspan="3">${sh.description||'-'}</td></tr>
+<tr><th>Peso</th><td>${sh.weight||'-'} kg</td><th>Volumen</th><td>${sh.volume||'-'} m3</td></tr></table>
+<div class="sig"><div>Despachador</div><div>Transportista</div><div>Receptor</div></div></body></html>`);
+w.document.close();w.print();
+}
+
+// ========== VEHICLES ==========
+function getVehicles(){return sGet('vehicles',[])}
+function saveVehicles(v){sSet('vehicles',v)}
+
+function renderVehicleList(){
+const v=getVehicles();const q=(document.getElementById('vehicle-search').value||'').toLowerCase();
+const filtered=v.filter(x=>!q||(x.plate+x.brand+x.model+x.type).toLowerCase().includes(q));
+const statusCls={'Disponible':'disponible','En Ruta':'enruta','En Mantencion':'mantencion','Fuera de Servicio':'fueraservicio'};
+document.getElementById('vehicle-list').innerHTML=filtered.length?filtered.map(x=>`<div class="list-item" onclick="openVehicleModal('${x.id}')">
+<div class="top"><span class="code">${x.plate}</span><span class="badge badge-${statusCls[x.status]||'normal'}">${x.status}</span></div>
+<div class="route">${x.brand} ${x.model} ${x.year||''}</div>
+<div class="meta">${x.type} | ${x.odometer?x.odometer.toLocaleString('es-CL')+' km':'Sin odometro'}</div>
+</div>`).join(''):'<div class="card" style="text-align:center;color:var(--text3);padding:40px">Sin vehiculos registrados</div>';
+}
+
+function openVehicleModal(id){
+const v=id?getVehicles().find(x=>x.id===id):null;
+openModal(`<div class="modal-title">${v?'Editar':'Nuevo'} Vehiculo<button class="btn-icon btn-secondary" onclick="closeModal()">&times;</button></div>
+<div class="form-grid">
+<div class="form-group"><label>Patente</label><input id="m-v-plate" value="${v?v.plate:''}" placeholder="XX-XX-XX" style="text-transform:uppercase"></div>
+<div class="form-group"><label>Tipo</label><select id="m-v-type">${VEHICLE_TYPES.map(t=>`<option ${v&&v.type===t?'selected':''}>${t}</option>`).join('')}</select></div>
+<div class="form-group"><label>Marca</label><select id="m-v-brand">${VEHICLE_BRANDS.map(b=>`<option ${v&&v.brand===b?'selected':''}>${b}</option>`).join('')}</select></div>
+<div class="form-group"><label>Modelo</label><input id="m-v-model" value="${v?v.model:''}" placeholder="Ej: FH 460"></div>
+<div class="form-group"><label>Ano</label><input type="number" id="m-v-year" value="${v?v.year:''}" placeholder="2024"></div>
+<div class="form-group"><label>Estado</label><select id="m-v-status"><option ${v&&v.status==='Disponible'?'selected':''}>Disponible</option><option ${v&&v.status==='En Ruta'?'selected':''}>En Ruta</option><option ${v&&v.status==='En Mantencion'?'selected':''}>En Mantencion</option><option ${v&&v.status==='Fuera de Servicio'?'selected':''}>Fuera de Servicio</option></select></div>
+<div class="form-group"><label>Odometro (km)</label><input type="number" id="m-v-odo" value="${v?v.odometer||'':''}" placeholder="0"></div>
+<div class="form-group"><label>Revision Tecnica</label><input type="date" id="m-v-revtec" value="${v?v.revTecExpiry||'':''}"></div>
+<div class="form-group"><label>Permiso Circulacion</label><input type="date" id="m-v-permiso" value="${v?v.permisoExpiry||'':''}"></div>
+<div class="form-group"><label>SOAP (vence)</label><input type="date" id="m-v-soap" value="${v?v.soapExpiry||'':''}"></div>
+</div>
+<div class="modal-actions">
+<button class="btn btn-primary" style="flex:1" onclick="saveVehicle('${v?v.id:''}')">${v?'Guardar':'Agregar Vehiculo'}</button>
+${v?`<button class="btn btn-red" onclick="deleteVehicle('${v.id}')">Eliminar</button>`:''}
+</div>`);
+}
+
+function saveVehicle(id){
+const v=getVehicles();
+const data={plate:document.getElementById('m-v-plate').value.toUpperCase().trim(),type:document.getElementById('m-v-type').value,brand:document.getElementById('m-v-brand').value,model:document.getElementById('m-v-model').value.trim(),year:document.getElementById('m-v-year').value,status:document.getElementById('m-v-status').value,odometer:Number(document.getElementById('m-v-odo').value)||0,revTecExpiry:document.getElementById('m-v-revtec').value,permisoExpiry:document.getElementById('m-v-permiso').value,soapExpiry:document.getElementById('m-v-soap').value};
+if(!data.plate){alert('Ingresa la patente');return}
+if(id){const idx=v.findIndex(x=>x.id===id);v[idx]={...v[idx],...data}}
+else v.push({id:genId(),...data});
+saveVehicles(v);closeModal();renderVehicleList();
+}
+
+function deleteVehicle(id){if(!confirm('Eliminar vehiculo?'))return;saveVehicles(getVehicles().filter(x=>x.id!==id));closeModal();renderVehicleList()}
+
+// ========== MAINTENANCE ==========
+function getMaintenance(){return sGet('maintenance',[])}
+function saveMaintenance(m){sSet('maintenance',m)}
+
+function renderMaintenanceList(){
+const m=getMaintenance().sort((a,b)=>new Date(b.date)-new Date(a.date));
+const v=getVehicles();
+document.getElementById('maintenance-list').innerHTML=m.length?m.map(x=>{
+const veh=v.find(ve=>ve.id===x.vehicleId);
+return`<div class="list-item">
+<div class="top"><span class="code">${veh?veh.plate:'?'}</span><span style="color:var(--text2);font-size:.8rem">${fmtDate(x.date)}</span></div>
+<div class="route">${x.type}</div>
+<div class="meta">${fmt$(x.cost)} | ${x.km?x.km.toLocaleString('es-CL')+' km':''} ${x.notes?'| '+x.notes:''}</div>
+</div>`;
+}).join(''):'<div class="card" style="text-align:center;color:var(--text3);padding:30px">Sin registros de mantencion</div>';
+}
+
+function openMaintenanceModal(){
+const v=getVehicles();
+if(!v.length){alert('Primero agrega un vehiculo');return}
+openModal(`<div class="modal-title">Nuevo Registro Mantencion<button class="btn-icon btn-secondary" onclick="closeModal()">&times;</button></div>
+<div class="form-grid">
+<div class="form-group"><label>Vehiculo</label><select id="m-mt-veh">${v.map(x=>`<option value="${x.id}">${x.plate} - ${x.brand} ${x.model}</option>`).join('')}</select></div>
+<div class="form-group"><label>Fecha</label><input type="date" id="m-mt-date" value="${today()}"></div>
+<div class="form-group"><label>Tipo</label><select id="m-mt-type">${MAINT_TYPES.map(t=>`<option>${t}</option>`).join('')}</select></div>
+<div class="form-group"><label>Costo ($)</label><input type="number" id="m-mt-cost" placeholder="0"></div>
+<div class="form-group"><label>Km odometro</label><input type="number" id="m-mt-km" placeholder="0"></div>
+<div class="form-group full"><label>Notas</label><input id="m-mt-notes" placeholder="Detalle..."></div>
+</div>
+<div class="modal-actions"><button class="btn btn-primary" style="flex:1" onclick="saveMaint()">Guardar</button></div>`);
+}
+
+function saveMaint(){
+const m=getMaintenance();
+m.push({id:genId(),vehicleId:document.getElementById('m-mt-veh').value,date:document.getElementById('m-mt-date').value,type:document.getElementById('m-mt-type').value,cost:Number(document.getElementById('m-mt-cost').value)||0,km:Number(document.getElementById('m-mt-km').value)||0,notes:document.getElementById('m-mt-notes').value.trim()});
+saveMaintenance(m);closeModal();renderMaintenanceList();
+// Update vehicle odometer
+const veh=getVehicles();const km=Number(document.getElementById('m-mt-km').value);
+if(km){const vi=veh.findIndex(x=>x.id===document.getElementById('m-mt-veh').value);if(vi>=0&&km>veh[vi].odometer){veh[vi].odometer=km;saveVehicles(veh)}}
+}
+
+// ========== FUEL LOG ==========
+function getFuelLogs(){return sGet('fuelLogs',[])}
+function saveFuelLogs(f){sSet('fuelLogs',f)}
+
+function renderFuelList(){
+const f=getFuelLogs().sort((a,b)=>new Date(b.date)-new Date(a.date));
+const v=getVehicles();
+document.getElementById('fuel-list').innerHTML=f.length?f.map(x=>{
+const veh=v.find(ve=>ve.id===x.vehicleId);
+return`<div class="list-item">
+<div class="top"><span class="code">${veh?veh.plate:'?'}</span><span style="color:var(--text2);font-size:.8rem">${fmtDate(x.date)}</span></div>
+<div class="route">${x.liters}L | ${fmt$(x.cost)}</div>
+<div class="meta">${x.km?x.km.toLocaleString('es-CL')+' km':''}${x.rendimiento?' | Rendimiento: '+x.rendimiento.toFixed(1)+' km/L':''}</div>
+</div>`;
+}).join(''):'<div class="card" style="text-align:center;color:var(--text3);padding:30px">Sin registros de combustible</div>';
+}
+
+function openFuelModal(){
+const v=getVehicles();
+if(!v.length){alert('Primero agrega un vehiculo');return}
+openModal(`<div class="modal-title">Registro de Combustible<button class="btn-icon btn-secondary" onclick="closeModal()">&times;</button></div>
+<div class="form-grid">
+<div class="form-group"><label>Vehiculo</label><select id="m-fl-veh">${v.map(x=>`<option value="${x.id}">${x.plate} - ${x.brand} ${x.model}</option>`).join('')}</select></div>
+<div class="form-group"><label>Fecha</label><input type="date" id="m-fl-date" value="${today()}"></div>
+<div class="form-group"><label>Litros</label><input type="number" id="m-fl-liters" step="0.1" placeholder="0"></div>
+<div class="form-group"><label>Costo Total ($)</label><input type="number" id="m-fl-cost" placeholder="0"></div>
+<div class="form-group"><label>Km odometro</label><input type="number" id="m-fl-km" placeholder="0"></div>
+</div>
+<div class="modal-actions"><button class="btn btn-primary" style="flex:1" onclick="saveFuel()">Guardar</button></div>`);
+}
+
+function saveFuel(){
+const f=getFuelLogs();const v=getVehicles();
+const vehicleId=document.getElementById('m-fl-veh').value;
+const km=Number(document.getElementById('m-fl-km').value)||0;
+const liters=Number(document.getElementById('m-fl-liters').value)||0;
+// Calculate rendimiento from previous entry
+let rendimiento=null;
+const prevLogs=f.filter(x=>x.vehicleId===vehicleId).sort((a,b)=>new Date(b.date)-new Date(a.date));
+if(prevLogs.length>0&&km>0&&prevLogs[0].km>0&&liters>0){rendimiento=(km-prevLogs[0].km)/liters}
+f.push({id:genId(),vehicleId,date:document.getElementById('m-fl-date').value,liters,cost:Number(document.getElementById('m-fl-cost').value)||0,km,rendimiento});
+saveFuelLogs(f);
+// Update vehicle odometer
+if(km){const vi=v.findIndex(x=>x.id===vehicleId);if(vi>=0&&km>(v[vi].odometer||0)){v[vi].odometer=km;saveVehicles(v)}}
+closeModal();renderFuelList();
+}
+
+// ========== DOCS ALERTS ==========
+function renderDocsAlerts(){
+const v=getVehicles();const now=new Date();const html=[];
+v.forEach(x=>{
+const checks=[
+{label:'Revision Tecnica',date:x.revTecExpiry},
+{label:'Permiso Circulacion',date:x.permisoExpiry},
+{label:'SOAP',date:x.soapExpiry}
+];
+checks.forEach(c=>{
+if(!c.date)return;
+const exp=new Date(c.date);const days=Math.floor((exp-now)/(1000*60*60*24));
+if(days<0)html.push(`<div class="alert alert-danger">&#9888; <strong>${x.plate}</strong>: ${c.label} <strong>VENCIDO</strong> (${fmtDate(c.date)})</div>`);
+else if(days<30)html.push(`<div class="alert alert-warn">&#9888; <strong>${x.plate}</strong>: ${c.label} vence en <strong>${days} dias</strong> (${fmtDate(c.date)})</div>`);
+else html.push(`<div class="alert alert-info">&#10003; <strong>${x.plate}</strong>: ${c.label} vigente hasta ${fmtDate(c.date)}</div>`);
+});
+});
+document.getElementById('docs-alerts').innerHTML=html.length?html.join(''):'<div class="card" style="text-align:center;color:var(--text3);padding:30px">Agrega fechas de vencimiento a tus vehiculos para ver alertas</div>';
+}
+
+// ========== ROUTES ==========
+function populateRouteSelects(){
+const sel1=document.getElementById('route-origin');
+const sel2=document.getElementById('route-dest');
+if(!sel1)return;
+const cur1=sel1.value,cur2=sel2.value;
+sel1.innerHTML=CITIES.map(c=>`<option ${c===cur1?'selected':''}>${c}</option>`).join('');
+sel2.innerHTML=CITIES.map(c=>`<option ${c===(cur2||'Valparaiso')?'selected':''}>${c}</option>`).join('');
+// Vehicles for route planner
+const vSel=document.getElementById('route-vehicle');
+const vs=getVehicles();
+vSel.innerHTML='<option value="">Sin asignar</option>'+vs.map(v=>`<option value="${v.id}">${v.plate} - ${v.brand} ${v.model}</option>`).join('');
+// Common routes
+renderCommonRoutes();
+}
+
+function findRoute(from,to){
+return ROUTES.find(r=>(r.from===from&&r.to===to)||(r.from===to&&r.to===from));
+}
+
+function calculateRoute(){
+const from=document.getElementById('route-origin').value;
+const to=document.getElementById('route-dest').value;
+const kml=Number(document.getElementById('route-kml').value)||6;
+const fuelPrice=Number(document.getElementById('route-fuel-price').value)||1200;
+const viaticos=Number(document.getElementById('route-viaticos').value)||0;
+const route=findRoute(from,to);
+const div=document.getElementById('route-result');
+if(!route){div.style.display='block';div.innerHTML=`<div class="card" style="border-color:var(--amber)"><p style="color:var(--text2)">No hay ruta directa entre ${from} y ${to}. Distancia no disponible en la base de datos.</p></div>`;return}
+const fuelLiters=route.km/kml;
+const fuelCost=Math.round(fuelLiters*fuelPrice);
+const totalCost=fuelCost+route.toll+viaticos;
+div.style.display='block';
+div.innerHTML=`<div class="card" style="border-color:var(--amber)">
+<div class="card-title">${from} → ${to}</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px">
+<div><span style="color:var(--text3);font-size:.75rem">Distancia</span><div style="font-size:1.2rem;font-weight:700">${route.km.toLocaleString('es-CL')} km</div></div>
+<div><span style="color:var(--text3);font-size:.75rem">Tiempo estimado</span><div style="font-size:1.2rem;font-weight:700">${route.hrs>=24?Math.floor(route.hrs/24)+'d '+Math.round(route.hrs%24)+'h':route.hrs.toFixed(1)+'h'}</div></div>
+<div><span style="color:var(--text3);font-size:.75rem">Combustible</span><div style="font-weight:600">${fuelLiters.toFixed(1)}L = ${fmt$(fuelCost)}</div></div>
+<div><span style="color:var(--text3);font-size:.75rem">Peajes</span><div style="font-weight:600">${fmt$(route.toll)}</div></div>
+<div><span style="color:var(--text3);font-size:.75rem">Viaticos</span><div style="font-weight:600">${fmt$(viaticos)}</div></div>
+<div><span style="color:var(--text3);font-size:.75rem">IVA (19%)</span><div style="font-weight:600">${fmt$(Math.round(totalCost*0.19))}</div></div>
+</div>
+<div style="margin-top:16px;padding-top:12px;border-top:2px solid var(--amber);display:flex;justify-content:space-between;align-items:center">
+<span style="font-size:1rem;font-weight:800;color:var(--amber)">COSTO TOTAL: ${fmt$(totalCost)}</span>
+<span style="font-size:.8rem;color:var(--text3)">+IVA: ${fmt$(Math.round(totalCost*1.19))}</span>
+</div>
+<button class="btn btn-sky btn-sm" style="margin-top:10px" onclick="saveRouteToHistory('${from}','${to}',${route.km},${totalCost},${fuelCost},${route.toll},${viaticos})">Guardar en historial</button>
+</div>`;
+}
+
+function saveRouteToHistory(from,to,km,total,fuel,toll,viaticos){
+const h=sGet('routeHistory',[]);
+h.push({id:genId(),from,to,km,total,fuel,toll,viaticos,date:new Date().toISOString()});
+sSet('routeHistory',h);
+alert('Ruta guardada en historial');
+}
+
+function renderRouteHistory(){
+const h=sGet('routeHistory',[]).sort((a,b)=>new Date(b.date)-new Date(a.date));
+document.getElementById('route-history-list').innerHTML=h.length?h.map(r=>`<div class="list-item">
+<div class="top"><span class="code">${r.from} → ${r.to}</span><span style="color:var(--text2);font-size:.8rem">${fmtDate(r.date)}</span></div>
+<div class="meta">${r.km.toLocaleString('es-CL')} km | Combustible: ${fmt$(r.fuel)} | Peajes: ${fmt$(r.toll)} | Viaticos: ${fmt$(r.viaticos)}</div>
+<div style="font-weight:700;color:var(--amber);margin-top:4px">Total: ${fmt$(r.total)}</div>
+</div>`).join(''):'<div class="card" style="text-align:center;color:var(--text3);padding:30px">Sin rutas guardadas</div>';
+}
+
+function renderCommonRoutes(){
+const top=ROUTES.filter(r=>r.from==='Santiago').sort((a,b)=>a.km-b.km).slice(0,12);
+document.getElementById('common-routes').innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${top.map(r=>`<div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px;cursor:pointer" onclick="document.getElementById('route-origin').value='${r.from}';document.getElementById('route-dest').value='${r.to}';calculateRoute()">
+<div style="font-weight:600;font-size:.85rem">${r.from} → ${r.to}</div>
+<div style="font-size:.75rem;color:var(--text3)">${r.km} km | ~${r.hrs>=10?Math.round(r.hrs):r.hrs.toFixed(1)}h | Peaje: ${fmt$(r.toll)}</div>
+</div>`).join('')}</div>`;
+}
+
+// ========== CLIENTS ==========
+function getClients(){return sGet('clients',[])}
+function saveClients(c){sSet('clients',c)}
+
+function renderClientList(){
+const c=getClients();const q=(document.getElementById('client-search').value||'').toLowerCase();
+const filtered=c.filter(x=>!q||(x.name+x.rut+x.contact+x.phone+x.email).toLowerCase().includes(q));
+const shipments=getShipments();
+document.getElementById('client-list').innerHTML=filtered.length?filtered.map(x=>{
+const count=shipments.filter(s=>s.client===x.name).length;
+return`<div class="list-item" onclick="openClientModal('${x.id}')">
+<div class="top"><span class="code">${x.name}</span>
+<span class="badge badge-${x.paymentStatus==='Pagado'?'pagado':x.paymentStatus==='Vencido'?'vencido':'pendiente'}">${x.paymentStatus||'Pendiente'}</span></div>
+<div class="meta">RUT: ${x.rut||'-'} | ${x.contact||'-'} | ${count} envios</div>
+<div class="meta">${x.phone||''} | ${x.email||''}</div>
+<div style="display:flex;gap:6px;margin-top:6px">
+${x.phone?`<a href="https://wa.me/56${x.phone.replace(/\\D/g,'')}" target="_blank" class="btn btn-green btn-sm" onclick="event.stopPropagation()">WhatsApp</a>`:''}
+<button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();viewClientHistory('${x.id}')">Historial</button>
+</div>
+</div>`;
+}).join(''):'<div class="card" style="text-align:center;color:var(--text3);padding:40px">Sin clientes. Agrega tu primer cliente con el boton + Cliente</div>';
+}
+
+function openClientModal(id){
+const c=id?getClients().find(x=>x.id===id):null;
+openModal(`<div class="modal-title">${c?'Editar':'Nuevo'} Cliente<button class="btn-icon btn-secondary" onclick="closeModal()">&times;</button></div>
+<div class="form-grid">
+<div class="form-group full"><label>Empresa / Nombre</label><input id="m-cl-name" value="${c?c.name:''}" placeholder="Razon social o nombre"></div>
+<div class="form-group"><label>RUT</label><input id="m-cl-rut" value="${c?c.rut:''}" placeholder="12.345.678-9"></div>
+<div class="form-group"><label>Contacto</label><input id="m-cl-contact" value="${c?c.contact:''}" placeholder="Nombre contacto"></div>
+<div class="form-group"><label>Telefono</label><input type="tel" id="m-cl-phone" value="${c?c.phone:''}" placeholder="9 1234 5678"></div>
+<div class="form-group"><label>Email</label><input type="email" id="m-cl-email" value="${c?c.email:''}" placeholder="correo@empresa.cl"></div>
+<div class="form-group full"><label>Direccion</label><input id="m-cl-addr" value="${c?c.address:''}" placeholder="Calle, numero, comuna, ciudad"></div>
+<div class="form-group"><label>Tipo documento</label><select id="m-cl-doctype"><option ${c&&c.docType==='Factura'?'selected':''}>Factura</option><option ${c&&c.docType==='Boleta'?'selected':''}>Boleta</option></select></div>
+<div class="form-group"><label>Pago</label><select id="m-cl-terms"><option ${c&&c.paymentTerms==='Contado'?'selected':''}>Contado</option><option ${c&&c.paymentTerms==='30 dias'?'selected':''}>30 dias</option><option ${c&&c.paymentTerms==='60 dias'?'selected':''}>60 dias</option><option ${c&&c.paymentTerms==='90 dias'?'selected':''}>90 dias</option></select></div>
+<div class="form-group"><label>Estado pago</label><select id="m-cl-paystatus"><option ${c&&c.paymentStatus==='Pendiente'?'selected':''}>Pendiente</option><option ${c&&c.paymentStatus==='Pagado'?'selected':''}>Pagado</option><option ${c&&c.paymentStatus==='Vencido'?'selected':''}>Vencido</option></select></div>
+<div class="form-group full"><label>Notas</label><textarea id="m-cl-notes" rows="2" placeholder="Notas internas...">${c?c.notes||'':''}</textarea></div>
+</div>
+<div class="modal-actions">
+<button class="btn btn-primary" style="flex:1" onclick="saveClient('${c?c.id:''}')">${c?'Guardar':'Agregar Cliente'}</button>
+${c?`<button class="btn btn-red" onclick="deleteClient('${c.id}')">Eliminar</button>`:''}
+</div>`);
+}
+
+function saveClient(id){
+const c=getClients();
+const data={name:document.getElementById('m-cl-name').value.trim(),rut:document.getElementById('m-cl-rut').value.trim(),contact:document.getElementById('m-cl-contact').value.trim(),phone:document.getElementById('m-cl-phone').value.trim(),email:document.getElementById('m-cl-email').value.trim(),address:document.getElementById('m-cl-addr').value.trim(),docType:document.getElementById('m-cl-doctype').value,paymentTerms:document.getElementById('m-cl-terms').value,paymentStatus:document.getElementById('m-cl-paystatus').value,notes:document.getElementById('m-cl-notes').value.trim()};
+if(!data.name){alert('Ingresa el nombre del cliente');return}
+if(id){const idx=c.findIndex(x=>x.id===id);c[idx]={...c[idx],...data}}
+else c.push({id:genId(),created:new Date().toISOString(),...data});
+saveClients(c);closeModal();renderClientList();
+}
+
+function deleteClient(id){if(!confirm('Eliminar cliente?'))return;saveClients(getClients().filter(x=>x.id!==id));closeModal();renderClientList()}
+
+function viewClientHistory(id){
+const c=getClients().find(x=>x.id===id);
+const sh=getShipments().filter(s=>s.client===c.name);
+const inc=getIncomes().filter(i=>i.clientId===id);
+const totalRev=inc.reduce((s,i)=>s+i.amount,0);
+openModal(`<div class="modal-title">${c.name}<button class="btn-icon btn-secondary" onclick="closeModal()">&times;</button></div>
+<div style="margin-bottom:12px"><strong>Envios:</strong> ${sh.length} | <strong>Ingresos:</strong> ${fmt$(totalRev)}</div>
+${sh.length?sh.map(s=>`<div style="background:var(--bg);border-radius:8px;padding:10px;margin-bottom:6px;font-size:.85rem">
+<strong>${s.code}</strong> ${s.origin}→${s.destination} <span class="badge badge-${STATUS_CSS[STATUSES.indexOf(s.status)]}">${s.status}</span>
+</div>`).join(''):'<p style="color:var(--text3)">Sin envios registrados</p>'}
+`);
+}
+
+// ========== FINANCES ==========
+function getIncomes(){return sGet('incomes',[])}
+function saveIncomes(i){sSet('incomes',i)}
+function getExpenses(){return sGet('expenses',[])}
+function saveExpenses(e){sSet('expenses',e)}
+
+function renderFinOverview(){
+const inc=getIncomes();const exp=getExpenses();
+const now=new Date();const thisMonth=now.getMonth();const thisYear=now.getFullYear();
+const mInc=inc.filter(i=>{const d=new Date(i.date);return d.getMonth()===thisMonth&&d.getFullYear()===thisYear}).reduce((s,i)=>s+i.amount,0);
+const mExp=exp.filter(e=>{const d=new Date(e.date);return d.getMonth()===thisMonth&&d.getFullYear()===thisYear}).reduce((s,e)=>s+e.amount,0);
+const totInc=inc.reduce((s,i)=>s+i.amount,0);
+const totExp=exp.reduce((s,e)=>s+e.amount,0);
+
+document.getElementById('fin-summary').innerHTML=`
+<div class="summary-item"><div class="num" style="color:var(--green)">${fmt$(mInc)}</div><div class="label">Ingresos mes</div></div>
+<div class="summary-item"><div class="num" style="color:var(--red)">${fmt$(mExp)}</div><div class="label">Gastos mes</div></div>
+<div class="summary-item"><div class="num" style="color:${mInc-mExp>=0?'var(--green)':'var(--red)'}">${fmt$(mInc-mExp)}</div><div class="label">Utilidad mes</div></div>
+<div class="summary-item"><div class="num">${fmt$(totInc-totExp)}</div><div class="label">Utilidad total</div></div>`;
+
+// Revenue chart - last 6 months
+renderRevenueChart(inc,exp);
+renderExpenseChart(exp);
+}
+
+let revenueChart=null,expenseChart=null;
+function renderRevenueChart(inc,exp){
+const labels=[];const incData=[];const expData=[];
+for(let i=5;i>=0;i--){
+const d=new Date();d.setMonth(d.getMonth()-i);
+const m=d.getMonth(),y=d.getFullYear();
+labels.push(d.toLocaleDateString('es-CL',{month:'short'}));
+incData.push(inc.filter(x=>{const dd=new Date(x.date);return dd.getMonth()===m&&dd.getFullYear()===y}).reduce((s,x)=>s+x.amount,0));
+expData.push(exp.filter(x=>{const dd=new Date(x.date);return dd.getMonth()===m&&dd.getFullYear()===y}).reduce((s,x)=>s+x.amount,0));
+}
+const ctx=document.getElementById('chart-revenue');
+if(revenueChart)revenueChart.destroy();
+revenueChart=new Chart(ctx,{type:'bar',data:{labels,datasets:[
+{label:'Ingresos',data:incData,backgroundColor:'#22c55e80',borderColor:'#22c55e',borderWidth:2,borderRadius:6},
+{label:'Gastos',data:expData,backgroundColor:'#ef444480',borderColor:'#ef4444',borderWidth:2,borderRadius:6}
+]},options:{responsive:true,plugins:{legend:{labels:{color:'#94a3b8'}}},scales:{x:{ticks:{color:'#64748b'},grid:{color:'#1e293b'}},y:{ticks:{color:'#64748b',callback:v=>fmt$(v)},grid:{color:'#1e293b'}}}}});
+}
+
+function renderExpenseChart(exp){
+const cats={};exp.forEach(e=>{cats[e.category]=(cats[e.category]||0)+e.amount});
+const labels=Object.keys(cats);const data=Object.values(cats);
+const colors=['#f59e0b','#ef4444','#8b5cf6','#06b6d4','#22c55e','#f97316','#ec4899','#64748b','#a78bfa'];
+const ctx=document.getElementById('chart-expenses');
+if(expenseChart)expenseChart.destroy();
+if(!labels.length){ctx.parentElement.style.display='none';return}
+ctx.parentElement.style.display='block';
+expenseChart=new Chart(ctx,{type:'doughnut',data:{labels,datasets:[{data,backgroundColor:colors.slice(0,labels.length),borderWidth:0}]},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{color:'#94a3b8',padding:12}}}}});
+}
+
+function renderIncomeList(){
+const inc=getIncomes().sort((a,b)=>new Date(b.date)-new Date(a.date));
+document.getElementById('income-list').innerHTML=inc.length?inc.map(x=>`<div class="list-item">
+<div class="top"><span style="font-weight:700;color:var(--green)">${fmt$(x.amount)}</span><span style="color:var(--text2);font-size:.8rem">${fmtDate(x.date)}</span></div>
+<div class="meta">${x.description} ${x.clientName?'| '+x.clientName:''}</div>
+<span class="badge badge-${(x.payStatus||'pendiente').toLowerCase()}">${x.payStatus||'Pendiente'}</span>
+</div>`).join(''):'<div class="card" style="text-align:center;color:var(--text3);padding:30px">Sin ingresos registrados</div>';
+}
+
+function openIncomeModal(){
+const clients=getClients();const shipments=getShipments().filter(s=>s.status==='Entregado');
+openModal(`<div class="modal-title">Registrar Ingreso<button class="btn-icon btn-secondary" onclick="closeModal()">&times;</button></div>
+<div class="form-grid">
+<div class="form-group"><label>Monto ($)</label><input type="number" id="m-inc-amt" placeholder="0"></div>
+<div class="form-group"><label>Fecha</label><input type="date" id="m-inc-date" value="${today()}"></div>
+<div class="form-group"><label>Cliente</label><select id="m-inc-client"><option value="">Sin cliente</option>${clients.map(c=>`<option value="${c.id}" data-name="${c.name}">${c.name}</option>`).join('')}</select></div>
+<div class="form-group"><label>Envio</label><select id="m-inc-ship"><option value="">Sin envio</option>${shipments.map(s=>`<option value="${s.id}">${s.code} - ${s.client}</option>`).join('')}</select></div>
+<div class="form-group"><label>Estado</label><select id="m-inc-status"><option>Pagado</option><option>Pendiente</option><option>Vencido</option></select></div>
+<div class="form-group full"><label>Descripcion</label><input id="m-inc-desc" placeholder="Transporte Santiago-Concepcion..."></div>
+</div>
+<div class="modal-actions"><button class="btn btn-primary" style="flex:1" onclick="saveIncome()">Guardar</button></div>`);
+}
+
+function saveIncome(){
+const inc=getIncomes();
+const clientSel=document.getElementById('m-inc-client');
+const clientName=clientSel.selectedOptions[0]?clientSel.selectedOptions[0].dataset.name||'':'';
+inc.push({id:genId(),amount:Number(document.getElementById('m-inc-amt').value)||0,date:document.getElementById('m-inc-date').value,clientId:clientSel.value,clientName,shipmentId:document.getElementById('m-inc-ship').value,payStatus:document.getElementById('m-inc-status').value,description:document.getElementById('m-inc-desc').value.trim()});
+saveIncomes(inc);closeModal();renderIncomeList();
+}
+
+function renderExpenseList(){
+const exp=getExpenses().sort((a,b)=>new Date(b.date)-new Date(a.date));
+document.getElementById('expense-list').innerHTML=exp.length?exp.map(x=>`<div class="list-item">
+<div class="top"><span style="font-weight:700;color:var(--red)">${fmt$(x.amount)}</span><span style="color:var(--text2);font-size:.8rem">${fmtDate(x.date)}</span></div>
+<div class="meta">${x.category} | ${x.description}</div>
+</div>`).join(''):'<div class="card" style="text-align:center;color:var(--text3);padding:30px">Sin gastos registrados</div>';
+}
+
+function openExpenseModal(){
+const vehicles=getVehicles();
+openModal(`<div class="modal-title">Registrar Gasto<button class="btn-icon btn-secondary" onclick="closeModal()">&times;</button></div>
+<div class="form-grid">
+<div class="form-group"><label>Monto ($)</label><input type="number" id="m-exp-amt" placeholder="0"></div>
+<div class="form-group"><label>Fecha</label><input type="date" id="m-exp-date" value="${today()}"></div>
+<div class="form-group"><label>Categoria</label><select id="m-exp-cat">${EXPENSE_CATS.map(c=>`<option>${c}</option>`).join('')}</select></div>
+<div class="form-group"><label>Vehiculo (opc.)</label><select id="m-exp-veh"><option value="">General</option>${vehicles.map(v=>`<option value="${v.id}">${v.plate}</option>`).join('')}</select></div>
+<div class="form-group full"><label>Descripcion</label><input id="m-exp-desc" placeholder="Detalle del gasto..."></div>
+</div>
+<div class="modal-actions"><button class="btn btn-primary" style="flex:1" onclick="saveExpense()">Guardar</button></div>`);
+}
+
+function saveExpense(){
+const exp=getExpenses();
+exp.push({id:genId(),amount:Number(document.getElementById('m-exp-amt').value)||0,date:document.getElementById('m-exp-date').value,category:document.getElementById('m-exp-cat').value,vehicleId:document.getElementById('m-exp-veh').value,description:document.getElementById('m-exp-desc').value.trim()});
+saveExpenses(exp);closeModal();renderExpenseList();
+}
+
+// ========== INVOICE ==========
+function populateInvoiceSelects(){
+const clients=getClients();const shipments=getShipments();
+document.getElementById('inv-client').innerHTML='<option value="">Seleccionar...</option>'+clients.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+document.getElementById('inv-shipment').innerHTML='<option value="">Sin envio</option>'+shipments.map(s=>`<option value="${s.id}">${s.code} - ${s.client} (${s.origin}→${s.destination})</option>`).join('');
+}
+
+function generateInvoice(){
+const clientId=document.getElementById('inv-client').value;
+const client=getClients().find(c=>c.id===clientId);
+const shipId=document.getElementById('inv-shipment').value;
+const ship=shipId?getShipments().find(s=>s.id===shipId):null;
+const type=document.getElementById('inv-type').value;
+const neto=Number(document.getElementById('inv-amount').value)||0;
+const desc=document.getElementById('inv-desc').value||'Servicio de transporte de carga';
+if(!client){alert('Selecciona un cliente');return}
+if(!neto){alert('Ingresa el monto');return}
+const iva=Math.round(neto*0.19);
+const total=neto+iva;
+const num=String(sGet('invCounter',1000)+1);sSet('invCounter',Number(num));
+
+const preview=document.getElementById('invoice-preview');
+preview.style.display='block';
+preview.innerHTML=`<div class="invoice-preview">
+<div style="display:flex;justify-content:space-between;align-items:flex-start">
+<div><h2 style="font-size:1.3rem">LogisticaCL</h2><p style="color:#666;font-size:.75rem">Gestion de Carga y Logistica</p></div>
+<div style="text-align:right"><strong style="font-size:1rem;color:#f59e0b">${type.toUpperCase()}</strong><br><span style="font-size:.8rem">N ${num}</span><br><span style="font-size:.75rem">${fmtDate(new Date())}</span></div>
+</div>
+<div style="background:#f8fafc;padding:12px;border-radius:6px;margin:16px 0;font-size:.8rem">
+<strong>${client.name}</strong><br>
+RUT: ${client.rut||'-'}<br>
+${client.address||'-'}<br>
+${client.email||''}
+</div>
+${ship?`<div style="background:#fffbeb;padding:10px;border-radius:6px;margin-bottom:12px;font-size:.8rem;border-left:3px solid #f59e0b">
+<strong>Envio:</strong> ${ship.code} | ${ship.origin} → ${ship.destination} | ${ship.description||''} | ${ship.weight?ship.weight+'kg':''}
+</div>`:''}
+<table>
+<thead><tr><th>Descripcion</th><th style="text-align:right">Monto</th></tr></thead>
+<tbody>
+<tr><td>${desc}</td><td style="text-align:right">${fmt$(neto)}</td></tr>
+<tr><td style="font-weight:600">Neto</td><td style="text-align:right">${fmt$(neto)}</td></tr>
+<tr><td>IVA 19%</td><td style="text-align:right">${fmt$(iva)}</td></tr>
+<tr style="background:#f0fdf4"><td style="font-weight:700;font-size:.95rem">TOTAL</td><td style="text-align:right;font-weight:700;font-size:.95rem">${fmt$(total)}</td></tr>
+</tbody>
+</table>
+<p style="font-size:.7rem;color:#999;margin-top:16px">Documento generado por LogisticaCL. Referencia tributaria: IVA 19%, PPM segun regimen.</p>
+</div>
+<div style="display:flex;gap:8px;margin-top:12px">
+<button class="btn btn-primary" onclick="window.print()">Imprimir</button>
+<button class="btn btn-secondary" onclick="document.getElementById('invoice-preview').style.display='none'">Cerrar</button>
+</div>`;
+}
+
+// ========== SEARCH LISTENERS ==========
+document.getElementById('shipment-search').addEventListener('input',renderShipmentList);
+document.getElementById('shipment-filter').addEventListener('change',renderShipmentList);
+document.getElementById('vehicle-search').addEventListener('input',renderVehicleList);
+document.getElementById('client-search').addEventListener('input',renderClientList);
+
+// ========== SERVICE WORKER ==========
+if('serviceWorker' in navigator){
+navigator.serviceWorker.register('./sw.js').then(()=>console.log('SW registered')).catch(e=>console.warn('SW failed:',e));
+}
+
+// ========== INIT ==========
+function init(){
+renderShipmentList();
+renderVehicleList();
+renderMaintenanceList();
+renderFuelList();
+renderClientList();
+populateRouteSelects();
+}
+init();
+</script>
+</body>
+</html>

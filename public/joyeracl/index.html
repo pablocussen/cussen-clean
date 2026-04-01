@@ -1,0 +1,1862 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#18181b">
+    <meta name="description" content="JoyeraCL - Gestión de negocio de joyería para artesanos chilenos">
+    <title>JoyeraCL - Gestión de Joyería</title>
+    <link rel="manifest" href="manifest.json">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: #18181b;
+            color: #e4e4e7;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            padding-bottom: 60px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #18181b 0%, #27272a 100%);
+            border-bottom: 2px solid #d4af37;
+            padding: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #d4af37;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .header p {
+            font-size: 0.875rem;
+            color: #a1a1a6;
+            margin-top: 0.25rem;
+        }
+
+        .container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .nav-tabs {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: #27272a;
+            border-top: 1px solid #3f3f46;
+            display: flex;
+            justify-content: space-around;
+            height: 60px;
+            z-index: 99;
+            overflow-x: auto;
+        }
+
+        .nav-tabs button {
+            flex: 1;
+            background: none;
+            border: none;
+            color: #71717a;
+            cursor: pointer;
+            font-size: 0.75rem;
+            padding: 0.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.25rem;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            min-width: 60px;
+        }
+
+        .nav-tabs button.active {
+            color: #d4af37;
+            background-color: rgba(212, 175, 55, 0.1);
+        }
+
+        .nav-tabs button:hover {
+            color: #fbbf24;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #d4af37;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #d4af37;
+        }
+
+        .card {
+            background-color: #27272a;
+            border: 1px solid #3f3f46;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+
+        .card:hover {
+            border-color: #d4af37;
+            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #d4af37;
+            margin-bottom: 0.25rem;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: #18181b;
+            border: 1px solid #3f3f46;
+            border-radius: 0.375rem;
+            color: #e4e4e7;
+            font-size: 16px;
+            font-family: 'Inter', sans-serif;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #d4af37;
+            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        button {
+            font-size: 16px;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-primary {
+            background-color: #d4af37;
+            color: #18181b;
+        }
+
+        .btn-primary:hover {
+            background-color: #e6c158;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background-color: #3f3f46;
+            color: #e4e4e7;
+        }
+
+        .btn-secondary:hover {
+            background-color: #52525b;
+        }
+
+        .btn-danger {
+            background-color: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #dc2626;
+        }
+
+        .btn-small {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .stat-box {
+            background-color: #18181b;
+            border: 1px solid #3f3f46;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: #a1a1a6;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #d4af37;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-right: 0.25rem;
+        }
+
+        .badge-primary {
+            background-color: rgba(212, 175, 55, 0.2);
+            color: #d4af37;
+        }
+
+        .badge-success {
+            background-color: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+        }
+
+        .badge-warning {
+            background-color: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .list-item {
+            background-color: #18181b;
+            border: 1px solid #3f3f46;
+            border-radius: 0.375rem;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .list-item-content {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .list-item-title {
+            font-weight: 600;
+            color: #e4e4e7;
+            margin-bottom: 0.25rem;
+        }
+
+        .list-item-meta {
+            font-size: 0.875rem;
+            color: #a1a1a6;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: #27272a;
+            border: 1px solid #3f3f46;
+            border-radius: 0.5rem;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-header {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #d4af37;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: #a1a1a6;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-btn:hover {
+            color: #d4af37;
+        }
+
+        .tabs-horizontal {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #3f3f46;
+            overflow-x: auto;
+            padding-bottom: 0;
+        }
+
+        .tab-button {
+            padding: 0.75rem 1rem;
+            background: none;
+            border: none;
+            color: #a1a1a6;
+            cursor: pointer;
+            font-weight: 500;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .tab-button.active {
+            color: #d4af37;
+            border-bottom-color: #d4af37;
+        }
+
+        .tab-button:hover {
+            color: #fbbf24;
+        }
+
+        .chart-container {
+            background-color: #18181b;
+            border: 1px solid #3f3f46;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: #a1a1a6;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .input-group input {
+            flex: 1;
+        }
+
+        .delete-btn {
+            background-color: #ef4444;
+            color: white;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+        }
+
+        .delete-btn:hover {
+            background-color: #dc2626;
+        }
+
+        .edit-btn {
+            background-color: #d4af37;
+            color: #18181b;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+        }
+
+        .edit-btn:hover {
+            background-color: #e6c158;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #22c55e;
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 0.375rem;
+            z-index: 1001;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateX(-50%) translateY(100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .accordion-item {
+            border: 1px solid #3f3f46;
+            border-radius: 0.375rem;
+            margin-bottom: 0.5rem;
+            overflow: hidden;
+        }
+
+        .accordion-header {
+            background-color: #18181b;
+            padding: 1rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.3s ease;
+        }
+
+        .accordion-header:hover {
+            background-color: #27272a;
+        }
+
+        .accordion-header.active {
+            background-color: rgba(212, 175, 55, 0.1);
+            color: #d4af37;
+        }
+
+        .accordion-content {
+            display: none;
+            padding: 1rem;
+            background-color: #1f1f23;
+            border-top: 1px solid #3f3f46;
+        }
+
+        .accordion-content.active {
+            display: block;
+        }
+
+        @media (max-width: 640px) {
+            .header h1 {
+                font-size: 1.25rem;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+
+            .modal-content {
+                padding: 1.5rem;
+            }
+
+            .list-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .list-item-content {
+                width: 100%;
+            }
+        }
+
+        .material-tag {
+            display: inline-block;
+            background-color: rgba(212, 175, 55, 0.2);
+            color: #d4af37;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            margin-right: 0.25rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .price-highlight {
+            color: #d4af37;
+            font-weight: 600;
+        }
+
+        .text-muted {
+            color: #a1a1a6;
+            font-size: 0.875rem;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #d4af37;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>✨ JoyeraCL</h1>
+        <p>Gestión integral de tu negocio de joyería</p>
+    </div>
+
+    <div class="container">
+        <!-- CATÁLOGO TAB -->
+        <div id="catalog-tab" class="tab-content active">
+            <div class="section-title">Catálogo de Productos</div>
+
+            <div class="button-group">
+                <button class="btn-primary" onclick="openCatalogModal()">+ Agregar Producto</button>
+                <button class="btn-secondary" onclick="filterByType()">Filtrar por Tipo</button>
+            </div>
+
+            <div id="catalog-list"></div>
+        </div>
+
+        <!-- PEDIDOS TAB -->
+        <div id="orders-tab" class="tab-content">
+            <div class="section-title">Gestión de Pedidos Personalizados</div>
+
+            <div class="button-group">
+                <button class="btn-primary" onclick="openOrderModal()">+ Nuevo Pedido</button>
+            </div>
+
+            <div id="orders-list"></div>
+        </div>
+
+        <!-- REPARACIONES TAB -->
+        <div id="repairs-tab" class="tab-content">
+            <div class="section-title">Reparaciones</div>
+
+            <div class="button-group">
+                <button class="btn-primary" onclick="openRepairModal()">+ Nueva Reparación</button>
+            </div>
+
+            <div id="repairs-list"></div>
+        </div>
+
+        <!-- INVENTARIO TAB -->
+        <div id="inventory-tab" class="tab-content">
+            <div class="section-title">Inventario de Materias Primas</div>
+
+            <div class="button-group">
+                <button class="btn-primary" onclick="openInventoryModal()">+ Agregar Material</button>
+            </div>
+
+            <div id="inventory-list"></div>
+        </div>
+
+        <!-- FINANZAS TAB -->
+        <div id="finance-tab" class="tab-content">
+            <div class="section-title">Finanzas</div>
+
+            <div class="grid">
+                <div class="stat-box">
+                    <div class="stat-label">Ingresos (este mes)</div>
+                    <div class="stat-value" id="total-income">$0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Gastos Materiales</div>
+                    <div class="stat-value" id="total-expenses">$0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Ganancia Neta</div>
+                    <div class="stat-value" id="net-profit">$0</div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <canvas id="revenue-chart" height="80"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <canvas id="cost-chart" height="80"></canvas>
+            </div>
+
+            <button class="btn-secondary" onclick="exportFinancialReport()">Descargar Reporte</button>
+        </div>
+
+        <!-- CLIENTES TAB -->
+        <div id="clients-tab" class="tab-content">
+            <div class="section-title">Base de Clientes</div>
+
+            <div class="button-group">
+                <button class="btn-primary" onclick="openClientModal()">+ Nuevo Cliente</button>
+            </div>
+
+            <div id="clients-list"></div>
+        </div>
+    </div>
+
+    <nav class="nav-tabs">
+        <button class="nav-btn active" data-tab="catalog-tab" onclick="switchTab('catalog-tab', this)">📦<br>Catálogo</button>
+        <button class="nav-btn" data-tab="orders-tab" onclick="switchTab('orders-tab', this)">📝<br>Pedidos</button>
+        <button class="nav-btn" data-tab="repairs-tab" onclick="switchTab('repairs-tab', this)">🔧<br>Reparaciones</button>
+        <button class="nav-btn" data-tab="inventory-tab" onclick="switchTab('inventory-tab', this)">📊<br>Inventario</button>
+        <button class="nav-btn" data-tab="finance-tab" onclick="switchTab('finance-tab', this)">💰<br>Finanzas</button>
+        <button class="nav-btn" data-tab="clients-tab" onclick="switchTab('clients-tab', this)">👥<br>Clientes</button>
+    </nav>
+
+    <!-- MODALS -->
+    <div id="catalog-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>Agregar/Editar Producto</span>
+                <button class="close-btn" onclick="closeCatalogModal()">&times;</button>
+            </div>
+            <form id="catalog-form" onsubmit="saveCatalogItem(event)">
+                <div class="form-group">
+                    <label>Nombre del Producto</label>
+                    <input type="text" id="catalog-name" required placeholder="Ej: Anillo de Oro 18k">
+                </div>
+                <div class="form-group">
+                    <label>Tipo</label>
+                    <select id="catalog-type" required>
+                        <option>Seleccionar tipo</option>
+                        <option>Anillo</option>
+                        <option>Collar</option>
+                        <option>Pulsera</option>
+                        <option>Aros</option>
+                        <option>Colgante</option>
+                        <option>Cadena</option>
+                        <option>Reloj</option>
+                        <option>Broche</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Material Principal</label>
+                    <select id="catalog-material" required>
+                        <option>Seleccionar material</option>
+                        <option>Oro 18k</option>
+                        <option>Oro 14k</option>
+                        <option>Plata 950</option>
+                        <option>Plata 925</option>
+                        <option>Acero</option>
+                        <option>Cobre</option>
+                        <option>Piedras</option>
+                    </select>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label>Peso (g)</label>
+                        <input type="number" id="catalog-weight" step="0.1" placeholder="0.0">
+                    </div>
+                    <div class="form-group">
+                        <label>Talla/Tamaño</label>
+                        <input type="text" id="catalog-size" placeholder="Ej: Talla 7">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Piedras/Gemas</label>
+                    <input type="text" id="catalog-gemstones" placeholder="Ej: Diamante, Rubí">
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label>Costo ($)</label>
+                        <input type="number" id="catalog-cost" required step="0.01" placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label>Precio Venta ($)</label>
+                        <input type="number" id="catalog-price" required step="0.01" placeholder="0.00">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Colección</label>
+                    <input type="text" id="catalog-collection" placeholder="Ej: Colección Primavera">
+                </div>
+                <div class="form-group">
+                    <label>Notas/Fotos</label>
+                    <textarea id="catalog-notes" placeholder="Características especiales, referencias de fotos, etc."></textarea>
+                </div>
+                <div class="button-group">
+                    <button type="submit" class="btn-primary">Guardar</button>
+                    <button type="button" class="btn-secondary" onclick="closeCatalogModal()">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="order-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>Nuevo Pedido Personalizado</span>
+                <button class="close-btn" onclick="closeOrderModal()">&times;</button>
+            </div>
+            <form id="order-form" onsubmit="saveOrder(event)">
+                <div class="form-group">
+                    <label>Cliente</label>
+                    <input type="text" id="order-client" required placeholder="Nombre del cliente">
+                </div>
+                <div class="form-group">
+                    <label>Descripción del Diseño</label>
+                    <textarea id="order-description" required placeholder="Describe el diseño solicitado"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Material Seleccionado</label>
+                    <select id="order-material" required>
+                        <option>Seleccionar material</option>
+                        <option>Oro 18k</option>
+                        <option>Oro 14k</option>
+                        <option>Plata 950</option>
+                        <option>Plata 925</option>
+                        <option>Acero</option>
+                        <option>Cobre</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Gemas/Piedras</label>
+                    <input type="text" id="order-gemstones" placeholder="Ej: Diamante, Esmeralda">
+                </div>
+                <div class="form-group">
+                    <label>Medidas (Talla anillo, largo cadena, etc.)</label>
+                    <input type="text" id="order-measurements" placeholder="Ej: Talla 7, cadena 45cm">
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label>Fecha Entrega (estimada)</label>
+                        <input type="date" id="order-deadline" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Anticipo Pagado ($)</label>
+                        <input type="number" id="order-advance" step="0.01" value="0">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Estado</label>
+                    <select id="order-status" required>
+                        <option>Diseño</option>
+                        <option>Producción</option>
+                        <option>Acabado</option>
+                        <option>Listo</option>
+                        <option>Entregado</option>
+                    </select>
+                </div>
+                <div class="button-group">
+                    <button type="submit" class="btn-primary">Guardar</button>
+                    <button type="button" class="btn-secondary" onclick="closeOrderModal()">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="repair-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>Nueva Reparación</span>
+                <button class="close-btn" onclick="closeRepairModal()">&times;</button>
+            </div>
+            <form id="repair-form" onsubmit="saveRepair(event)">
+                <div class="form-group">
+                    <label>Descripción del Artículo</label>
+                    <input type="text" id="repair-item" required placeholder="Ej: Anillo de oro con diamante">
+                </div>
+                <div class="form-group">
+                    <label>Problema Reportado</label>
+                    <select id="repair-problem" required>
+                        <option>Seleccionar problema</option>
+                        <option>Soldadura</option>
+                        <option>Cambio de piedra</option>
+                        <option>Ajuste de tamaño</option>
+                        <option>Pulido</option>
+                        <option>Baño de rodio</option>
+                        <option>Cambio de broche</option>
+                        <option>Otro</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Cliente</label>
+                    <input type="text" id="repair-client" placeholder="Nombre del cliente">
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label>Tiempo Estimado (días)</label>
+                        <input type="number" id="repair-time" required min="1" placeholder="3">
+                    </div>
+                    <div class="form-group">
+                        <label>Costo ($)</label>
+                        <input type="number" id="repair-cost" step="0.01" required placeholder="0.00">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Estado</label>
+                    <select id="repair-status" required>
+                        <option>Recibido</option>
+                        <option>En Reparación</option>
+                        <option>Listo para Retirar</option>
+                        <option>Entregado</option>
+                    </select>
+                </div>
+                <div class="button-group">
+                    <button type="submit" class="btn-primary">Guardar</button>
+                    <button type="button" class="btn-secondary" onclick="closeRepairModal()">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="inventory-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>Agregar Material</span>
+                <button class="close-btn" onclick="closeInventoryModal()">&times;</button>
+            </div>
+            <form id="inventory-form" onsubmit="saveInventoryItem(event)">
+                <div class="form-group">
+                    <label>Tipo de Material</label>
+                    <select id="inventory-type" required>
+                        <option>Seleccionar tipo</option>
+                        <option>Oro por gramo</option>
+                        <option>Plata por gramo</option>
+                        <option>Piedras</option>
+                        <option>Hallazgos</option>
+                        <option>Cadenas al metro</option>
+                        <option>Alambre</option>
+                        <option>Soldadura</option>
+                        <option>Otros</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Descripción</label>
+                    <input type="text" id="inventory-description" placeholder="Ej: Oro 18k, Diamantes 0.5ct">
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label>Cantidad</label>
+                        <input type="number" id="inventory-quantity" step="0.01" required placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Unidad</label>
+                        <input type="text" id="inventory-unit" placeholder="g, metros, pcs">
+                    </div>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label>Precio Actual ($/unidad)</label>
+                        <input type="number" id="inventory-price" step="0.01" required placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label>Stock Mínimo</label>
+                        <input type="number" id="inventory-min" step="0.01" placeholder="0">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Proveedor</label>
+                    <input type="text" id="inventory-supplier" placeholder="Nombre del proveedor">
+                </div>
+                <div class="button-group">
+                    <button type="submit" class="btn-primary">Guardar</button>
+                    <button type="button" class="btn-secondary" onclick="closeInventoryModal()">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="client-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>Nuevo Cliente</span>
+                <button class="close-btn" onclick="closeClientModal()">&times;</button>
+            </div>
+            <form id="client-form" onsubmit="saveClient(event)">
+                <div class="form-group">
+                    <label>Nombre Completo</label>
+                    <input type="text" id="client-name" required placeholder="Nombre">
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label>Teléfono</label>
+                        <input type="tel" id="client-phone" placeholder="+56 9 XXXX XXXX">
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="client-email" placeholder="correo@example.com">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Materiales Preferidos</label>
+                    <input type="text" id="client-materials" placeholder="Ej: Oro 18k, Plata">
+                </div>
+                <div class="form-group">
+                    <label>Estilos Preferidos</label>
+                    <input type="text" id="client-styles" placeholder="Ej: Minimalista, Vintage">
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label>Talla de Anillo</label>
+                        <input type="text" id="client-ring-size" placeholder="Ej: 7">
+                    </div>
+                    <div class="form-group">
+                        <label>Largo de Cadena (cm)</label>
+                        <input type="text" id="client-chain-length" placeholder="Ej: 45">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Fechas Especiales (cumpleaños, aniversarios)</label>
+                    <input type="text" id="client-special-dates" placeholder="Ej: 15/03 - Cumpleaños">
+                </div>
+                <div class="form-group">
+                    <label>Lista de Deseos</label>
+                    <textarea id="client-wishlist" placeholder="Productos o diseños que el cliente desea"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Historial de Compras/Notas</label>
+                    <textarea id="client-notes" placeholder="Historial, preferencias especiales, etc."></textarea>
+                </div>
+                <div class="button-group">
+                    <button type="submit" class="btn-primary">Guardar</button>
+                    <button type="button" class="btn-secondary" onclick="closeClientModal()">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // STORAGE MANAGEMENT
+        class JoyeraCLStorage {
+            constructor() {
+                this.initializeData();
+            }
+
+            initializeData() {
+                if (!this.getCatalog()) this.setCatalog([]);
+                if (!this.getOrders()) this.setOrders([]);
+                if (!this.getRepairs()) this.setRepairs([]);
+                if (!this.getInventory()) this.setInventory([]);
+                if (!this.getClients()) this.setClients([]);
+            }
+
+            safeGet(key) {
+                try {
+                    const data = localStorage.getItem(key);
+                    return data ? JSON.parse(data) : null;
+                } catch (e) {
+                    console.error('Storage read error:', e);
+                    return null;
+                }
+            }
+
+            safeSet(key, value) {
+                try {
+                    localStorage.setItem(key, JSON.stringify(value));
+                    return true;
+                } catch (e) {
+                    console.error('Storage write error:', e);
+                    return false;
+                }
+            }
+
+            getCatalog() { return this.safeGet('joyeracl_catalog') || []; }
+            setCatalog(data) { return this.safeSet('joyeracl_catalog', data); }
+
+            getOrders() { return this.safeGet('joyeracl_orders') || []; }
+            setOrders(data) { return this.safeSet('joyeracl_orders', data); }
+
+            getRepairs() { return this.safeGet('joyeracl_repairs') || []; }
+            setRepairs(data) { return this.safeSet('joyeracl_repairs', data); }
+
+            getInventory() { return this.safeGet('joyeracl_inventory') || []; }
+            setInventory(data) { return this.safeSet('joyeracl_inventory', data); }
+
+            getClients() { return this.safeGet('joyeracl_clients') || []; }
+            setClients(data) { return this.safeSet('joyeracl_clients', data); }
+        }
+
+        const storage = new JoyeraCLStorage();
+
+        // UTILITY FUNCTIONS
+        function formatCLP(value) {
+            return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(value);
+        }
+
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        function switchTab(tabId, button) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            button.classList.add('active');
+        }
+
+        // CATALOG FUNCTIONS
+        let editingCatalogId = null;
+
+        function openCatalogModal() {
+            editingCatalogId = null;
+            document.getElementById('catalog-form').reset();
+            document.getElementById('catalog-modal').classList.add('active');
+        }
+
+        function closeCatalogModal() {
+            document.getElementById('catalog-modal').classList.remove('active');
+        }
+
+        function saveCatalogItem(e) {
+            e.preventDefault();
+            const catalog = storage.getCatalog();
+            const item = {
+                id: editingCatalogId || Date.now(),
+                name: document.getElementById('catalog-name').value,
+                type: document.getElementById('catalog-type').value,
+                material: document.getElementById('catalog-material').value,
+                weight: parseFloat(document.getElementById('catalog-weight').value) || 0,
+                size: document.getElementById('catalog-size').value,
+                gemstones: document.getElementById('catalog-gemstones').value,
+                cost: parseFloat(document.getElementById('catalog-cost').value),
+                price: parseFloat(document.getElementById('catalog-price').value),
+                collection: document.getElementById('catalog-collection').value,
+                notes: document.getElementById('catalog-notes').value,
+                createdAt: editingCatalogId ? catalog.find(c => c.id === editingCatalogId).createdAt : new Date().toISOString()
+            };
+
+            if (editingCatalogId) {
+                const index = catalog.findIndex(c => c.id === editingCatalogId);
+                catalog[index] = item;
+            } else {
+                catalog.push(item);
+            }
+
+            storage.setCatalog(catalog);
+            renderCatalog();
+            closeCatalogModal();
+            showToast(editingCatalogId ? 'Producto actualizado' : 'Producto agregado');
+        }
+
+        function editCatalogItem(id) {
+            const catalog = storage.getCatalog();
+            const item = catalog.find(c => c.id === id);
+            if (!item) return;
+
+            editingCatalogId = id;
+            document.getElementById('catalog-name').value = item.name;
+            document.getElementById('catalog-type').value = item.type;
+            document.getElementById('catalog-material').value = item.material;
+            document.getElementById('catalog-weight').value = item.weight || '';
+            document.getElementById('catalog-size').value = item.size;
+            document.getElementById('catalog-gemstones').value = item.gemstones;
+            document.getElementById('catalog-cost').value = item.cost;
+            document.getElementById('catalog-price').value = item.price;
+            document.getElementById('catalog-collection').value = item.collection;
+            document.getElementById('catalog-notes').value = item.notes;
+            document.getElementById('catalog-modal').classList.add('active');
+        }
+
+        function deleteCatalogItem(id) {
+            if (confirm('¿Eliminar este producto?')) {
+                let catalog = storage.getCatalog();
+                catalog = catalog.filter(c => c.id !== id);
+                storage.setCatalog(catalog);
+                renderCatalog();
+                showToast('Producto eliminado');
+            }
+        }
+
+        function renderCatalog() {
+            const catalog = storage.getCatalog();
+            const container = document.getElementById('catalog-list');
+
+            if (catalog.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📦</div><p>No hay productos aún. ¡Agrega el primero!</p></div>';
+                return;
+            }
+
+            const grouped = {};
+            catalog.forEach(item => {
+                if (!grouped[item.collection || 'Sin Colección']) {
+                    grouped[item.collection || 'Sin Colección'] = [];
+                }
+                grouped[item.collection || 'Sin Colección'].push(item);
+            });
+
+            container.innerHTML = Object.entries(grouped).map(([collection, items]) => `
+                <div class="card">
+                    <h3 style="color: #d4af37; margin-bottom: 1rem;">📍 ${collection}</h3>
+                    ${items.map(item => `
+                        <div class="list-item">
+                            <div class="list-item-content">
+                                <div class="list-item-title">${item.name}</div>
+                                <div class="list-item-meta">
+                                    <span class="badge badge-primary">${item.type}</span>
+                                    <span class="badge badge-primary">${item.material}</span>
+                                    ${item.weight ? `<span class="text-muted">${item.weight}g</span>` : ''}
+                                    ${item.gemstones ? `<span class="text-muted">💎 ${item.gemstones}</span>` : ''}
+                                </div>
+                                <div style="margin-top: 0.5rem;">
+                                    <span class="text-muted">Costo: ${formatCLP(item.cost)}</span> |
+                                    <span class="price-highlight">Venta: ${formatCLP(item.price)}</span> |
+                                    <span class="price-highlight">Ganancia: ${formatCLP(item.price - item.cost)}</span>
+                                </div>
+                            </div>
+                            <div class="button-group" style="width: auto;">
+                                <button class="edit-btn" onclick="editCatalogItem(${item.id})">Editar</button>
+                                <button class="delete-btn" onclick="deleteCatalogItem(${item.id})">Eliminar</button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `).join('');
+        }
+
+        // ORDER FUNCTIONS
+        let editingOrderId = null;
+
+        function openOrderModal() {
+            editingOrderId = null;
+            document.getElementById('order-form').reset();
+            document.getElementById('order-modal').classList.add('active');
+        }
+
+        function closeOrderModal() {
+            document.getElementById('order-modal').classList.remove('active');
+        }
+
+        function saveOrder(e) {
+            e.preventDefault();
+            const orders = storage.getOrders();
+            const item = {
+                id: editingOrderId || Date.now(),
+                client: document.getElementById('order-client').value,
+                description: document.getElementById('order-description').value,
+                material: document.getElementById('order-material').value,
+                gemstones: document.getElementById('order-gemstones').value,
+                measurements: document.getElementById('order-measurements').value,
+                deadline: document.getElementById('order-deadline').value,
+                advance: parseFloat(document.getElementById('order-advance').value) || 0,
+                status: document.getElementById('order-status').value,
+                createdAt: editingOrderId ? orders.find(o => o.id === editingOrderId).createdAt : new Date().toISOString()
+            };
+
+            if (editingOrderId) {
+                const index = orders.findIndex(o => o.id === editingOrderId);
+                orders[index] = item;
+            } else {
+                orders.push(item);
+            }
+
+            storage.setOrders(orders);
+            renderOrders();
+            closeOrderModal();
+            showToast(editingOrderId ? 'Pedido actualizado' : 'Pedido agregado');
+        }
+
+        function editOrder(id) {
+            const orders = storage.getOrders();
+            const item = orders.find(o => o.id === id);
+            if (!item) return;
+
+            editingOrderId = id;
+            document.getElementById('order-client').value = item.client;
+            document.getElementById('order-description').value = item.description;
+            document.getElementById('order-material').value = item.material;
+            document.getElementById('order-gemstones').value = item.gemstones;
+            document.getElementById('order-measurements').value = item.measurements;
+            document.getElementById('order-deadline').value = item.deadline;
+            document.getElementById('order-advance').value = item.advance;
+            document.getElementById('order-status').value = item.status;
+            document.getElementById('order-modal').classList.add('active');
+        }
+
+        function deleteOrder(id) {
+            if (confirm('¿Eliminar este pedido?')) {
+                let orders = storage.getOrders();
+                orders = orders.filter(o => o.id !== id);
+                storage.setOrders(orders);
+                renderOrders();
+                showToast('Pedido eliminado');
+            }
+        }
+
+        function renderOrders() {
+            const orders = storage.getOrders();
+            const container = document.getElementById('orders-list');
+
+            if (orders.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📝</div><p>No hay pedidos. ¡Agrega uno!</p></div>';
+                return;
+            }
+
+            const statusColors = {
+                'Diseño': 'badge-primary',
+                'Producción': 'badge-warning',
+                'Acabado': 'badge-warning',
+                'Listo': 'badge-success',
+                'Entregado': 'badge-success'
+            };
+
+            container.innerHTML = orders.map(order => `
+                <div class="list-item">
+                    <div class="list-item-content">
+                        <div class="list-item-title">${order.client}</div>
+                        <div class="list-item-meta">
+                            <span class="badge ${statusColors[order.status]}">${order.status}</span>
+                            <span class="text-muted">📅 Entrega: ${new Date(order.deadline).toLocaleDateString('es-CL')}</span>
+                        </div>
+                        <div style="margin-top: 0.5rem;">
+                            <p class="text-muted">${order.description.substring(0, 60)}...</p>
+                            <p class="text-muted">${order.material} ${order.gemstones ? '• ' + order.gemstones : ''}</p>
+                            <p class="price-highlight">Anticipo: ${formatCLP(order.advance)}</p>
+                        </div>
+                    </div>
+                    <div class="button-group" style="width: auto;">
+                        <button class="edit-btn" onclick="editOrder(${order.id})">Editar</button>
+                        <button class="delete-btn" onclick="deleteOrder(${order.id})">Eliminar</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // REPAIR FUNCTIONS
+        let editingRepairId = null;
+
+        function openRepairModal() {
+            editingRepairId = null;
+            document.getElementById('repair-form').reset();
+            document.getElementById('repair-modal').classList.add('active');
+        }
+
+        function closeRepairModal() {
+            document.getElementById('repair-modal').classList.remove('active');
+        }
+
+        function saveRepair(e) {
+            e.preventDefault();
+            const repairs = storage.getRepairs();
+            const item = {
+                id: editingRepairId || Date.now(),
+                item: document.getElementById('repair-item').value,
+                problem: document.getElementById('repair-problem').value,
+                client: document.getElementById('repair-client').value,
+                time: parseInt(document.getElementById('repair-time').value),
+                cost: parseFloat(document.getElementById('repair-cost').value),
+                status: document.getElementById('repair-status').value,
+                createdAt: editingRepairId ? repairs.find(r => r.id === editingRepairId).createdAt : new Date().toISOString()
+            };
+
+            if (editingRepairId) {
+                const index = repairs.findIndex(r => r.id === editingRepairId);
+                repairs[index] = item;
+            } else {
+                repairs.push(item);
+            }
+
+            storage.setRepairs(repairs);
+            renderRepairs();
+            closeRepairModal();
+            showToast(editingRepairId ? 'Reparación actualizada' : 'Reparación agregada');
+        }
+
+        function editRepair(id) {
+            const repairs = storage.getRepairs();
+            const item = repairs.find(r => r.id === id);
+            if (!item) return;
+
+            editingRepairId = id;
+            document.getElementById('repair-item').value = item.item;
+            document.getElementById('repair-problem').value = item.problem;
+            document.getElementById('repair-client').value = item.client;
+            document.getElementById('repair-time').value = item.time;
+            document.getElementById('repair-cost').value = item.cost;
+            document.getElementById('repair-status').value = item.status;
+            document.getElementById('repair-modal').classList.add('active');
+        }
+
+        function deleteRepair(id) {
+            if (confirm('¿Eliminar esta reparación?')) {
+                let repairs = storage.getRepairs();
+                repairs = repairs.filter(r => r.id !== id);
+                storage.setRepairs(repairs);
+                renderRepairs();
+                showToast('Reparación eliminada');
+            }
+        }
+
+        function renderRepairs() {
+            const repairs = storage.getRepairs();
+            const container = document.getElementById('repairs-list');
+
+            if (repairs.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🔧</div><p>No hay reparaciones. ¡Agrega una!</p></div>';
+                return;
+            }
+
+            const statusColors = {
+                'Recibido': 'badge-primary',
+                'En Reparación': 'badge-warning',
+                'Listo para Retirar': 'badge-success',
+                'Entregado': 'badge-success'
+            };
+
+            container.innerHTML = repairs.map(repair => `
+                <div class="list-item">
+                    <div class="list-item-content">
+                        <div class="list-item-title">${repair.item}</div>
+                        <div class="list-item-meta">
+                            <span class="badge ${statusColors[repair.status]}">${repair.status}</span>
+                            <span class="text-muted">${repair.problem}</span>
+                        </div>
+                        <div style="margin-top: 0.5rem;">
+                            ${repair.client ? `<p class="text-muted">👤 ${repair.client}</p>` : ''}
+                            <p class="text-muted">⏱️ ${repair.time} días estimados</p>
+                            <p class="price-highlight">Costo: ${formatCLP(repair.cost)}</p>
+                        </div>
+                    </div>
+                    <div class="button-group" style="width: auto;">
+                        <button class="edit-btn" onclick="editRepair(${repair.id})">Editar</button>
+                        <button class="delete-btn" onclick="deleteRepair(${repair.id})">Eliminar</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // INVENTORY FUNCTIONS
+        let editingInventoryId = null;
+
+        function openInventoryModal() {
+            editingInventoryId = null;
+            document.getElementById('inventory-form').reset();
+            document.getElementById('inventory-modal').classList.add('active');
+        }
+
+        function closeInventoryModal() {
+            document.getElementById('inventory-modal').classList.remove('active');
+        }
+
+        function saveInventoryItem(e) {
+            e.preventDefault();
+            const inventory = storage.getInventory();
+            const item = {
+                id: editingInventoryId || Date.now(),
+                type: document.getElementById('inventory-type').value,
+                description: document.getElementById('inventory-description').value,
+                quantity: parseFloat(document.getElementById('inventory-quantity').value),
+                unit: document.getElementById('inventory-unit').value,
+                price: parseFloat(document.getElementById('inventory-price').value),
+                minStock: parseFloat(document.getElementById('inventory-min').value) || 0,
+                supplier: document.getElementById('inventory-supplier').value,
+                createdAt: editingInventoryId ? inventory.find(i => i.id === editingInventoryId).createdAt : new Date().toISOString()
+            };
+
+            if (editingInventoryId) {
+                const index = inventory.findIndex(i => i.id === editingInventoryId);
+                inventory[index] = item;
+            } else {
+                inventory.push(item);
+            }
+
+            storage.setInventory(inventory);
+            renderInventory();
+            closeInventoryModal();
+            showToast(editingInventoryId ? 'Material actualizado' : 'Material agregado');
+        }
+
+        function editInventoryItem(id) {
+            const inventory = storage.getInventory();
+            const item = inventory.find(i => i.id === id);
+            if (!item) return;
+
+            editingInventoryId = id;
+            document.getElementById('inventory-type').value = item.type;
+            document.getElementById('inventory-description').value = item.description;
+            document.getElementById('inventory-quantity').value = item.quantity;
+            document.getElementById('inventory-unit').value = item.unit;
+            document.getElementById('inventory-price').value = item.price;
+            document.getElementById('inventory-min').value = item.minStock;
+            document.getElementById('inventory-supplier').value = item.supplier;
+            document.getElementById('inventory-modal').classList.add('active');
+        }
+
+        function deleteInventoryItem(id) {
+            if (confirm('¿Eliminar este material?')) {
+                let inventory = storage.getInventory();
+                inventory = inventory.filter(i => i.id !== id);
+                storage.setInventory(inventory);
+                renderInventory();
+                showToast('Material eliminado');
+            }
+        }
+
+        function renderInventory() {
+            const inventory = storage.getInventory();
+            const container = document.getElementById('inventory-list');
+
+            if (inventory.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📊</div><p>No hay materiales. ¡Agrega uno!</p></div>';
+                return;
+            }
+
+            container.innerHTML = inventory.map(item => {
+                const totalValue = item.quantity * item.price;
+                const isLow = item.quantity <= item.minStock && item.minStock > 0;
+                return `
+                    <div class="list-item">
+                        <div class="list-item-content">
+                            <div class="list-item-title">${item.type} ${isLow ? '⚠️' : ''}</div>
+                            <div class="list-item-meta">
+                                <p class="text-muted">${item.description}</p>
+                                <p class="text-muted">Stock: <span style="color: ${isLow ? '#ef4444' : '#d4af37'}; font-weight: 600;">${item.quantity} ${item.unit}</span> | ${formatCLP(item.price)}/${item.unit}</p>
+                                <p class="text-muted">Mínimo: ${item.minStock} ${item.unit}</p>
+                                ${item.supplier ? `<p class="text-muted">Proveedor: ${item.supplier}</p>` : ''}
+                                <p class="price-highlight">Valor Total: ${formatCLP(totalValue)}</p>
+                            </div>
+                        </div>
+                        <div class="button-group" style="width: auto;">
+                            <button class="edit-btn" onclick="editInventoryItem(${item.id})">Editar</button>
+                            <button class="delete-btn" onclick="deleteInventoryItem(${item.id})">Eliminar</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // FINANCE FUNCTIONS
+        function calculateFinances() {
+            const orders = storage.getOrders();
+            const repairs = storage.getRepairs();
+            const catalog = storage.getCatalog();
+            const inventory = storage.getInventory();
+
+            const completedOrders = orders.filter(o => o.status === 'Entregado');
+            const completedRepairs = repairs.filter(r => r.status === 'Entregado');
+
+            let totalIncome = 0;
+            completedOrders.forEach(order => {
+                const orderPrice = parseFloat(prompt(`Precio total del pedido "${order.client}"?`, '0')) || 0;
+                totalIncome += orderPrice;
+            });
+            completedRepairs.forEach(repair => {
+                totalIncome += repair.cost;
+            });
+
+            const totalExpenses = inventory.reduce((sum, item) => sum + (item.quantity * item.price), 0);
+
+            return {
+                income: totalIncome || 0,
+                expenses: totalExpenses,
+                profit: totalIncome - totalExpenses
+            };
+        }
+
+        function renderFinances() {
+            const finances = calculateFinances();
+            document.getElementById('total-income').textContent = formatCLP(finances.income);
+            document.getElementById('total-expenses').textContent = formatCLP(finances.expenses);
+            document.getElementById('net-profit').textContent = formatCLP(finances.profit);
+
+            renderRevenueChart();
+            renderCostChart();
+        }
+
+        function renderRevenueChart() {
+            const orders = storage.getOrders();
+            const repairs = storage.getRepairs();
+
+            const statusCounts = {
+                'Diseño': 0,
+                'Producción': 0,
+                'Acabado': 0,
+                'Listo': 0,
+                'Entregado': 0
+            };
+
+            orders.forEach(o => {
+                if (statusCounts.hasOwnProperty(o.status)) statusCounts[o.status]++;
+            });
+
+            const ctx = document.getElementById('revenue-chart');
+            if (window.revenueChart) window.revenueChart.destroy();
+
+            window.revenueChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(statusCounts),
+                    datasets: [{
+                        data: Object.values(statusCounts),
+                        backgroundColor: ['#8b5cf6', '#f59e0b', '#fbbf24', '#10b981', '#34d399'],
+                        borderColor: '#27272a',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#e4e4e7', font: { family: "'Inter', sans-serif" } }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Pedidos por Estado',
+                            color: '#d4af37',
+                            font: { family: "'Inter', sans-serif", size: 14, weight: 'bold' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderCostChart() {
+            const inventory = storage.getInventory();
+
+            const typeValues = {};
+            inventory.forEach(item => {
+                const type = item.type.substring(0, 15);
+                typeValues[type] = (typeValues[type] || 0) + (item.quantity * item.price);
+            });
+
+            const ctx = document.getElementById('cost-chart');
+            if (window.costChart) window.costChart.destroy();
+
+            window.costChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(typeValues),
+                    datasets: [{
+                        label: 'Valor en Stock ($)',
+                        data: Object.values(typeValues),
+                        backgroundColor: '#d4af37',
+                        borderColor: '#fbbf24',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: {
+                            labels: { color: '#e4e4e7', font: { family: "'Inter', sans-serif" } }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Valor de Inventario por Tipo',
+                            color: '#d4af37',
+                            font: { family: "'Inter', sans-serif", size: 14, weight: 'bold' }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#a1a1a6' },
+                            grid: { color: '#3f3f46' }
+                        },
+                        y: {
+                            ticks: { color: '#a1a1a6' },
+                            grid: { color: '#3f3f46' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function exportFinancialReport() {
+            const finances = calculateFinances();
+            const report = `
+REPORTE FINANCIERO - JOYERACL
+==============================
+Generado: ${new Date().toLocaleDateString('es-CL')}
+
+RESUMEN
+-------
+Ingresos Totales: ${formatCLP(finances.income)}
+Gastos en Materiales: ${formatCLP(finances.expenses)}
+Ganancia Neta: ${formatCLP(finances.profit)}
+Margen: ${finances.income > 0 ? (((finances.profit / finances.income) * 100).toFixed(2)) : 0}%
+
+DETALLES DE PEDIDOS ENTREGADOS
+-------------------------------
+${storage.getOrders().filter(o => o.status === 'Entregado').map(o => `- ${o.client}: ${o.material}`).join('\n') || 'Ninguno'}
+
+DETALLES DE REPARACIONES ENTREGADAS
+------------------------------------
+${storage.getRepairs().filter(r => r.status === 'Entregado').map(r => `- ${r.item} (${r.problem}): ${formatCLP(r.cost)}`).join('\n') || 'Ninguna'}
+
+INVENTARIO ACTUAL
+-----------------
+${storage.getInventory().map(i => `- ${i.type}: ${i.quantity} ${i.unit} @ ${formatCLP(i.price)}/${i.unit} = ${formatCLP(i.quantity * i.price)}`).join('\n') || 'Vacío'}
+            `;
+
+            const blob = new Blob([report], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `reporte_financiero_${new Date().toISOString().split('T')[0]}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Reporte exportado');
+        }
+
+        // CLIENT FUNCTIONS
+        let editingClientId = null;
+
+        function openClientModal() {
+            editingClientId = null;
+            document.getElementById('client-form').reset();
+            document.getElementById('client-modal').classList.add('active');
+        }
+
+        function closeClientModal() {
+            document.getElementById('client-modal').classList.remove('active');
+        }
+
+        function saveClient(e) {
+            e.preventDefault();
+            const clients = storage.getClients();
+            const item = {
+                id: editingClientId || Date.now(),
+                name: document.getElementById('client-name').value,
+                phone: document.getElementById('client-phone').value,
+                email: document.getElementById('client-email').value,
+                materials: document.getElementById('client-materials').value,
+                styles: document.getElementById('client-styles').value,
+                ringSize: document.getElementById('client-ring-size').value,
+                chainLength: document.getElementById('client-chain-length').value,
+                specialDates: document.getElementById('client-special-dates').value,
+                wishlist: document.getElementById('client-wishlist').value,
+                notes: document.getElementById('client-notes').value,
+                createdAt: editingClientId ? clients.find(c => c.id === editingClientId).createdAt : new Date().toISOString()
+            };
+
+            if (editingClientId) {
+                const index = clients.findIndex(c => c.id === editingClientId);
+                clients[index] = item;
+            } else {
+                clients.push(item);
+            }
+
+            storage.setClients(clients);
+            renderClients();
+            closeClientModal();
+            showToast(editingClientId ? 'Cliente actualizado' : 'Cliente agregado');
+        }
+
+        function editClient(id) {
+            const clients = storage.getClients();
+            const item = clients.find(c => c.id === id);
+            if (!item) return;
+
+            editingClientId = id;
+            document.getElementById('client-name').value = item.name;
+            document.getElementById('client-phone').value = item.phone;
+            document.getElementById('client-email').value = item.email;
+            document.getElementById('client-materials').value = item.materials;
+            document.getElementById('client-styles').value = item.styles;
+            document.getElementById('client-ring-size').value = item.ringSize;
+            document.getElementById('client-chain-length').value = item.chainLength;
+            document.getElementById('client-special-dates').value = item.specialDates;
+            document.getElementById('client-wishlist').value = item.wishlist;
+            document.getElementById('client-notes').value = item.notes;
+            document.getElementById('client-modal').classList.add('active');
+        }
+
+        function deleteClient(id) {
+            if (confirm('¿Eliminar este cliente?')) {
+                let clients = storage.getClients();
+                clients = clients.filter(c => c.id !== id);
+                storage.setClients(clients);
+                renderClients();
+                showToast('Cliente eliminado');
+            }
+        }
+
+        function renderClients() {
+            const clients = storage.getClients();
+            const container = document.getElementById('clients-list');
+
+            if (clients.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">👥</div><p>No hay clientes aún. ¡Agrega uno!</p></div>';
+                return;
+            }
+
+            container.innerHTML = clients.map(client => `
+                <div class="list-item">
+                    <div class="list-item-content">
+                        <div class="list-item-title">${client.name}</div>
+                        <div class="list-item-meta">
+                            ${client.phone ? `<p class="text-muted">📱 ${client.phone}</p>` : ''}
+                            ${client.email ? `<p class="text-muted">📧 ${client.email}</p>` : ''}
+                            ${client.materials ? `<p class="text-muted">🎨 Materiales: ${client.materials}</p>` : ''}
+                            ${client.ringSize ? `<p class="text-muted">💍 Talla: ${client.ringSize}</p>` : ''}
+                            ${client.specialDates ? `<p class="text-muted">🎂 Fechas: ${client.specialDates}</p>` : ''}
+                            ${client.wishlist ? `<p class="text-muted">📋 Deseos: ${client.wishlist.substring(0, 40)}...</p>` : ''}
+                        </div>
+                    </div>
+                    <div class="button-group" style="width: auto;">
+                        <button class="edit-btn" onclick="editClient(${client.id})">Editar</button>
+                        <button class="delete-btn" onclick="deleteClient(${client.id})">Eliminar</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // FILTER FUNCTION
+        function filterByType() {
+            const types = ['Anillo', 'Collar', 'Pulsera', 'Aros', 'Colgante', 'Cadena', 'Reloj', 'Broche'];
+            const type = prompt(`Selecciona un tipo:\n${types.join('\n')}`);
+
+            if (type && types.includes(type)) {
+                const catalog = storage.getCatalog();
+                const filtered = catalog.filter(c => c.type === type);
+                const container = document.getElementById('catalog-list');
+
+                if (filtered.length === 0) {
+                    container.innerHTML = `<div class="empty-state"><p>No hay ${type.toLowerCase()}s</p></div>`;
+                    return;
+                }
+
+                container.innerHTML = filtered.map(item => `
+                    <div class="card">
+                        <div class="list-item">
+                            <div class="list-item-content">
+                                <div class="list-item-title">${item.name}</div>
+                                <div class="list-item-meta">
+                                    <span class="badge badge-primary">${item.material}</span>
+                                    ${item.gemstones ? `<span class="text-muted">💎 ${item.gemstones}</span>` : ''}
+                                </div>
+                                <div style="margin-top: 0.5rem;">
+                                    <span class="price-highlight">Venta: ${formatCLP(item.price)}</span>
+                                </div>
+                            </div>
+                            <div class="button-group" style="width: auto;">
+                                <button class="edit-btn" onclick="editCatalogItem(${item.id})">Editar</button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // INITIALIZE
+        document.addEventListener('DOMContentLoaded', () => {
+            renderCatalog();
+            renderOrders();
+            renderRepairs();
+            renderInventory();
+            renderClients();
+            renderFinances();
+
+            // Register service worker for PWA
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('sw.js').catch(() => {});
+            }
+        });
+
+        // MODAL CLOSE ON BACKGROUND CLICK
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

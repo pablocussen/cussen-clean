@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clasificaci&oacute;n Espectral de Asteroides &mdash; Bennu &amp; Ryugu | CUSSEN</title>
+    <meta name="description" content="Clasificaci&oacute;n espectral de asteroides NEO con taxonom&iacute;a Bus-DeMeo. Validaci&oacute;n con muestras retornadas de OSIRIS-REx (Bennu) y Hayabusa2 (Ryugu). &Iacute;ndices CASI propuestos.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --dark: #07090f;
+            --dark2: #0d1117;
+            --card: #111827;
+            --border: rgba(255,255,255,0.07);
+            --cyan: #06b6d4;
+            --cyan-dim: rgba(6,182,212,0.12);
+            --cyan-border: rgba(6,182,212,0.25);
+            --text: #e2e8f0;
+            --muted: #94a3b8;
+            --mono: 'JetBrains Mono', monospace;
+            --amber: #f59e0b;
+            --amber-dim: rgba(245,158,11,0.12);
+            --amber-border: rgba(245,158,11,0.30);
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background:
+                radial-gradient(ellipse 800px 600px at 75% 20%, rgba(139,92,246,0.12) 0%, transparent 70%),
+                radial-gradient(ellipse 600px 500px at 20% 70%, rgba(59,130,246,0.10) 0%, transparent 70%),
+                radial-gradient(ellipse 400px 400px at 50% 45%, rgba(6,182,212,0.06) 0%, transparent 60%),
+                linear-gradient(180deg, rgba(30,27,75,0.15) 0%, transparent 50%),
+                var(--dark);
+            color: var(--text);
+            font-family: "Inter", system-ui, sans-serif;
+            font-size: 16px;
+            line-height: 1.7;
+        }
+
+        a { color: var(--cyan); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        /* -- NAV ------------------------------------------------ */
+        nav {
+            position: sticky; top: 0; z-index: 100;
+            background: rgba(7,9,15,0.90);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 40px; height: 60px;
+        }
+        .nav-logo {
+            font-weight: 700; font-size: 1rem; letter-spacing: 0.08em;
+            color: var(--text);
+        }
+        .nav-links { display: flex; gap: 32px; list-style: none; }
+        .nav-links a { font-size: 0.875rem; color: var(--muted); transition: color .2s; }
+        .nav-links a:hover { color: var(--text); text-decoration: none; }
+        .nav-cta {
+            background: var(--cyan); color: var(--dark) !important;
+            padding: 6px 18px; border-radius: 6px; font-weight: 600;
+        }
+        .nav-cta:hover { opacity: 0.88; }
+        .nav-back {
+            font-size: 0.8rem; color: var(--muted); font-family: var(--mono);
+            border: 1px solid var(--border); padding: 4px 12px; border-radius: 4px;
+            transition: all .2s;
+        }
+        .nav-back:hover { color: var(--cyan); border-color: var(--cyan-border); text-decoration: none; }
+
+        /* -- LAYOUT --------------------------------------------- */
+        .wrap { max-width: 900px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+        /* -- BG ASTEROID -------------------------------------------- */
+        .bg-planet {
+            position: fixed;
+            top: 6%;
+            right: 2%;
+            width: 380px;
+            height: 380px;
+            background: url('assets/bennu-real.png') center/contain no-repeat;
+            filter: drop-shadow(0 0 40px rgba(139,92,246,0.10)) drop-shadow(0 0 100px rgba(59,130,246,0.05));
+            opacity: 0.55;
+            z-index: 0;
+            pointer-events: none;
+            animation: asteroidSpin 25s linear infinite;
+        }
+        .bg-starfield {
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(1.5px 1.5px at 8% 12%, rgba(255,255,255,0.6), transparent),
+                radial-gradient(1px 1px at 22% 58%, rgba(255,255,255,0.5), transparent),
+                radial-gradient(1.5px 1.5px at 48% 8%, rgba(255,255,255,0.55), transparent),
+                radial-gradient(1px 1px at 65% 72%, rgba(255,255,255,0.4), transparent),
+                radial-gradient(2px 2px at 82% 25%, rgba(255,255,255,0.5), transparent),
+                radial-gradient(1px 1px at 12% 82%, rgba(255,255,255,0.35), transparent),
+                radial-gradient(1.5px 1.5px at 38% 38%, rgba(255,255,255,0.3), transparent),
+                radial-gradient(1px 1px at 72% 48%, rgba(255,255,255,0.4), transparent),
+                radial-gradient(2px 2px at 90% 5%, rgba(255,255,255,0.45), transparent),
+                radial-gradient(1px 1px at 3% 45%, rgba(255,255,255,0.35), transparent),
+                radial-gradient(1.5px 1.5px at 55% 88%, rgba(255,255,255,0.5), transparent),
+                radial-gradient(1px 1px at 75% 15%, rgba(255,255,255,0.3), transparent);
+            z-index: -1;
+            pointer-events: none;
+        }
+        .bg-comet {
+            position: fixed;
+            top: 15%;
+            left: -100px;
+            width: 110px;
+            height: 1.5px;
+            background: linear-gradient(90deg, transparent, rgba(180,200,255,0.7), rgba(139,92,246,0.3), transparent);
+            border-radius: 50%;
+            z-index: -1;
+            pointer-events: none;
+            opacity: 0;
+            animation: cometShoot 11s ease-in-out infinite;
+            animation-delay: 3s;
+        }
+        .bg-comet:nth-child(3) {
+            top: 55%;
+            animation-delay: 8s;
+            animation-duration: 9s;
+            width: 90px;
+        }
+        @keyframes cometShoot {
+            0%, 90%, 100% { transform: translateX(0) rotate(-30deg); opacity: 0; }
+            5% { opacity: 0.8; }
+            15% { transform: translateX(calc(100vw + 200px)) rotate(-30deg); opacity: 0; }
+        }
+        @keyframes asteroidSpin {
+            0% { transform: translateY(0) rotate(0deg); }
+            100% { transform: translateY(0) rotate(360deg); }
+        }
+
+        /* -- HEADER --------------------------------------------- */
+        .page-header {
+            border-bottom: 1px solid var(--border);
+            padding: 56px 0 40px;
+        }
+        .header-eyebrow {
+            font-family: var(--mono); font-size: 0.75rem;
+            color: var(--cyan); letter-spacing: 0.12em; text-transform: uppercase;
+            margin-bottom: 14px;
+        }
+        .page-header h1 {
+            font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+            font-weight: 700; line-height: 1.2;
+            color: var(--text); margin-bottom: 18px;
+        }
+        .page-header .abstract {
+            font-size: 0.975rem; color: var(--muted);
+            max-width: 720px; line-height: 1.75;
+            margin-bottom: 24px; text-align: justify;
+        }
+        .badge-row { display: flex; flex-wrap: wrap; gap: 8px; }
+        .badge {
+            font-family: var(--mono); font-size: 0.75rem; font-weight: 600;
+            padding: 4px 12px; border-radius: 4px;
+            background: var(--cyan-dim); border: 1px solid var(--cyan-border);
+            color: var(--cyan); letter-spacing: 0.06em;
+        }
+        .badge-tag {
+            font-size: 0.75rem; padding: 4px 10px; border-radius: 4px;
+            background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+            color: var(--muted);
+        }
+
+        /* -- KEY RESULTS BAR ------------------------------------ */
+        .results-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 1px;
+            background: var(--border);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 48px 0;
+        }
+        .res-cell {
+            background: var(--card);
+            padding: 20px 18px;
+            text-align: center;
+        }
+        .res-value {
+            font-family: var(--mono); font-size: 1.35rem; font-weight: 600;
+            color: var(--cyan); display: block; margin-bottom: 6px;
+        }
+        .res-label { font-size: 0.78rem; color: var(--muted); line-height: 1.4; }
+
+        /* -- SECTION -------------------------------------------- */
+        section { padding: 56px 0; border-top: 1px solid var(--border); }
+        section h2 {
+            font-size: 1.25rem; font-weight: 700;
+            color: var(--text); margin-bottom: 6px;
+        }
+        .sec-code {
+            font-family: var(--mono); font-size: 0.72rem; color: var(--cyan);
+            letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px;
+        }
+        .sec-intro { font-size: 0.95rem; color: var(--muted); margin: 16px 0 28px; max-width: 680px; text-align: justify; }
+
+        /* -- FIGURE --------------------------------------------- */
+        .figure {
+            margin: 36px 0;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            background: var(--dark2);
+        }
+        .figure img {
+            display: block; width: 100%; height: auto;
+        }
+        .figure-placeholder {
+            display: flex; align-items: center; justify-content: center;
+            min-height: 280px;
+            background: linear-gradient(145deg, rgba(6,182,212,0.04), rgba(7,9,15,0.8));
+            border: 1px dashed var(--cyan-border);
+            margin: 0;
+            position: relative;
+        }
+        .figure-placeholder::before {
+            content: '';
+            position: absolute; inset: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 20px,
+                rgba(6,182,212,0.03) 20px,
+                rgba(6,182,212,0.03) 21px
+            );
+        }
+        .figure-placeholder span {
+            font-family: var(--mono); font-size: 0.8rem;
+            color: var(--cyan); opacity: 0.7;
+            text-align: center; padding: 20px; z-index: 1;
+            line-height: 1.7;
+        }
+        .figure-caption {
+            padding: 16px 20px;
+            border-top: 1px solid var(--border);
+        }
+        .figure-caption .fig-label {
+            font-family: var(--mono); font-size: 0.75rem; color: var(--cyan);
+            font-weight: 600; margin-bottom: 6px;
+        }
+        .figure-caption p {
+            font-size: 0.875rem; color: var(--muted); line-height: 1.65; text-align: justify;
+        }
+
+        /* -- ANALYSIS BLOCK ------------------------------------- */
+        .analysis {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--cyan);
+            border-radius: 0 8px 8px 0;
+            padding: 20px 24px;
+            margin: 24px 0;
+            font-size: 0.925rem; color: var(--muted); line-height: 1.72; text-align: justify;
+        }
+        .analysis strong { color: var(--text); }
+
+        /* -- CRITICAL FINDING ----------------------------------- */
+        .critical-finding {
+            background: var(--amber-dim);
+            border: 1px solid var(--amber-border);
+            border-left: 3px solid var(--amber);
+            border-radius: 0 8px 8px 0;
+            padding: 20px 24px;
+            margin: 28px 0;
+            font-size: 0.925rem; color: var(--muted); line-height: 1.72; text-align: justify;
+        }
+        .critical-finding strong { color: var(--amber); }
+        .critical-finding .cf-label {
+            font-family: var(--mono); font-size: 0.7rem; color: var(--amber);
+            letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px;
+            display: block;
+        }
+
+        /* -- FORMULA -------------------------------------------- */
+        .formula {
+            background: rgba(0,0,0,0.4);
+            border: 1px solid var(--border);
+            border-left: 3px solid rgba(6,182,212,0.5);
+            border-radius: 0 6px 6px 0;
+            padding: 16px 20px;
+            font-family: var(--mono); font-size: 0.82rem;
+            color: #7dd3fc; line-height: 1.9;
+            overflow-x: auto; margin: 16px 0;
+        }
+        .formula-label {
+            font-family: var(--mono); font-size: 0.7rem;
+            color: var(--muted); text-transform: uppercase;
+            letter-spacing: 0.1em; margin-bottom: 6px;
+        }
+
+        /* -- DATA TABLE ----------------------------------------- */
+        .data-table { width: 100%; border-collapse: collapse; margin: 24px 0; font-size: 0.9rem; }
+        .data-table th {
+            font-family: var(--mono); font-size: 0.72rem; color: var(--cyan);
+            text-transform: uppercase; letter-spacing: 0.08em;
+            padding: 10px 14px; text-align: left;
+            border-bottom: 1px solid var(--cyan-border);
+        }
+        .data-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); color: var(--muted); }
+        .data-table tr:last-child td { border-bottom: none; }
+        .data-table .val { color: var(--cyan); font-family: var(--mono); font-weight: 500; }
+        .data-table .total td { color: var(--text); font-weight: 600; }
+        .data-table .total .val { color: var(--cyan); }
+        .data-table .warn { color: var(--amber); font-weight: 600; }
+
+        /* -- CTA ------------------------------------------------ */
+        .cta-section {
+            padding: 48px 0;
+            border-top: 1px solid var(--border);
+            display: flex; flex-direction: column; align-items: flex-start; gap: 20px;
+        }
+        .cta-section h3 { font-size: 1.1rem; font-weight: 600; color: var(--text); }
+        .cta-section p { font-size: 0.9rem; color: var(--muted); max-width: 560px; text-align: justify; }
+        .btn-row { display: flex; gap: 12px; flex-wrap: wrap; }
+        .btn-primary {
+            background: var(--cyan); color: var(--dark);
+            padding: 10px 22px; border-radius: 6px;
+            font-weight: 600; font-size: 0.875rem;
+            transition: opacity .2s;
+        }
+        .btn-primary:hover { opacity: 0.85; text-decoration: none; }
+        .btn-secondary {
+            background: transparent; color: var(--cyan);
+            padding: 10px 22px; border-radius: 6px;
+            border: 1px solid var(--cyan-border);
+            font-weight: 500; font-size: 0.875rem;
+            transition: all .2s;
+        }
+        .btn-secondary:hover { background: var(--cyan-dim); text-decoration: none; }
+
+        /* -- REFERENCES ----------------------------------------- */
+        .ref-list { list-style: none; }
+        .ref-list li {
+            font-size: 0.875rem; color: var(--muted);
+            padding: 8px 0; border-bottom: 1px solid var(--border);
+            padding-left: 20px; position: relative; line-height: 1.55;
+        }
+        .ref-list li::before {
+            content: '[' attr(data-n) ']';
+            font-family: var(--mono); font-size: 0.7rem; color: var(--cyan);
+            position: absolute; left: 0; top: 9px;
+        }
+        .ref-list li:last-child { border-bottom: none; }
+
+        /* -- FOOTER --------------------------------------------- */
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 32px 0;
+            font-size: 0.825rem; color: var(--muted);
+        }
+        .footer-inner {
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 12px;
+        }
+
+        /* -- NOTE ----------------------------------------------- */
+        .note {
+            font-size: 0.825rem; color: var(--muted);
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: 6px; padding: 12px 16px;
+            margin-top: 20px; line-height: 1.6;
+            text-align: justify;
+        }
+
+        /* -- LANG TOGGLE ---------------------------------------- */
+        .lang-toggle {
+            font-family: var(--mono); font-size: 0.75rem;
+            color: var(--muted); cursor: pointer;
+            border: 1px solid var(--border); padding: 4px 10px;
+            border-radius: 4px; background: transparent;
+            transition: all .2s;
+        }
+        .lang-toggle:hover { color: var(--cyan); border-color: var(--cyan-border); }
+        [data-en] { display: none; }
+        html[lang="en"] [data-es] { display: none; }
+        html[lang="en"] [data-en] { display: revert; }
+
+        @media (max-width: 768px) {
+            nav { padding: 0 12px; }
+            .wrap { padding: 0 16px; }
+            .nav-links { display: none; }
+            .results-bar { grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 16px; }
+            .page-header h1 { font-size: 1.6rem; }
+            .page-header .abstract { font-size: 0.9rem; }
+            .figure img { border-radius: 4px; }
+            .figure-caption { padding: 12px 14px; }
+            .analysis { padding: 14px 16px; font-size: 0.875rem; }
+            .data-table { font-size: 0.8rem; }
+            .data-table td, .data-table th { padding: 6px 8px; }
+            h2 { font-size: 1.2rem; }
+            .sec-intro { font-size: 0.875rem; }
+            .ref-list li { font-size: 0.8rem; padding: 8px 0; }
+        }
+
+        @media (max-width: 480px) {
+            .results-bar { grid-template-columns: repeat(2, 1fr); gap: 8px; padding: 12px; }
+            .results-bar .r-val { font-size: 1rem; }
+            .badge-row { gap: 4px; }
+            .badge { font-size: 0.65rem; padding: 3px 8px; }
+            .page-header h1 { font-size: 1.3rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-starfield"></div>
+    <div class="bg-comet"></div>
+    <div class="bg-comet"></div>
+    <div class="bg-planet"></div>
+
+    <nav>
+        <a href="../../../" class="nav-logo">CUSSEN</a>
+        <ul class="nav-links">
+            <li><a href="../../../servicios/">Servicios</a></li>
+            <li><a href="../../../#proyectos">Proyectos</a></li>
+            <li><a href="../../../framework/">Framework</a></li>
+            <li>
+                <button class="lang-toggle" onclick="toggleLang()" aria-label="Toggle language">
+                    <span data-es>EN</span><span data-en>ES</span>
+                </button>
+            </li>
+            <li><a href="../../../#contacto" class="nav-cta">Contacto</a></li>
+        </ul>
+        <a href="../../../#proyectos" class="nav-back" data-es>&larr; Portfolio</a>
+        <a href="../../../#proyectos" class="nav-back" data-en>&larr; Portfolio</a>
+    </nav>
+
+    <div class="wrap">
+
+        <!-- == HEADER == -->
+        <header class="page-header">
+            <div class="header-eyebrow">
+                <span data-es>SP.04 &middot; Inteligencia Planetaria &mdash; Spectral Intelligence for Space Resources</span>
+                <span data-en>SP.04 &middot; Planetary Intelligence &mdash; Spectral Intelligence for Space Resources</span>
+            </div>
+            <h1>
+                <span data-es>Clasificaci&oacute;n Espectral de Asteroides &mdash; Bennu &amp; Ryugu</span>
+                <span data-en>Asteroid Spectral Classification &mdash; Bennu &amp; Ryugu</span>
+            </h1>
+            <p class="abstract" data-es>
+                &Iacute;ndices de prospecci&oacute;n validados con muestras retornadas de OSIRIS-REx y Hayabusa2.
+                Clasificaci&oacute;n espectral de objetos cercanos a la Tierra (NEO) usando la taxonom&iacute;a
+                Bus-DeMeo aplicada a espectros sint&eacute;ticos y datos reales. Validaci&oacute;n cruzada con
+                las &uacute;nicas dos muestras de asteroides tipo C retornadas a la Tierra: <strong>Bennu</strong>
+                (OSIRIS-REx, NASA, 2023) y <strong>Ryugu</strong> (Hayabusa2, JAXA, 2020). Se proponen los
+                <strong>CASI</strong> (Cussen Asteroid Spectral Indices) como marco estandarizado de
+                prospecci&oacute;n de recursos asteroidales.
+            </p>
+            <p class="abstract" data-en>
+                Prospection indices validated with returned samples from OSIRIS-REx and Hayabusa2.
+                Spectral classification of Near-Earth Objects (NEO) using Bus-DeMeo taxonomy
+                applied to synthetic spectra and real data. Cross-validation with the only two
+                C-type asteroid samples returned to Earth: <strong>Bennu</strong> (OSIRIS-REx, NASA, 2023)
+                and <strong>Ryugu</strong> (Hayabusa2, JAXA, 2020). We propose the <strong>CASI</strong>
+                (Cussen Asteroid Spectral Indices) as a standardized framework for asteroid resource prospection.
+            </p>
+            <div class="badge-row">
+                <span class="badge">CASI-01</span>
+                <span class="badge">CASI-02</span>
+                <span class="badge">CASI-03</span>
+                <span class="badge-tag">Bus-DeMeo Taxonomy</span>
+                <span class="badge-tag">OSIRIS-REx / Hayabusa2</span>
+                <span class="badge-tag">C-type NEOs</span>
+                <span class="badge-tag">PCA + Random Forest</span>
+                <span class="badge-tag">0.4&ndash;4.3 &mu;m</span>
+            </div>
+        </header>
+
+        <!-- == KEY RESULTS BAR == -->
+        <div class="results-bar">
+            <div class="res-cell">
+                <span class="res-value">5</span>
+                <span class="res-label" data-es>Clases taxon&oacute;micas (C, S, M, V, D)</span>
+                <span class="res-label" data-en>Taxonomic classes (C, S, M, V, D)</span>
+            </div>
+            <div class="res-cell">
+                <span class="res-value">300</span>
+                <span class="res-label" data-es>Espectros sint&eacute;ticos generados</span>
+                <span class="res-label" data-en>Synthetic spectra generated</span>
+            </div>
+            <div class="res-cell">
+                <span class="res-value">3 CASI</span>
+                <span class="res-label" data-es>&Iacute;ndices espectrales propuestos</span>
+                <span class="res-label" data-en>Spectral indices proposed</span>
+            </div>
+            <div class="res-cell">
+                <span class="res-value">PCA+RF</span>
+                <span class="res-label" data-es>Pipeline de clasificaci&oacute;n</span>
+                <span class="res-label" data-en>Classification pipeline</span>
+            </div>
+            <div class="res-cell">
+                <span class="res-value">2</span>
+                <span class="res-label" data-es>Ground truth (Bennu + Ryugu)</span>
+                <span class="res-label" data-en>Ground truth (Bennu + Ryugu)</span>
+            </div>
+            <div class="res-cell">
+                <span class="res-value">0.4&ndash;4.3 &mu;m</span>
+                <span class="res-label" data-es>Rango espectral cubierto</span>
+                <span class="res-label" data-en>Spectral range covered</span>
+            </div>
+        </div>
+
+        <!-- == SECTION 1: BENNU vs RYUGU == -->
+        <section>
+            <div class="sec-code" data-es>Secci&oacute;n 1 &mdash; Verdad de Terreno</div>
+            <div class="sec-code" data-en>Section 1 &mdash; Ground Truth</div>
+            <h2 data-es>Bennu vs Ryugu &mdash; Los &uacute;nicos dos asteroides tipo C con muestras retornadas</h2>
+            <h2 data-en>Bennu vs Ryugu &mdash; The only two C-type asteroids with returned samples</h2>
+            <p class="sec-intro" data-es>
+                Bennu y Ryugu constituyen la &uacute;nica validaci&oacute;n directa disponible entre datos de
+                teledeteci&oacute;n espectral y composici&oacute;n real de asteroides. Ambos son del complejo C
+                (carbonosos), pero presentan diferencias cr&iacute;ticas entre sus firmas espectrales
+                remotas y su contenido vol&aacute;til real medido en las muestras retornadas.
+            </p>
+            <p class="sec-intro" data-en>
+                Bennu and Ryugu constitute the only available direct validation between remote
+                spectral sensing data and actual asteroid composition. Both belong to the C-complex
+                (carbonaceous), yet show critical differences between their remote spectral signatures
+                and the actual volatile content measured in returned samples.
+            </p>
+
+            <table class="data-table" style="margin-top:16px">
+                <thead>
+                    <tr>
+                        <th data-es>Propiedad</th><th data-en>Property</th>
+                        <th>Bennu</th>
+                        <th>Ryugu</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td data-es>Misi&oacute;n</td><td data-en>Mission</td>
+                        <td class="val">OSIRIS-REx (NASA)</td>
+                        <td class="val">Hayabusa2 (JAXA)</td>
+                    </tr>
+                    <tr>
+                        <td data-es>Taxonom&iacute;a</td><td data-en>Taxonomy</td>
+                        <td class="val">B-type (C-complex)</td>
+                        <td class="val">Cb-type (C-complex)</td>
+                    </tr>
+                    <tr>
+                        <td>Albedo</td>
+                        <td class="val">0.044</td>
+                        <td class="val">0.040&ndash;0.045</td>
+                    </tr>
+                    <tr>
+                        <td data-es>Instrumentos</td><td data-en>Instruments</td>
+                        <td class="val" style="font-size:0.82rem">OVIRS (0.4&ndash;4.3 &mu;m) + OTES</td>
+                        <td class="val" style="font-size:0.82rem">NIRS3 (1.8&ndash;3.2 &mu;m) + ONC-T</td>
+                    </tr>
+                    <tr>
+                        <td data-es>Profundidad banda 2.7 &mu;m</td><td data-en>2.7 &mu;m band depth</td>
+                        <td class="val">5&ndash;8% (fuerte / strong)</td>
+                        <td class="val">2&ndash;4% (d&eacute;bil / weak)</td>
+                    </tr>
+                    <tr>
+                        <td data-es>H<sub>2</sub>O real (muestra)</td><td data-en>Actual H<sub>2</sub>O (sample)</td>
+                        <td class="val">4.7 wt%</td>
+                        <td class="val">7.0 wt%</td>
+                    </tr>
+                    <tr>
+                        <td data-es>Carbono</td><td data-en>Carbon</td>
+                        <td class="val">4.7 wt%</td>
+                        <td class="val">3.5&ndash;4.6 wt%</td>
+                    </tr>
+                    <tr>
+                        <td data-es>Minerales primarios</td><td data-en>Primary minerals</td>
+                        <td colspan="2" style="color:var(--muted)">Serpentine, saponite, magnetite</td>
+                    </tr>
+                    <tr>
+                        <td data-es>Carbonatos</td><td data-en>Carbonates</td>
+                        <td data-es>Abundantes (venas)</td><td data-en>Abundant (veins)</td>
+                        <td data-es>Presentes</td><td data-en>Present</td>
+                    </tr>
+                    <tr>
+                        <td data-es>An&aacute;logo meteorito</td><td data-en>Meteorite match</td>
+                        <td class="val">CI chondrite</td>
+                        <td class="val">CI chondrite</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- CRITICAL FINDING -->
+            <div class="critical-finding">
+                <span class="cf-label" data-es>Hallazgo cr&iacute;tico</span>
+                <span class="cf-label" data-en>Critical finding</span>
+                <strong data-es>Ryugu tiene MENOR profundidad de banda espectral pero M&Aacute;S agua real.</strong>
+                <strong data-en>Ryugu has WEAKER spectral band depth but MORE actual water.</strong>
+                <span data-es>
+                    La profundidad de banda superficial subestima el contenido vol&aacute;til total debido
+                    a que el calentamiento solar deshidrata la superficie. Cualquier &iacute;ndice espectral
+                    de prospecci&oacute;n minera <strong>debe incorporar correcci&oacute;n t&eacute;rmica</strong> para
+                    evitar subestimaciones sistem&aacute;ticas del contenido de agua.
+                </span>
+                <span data-en>
+                    Surface band depth underestimates bulk volatile content because solar heating
+                    dehydrates the surface. Any spectral mining index <strong>must account for thermal
+                    correction</strong> to avoid systematic underestimates of water content.
+                </span>
+            </div>
+        </section>
+
+        <!-- == SECTION 2: BUS-DEMEO TAXONOMY == -->
+        <section>
+            <div class="sec-code" data-es>Secci&oacute;n 2 &mdash; Taxonom&iacute;a Bus-DeMeo</div>
+            <div class="sec-code" data-en>Section 2 &mdash; Bus-DeMeo Taxonomy</div>
+            <h2 data-es>Clasificaci&oacute;n espectral y an&aacute;lisis multivariado</h2>
+            <h2 data-en>Spectral classification and multivariate analysis</h2>
+            <p class="sec-intro" data-es>
+                La taxonom&iacute;a Bus-DeMeo (2009) clasifica asteroides a partir de sus espectros de
+                reflectancia en el rango visible e infrarrojo cercano. Se generaron 300 espectros
+                sint&eacute;ticos representando 5 clases principales (C, S, M, V, D) y se entrenaron
+                modelos de clasificaci&oacute;n mediante PCA + Random Forest, con Bennu y Ryugu como
+                puntos de validaci&oacute;n externa.
+            </p>
+            <p class="sec-intro" data-en>
+                The Bus-DeMeo taxonomy (2009) classifies asteroids based on their reflectance
+                spectra in the visible and near-infrared range. We generated 300 synthetic spectra
+                representing 5 major classes (C, S, M, V, D) and trained classification models
+                using PCA + Random Forest, with Bennu and Ryugu as external validation points.
+            </p>
+
+            <!-- Figure 1: Spectral profiles -->
+            <div class="figure">
+                <img src="assets/fig04_01_spectral_library.png" alt="Asteroid Spectral Library" style="width:100%;border-radius:8px;border:1px solid var(--border);">
+                <div class="figure-caption">
+                    <div class="fig-label">
+                        <span data-es>Fig. 1 &mdash; Perfiles espectrales de las 5 clases taxon&oacute;micas Bus-DeMeo con Bennu y Ryugu superpuestos</span>
+                        <span data-en>Fig. 1 &mdash; Spectral profiles of the 5 Bus-DeMeo taxonomic classes with Bennu and Ryugu overlaid</span>
+                    </div>
+                    <p data-es>
+                        Los tipos C muestran espectros planos con baja reflectancia y una absorci&oacute;n sutil a 2.7 &mu;m
+                        (hidratos). Los tipos S presentan las bandas diagn&oacute;sticas a 1 y 2 &mu;m (olivino/piroxeno).
+                        Los tipos M son espectralmente planos con alto albedo. Los tipos V tienen una absorci&oacute;n profunda
+                        a 0.9 &mu;m (piroxeno de bajo calcio). Los tipos D presentan pendiente roja pronunciada sin absorciones
+                        claras. Bennu y Ryugu caen dentro del cluster C con variaciones sutiles en la regi&oacute;n de 2.7 &mu;m.
+                    </p>
+                    <p data-en>
+                        C-types show flat spectra with low reflectance and a subtle 2.7 &mu;m absorption (hydrates).
+                        S-types exhibit diagnostic bands at 1 and 2 &mu;m (olivine/pyroxene). M-types are spectrally
+                        flat with high albedo. V-types have a deep 0.9 &mu;m absorption (low-Ca pyroxene). D-types
+                        show a steep red slope with no clear absorptions. Bennu and Ryugu fall within the C cluster
+                        with subtle variations in the 2.7 &mu;m region.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Figure 2: PCA -->
+            <div class="figure">
+                <img src="assets/fig04_03_pca_taxonomy.png" alt="PCA Taxonomy" style="width:100%;border-radius:8px;border:1px solid var(--border);">
+                <div class="figure-caption">
+                    <div class="fig-label">
+                        <span data-es>Fig. 2 &mdash; PCA (PC1 vs PC2) mostrando clusters taxon&oacute;micos con Bennu y Ryugu</span>
+                        <span data-en>Fig. 2 &mdash; PCA (PC1 vs PC2) showing taxonomic clusters with Bennu and Ryugu</span>
+                    </div>
+                    <p data-es>
+                        El an&aacute;lisis de componentes principales separa eficazmente las 5 clases. PC1 captura la
+                        pendiente espectral general (rojo vs azul), mientras que PC2 codifica la profundidad de las
+                        absorciones a 1&ndash;2 &mu;m. Los tipos C y D se solapan parcialmente en PC1 pero se separan
+                        en PC2. Bennu y Ryugu se ubican dentro del cluster C pero en posiciones ligeramente distintas,
+                        reflejando sus subtipos B y Cb respectivamente.
+                    </p>
+                    <p data-en>
+                        Principal component analysis effectively separates the 5 classes. PC1 captures the overall
+                        spectral slope (red vs blue), while PC2 encodes the depth of 1&ndash;2 &mu;m absorptions.
+                        C and D types partially overlap on PC1 but separate on PC2. Bennu and Ryugu fall within
+                        the C cluster but at slightly different positions, reflecting their B and Cb subtypes respectively.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Figure 3: Confusion matrix -->
+            <div class="figure">
+                <img src="assets/fig04_05_classification_results.png" alt="Classification Results" style="width:100%;border-radius:8px;border:1px solid var(--border);">
+                <div class="figure-caption">
+                    <div class="fig-label">
+                        <span data-es>Fig. 3 &mdash; Matriz de confusi&oacute;n del clasificador Random Forest sobre espectros sint&eacute;ticos</span>
+                        <span data-en>Fig. 3 &mdash; Random Forest classifier confusion matrix on synthetic spectra</span>
+                    </div>
+                    <p data-es>
+                        El clasificador Random Forest alcanza una precisi&oacute;n superior al 95% en validaci&oacute;n cruzada 5-fold.
+                        Las confusiones residuales se concentran entre los tipos C y D (pendiente roja similar) y entre
+                        S y V (ambos con absorciones a 1 &mu;m). Los tipos M se clasifican correctamente en todos los casos
+                        debido a su espectro distintivamente plano con alto albedo.
+                    </p>
+                    <p data-en>
+                        The Random Forest classifier achieves over 95% accuracy in 5-fold cross-validation.
+                        Residual confusions concentrate between C and D types (similar red slope) and between
+                        S and V types (both with 1 &mu;m absorptions). M-types are correctly classified in all
+                        cases due to their distinctively flat spectrum with high albedo.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- == SECTION 3: CASI INDICES == -->
+        <section>
+            <div class="sec-code" data-es>&Iacute;ndices CASI &mdash; Cussen Asteroid Spectral Indices</div>
+            <div class="sec-code" data-en>CASI &mdash; Cussen Asteroid Spectral Indices</div>
+            <h2 data-es>&Iacute;ndices de Prospecci&oacute;n Asteroidal Propuestos</h2>
+            <h2 data-en>Proposed Asteroid Prospection Indices</h2>
+            <p class="sec-intro" data-es>
+                Tres &iacute;ndices espectrales propuestos para la evaluaci&oacute;n cuantitativa de recursos
+                vol&aacute;tiles, met&aacute;licos y la viabilidad de misi&oacute;n a asteroides cercanos a la Tierra.
+                Estos &iacute;ndices son <strong>propuestos</strong> y est&aacute;n pendientes de validaci&oacute;n
+                con datos adicionales de misi&oacute;n.
+            </p>
+            <p class="sec-intro" data-en>
+                Three spectral indices proposed for quantitative assessment of volatile resources,
+                metallic resources, and mission viability for Near-Earth asteroids.
+                These indices are <strong>proposed</strong> and pending validation with additional mission data.
+            </p>
+
+            <table class="data-table" style="margin-top:16px">
+                <thead>
+                    <tr>
+                        <th data-es>C&oacute;digo</th><th data-en>Code</th>
+                        <th data-es>Nombre</th><th data-en>Name</th>
+                        <th data-es>Objetivo</th><th data-en>Target</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="val">CASI-01</td>
+                        <td>VMI (Volatile Mining Index)</td>
+                        <td data-es>Contenido vol&aacute;til (H<sub>2</sub>O) con correcci&oacute;n t&eacute;rmica</td>
+                        <td data-en>Volatile content (H<sub>2</sub>O) with thermal correction</td>
+                    </tr>
+                    <tr>
+                        <td class="val">CASI-02</td>
+                        <td>MMI (Metal Mining Index)</td>
+                        <td data-es>Recursos met&aacute;licos &mdash; tipos M/X</td>
+                        <td data-en>Metallic resources &mdash; M/X-types</td>
+                    </tr>
+                    <tr>
+                        <td class="val">CASI-03</td>
+                        <td>MVI (Mission Viability Index)</td>
+                        <td data-es>Recurso &times; accesibilidad (delta-v)</td>
+                        <td data-en>Resource &times; accessibility (delta-v)</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- CASI-01: VMI -->
+            <div class="formula-label">CASI-01 &mdash; Volatile Mining Index (VMI)</div>
+            <div class="formula">VMI = BD<sub>2.7</sub> &times; T<sub>corr</sub> &times; (1 + BD<sub>3.1</sub> / BD<sub>2.7</sub>)
+  BD<sub>2.7</sub> = continuum-removed depth at 2.7 &mu;m (phyllosilicate OH)
+  BD<sub>3.1</sub> = continuum-removed depth at 3.1 &mu;m (molecular H<sub>2</sub>O)
+  T<sub>corr</sub> = thermal correction factor (perihelion distance, albedo)</div>
+
+            <div class="critical-finding" style="margin:16px 0 28px">
+                <span class="cf-label" data-es>Nota cr&iacute;tica &mdash; Lecci&oacute;n de Ryugu</span>
+                <span class="cf-label" data-en>Critical note &mdash; Ryugu lesson</span>
+                <span data-es>
+                    <strong>VMI<sub>raw</sub> (sin correcci&oacute;n t&eacute;rmica) subestima el contenido vol&aacute;til en
+                    superficies procesadas t&eacute;rmicamente.</strong> Ryugu demuestra que un asteroide con menor
+                    profundidad de banda espectral puede contener significativamente m&aacute;s agua en su interior.
+                    La correcci&oacute;n T<sub>corr</sub> es esencial para evitar falsos negativos en la prospecci&oacute;n de vol&aacute;tiles.
+                </span>
+                <span data-en>
+                    <strong>VMI<sub>raw</sub> (without thermal correction) underestimates volatile content for
+                    thermally processed surfaces.</strong> Ryugu demonstrates that an asteroid with weaker spectral
+                    band depth may contain significantly more water in its interior. The T<sub>corr</sub> correction
+                    is essential to avoid false negatives in volatile prospection.
+                </span>
+            </div>
+
+            <!-- CASI-02: MMI -->
+            <div class="formula-label">CASI-02 &mdash; Metal Mining Index (MMI)</div>
+            <div class="formula">MMI = (1 &minus; &sigma;<sub>spec</sub>) &times; p<sub>v</sub> / p<sub>v,ref</sub>
+  &sigma;<sub>spec</sub> = spectral variance (normalized) &mdash; flat spectra &rarr; low &sigma;
+  p<sub>v</sub> = geometric albedo
+  p<sub>v,ref</sub> = 0.10 (reference albedo for M-type threshold)
+  MMI &gt; 1.0 &rarr; strong M/X-type candidate (Ni-Fe metal surface)</div>
+
+            <!-- CASI-03: MVI -->
+            <div class="formula-label">CASI-03 &mdash; Mission Viability Index (MVI)</div>
+            <div class="formula">MVI = R<sub>score</sub> &times; A<sub>score</sub>
+  R<sub>score</sub> = max(VMI, MMI) &mdash; resource value (best prospect)
+  A<sub>score</sub> = exp(&minus;&Delta;v / &Delta;v<sub>ref</sub>) &mdash; accessibility decay
+  &Delta;v = orbital transfer delta-v (km/s)
+  &Delta;v<sub>ref</sub> = 6.0 km/s (LEO to asteroid reference)
+  MVI &gt; 0.5 &rarr; viable target for resource extraction mission</div>
+
+            <div class="note" data-es>
+                Los &iacute;ndices CASI son <strong>propuestos por el autor</strong> y no provienen de la
+                literatura existente. Est&aacute;n dise&ntilde;ados como extensi&oacute;n del marco de prospecci&oacute;n
+                planetario (Framework Cussen) al contexto de asteroides cercanos, y requieren
+                calibraci&oacute;n con datos de misiones adicionales de retorno de muestras.
+            </div>
+            <div class="note" data-en>
+                CASI indices are <strong>proposed by the author</strong> and are not derived from
+                existing literature. They are designed as an extension of the planetary prospection
+                framework (Cussen Framework) to the near-Earth asteroid context, and require
+                calibration with data from additional sample-return missions.
+            </div>
+        </section>
+
+        <!-- == SECTION 4: VALIDATION == -->
+        <section>
+            <div class="sec-code" data-es>Secci&oacute;n 4 &mdash; Validaci&oacute;n</div>
+            <div class="sec-code" data-en>Section 4 &mdash; Validation</div>
+            <h2 data-es>VMI predicho vs composici&oacute;n real de las muestras</h2>
+            <h2 data-en>Predicted VMI vs actual sample composition</h2>
+            <p class="sec-intro" data-es>
+                Comparaci&oacute;n directa entre el &iacute;ndice VMI calculado a partir de datos espectrales
+                remotos y el contenido real de agua medido en las muestras retornadas a laboratorios
+                terrestres. Esta es la primera validaci&oacute;n posible de un &iacute;ndice de prospecci&oacute;n
+                asteroidal con verdad de terreno composicional.
+            </p>
+            <p class="sec-intro" data-en>
+                Direct comparison between the VMI index calculated from remote spectral data and
+                the actual water content measured in samples returned to terrestrial laboratories.
+                This is the first possible validation of an asteroid prospection index with
+                compositional ground truth.
+            </p>
+
+            <table class="data-table" style="margin-top:16px">
+                <thead>
+                    <tr>
+                        <th data-es>Asteroide</th><th data-en>Asteroid</th>
+                        <th data-es>VMI (espectral)</th><th data-en>VMI (spectral)</th>
+                        <th data-es>H<sub>2</sub>O real</th><th data-en>Actual H<sub>2</sub>O</th>
+                        <th data-es>Discrepancia</th><th data-en>Gap</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="val">Bennu</td>
+                        <td class="val" data-es>Alto (0.82)</td><td class="val" data-en>High (0.82)</td>
+                        <td class="val">4.7 wt%</td>
+                        <td data-es>Consistente</td><td data-en>Consistent</td>
+                    </tr>
+                    <tr>
+                        <td class="val">Ryugu</td>
+                        <td class="val" data-es>Moderado (0.45)</td><td class="val" data-en>Moderate (0.45)</td>
+                        <td class="val">7.0 wt%</td>
+                        <td class="warn" data-es>SUBESTIMACI&Oacute;N &mdash; correcci&oacute;n t&eacute;rmica requerida</td>
+                        <td class="warn" data-en>UNDERESTIMATE &mdash; thermal correction needed</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- == ADDITIONAL FIGURES == -->
+        <section>
+            <div class="sec-code" data-es>Figuras Adicionales</div>
+            <div class="sec-code" data-en>Additional Figures</div>
+
+            <div class="figure">
+                <img src="assets/fig04_06_casi_indices.png" alt="CASI Indices" style="width:100%;border-radius:8px;border:1px solid var(--border);">
+                <div class="figure-caption">
+                    <div class="fig-label">
+                        <span data-es>Fig. 4 &mdash; &Iacute;ndices CASI: distribuci&oacute;n VMI/MMI por clase + espacio de recursos + MVI vs &Delta;v</span>
+                        <span data-en>Fig. 4 &mdash; CASI indices: VMI/MMI distribution by class + resource space + MVI vs &Delta;v</span>
+                    </div>
+                    <p data-es>Los tipos C/D concentran los valores m&aacute;s altos de VMI (vol&aacute;tiles). Los tipos M dominan en MMI (metales). El &iacute;ndice MVI combina potencial de recursos con accesibilidad orbital (&Delta;v bajo = m&aacute;s f&aacute;cil de alcanzar). &Iacute;ndices propuestos (Cussen, 2026) &mdash; pendientes de validaci&oacute;n.</p>
+                    <p data-en>C/D types concentrate the highest VMI values (volatiles). M types dominate MMI (metals). The MVI index combines resource potential with orbital accessibility (low &Delta;v = easier to reach). Proposed indices (Cussen, 2026) &mdash; pending validation.</p>
+                </div>
+            </div>
+
+            <div class="figure">
+                <img src="assets/fig_bennu_ryugu_validation.png" alt="Bennu vs Ryugu Validation" style="width:100%;border-radius:8px;border:1px solid var(--border);">
+                <div class="figure-caption">
+                    <div class="fig-label">
+                        <span data-es>Fig. 5 &mdash; Validaci&oacute;n CASI-01 VMI con muestras retornadas: Bennu (OSIRIS-REx) vs Ryugu (Hayabusa2)</span>
+                        <span data-en>Fig. 5 &mdash; CASI-01 VMI validation with returned samples: Bennu (OSIRIS-REx) vs Ryugu (Hayabusa2)</span>
+                    </div>
+                    <p data-es>Izquierda: espectros sint&eacute;ticos basados en datos publicados OVIRS/NIRS3. Derecha: VMI espectral vs contenido real de agua. Ryugu tiene un VMI m&aacute;s bajo (banda 2.7 &mu;m d&eacute;bil) pero m&aacute;s agua real (7 vs 4.7 wt%), demostrando que la profundidad de banda subestima el contenido vol&aacute;til en superficies procesadas t&eacute;rmicamente. Se requiere correcci&oacute;n t&eacute;rmica.</p>
+                    <p data-en>Left: synthetic spectra based on published OVIRS/NIRS3 data. Right: spectral VMI vs actual water content. Ryugu has lower VMI (weak 2.7 &mu;m band) but more actual water (7 vs 4.7 wt%), demonstrating that band depth underestimates volatile content for thermally processed surfaces. Thermal correction required.</p>
+                </div>
+            </div>
+            <div class="figure">
+                <img src="assets/fig_real_vs_synthetic.png" alt="Real vs Synthetic Spectra Validation" style="width:100%;border-radius:8px;border:1px solid var(--border);">
+                <div class="figure-caption">
+                    <div class="fig-label">
+                        <span data-es>Fig. 6 &mdash; Validaci&oacute;n: datos instrumentales reales (OVIRS/NIRS3) vs modelo espectral sint&eacute;tico</span>
+                        <span data-en>Fig. 6 &mdash; Validation: real instrument data (OVIRS/NIRS3) vs synthetic spectral model</span>
+                    </div>
+                    <p data-es>Comparaci&oacute;n directa entre espectros reales del PDS de NASA (OVIRS, 108 espectros Orbit A) y DARTS de JAXA (NIRS3, 62,356 espectros de proximidad) con el modelo sint&eacute;tico Cussen. Los datos NIRS3 est&aacute;n normalizados al albedo publicado a 2.0&ndash;2.2 &mu;m. Datos >2.55 &mu;m excluidos por contaminaci&oacute;n de emisi&oacute;n t&eacute;rmica no corregida.</p>
+                    <p data-en>Direct comparison between real PDS NASA spectra (OVIRS, 108 Orbit A spectra) and JAXA DARTS data (NIRS3, 62,356 proximity spectra) with the Cussen synthetic model. NIRS3 data normalized to published albedo at 2.0&ndash;2.2 &mu;m. Data >2.55 &mu;m excluded due to uncorrected thermal emission contamination.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- == KEY FINDINGS == -->
+        <section>
+            <div class="sec-code" data-es>Hallazgos Principales</div>
+            <div class="sec-code" data-en>Key Findings</div>
+            <h2 data-es>Resultados y Conclusiones</h2>
+            <h2 data-en>Results and Conclusions</h2>
+
+            <div class="analysis">
+                <strong data-es>1. Asteroides tipo C confirmados como objetivos de mayor valor vol&aacute;til:</strong>
+                <strong data-en>1. C-type asteroids confirmed as highest-value volatile targets:</strong>
+                <span data-es>
+                    Las muestras retornadas de Bennu y Ryugu confirman que los asteroides del complejo C
+                    contienen entre 4.7% y 7% de agua en peso, adem&aacute;s de carbono org&aacute;nico (3.5&ndash;4.7 wt%)
+                    y minerales hidratados (serpentina, saponita). Estos valores superan significativamente
+                    las estimaciones previas basadas &uacute;nicamente en an&aacute;logos meteorit&iacute;cos, validando la
+                    prioridad de los tipos C para futuras misiones de extracci&oacute;n de recursos in situ (ISRU).
+                </span>
+                <span data-en>
+                    Returned samples from Bennu and Ryugu confirm that C-complex asteroids contain
+                    4.7% to 7% water by weight, plus organic carbon (3.5&ndash;4.7 wt%) and hydrated minerals
+                    (serpentine, saponite). These values significantly exceed previous estimates based
+                    solely on meteorite analogs, validating the priority of C-types for future
+                    in-situ resource utilization (ISRU) missions.
+                </span>
+            </div>
+
+            <div class="analysis">
+                <strong data-es>2. Las firmas espectrales superficiales subestiman la composici&oacute;n total:</strong>
+                <strong data-en>2. Surface spectral features underestimate bulk composition:</strong>
+                <span data-es>
+                    El caso de Ryugu demuestra inequ&iacute;vocamente que la profundidad de banda espectral observada
+                    remotamente puede subestimar el contenido vol&aacute;til real del cuerpo. La deshidrataci&oacute;n
+                    t&eacute;rmica de la superficie (por calentamiento solar en el perihelio) reduce la firma espectral
+                    sin alterar la composici&oacute;n interna. Esta es una limitaci&oacute;n cr&iacute;tica para cualquier
+                    esquema de prospecci&oacute;n remota y motiva la inclusi&oacute;n del factor T<sub>corr</sub> en el &iacute;ndice VMI.
+                </span>
+                <span data-en>
+                    The Ryugu case unequivocally demonstrates that remotely observed spectral band depth
+                    can underestimate the actual volatile content of the body. Surface thermal dehydration
+                    (from solar heating at perihelion) reduces the spectral signature without altering
+                    internal composition. This is a critical limitation for any remote prospection scheme
+                    and motivates the inclusion of the T<sub>corr</sub> factor in the VMI index.
+                </span>
+            </div>
+
+            <div class="analysis">
+                <strong data-es>3. La taxonom&iacute;a Bus-DeMeo provee screening de primer orden:</strong>
+                <strong data-en>3. Bus-DeMeo taxonomy provides first-order screening:</strong>
+                <span data-es>
+                    La clasificaci&oacute;n taxon&oacute;mica basada en espectros del visible e infrarrojo cercano
+                    (0.4&ndash;2.5 &mu;m) es eficaz para separar las grandes familias de asteroides y priorizar
+                    objetivos. Sin embargo, la evaluaci&oacute;n cuantitativa de recursos requiere datos espectrales
+                    en el infrarrojo medio (&gt;2.5 &mu;m) donde se encuentran las absorciones diagn&oacute;sticas
+                    de OH/H<sub>2</sub>O (2.7 &mu;m) y carbonatos (3.4 &mu;m). La taxonom&iacute;a sola no es
+                    suficiente para prospecci&oacute;n de recursos.
+                </span>
+                <span data-en>
+                    Taxonomic classification based on visible and near-infrared spectra (0.4&ndash;2.5 &mu;m) is
+                    effective for separating the major asteroid families and prioritizing targets. However,
+                    quantitative resource assessment requires mid-infrared spectral data (&gt;2.5 &mu;m) where
+                    diagnostic OH/H<sub>2</sub>O (2.7 &mu;m) and carbonate (3.4 &mu;m) absorptions are found.
+                    Taxonomy alone is not sufficient for resource prospection.
+                </span>
+            </div>
+
+            <div class="analysis">
+                <strong data-es>4. Marco CASI propuesto como aproximaci&oacute;n estandarizada:</strong>
+                <strong data-en>4. CASI framework proposed as standardized approach:</strong>
+                <span data-es>
+                    Los tres &iacute;ndices CASI (VMI, MMI, MVI) proporcionan un marco cuantitativo para
+                    evaluar simult&aacute;neamente el potencial de recursos vol&aacute;tiles, met&aacute;licos y la
+                    viabilidad de misi&oacute;n de asteroides candidatos. La calibraci&oacute;n actual se limita a
+                    dos puntos de validaci&oacute;n (Bennu y Ryugu). Se requiere calibraci&oacute;n con datos de
+                    futuras misiones de retorno de muestras (MMX a Phobos, Hera a Dimorphos) para
+                    robustecer los umbrales y el factor de correcci&oacute;n t&eacute;rmica.
+                </span>
+                <span data-en>
+                    The three CASI indices (VMI, MMI, MVI) provide a quantitative framework for
+                    simultaneously evaluating volatile resource potential, metallic resources, and
+                    mission viability for candidate asteroids. Current calibration is limited to
+                    two validation points (Bennu and Ryugu). Calibration with data from future
+                    sample-return missions (MMX to Phobos, Hera to Dimorphos) is required to
+                    strengthen thresholds and the thermal correction factor.
+                </span>
+            </div>
+        </section>
+
+        <!-- == METHODOLOGY / TECH STACK == -->
+        <section>
+            <div class="sec-code" data-es>Metodolog&iacute;a</div>
+            <div class="sec-code" data-en>Methodology</div>
+            <h2 data-es>Datos, procesamiento y stack t&eacute;cnico</h2>
+            <h2 data-en>Data, processing, and tech stack</h2>
+
+            <table class="data-table" style="margin-top:16px">
+                <thead>
+                    <tr>
+                        <th data-es>Par&aacute;metro</th><th data-en>Parameter</th>
+                        <th data-es>Detalle</th><th data-en>Detail</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td data-es>Datos espectrales</td><td data-en>Spectral data</td><td class="val">OVIRS (Bennu), NIRS3 (Ryugu), SMASS (Bus-DeMeo)</td></tr>
+                    <tr><td data-es>Rango espectral</td><td data-en>Spectral range</td><td class="val">0.4&ndash;4.3 &mu;m (VNIR + MIR)</td></tr>
+                    <tr><td data-es>Espectros sint&eacute;ticos</td><td data-en>Synthetic spectra</td><td class="val">300 (60 por clase &times; 5 clases)</td></tr>
+                    <tr><td data-es>Clasificaci&oacute;n</td><td data-en>Classification</td><td class="val">PCA (2 componentes) + Random Forest (100 trees)</td></tr>
+                    <tr><td data-es>Validaci&oacute;n</td><td data-en>Validation</td><td class="val">5-fold cross-validation + Bennu/Ryugu ground truth</td></tr>
+                    <tr><td data-es>Formato de datos</td><td data-en>Data format</td><td class="val">PDS4 (NASA Planetary Data System)</td></tr>
+                    <tr><td data-es>Lenguaje</td><td data-en>Language</td><td class="val">Python 3.12</td></tr>
+                    <tr><td data-es>Librer&iacute;as</td><td data-en>Libraries</td><td class="val">NumPy &middot; SciPy &middot; Scikit-learn &middot; Matplotlib &middot; PDS4 tools</td></tr>
+                </tbody>
+            </table>
+
+            <div class="badge-row" style="margin-top:24px">
+                <span class="badge-tag">Python</span>
+                <span class="badge-tag">NumPy</span>
+                <span class="badge-tag">SciPy</span>
+                <span class="badge-tag">Scikit-learn</span>
+                <span class="badge-tag">Matplotlib</span>
+                <span class="badge-tag">PDS4</span>
+                <span class="badge-tag">SMASS</span>
+            </div>
+        </section>
+
+        <!-- == REFERENCES == -->
+        <section>
+            <div class="sec-code" data-es>Referencias</div>
+            <div class="sec-code" data-en>References</div>
+            <h2 data-es>Bibliograf&iacute;a</h2>
+            <h2 data-en>Bibliography</h2>
+            <ul class="ref-list" style="margin-top:20px">
+                <li data-n="1">DeMeo, F.E. et al. (2009). An extension of the Bus asteroid taxonomy into the near-infrared. <em>Icarus</em>, 202(1), 160&ndash;180.</li>
+                <li data-n="2">Hamilton, V.E. et al. (2019). Evidence for widespread hydrated minerals on asteroid (101955) Bennu. <em>Nature Astronomy</em>, 3, 332&ndash;340.</li>
+                <li data-n="3">Simon, A.A. et al. (2020). Widespread carbon-bearing materials on near-Earth asteroid (101955) Bennu. <em>Science</em>, 370(6517), eabc3522.</li>
+                <li data-n="4">Kitazato, K. et al. (2019). The surface composition of asteroid 162173 Ryugu as observed by the Hayabusa2 NIRS3 instrument. <em>Science</em>, 364(6437), 272&ndash;275.</li>
+                <li data-n="5">Yokoyama, T. et al. (2022). Samples returned from the asteroid Ryugu are similar to Ivuna-type carbonaceous meteorites. <em>Science</em>, 379(6634), eabn7850.</li>
+                <li data-n="6">Lauretta, D.S. et al. (2024). Asteroid (101955) Bennu in the laboratory: Properties of the sample collected by OSIRIS-REx. <em>Meteoritics &amp; Planetary Science</em>, 59(6), 1267&ndash;1290.</li>
+                <li data-n="7">Takir, D. &amp; Emery, J.P. (2012). Outer Main Belt asteroids: Identification and distribution of four 3-&mu;m spectral groups. <em>Icarus</em>, 219(2), 641&ndash;654.</li>
+                <li data-n="8">Reddy, V. et al. (2015). Asteroid spectroscopy and mineralogy. In <em>Asteroids IV</em> (pp. 43&ndash;63). University of Arizona Press.</li>
+            </ul>
+        </section>
+
+        <!-- == CTA == -->
+        <div class="cta-section">
+            <h3 data-es>An&aacute;lisis espectral para su proyecto</h3>
+            <h3 data-en>Spectral analysis for your project</h3>
+            <p data-es>
+                Clasificaci&oacute;n taxon&oacute;mica de asteroides, dise&ntilde;o de &iacute;ndices espectrales de
+                prospecci&oacute;n y an&aacute;lisis de datos de misiones planetarias para evaluaci&oacute;n de recursos.
+            </p>
+            <p data-en>
+                Asteroid taxonomic classification, prospection spectral index design,
+                and planetary mission data analysis for resource assessment.
+            </p>
+            <div class="btn-row">
+                <a href="../../../servicios/" class="btn-primary" data-es>Ver Servicios</a>
+                <a href="../../../servicios/" class="btn-primary" data-en>View Services</a>
+                <a href="../../../#contacto" class="btn-secondary" data-es>Solicitar an&aacute;lisis similar</a>
+                <a href="../../../#contacto" class="btn-secondary" data-en>Request similar analysis</a>
+            </div>
+        </div>
+
+    </div>
+
+    <footer>
+        <div class="wrap">
+            <div class="footer-inner">
+                <span data-es>CUSSEN &mdash; Inteligencia Geoespacial &middot; Patagonia, Chile</span>
+                <span data-en>CUSSEN &mdash; Geospatial Intelligence &middot; Patagonia, Chile</span>
+                <a href="../../../#proyectos" data-es>&larr; Volver al portfolio</a>
+                <a href="../../../#proyectos" data-en>&larr; Back to portfolio</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        function toggleLang() {
+            const html = document.documentElement;
+            html.lang = html.lang === 'es' ? 'en' : 'es';
+        }
+    </script>
+
+</body>
+</html>

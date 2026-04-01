@@ -1,0 +1,2004 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="TatuadorCL - Sistema de gestión para estudios de tatuajes en Chile">
+    <meta name="theme-color" content="#0a0a0a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="TatuadorCL">
+    <title>TatuadorCL - Gestión de Estudio</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%230a0a0a' width='180' height='180'/><text x='90' y='100' font-size='60' font-weight='bold' fill='%23ef4444' text-anchor='middle' font-family='serif'>✦</text></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%230a0a0a' width='180' height='180'/><text x='90' y='100' font-size='60' font-weight='bold' fill='%23ef4444' text-anchor='middle' font-family='serif'>✦</text></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: #0a0a0a;
+            color: #e5e5e5;
+            line-height: 1.6;
+            overscroll-behavior-y: contain;
+        }
+
+        /* Prevent zoom on input focus */
+        input, textarea, select {
+            font-size: 16px !important;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 16px;
+        }
+
+        header {
+            background-color: #171717;
+            border-bottom: 2px solid #ef4444;
+            padding: 16px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.1);
+        }
+
+        header h1 {
+            font-size: 24px;
+            color: #ef4444;
+            margin: 0;
+            letter-spacing: -0.5px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .tabs::-webkit-scrollbar {
+            display: none;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            color: #999;
+            padding: 12px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            white-space: nowrap;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .tab-btn:hover {
+            color: #e5e5e5;
+        }
+
+        .tab-btn.active {
+            color: #ef4444;
+            border-bottom-color: #ef4444;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 20px 0;
+            animation: fadeIn 0.2s;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .card {
+            background-color: #171717;
+            border: 1px solid #2a2a2a;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            transition: all 0.2s;
+        }
+
+        .card:hover {
+            border-color: #ef4444;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 12px;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #e5e5e5;
+        }
+
+        .card-subtitle {
+            font-size: 12px;
+            color: #999;
+            margin-top: 4px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .badge-nuevo {
+            background-color: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+        }
+
+        .badge-continuacion {
+            background-color: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+        }
+
+        .badge-retoque {
+            background-color: rgba(168, 85, 247, 0.2);
+            color: #a855f7;
+        }
+
+        .badge-vip {
+            background-color: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 6px;
+            color: #d4d4d4;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            background-color: #0a0a0a;
+            border: 1px solid #2a2a2a;
+            border-radius: 6px;
+            padding: 10px 12px;
+            color: #e5e5e5;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #ef4444;
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        button {
+            background-color: #ef4444;
+            color: #fff;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        button:hover {
+            background-color: #dc2626;
+            transform: translateY(-1px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button.secondary {
+            background-color: #2a2a2a;
+            color: #e5e5e5;
+        }
+
+        button.secondary:hover {
+            background-color: #3a3a3a;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .button-group button {
+            flex: 1;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: #171717;
+            border-radius: 12px;
+            padding: 24px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 1px solid #2a2a2a;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #2a2a2a;
+            padding-bottom: 12px;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #e5e5e5;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: #999;
+            cursor: pointer;
+            font-size: 24px;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+        }
+
+        .modal-close:hover {
+            color: #ef4444;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        @media (max-width: 640px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-box {
+            background-color: #0a0a0a;
+            border: 1px solid #2a2a2a;
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #ef4444;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #999;
+            margin-top: 4px;
+        }
+
+        .appointment-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            padding: 12px;
+            background-color: #0a0a0a;
+            border-left: 3px solid #ef4444;
+            border-radius: 4px;
+            margin-bottom: 12px;
+        }
+
+        .appointment-time {
+            font-size: 14px;
+            font-weight: 600;
+            color: #ef4444;
+        }
+
+        .appointment-details {
+            font-size: 13px;
+            color: #d4d4d4;
+            margin-top: 4px;
+        }
+
+        .client-list {
+            list-style: none;
+        }
+
+        .client-item {
+            padding: 12px 0;
+            border-bottom: 1px solid #2a2a2a;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .client-item:last-child {
+            border-bottom: none;
+        }
+
+        .client-name {
+            font-weight: 600;
+            color: #e5e5e5;
+        }
+
+        .client-meta {
+            font-size: 12px;
+            color: #999;
+            margin-top: 4px;
+        }
+
+        .design-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .design-item {
+            background-color: #0a0a0a;
+            border: 2px dashed #2a2a2a;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .design-item:hover {
+            border-color: #ef4444;
+            box-shadow: 0 0 12px rgba(239, 68, 68, 0.2);
+        }
+
+        .design-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .design-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: #d4d4d4;
+        }
+
+        .inventory-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        .inventory-table th {
+            background-color: #0a0a0a;
+            border-bottom: 2px solid #ef4444;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #ef4444;
+            font-size: 12px;
+        }
+
+        .inventory-table td {
+            border-bottom: 1px solid #2a2a2a;
+            padding: 12px;
+            font-size: 13px;
+        }
+
+        .inventory-table tr:hover {
+            background-color: rgba(239, 68, 68, 0.05);
+        }
+
+        .stock-low {
+            color: #ef4444;
+            font-weight: 600;
+        }
+
+        .stock-ok {
+            color: #22c55e;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #e5e5e5;
+            margin-bottom: 16px;
+            margin-top: 24px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title:first-child {
+            margin-top: 0;
+        }
+
+        .divider {
+            height: 1px;
+            background-color: #2a2a2a;
+            margin: 24px 0;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .empty-state-text {
+            font-size: 14px;
+        }
+
+        .error {
+            background-color: rgba(239, 68, 68, 0.1);
+            border: 1px solid #ef4444;
+            color: #fca5a5;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            font-size: 13px;
+        }
+
+        .success {
+            background-color: rgba(34, 197, 94, 0.1);
+            border: 1px solid #22c55e;
+            color: #86efac;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            font-size: 13px;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #2a2a2a;
+            border-top-color: #ef4444;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        footer {
+            background-color: #0a0a0a;
+            border-top: 1px solid #2a2a2a;
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+            margin-top: 40px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .action-buttons button {
+            flex: 1;
+            padding: 8px 12px;
+            font-size: 12px;
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 20px;
+            }
+
+            .tabs {
+                gap: 4px;
+            }
+
+            .tab-btn {
+                padding: 10px 12px;
+                font-size: 12px;
+            }
+
+            .card {
+                padding: 12px;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .section-title {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>✦ TatuadorCL</h1>
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="agenda">AGENDA</button>
+                <button class="tab-btn" data-tab="clientes">CLIENTES</button>
+                <button class="tab-btn" data-tab="disenos">DISEÑOS</button>
+                <button class="tab-btn" data-tab="inventario">INVENTARIO</button>
+                <button class="tab-btn" data-tab="finanzas">FINANZAS</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- TAB: AGENDA -->
+        <div id="agenda" class="tab-content active">
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-value" id="appointmentCount">0</div>
+                    <div class="stat-label">Citas Hoy</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="totalDeposit">$0</div>
+                    <div class="stat-label">Depósitos</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="estimatedHours">0h</div>
+                    <div class="stat-label">Horas Estimadas</div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Filtrar por fecha</label>
+                <input type="date" id="agendaDate">
+            </div>
+
+            <button onclick="showAgendaModal()">+ Nueva Cita</button>
+
+            <div id="appointmentsList"></div>
+        </div>
+
+        <!-- TAB: CLIENTES -->
+        <div id="clientes" class="tab-content">
+            <div class="form-group">
+                <input type="text" id="clientSearch" placeholder="Buscar cliente...">
+            </div>
+
+            <button onclick="showClientModal()">+ Nuevo Cliente</button>
+
+            <ul class="client-list" id="clientsList"></ul>
+        </div>
+
+        <!-- TAB: DISEÑOS -->
+        <div id="disenos" class="tab-content">
+            <div class="form-group">
+                <label>Estilo</label>
+                <select id="designStyle">
+                    <option value="">Todos los estilos</option>
+                    <option value="Tradicional">Tradicional</option>
+                    <option value="Neo-tradicional">Neo-tradicional</option>
+                    <option value="Realismo">Realismo</option>
+                    <option value="Blackwork">Blackwork</option>
+                    <option value="Minimalista">Minimalista</option>
+                    <option value="Japonés">Japonés</option>
+                    <option value="Tribal">Tribal</option>
+                    <option value="Lettering">Lettering</option>
+                    <option value="Geométrico">Geométrico</option>
+                    <option value="Acuarela">Acuarela</option>
+                    <option value="Dotwork">Dotwork</option>
+                    <option value="Biomecánico">Biomecánico</option>
+                </select>
+            </div>
+
+            <button onclick="showDesignModal()">+ Nuevo Diseño</button>
+
+            <h2 class="section-title">Calculadora de Presupuesto</h2>
+            <div class="card">
+                <div class="form-group">
+                    <label>Tamaño (cm)</label>
+                    <input type="number" id="designSize" min="1" placeholder="ej: 15">
+                </div>
+                <div class="form-group">
+                    <label>Complejidad (1-5)</label>
+                    <input type="range" id="designComplexity" min="1" max="5" value="3" style="width: 100%;">
+                </div>
+                <div class="form-group">
+                    <label>Tarifa por hora</label>
+                    <input type="number" id="hourlyRate" value="50000" min="10000">
+                </div>
+                <div class="card" style="background-color: #0a0a0a; border: 1px dashed #ef4444;">
+                    <div class="stat-value" id="estimatedPrice">$0</div>
+                    <div class="stat-label">Presupuesto estimado</div>
+                </div>
+            </div>
+
+            <h2 class="section-title">Portafolio</h2>
+            <div id="designsList"></div>
+        </div>
+
+        <!-- TAB: INVENTARIO -->
+        <div id="inventario" class="tab-content">
+            <div class="form-group">
+                <label>Tipo de suministro</label>
+                <select id="inventoryType">
+                    <option value="">Todos</option>
+                    <option value="Tintas">Tintas</option>
+                    <option value="Agujas">Agujas</option>
+                    <option value="Máquinas">Máquinas</option>
+                    <option value="Consumibles">Consumibles</option>
+                    <option value="Equipo">Equipo</option>
+                </select>
+            </div>
+
+            <button onclick="showInventoryModal()">+ Nuevo Suministro</button>
+
+            <h2 class="section-title">Stock Actual</h2>
+            <table class="inventory-table">
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Tipo</th>
+                        <th>Stock</th>
+                        <th>Estado</th>
+                        <th>Vencimiento</th>
+                    </tr>
+                </thead>
+                <tbody id="inventoryTable"></tbody>
+            </table>
+
+            <h2 class="section-title">Historial de Esterilización</h2>
+            <button onclick="logSterilization()">+ Registrar Autoclave</button>
+            <div id="sterilizationLog"></div>
+        </div>
+
+        <!-- TAB: FINANZAS -->
+        <div id="finanzas" class="tab-content">
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-value" id="monthlyRevenue">$0</div>
+                    <div class="stat-label">Ingresos Mes</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="monthlyExpenses">$0</div>
+                    <div class="stat-label">Gastos Mes</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="monthlyProfit">$0</div>
+                    <div class="stat-label">Utilidad Neta</div>
+                </div>
+            </div>
+
+            <h2 class="section-title">Gráfico de Ingresos vs Gastos</h2>
+            <div class="chart-container">
+                <canvas id="revenueChart"></canvas>
+            </div>
+
+            <div class="grid-2">
+                <div>
+                    <h2 class="section-title">Registrar Ingreso</h2>
+                    <button onclick="showRevenueModal()">+ Nuevo Ingreso</button>
+                </div>
+                <div>
+                    <h2 class="section-title">Registrar Gasto</h2>
+                    <button onclick="showExpenseModal()">+ Nuevo Gasto</button>
+                </div>
+            </div>
+
+            <h2 class="section-title">Calculadora de Tarifa Óptima</h2>
+            <div class="card">
+                <div class="form-group">
+                    <label>Horas trabajadas/mes</label>
+                    <input type="number" id="monthlyHours" value="160" min="1">
+                </div>
+                <div class="form-group">
+                    <label>Gastos fijos/mes</label>
+                    <input type="number" id="fixedExpenses" value="500000" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Margen ganancia deseado (%)</label>
+                    <input type="number" id="desiredMargin" value="50" min="0" max="100">
+                </div>
+                <div class="card" style="background-color: #0a0a0a; border: 1px dashed #ef4444;">
+                    <div class="stat-value" id="optimalRate">$0</div>
+                    <div class="stat-label">Tarifa mínima recomendada/hora</div>
+                </div>
+            </div>
+
+            <h2 class="section-title">Transacciones</h2>
+            <button onclick="showTransactionModal()">+ Nueva Transacción</button>
+            <div id="transactionsList"></div>
+        </div>
+    </main>
+
+    <footer>
+        <p>TatuadorCL © 2026 - Sistema de gestión para estudios de tatuajes</p>
+        <p style="margin-top: 8px;">Datos guardados localmente • Última actualización: <span id="lastUpdate">-</span></p>
+    </footer>
+
+    <!-- MODALS -->
+    <div id="agendaModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Nueva Cita</h2>
+                <button class="modal-close" onclick="closeModal('agendaModal')">&times;</button>
+            </div>
+            <div id="agendaError"></div>
+            <div class="form-group">
+                <label>Cliente</label>
+                <select id="appointmentClient"></select>
+            </div>
+            <div class="form-group">
+                <label>Fecha y hora</label>
+                <input type="datetime-local" id="appointmentDateTime">
+            </div>
+            <div class="form-group">
+                <label>Descripción del diseño</label>
+                <textarea id="appointmentDesign"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Zona del cuerpo</label>
+                <select id="appointmentBodyPart">
+                    <option value="">Seleccionar...</option>
+                    <option value="Brazo">Brazo</option>
+                    <option value="Pierna">Pierna</option>
+                    <option value="Pecho">Pecho</option>
+                    <option value="Espalda">Espalda</option>
+                    <option value="Cuello">Cuello</option>
+                    <option value="Muñeca">Muñeca</option>
+                    <option value="Tobillo">Tobillo</option>
+                    <option value="Mano">Mano</option>
+                    <option value="Pie">Pie</option>
+                    <option value="Otro">Otro</option>
+                </select>
+            </div>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Tamaño (cm)</label>
+                    <input type="number" id="appointmentSize" min="1">
+                </div>
+                <div class="form-group">
+                    <label>Horas estimadas</label>
+                    <input type="number" id="appointmentHours" min="0.5" step="0.5">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Tipo de sesión</label>
+                <select id="appointmentType">
+                    <option value="Nuevo">Nuevo</option>
+                    <option value="Continuación">Continuación</option>
+                    <option value="Retoque">Retoque</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Depósito (CLP)</label>
+                <input type="number" id="appointmentDeposit" min="0">
+            </div>
+            <div class="form-group">
+                <label>Walk-in</label>
+                <select id="appointmentWalkIn">
+                    <option value="false">No</option>
+                    <option value="true">Sí</option>
+                </select>
+            </div>
+            <div class="button-group">
+                <button onclick="closeModal('agendaModal')" class="secondary">Cancelar</button>
+                <button onclick="saveAppointment()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="clientModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Nuevo Cliente</h2>
+                <button class="modal-close" onclick="closeModal('clientModal')">&times;</button>
+            </div>
+            <div id="clientError"></div>
+            <div class="form-group">
+                <label>Nombre</label>
+                <input type="text" id="clientName">
+            </div>
+            <div class="form-group">
+                <label>Teléfono</label>
+                <input type="tel" id="clientPhone" placeholder="+56 9 ...">
+            </div>
+            <div class="form-group">
+                <label>RUT</label>
+                <input type="text" id="clientRut" placeholder="ej: 12345678-9">
+            </div>
+            <div class="form-group">
+                <label>Edad</label>
+                <input type="number" id="clientAge" min="18">
+            </div>
+            <div class="form-group">
+                <label>Alergias</label>
+                <textarea id="clientAllergies" placeholder="Especificar alergias a tintas o materiales"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Tipo de piel</label>
+                <select id="clientSkinType">
+                    <option value="">Seleccionar...</option>
+                    <option value="Sensible">Sensible</option>
+                    <option value="Normal">Normal</option>
+                    <option value="Grasosa">Grasosa</option>
+                    <option value="Mixta">Mixta</option>
+                    <option value="Oscura">Oscura</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>VIP</label>
+                <select id="clientVip">
+                    <option value="false">No</option>
+                    <option value="true">Sí</option>
+                </select>
+            </div>
+            <div class="button-group">
+                <button onclick="closeModal('clientModal')" class="secondary">Cancelar</button>
+                <button onclick="saveClient()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="designModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Nuevo Diseño</h2>
+                <button class="modal-close" onclick="closeModal('designModal')">&times;</button>
+            </div>
+            <div id="designError"></div>
+            <div class="form-group">
+                <label>Nombre del diseño</label>
+                <input type="text" id="designName">
+            </div>
+            <div class="form-group">
+                <label>Estilo</label>
+                <select id="designStyleInput">
+                    <option value="">Seleccionar...</option>
+                    <option value="Tradicional">Tradicional</option>
+                    <option value="Neo-tradicional">Neo-tradicional</option>
+                    <option value="Realismo">Realismo</option>
+                    <option value="Blackwork">Blackwork</option>
+                    <option value="Minimalista">Minimalista</option>
+                    <option value="Japonés">Japonés</option>
+                    <option value="Tribal">Tribal</option>
+                    <option value="Lettering">Lettering</option>
+                    <option value="Geométrico">Geométrico</option>
+                    <option value="Acuarela">Acuarela</option>
+                    <option value="Dotwork">Dotwork</option>
+                    <option value="Biomecánico">Biomecánico</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Descripción</label>
+                <textarea id="designDescription"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Estado</label>
+                <select id="designStatus">
+                    <option value="Disponible">Disponible</option>
+                    <option value="Reservado">Reservado</option>
+                    <option value="Tatuado">Tatuado</option>
+                    <option value="Personalizado">Personalizado</option>
+                </select>
+            </div>
+            <div class="button-group">
+                <button onclick="closeModal('designModal')" class="secondary">Cancelar</button>
+                <button onclick="saveDesign()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="inventoryModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Nuevo Suministro</h2>
+                <button class="modal-close" onclick="closeModal('inventoryModal')">&times;</button>
+            </div>
+            <div id="inventoryError"></div>
+            <div class="form-group">
+                <label>Producto</label>
+                <input type="text" id="inventoryProduct">
+            </div>
+            <div class="form-group">
+                <label>Tipo</label>
+                <select id="inventoryTypeInput">
+                    <option value="">Seleccionar...</option>
+                    <option value="Tintas">Tintas</option>
+                    <option value="Agujas">Agujas</option>
+                    <option value="Máquinas">Máquinas</option>
+                    <option value="Consumibles">Consumibles</option>
+                    <option value="Equipo">Equipo</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Marca/Proveedor</label>
+                <input type="text" id="inventoryBrand">
+            </div>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Stock</label>
+                    <input type="number" id="inventoryStock" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Stock mínimo</label>
+                    <input type="number" id="inventoryMinStock" min="0">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Fecha de vencimiento</label>
+                <input type="date" id="inventoryExpiry">
+            </div>
+            <div class="form-group">
+                <label>Costo unitario</label>
+                <input type="number" id="inventoryCost" min="0">
+            </div>
+            <div class="button-group">
+                <button onclick="closeModal('inventoryModal')" class="secondary">Cancelar</button>
+                <button onclick="saveInventory()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="revenueModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Registrar Ingreso</h2>
+                <button class="modal-close" onclick="closeModal('revenueModal')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>Monto (CLP)</label>
+                <input type="number" id="revenueAmount" min="0">
+            </div>
+            <div class="form-group">
+                <label>Método de pago</label>
+                <select id="revenueMethod">
+                    <option value="Efectivo">Efectivo</option>
+                    <option value="Transferencia">Transferencia</option>
+                    <option value="Tarjeta">Tarjeta</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Concepto</label>
+                <select id="revenueType">
+                    <option value="Tatuaje">Tatuaje</option>
+                    <option value="Diseño">Diseño</option>
+                    <option value="Consulta">Consulta</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Boleta/Factura</label>
+                <input type="text" id="revenueReceipt">
+            </div>
+            <div class="button-group">
+                <button onclick="closeModal('revenueModal')" class="secondary">Cancelar</button>
+                <button onclick="saveRevenue()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="expenseModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Registrar Gasto</h2>
+                <button class="modal-close" onclick="closeModal('expenseModal')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>Monto (CLP)</label>
+                <input type="number" id="expenseAmount" min="0">
+            </div>
+            <div class="form-group">
+                <label>Categoría</label>
+                <select id="expenseCategory">
+                    <option value="Suministros">Suministros</option>
+                    <option value="Arriendo">Arriendo</option>
+                    <option value="Servicios">Servicios</option>
+                    <option value="Marketing">Marketing</option>
+                    <option value="Otro">Otro</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Descripción</label>
+                <input type="text" id="expenseDescription">
+            </div>
+            <div class="form-group">
+                <label>Boleta/Factura</label>
+                <input type="text" id="expenseReceipt">
+            </div>
+            <div class="button-group">
+                <button onclick="closeModal('expenseModal')" class="secondary">Cancelar</button>
+                <button onclick="saveExpense()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="transactionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Nueva Transacción</h2>
+                <button class="modal-close" onclick="closeModal('transactionModal')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>Tipo</label>
+                <select id="transactionType">
+                    <option value="Ingreso">Ingreso</option>
+                    <option value="Gasto">Gasto</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Monto (CLP)</label>
+                <input type="number" id="transactionAmount" min="0">
+            </div>
+            <div class="form-group">
+                <label>Descripción</label>
+                <input type="text" id="transactionDescription">
+            </div>
+            <div class="form-group">
+                <label>Fecha</label>
+                <input type="date" id="transactionDate">
+            </div>
+            <div class="button-group">
+                <button onclick="closeModal('transactionModal')" class="secondary">Cancelar</button>
+                <button onclick="saveTransaction()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============ PWA SETUP ============
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('data:application/javascript;base64,KGZ1bmN0aW9uKCkgewogIGNvbnN0IGNBQ0hFX05BTUU9J3RhdHVhZG9yY2wtdjEnOwogIGNvbnN0IHVybHNUb0NhY2hlPVsKICAgIycuLycsCiAgICAnLi9pbmRleC5odG1sJwogIF07CiAgc2VsZi5hZGRFdmVudExpc3RlbmVyKCdpbnN0YWxsJyxldmVudD0+ewogICAgZXZlbnQud2FpdFVudGlsKHNlbGYuY2FjaGVzLm9wZW4oY0FDSEVfTkFNRSkudGhlbihjYWNoZT0+Y2FjaGUuYWRkQWxsKHVybHNUb0NhY2hlKSkpOwogIH0pOwogIHNlbGYuYWRkRXZlbnRMaXN0ZW5lcignZmV0Y2gnLGV2ZW50PT4gewogICAgaWYoZXZlbnQucmVxdWVzdC5tZXRob2QhPT0nR0VUJykgcmV0dXJuOwogICAgZXZlbnQucmVzcG9uZFdpdGgoCiAgICAgIGNhY2hlcy5tYXRjaChldmVudC5yZXF1ZXN0KS50aGVuKHJlc3BvbnNlPT4gcmVzcG9uc2V8fGZldGNoKGV2ZW50LnJlcXVlc3QpKQogICAgKTsKICB9KTsKfSkoKTs=', { type: 'module' });
+        }
+
+        // ============ DATA STRUCTURE ============
+        const DB = {
+            appointments: [],
+            clients: [],
+            designs: [],
+            inventory: [],
+            revenue: [],
+            expenses: [],
+            transactions: [],
+            sterilization: []
+        };
+
+        const DESIGN_ICONS = {
+            'Tradicional': '🦅',
+            'Neo-tradicional': '🌹',
+            'Realismo': '📸',
+            'Blackwork': '⬛',
+            'Minimalista': '◯',
+            'Japonés': '🗻',
+            'Tribal': '🛡️',
+            'Lettering': '🔤',
+            'Geométrico': '◈',
+            'Acuarela': '🎨',
+            'Dotwork': '⋯',
+            'Biomecánico': '⚙️'
+        };
+
+        // ============ STORAGE ============
+        function loadData() {
+            try {
+                const stored = localStorage.getItem('tatuadorCL-data');
+                if (stored) {
+                    const data = JSON.parse(stored);
+                    Object.assign(DB, data);
+                }
+            } catch (e) {
+                console.error('Error loading data:', e);
+            }
+        }
+
+        function saveData() {
+            try {
+                localStorage.setItem('tatuadorCL-data', JSON.stringify(DB));
+                updateLastUpdate();
+            } catch (e) {
+                console.error('Error saving data:', e);
+            }
+        }
+
+        function updateLastUpdate() {
+            try {
+                const now = new Date().toLocaleString('es-CL', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                document.getElementById('lastUpdate').textContent = now;
+            } catch (e) {
+                console.error('Error updating timestamp:', e);
+            }
+        }
+
+        // ============ MODAL FUNCTIONS ============
+        function openModal(id) {
+            try {
+                document.getElementById(id).classList.add('active');
+            } catch (e) {
+                console.error('Error opening modal:', e);
+            }
+        }
+
+        function closeModal(id) {
+            try {
+                document.getElementById(id).classList.remove('active');
+            } catch (e) {
+                console.error('Error closing modal:', e);
+            }
+        }
+
+        // ============ TAB NAVIGATION ============
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                try {
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    this.classList.add('active');
+                    document.getElementById(this.dataset.tab).classList.add('active');
+                    if (this.dataset.tab === 'finanzas') renderRevenueChart();
+                } catch (e) {
+                    console.error('Error switching tabs:', e);
+                }
+            });
+        });
+
+        // ============ AGENDA TAB ============
+        function showAgendaModal() {
+            try {
+                const select = document.getElementById('appointmentClient');
+                select.innerHTML = '<option value="">Seleccionar cliente...</option>';
+                DB.clients.forEach((c, i) => {
+                    const option = document.createElement('option');
+                    option.value = i;
+                    option.textContent = c.name;
+                    select.appendChild(option);
+                });
+                document.getElementById('appointmentDateTime').value = new Date().toISOString().slice(0, 16);
+                openModal('agendaModal');
+            } catch (e) {
+                console.error('Error showing agenda modal:', e);
+            }
+        }
+
+        function saveAppointment() {
+            try {
+                const clientIdx = document.getElementById('appointmentClient').value;
+                const dateTime = document.getElementById('appointmentDateTime').value;
+                const design = document.getElementById('appointmentDesign').value.trim();
+                const bodyPart = document.getElementById('appointmentBodyPart').value;
+                const size = parseFloat(document.getElementById('appointmentSize').value) || 0;
+                const hours = parseFloat(document.getElementById('appointmentHours').value) || 0;
+                const type = document.getElementById('appointmentType').value;
+                const deposit = parseFloat(document.getElementById('appointmentDeposit').value) || 0;
+                const walkIn = document.getElementById('appointmentWalkIn').value === 'true';
+
+                const errDiv = document.getElementById('agendaError');
+
+                if (!clientIdx && !walkIn) {
+                    errDiv.innerHTML = '<div class="error">Selecciona cliente o marca como Walk-in</div>';
+                    return;
+                }
+                if (!dateTime) {
+                    errDiv.innerHTML = '<div class="error">Fecha y hora requerida</div>';
+                    return;
+                }
+                if (!bodyPart) {
+                    errDiv.innerHTML = '<div class="error">Zona del cuerpo requerida</div>';
+                    return;
+                }
+
+                const appointment = {
+                    id: Date.now(),
+                    clientIdx: clientIdx ? parseInt(clientIdx) : null,
+                    dateTime,
+                    design,
+                    bodyPart,
+                    size,
+                    hours,
+                    type,
+                    deposit,
+                    walkIn,
+                    created: new Date().toISOString()
+                };
+
+                DB.appointments.push(appointment);
+                saveData();
+                errDiv.innerHTML = '';
+                closeModal('agendaModal');
+                renderAgenda();
+            } catch (e) {
+                console.error('Error saving appointment:', e);
+                document.getElementById('agendaError').innerHTML = '<div class="error">Error al guardar cita</div>';
+            }
+        }
+
+        function renderAgenda() {
+            try {
+                const today = document.getElementById('agendaDate').value || new Date().toISOString().split('T')[0];
+                const filtered = DB.appointments.filter(a => a.dateTime.startsWith(today));
+
+                let totalDeposit = 0;
+                let totalHours = 0;
+
+                const html = filtered.map(apt => {
+                    totalDeposit += apt.deposit;
+                    totalHours += apt.hours;
+                    const client = apt.clientIdx !== null ? DB.clients[apt.clientIdx] : { name: 'Walk-in' };
+                    const time = new Date(apt.dateTime).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+                    return `
+                        <div class="card">
+                            <div class="appointment-time">${time}</div>
+                            <div class="appointment-details"><strong>${client.name}</strong></div>
+                            <div class="appointment-details">${apt.bodyPart} • ${apt.size}cm • ${apt.hours}h</div>
+                            <div class="appointment-details">${apt.design}</div>
+                            <div style="display: flex; gap: 8px; margin-top: 8px;">
+                                <span class="badge badge-${apt.type.toLowerCase()}">${apt.type}</span>
+                                ${apt.deposit > 0 ? `<span class="badge" style="background-color: rgba(34,197,94,0.2); color: #22c55e;">Dep: $${apt.deposit.toLocaleString()}</span>` : ''}
+                            </div>
+                            <div class="action-buttons">
+                                <button onclick="deleteAppointment(${apt.id})" class="secondary" style="flex: none; width: auto;">Eliminar</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                document.getElementById('appointmentsList').innerHTML = html || '<div class="empty-state"><div class="empty-state-icon">📅</div><div class="empty-state-text">Sin citas para esta fecha</div></div>';
+
+                document.getElementById('appointmentCount').textContent = filtered.length;
+                document.getElementById('totalDeposit').textContent = '$' + totalDeposit.toLocaleString();
+                document.getElementById('estimatedHours').textContent = totalHours.toFixed(1) + 'h';
+            } catch (e) {
+                console.error('Error rendering agenda:', e);
+            }
+        }
+
+        function deleteAppointment(id) {
+            try {
+                if (confirm('¿Eliminar cita?')) {
+                    DB.appointments = DB.appointments.filter(a => a.id !== id);
+                    saveData();
+                    renderAgenda();
+                }
+            } catch (e) {
+                console.error('Error deleting appointment:', e);
+            }
+        }
+
+        document.getElementById('agendaDate').addEventListener('change', renderAgenda);
+        document.getElementById('agendaDate').value = new Date().toISOString().split('T')[0];
+
+        // ============ CLIENTES TAB ============
+        function showClientModal() {
+            try {
+                document.getElementById('clientError').innerHTML = '';
+                document.getElementById('clientName').value = '';
+                document.getElementById('clientPhone').value = '';
+                document.getElementById('clientRut').value = '';
+                document.getElementById('clientAge').value = '18';
+                document.getElementById('clientAllergies').value = '';
+                document.getElementById('clientSkinType').value = '';
+                document.getElementById('clientVip').value = 'false';
+                openModal('clientModal');
+            } catch (e) {
+                console.error('Error showing client modal:', e);
+            }
+        }
+
+        function saveClient() {
+            try {
+                const name = document.getElementById('clientName').value.trim();
+                const phone = document.getElementById('clientPhone').value.trim();
+                const rut = document.getElementById('clientRut').value.trim();
+                const age = parseInt(document.getElementById('clientAge').value) || 0;
+                const allergies = document.getElementById('clientAllergies').value.trim();
+                const skinType = document.getElementById('clientSkinType').value;
+                const vip = document.getElementById('clientVip').value === 'true';
+
+                const errDiv = document.getElementById('clientError');
+
+                if (!name) {
+                    errDiv.innerHTML = '<div class="error">Nombre requerido</div>';
+                    return;
+                }
+                if (!phone) {
+                    errDiv.innerHTML = '<div class="error">Teléfono requerido</div>';
+                    return;
+                }
+                if (!rut) {
+                    errDiv.innerHTML = '<div class="error">RUT requerido</div>';
+                    return;
+                }
+                if (age < 18) {
+                    errDiv.innerHTML = '<div class="error">Debe ser mayor de 18 años</div>';
+                    return;
+                }
+
+                const client = {
+                    id: Date.now(),
+                    name,
+                    phone,
+                    rut,
+                    age,
+                    allergies,
+                    skinType,
+                    vip,
+                    tattooHistory: [],
+                    consentForm: false,
+                    aftercareSent: false,
+                    created: new Date().toISOString()
+                };
+
+                DB.clients.push(client);
+                saveData();
+                errDiv.innerHTML = '';
+                closeModal('clientModal');
+                renderClients();
+            } catch (e) {
+                console.error('Error saving client:', e);
+                document.getElementById('clientError').innerHTML = '<div class="error">Error al guardar cliente</div>';
+            }
+        }
+
+        function renderClients() {
+            try {
+                const search = (document.getElementById('clientSearch').value || '').toLowerCase();
+                const filtered = DB.clients.filter(c =>
+                    c.name.toLowerCase().includes(search) ||
+                    c.phone.includes(search)
+                );
+
+                const html = filtered.map((c, i) => `
+                    <li class="client-item">
+                        <div>
+                            <div class="client-name">${c.name} ${c.vip ? '<span class="badge badge-vip">VIP</span>' : ''}</div>
+                            <div class="client-meta">📱 ${c.phone} • RUT: ${c.rut}</div>
+                            <div class="client-meta">Edad: ${c.age} • Piel: ${c.skinType || '-'}</div>
+                            ${c.allergies ? `<div class="client-meta">⚠️ Alergias: ${c.allergies}</div>` : ''}
+                        </div>
+                        <button onclick="deleteClient(${c.id})" class="secondary" style="padding: 6px 12px; font-size: 12px;">✕</button>
+                    </li>
+                `).join('');
+
+                document.getElementById('clientsList').innerHTML = html || '<div class="empty-state"><div class="empty-state-icon">👤</div><div class="empty-state-text">Sin clientes</div></div>';
+            } catch (e) {
+                console.error('Error rendering clients:', e);
+            }
+        }
+
+        function deleteClient(id) {
+            try {
+                if (confirm('¿Eliminar cliente y su historial?')) {
+                    DB.clients = DB.clients.filter(c => c.id !== id);
+                    saveData();
+                    renderClients();
+                }
+            } catch (e) {
+                console.error('Error deleting client:', e);
+            }
+        }
+
+        document.getElementById('clientSearch').addEventListener('input', renderClients);
+
+        // ============ DISEÑOS TAB ============
+        function showDesignModal() {
+            try {
+                document.getElementById('designError').innerHTML = '';
+                document.getElementById('designName').value = '';
+                document.getElementById('designStyleInput').value = '';
+                document.getElementById('designDescription').value = '';
+                document.getElementById('designStatus').value = 'Disponible';
+                openModal('designModal');
+            } catch (e) {
+                console.error('Error showing design modal:', e);
+            }
+        }
+
+        function saveDesign() {
+            try {
+                const name = document.getElementById('designName').value.trim();
+                const style = document.getElementById('designStyleInput').value;
+                const description = document.getElementById('designDescription').value.trim();
+                const status = document.getElementById('designStatus').value;
+
+                const errDiv = document.getElementById('designError');
+
+                if (!name) {
+                    errDiv.innerHTML = '<div class="error">Nombre requerido</div>';
+                    return;
+                }
+                if (!style) {
+                    errDiv.innerHTML = '<div class="error">Estilo requerido</div>';
+                    return;
+                }
+
+                const design = {
+                    id: Date.now(),
+                    name,
+                    style,
+                    description,
+                    status,
+                    created: new Date().toISOString()
+                };
+
+                DB.designs.push(design);
+                saveData();
+                errDiv.innerHTML = '';
+                closeModal('designModal');
+                renderDesigns();
+            } catch (e) {
+                console.error('Error saving design:', e);
+                document.getElementById('designError').innerHTML = '<div class="error">Error al guardar diseño</div>';
+            }
+        }
+
+        function renderDesigns() {
+            try {
+                const style = document.getElementById('designStyle').value;
+                const filtered = style ? DB.designs.filter(d => d.style === style) : DB.designs;
+
+                const html = filtered.map(d => `
+                    <div class="design-item">
+                        <div class="design-icon">${DESIGN_ICONS[d.style] || '✦'}</div>
+                        <div class="design-name">${d.name}</div>
+                        <div style="font-size: 11px; color: #999; margin-top: 4px;">${d.style}</div>
+                        <div style="font-size: 11px; color: #666; margin-top: 4px;">${d.status}</div>
+                        <button onclick="deleteDesign(${d.id})" class="secondary" style="margin-top: 8px; padding: 4px 8px; font-size: 11px; width: 100%;">Eliminar</button>
+                    </div>
+                `).join('');
+
+                document.getElementById('designsList').innerHTML = html || '<div class="empty-state"><div class="empty-state-icon">🎨</div><div class="empty-state-text">Sin diseños</div></div>';
+            } catch (e) {
+                console.error('Error rendering designs:', e);
+            }
+        }
+
+        function deleteDesign(id) {
+            try {
+                if (confirm('¿Eliminar diseño?')) {
+                    DB.designs = DB.designs.filter(d => d.id !== id);
+                    saveData();
+                    renderDesigns();
+                }
+            } catch (e) {
+                console.error('Error deleting design:', e);
+            }
+        }
+
+        document.getElementById('designStyle').addEventListener('change', renderDesigns);
+
+        // Design calculator
+        document.getElementById('designSize').addEventListener('input', calculatePrice);
+        document.getElementById('designComplexity').addEventListener('input', calculatePrice);
+        document.getElementById('hourlyRate').addEventListener('input', calculatePrice);
+
+        function calculatePrice() {
+            try {
+                const size = parseFloat(document.getElementById('designSize').value) || 0;
+                const complexity = parseFloat(document.getElementById('designComplexity').value) || 1;
+                const rate = parseFloat(document.getElementById('hourlyRate').value) || 50000;
+
+                const baseHours = (size / 10) * (complexity / 3);
+                const price = baseHours * rate;
+
+                document.getElementById('estimatedPrice').textContent = '$' + Math.round(price).toLocaleString();
+            } catch (e) {
+                console.error('Error calculating price:', e);
+            }
+        }
+
+        // ============ INVENTARIO TAB ============
+        function showInventoryModal() {
+            try {
+                document.getElementById('inventoryError').innerHTML = '';
+                document.getElementById('inventoryProduct').value = '';
+                document.getElementById('inventoryTypeInput').value = '';
+                document.getElementById('inventoryBrand').value = '';
+                document.getElementById('inventoryStock').value = '0';
+                document.getElementById('inventoryMinStock').value = '0';
+                document.getElementById('inventoryExpiry').value = '';
+                document.getElementById('inventoryCost').value = '0';
+                openModal('inventoryModal');
+            } catch (e) {
+                console.error('Error showing inventory modal:', e);
+            }
+        }
+
+        function saveInventory() {
+            try {
+                const product = document.getElementById('inventoryProduct').value.trim();
+                const type = document.getElementById('inventoryTypeInput').value;
+                const brand = document.getElementById('inventoryBrand').value.trim();
+                const stock = parseFloat(document.getElementById('inventoryStock').value) || 0;
+                const minStock = parseFloat(document.getElementById('inventoryMinStock').value) || 0;
+                const expiry = document.getElementById('inventoryExpiry').value;
+                const cost = parseFloat(document.getElementById('inventoryCost').value) || 0;
+
+                const errDiv = document.getElementById('inventoryError');
+
+                if (!product) {
+                    errDiv.innerHTML = '<div class="error">Producto requerido</div>';
+                    return;
+                }
+                if (!type) {
+                    errDiv.innerHTML = '<div class="error">Tipo requerido</div>';
+                    return;
+                }
+
+                const item = {
+                    id: Date.now(),
+                    product,
+                    type,
+                    brand,
+                    stock,
+                    minStock,
+                    expiry,
+                    cost,
+                    created: new Date().toISOString()
+                };
+
+                DB.inventory.push(item);
+                saveData();
+                errDiv.innerHTML = '';
+                closeModal('inventoryModal');
+                renderInventory();
+            } catch (e) {
+                console.error('Error saving inventory:', e);
+                document.getElementById('inventoryError').innerHTML = '<div class="error">Error al guardar</div>';
+            }
+        }
+
+        function renderInventory() {
+            try {
+                const type = document.getElementById('inventoryType').value;
+                const filtered = type ? DB.inventory.filter(i => i.type === type) : DB.inventory;
+
+                const html = filtered.map(item => {
+                    const isLow = item.stock <= item.minStock;
+                    const isExpired = item.expiry && new Date(item.expiry) < new Date();
+                    return `
+                        <tr>
+                            <td><strong>${item.product}</strong><br><span style="font-size: 11px; color: #999;">${item.brand}</span></td>
+                            <td>${item.type}</td>
+                            <td>${item.stock} ${isLow ? '<span class="stock-low">⚠️ BAJO</span>' : '<span class="stock-ok">✓</span>'}</td>
+                            <td>${isExpired ? '<span class="stock-low">VENCIDO</span>' : (item.expiry ? new Date(item.expiry).toLocaleDateString('es-CL') : '-')}</td>
+                            <td><button onclick="deleteInventoryItem(${item.id})" class="secondary" style="padding: 4px 8px; font-size: 11px;">Eliminar</button></td>
+                        </tr>
+                    `;
+                }).join('');
+
+                document.getElementById('inventoryTable').innerHTML = html || '<tr><td colspan="5" style="text-align: center; color: #999; padding: 20px;">Sin suministros</td></tr>';
+            } catch (e) {
+                console.error('Error rendering inventory:', e);
+            }
+        }
+
+        function deleteInventoryItem(id) {
+            try {
+                if (confirm('¿Eliminar suministro?')) {
+                    DB.inventory = DB.inventory.filter(i => i.id !== id);
+                    saveData();
+                    renderInventory();
+                }
+            } catch (e) {
+                console.error('Error deleting inventory item:', e);
+            }
+        }
+
+        function logSterilization() {
+            try {
+                const note = prompt('Esterilización de autoclave - Fecha/Hora/Notas:');
+                if (note) {
+                    DB.sterilization.push({
+                        id: Date.now(),
+                        note,
+                        date: new Date().toISOString()
+                    });
+                    saveData();
+                    renderSterilization();
+                }
+            } catch (e) {
+                console.error('Error logging sterilization:', e);
+            }
+        }
+
+        function renderSterilization() {
+            try {
+                const html = DB.sterilization.slice(-10).reverse().map(s =>
+                    `<div class="card" style="background-color: #0a0a0a;"><strong>✓ Esterilizado</strong><br><small style="color: #999;">${new Date(s.date).toLocaleString('es-CL')}</small><br><div style="margin-top: 6px;">${s.note}</div></div>`
+                ).join('');
+                document.getElementById('sterilizationLog').innerHTML = html || '<div class="empty-state"><div class="empty-state-text">Sin registros</div></div>';
+            } catch (e) {
+                console.error('Error rendering sterilization:', e);
+            }
+        }
+
+        document.getElementById('inventoryType').addEventListener('change', renderInventory);
+
+        // ============ FINANZAS TAB ============
+        function showRevenueModal() {
+            try {
+                document.getElementById('revenueAmount').value = '';
+                document.getElementById('revenueMethod').value = 'Efectivo';
+                document.getElementById('revenueType').value = 'Tatuaje';
+                document.getElementById('revenueReceipt').value = '';
+                openModal('revenueModal');
+            } catch (e) {
+                console.error('Error showing revenue modal:', e);
+            }
+        }
+
+        function saveRevenue() {
+            try {
+                const amount = parseFloat(document.getElementById('revenueAmount').value) || 0;
+                const method = document.getElementById('revenueMethod').value;
+                const type = document.getElementById('revenueType').value;
+                const receipt = document.getElementById('revenueReceipt').value.trim();
+
+                if (amount <= 0) {
+                    alert('Monto debe ser mayor a 0');
+                    return;
+                }
+
+                DB.revenue.push({
+                    id: Date.now(),
+                    amount,
+                    method,
+                    type,
+                    receipt,
+                    date: new Date().toISOString()
+                });
+
+                DB.transactions.push({
+                    id: Date.now(),
+                    type: 'Ingreso',
+                    amount,
+                    description: type,
+                    date: new Date().toISOString()
+                });
+
+                saveData();
+                closeModal('revenueModal');
+                renderFinances();
+                renderTransactions();
+            } catch (e) {
+                console.error('Error saving revenue:', e);
+            }
+        }
+
+        function showExpenseModal() {
+            try {
+                document.getElementById('expenseAmount').value = '';
+                document.getElementById('expenseCategory').value = 'Suministros';
+                document.getElementById('expenseDescription').value = '';
+                document.getElementById('expenseReceipt').value = '';
+                openModal('expenseModal');
+            } catch (e) {
+                console.error('Error showing expense modal:', e);
+            }
+        }
+
+        function saveExpense() {
+            try {
+                const amount = parseFloat(document.getElementById('expenseAmount').value) || 0;
+                const category = document.getElementById('expenseCategory').value;
+                const description = document.getElementById('expenseDescription').value.trim();
+                const receipt = document.getElementById('expenseReceipt').value.trim();
+
+                if (amount <= 0) {
+                    alert('Monto debe ser mayor a 0');
+                    return;
+                }
+
+                DB.expenses.push({
+                    id: Date.now(),
+                    amount,
+                    category,
+                    description,
+                    receipt,
+                    date: new Date().toISOString()
+                });
+
+                DB.transactions.push({
+                    id: Date.now(),
+                    type: 'Gasto',
+                    amount,
+                    description: category,
+                    date: new Date().toISOString()
+                });
+
+                saveData();
+                closeModal('expenseModal');
+                renderFinances();
+                renderTransactions();
+            } catch (e) {
+                console.error('Error saving expense:', e);
+            }
+        }
+
+        function showTransactionModal() {
+            try {
+                document.getElementById('transactionType').value = 'Ingreso';
+                document.getElementById('transactionAmount').value = '';
+                document.getElementById('transactionDescription').value = '';
+                document.getElementById('transactionDate').value = new Date().toISOString().split('T')[0];
+                openModal('transactionModal');
+            } catch (e) {
+                console.error('Error showing transaction modal:', e);
+            }
+        }
+
+        function saveTransaction() {
+            try {
+                const type = document.getElementById('transactionType').value;
+                const amount = parseFloat(document.getElementById('transactionAmount').value) || 0;
+                const description = document.getElementById('transactionDescription').value.trim();
+                const date = document.getElementById('transactionDate').value;
+
+                if (amount <= 0) {
+                    alert('Monto debe ser mayor a 0');
+                    return;
+                }
+
+                DB.transactions.push({
+                    id: Date.now(),
+                    type,
+                    amount,
+                    description,
+                    date: new Date(date).toISOString()
+                });
+
+                saveData();
+                closeModal('transactionModal');
+                renderTransactions();
+                renderFinances();
+            } catch (e) {
+                console.error('Error saving transaction:', e);
+            }
+        }
+
+        function renderFinances() {
+            try {
+                const now = new Date();
+                const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+                const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+                const monthRevenue = DB.revenue.filter(r => {
+                    const d = new Date(r.date);
+                    return d >= monthStart && d <= monthEnd;
+                }).reduce((sum, r) => sum + r.amount, 0);
+
+                const monthExpenses = DB.expenses.filter(e => {
+                    const d = new Date(e.date);
+                    return d >= monthStart && d <= monthEnd;
+                }).reduce((sum, e) => sum + e.amount, 0);
+
+                document.getElementById('monthlyRevenue').textContent = '$' + monthRevenue.toLocaleString();
+                document.getElementById('monthlyExpenses').textContent = '$' + monthExpenses.toLocaleString();
+                document.getElementById('monthlyProfit').textContent = '$' + (monthRevenue - monthExpenses).toLocaleString();
+
+                // Optimal rate calculator
+                const hours = parseFloat(document.getElementById('monthlyHours').value) || 160;
+                const fixed = parseFloat(document.getElementById('fixedExpenses').value) || 500000;
+                const margin = parseFloat(document.getElementById('desiredMargin').value) || 50;
+
+                const needed = fixed / (hours * (1 - (margin / 100)));
+                document.getElementById('optimalRate').textContent = '$' + Math.round(needed).toLocaleString();
+            } catch (e) {
+                console.error('Error rendering finances:', e);
+            }
+        }
+
+        function renderTransactions() {
+            try {
+                const html = DB.transactions.slice(-20).reverse().map(t => `
+                    <div class="card" style="border-left-color: ${t.type === 'Ingreso' ? '#22c55e' : '#ef4444'};">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-weight: 600; color: ${t.type === 'Ingreso' ? '#22c55e' : '#ef4444'};">${t.type}</div>
+                                <div style="font-size: 13px; color: #999;">${t.description}</div>
+                                <div style="font-size: 11px; color: #666; margin-top: 4px;">${new Date(t.date).toLocaleDateString('es-CL')}</div>
+                            </div>
+                            <div style="font-size: 18px; font-weight: 700; color: ${t.type === 'Ingreso' ? '#22c55e' : '#fca5a5'};">
+                                ${t.type === 'Ingreso' ? '+' : '-'}$${t.amount.toLocaleString()}
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+                document.getElementById('transactionsList').innerHTML = html || '<div class="empty-state"><div class="empty-state-text">Sin transacciones</div></div>';
+            } catch (e) {
+                console.error('Error rendering transactions:', e);
+            }
+        }
+
+        // Chart setup
+        let revenueChart = null;
+
+        function renderRevenueChart() {
+            try {
+                const now = new Date();
+                const months = [];
+                const revenues = [];
+                const expenses = [];
+
+                for (let i = 5; i >= 0; i--) {
+                    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                    const monthStart = new Date(d.getFullYear(), d.getMonth(), 1);
+                    const monthEnd = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+
+                    months.push(d.toLocaleString('es-CL', { month: 'short' }));
+
+                    const rev = DB.revenue.filter(r => {
+                        const rd = new Date(r.date);
+                        return rd >= monthStart && rd <= monthEnd;
+                    }).reduce((sum, r) => sum + r.amount, 0);
+
+                    const exp = DB.expenses.filter(e => {
+                        const ed = new Date(e.date);
+                        return ed >= monthStart && ed <= monthEnd;
+                    }).reduce((sum, e) => sum + e.amount, 0);
+
+                    revenues.push(rev / 1000);
+                    expenses.push(exp / 1000);
+                }
+
+                const ctx = document.getElementById('revenueChart');
+                if (!ctx) return;
+
+                if (revenueChart) {
+                    revenueChart.data.labels = months;
+                    revenueChart.data.datasets[0].data = revenues;
+                    revenueChart.data.datasets[1].data = expenses;
+                    revenueChart.update();
+                } else {
+                    revenueChart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: months,
+                            datasets: [
+                                {
+                                    label: 'Ingresos (k CLP)',
+                                    data: revenues,
+                                    borderColor: '#22c55e',
+                                    backgroundColor: 'rgba(34, 197, 94, 0.05)',
+                                    tension: 0.4,
+                                    fill: true
+                                },
+                                {
+                                    label: 'Gastos (k CLP)',
+                                    data: expenses,
+                                    borderColor: '#ef4444',
+                                    backgroundColor: 'rgba(239, 68, 68, 0.05)',
+                                    tension: 0.4,
+                                    fill: true
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    labels: { color: '#e5e5e5', font: { family: "'Inter', sans-serif" } }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    ticks: { color: '#999' },
+                                    grid: { color: '#2a2a2a' }
+                                },
+                                x: {
+                                    ticks: { color: '#999' },
+                                    grid: { color: '#2a2a2a' }
+                                }
+                            }
+                        }
+                    });
+                }
+            } catch (e) {
+                console.error('Error rendering chart:', e);
+            }
+        }
+
+        document.getElementById('monthlyHours').addEventListener('input', renderFinances);
+        document.getElementById('fixedExpenses').addEventListener('input', renderFinances);
+        document.getElementById('desiredMargin').addEventListener('input', renderFinances);
+
+        // ============ INITIALIZATION ============
+        loadData();
+        renderAgenda();
+        renderClients();
+        renderDesigns();
+        renderInventory();
+        renderSterilization();
+        renderFinances();
+        renderTransactions();
+        updateLastUpdate();
+
+        // Close modals on outside click
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeModal(modal.id);
+            });
+        });
+    </script>
+</body>
+</html>

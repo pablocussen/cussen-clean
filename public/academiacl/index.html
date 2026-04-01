@@ -1,0 +1,2069 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="AcademiaCL - Gestión de academia de tutorías y enseñanza privada">
+    <meta name="theme-color" content="#7c3aed">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="AcademiaCL">
+
+    <title>AcademiaCL - Gestión de Tutorías</title>
+
+    <link rel="manifest" href="data:application/json,{%22name%22:%22AcademiaCL%22,%22short_name%22:%22Academia%22,%22start_url%22:%22/%22,%22scope%22:%22/%22,%22display%22:%22standalone%22,%22background_color%22:%22%23ffffff%22,%22theme_color%22:%22%237c3aed%22,%22icons%22:[{%22src%22:%22data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 192 192%27%3E%3Crect fill=%27%237c3aed%27 width=%27192%27 height=%27192%27/%3E%3Ctext x=%2796%27 y=%27120%27 font-size=%2780%27 font-weight=%27bold%27 fill=%27white%27 text-anchor=%27middle%27 font-family=%27sans-serif%27%3EA%3C/text%3E%3C/svg%3E%22,%22sizes%22:%22192x192%22,%22type%22:%22image/svg+xml%22,%22purpose%22:%22any%22}]}">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%237c3aed' width='100' height='100'/%3E%3Ctext x='50' y='70' font-size='60' font-weight='bold' fill='white' text-anchor='middle'%3EA%3C/text%3E%3C/svg%3E">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #ffffff;
+            color: #1f2937;
+            font-size: 16px;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: #ffffff;
+        }
+
+        header {
+            background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+            color: white;
+            padding: 1rem;
+            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.15);
+            flex-shrink: 0;
+        }
+
+        header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            font-size: 0.875rem;
+            opacity: 0.9;
+        }
+
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 1rem;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        nav {
+            display: flex;
+            gap: 0;
+            background: #f9fafb;
+            border-top: 1px solid #e5e7eb;
+            flex-shrink: 0;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        nav button {
+            flex: 1;
+            min-width: 80px;
+            padding: 1rem 0.75rem;
+            border: none;
+            background: transparent;
+            color: #6b7280;
+            font-weight: 500;
+            font-size: 0.875rem;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        nav button.active {
+            color: #7c3aed;
+            border-bottom-color: #7c3aed;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #374151;
+            font-size: 0.95rem;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-family: 'Inter', sans-serif;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #7c3aed;
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #7c3aed;
+            color: white;
+        }
+
+        .btn-primary:active {
+            background: #6d28d9;
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+            border: 1px solid #d1d5db;
+        }
+
+        .btn-secondary:active {
+            background: #e5e7eb;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:active {
+            background: #dc2626;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 640px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-primary {
+            background: #ede9fe;
+            color: #7c3aed;
+        }
+
+        .badge-success {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+
+        .badge-warning {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .badge-danger {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 640px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .stat-box {
+            background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+            border: 1px solid #e9d5ff;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #7c3aed;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin-bottom: 1rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+
+        th {
+            background: #f9fafb;
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+            color: #374151;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        tr:hover {
+            background: #fafafa;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: flex-end;
+            animation: slideUp 0.3s ease;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-content {
+            background: white;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            border-radius: 1rem 1rem 0 0;
+            padding: 1.5rem;
+            animation: modalSlide 0.3s ease;
+        }
+
+        @keyframes modalSlide {
+            from {
+                transform: translateY(100%);
+            }
+            to {
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .modal-header h2 {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #6b7280;
+            padding: 0;
+            width: 2rem;
+            height: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-btn:active {
+            color: #1f2937;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #9ca3af;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            padding: 0.5rem;
+            font-size: 0.75rem;
+            cursor: pointer;
+            background: white;
+            transition: all 0.2s ease;
+        }
+
+        .calendar-day:active {
+            background: #f5f3ff;
+            border-color: #7c3aed;
+        }
+
+        .calendar-day.other-month {
+            background: #f9fafb;
+            color: #d1d5db;
+        }
+
+        .calendar-day.has-class {
+            background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+            border-color: #7c3aed;
+            font-weight: 600;
+        }
+
+        .event-item {
+            background: white;
+            border-left: 4px solid #7c3aed;
+            padding: 0.75rem;
+            margin-bottom: 0.75rem;
+            border-radius: 0.25rem 0.5rem 0.5rem 0.25rem;
+        }
+
+        .event-time {
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-bottom: 0.25rem;
+        }
+
+        .event-title {
+            font-weight: 600;
+            color: #1f2937;
+            font-size: 0.95rem;
+        }
+
+        .event-detail {
+            font-size: 0.8rem;
+            color: #6b7280;
+            margin-top: 0.25rem;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 1.5rem;
+        }
+
+        .subject-select {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .subject-checkbox {
+            display: flex;
+            align-items: center;
+        }
+
+        .subject-checkbox input[type="checkbox"] {
+            width: auto;
+            margin-right: 0.5rem;
+            cursor: pointer;
+        }
+
+        .subject-checkbox label {
+            margin: 0;
+            flex: 1;
+            cursor: pointer;
+            font-weight: 400;
+        }
+
+        .grade-scale {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .grade-btn {
+            aspect-ratio: 1;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            background: white;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .grade-btn.selected {
+            background: #7c3aed;
+            color: white;
+            border-color: #7c3aed;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f4f6;
+            border-top-color: #7c3aed;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            font-weight: 500;
+        }
+
+        .alert-success {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #86efac;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+
+        .alert-info {
+            background: #dbeafe;
+            color: #0c4a6e;
+            border: 1px solid #93c5fd;
+        }
+
+        @media (min-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .modal-content {
+                max-width: 500px;
+                margin: auto;
+                border-radius: 1rem;
+            }
+
+            .modal {
+                align-items: center;
+                justify-content: center;
+            }
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid #7c3aed;
+        }
+
+        .filter-bar {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-bar select {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 0.75rem;
+            border-radius: 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .status-badge.programada {
+            background: #dbeafe;
+            color: #0c4a6e;
+        }
+
+        .status-badge.realizada {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-badge.cancelada {
+            background: #f3e8ff;
+            color: #6b21a8;
+        }
+
+        .status-badge.recuperada {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-badge.pagado {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-badge.pendiente {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-badge.atrasado {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <h1>AcademiaCL</h1>
+            <p>Gestión integral de tutorías y enseñanza privada</p>
+        </header>
+
+        <div class="content">
+            <!-- TAB: ALUMNOS -->
+            <div id="tab-alumnos" class="tab-content active">
+                <div class="section-title">Gestión de Alumnos</div>
+
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="stat-number" id="total-students">0</div>
+                        <div class="stat-label">Alumnos Totales</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number" id="active-students">0</div>
+                        <div class="stat-label">Alumnos Activos</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number" id="avg-grade">0</div>
+                        <div class="stat-label">Promedio General</div>
+                    </div>
+                </div>
+
+                <button class="btn-primary" onclick="openAddStudentModal()" style="width: 100%; margin-bottom: 1.5rem;">+ Agregar Alumno</button>
+
+                <div id="students-list"></div>
+            </div>
+
+            <!-- TAB: CLASES -->
+            <div id="tab-clases" class="tab-content">
+                <div class="section-title">Programación de Clases</div>
+
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="stat-number" id="total-classes">0</div>
+                        <div class="stat-label">Clases Totales</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number" id="upcoming-classes">0</div>
+                        <div class="stat-label">Próximas Clases</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number" id="completed-classes">0</div>
+                        <div class="stat-label">Clases Realizadas</div>
+                    </div>
+                </div>
+
+                <button class="btn-primary" onclick="openAddClassModal()" style="width: 100%; margin-bottom: 1.5rem;">+ Agendar Clase</button>
+
+                <div class="filter-bar">
+                    <select id="class-filter" onchange="filterClasses()">
+                        <option value="">Todas las clases</option>
+                        <option value="programada">Programada</option>
+                        <option value="realizada">Realizada</option>
+                        <option value="cancelada">Cancelada</option>
+                        <option value="recuperada">Recuperada</option>
+                    </select>
+                </div>
+
+                <div id="classes-list"></div>
+            </div>
+
+            <!-- TAB: HORARIO -->
+            <div id="tab-horario" class="tab-content">
+                <div class="section-title">Horario Semanal</div>
+
+                <div style="margin-bottom: 1.5rem;">
+                    <label>Semana del</label>
+                    <input type="date" id="week-start" onchange="loadWeeklySchedule()">
+                </div>
+
+                <div class="calendar-grid" id="calendar-grid"></div>
+
+                <div style="margin-top: 1.5rem;">
+                    <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem;">Clases de la Semana</h3>
+                    <div id="weekly-events"></div>
+                </div>
+            </div>
+
+            <!-- TAB: EVALUACIONES -->
+            <div id="tab-evaluaciones" class="tab-content">
+                <div class="section-title">Evaluaciones y Notas</div>
+
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="stat-number" id="total-grades">0</div>
+                        <div class="stat-label">Evaluaciones Registradas</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number" id="avg-class-grade">0</div>
+                        <div class="stat-label">Promedio de Clases</div>
+                    </div>
+                </div>
+
+                <button class="btn-primary" onclick="openAddGradeModal()" style="width: 100%; margin-bottom: 1.5rem;">+ Registrar Evaluación</button>
+
+                <div class="filter-bar">
+                    <select id="grade-student-filter" onchange="filterGrades()">
+                        <option value="">Todos los alumnos</option>
+                    </select>
+                    <select id="grade-type-filter" onchange="filterGrades()">
+                        <option value="">Todos los tipos</option>
+                        <option value="prueba">Prueba</option>
+                        <option value="ensayo">Ensayo</option>
+                        <option value="tarea">Tarea</option>
+                        <option value="oral">Oral</option>
+                    </select>
+                </div>
+
+                <div id="grades-list"></div>
+
+                <div style="margin-top: 2rem;">
+                    <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem;">Tendencia de Calificaciones por Alumno</h3>
+                    <div class="chart-container">
+                        <canvas id="grades-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: FINANZAS -->
+            <div id="tab-finanzas" class="tab-content">
+                <div class="section-title">Gestión de Finanzas</div>
+
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="stat-number" id="monthly-revenue">$0</div>
+                        <div class="stat-label">Ingresos Mensuales</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number" id="pending-payments">$0</div>
+                        <div class="stat-label">Pagos Pendientes</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number" id="overdue-payments">$0</div>
+                        <div class="stat-label">Pagos Atrasados</div>
+                    </div>
+                </div>
+
+                <button class="btn-primary" onclick="openAddPaymentModal()" style="width: 100%; margin-bottom: 1.5rem;">+ Registrar Pago</button>
+
+                <div style="margin-bottom: 2rem;">
+                    <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem;">Ingresos por Mes</h3>
+                    <div class="chart-container">
+                        <canvas id="revenue-chart"></canvas>
+                    </div>
+                </div>
+
+                <div class="filter-bar">
+                    <select id="payment-status-filter" onchange="filterPayments()">
+                        <option value="">Todos los estados</option>
+                        <option value="pagado">Pagado</option>
+                        <option value="pendiente">Pendiente</option>
+                        <option value="atrasado">Atrasado</option>
+                    </select>
+                </div>
+
+                <div id="payments-list"></div>
+            </div>
+
+            <!-- TAB: MATERIALES -->
+            <div id="tab-materiales" class="tab-content">
+                <div class="section-title">Biblioteca de Materiales</div>
+
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="stat-number" id="total-materials">0</div>
+                        <div class="stat-label">Materiales Disponibles</div>
+                    </div>
+                </div>
+
+                <button class="btn-primary" onclick="openAddMaterialModal()" style="width: 100%; margin-bottom: 1.5rem;">+ Agregar Material</button>
+
+                <div class="filter-bar">
+                    <select id="material-subject-filter" onchange="filterMaterials()">
+                        <option value="">Todas las materias</option>
+                        <option value="matemáticas">Matemáticas</option>
+                        <option value="lenguaje">Lenguaje</option>
+                        <option value="ciencias">Ciencias</option>
+                        <option value="historia">Historia</option>
+                        <option value="inglés">Inglés</option>
+                        <option value="física">Física</option>
+                        <option value="química">Química</option>
+                        <option value="paes">PAES</option>
+                    </select>
+                    <select id="material-type-filter" onchange="filterMaterials()">
+                        <option value="">Todos los tipos</option>
+                        <option value="guía">Guía</option>
+                        <option value="ejercicios">Ejercicios</option>
+                        <option value="ensayo">Ensayo</option>
+                        <option value="resumen">Resumen</option>
+                        <option value="video">Video Link</option>
+                    </select>
+                </div>
+
+                <div id="materials-list"></div>
+            </div>
+        </div>
+
+        <nav>
+            <button class="nav-btn active" onclick="switchTab('alumnos')">Alumnos</button>
+            <button class="nav-btn" onclick="switchTab('clases')">Clases</button>
+            <button class="nav-btn" onclick="switchTab('horario')">Horario</button>
+            <button class="nav-btn" onclick="switchTab('evaluaciones')">Evaluaciones</button>
+            <button class="nav-btn" onclick="switchTab('finanzas')">Finanzas</button>
+            <button class="nav-btn" onclick="switchTab('materiales')">Materiales</button>
+        </nav>
+    </div>
+
+    <!-- MODALS -->
+    <!-- Add Student Modal -->
+    <div id="modal-add-student" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Agregar Alumno</h2>
+                <button class="close-btn" onclick="closeModal('modal-add-student')">✕</button>
+            </div>
+            <form id="form-add-student">
+                <div class="form-group">
+                    <label>Nombre Completo *</label>
+                    <input type="text" id="student-name" required placeholder="Ej: Juan Pérez">
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label>Edad *</label>
+                        <input type="number" id="student-age" required min="5" max="30">
+                    </div>
+                    <div class="form-group">
+                        <label>Nivel Escolar *</label>
+                        <select id="student-grade" required>
+                            <option value="">Selecciona nivel</option>
+                            <option value="1° medio">1° Medio</option>
+                            <option value="2° medio">2° Medio</option>
+                            <option value="3° medio">3° Medio</option>
+                            <option value="4° medio">4° Medio</option>
+                            <option value="universidad">Universidad</option>
+                            <option value="otros">Otros</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Establecimiento (Colegio/Universidad) *</label>
+                    <input type="text" id="student-school" required placeholder="Ej: Liceo Andrés Bello">
+                </div>
+                <div class="form-group">
+                    <label>Materias de Interés *</label>
+                    <div class="subject-select">
+                        <label class="subject-checkbox">
+                            <input type="checkbox" name="subjects" value="matemáticas"> Matemáticas
+                        </label>
+                        <label class="subject-checkbox">
+                            <input type="checkbox" name="subjects" value="lenguaje"> Lenguaje
+                        </label>
+                        <label class="subject-checkbox">
+                            <input type="checkbox" name="subjects" value="ciencias"> Ciencias
+                        </label>
+                        <label class="subject-checkbox">
+                            <input type="checkbox" name="subjects" value="historia"> Historia
+                        </label>
+                        <label class="subject-checkbox">
+                            <input type="checkbox" name="subjects" value="inglés"> Inglés
+                        </label>
+                        <label class="subject-checkbox">
+                            <input type="checkbox" name="subjects" value="física"> Física
+                        </label>
+                        <label class="subject-checkbox">
+                            <input type="checkbox" name="subjects" value="química"> Química
+                        </label>
+                        <label class="subject-checkbox">
+                            <input type="checkbox" name="subjects" value="paes"> PAES/PSU
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Teléfono Apoderado/Contacto *</label>
+                    <input type="tel" id="student-phone" required placeholder="+56 9 XXXX XXXX">
+                </div>
+                <div class="form-group">
+                    <label>Objetivos de Aprendizaje</label>
+                    <textarea id="student-goals" placeholder="Describe los objetivos académicos del alumno..."></textarea>
+                </div>
+                <div class="action-buttons">
+                    <button type="button" class="btn-secondary" onclick="closeModal('modal-add-student')" style="flex: 1;">Cancelar</button>
+                    <button type="submit" class="btn-primary" style="flex: 1;">Guardar Alumno</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Class Modal -->
+    <div id="modal-add-class" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Agendar Clase</h2>
+                <button class="close-btn" onclick="closeModal('modal-add-class')">✕</button>
+            </div>
+            <form id="form-add-class">
+                <div class="form-group">
+                    <label>Alumno *</label>
+                    <select id="class-student" required></select>
+                </div>
+                <div class="form-group">
+                    <label>Materia *</label>
+                    <select id="class-subject" required>
+                        <option value="">Selecciona materia</option>
+                        <option value="matemáticas">Matemáticas</option>
+                        <option value="lenguaje">Lenguaje</option>
+                        <option value="ciencias">Ciencias</option>
+                        <option value="historia">Historia</option>
+                        <option value="inglés">Inglés</option>
+                        <option value="física">Física</option>
+                        <option value="química">Química</option>
+                        <option value="paes">PAES/PSU</option>
+                    </select>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label>Fecha *</label>
+                        <input type="date" id="class-date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Hora *</label>
+                        <input type="time" id="class-time" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Duración *</label>
+                    <select id="class-duration" required>
+                        <option value="">Selecciona duración</option>
+                        <option value="1">1 hora</option>
+                        <option value="1.5">1.5 horas</option>
+                        <option value="2">2 horas</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Modalidad *</label>
+                    <select id="class-modality" required>
+                        <option value="">Selecciona modalidad</option>
+                        <option value="presencial">Presencial</option>
+                        <option value="online">Online</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Tema a Cubrir</label>
+                    <input type="text" id="class-topic" placeholder="Ej: Derivadas y límites">
+                </div>
+                <div class="form-group">
+                    <label>Tareas Asignadas</label>
+                    <textarea id="class-homework" placeholder="Describe las tareas para el alumno..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Notas de la Clase</label>
+                    <textarea id="class-notes" placeholder="Observaciones durante la clase..."></textarea>
+                </div>
+                <div class="action-buttons">
+                    <button type="button" class="btn-secondary" onclick="closeModal('modal-add-class')" style="flex: 1;">Cancelar</button>
+                    <button type="submit" class="btn-primary" style="flex: 1;">Guardar Clase</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Grade Modal -->
+    <div id="modal-add-grade" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Registrar Evaluación</h2>
+                <button class="close-btn" onclick="closeModal('modal-add-grade')">✕</button>
+            </div>
+            <form id="form-add-grade">
+                <div class="form-group">
+                    <label>Alumno *</label>
+                    <select id="grade-student" required></select>
+                </div>
+                <div class="form-group">
+                    <label>Materia *</label>
+                    <select id="grade-subject" required>
+                        <option value="">Selecciona materia</option>
+                        <option value="matemáticas">Matemáticas</option>
+                        <option value="lenguaje">Lenguaje</option>
+                        <option value="ciencias">Ciencias</option>
+                        <option value="historia">Historia</option>
+                        <option value="inglés">Inglés</option>
+                        <option value="física">Física</option>
+                        <option value="química">Química</option>
+                        <option value="paes">PAES/PSU</option>
+                    </select>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label>Fecha *</label>
+                        <input type="date" id="grade-date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Tipo de Evaluación *</label>
+                        <select id="grade-type" required>
+                            <option value="">Selecciona tipo</option>
+                            <option value="prueba">Prueba</option>
+                            <option value="ensayo">Ensayo</option>
+                            <option value="tarea">Tarea</option>
+                            <option value="oral">Oral</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Calificación (1.0 - 7.0) *</label>
+                    <div class="grade-scale">
+                        <button type="button" class="grade-btn" data-grade="1.0" onclick="selectGrade('1.0')">1.0</button>
+                        <button type="button" class="grade-btn" data-grade="2.0" onclick="selectGrade('2.0')">2.0</button>
+                        <button type="button" class="grade-btn" data-grade="3.0" onclick="selectGrade('3.0')">3.0</button>
+                        <button type="button" class="grade-btn" data-grade="4.0" onclick="selectGrade('4.0')">4.0</button>
+                        <button type="button" class="grade-btn" data-grade="5.0" onclick="selectGrade('5.0')">5.0</button>
+                        <button type="button" class="grade-btn" data-grade="6.0" onclick="selectGrade('6.0')">6.0</button>
+                        <button type="button" class="grade-btn" data-grade="7.0" onclick="selectGrade('7.0')">7.0</button>
+                    </div>
+                    <input type="hidden" id="grade-value" required>
+                </div>
+                <div class="form-group">
+                    <label>Comentarios</label>
+                    <textarea id="grade-comments" placeholder="Observaciones sobre el desempeño..."></textarea>
+                </div>
+                <div class="action-buttons">
+                    <button type="button" class="btn-secondary" onclick="closeModal('modal-add-grade')" style="flex: 1;">Cancelar</button>
+                    <button type="submit" class="btn-primary" style="flex: 1;">Guardar Evaluación</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Payment Modal -->
+    <div id="modal-add-payment" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Registrar Pago</h2>
+                <button class="close-btn" onclick="closeModal('modal-add-payment')">✕</button>
+            </div>
+            <form id="form-add-payment">
+                <div class="form-group">
+                    <label>Alumno *</label>
+                    <select id="payment-student" required></select>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label>Monto (CLP) *</label>
+                        <input type="number" id="payment-amount" required min="1000" placeholder="50000">
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha del Pago *</label>
+                        <input type="date" id="payment-date" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Tipo de Pago *</label>
+                    <select id="payment-type" required>
+                        <option value="">Selecciona tipo</option>
+                        <option value="puntual">Puntual</option>
+                        <option value="pack_4">Pack 4 clases</option>
+                        <option value="pack_8">Pack 8 clases</option>
+                        <option value="pack_12">Pack 12 clases</option>
+                        <option value="mensual">Mensual</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Estado del Pago *</label>
+                    <select id="payment-status" required>
+                        <option value="">Selecciona estado</option>
+                        <option value="pagado">Pagado</option>
+                        <option value="pendiente">Pendiente</option>
+                        <option value="atrasado">Atrasado</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Método de Pago</label>
+                    <select id="payment-method">
+                        <option value="transferencia">Transferencia Bancaria</option>
+                        <option value="efectivo">Efectivo</option>
+                        <option value="otro">Otro</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Notas</label>
+                    <textarea id="payment-notes" placeholder="Ej: Pago vía Banco del Estado..."></textarea>
+                </div>
+                <div class="action-buttons">
+                    <button type="button" class="btn-secondary" onclick="closeModal('modal-add-payment')" style="flex: 1;">Cancelar</button>
+                    <button type="submit" class="btn-primary" style="flex: 1;">Guardar Pago</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Material Modal -->
+    <div id="modal-add-material" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Agregar Material</h2>
+                <button class="close-btn" onclick="closeModal('modal-add-material')">✕</button>
+            </div>
+            <form id="form-add-material">
+                <div class="form-group">
+                    <label>Nombre del Material *</label>
+                    <input type="text" id="material-name" required placeholder="Ej: Guía de Ecuaciones Cuadráticas">
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label>Materia *</label>
+                        <select id="material-subject" required>
+                            <option value="">Selecciona materia</option>
+                            <option value="matemáticas">Matemáticas</option>
+                            <option value="lenguaje">Lenguaje</option>
+                            <option value="ciencias">Ciencias</option>
+                            <option value="historia">Historia</option>
+                            <option value="inglés">Inglés</option>
+                            <option value="física">Física</option>
+                            <option value="química">Química</option>
+                            <option value="paes">PAES</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Tipo de Material *</label>
+                        <select id="material-type" required>
+                            <option value="">Selecciona tipo</option>
+                            <option value="guía">Guía</option>
+                            <option value="ejercicios">Ejercicios</option>
+                            <option value="ensayo">Ensayo</option>
+                            <option value="resumen">Resumen</option>
+                            <option value="video">Video Link</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Nivel Escolar *</label>
+                    <select id="material-grade" required>
+                        <option value="">Selecciona nivel</option>
+                        <option value="1° medio">1° Medio</option>
+                        <option value="2° medio">2° Medio</option>
+                        <option value="3° medio">3° Medio</option>
+                        <option value="4° medio">4° Medio</option>
+                        <option value="universidad">Universidad</option>
+                        <option value="todos">Todos los niveles</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Tópico / Tema *</label>
+                    <input type="text" id="material-topic" required placeholder="Ej: Ecuaciones cuadráticas, funciones">
+                </div>
+                <div class="form-group">
+                    <label>Descripción / URL (si es video)</label>
+                    <textarea id="material-description" placeholder="Descripción del material o enlace del video..."></textarea>
+                </div>
+                <div class="action-buttons">
+                    <button type="button" class="btn-secondary" onclick="closeModal('modal-add-material')" style="flex: 1;">Cancelar</button>
+                    <button type="submit" class="btn-primary" style="flex: 1;">Guardar Material</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // ============ STATE MANAGEMENT ============
+        let appState = {
+            students: [],
+            classes: [],
+            grades: [],
+            payments: [],
+            materials: []
+        };
+
+        const SUBJECTS = ['matemáticas', 'lenguaje', 'ciencias', 'historia', 'inglés', 'física', 'química', 'paes'];
+        const GRADES = ['1° medio', '2° medio', '3° medio', '4° medio', 'universidad', 'otros'];
+        const SUBJECTS_COLORS = {
+            'matemáticas': '#ec4899',
+            'lenguaje': '#f59e0b',
+            'ciencias': '#10b981',
+            'historia': '#8b5cf6',
+            'inglés': '#06b6d4',
+            'física': '#6366f1',
+            'química': '#ef4444',
+            'paes': '#7c3aed'
+        };
+
+        // ============ INITIALIZATION ============
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDataFromStorage();
+            initializeForms();
+            switchTab('alumnos');
+            setTodayAsDefaultDate();
+            registerServiceWorker();
+        });
+
+        function initializeForms() {
+            document.getElementById('form-add-student').addEventListener('submit', handleAddStudent);
+            document.getElementById('form-add-class').addEventListener('submit', handleAddClass);
+            document.getElementById('form-add-grade').addEventListener('submit', handleAddGrade);
+            document.getElementById('form-add-payment').addEventListener('submit', handleAddPayment);
+            document.getElementById('form-add-material').addEventListener('submit', handleAddMaterial);
+        }
+
+        function setTodayAsDefaultDate() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('class-date').value = today;
+            document.getElementById('grade-date').value = today;
+            document.getElementById('payment-date').value = today;
+
+            const weekStart = new Date();
+            weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+            document.getElementById('week-start').value = weekStart.toISOString().split('T')[0];
+        }
+
+        // ============ STORAGE ============
+        function saveDataToStorage() {
+            try {
+                localStorage.setItem('academiacl_data', JSON.stringify(appState));
+            } catch (e) {
+                console.warn('localStorage error:', e);
+            }
+        }
+
+        function loadDataFromStorage() {
+            try {
+                const saved = localStorage.getItem('academiacl_data');
+                if (saved) {
+                    appState = JSON.parse(saved);
+                }
+            } catch (e) {
+                console.warn('localStorage error:', e);
+            }
+        }
+
+        // ============ TAB NAVIGATION ============
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+            event.target.classList.add('active');
+
+            if (tabName === 'alumnos') renderStudents();
+            if (tabName === 'clases') renderClasses();
+            if (tabName === 'horario') loadWeeklySchedule();
+            if (tabName === 'evaluaciones') {
+                renderGrades();
+                renderGradesChart();
+                populateGradeStudentFilter();
+            }
+            if (tabName === 'finanzas') {
+                renderPayments();
+                renderRevenueChart();
+            }
+            if (tabName === 'materiales') renderMaterials();
+        }
+
+        // ============ MODALS ============
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+            document.getElementById(modalId).addEventListener('click', handleModalBackdropClick);
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        function handleModalBackdropClick(e) {
+            if (e.target === e.currentTarget) {
+                closeModal(e.currentTarget.id);
+            }
+        }
+
+        // ============ STUDENTS ============
+        function openAddStudentModal() {
+            document.getElementById('form-add-student').reset();
+            openModal('modal-add-student');
+        }
+
+        function handleAddStudent(e) {
+            e.preventDefault();
+
+            const subjects = Array.from(document.querySelectorAll('input[name="subjects"]:checked')).map(el => el.value);
+
+            const student = {
+                id: Date.now().toString(),
+                name: document.getElementById('student-name').value,
+                age: parseInt(document.getElementById('student-age').value),
+                grade: document.getElementById('student-grade').value,
+                school: document.getElementById('student-school').value,
+                subjects: subjects,
+                phone: document.getElementById('student-phone').value,
+                goals: document.getElementById('student-goals').value,
+                createdAt: new Date().toISOString()
+            };
+
+            appState.students.push(student);
+            saveDataToStorage();
+            closeModal('modal-add-student');
+            renderStudents();
+            updateStudentSelects();
+        }
+
+        function renderStudents() {
+            const container = document.getElementById('students-list');
+
+            if (appState.students.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">👥</div><p>No hay alumnos registrados. Comienza agregando uno.</p></div>';
+                updateStats();
+                return;
+            }
+
+            container.innerHTML = appState.students.map(student => `
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <h3 class="card-title">${student.name}</h3>
+                            <p style="font-size: 0.875rem; color: #6b7280; margin-top: 0.25rem;">${student.grade} • ${student.school}</p>
+                        </div>
+                        <button class="btn-danger" onclick="deleteStudent('${student.id}')" style="padding: 0.5rem 1rem; font-size: 0.85rem;">Eliminar</button>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; font-size: 0.875rem; margin-top: 1rem;">
+                        <div>
+                            <span style="color: #6b7280;">Edad:</span>
+                            <p style="font-weight: 600;">${student.age} años</p>
+                        </div>
+                        <div>
+                            <span style="color: #6b7280;">Contacto:</span>
+                            <p style="font-weight: 600;">${student.phone}</p>
+                        </div>
+                        <div style="grid-column: 1 / -1;">
+                            <span style="color: #6b7280;">Materias:</span>
+                            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem;">
+                                ${student.subjects.map(s => `<span class="badge badge-primary">${s}</span>`).join('')}
+                            </div>
+                        </div>
+                        <div style="grid-column: 1 / -1;">
+                            <span style="color: #6b7280;">Objetivos:</span>
+                            <p style="margin-top: 0.5rem;">${student.goals || 'Sin especificar'}</p>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            updateStats();
+        }
+
+        function deleteStudent(studentId) {
+            if (confirm('¿Estás seguro de que deseas eliminar este alumno?')) {
+                appState.students = appState.students.filter(s => s.id !== studentId);
+                appState.classes = appState.classes.filter(c => c.studentId !== studentId);
+                appState.grades = appState.grades.filter(g => g.studentId !== studentId);
+                appState.payments = appState.payments.filter(p => p.studentId !== studentId);
+                saveDataToStorage();
+                renderStudents();
+                updateStudentSelects();
+            }
+        }
+
+        function updateStudentSelects() {
+            const selects = ['class-student', 'grade-student', 'payment-student'];
+            const html = appState.students.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+
+            selects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                select.innerHTML = '<option value="">Selecciona alumno</option>' + html;
+            });
+        }
+
+        // ============ CLASSES ============
+        function openAddClassModal() {
+            document.getElementById('form-add-class').reset();
+            updateStudentSelects();
+            openModal('modal-add-class');
+        }
+
+        function handleAddClass(e) {
+            e.preventDefault();
+
+            const classObj = {
+                id: Date.now().toString(),
+                studentId: document.getElementById('class-student').value,
+                subject: document.getElementById('class-subject').value,
+                date: document.getElementById('class-date').value,
+                time: document.getElementById('class-time').value,
+                duration: parseFloat(document.getElementById('class-duration').value),
+                modality: document.getElementById('class-modality').value,
+                topic: document.getElementById('class-topic').value,
+                homework: document.getElementById('class-homework').value,
+                notes: document.getElementById('class-notes').value,
+                status: 'programada',
+                createdAt: new Date().toISOString()
+            };
+
+            appState.classes.push(classObj);
+            saveDataToStorage();
+            closeModal('modal-add-class');
+            renderClasses();
+        }
+
+        function renderClasses() {
+            const container = document.getElementById('classes-list');
+            let classes = appState.classes;
+
+            const filter = document.getElementById('class-filter')?.value;
+            if (filter) {
+                classes = classes.filter(c => c.status === filter);
+            }
+
+            if (classes.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📚</div><p>No hay clases registradas.</p></div>';
+                updateStats();
+                return;
+            }
+
+            classes.sort((a, b) => new Date(`${a.date}T${a.time}`) - new Date(`${b.date}T${b.time}`));
+
+            container.innerHTML = classes.map(cls => {
+                const student = appState.students.find(s => s.id === cls.studentId);
+                const color = SUBJECTS_COLORS[cls.subject] || '#7c3aed';
+
+                return `
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <h3 class="card-title">${cls.subject}</h3>
+                                <p style="font-size: 0.875rem; color: #6b7280; margin-top: 0.25rem;">${student?.name || 'Alumno'}</p>
+                            </div>
+                            <span class="status-badge ${cls.status}">${cls.status}</span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; font-size: 0.875rem; margin-top: 1rem;">
+                            <div>
+                                <span style="color: #6b7280;">Fecha:</span>
+                                <p style="font-weight: 600;">${new Date(cls.date).toLocaleDateString('es-CL')}</p>
+                            </div>
+                            <div>
+                                <span style="color: #6b7280;">Hora:</span>
+                                <p style="font-weight: 600;">${cls.time}</p>
+                            </div>
+                            <div>
+                                <span style="color: #6b7280;">Duración:</span>
+                                <p style="font-weight: 600;">${cls.duration} horas</p>
+                            </div>
+                            <div>
+                                <span style="color: #6b7280;">Modalidad:</span>
+                                <p style="font-weight: 600;">${cls.modality}</p>
+                            </div>
+                            ${cls.topic ? `<div style="grid-column: 1 / -1;"><span style="color: #6b7280;">Tema:</span><p style="margin-top: 0.25rem;">${cls.topic}</p></div>` : ''}
+                            ${cls.homework ? `<div style="grid-column: 1 / -1;"><span style="color: #6b7280;">Tareas:</span><p style="margin-top: 0.25rem;">${cls.homework}</p></div>` : ''}
+                            ${cls.notes ? `<div style="grid-column: 1 / -1;"><span style="color: #6b7280;">Notas:</span><p style="margin-top: 0.25rem;">${cls.notes}</p></div>` : ''}
+                        </div>
+                        <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                            <button class="btn-secondary" onclick="updateClassStatus('${cls.id}', 'realizada')" style="flex: 1; padding: 0.5rem;">Realizada</button>
+                            <button class="btn-danger" onclick="deleteClass('${cls.id}')" style="flex: 1; padding: 0.5rem;">Eliminar</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            updateStats();
+        }
+
+        function filterClasses() {
+            renderClasses();
+        }
+
+        function updateClassStatus(classId, newStatus) {
+            const cls = appState.classes.find(c => c.id === classId);
+            if (cls) {
+                cls.status = newStatus;
+                saveDataToStorage();
+                renderClasses();
+            }
+        }
+
+        function deleteClass(classId) {
+            appState.classes = appState.classes.filter(c => c.id !== classId);
+            saveDataToStorage();
+            renderClasses();
+        }
+
+        // ============ SCHEDULE ============
+        function loadWeeklySchedule() {
+            const weekStartInput = document.getElementById('week-start').value;
+            const weekStart = new Date(weekStartInput);
+
+            renderCalendar(weekStart);
+            renderWeeklyEvents(weekStart);
+        }
+
+        function renderCalendar(weekStart) {
+            const grid = document.getElementById('calendar-grid');
+            const dayNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+
+            const firstDay = weekStart.getDay();
+            const monthStart = new Date(weekStart);
+            monthStart.setDate(monthStart.getDate() - firstDay);
+
+            let html = '<div style="grid-column: 1 / -1; display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.5rem; margin-bottom: 1rem;">';
+            dayNames.forEach(day => {
+                html += `<div style="text-align: center; font-weight: 600; padding: 0.5rem; color: #6b7280; font-size: 0.875rem;">${day}</div>`;
+            });
+            html += '</div>';
+
+            let cells = '';
+            for (let i = 0; i < 42; i++) {
+                const date = new Date(monthStart);
+                date.setDate(date.getDate() + i);
+                const dateStr = date.toISOString().split('T')[0];
+                const hasClass = appState.classes.some(c => c.date === dateStr && c.status !== 'cancelada');
+                const isCurrentWeek = i >= firstDay && i < firstDay + 7;
+
+                cells += `
+                    <div class="calendar-day ${!isCurrentWeek ? 'other-month' : ''} ${hasClass ? 'has-class' : ''}" onclick="jumpToDate('${dateStr}')">
+                        <div>${date.getDate()}</div>
+                        ${hasClass && isCurrentWeek ? '<div style="font-size: 1.2rem;">●</div>' : ''}
+                    </div>
+                `;
+            }
+
+            grid.innerHTML = html + '<div style="grid-column: 1 / -1; display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.5rem;">' + cells + '</div>';
+        }
+
+        function renderWeeklyEvents(weekStart) {
+            const container = document.getElementById('weekly-events');
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekEnd.getDate() + 7);
+
+            let weekClasses = appState.classes.filter(cls => {
+                const classDate = new Date(cls.date);
+                return classDate >= weekStart && classDate < weekEnd && cls.status !== 'cancelada';
+            });
+
+            weekClasses.sort((a, b) => new Date(`${a.date}T${a.time}`) - new Date(`${b.date}T${b.time}`));
+
+            if (weekClasses.length === 0) {
+                container.innerHTML = '<p style="color: #9ca3af; text-align: center; padding: 2rem;">Sin clases esta semana</p>';
+                return;
+            }
+
+            container.innerHTML = weekClasses.map(cls => {
+                const student = appState.students.find(s => s.id === cls.studentId);
+                const color = SUBJECTS_COLORS[cls.subject] || '#7c3aed';
+
+                return `
+                    <div class="event-item" style="border-left-color: ${color};">
+                        <div class="event-time">${new Date(cls.date).toLocaleDateString('es-CL', { weekday: 'short' })} ${cls.time}</div>
+                        <div class="event-title">${cls.subject}</div>
+                        <div class="event-detail">${student?.name || 'Alumno'} • ${cls.duration}h • ${cls.modality}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function jumpToDate(dateStr) {
+            const date = new Date(dateStr);
+            const weekStart = new Date(date);
+            weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+            document.getElementById('week-start').value = weekStart.toISOString().split('T')[0];
+            loadWeeklySchedule();
+        }
+
+        // ============ GRADES ============
+        function openAddGradeModal() {
+            document.getElementById('form-add-grade').reset();
+            document.getElementById('grade-value').value = '';
+            document.querySelectorAll('.grade-btn').forEach(btn => btn.classList.remove('selected'));
+            updateStudentSelects();
+            openModal('modal-add-grade');
+        }
+
+        function selectGrade(value) {
+            document.getElementById('grade-value').value = value;
+            document.querySelectorAll('.grade-btn').forEach(btn => btn.classList.remove('selected'));
+            document.querySelector(`[data-grade="${value}"]`).classList.add('selected');
+        }
+
+        function handleAddGrade(e) {
+            e.preventDefault();
+
+            const grade = {
+                id: Date.now().toString(),
+                studentId: document.getElementById('grade-student').value,
+                subject: document.getElementById('grade-subject').value,
+                date: document.getElementById('grade-date').value,
+                type: document.getElementById('grade-type').value,
+                value: parseFloat(document.getElementById('grade-value').value),
+                comments: document.getElementById('grade-comments').value,
+                createdAt: new Date().toISOString()
+            };
+
+            appState.grades.push(grade);
+            saveDataToStorage();
+            closeModal('modal-add-grade');
+            renderGrades();
+            renderGradesChart();
+        }
+
+        function renderGrades() {
+            const container = document.getElementById('grades-list');
+            let grades = appState.grades;
+
+            const studentFilter = document.getElementById('grade-student-filter')?.value;
+            const typeFilter = document.getElementById('grade-type-filter')?.value;
+
+            if (studentFilter) grades = grades.filter(g => g.studentId === studentFilter);
+            if (typeFilter) grades = grades.filter(g => g.type === typeFilter);
+
+            if (grades.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📊</div><p>No hay evaluaciones registradas.</p></div>';
+                updateStats();
+                return;
+            }
+
+            grades.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            container.innerHTML = grades.map(grade => {
+                const student = appState.students.find(s => s.id === grade.studentId);
+                const backgroundColor = grade.value >= 4 ? '#dcfce7' : grade.value >= 3 ? '#fef3c7' : '#fee2e2';
+                const textColor = grade.value >= 4 ? '#166534' : grade.value >= 3 ? '#92400e' : '#991b1b';
+
+                return `
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <h3 class="card-title">${student?.name || 'Alumno'}</h3>
+                                <p style="font-size: 0.875rem; color: #6b7280; margin-top: 0.25rem;">${grade.subject}</p>
+                            </div>
+                            <div style="background: ${backgroundColor}; color: ${textColor}; padding: 0.5rem 1rem; border-radius: 0.5rem; font-weight: 700; font-size: 1.25rem;">${grade.value.toFixed(1)}</div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; font-size: 0.875rem; margin-top: 1rem;">
+                            <div>
+                                <span style="color: #6b7280;">Fecha:</span>
+                                <p style="font-weight: 600;">${new Date(grade.date).toLocaleDateString('es-CL')}</p>
+                            </div>
+                            <div>
+                                <span style="color: #6b7280;">Tipo:</span>
+                                <p style="font-weight: 600;">${grade.type}</p>
+                            </div>
+                            ${grade.comments ? `<div style="grid-column: 1 / -1;"><span style="color: #6b7280;">Comentarios:</span><p style="margin-top: 0.25rem;">${grade.comments}</p></div>` : ''}
+                        </div>
+                        <button class="btn-danger" onclick="deleteGrade('${grade.id}')" style="width: 100%; margin-top: 1rem; padding: 0.5rem;">Eliminar</button>
+                    </div>
+                `;
+            }).join('');
+
+            updateStats();
+        }
+
+        function filterGrades() {
+            renderGrades();
+        }
+
+        function deleteGrade(gradeId) {
+            appState.grades = appState.grades.filter(g => g.id !== gradeId);
+            saveDataToStorage();
+            renderGrades();
+            renderGradesChart();
+        }
+
+        function populateGradeStudentFilter() {
+            const select = document.getElementById('grade-student-filter');
+            const html = appState.students.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+            select.innerHTML = '<option value="">Todos los alumnos</option>' + html;
+        }
+
+        function renderGradesChart() {
+            const ctx = document.getElementById('grades-chart');
+            if (!ctx) return;
+
+            const studentNames = appState.students.map(s => s.name);
+            const datasets = [];
+
+            studentNames.forEach(name => {
+                const studentGrades = appState.grades.filter(g => {
+                    const student = appState.students.find(s => s.id === g.studentId);
+                    return student?.name === name;
+                });
+
+                if (studentGrades.length > 0) {
+                    datasets.push({
+                        label: name,
+                        data: studentGrades.map(g => g.value),
+                        borderColor: SUBJECTS_COLORS['matemáticas'],
+                        backgroundColor: 'rgba(124, 58, 237, 0.1)',
+                        tension: 0.4
+                    });
+                }
+            });
+
+            const existingChart = Chart.instances.find(c => c.canvas === ctx);
+            if (existingChart) existingChart.destroy();
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: Math.max(...datasets.map(d => d.data.length), 0))}.map((_, i) => `Eval. ${i + 1}`),
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: studentNames.length > 1 }
+                    },
+                    scales: {
+                        y: {
+                            min: 1,
+                            max: 7,
+                            title: { display: true, text: 'Calificación (1.0-7.0)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ============ PAYMENTS ============
+        function openAddPaymentModal() {
+            document.getElementById('form-add-payment').reset();
+            updateStudentSelects();
+            openModal('modal-add-payment');
+        }
+
+        function handleAddPayment(e) {
+            e.preventDefault();
+
+            const payment = {
+                id: Date.now().toString(),
+                studentId: document.getElementById('payment-student').value,
+                amount: parseInt(document.getElementById('payment-amount').value),
+                date: document.getElementById('payment-date').value,
+                type: document.getElementById('payment-type').value,
+                status: document.getElementById('payment-status').value,
+                method: document.getElementById('payment-method').value,
+                notes: document.getElementById('payment-notes').value,
+                createdAt: new Date().toISOString()
+            };
+
+            appState.payments.push(payment);
+            saveDataToStorage();
+            closeModal('modal-add-payment');
+            renderPayments();
+            renderRevenueChart();
+        }
+
+        function renderPayments() {
+            const container = document.getElementById('payments-list');
+            let payments = appState.payments;
+
+            const filter = document.getElementById('payment-status-filter')?.value;
+            if (filter) {
+                payments = payments.filter(p => p.status === filter);
+            }
+
+            if (payments.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">💳</div><p>No hay pagos registrados.</p></div>';
+                updateStats();
+                return;
+            }
+
+            payments.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            container.innerHTML = payments.map(payment => {
+                const student = appState.students.find(s => s.id === payment.studentId);
+
+                return `
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <h3 class="card-title">${student?.name || 'Alumno'}</h3>
+                                <p style="font-size: 0.875rem; color: #6b7280; margin-top: 0.25rem;">${payment.type}</p>
+                            </div>
+                            <span class="status-badge ${payment.status}">$${payment.amount.toLocaleString('es-CL')}</span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; font-size: 0.875rem; margin-top: 1rem;">
+                            <div>
+                                <span style="color: #6b7280;">Fecha:</span>
+                                <p style="font-weight: 600;">${new Date(payment.date).toLocaleDateString('es-CL')}</p>
+                            </div>
+                            <div>
+                                <span style="color: #6b7280;">Estado:</span>
+                                <p style="font-weight: 600;">${payment.status}</p>
+                            </div>
+                            <div>
+                                <span style="color: #6b7280;">Método:</span>
+                                <p style="font-weight: 600;">${payment.method}</p>
+                            </div>
+                            ${payment.notes ? `<div style="grid-column: 1 / -1;"><span style="color: #6b7280;">Notas:</span><p style="margin-top: 0.25rem;">${payment.notes}</p></div>` : ''}
+                        </div>
+                        <button class="btn-danger" onclick="deletePayment('${payment.id}')" style="width: 100%; margin-top: 1rem; padding: 0.5rem;">Eliminar</button>
+                    </div>
+                `;
+            }).join('');
+
+            updateStats();
+        }
+
+        function filterPayments() {
+            renderPayments();
+        }
+
+        function deletePayment(paymentId) {
+            appState.payments = appState.payments.filter(p => p.id !== paymentId);
+            saveDataToStorage();
+            renderPayments();
+            renderRevenueChart();
+        }
+
+        function renderRevenueChart() {
+            const ctx = document.getElementById('revenue-chart');
+            if (!ctx) return;
+
+            const months = [];
+            const monthData = {};
+
+            for (let i = 11; i >= 0; i--) {
+                const date = new Date();
+                date.setMonth(date.getMonth() - i);
+                const monthKey = date.toLocaleDateString('es-CL', { month: 'short', year: '2-digit' });
+                months.push(monthKey);
+                monthData[monthKey] = 0;
+            }
+
+            appState.payments.forEach(payment => {
+                if (payment.status === 'pagado') {
+                    const date = new Date(payment.date);
+                    const monthKey = date.toLocaleDateString('es-CL', { month: 'short', year: '2-digit' });
+                    if (monthData[monthKey] !== undefined) {
+                        monthData[monthKey] += payment.amount;
+                    }
+                }
+            });
+
+            const existingChart = Chart.instances.find(c => c.canvas === ctx);
+            if (existingChart) existingChart.destroy();
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: 'Ingresos (CLP)',
+                        data: months.map(m => monthData[m]),
+                        backgroundColor: 'rgba(124, 58, 237, 0.8)',
+                        borderColor: '#7c3aed',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Monto (CLP)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ============ MATERIALS ============
+        function openAddMaterialModal() {
+            document.getElementById('form-add-material').reset();
+            openModal('modal-add-material');
+        }
+
+        function handleAddMaterial(e) {
+            e.preventDefault();
+
+            const material = {
+                id: Date.now().toString(),
+                name: document.getElementById('material-name').value,
+                subject: document.getElementById('material-subject').value,
+                type: document.getElementById('material-type').value,
+                grade: document.getElementById('material-grade').value,
+                topic: document.getElementById('material-topic').value,
+                description: document.getElementById('material-description').value,
+                createdAt: new Date().toISOString()
+            };
+
+            appState.materials.push(material);
+            saveDataToStorage();
+            closeModal('modal-add-material');
+            renderMaterials();
+        }
+
+        function renderMaterials() {
+            const container = document.getElementById('materials-list');
+            let materials = appState.materials;
+
+            const subjectFilter = document.getElementById('material-subject-filter')?.value;
+            const typeFilter = document.getElementById('material-type-filter')?.value;
+
+            if (subjectFilter) materials = materials.filter(m => m.subject === subjectFilter);
+            if (typeFilter) materials = materials.filter(m => m.type === typeFilter);
+
+            if (materials.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📚</div><p>No hay materiales en la biblioteca.</p></div>';
+                updateStats();
+                return;
+            }
+
+            materials.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+            container.innerHTML = materials.map(material => `
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <h3 class="card-title">${material.name}</h3>
+                            <p style="font-size: 0.875rem; color: #6b7280; margin-top: 0.25rem;">${material.subject} • ${material.type}</p>
+                        </div>
+                        <span class="badge badge-primary">${material.grade}</span>
+                    </div>
+                    <div style="margin-top: 1rem;">
+                        <p style="font-size: 0.875rem; color: #6b7280;">Tema: <strong>${material.topic}</strong></p>
+                        ${material.description ? `<p style="margin-top: 0.5rem; font-size: 0.875rem;">${material.description}</p>` : ''}
+                    </div>
+                    <button class="btn-danger" onclick="deleteMaterial('${material.id}')" style="width: 100%; margin-top: 1rem; padding: 0.5rem;">Eliminar</button>
+                </div>
+            `).join('');
+
+            updateStats();
+        }
+
+        function filterMaterials() {
+            renderMaterials();
+        }
+
+        function deleteMaterial(materialId) {
+            appState.materials = appState.materials.filter(m => m.id !== materialId);
+            saveDataToStorage();
+            renderMaterials();
+        }
+
+        // ============ STATISTICS ============
+        function updateStats() {
+            const now = new Date();
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
+
+            // Students
+            document.getElementById('total-students').textContent = appState.students.length;
+            document.getElementById('active-students').textContent = appState.students.length;
+
+            const allGrades = appState.grades.map(g => g.value);
+            const avgGrade = allGrades.length > 0 ? (allGrades.reduce((a, b) => a + b) / allGrades.length).toFixed(1) : '0';
+            document.getElementById('avg-grade').textContent = avgGrade;
+
+            // Classes
+            document.getElementById('total-classes').textContent = appState.classes.length;
+
+            const upcoming = appState.classes.filter(c => {
+                const classDate = new Date(`${c.date}T${c.time}`);
+                return classDate > now && c.status === 'programada';
+            }).length;
+            document.getElementById('upcoming-classes').textContent = upcoming;
+
+            const completed = appState.classes.filter(c => c.status === 'realizada').length;
+            document.getElementById('completed-classes').textContent = completed;
+
+            // Grades
+            document.getElementById('total-grades').textContent = appState.grades.length;
+            document.getElementById('avg-class-grade').textContent = avgGrade;
+
+            // Payments
+            const monthlyRevenue = appState.payments
+                .filter(p => {
+                    const pDate = new Date(p.date);
+                    return pDate.getMonth() === currentMonth && pDate.getFullYear() === currentYear && p.status === 'pagado';
+                })
+                .reduce((sum, p) => sum + p.amount, 0);
+
+            const pendingPayments = appState.payments
+                .filter(p => p.status === 'pendiente')
+                .reduce((sum, p) => sum + p.amount, 0);
+
+            const overduePayments = appState.payments
+                .filter(p => p.status === 'atrasado')
+                .reduce((sum, p) => sum + p.amount, 0);
+
+            document.getElementById('monthly-revenue').textContent = `$${monthlyRevenue.toLocaleString('es-CL')}`;
+            document.getElementById('pending-payments').textContent = `$${pendingPayments.toLocaleString('es-CL')}`;
+            document.getElementById('overdue-payments').textContent = `$${overduePayments.toLocaleString('es-CL')}`;
+
+            // Materials
+            document.getElementById('total-materials').textContent = appState.materials.length;
+        }
+
+        // ============ PWA / SERVICE WORKER ============
+        function registerServiceWorker() {
+            if ('serviceWorker' in navigator) {
+                const swCode = `
+                    self.addEventListener('install', (e) => e.waitUntil(caches.open('v1')));
+                    self.addEventListener('fetch', (e) => {
+                        e.respondWith(
+                            caches.match(e.request).then(r => r || fetch(e.request))
+                        );
+                    });
+                `;
+
+                const blob = new Blob([swCode], { type: 'application/javascript' });
+                const swURL = URL.createObjectURL(blob);
+
+                navigator.serviceWorker.register(swURL).catch(err => console.log('SW error:', err));
+            }
+        }
+    </script>
+</body>
+</html>

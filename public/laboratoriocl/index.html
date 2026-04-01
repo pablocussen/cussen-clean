@@ -1,0 +1,2113 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <meta name="theme-color" content="#0d9488">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="LaboratorioCL">
+    <title>LaboratorioCL - Gestión de Laboratorio Clínico</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%230d9488' width='100' height='100'/><text x='50' y='65' font-size='60' fill='white' text-anchor='middle' font-weight='bold'>L</text></svg>">
+    <link rel="manifest" href="data:application/json,{\"name\":\"LaboratorioCL\",\"short_name\":\"LabCL\",\"start_url\":\"/laboratoriocl/\",\"display\":\"standalone\",\"background_color\":\"#f0f9ff\",\"theme_color\":\"#0d9488\",\"icons\":[{\"src\":\"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%230d9488' width='192' height='192'/><text x='96' y='130' font-size='100' fill='white' text-anchor='middle' font-weight='bold'>L</text></svg>\",\"sizes\":\"192x192\",\"type\":\"image/svg+xml\"}]}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: #f0f9ff;
+            color: #1f2937;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            padding-bottom: max(env(safe-area-inset-bottom), 0px);
+        }
+
+        header {
+            background: linear-gradient(135deg, #0d9488 0%, #059669 100%);
+            color: white;
+            padding: max(env(safe-area-inset-top), 16px) 16px 16px;
+            box-shadow: 0 4px 12px rgba(13, 148, 136, 0.2);
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        header p {
+            font-size: 13px;
+            opacity: 0.9;
+            margin-top: 4px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            padding: 12px 12px 0;
+            overflow-x: auto;
+            background: white;
+            border-bottom: 1px solid #e5e7eb;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .tabs::-webkit-scrollbar {
+            height: 3px;
+        }
+
+        .tabs::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .tabs::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 2px;
+        }
+
+        .tab-btn {
+            padding: 12px 16px;
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            font-size: 14px;
+            font-weight: 500;
+            color: #6b7280;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .tab-btn.active {
+            color: #0d9488;
+            border-bottom-color: #0d9488;
+        }
+
+        .tab-btn:hover {
+            color: #0d9488;
+        }
+
+        .container {
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 16px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            border: 1px solid #e5e7eb;
+        }
+
+        .section h2 {
+            font-size: 18px;
+            margin-bottom: 16px;
+            color: #0d9488;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section h2::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: #0d9488;
+            border-radius: 2px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 6px;
+            color: #374151;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: 'Inter', sans-serif;
+            transition: border-color 0.2s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #0d9488;
+            box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 16px;
+        }
+
+        @media (max-width: 640px) {
+            .grid-2, .grid-3 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        button {
+            padding: 12px 20px;
+            background: #0d9488;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        button:hover {
+            background: #0b8a7e;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button.secondary {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        button.secondary:hover {
+            background: #d1d5db;
+        }
+
+        button.danger {
+            background: #ef4444;
+        }
+
+        button.danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        thead {
+            background: #f3f4f6;
+            border-bottom: 2px solid #0d9488;
+        }
+
+        th {
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #0d9488;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        tr:hover {
+            background: #f9fafb;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge.success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge.warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge.danger {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge.info {
+            background: #dbeafe;
+            color: #0c4a6e;
+        }
+
+        .alert {
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+
+        .alert.success {
+            background: #d1fae5;
+            color: #065f46;
+            border-left: 4px solid #10b981;
+        }
+
+        .alert.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border-left: 4px solid #ef4444;
+        }
+
+        .alert.warning {
+            background: #fef3c7;
+            color: #92400e;
+            border-left: 4px solid #f59e0b;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #0d9488 0%, #059669 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-card.secondary {
+            background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+        }
+
+        .stat-card .number {
+            font-size: 32px;
+            font-weight: 700;
+            margin: 10px 0;
+        }
+
+        .stat-card .label {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        .row {
+            margin-bottom: 12px;
+            padding: 12px;
+            background: #f9fafb;
+            border-radius: 8px;
+            border-left: 3px solid #0d9488;
+        }
+
+        .row strong {
+            color: #0d9488;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .flag-high {
+            color: #dc2626;
+            font-weight: 600;
+        }
+
+        .flag-low {
+            color: #2563eb;
+            font-weight: 600;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            padding: 16px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            box-shadow: 0 20px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .modal-close {
+            float: right;
+            background: #e5e7eb;
+            color: #6b7280;
+            border: none;
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .modal-close:hover {
+            background: #d1d5db;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 20px 0;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6b7280;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e5e7eb;
+            border-top-color: #0d9488;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #9ca3af;
+        }
+
+        .empty-state svg {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            padding: 6px 12px;
+            font-size: 12px;
+            background: #0d9488;
+        }
+
+        .action-btn.edit {
+            background: #0d9488;
+        }
+
+        .action-btn.delete {
+            background: #ef4444;
+        }
+
+        .action-btn.view {
+            background: #7c3aed;
+        }
+
+        .highlight-abnormal {
+            background: #fef3c7;
+            padding: 8px;
+            border-radius: 4px;
+            border-left: 3px solid #f59e0b;
+        }
+
+        .footer {
+            padding: 16px;
+            text-align: center;
+            font-size: 12px;
+            color: #9ca3af;
+            border-top: 1px solid #e5e7eb;
+            margin-top: 20px;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+
+        .status-indicator.received {
+            background: #3b82f6;
+        }
+
+        .status-indicator.processing {
+            background: #f59e0b;
+        }
+
+        .status-indicator.validated {
+            background: #10b981;
+        }
+
+        .status-indicator.delivered {
+            background: #6366f1;
+        }
+
+        .search-box {
+            margin-bottom: 16px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            padding: 16px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 2000;
+            max-width: 300px;
+            border-left: 4px solid #0d9488;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(400px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .notification.error {
+            border-left-color: #ef4444;
+            background: #fef2f2;
+            color: #991b1b;
+        }
+
+        .notification.success {
+            border-left-color: #10b981;
+            background: #f0fdf4;
+            color: #15803d;
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 24px;
+            }
+
+            .section {
+                padding: 16px;
+            }
+
+            .grid-3 {
+                grid-template-columns: 1fr;
+            }
+
+            .notification {
+                right: 10px;
+                left: 10px;
+                max-width: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🔬 LaboratorioCL</h1>
+        <p>Sistema de Gestión de Laboratorio Clínico</p>
+    </header>
+
+    <div class="tabs">
+        <button class="tab-btn active" data-tab="examenes">Exámenes</button>
+        <button class="tab-btn" data-tab="pacientes">Pacientes</button>
+        <button class="tab-btn" data-tab="resultados">Resultados</button>
+        <button class="tab-btn" data-tab="reactivos">Reactivos</button>
+        <button class="tab-btn" data-tab="finanzas">Finanzas</button>
+        <button class="tab-btn" data-tab="equipos">Equipos</button>
+    </div>
+
+    <div class="container">
+        <!-- TAB: EXÁMENES -->
+        <div id="examenes" class="tab-content active">
+            <div class="section">
+                <h2>Crear Nueva Orden</h2>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="exam_patient">Paciente (RUT)</label>
+                        <input type="text" id="exam_patient" placeholder="Ej: 12345678-K">
+                    </div>
+                    <div class="form-group">
+                        <label for="exam_doctor">Médico Solicitante</label>
+                        <input type="text" id="exam_doctor" placeholder="Nombre del médico">
+                    </div>
+                    <div class="form-group">
+                        <label for="exam_type">Tipo de Examen</label>
+                        <select id="exam_type">
+                            <option value="">Selecciona un examen</option>
+                            <option value="hemograma">Hemograma Completo</option>
+                            <option value="perfil_lipidico">Perfil Lipídico</option>
+                            <option value="glicemia">Glicemia</option>
+                            <option value="orina_completa">Orina Completa</option>
+                            <option value="tsh">TSH</option>
+                            <option value="pcr">PCR (Proteína C Reactiva)</option>
+                            <option value="cultivo">Cultivo</option>
+                            <option value="antibiograma">Antibiograma</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="exam_priority">Prioridad</label>
+                        <select id="exam_priority">
+                            <option value="normal">Normal</option>
+                            <option value="urgente">Urgente</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="exam_sample">Tipo de Muestra</label>
+                        <select id="exam_sample">
+                            <option value="sangre">Sangre</option>
+                            <option value="orina">Orina</option>
+                            <option value="hisopado">Hisopado</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="exam_price">Precio (CLP)</label>
+                        <input type="number" id="exam_price" placeholder="0" min="0">
+                    </div>
+                </div>
+                <button onclick="addExam()">Registrar Examen</button>
+            </div>
+
+            <div class="section">
+                <h2>Órdenes de Exámenes</h2>
+                <div class="search-box">
+                    <input type="text" id="exam_search" placeholder="Buscar por paciente o médico..." oninput="filterExams()">
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Barcode</th>
+                                <th>Paciente</th>
+                                <th>Examen</th>
+                                <th>Médico</th>
+                                <th>Prioridad</th>
+                                <th>Estado</th>
+                                <th>Fecha</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="exams_list">
+                        </tbody>
+                    </table>
+                </div>
+                <div id="exams_empty" class="empty-state">
+                    <p>No hay órdenes registradas. Crea una nueva orden arriba.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: PACIENTES -->
+        <div id="pacientes" class="tab-content">
+            <div class="section">
+                <h2>Registrar Paciente</h2>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="patient_rut">RUT</label>
+                        <input type="text" id="patient_rut" placeholder="12345678-K">
+                    </div>
+                    <div class="form-group">
+                        <label for="patient_name">Nombre Completo</label>
+                        <input type="text" id="patient_name" placeholder="Juan Pérez">
+                    </div>
+                    <div class="form-group">
+                        <label for="patient_dob">Fecha de Nacimiento</label>
+                        <input type="date" id="patient_dob">
+                    </div>
+                    <div class="form-group">
+                        <label for="patient_sex">Sexo</label>
+                        <select id="patient_sex">
+                            <option value="M">Masculino</option>
+                            <option value="F">Femenino</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="patient_previsión">Previsión</label>
+                        <select id="patient_previsión">
+                            <option value="FONASA">FONASA</option>
+                            <option value="ISAPRE">ISAPRE</option>
+                            <option value="Privado">Privado</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="patient_doctor">Médico Tratante</label>
+                        <input type="text" id="patient_doctor" placeholder="Dr. Carlos López">
+                    </div>
+                    <div class="form-group">
+                        <label for="patient_phone">Teléfono</label>
+                        <input type="tel" id="patient_phone" placeholder="+56 9 1234 5678">
+                    </div>
+                    <div class="form-group">
+                        <label for="patient_email">Email</label>
+                        <input type="email" id="patient_email" placeholder="paciente@email.com">
+                    </div>
+                </div>
+                <button onclick="addPatient()">Registrar Paciente</button>
+            </div>
+
+            <div class="section">
+                <h2>Base de Pacientes</h2>
+                <div class="search-box">
+                    <input type="text" id="patient_search" placeholder="Buscar por RUT o nombre..." oninput="filterPatients()">
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>RUT</th>
+                                <th>Nombre</th>
+                                <th>Edad</th>
+                                <th>Sexo</th>
+                                <th>Previsión</th>
+                                <th>Médico</th>
+                                <th>Teléfono</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="patients_list">
+                        </tbody>
+                    </table>
+                </div>
+                <div id="patients_empty" class="empty-state">
+                    <p>No hay pacientes registrados. Registra un nuevo paciente arriba.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: RESULTADOS -->
+        <div id="resultados" class="tab-content">
+            <div class="section">
+                <h2>Ingreso de Resultados</h2>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="result_exam_id">Número de Orden</label>
+                        <input type="text" id="result_exam_id" placeholder="ID del examen">
+                    </div>
+                    <div class="form-group">
+                        <label for="result_test_type">Tipo de Examen</label>
+                        <select id="result_test_type">
+                            <option value="">Selecciona examen</option>
+                            <option value="hemograma">Hemograma</option>
+                            <option value="perfil_lipidico">Perfil Lipídico</option>
+                            <option value="glicemia">Glicemia</option>
+                            <option value="orina_completa">Orina Completa</option>
+                            <option value="tsh">TSH</option>
+                            <option value="pcr">PCR</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="result_value">Valor del Resultado</label>
+                        <input type="number" id="result_value" placeholder="0.00" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label for="result_unit">Unidad</label>
+                        <input type="text" id="result_unit" placeholder="mg/dL, U/L, mm³, etc.">
+                    </div>
+                    <div class="form-group">
+                        <label for="result_ref_min">Valor Mín. Referencia</label>
+                        <input type="number" id="result_ref_min" placeholder="0.00" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label for="result_ref_max">Valor Máx. Referencia</label>
+                        <input type="number" id="result_ref_max" placeholder="100.00" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label for="result_technician">Técnico Responsable</label>
+                        <input type="text" id="result_technician" placeholder="Nombre del técnico">
+                    </div>
+                    <div class="form-group">
+                        <label for="result_pathologist">Patólogo (Validador)</label>
+                        <input type="text" id="result_pathologist" placeholder="Nombre del patólogo">
+                    </div>
+                </div>
+                <button onclick="addResult()">Registrar Resultado</button>
+            </div>
+
+            <div class="section">
+                <h2>Resultados Ingresados</h2>
+                <div id="results_list"></div>
+                <div id="results_empty" class="empty-state">
+                    <p>No hay resultados ingresados aún.</p>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>Control de Calidad (QC)</h2>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="qc_test">Examen QC</label>
+                        <select id="qc_test">
+                            <option value="hemograma">Hemograma</option>
+                            <option value="glicemia">Glicemia</option>
+                            <option value="tsh">TSH</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="qc_control_level">Nivel de Control</label>
+                        <select id="qc_control_level">
+                            <option value="normal">Normal</option>
+                            <option value="patológico">Patológico</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="qc_value">Valor Observado</label>
+                        <input type="number" id="qc_value" placeholder="0.00" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label for="qc_expected">Valor Esperado</label>
+                        <input type="number" id="qc_expected" placeholder="0.00" step="0.01">
+                    </div>
+                </div>
+                <button onclick="addQC()">Registrar QC</button>
+                <div id="qc_list" style="margin-top: 16px;"></div>
+            </div>
+        </div>
+
+        <!-- TAB: REACTIVOS -->
+        <div id="reactivos" class="tab-content">
+            <div class="section">
+                <h2>Registrar Reactivo/Suministro</h2>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="supply_name">Nombre del Reactivo</label>
+                        <select id="supply_name">
+                            <option value="">Selecciona</option>
+                            <option value="Suero Fisiológico">Suero Fisiológico</option>
+                            <option value="Tubos EDTA">Tubos EDTA</option>
+                            <option value="Tubos Sin Anticoagulante">Tubos Sin Anticoagulante</option>
+                            <option value="Agujas Estériles">Agujas Estériles</option>
+                            <option value="Algodón">Algodón</option>
+                            <option value="Alcohol 70%">Alcohol 70%</option>
+                            <option value="Guantes de Látex">Guantes de Látex</option>
+                            <option value="Reactivo Hemograma">Reactivo Hemograma</option>
+                            <option value="Reactivo Glicemia">Reactivo Glicemia</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="supply_lote">Número de Lote</label>
+                        <input type="text" id="supply_lote" placeholder="Ej: LOT2024001">
+                    </div>
+                    <div class="form-group">
+                        <label for="supply_expiry">Fecha de Vencimiento</label>
+                        <input type="date" id="supply_expiry">
+                    </div>
+                    <div class="form-group">
+                        <label for="supply_quantity">Cantidad en Stock</label>
+                        <input type="number" id="supply_quantity" placeholder="0" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="supply_supplier">Proveedor</label>
+                        <input type="text" id="supply_supplier" placeholder="Nombre del proveedor">
+                    </div>
+                    <div class="form-group">
+                        <label for="supply_cost">Costo Unitario (CLP)</label>
+                        <input type="number" id="supply_cost" placeholder="0" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="supply_temp">Temperatura Almacenamiento</label>
+                        <input type="text" id="supply_temp" placeholder="Ej: 2-8°C, Ambiente">
+                    </div>
+                    <div class="form-group">
+                        <label for="supply_last_temp_check">Última Verificación de Temp.</label>
+                        <input type="datetime-local" id="supply_last_temp_check">
+                    </div>
+                </div>
+                <button onclick="addSupply()">Registrar Reactivo</button>
+            </div>
+
+            <div class="section">
+                <h2>Inventario de Reactivos</h2>
+                <div class="search-box">
+                    <input type="text" id="supply_search" placeholder="Buscar reactivo..." oninput="filterSupplies()">
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Reactivo</th>
+                                <th>Lote</th>
+                                <th>Stock</th>
+                                <th>Vencimiento</th>
+                                <th>Proveedor</th>
+                                <th>Costo Unit.</th>
+                                <th>Temp.</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="supplies_list">
+                        </tbody>
+                    </table>
+                </div>
+                <div id="supplies_empty" class="empty-state">
+                    <p>No hay reactivos registrados. Agrega uno nuevo arriba.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: FINANZAS -->
+        <div id="finanzas" class="tab-content">
+            <div class="section">
+                <h2>Resumen Financiero</h2>
+                <div class="grid-3">
+                    <div class="stat-card">
+                        <div class="label">Ingresos Totales</div>
+                        <div class="number" id="total_revenue">$0</div>
+                    </div>
+                    <div class="stat-card secondary">
+                        <div class="label">Gastos Totales</div>
+                        <div class="number" id="total_expenses">$0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">Ganancia Neta</div>
+                        <div class="number" id="net_profit">$0</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>Ingresos por Tipo de Examen</h2>
+                <div class="chart-container">
+                    <canvas id="revenue_chart"></canvas>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>Volumen Mensual</h2>
+                <div class="chart-container">
+                    <canvas id="volume_chart"></canvas>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>Desglose de Gastos</h2>
+                <div class="grid-2">
+                    <div class="row">
+                        <strong>Reactivos y Suministros</strong>
+                        <span id="expense_supplies">$0</span>
+                    </div>
+                    <div class="row">
+                        <strong>Personal</strong>
+                        <span id="expense_personal">$0</span>
+                    </div>
+                    <div class="row">
+                        <strong>Mantenimiento de Equipos</strong>
+                        <span id="expense_maintenance">$0</span>
+                    </div>
+                    <div class="row">
+                        <strong>Otros Gastos</strong>
+                        <span id="expense_other">$0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>Ingresos por Previsión</h2>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Previsión</th>
+                                <th>Número de Exámenes</th>
+                                <th>Ingreso Total (CLP)</th>
+                                <th>% del Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="previsión_list">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>Códigos FONASA</h2>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Examen</th>
+                                <th>Código FONASA</th>
+                                <th>Precio Base FONASA (CLP)</th>
+                                <th>Precio Laboratorio (CLP)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="fonasa_list">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: EQUIPOS -->
+        <div id="equipos" class="tab-content">
+            <div class="section">
+                <h2>Registrar Equipo</h2>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="equipment_type">Tipo de Equipo</label>
+                        <select id="equipment_type">
+                            <option value="">Selecciona</option>
+                            <option value="Analizador Hematológico">Analizador Hematológico</option>
+                            <option value="Centrífuga">Centrífuga</option>
+                            <option value="Microscopio">Microscopio</option>
+                            <option value="Autoclave">Autoclave</option>
+                            <option value="Refrigerador de Muestras">Refrigerador de Muestras</option>
+                            <option value="Analizador Bioquímico">Analizador Bioquímico</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="equipment_model">Modelo</label>
+                        <input type="text" id="equipment_model" placeholder="Ej: Sysmex XN-1000">
+                    </div>
+                    <div class="form-group">
+                        <label for="equipment_serial">Número de Serie</label>
+                        <input type="text" id="equipment_serial" placeholder="Número de serie">
+                    </div>
+                    <div class="form-group">
+                        <label for="equipment_manufacturer">Fabricante</label>
+                        <input type="text" id="equipment_manufacturer" placeholder="Nombre del fabricante">
+                    </div>
+                    <div class="form-group">
+                        <label for="equipment_installation">Fecha de Instalación</label>
+                        <input type="date" id="equipment_installation">
+                    </div>
+                    <div class="form-group">
+                        <label for="equipment_next_calibration">Próxima Calibración</label>
+                        <input type="date" id="equipment_next_calibration">
+                    </div>
+                </div>
+                <button onclick="addEquipment()">Registrar Equipo</button>
+            </div>
+
+            <div class="section">
+                <h2>Equipos Registrados</h2>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Tipo</th>
+                                <th>Modelo</th>
+                                <th>Serie</th>
+                                <th>Fabricante</th>
+                                <th>Instalado</th>
+                                <th>Próx. Calibración</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="equipment_list">
+                        </tbody>
+                    </table>
+                </div>
+                <div id="equipment_empty" class="empty-state">
+                    <p>No hay equipos registrados. Agrega uno nuevo arriba.</p>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>Registro de Mantenimiento</h2>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="maintenance_equipment">Equipo</label>
+                        <select id="maintenance_equipment">
+                            <option value="">Selecciona equipo</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="maintenance_type">Tipo de Mantenimiento</label>
+                        <select id="maintenance_type">
+                            <option value="preventivo">Preventivo</option>
+                            <option value="correctivo">Correctivo</option>
+                            <option value="calibración">Calibración</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="maintenance_date">Fecha</label>
+                        <input type="date" id="maintenance_date">
+                    </div>
+                    <div class="form-group">
+                        <label for="maintenance_technician">Técnico</label>
+                        <input type="text" id="maintenance_technician" placeholder="Nombre del técnico">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="maintenance_notes">Notas</label>
+                    <textarea id="maintenance_notes" placeholder="Detalles del mantenimiento..."></textarea>
+                </div>
+                <button onclick="addMaintenance()">Registrar Mantenimiento</button>
+                <div id="maintenance_list" style="margin-top: 16px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>LaboratorioCL © 2024 | Gestión Profesional de Laboratorios Clínicos</p>
+        <p style="margin-top: 8px;">Versión 1.0 | Completamente offline</p>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        // Safe localStorage wrapper
+        const safeStorage = {
+            getItem: (key) => {
+                try {
+                    return localStorage.getItem(key);
+                } catch (e) {
+                    console.warn('localStorage getItem failed:', e);
+                    return null;
+                }
+            },
+            setItem: (key, value) => {
+                try {
+                    localStorage.setItem(key, value);
+                } catch (e) {
+                    console.warn('localStorage setItem failed:', e);
+                }
+            },
+            removeItem: (key) => {
+                try {
+                    localStorage.removeItem(key);
+                } catch (e) {
+                    console.warn('localStorage removeItem failed:', e);
+                }
+            },
+            clear: () => {
+                try {
+                    localStorage.clear();
+                } catch (e) {
+                    console.warn('localStorage clear failed:', e);
+                }
+            }
+        };
+
+        // Data structures
+        let exams = [];
+        let patients = [];
+        let results = [];
+        let supplies = [];
+        let equipment = [];
+        let maintenanceLog = [];
+        let qcLog = [];
+
+        // FONASA pricing table
+        const fonasaPricing = {
+            'hemograma': { code: '14001', price: 15000 },
+            'perfil_lipidico': { code: '14002', price: 18000 },
+            'glicemia': { code: '14003', price: 8000 },
+            'orina_completa': { code: '14004', price: 10000 },
+            'tsh': { code: '14005', price: 12000 },
+            'pcr': { code: '14006', price: 9000 },
+            'cultivo': { code: '14007', price: 20000 },
+            'antibiograma': { code: '14008', price: 12000 }
+        };
+
+        // Reference ranges
+        const referenceRanges = {
+            'hemograma': { min: 4.5, max: 11.0, unit: 'x10^9/L' },
+            'glicemia': { min: 70, max: 100, unit: 'mg/dL' },
+            'tsh': { min: 0.4, max: 4.0, unit: 'mUI/L' },
+            'perfil_lipidico': { min: 0, max: 200, unit: 'mg/dL' },
+            'orina_completa': { min: 0, max: 5, unit: 'cells/uL' }
+        };
+
+        // Tab switching
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tabName = btn.dataset.tab;
+                document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+                document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+                document.getElementById(tabName).classList.add('active');
+                btn.classList.add('active');
+
+                // Refresh charts when Finanzas tab is opened
+                if (tabName === 'finanzas') {
+                    setTimeout(() => {
+                        updateFinanzas();
+                    }, 100);
+                }
+            });
+        });
+
+        // Generate barcode-like ID
+        function generateBarcode() {
+            return 'LAB' + Date.now().toString().slice(-8);
+        }
+
+        // Show notification
+        function showNotification(message, type = 'success') {
+            const notif = document.createElement('div');
+            notif.className = `notification ${type}`;
+            notif.textContent = message;
+            document.body.appendChild(notif);
+            setTimeout(() => {
+                notif.remove();
+            }, 3000);
+        }
+
+        // EXÁMENES functions
+        function addExam() {
+            const patient = document.getElementById('exam_patient').value.trim();
+            const doctor = document.getElementById('exam_doctor').value.trim();
+            const type = document.getElementById('exam_type').value;
+            const priority = document.getElementById('exam_priority').value;
+            const sample = document.getElementById('exam_sample').value;
+            const price = parseFloat(document.getElementById('exam_price').value) || 0;
+
+            if (!patient || !doctor || !type || !price) {
+                showNotification('Por favor completa todos los campos', 'error');
+                return;
+            }
+
+            const exam = {
+                id: generateBarcode(),
+                patient,
+                doctor,
+                type,
+                priority,
+                sample,
+                price,
+                status: 'recibida',
+                date: new Date().toLocaleDateString('es-CL'),
+                turnaroundTime: priority === 'urgente' ? '2h' : '24h'
+            };
+
+            exams.push(exam);
+            saveData();
+            renderExams();
+            document.getElementById('exam_patient').value = '';
+            document.getElementById('exam_doctor').value = '';
+            document.getElementById('exam_type').value = '';
+            document.getElementById('exam_price').value = '';
+            showNotification('Examen registrado correctamente');
+        }
+
+        function renderExams() {
+            const list = document.getElementById('exams_list');
+            const empty = document.getElementById('exams_empty');
+
+            if (exams.length === 0) {
+                list.innerHTML = '';
+                empty.style.display = 'block';
+                return;
+            }
+
+            empty.style.display = 'none';
+            list.innerHTML = exams.map(exam => `
+                <tr>
+                    <td><strong>${exam.id}</strong></td>
+                    <td>${exam.patient}</td>
+                    <td>${getExamLabel(exam.type)}</td>
+                    <td>${exam.doctor}</td>
+                    <td><span class="badge ${exam.priority === 'urgente' ? 'danger' : 'info'}">${exam.priority.charAt(0).toUpperCase() + exam.priority.slice(1)}</span></td>
+                    <td><span class="status-indicator ${exam.status}"></span>${exam.status.charAt(0).toUpperCase() + exam.status.slice(1)}</td>
+                    <td>${exam.date}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="action-btn edit" onclick="updateExamStatus('${exam.id}')">Cambiar Estado</button>
+                            <button class="action-btn delete" onclick="deleteExam('${exam.id}')">Eliminar</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function getExamLabel(type) {
+            const labels = {
+                'hemograma': 'Hemograma',
+                'perfil_lipidico': 'Perfil Lipídico',
+                'glicemia': 'Glicemia',
+                'orina_completa': 'Orina Completa',
+                'tsh': 'TSH',
+                'pcr': 'PCR',
+                'cultivo': 'Cultivo',
+                'antibiograma': 'Antibiograma'
+            };
+            return labels[type] || type;
+        }
+
+        function updateExamStatus(id) {
+            const exam = exams.find(e => e.id === id);
+            if (!exam) return;
+
+            const statuses = ['recibida', 'en proceso', 'validado', 'entregado'];
+            const currentIndex = statuses.indexOf(exam.status);
+            exam.status = statuses[(currentIndex + 1) % statuses.length];
+            saveData();
+            renderExams();
+            showNotification(`Estado actualizado a: ${exam.status}`);
+        }
+
+        function deleteExam(id) {
+            if (!confirm('¿Estás seguro de eliminar este examen?')) return;
+            exams = exams.filter(e => e.id !== id);
+            saveData();
+            renderExams();
+            showNotification('Examen eliminado');
+        }
+
+        function filterExams() {
+            const search = document.getElementById('exam_search').value.toLowerCase();
+            const filtered = exams.filter(e =>
+                e.patient.toLowerCase().includes(search) ||
+                e.doctor.toLowerCase().includes(search)
+            );
+
+            const list = document.getElementById('exams_list');
+            if (filtered.length === 0) {
+                list.innerHTML = '';
+                document.getElementById('exams_empty').style.display = 'block';
+                return;
+            }
+
+            document.getElementById('exams_empty').style.display = 'none';
+            list.innerHTML = filtered.map(exam => `
+                <tr>
+                    <td><strong>${exam.id}</strong></td>
+                    <td>${exam.patient}</td>
+                    <td>${getExamLabel(exam.type)}</td>
+                    <td>${exam.doctor}</td>
+                    <td><span class="badge ${exam.priority === 'urgente' ? 'danger' : 'info'}">${exam.priority.charAt(0).toUpperCase() + exam.priority.slice(1)}</span></td>
+                    <td><span class="status-indicator ${exam.status}"></span>${exam.status.charAt(0).toUpperCase() + exam.status.slice(1)}</td>
+                    <td>${exam.date}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="action-btn edit" onclick="updateExamStatus('${exam.id}')">Cambiar Estado</button>
+                            <button class="action-btn delete" onclick="deleteExam('${exam.id}')">Eliminar</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // PACIENTES functions
+        function addPatient() {
+            const rut = document.getElementById('patient_rut').value.trim();
+            const name = document.getElementById('patient_name').value.trim();
+            const dob = document.getElementById('patient_dob').value;
+            const sex = document.getElementById('patient_sex').value;
+            const prev = document.getElementById('patient_previsión').value;
+            const doctor = document.getElementById('patient_doctor').value.trim();
+            const phone = document.getElementById('patient_phone').value.trim();
+            const email = document.getElementById('patient_email').value.trim();
+
+            if (!rut || !name || !dob) {
+                showNotification('Por favor completa los campos obligatorios', 'error');
+                return;
+            }
+
+            const patient = {
+                id: rut,
+                rut,
+                name,
+                dob,
+                sex,
+                previsión: prev,
+                doctor,
+                phone,
+                email,
+                registeredDate: new Date().toLocaleDateString('es-CL')
+            };
+
+            patients.push(patient);
+            saveData();
+            renderPatients();
+            document.getElementById('patient_rut').value = '';
+            document.getElementById('patient_name').value = '';
+            document.getElementById('patient_dob').value = '';
+            showNotification('Paciente registrado correctamente');
+        }
+
+        function getAge(dob) {
+            const today = new Date();
+            const birth = new Date(dob);
+            let age = today.getFullYear() - birth.getFullYear();
+            const m = today.getMonth() - birth.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+            return age;
+        }
+
+        function renderPatients() {
+            const list = document.getElementById('patients_list');
+            const empty = document.getElementById('patients_empty');
+
+            if (patients.length === 0) {
+                list.innerHTML = '';
+                empty.style.display = 'block';
+                return;
+            }
+
+            empty.style.display = 'none';
+            list.innerHTML = patients.map(p => `
+                <tr>
+                    <td><strong>${p.rut}</strong></td>
+                    <td>${p.name}</td>
+                    <td>${getAge(p.dob)}</td>
+                    <td>${p.sex === 'M' ? 'Masculino' : 'Femenino'}</td>
+                    <td>${p.previsión}</td>
+                    <td>${p.doctor}</td>
+                    <td>${p.phone}</td>
+                    <td>
+                        <button class="action-btn view" onclick="viewPatientHistory('${p.rut}')">Ver Historial</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function viewPatientHistory(rut) {
+            const patientExams = exams.filter(e => e.patient === rut);
+            if (patientExams.length === 0) {
+                alert('Este paciente no tiene exámenes registrados');
+            } else {
+                alert(`Exámenes de ${rut}:\n${patientExams.map(e => `- ${getExamLabel(e.type)} (${e.date})`).join('\n')}`);
+            }
+        }
+
+        function filterPatients() {
+            const search = document.getElementById('patient_search').value.toLowerCase();
+            const filtered = patients.filter(p =>
+                p.rut.toLowerCase().includes(search) ||
+                p.name.toLowerCase().includes(search)
+            );
+
+            const list = document.getElementById('patients_list');
+            if (filtered.length === 0) {
+                list.innerHTML = '';
+                document.getElementById('patients_empty').style.display = 'block';
+                return;
+            }
+
+            document.getElementById('patients_empty').style.display = 'none';
+            list.innerHTML = filtered.map(p => `
+                <tr>
+                    <td><strong>${p.rut}</strong></td>
+                    <td>${p.name}</td>
+                    <td>${getAge(p.dob)}</td>
+                    <td>${p.sex === 'M' ? 'Masculino' : 'Femenino'}</td>
+                    <td>${p.previsión}</td>
+                    <td>${p.doctor}</td>
+                    <td>${p.phone}</td>
+                    <td>
+                        <button class="action-btn view" onclick="viewPatientHistory('${p.rut}')">Ver Historial</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // RESULTADOS functions
+        function addResult() {
+            const examId = document.getElementById('result_exam_id').value.trim();
+            const testType = document.getElementById('result_test_type').value;
+            const value = parseFloat(document.getElementById('result_value').value);
+            const unit = document.getElementById('result_unit').value;
+            const refMin = parseFloat(document.getElementById('result_ref_min').value);
+            const refMax = parseFloat(document.getElementById('result_ref_max').value);
+            const technician = document.getElementById('result_technician').value.trim();
+            const pathologist = document.getElementById('result_pathologist').value.trim();
+
+            if (!examId || !testType || isNaN(value)) {
+                showNotification('Por favor completa los campos requeridos', 'error');
+                return;
+            }
+
+            const abnormal = value < refMin || value > refMax;
+            const flag = abnormal ? (value < refMin ? 'baja' : 'alta') : 'normal';
+
+            const result = {
+                id: generateBarcode(),
+                examId,
+                testType,
+                value,
+                unit,
+                refMin,
+                refMax,
+                flag,
+                abnormal,
+                technician,
+                pathologist,
+                date: new Date().toLocaleDateString('es-CL'),
+                time: new Date().toLocaleTimeString('es-CL')
+            };
+
+            results.push(result);
+            saveData();
+            renderResults();
+            document.getElementById('result_exam_id').value = '';
+            showNotification('Resultado registrado' + (abnormal ? ' - ⚠️ VALOR ANORMAL' : ''));
+        }
+
+        function renderResults() {
+            const container = document.getElementById('results_list');
+            const empty = document.getElementById('results_empty');
+
+            if (results.length === 0) {
+                container.innerHTML = '';
+                empty.style.display = 'block';
+                return;
+            }
+
+            empty.style.display = 'none';
+            container.innerHTML = results.map(r => `
+                <div class="${r.abnormal ? 'highlight-abnormal' : ''}" style="padding: 12px; margin-bottom: 12px; border-radius: 8px; background: white; border: 1px solid ${r.abnormal ? '#fcd34d' : '#e5e7eb'}">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                        <div>
+                            <strong>${getExamLabel(r.testType)}</strong> - ID: ${r.examId}
+                            <br><small style="color: #6b7280;">${r.date} ${r.time}</small>
+                        </div>
+                        <span class="badge ${r.abnormal ? 'warning' : 'success'}">
+                            ${r.abnormal ? `🚩 ${r.flag.toUpperCase()}` : '✓ Normal'}
+                        </span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; font-size: 13px;">
+                        <div><strong>Valor:</strong> ${r.value} ${r.unit}</div>
+                        <div><strong>Rango:</strong> ${r.refMin} - ${r.refMax}</div>
+                        <div><strong>Técnico:</strong> ${r.technician}</div>
+                        <div><strong>Patólogo:</strong> ${r.pathologist}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function addQC() {
+            const test = document.getElementById('qc_test').value;
+            const level = document.getElementById('qc_control_level').value;
+            const observed = parseFloat(document.getElementById('qc_value').value);
+            const expected = parseFloat(document.getElementById('qc_expected').value);
+
+            if (!test || !level || isNaN(observed) || isNaN(expected)) {
+                showNotification('Por favor completa los campos requeridos', 'error');
+                return;
+            }
+
+            const deviation = Math.abs(observed - expected) / expected * 100;
+            const status = deviation < 5 ? 'OK' : 'FUERA DE CONTROL';
+
+            const qc = {
+                id: generateBarcode(),
+                test,
+                level,
+                observed,
+                expected,
+                deviation: deviation.toFixed(2),
+                status,
+                date: new Date().toLocaleDateString('es-CL'),
+                time: new Date().toLocaleTimeString('es-CL')
+            };
+
+            qcLog.push(qc);
+            saveData();
+            renderQC();
+            document.getElementById('qc_test').value = '';
+            document.getElementById('qc_value').value = '';
+            document.getElementById('qc_expected').value = '';
+            showNotification(`QC registrado: ${status}`);
+        }
+
+        function renderQC() {
+            const container = document.getElementById('qc_list');
+            if (qcLog.length === 0) {
+                container.innerHTML = '<p style="color: #9ca3af; text-align: center;">Sin registros de QC</p>';
+                return;
+            }
+
+            container.innerHTML = qcLog.slice(-5).reverse().map(q => `
+                <div style="padding: 12px; background: ${q.status === 'OK' ? '#d1fae5' : '#fee2e2'}; border-radius: 8px; margin-bottom: 8px; border-left: 3px solid ${q.status === 'OK' ? '#10b981' : '#ef4444'}">
+                    <div style="display: flex; justify-content: space-between; font-size: 13px;">
+                        <span><strong>${q.test}</strong> (${q.level})</span>
+                        <span class="badge ${q.status === 'OK' ? 'success' : 'danger'}">${q.status}</span>
+                    </div>
+                    <div style="font-size: 12px; color: #6b7280; margin-top: 6px;">
+                        Esperado: ${q.expected} | Observado: ${q.observed} | Desviación: ${q.deviation}%
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // REACTIVOS functions
+        function addSupply() {
+            const name = document.getElementById('supply_name').value || document.getElementById('supply_name').placeholder;
+            const lote = document.getElementById('supply_lote').value.trim();
+            const expiry = document.getElementById('supply_expiry').value;
+            const quantity = parseInt(document.getElementById('supply_quantity').value) || 0;
+            const supplier = document.getElementById('supply_supplier').value.trim();
+            const cost = parseFloat(document.getElementById('supply_cost').value) || 0;
+            const temp = document.getElementById('supply_temp').value.trim();
+            const lastTempCheck = document.getElementById('supply_last_temp_check').value;
+
+            if (!name || !lote || !expiry) {
+                showNotification('Por favor completa los campos obligatorios', 'error');
+                return;
+            }
+
+            const supply = {
+                id: generateBarcode(),
+                name,
+                lote,
+                expiry,
+                quantity,
+                supplier,
+                cost,
+                temp,
+                lastTempCheck,
+                addedDate: new Date().toLocaleDateString('es-CL')
+            };
+
+            supplies.push(supply);
+            saveData();
+            renderSupplies();
+            document.getElementById('supply_name').value = '';
+            document.getElementById('supply_lote').value = '';
+            document.getElementById('supply_quantity').value = '';
+            showNotification('Reactivo registrado correctamente');
+        }
+
+        function renderSupplies() {
+            const list = document.getElementById('supplies_list');
+            const empty = document.getElementById('supplies_empty');
+
+            if (supplies.length === 0) {
+                list.innerHTML = '';
+                empty.style.display = 'block';
+                return;
+            }
+
+            empty.style.display = 'none';
+            list.innerHTML = supplies.map(s => {
+                const expiryDate = new Date(s.expiry);
+                const today = new Date();
+                const daysUntilExpiry = Math.floor((expiryDate - today) / (1000 * 60 * 60 * 24));
+                const isExpired = daysUntilExpiry < 0;
+                const isExpiringSoon = daysUntilExpiry < 30;
+                const statusColor = isExpired ? '#ef4444' : isExpiringSoon ? '#f59e0b' : '#10b981';
+
+                return `
+                    <tr>
+                        <td>${s.name}</td>
+                        <td><strong>${s.lote}</strong></td>
+                        <td>${s.quantity}</td>
+                        <td style="color: ${statusColor}; font-weight: 600;">${s.expiry}${isExpired ? ' (VENCIDO)' : isExpiringSoon ? ' (⚠️)' : ''}</td>
+                        <td>${s.supplier}</td>
+                        <td>$${s.cost.toLocaleString('es-CL')}</td>
+                        <td>${s.temp}</td>
+                        <td>
+                            <button class="action-btn delete" onclick="deleteSupply('${s.id}')">Eliminar</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function deleteSupply(id) {
+            if (!confirm('¿Eliminar este reactivo?')) return;
+            supplies = supplies.filter(s => s.id !== id);
+            saveData();
+            renderSupplies();
+            showNotification('Reactivo eliminado');
+        }
+
+        function filterSupplies() {
+            const search = document.getElementById('supply_search').value.toLowerCase();
+            const filtered = supplies.filter(s =>
+                s.name.toLowerCase().includes(search) ||
+                s.lote.toLowerCase().includes(search)
+            );
+
+            const list = document.getElementById('supplies_list');
+            if (filtered.length === 0) {
+                list.innerHTML = '';
+                document.getElementById('supplies_empty').style.display = 'block';
+                return;
+            }
+
+            document.getElementById('supplies_empty').style.display = 'none';
+            list.innerHTML = filtered.map(s => {
+                const expiryDate = new Date(s.expiry);
+                const today = new Date();
+                const daysUntilExpiry = Math.floor((expiryDate - today) / (1000 * 60 * 60 * 24));
+                const isExpired = daysUntilExpiry < 0;
+                const isExpiringSoon = daysUntilExpiry < 30;
+                const statusColor = isExpired ? '#ef4444' : isExpiringSoon ? '#f59e0b' : '#10b981';
+
+                return `
+                    <tr>
+                        <td>${s.name}</td>
+                        <td><strong>${s.lote}</strong></td>
+                        <td>${s.quantity}</td>
+                        <td style="color: ${statusColor}; font-weight: 600;">${s.expiry}${isExpired ? ' (VENCIDO)' : isExpiringSoon ? ' (⚠️)' : ''}</td>
+                        <td>${s.supplier}</td>
+                        <td>$${s.cost.toLocaleString('es-CL')}</td>
+                        <td>${s.temp}</td>
+                        <td>
+                            <button class="action-btn delete" onclick="deleteSupply('${s.id}')">Eliminar</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // EQUIPOS functions
+        function addEquipment() {
+            const type = document.getElementById('equipment_type').value;
+            const model = document.getElementById('equipment_model').value.trim();
+            const serial = document.getElementById('equipment_serial').value.trim();
+            const manufacturer = document.getElementById('equipment_manufacturer').value.trim();
+            const installation = document.getElementById('equipment_installation').value;
+            const nextCal = document.getElementById('equipment_next_calibration').value;
+
+            if (!type || !model || !serial) {
+                showNotification('Por favor completa los campos obligatorios', 'error');
+                return;
+            }
+
+            const eq = {
+                id: generateBarcode(),
+                type,
+                model,
+                serial,
+                manufacturer,
+                installation,
+                nextCal,
+                addedDate: new Date().toLocaleDateString('es-CL')
+            };
+
+            equipment.push(eq);
+            saveData();
+            renderEquipment();
+            updateMaintenanceEquipmentOptions();
+            document.getElementById('equipment_type').value = '';
+            document.getElementById('equipment_model').value = '';
+            showNotification('Equipo registrado correctamente');
+        }
+
+        function renderEquipment() {
+            const list = document.getElementById('equipment_list');
+            const empty = document.getElementById('equipment_empty');
+
+            if (equipment.length === 0) {
+                list.innerHTML = '';
+                empty.style.display = 'block';
+                return;
+            }
+
+            empty.style.display = 'none';
+            list.innerHTML = equipment.map(e => {
+                const calDate = new Date(e.nextCal);
+                const today = new Date();
+                const daysUntilCal = Math.floor((calDate - today) / (1000 * 60 * 60 * 24));
+                const isOverdue = daysUntilCal < 0;
+                const calColor = isOverdue ? '#ef4444' : daysUntilCal < 30 ? '#f59e0b' : '#10b981';
+
+                return `
+                    <tr>
+                        <td>${e.type}</td>
+                        <td>${e.model}</td>
+                        <td><strong>${e.serial}</strong></td>
+                        <td>${e.manufacturer}</td>
+                        <td>${e.installation}</td>
+                        <td style="color: ${calColor}; font-weight: 600;">${e.nextCal}${isOverdue ? ' (VENCIDA)' : ''}</td>
+                        <td>
+                            <button class="action-btn delete" onclick="deleteEquipment('${e.id}')">Eliminar</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function deleteEquipment(id) {
+            if (!confirm('¿Eliminar este equipo?')) return;
+            equipment = equipment.filter(e => e.id !== id);
+            saveData();
+            renderEquipment();
+            updateMaintenanceEquipmentOptions();
+            showNotification('Equipo eliminado');
+        }
+
+        function updateMaintenanceEquipmentOptions() {
+            const select = document.getElementById('maintenance_equipment');
+            select.innerHTML = '<option value="">Selecciona equipo</option>' +
+                equipment.map(e => `<option value="${e.id}">${e.type} - ${e.model}</option>`).join('');
+        }
+
+        function addMaintenance() {
+            const equipmentId = document.getElementById('maintenance_equipment').value;
+            const type = document.getElementById('maintenance_type').value;
+            const date = document.getElementById('maintenance_date').value;
+            const technician = document.getElementById('maintenance_technician').value.trim();
+            const notes = document.getElementById('maintenance_notes').value.trim();
+
+            if (!equipmentId || !type || !date || !technician) {
+                showNotification('Por favor completa los campos obligatorios', 'error');
+                return;
+            }
+
+            const eq = equipment.find(e => e.id === equipmentId);
+            const maintenance = {
+                id: generateBarcode(),
+                equipmentId,
+                equipmentType: eq ? eq.type : 'Desconocido',
+                type,
+                date,
+                technician,
+                notes,
+                registeredDate: new Date().toLocaleDateString('es-CL')
+            };
+
+            maintenanceLog.push(maintenance);
+            saveData();
+            renderMaintenance();
+            document.getElementById('maintenance_equipment').value = '';
+            document.getElementById('maintenance_technician').value = '';
+            document.getElementById('maintenance_notes').value = '';
+            showNotification('Mantenimiento registrado');
+        }
+
+        function renderMaintenance() {
+            const container = document.getElementById('maintenance_list');
+            if (maintenanceLog.length === 0) {
+                container.innerHTML = '<p style="color: #9ca3af; text-align: center;">Sin registros de mantenimiento</p>';
+                return;
+            }
+
+            container.innerHTML = '<div style="margin-top: 16px;">' + maintenanceLog.slice(-5).reverse().map(m => `
+                <div style="padding: 12px; background: #f3f4f6; border-radius: 8px; margin-bottom: 8px; border-left: 3px solid #0d9488">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                        <strong>${m.equipmentType}</strong>
+                        <span class="badge info">${m.type}</span>
+                    </div>
+                    <div style="font-size: 13px; color: #6b7280;">
+                        <div><strong>Fecha:</strong> ${m.date}</div>
+                        <div><strong>Técnico:</strong> ${m.technician}</div>
+                        ${m.notes ? `<div><strong>Notas:</strong> ${m.notes}</div>` : ''}
+                    </div>
+                </div>
+            `).join('') + '</div>';
+        }
+
+        // FINANZAS functions
+        function updateFinanzas() {
+            updateFinancialStats();
+            updateRevenueChart();
+            updateVolumeChart();
+            updatePrevisióTable();
+            updateFonasaTable();
+        }
+
+        function updateFinancialStats() {
+            // Calculate revenue
+            const totalRevenue = exams.reduce((sum, e) => sum + (e.price || 0), 0);
+
+            // Calculate supply expenses
+            const supplyExpenses = supplies.reduce((sum, s) => sum + (s.quantity * s.cost), 0);
+
+            // Estimated other expenses (for demo)
+            const personalExpense = exams.length * 5000; // 5000 per exam for staff
+            const maintenanceExpense = equipment.length * 50000; // 50000 per equipment
+            const otherExpense = 100000; // Fixed other costs
+
+            const totalExpenses = supplyExpenses + personalExpense + maintenanceExpense + otherExpense;
+            const netProfit = totalRevenue - totalExpenses;
+
+            document.getElementById('total_revenue').textContent = `$${totalRevenue.toLocaleString('es-CL')}`;
+            document.getElementById('total_expenses').textContent = `$${totalExpenses.toLocaleString('es-CL')}`;
+            document.getElementById('net_profit').textContent = `$${netProfit.toLocaleString('es-CL')}`;
+
+            document.getElementById('expense_supplies').textContent = `$${supplyExpenses.toLocaleString('es-CL')}`;
+            document.getElementById('expense_personal').textContent = `$${personalExpense.toLocaleString('es-CL')}`;
+            document.getElementById('expense_maintenance').textContent = `$${maintenanceExpense.toLocaleString('es-CL')}`;
+            document.getElementById('expense_other').textContent = `$${otherExpense.toLocaleString('es-CL')}`;
+        }
+
+        function updateRevenueChart() {
+            const ctx = document.getElementById('revenue_chart');
+            if (!ctx) return;
+
+            const types = [...new Set(exams.map(e => e.type))];
+            const revenues = types.map(t => exams.filter(e => e.type === t).reduce((sum, e) => sum + (e.price || 0), 0));
+
+            if (window.revenueChart) window.revenueChart.destroy();
+
+            window.revenueChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: types.map(t => getExamLabel(t)),
+                    datasets: [{
+                        data: revenues,
+                        backgroundColor: [
+                            '#0d9488',
+                            '#059669',
+                            '#7c3aed',
+                            '#6d28d9',
+                            '#1f2937',
+                            '#4b5563',
+                            '#fbbf24',
+                            '#f97316'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { font: { size: 12 }, padding: 15 }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateVolumeChart() {
+            const ctx = document.getElementById('volume_chart');
+            if (!ctx) return;
+
+            const examsByDate = {};
+            exams.forEach(e => {
+                examsByDate[e.date] = (examsByDate[e.date] || 0) + 1;
+            });
+
+            const dates = Object.keys(examsByDate).sort();
+            const counts = dates.map(d => examsByDate[d]);
+
+            if (window.volumeChart) window.volumeChart.destroy();
+
+            window.volumeChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates.length > 0 ? dates : ['Sin datos'],
+                    datasets: [{
+                        label: 'Exámenes por día',
+                        data: counts.length > 0 ? counts : [0],
+                        borderColor: '#0d9488',
+                        backgroundColor: 'rgba(13, 148, 136, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { font: { size: 12 } }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function updatePrevisióTable() {
+            const prev = {};
+            exams.forEach(e => {
+                const p = patients.find(pat => pat.rut === e.patient);
+                if (p) {
+                    if (!prev[p.previsión]) prev[p.previsión] = { count: 0, revenue: 0 };
+                    prev[p.previsión].count++;
+                    prev[p.previsión].revenue += e.price;
+                }
+            });
+
+            const totalRevenue = Object.values(prev).reduce((sum, p) => sum + p.revenue, 0) || 1;
+            const list = document.getElementById('previsión_list');
+            list.innerHTML = Object.entries(prev).map(([name, data]) => `
+                <tr>
+                    <td><strong>${name}</strong></td>
+                    <td>${data.count}</td>
+                    <td>$${data.revenue.toLocaleString('es-CL')}</td>
+                    <td>${((data.revenue / totalRevenue) * 100).toFixed(1)}%</td>
+                </tr>
+            `).join('');
+
+            if (Object.keys(prev).length === 0) {
+                list.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #9ca3af;">Sin datos</td></tr>';
+            }
+        }
+
+        function updateFonasaTable() {
+            const list = document.getElementById('fonasa_list');
+            list.innerHTML = Object.entries(fonasaPricing).map(([key, value]) => `
+                <tr>
+                    <td>${getExamLabel(key)}</td>
+                    <td><strong>${value.code}</strong></td>
+                    <td>$${value.price.toLocaleString('es-CL')}</td>
+                    <td>$${(value.price * 1.15).toLocaleString('es-CL')}</td>
+                </tr>
+            `).join('');
+        }
+
+        // Data persistence
+        function saveData() {
+            try {
+                safeStorage.setItem('lab_exams', JSON.stringify(exams));
+                safeStorage.setItem('lab_patients', JSON.stringify(patients));
+                safeStorage.setItem('lab_results', JSON.stringify(results));
+                safeStorage.setItem('lab_supplies', JSON.stringify(supplies));
+                safeStorage.setItem('lab_equipment', JSON.stringify(equipment));
+                safeStorage.setItem('lab_maintenance', JSON.stringify(maintenanceLog));
+                safeStorage.setItem('lab_qc', JSON.stringify(qcLog));
+            } catch (e) {
+                console.warn('Error saving data:', e);
+            }
+        }
+
+        function loadData() {
+            try {
+                const saved = {
+                    exams: safeStorage.getItem('lab_exams'),
+                    patients: safeStorage.getItem('lab_patients'),
+                    results: safeStorage.getItem('lab_results'),
+                    supplies: safeStorage.getItem('lab_supplies'),
+                    equipment: safeStorage.getItem('lab_equipment'),
+                    maintenance: safeStorage.getItem('lab_maintenance'),
+                    qc: safeStorage.getItem('lab_qc')
+                };
+
+                exams = saved.exams ? JSON.parse(saved.exams) : [];
+                patients = saved.patients ? JSON.parse(saved.patients) : [];
+                results = saved.results ? JSON.parse(saved.results) : [];
+                supplies = saved.supplies ? JSON.parse(saved.supplies) : [];
+                equipment = saved.equipment ? JSON.parse(saved.equipment) : [];
+                maintenanceLog = saved.maintenance ? JSON.parse(saved.maintenance) : [];
+                qcLog = saved.qc ? JSON.parse(saved.qc) : [];
+            } catch (e) {
+                console.warn('Error loading data:', e);
+            }
+        }
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadData();
+            renderExams();
+            renderPatients();
+            renderResults();
+            renderQC();
+            renderSupplies();
+            renderEquipment();
+            renderMaintenance();
+            updateMaintenanceEquipmentOptions();
+
+            // Register service worker for PWA
+            if ('serviceWorker' in navigator) {
+                const swCode = `
+                    self.addEventListener('install', e => {
+                        e.waitUntil(caches.open('laboratoriocl-v1').then(cache => {
+                            return cache.addAll([
+                                '/',
+                                '/laboratoriocl/'
+                            ]).catch(() => {});
+                        }));
+                        self.skipWaiting();
+                    });
+
+                    self.addEventListener('activate', e => {
+                        e.waitUntil(clients.claim());
+                    });
+
+                    self.addEventListener('fetch', e => {
+                        e.respondWith(caches.match(e.request).catch(() => fetch(e.request)));
+                    });
+                `;
+
+                const blob = new Blob([swCode], { type: 'application/javascript' });
+                const swUrl = URL.createObjectURL(blob);
+                navigator.serviceWorker.register(swUrl).catch(() => {});
+            }
+        });
+
+        // Auto-save on any change
+        setInterval(saveData, 30000);
+    </script>
+</body>
+</html>

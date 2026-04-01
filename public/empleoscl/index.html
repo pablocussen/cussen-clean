@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0c4a6e">
+<meta name="description" content="EmpleosCL — Organizador de Busqueda de Empleo Chile. Postulaciones, entrevistas, sueldos y derechos laborales.">
+<title>EmpleosCL — Organizador de Busqueda de Empleo</title>
+<link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiRW1wbGVvc0NMIiwic2hvcnRfbmFtZSI6IkVtcGxlb3NDTCIsInN0YXJ0X3VybCI6Ii4iLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsImJhY2tncm91bmRfY29sb3IiOiIjZjBmOWZmIiwidGhlbWVfY29sb3IiOiIjMGM0YTZlIn0=">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f0f9ff;--accent:#0369a1;--text:#0c4a6e;--card:#fff;--border:#bae6fd;--success:#059669;--warn:#d97706;--danger:#dc2626;--muted:#64748b;--radius:10px;--shadow:0 2px 8px rgba(3,105,161,.12)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:70px}
+header{background:linear-gradient(90deg,#0c4a6e,#0369a1);color:#fff;padding:16px 20px;text-align:center;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.15)}
+header h1{font-size:1.3rem;font-weight:700;letter-spacing:.5px}
+header p{font-size:.75rem;opacity:.8;margin-top:2px}
+nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:2px solid var(--border);z-index:100;box-shadow:0 -2px 12px rgba(0,0,0,.08)}
+nav button{flex:1;padding:8px 2px 10px;border:none;background:none;color:var(--muted);font-size:.6rem;font-family:inherit;font-weight:500;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;transition:color .2s}
+nav button.active{color:var(--accent);font-weight:700}
+nav button svg{width:22px;height:22px}
+.tab{display:none;padding:16px;max-width:900px;margin:0 auto}
+.tab.active{display:block}
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;margin-bottom:14px;border:1px solid var(--border)}
+.card h3{font-size:.95rem;margin-bottom:8px;color:var(--accent)}
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.stat-box{background:var(--card);border-radius:var(--radius);padding:14px 10px;text-align:center;box-shadow:var(--shadow);border:1px solid var(--border)}
+.stat-box .num{font-size:1.6rem;font-weight:700;color:var(--accent)}
+.stat-box .label{font-size:.7rem;color:var(--muted);margin-top:2px}
+button.btn{background:var(--accent);color:#fff;border:none;border-radius:var(--radius);padding:10px 20px;font-family:inherit;font-size:.85rem;font-weight:600;cursor:pointer;transition:opacity .2s}
+button.btn:hover{opacity:.85}
+button.btn-sm{padding:6px 14px;font-size:.75rem}
+button.btn-outline{background:none;color:var(--accent);border:1.5px solid var(--accent)}
+button.btn-danger{background:var(--danger)}
+input,select,textarea{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.85rem;background:#fff;color:var(--text);transition:border-color .2s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
+textarea{resize:vertical;min-height:60px}
+label{display:block;font-size:.78rem;font-weight:600;margin-bottom:4px;color:var(--text)}
+.form-group{margin-bottom:12px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal{background:#fff;border-radius:14px;padding:24px;width:100%;max-width:520px;max-height:85vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.2)}
+.modal h2{font-size:1.1rem;margin-bottom:16px;color:var(--accent)}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:16px}
+.kanban{display:flex;gap:10px;overflow-x:auto;padding-bottom:10px;-webkit-overflow-scrolling:touch}
+.kanban-col{min-width:200px;flex:1;background:rgba(255,255,255,.6);border-radius:var(--radius);padding:10px}
+.kanban-col h4{font-size:.75rem;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:8px;text-align:center;padding-bottom:6px;border-bottom:2px solid var(--border)}
+.k-card{background:#fff;border-radius:8px;padding:10px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,.08);border-left:4px solid var(--accent);cursor:pointer;transition:transform .15s}
+.k-card:hover{transform:translateY(-1px)}
+.k-card .empresa{font-weight:600;font-size:.82rem}
+.k-card .cargo{font-size:.75rem;color:var(--muted)}
+.k-card .meta{font-size:.68rem;color:var(--muted);margin-top:4px;display:flex;gap:6px;flex-wrap:wrap}
+.k-card .tag{font-size:.62rem;padding:2px 6px;border-radius:4px;font-weight:600}
+.estado-postulado{border-left-color:#6366f1}.estado-postulado .tag{background:#eef2ff;color:#6366f1}
+.estado-entrevista{border-left-color:#f59e0b}.estado-entrevista .tag{background:#fffbeb;color:#b45309}
+.estado-prueba{border-left-color:#8b5cf6}.estado-prueba .tag{background:#f5f3ff;color:#7c3aed}
+.estado-oferta{border-left-color:#10b981}.estado-oferta .tag{background:#ecfdf5;color:#059669}
+.estado-aceptado{border-left-color:#059669}.estado-aceptado .tag{background:#d1fae5;color:#047857}
+.estado-rechazado{border-left-color:#ef4444}.estado-rechazado .tag{background:#fef2f2;color:#dc2626}
+.estado-descartado{border-left-color:#94a3b8}.estado-descartado .tag{background:#f1f5f9;color:#64748b}
+.accordion{border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;overflow:hidden}
+.accordion-header{padding:12px 16px;background:#fff;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:.85rem}
+.accordion-header:hover{background:#f0f9ff}
+.accordion-body{padding:0 16px 14px;font-size:.82rem;line-height:1.6;color:#334155;display:none}
+.accordion.open .accordion-body{display:block}
+.accordion-header .arrow{transition:transform .2s;font-size:.7rem}
+.accordion.open .accordion-header .arrow{transform:rotate(90deg)}
+.checklist-item{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:.82rem}
+.checklist-item input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent)}
+.calc-result{background:linear-gradient(135deg,#0c4a6e,#0369a1);color:#fff;border-radius:var(--radius);padding:18px;margin-top:14px}
+.calc-result .big{font-size:1.5rem;font-weight:700}
+.calc-result .detail{font-size:.78rem;opacity:.85;margin-top:4px}
+.compare-card{border:2px solid var(--border);border-radius:var(--radius);padding:14px;text-align:center}
+.compare-card.winner{border-color:var(--success);background:#ecfdf5}
+.compare-card h4{font-size:.9rem;color:var(--accent)}
+.compare-card .score{font-size:1.8rem;font-weight:700;color:var(--accent);margin:8px 0}
+.salary-ref{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center;font-size:.82rem;padding:8px 0;border-bottom:1px solid #f1f5f9}
+.salary-ref .cargo-name{font-weight:600}
+.salary-ref .rango{color:var(--accent);font-weight:500;text-align:right}
+.tip-card{background:#fff;border-radius:var(--radius);padding:14px;margin-bottom:10px;border-left:4px solid var(--accent)}
+.tip-card h4{font-size:.85rem;margin-bottom:6px;color:var(--accent)}
+.tip-card p,.tip-card li{font-size:.8rem;line-height:1.6;color:#334155}
+.tip-card ul{padding-left:18px;margin-top:6px}
+.rights-card{background:#fff;border-radius:var(--radius);padding:16px;margin-bottom:12px;box-shadow:var(--shadow)}
+.rights-card h4{font-size:.9rem;color:var(--accent);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.rights-card p,.rights-card li{font-size:.8rem;line-height:1.7;color:#334155}
+.rights-card ul{padding-left:18px;margin-top:6px}
+.highlight-box{background:linear-gradient(135deg,#fef3c7,#fde68a);border-radius:var(--radius);padding:14px;margin:12px 0;border-left:4px solid #f59e0b}
+.highlight-box p{font-size:.82rem;color:#92400e;font-weight:500}
+.hidden{display:none!important}
+@media(max-width:600px){.form-row{grid-template-columns:1fr}.kanban{flex-direction:column}.kanban-col{min-width:100%}.stat-row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+<h1>EmpleosCL</h1>
+<p>Organizador de Busqueda de Empleo Chile</p>
+</header>
+
+<div id="tab-postulaciones" class="tab active">
+<div class="stat-row" id="stats-row">
+<div class="stat-box"><div class="num" id="stat-total">0</div><div class="label">Total Postulaciones</div></div>
+<div class="stat-box"><div class="num" id="stat-respuesta">0%</div><div class="label">Tasa Respuesta</div></div>
+<div class="stat-box"><div class="num" id="stat-entrevistas">0</div><div class="label">Entrevistas este mes</div></div>
+</div>
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+<h2 style="font-size:1rem">Mis Postulaciones</h2>
+<button class="btn btn-sm" onclick="openAddModal()">+ Nueva</button>
+</div>
+<div class="kanban" id="kanban-board"></div>
+</div>
+
+<div id="tab-entrevista" class="tab">
+<h2 style="font-size:1.05rem;margin-bottom:14px">Preparacion Entrevista</h2>
+<div class="card">
+<h3>Metodo STAR</h3>
+<p style="font-size:.82rem;line-height:1.6;color:#334155">Estructura tus respuestas usando el metodo STAR para responder preguntas conductuales:</p>
+<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px">
+<div style="background:#eef2ff;padding:10px;border-radius:8px"><strong style="color:#6366f1;font-size:.8rem">S — Situacion</strong><p style="font-size:.75rem;color:#334155;margin-top:4px">Describe el contexto y escenario</p></div>
+<div style="background:#fef3c7;padding:10px;border-radius:8px"><strong style="color:#b45309;font-size:.8rem">T — Tarea</strong><p style="font-size:.75rem;color:#334155;margin-top:4px">Explica tu responsabilidad</p></div>
+<div style="background:#ecfdf5;padding:10px;border-radius:8px"><strong style="color:#059669;font-size:.8rem">A — Accion</strong><p style="font-size:.75rem;color:#334155;margin-top:4px">Detalla que hiciste tu</p></div>
+<div style="background:#fef2f2;padding:10px;border-radius:8px"><strong style="color:#dc2626;font-size:.8rem">R — Resultado</strong><p style="font-size:.75rem;color:#334155;margin-top:4px">Comparte el impacto medible</p></div>
+</div>
+</div>
+
+<h3 style="font-size:.9rem;margin:16px 0 10px">Preguntas Frecuentes</h3>
+<div id="interview-questions"></div>
+
+<div class="card" style="margin-top:16px">
+<h3>Preguntas para hacerle al entrevistador</h3>
+<ul style="font-size:.8rem;line-height:1.8;color:#334155;padding-left:18px">
+<li>Cual es un dia tipico en este cargo?</li>
+<li>Como es el equipo con el que trabajaria?</li>
+<li>Cuales son los principales desafios del puesto?</li>
+<li>Como miden el exito en esta posicion?</li>
+<li>Hay oportunidades de crecimiento o capacitacion?</li>
+<li>Cual es la cultura de la empresa respecto al trabajo remoto?</li>
+<li>Cuales son los proximos pasos del proceso de seleccion?</li>
+<li>Como ha evolucionado el equipo en el ultimo ano?</li>
+</ul>
+</div>
+
+<div class="card">
+<h3>Checklist Pre-Entrevista</h3>
+<div id="checklist-container"></div>
+</div>
+</div>
+
+<div id="tab-sueldo" class="tab">
+<h2 style="font-size:1.05rem;margin-bottom:14px">Sueldo y Beneficios</h2>
+
+<div class="card">
+<h3>Calculadora Sueldo Liquido</h3>
+<div class="form-group">
+<label>Sueldo Bruto Mensual (CLP)</label>
+<input type="number" id="calc-bruto" placeholder="Ej: 1500000" oninput="calcularSueldo()">
+</div>
+<div class="form-row">
+<div class="form-group">
+<label>AFP</label>
+<select id="calc-afp" onchange="calcularSueldo()">
+<option value="0.1144">Capital (11.44%)</option>
+<option value="0.1141">Cuprum (11.41%)</option>
+<option value="0.1158">Habitat (11.58%)</option>
+<option value="0.1044">Modelo (10.44%)</option>
+<option value="0.1135">PlanVital (11.35%)</option>
+<option value="0.1169">ProVida (11.69%)</option>
+<option value="0.1077">Uno (10.77%)</option>
+</select>
+</div>
+<div class="form-group">
+<label>Salud</label>
+<select id="calc-salud" onchange="calcularSueldo()">
+<option value="0.07">Fonasa (7%)</option>
+<option value="0.07">Isapre (7% minimo)</option>
+</select>
+</div>
+</div>
+<div id="calc-result" class="hidden"></div>
+</div>
+
+<div class="card">
+<h3>Comparador de Ofertas</h3>
+<p style="font-size:.78rem;color:var(--muted);margin-bottom:12px">Compara hasta 3 ofertas laborales para tomar la mejor decision</p>
+<div id="compare-inputs">
+<div class="compare-input-block" style="margin-bottom:14px;padding:12px;background:#f8fafc;border-radius:8px">
+<strong style="font-size:.82rem">Oferta 1</strong>
+<div class="form-row" style="margin-top:8px">
+<div class="form-group"><label>Empresa</label><input type="text" id="cmp-emp-1" placeholder="Empresa"></div>
+<div class="form-group"><label>Sueldo Bruto</label><input type="number" id="cmp-sueldo-1" placeholder="CLP"></div>
+</div>
+<div class="form-row">
+<div class="form-group"><label>Colacion/mes</label><input type="number" id="cmp-colacion-1" placeholder="0" value="0"></div>
+<div class="form-group"><label>Movilizacion/mes</label><input type="number" id="cmp-movil-1" placeholder="0" value="0"></div>
+</div>
+<div class="form-row">
+<div class="form-group"><label>Seguro Complementario</label><select id="cmp-seguro-1"><option value="0">No</option><option value="1">Si</option></select></div>
+<div class="form-group"><label>Bono Anual (CLP)</label><input type="number" id="cmp-bono-1" placeholder="0" value="0"></div>
+</div>
+<div class="form-group"><label>Dias Home Office / semana</label><input type="number" id="cmp-ho-1" placeholder="0" value="0" min="0" max="5"></div>
+</div>
+<div class="compare-input-block" style="margin-bottom:14px;padding:12px;background:#f8fafc;border-radius:8px">
+<strong style="font-size:.82rem">Oferta 2</strong>
+<div class="form-row" style="margin-top:8px">
+<div class="form-group"><label>Empresa</label><input type="text" id="cmp-emp-2" placeholder="Empresa"></div>
+<div class="form-group"><label>Sueldo Bruto</label><input type="number" id="cmp-sueldo-2" placeholder="CLP"></div>
+</div>
+<div class="form-row">
+<div class="form-group"><label>Colacion/mes</label><input type="number" id="cmp-colacion-2" placeholder="0" value="0"></div>
+<div class="form-group"><label>Movilizacion/mes</label><input type="number" id="cmp-movil-2" placeholder="0" value="0"></div>
+</div>
+<div class="form-row">
+<div class="form-group"><label>Seguro Complementario</label><select id="cmp-seguro-2"><option value="0">No</option><option value="1">Si</option></select></div>
+<div class="form-group"><label>Bono Anual (CLP)</label><input type="number" id="cmp-bono-2" placeholder="0" value="0"></div>
+</div>
+<div class="form-group"><label>Dias Home Office / semana</label><input type="number" id="cmp-ho-2" placeholder="0" value="0" min="0" max="5"></div>
+</div>
+</div>
+<button class="btn" onclick="compararOfertas()" style="width:100%">Comparar Ofertas</button>
+<div id="compare-result" class="hidden" style="margin-top:14px"></div>
+</div>
+
+<div class="card">
+<h3>Sueldos Referenciales Chile 2024</h3>
+<div id="salary-ref-list"></div>
+</div>
+</div>
+
+<div id="tab-cv" class="tab">
+<h2 style="font-size:1.05rem;margin-bottom:14px">CV Tips</h2>
+
+<div class="tip-card">
+<h4>Estructura CV Chile</h4>
+<ul>
+<li><strong>Datos personales:</strong> Nombre completo, RUT, direccion, telefono, email, perfil LinkedIn</li>
+<li><strong>Perfil profesional:</strong> 3-4 lineas resumiendo tu experiencia y valor agregado</li>
+<li><strong>Experiencia laboral:</strong> Orden cronologico inverso (mas reciente primero). Incluye empresa, cargo, periodo y logros cuantificables</li>
+<li><strong>Educacion:</strong> Titulo, institucion, ano de egreso</li>
+<li><strong>Habilidades tecnicas:</strong> Software, herramientas, lenguajes de programacion</li>
+<li><strong>Idiomas:</strong> Nivel segun Marco Europeo (A1-C2)</li>
+<li><strong>Certificaciones:</strong> Cursos relevantes al cargo</li>
+</ul>
+</div>
+
+<div class="tip-card">
+<h4>Tips Clave</h4>
+<ul>
+<li><strong>Extension:</strong> 1-2 paginas maximo. Si tienes menos de 5 anos de experiencia, 1 pagina basta</li>
+<li><strong>Foto:</strong> La tendencia actual en Chile es NO incluir foto (evita discriminacion)</li>
+<li><strong>Pretension de renta:</strong> NUNCA ponerla en el CV. Se negocia en la entrevista</li>
+<li><strong>Cuantifica logros:</strong> "Aumente ventas en 20%" es mejor que "Responsable de ventas"</li>
+<li><strong>Keywords del aviso:</strong> Usa las mismas palabras clave que aparecen en la oferta laboral</li>
+<li><strong>Formato:</strong> PDF siempre. Nombre archivo: "CV_NombreApellido_2024.pdf"</li>
+<li><strong>Sin errores:</strong> Revisa ortografia. Pide a alguien que lo lea antes de enviar</li>
+<li><strong>Diseno limpio:</strong> Evita colores excesivos o formatos complicados. Los ATS (sistemas automaticos) no los leen bien</li>
+</ul>
+</div>
+
+<div class="tip-card">
+<h4>Carta de Presentacion</h4>
+<p><strong>Cuando incluirla:</strong> Cuando el aviso la pide explicitamente o postulas directamente a la empresa (no por portal).</p>
+<ul>
+<li><strong>Parrafo 1:</strong> Quien eres y a que cargo postulas. Menciona como te enteraste de la oferta</li>
+<li><strong>Parrafo 2:</strong> Por que eres el candidato ideal. Conecta tu experiencia con los requisitos del cargo</li>
+<li><strong>Parrafo 3:</strong> Cierre con entusiasmo y disponibilidad para entrevista</li>
+</ul>
+<p style="margin-top:8px"><strong>Tono:</strong> Formal pero personal. Evita copiar/pegar la misma carta para todos.</p>
+</div>
+
+<div class="tip-card">
+<h4>Optimiza tu LinkedIn</h4>
+<ul>
+<li><strong>Foto:</strong> Profesional, fondo neutro, buena iluminacion. Aumenta visitas al perfil en 14x</li>
+<li><strong>Headline:</strong> No solo tu cargo. Ejemplo: "Ingeniero Civil Industrial | Gestion de Proyectos | Mejora Continua"</li>
+<li><strong>Resumen (Acerca de):</strong> 3-5 parrafos con keywords de tu industria. Escribe en primera persona</li>
+<li><strong>Experiencia:</strong> Detalla logros, no solo funciones. Usa viñetas y numeros</li>
+<li><strong>Recomendaciones:</strong> Pide al menos 3 a exjefes o colegas. Ofrece escribir una a cambio</li>
+<li><strong>Actividad:</strong> Publica o comenta al menos 1 vez por semana para aparecer en el algoritmo</li>
+<li><strong>URL personalizada:</strong> linkedin.com/in/tunombre (se ve mas profesional)</li>
+</ul>
+</div>
+</div>
+
+<div id="tab-derechos" class="tab">
+<h2 style="font-size:1.05rem;margin-bottom:14px">Derechos Laborales Chile</h2>
+
+<div class="highlight-box">
+<p>Conocer tus derechos laborales es fundamental. Aqui encuentras un resumen del Codigo del Trabajo chileno vigente. Ante dudas, consulta la Direccion del Trabajo.</p>
+</div>
+
+<div class="rights-card">
+<h4>Jornada Laboral</h4>
+<ul>
+<li><strong>Jornada ordinaria:</strong> 44 horas semanales (se reduce a 40 horas en 2028)</li>
+<li><strong>Distribucion:</strong> Maximo 5 o 6 dias por semana</li>
+<li><strong>Horas extras:</strong> Maximo 2 por dia, con recargo del 25% sobre el sueldo hora</li>
+<li><strong>Horas extras deben pactarse por escrito</strong></li>
+<li><strong>Colacion:</strong> Minimo 30 minutos, no es parte de la jornada</li>
+</ul>
+</div>
+
+<div class="rights-card">
+<h4>Vacaciones y Feriados</h4>
+<ul>
+<li><strong>Vacaciones:</strong> 15 dias habiles por ano con derecho a remuneracion integra (despues de 1 ano)</li>
+<li><strong>Acumulacion:</strong> Se pueden acumular hasta 2 periodos consecutivos</li>
+<li><strong>Feriados irrenunciables:</strong> 1 de enero, 1 de mayo, 18 de septiembre, 19 de septiembre, 25 de diciembre</li>
+<li><strong>Feriados irrenunciables:</strong> El empleador no puede obligarte a trabajar estos dias (salvo excepciones de ley)</li>
+</ul>
+</div>
+
+<div class="rights-card">
+<h4>Licencias Medicas</h4>
+<ul>
+<li><strong>Carencia:</strong> Los primeros 3 dias de licencia los paga el empleador (solo para licencias de hasta 10 dias)</li>
+<li><strong>Subsidio:</strong> Desde el dia 4, paga la Isapre o Fonasa</li>
+<li><strong>Plazo presentacion:</strong> 2 dias habiles desde la fecha de emision</li>
+<li><strong>Licencia maternal:</strong> 6 semanas prenatal + 12 semanas postnatal</li>
+<li><strong>Postnatal parental:</strong> 12 semanas adicionales (jornada completa) o 18 semanas (media jornada)</li>
+</ul>
+</div>
+
+<div class="rights-card">
+<h4>Fuero Maternal y Paternal</h4>
+<ul>
+<li><strong>Fuero maternal:</strong> Desde el inicio del embarazo hasta 1 ano despues del postnatal</li>
+<li><strong>Fuero paternal:</strong> Desde el nacimiento hasta 1 ano despues (si usa postnatal parental)</li>
+<li><strong>Proteccion:</strong> No pueden despedirte durante el fuero sin autorizacion judicial</li>
+<li><strong>Permiso paternal:</strong> 5 dias pagados por nacimiento de hijo</li>
+</ul>
+</div>
+
+<div class="rights-card">
+<h4>Despido e Indemnizaciones</h4>
+<ul>
+<li><strong>Indemnizacion por anos:</strong> 1 mes de sueldo por cada ano trabajado (tope 11 anos)</li>
+<li><strong>Aplica cuando:</strong> Despido por necesidades de la empresa (art. 161) o desahucio</li>
+<li><strong>NO aplica:</strong> Renuncia voluntaria ni despido por causales del art. 160 (conducta grave)</li>
+<li><strong>Aviso previo:</strong> 30 dias o pago de un mes adicional (indemnizacion sustitutiva)</li>
+<li><strong>Finiquito:</strong> Debe firmarse ante notario, ministro de fe o Inspeccion del Trabajo</li>
+<li><strong>Plazo pago:</strong> El empleador tiene 10 dias habiles para pagar las indemnizaciones</li>
+</ul>
+</div>
+
+<div class="rights-card">
+<h4>Cotizaciones Obligatorias</h4>
+<ul>
+<li><strong>AFP:</strong> ~10.58% a 11.69% (depende de la AFP, incluye comision)</li>
+<li><strong>Salud:</strong> 7% obligatorio (Fonasa o Isapre)</li>
+<li><strong>Seguro de Cesantia:</strong> 0.6% trabajador (contrato indefinido) / 3% solo empleador (plazo fijo)</li>
+<li><strong>Tope imponible AFP:</strong> 81.6 UF (aproximadamente $2.900.000 en 2024)</li>
+<li><strong>Tope imponible Salud:</strong> 81.6 UF</li>
+</ul>
+</div>
+
+<div class="rights-card">
+<h4>Donde Denunciar</h4>
+<ul>
+<li><strong>Direccion del Trabajo (DT):</strong> Fiscaliza cumplimiento de leyes laborales</li>
+<li><strong>Web:</strong> <a href="https://tramites.dirtrab.cl" target="_blank" style="color:var(--accent)">tramites.dirtrab.cl</a></li>
+<li><strong>Fono consulta:</strong> 600 450 4000</li>
+<li><strong>Denuncia online:</strong> Puedes presentar reclamos laborales desde la web sin necesidad de ir presencialmente</li>
+<li><strong>Inspeccion del Trabajo:</strong> Oficinas en todas las regiones del pais</li>
+</ul>
+</div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div id="modal-postulacion" class="modal-overlay hidden">
+<div class="modal">
+<h2 id="modal-title">Nueva Postulacion</h2>
+<div class="form-row">
+<div class="form-group"><label>Empresa *</label><input type="text" id="f-empresa" placeholder="Nombre empresa"></div>
+<div class="form-group"><label>Cargo *</label><input type="text" id="f-cargo" placeholder="Cargo al que postulas"></div>
+</div>
+<div class="form-row">
+<div class="form-group">
+<label>Fuente</label>
+<select id="f-fuente">
+<option value="LinkedIn">LinkedIn</option>
+<option value="Trabajando.com">Trabajando.com</option>
+<option value="Computrabajo">Computrabajo</option>
+<option value="Indeed">Indeed</option>
+<option value="Contacto">Contacto directo</option>
+<option value="BNE">Bolsa Nacional Empleo</option>
+<option value="Otra">Otra</option>
+</select>
+</div>
+<div class="form-group"><label>Fecha Postulacion</label><input type="date" id="f-fecha"></div>
+</div>
+<div class="form-row">
+<div class="form-group"><label>Sueldo Ofrecido</label><input type="text" id="f-sueldo" placeholder="Ej: $1.500.000 o 45 UF"></div>
+<div class="form-group">
+<label>Modalidad</label>
+<select id="f-modalidad">
+<option value="Presencial">Presencial</option>
+<option value="Hibrido">Hibrido</option>
+<option value="Remoto">Remoto</option>
+</select>
+</div>
+</div>
+<div class="form-row">
+<div class="form-group">
+<label>Tipo Contrato</label>
+<select id="f-contrato">
+<option value="Indefinido">Indefinido</option>
+<option value="Plazo fijo">Plazo fijo</option>
+<option value="Honorarios">Honorarios</option>
+<option value="Practica">Practica</option>
+</select>
+</div>
+<div class="form-group">
+<label>Estado</label>
+<select id="f-estado">
+<option value="Postulado">Postulado</option>
+<option value="En revision">En revision</option>
+<option value="Entrevista agendada">Entrevista agendada</option>
+<option value="Entrevista realizada">Entrevista realizada</option>
+<option value="Prueba tecnica">Prueba tecnica</option>
+<option value="Oferta recibida">Oferta recibida</option>
+<option value="Aceptado">Aceptado</option>
+<option value="Rechazado">Rechazado</option>
+<option value="Descartado">Descartado</option>
+</select>
+</div>
+</div>
+<div class="form-group"><label>Link al Aviso</label><input type="url" id="f-link" placeholder="https://..."></div>
+<div class="form-group"><label>Notas</label><textarea id="f-notas" placeholder="Notas adicionales..."></textarea></div>
+<div class="modal-actions">
+<button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+<button class="btn btn-danger hidden" id="btn-delete" onclick="deletePostulacion()">Eliminar</button>
+<button class="btn" id="btn-save" onclick="savePostulacion()">Guardar</button>
+</div>
+</div>
+</div>
+
+<nav>
+<button class="active" onclick="switchTab('postulaciones',this)">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+Postulaciones
+</button>
+<button onclick="switchTab('entrevista',this)">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+Entrevista
+</button>
+<button onclick="switchTab('sueldo',this)">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+Sueldo
+</button>
+<button onclick="switchTab('cv',this)">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+CV Tips
+</button>
+<button onclick="switchTab('derechos',this)">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+Derechos
+</button>
+</nav>
+
+<script>
+const STORAGE_KEY='empleoscl_v1';
+const KANBAN_COLS=[
+{id:'postulado',title:'Postulado',estados:['Postulado','En revision']},
+{id:'entrevista',title:'Entrevista',estados:['Entrevista agendada','Entrevista realizada']},
+{id:'prueba',title:'Prueba',estados:['Prueba tecnica']},
+{id:'oferta',title:'Oferta',estados:['Oferta recibida']},
+{id:'resultado',title:'Resultado',estados:['Aceptado','Rechazado','Descartado']}
+];
+const ESTADO_CLASS={
+'Postulado':'estado-postulado','En revision':'estado-postulado',
+'Entrevista agendada':'estado-entrevista','Entrevista realizada':'estado-entrevista',
+'Prueba tecnica':'estado-prueba','Oferta recibida':'estado-oferta',
+'Aceptado':'estado-aceptado','Rechazado':'estado-rechazado','Descartado':'estado-descartado'
+};
+let postulaciones=[];
+let editingId=null;
+
+function loadData(){
+try{const d=localStorage.getItem(STORAGE_KEY);if(d)postulaciones=JSON.parse(d);}catch(e){postulaciones=[];}
+if(!postulaciones.length)loadDemo();
+}
+function saveData(){
+try{localStorage.setItem(STORAGE_KEY,JSON.stringify(postulaciones));}catch(e){console.warn('localStorage error',e);}
+}
+function loadDemo(){
+const today=new Date();const d1=new Date(today);d1.setDate(d1.getDate()-12);
+const d2=new Date(today);d2.setDate(d2.getDate()-5);
+const d3=new Date(today);d3.setDate(d3.getDate()-2);
+postulaciones=[
+{id:genId(),empresa:'Banco de Chile',cargo:'Analista de Datos',fuente:'LinkedIn',fecha:fmt(d1),sueldo:'$1.800.000',modalidad:'Hibrido',contrato:'Indefinido',estado:'Entrevista agendada',link:'',notas:'Entrevista el viernes a las 10:00. Preparar caso de analisis.'},
+{id:genId(),empresa:'Falabella Tecnologia',cargo:'Desarrollador Full Stack',fuente:'Computrabajo',fecha:fmt(d2),sueldo:'$2.200.000',modalidad:'Remoto',contrato:'Indefinido',estado:'Postulado',link:'',notas:'Piden experiencia en React y Node.js. Envie CV actualizado.'},
+{id:genId(),empresa:'Gobierno Digital',cargo:'Ingeniero de Sistemas',fuente:'BNE',fecha:fmt(d3),sueldo:'$1.500.000',modalidad:'Presencial',contrato:'Plazo fijo',estado:'Prueba tecnica',link:'',notas:'Prueba tecnica de infraestructura cloud. Estudiar AWS.'}
+];
+saveData();
+}
+function genId(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
+function fmt(d){return d.toISOString().split('T')[0];}
+
+function switchTab(name,btn){
+document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+document.getElementById('tab-'+name).classList.add('active');
+document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+btn.classList.add('active');
+}
+
+function renderKanban(){
+const board=document.getElementById('kanban-board');
+board.innerHTML='';
+KANBAN_COLS.forEach(col=>{
+const div=document.createElement('div');
+div.className='kanban-col';
+div.innerHTML='<h4>'+col.title+' (<span class="col-count">0</span>)</h4>';
+const items=postulaciones.filter(p=>col.estados.includes(p.estado));
+div.querySelector('.col-count').textContent=items.length;
+items.forEach(p=>{
+const cls=ESTADO_CLASS[p.estado]||'';
+const card=document.createElement('div');
+card.className='k-card '+cls;
+card.onclick=()=>openEditModal(p.id);
+card.innerHTML='<div class="empresa">'+esc(p.empresa)+'</div>'
++'<div class="cargo">'+esc(p.cargo)+'</div>'
++'<div class="meta"><span class="tag">'+esc(p.estado)+'</span>'
++'<span>'+esc(p.modalidad)+'</span>'
++(p.sueldo?'<span>'+esc(p.sueldo)+'</span>':'')
++'</div>';
+div.appendChild(card);
+});
+board.appendChild(div);
+});
+updateStats();
+}
+
+function updateStats(){
+const total=postulaciones.length;
+document.getElementById('stat-total').textContent=total;
+const responded=postulaciones.filter(p=>!['Postulado','En revision'].includes(p.estado)).length;
+document.getElementById('stat-respuesta').textContent=total?Math.round(responded/total*100)+'%':'0%';
+const now=new Date();const m=now.getMonth(),y=now.getFullYear();
+const interviews=postulaciones.filter(p=>{
+if(!['Entrevista agendada','Entrevista realizada'].includes(p.estado))return false;
+if(!p.fecha)return false;
+const d=new Date(p.fecha);return d.getMonth()===m&&d.getFullYear()===y;
+}).length;
+document.getElementById('stat-entrevistas').textContent=interviews;
+}
+
+function openAddModal(){
+editingId=null;
+document.getElementById('modal-title').textContent='Nueva Postulacion';
+document.getElementById('btn-delete').classList.add('hidden');
+document.getElementById('f-empresa').value='';
+document.getElementById('f-cargo').value='';
+document.getElementById('f-fuente').value='LinkedIn';
+document.getElementById('f-fecha').value=fmt(new Date());
+document.getElementById('f-sueldo').value='';
+document.getElementById('f-modalidad').value='Presencial';
+document.getElementById('f-contrato').value='Indefinido';
+document.getElementById('f-estado').value='Postulado';
+document.getElementById('f-link').value='';
+document.getElementById('f-notas').value='';
+document.getElementById('modal-postulacion').classList.remove('hidden');
+}
+
+function openEditModal(id){
+const p=postulaciones.find(x=>x.id===id);
+if(!p)return;
+editingId=id;
+document.getElementById('modal-title').textContent='Editar Postulacion';
+document.getElementById('btn-delete').classList.remove('hidden');
+document.getElementById('f-empresa').value=p.empresa||'';
+document.getElementById('f-cargo').value=p.cargo||'';
+document.getElementById('f-fuente').value=p.fuente||'LinkedIn';
+document.getElementById('f-fecha').value=p.fecha||'';
+document.getElementById('f-sueldo').value=p.sueldo||'';
+document.getElementById('f-modalidad').value=p.modalidad||'Presencial';
+document.getElementById('f-contrato').value=p.contrato||'Indefinido';
+document.getElementById('f-estado').value=p.estado||'Postulado';
+document.getElementById('f-link').value=p.link||'';
+document.getElementById('f-notas').value=p.notas||'';
+document.getElementById('modal-postulacion').classList.remove('hidden');
+}
+
+function closeModal(){
+document.getElementById('modal-postulacion').classList.add('hidden');
+editingId=null;
+}
+
+function savePostulacion(){
+const empresa=document.getElementById('f-empresa').value.trim();
+const cargo=document.getElementById('f-cargo').value.trim();
+if(!empresa||!cargo){alert('Empresa y Cargo son obligatorios');return;}
+const data={
+empresa,cargo,
+fuente:document.getElementById('f-fuente').value,
+fecha:document.getElementById('f-fecha').value,
+sueldo:document.getElementById('f-sueldo').value.trim(),
+modalidad:document.getElementById('f-modalidad').value,
+contrato:document.getElementById('f-contrato').value,
+estado:document.getElementById('f-estado').value,
+link:document.getElementById('f-link').value.trim(),
+notas:document.getElementById('f-notas').value.trim()
+};
+if(editingId){
+const idx=postulaciones.findIndex(p=>p.id===editingId);
+if(idx>=0)postulaciones[idx]={...postulaciones[idx],...data};
+}else{
+data.id=genId();
+postulaciones.unshift(data);
+}
+saveData();renderKanban();closeModal();
+}
+
+function deletePostulacion(){
+if(!editingId)return;
+if(!confirm('Eliminar esta postulacion?'))return;
+postulaciones=postulaciones.filter(p=>p.id!==editingId);
+saveData();renderKanban();closeModal();
+}
+
+function esc(s){if(!s)return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+
+// Interview questions
+const QUESTIONS=[
+{q:'Hablame de ti',tip:'Resume en 2 minutos: tu formacion, experiencia clave y por que encajas en el cargo. No cuentes tu vida personal.'},
+{q:'Por que quieres trabajar aqui?',tip:'Investiga la empresa antes. Menciona algo especifico: su cultura, proyectos recientes o valores que compartas.'},
+{q:'Cuales son tus fortalezas?',tip:'Elige 2-3 fortalezas relevantes al cargo y da un ejemplo concreto de cada una.'},
+{q:'Cuales son tus debilidades?',tip:'Menciona una debilidad real pero menor, y explica que estas haciendo para mejorarla. No digas "soy perfeccionista".'},
+{q:'Donde te ves en 5 anos?',tip:'Muestra ambicion realista dentro de la empresa. Ejemplo: "liderando un equipo" o "siendo referente tecnico".'},
+{q:'Cual es tu pretension de renta?',tip:'Investiga el rango de mercado antes. Da un rango (ej: $1.5M - $1.8M bruto). Puedes decir "estoy abierto a conversar segun beneficios totales".'},
+{q:'Por que dejaste tu trabajo anterior?',tip:'Nunca hables mal del empleo anterior. Enfocate en buscar nuevos desafios, crecimiento profesional o alineacion con tus metas.'},
+{q:'Como manejas el estres y la presion?',tip:'Da un ejemplo real usando metodo STAR. Muestra que tienes herramientas: priorizacion, organizacion, comunicacion.'},
+{q:'Cuentame de un conflicto laboral y como lo resolviste',tip:'Usa STAR. Muestra madurez: escuchaste al otro, buscaste solucion win-win, aprendiste algo del proceso.'},
+{q:'Conoces nuestra empresa?',tip:'Investiga antes: que hacen, competidores, noticias recientes, valores. Muestra que no postulaste al azar.'},
+{q:'Que sabes de este cargo?',tip:'Lee bien la descripcion del puesto. Relaciona cada requisito con tu experiencia.'},
+{q:'Como te describirian tus companeros de trabajo?',tip:'Se honesto y positivo. Menciona algo como "colaborador", "confiable", "propositivo". Da un ejemplo si puedes.'},
+{q:'Que te motiva profesionalmente?',tip:'Conecta tu motivacion con lo que ofrece el cargo. Ejemplo: resolver problemas, impactar usuarios, aprender tecnologias nuevas.'},
+{q:'Has liderado un proyecto? Cuentame',tip:'Usa STAR. Si no has liderado formalmente, habla de cuando tomaste iniciativa o coordinaste algo.'},
+{q:'Tienes alguna pregunta para nosotros?',tip:'SIEMPRE ten preguntas preparadas. Muestra interes genuino. Ve la seccion "Preguntas para el entrevistador" abajo.'},
+{q:'Cual ha sido tu mayor logro profesional?',tip:'Elige uno relevante al cargo. Cuantifica el resultado: "reduje costos en 15%", "implemente sistema que atiende 10k usuarios".'}
+];
+function renderQuestions(){
+const c=document.getElementById('interview-questions');
+QUESTIONS.forEach(q=>{
+const acc=document.createElement('div');
+acc.className='accordion';
+acc.innerHTML='<div class="accordion-header" onclick="this.parentElement.classList.toggle(\'open\')"><span>'+esc(q.q)+'</span><span class="arrow">&#9654;</span></div>'
++'<div class="accordion-body"><p>'+esc(q.tip)+'</p></div>';
+c.appendChild(acc);
+});
+}
+
+const CHECKLIST_ITEMS=[
+'Investigar la empresa (web, RRSS, noticias recientes)',
+'Revisar la descripcion del cargo y preparar ejemplos',
+'Actualizar y revisar el CV (sin errores)',
+'Preparar respuestas a preguntas frecuentes',
+'Preparar preguntas para el entrevistador',
+'Definir pretension de renta (investigar mercado)',
+'Elegir vestimenta adecuada (formal o smart casual)',
+'Confirmar direccion, hora y nombre del entrevistador',
+'Planificar ruta para llegar 10 minutos antes',
+'Llevar copia impresa del CV y documento de identidad',
+'Cargar celular y silenciarlo antes de entrar'
+];
+function renderChecklist(){
+let saved={};
+try{const s=localStorage.getItem('empleoscl_checklist');if(s)saved=JSON.parse(s);}catch(e){saved={};}
+const c=document.getElementById('checklist-container');
+c.innerHTML='';
+CHECKLIST_ITEMS.forEach((item,i)=>{
+const div=document.createElement('div');
+div.className='checklist-item';
+const cb=document.createElement('input');
+cb.type='checkbox';
+cb.checked=!!saved[i];
+cb.onchange=()=>{
+try{const s2=JSON.parse(localStorage.getItem('empleoscl_checklist')||'{}');s2[i]=cb.checked;localStorage.setItem('empleoscl_checklist',JSON.stringify(s2));}catch(e){}
+};
+const lbl=document.createElement('span');
+lbl.textContent=item;
+div.appendChild(cb);div.appendChild(lbl);
+c.appendChild(div);
+});
+}
+
+// Salary calculator
+function calcularSueldo(){
+const bruto=parseFloat(document.getElementById('calc-bruto').value)||0;
+if(bruto<=0){document.getElementById('calc-result').classList.add('hidden');return;}
+const afpRate=parseFloat(document.getElementById('calc-afp').value);
+const saludRate=parseFloat(document.getElementById('calc-salud').value);
+const topeImponible=2902935;
+const base=Math.min(bruto,topeImponible);
+const afp=Math.round(base*afpRate);
+const salud=Math.round(base*saludRate);
+const cesantia=Math.round(base*0.006);
+const totalPrev=afp+salud+cesantia;
+const tributable=bruto-totalPrev;
+const impuesto=calcImpuesto2da(tributable);
+const liquido=bruto-totalPrev-impuesto;
+const r=document.getElementById('calc-result');
+r.classList.remove('hidden');
+r.innerHTML='<div class="calc-result">'
++'<div class="big">$'+formatCLP(liquido)+' liquido</div>'
++'<div class="detail">AFP: $'+formatCLP(afp)+' | Salud: $'+formatCLP(salud)+' | Cesantia: $'+formatCLP(cesantia)+'</div>'
++'<div class="detail">Impuesto 2da cat.: $'+formatCLP(impuesto)+' | Total descuentos: $'+formatCLP(totalPrev+impuesto)+'</div>'
++'</div>';
+}
+function calcImpuesto2da(renta){
+if(renta<=0)return 0;
+const utm=66362;
+const t=renta/utm;
+let imp=0;
+if(t<=13.5)imp=0;
+else if(t<=30)imp=(t-13.5)*0.04*utm;
+else if(t<=50)imp=((t-30)*0.08+16.5*0.04)*utm;
+else if(t<=70)imp=((t-50)*0.135+20*0.08+16.5*0.04)*utm;
+else if(t<=90)imp=((t-70)*0.23+20*0.135+20*0.08+16.5*0.04)*utm;
+else if(t<=120)imp=((t-90)*0.304+20*0.23+20*0.135+20*0.08+16.5*0.04)*utm;
+else if(t<=150)imp=((t-120)*0.35+30*0.304+20*0.23+20*0.135+20*0.08+16.5*0.04)*utm;
+else imp=((t-150)*0.4+30*0.35+30*0.304+20*0.23+20*0.135+20*0.08+16.5*0.04)*utm;
+return Math.max(0,Math.round(imp));
+}
+function formatCLP(n){return Math.round(n).toLocaleString('es-CL');}
+
+// Offer comparer
+function compararOfertas(){
+const ofertas=[];
+for(let i=1;i<=2;i++){
+const emp=document.getElementById('cmp-emp-'+i).value.trim()||'Oferta '+i;
+const sueldo=parseFloat(document.getElementById('cmp-sueldo-'+i).value)||0;
+if(sueldo<=0){alert('Ingresa sueldo bruto para la Oferta '+i);return;}
+const colacion=parseFloat(document.getElementById('cmp-colacion-'+i).value)||0;
+const movil=parseFloat(document.getElementById('cmp-movil-'+i).value)||0;
+const seguro=parseInt(document.getElementById('cmp-seguro-'+i).value)||0;
+const bono=parseFloat(document.getElementById('cmp-bono-'+i).value)||0;
+const ho=parseInt(document.getElementById('cmp-ho-'+i).value)||0;
+ofertas.push({emp,sueldo,colacion,movil,seguro,bono,ho});
+}
+const scores=ofertas.map(o=>{
+let s=0;
+s+=o.sueldo/10000;
+s+=o.colacion/5000;
+s+=o.movil/5000;
+s+=o.seguro*15;
+s+=o.bono/100000;
+s+=o.ho*12;
+return{...o,score:Math.round(s)};
+});
+const maxScore=Math.max(...scores.map(s=>s.score));
+const r=document.getElementById('compare-result');
+r.classList.remove('hidden');
+r.innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'
++scores.map(s=>{
+const win=s.score===maxScore?'winner':'';
+return '<div class="compare-card '+win+'">'
++'<h4>'+esc(s.emp)+'</h4>'
++'<div class="score">'+s.score+' pts</div>'
++'<div style="font-size:.75rem;color:var(--muted)">'
++'Bruto: $'+formatCLP(s.sueldo)+'<br>'
++'Colacion: $'+formatCLP(s.colacion)+'<br>'
++'Movilizacion: $'+formatCLP(s.movil)+'<br>'
++'Seguro: '+(s.seguro?'Si':'No')+'<br>'
++'Bono anual: $'+formatCLP(s.bono)+'<br>'
++'Home office: '+s.ho+' dias/sem'
++'</div>'
++(win?'<div style="margin-top:8px;font-size:.78rem;font-weight:700;color:var(--success)">Mejor opcion</div>':'')
++'</div>';
+}).join('')+'</div>';
+}
+
+// Salary references
+const SALARY_REF=[
+{cargo:'Desarrollador Junior',rango:'$800.000 - $1.200.000'},
+{cargo:'Desarrollador Senior',rango:'$1.800.000 - $3.000.000'},
+{cargo:'Contador/a',rango:'$900.000 - $1.500.000'},
+{cargo:'Ingeniero/a Civil',rango:'$1.200.000 - $2.500.000'},
+{cargo:'Administrativo/a',rango:'$500.000 - $800.000'},
+{cargo:'Marketing Digital',rango:'$800.000 - $1.500.000'},
+{cargo:'Recursos Humanos',rango:'$900.000 - $1.500.000'},
+{cargo:'Gerente de Area',rango:'$2.500.000 - $5.000.000'},
+{cargo:'Diseno UX/UI',rango:'$1.000.000 - $2.000.000'},
+{cargo:'Data Analyst',rango:'$1.200.000 - $2.200.000'},
+{cargo:'Community Manager',rango:'$600.000 - $1.000.000'},
+{cargo:'Ejecutivo/a Comercial',rango:'$700.000 - $1.500.000'}
+];
+function renderSalaryRef(){
+const c=document.getElementById('salary-ref-list');
+c.innerHTML=SALARY_REF.map(s=>'<div class="salary-ref"><span class="cargo-name">'+esc(s.cargo)+'</span><span class="rango">'+esc(s.rango)+'</span></div>').join('');
+}
+
+// Close modal on overlay click
+document.getElementById('modal-postulacion').addEventListener('click',function(e){
+if(e.target===this)closeModal();
+});
+
+// Init
+loadData();
+renderKanban();
+renderQuestions();
+renderChecklist();
+renderSalaryRef();
+</script>
+</body>
+</html>

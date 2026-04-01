@@ -1,0 +1,1253 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0369a1">
+<meta name="description" content="CreditoCL — Gestión de Deudas y Créditos Chile">
+<title>CreditoCL — Gestión de Deudas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{--bg:#f0f6ff;--card:#ffffff;--card2:#e8f2ff;--border:#b8d4f0;--accent:#0369a1;--text:#1e3a5f;--muted:#6b8fa5;--green:#16a34a;--yellow:#d97706;--red:#dc2626;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+header{background:linear-gradient(90deg,#0c4a7a,#0369a1);padding:13px 18px;position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;color:white}
+header h1{font-size:1.1rem;font-weight:700;letter-spacing:.3px}
+header span{font-size:.75rem;opacity:.85}
+nav{background:#fff;border-bottom:2px solid var(--border);display:flex;overflow-x:auto;position:sticky;top:62px;z-index:40;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+nav button{flex:none;padding:10px 16px;border:none;background:none;color:var(--muted);font-family:'Inter',sans-serif;font-size:.8rem;font-weight:500;cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;transition:.2s}
+nav button.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+main{padding:16px;max-width:700px;margin:0 auto}
+.tab{display:none}.tab.active{display:block}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px}
+.card2{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px}
+h2{font-size:1rem;font-weight:700;color:var(--accent);margin-bottom:10px}
+h3{font-size:.9rem;font-weight:600;margin-bottom:8px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.stat-box{background:var(--card2);border-radius:10px;padding:12px;text-align:center}
+.stat-val{font-size:1.25rem;font-weight:700;color:var(--accent)}
+.stat-lbl{font-size:.7rem;color:var(--muted);margin-top:2px}
+label{display:block;font-size:.8rem;font-weight:500;margin-bottom:4px;color:var(--text)}
+input,select,textarea{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:'Inter',sans-serif;font-size:16px;color:var(--text);background:#fff;margin-bottom:10px;outline:none;transition:border-color .2s}
+input:focus,select:focus{border-color:var(--accent)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 16px;border-radius:8px;border:none;font-family:'Inter',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;transition:.2s}
+.btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{background:#0284c7}
+.btn-success{background:var(--green);color:#fff}
+.btn-danger{background:var(--red);color:#fff}
+.btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--text)}
+.btn-sm{padding:6px 11px;font-size:.78rem}
+.btn-full{width:100%}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:600}
+.badge-green{background:#dcfce7;color:var(--green)}
+.badge-yellow{background:#fef9c3;color:var(--yellow)}
+.badge-red{background:#fee2e2;color:var(--red)}
+.badge-blue{background:#dbeafe;color:var(--accent)}
+.semaforo{border-radius:10px;padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;gap:10px}
+.semaforo.green{background:#dcfce7;border:1px solid #86efac}
+.semaforo.yellow{background:#fef9c3;border:1px solid #fde047}
+.semaforo.red{background:#fee2e2;border:1px solid #fca5a5}
+.semaforo-icon{font-size:1.6rem}
+.semaforo-text strong{display:block;font-size:.9rem}
+.semaforo-text span{font-size:.78rem;color:var(--muted)}
+.debt-card{background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;position:relative}
+.debt-card-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px}
+.debt-name{font-weight:700;font-size:.95rem}
+.debt-meta{font-size:.75rem;color:var(--muted);margin-top:2px}
+.debt-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.progress-bar{background:#e5e7eb;border-radius:4px;height:8px;overflow:hidden;margin:6px 0}
+.progress-fill{height:100%;border-radius:4px;transition:.3s}
+.tabs-strategy{display:flex;gap:8px;margin-bottom:14px}
+.tabs-strategy button{flex:1;padding:8px;border-radius:8px;border:1.5px solid var(--border);background:#fff;font-family:'Inter',sans-serif;font-size:.8rem;font-weight:600;cursor:pointer;color:var(--muted)}
+.tabs-strategy button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+table{width:100%;border-collapse:collapse;font-size:.8rem}
+thead th{background:var(--card2);padding:8px;text-align:left;border-bottom:1px solid var(--border);font-weight:600}
+tbody td{padding:7px 8px;border-bottom:1px solid #f0f6ff}
+tbody tr:nth-child(even) td{background:#f8fbff}
+.chart-wrap{position:relative;height:220px;margin:10px 0}
+.chart-wrap-sm{position:relative;height:180px;margin:8px 0}
+.modal-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;align-items:center;justify-content:center;padding:16px}
+.modal-backdrop.open{display:flex}
+.modal{background:#fff;border-radius:16px;padding:20px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto}
+.modal h2{margin-bottom:14px}
+.modal-actions{display:flex;gap:8px;margin-top:8px}
+.row{display:flex;gap:8px;align-items:flex-end}
+.row>*{flex:1}
+.info-box{background:var(--card2);border-left:4px solid var(--accent);border-radius:0 8px 8px 0;padding:10px 14px;margin-bottom:12px;font-size:.82rem;line-height:1.5}
+.info-box.warn{border-color:var(--yellow);background:#fef9c3}
+.info-box.danger{border-color:var(--red);background:#fee2e2}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;font-size:.85rem}
+.toggle{position:relative;display:inline-block;width:40px;height:22px}
+.toggle input{opacity:0;width:0;height:0}
+.slider{position:absolute;inset:0;background:#ccc;border-radius:22px;transition:.3s;cursor:pointer}
+.slider:before{content:'';position:absolute;height:16px;width:16px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s}
+input:checked+.slider{background:var(--accent)}
+input:checked+.slider:before{transform:translateX(18px)}
+.range-wrap{margin-bottom:12px}
+.range-wrap input[type=range]{padding:0;height:4px;background:var(--border);border:none;cursor:pointer;accent-color:var(--accent)}
+.amort-table{max-height:300px;overflow-y:auto}
+.filter-row{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.filter-row select,.filter-row input{margin-bottom:0;flex:1;min-width:120px}
+.empty-state{text-align:center;padding:32px 16px;color:var(--muted)}
+.empty-state svg{width:48px;height:48px;margin-bottom:10px;opacity:.4}
+.section-title{font-size:.75rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 8px}
+.edu-card{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:14px}
+.edu-header{background:var(--card2);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-weight:600;font-size:.9rem}
+.edu-body{padding:14px 16px;font-size:.83rem;line-height:1.6;display:none}
+.edu-body.open{display:block}
+.edu-body h4{font-size:.85rem;font-weight:600;color:var(--accent);margin:10px 0 4px}
+.edu-body ul{padding-left:16px;margin-bottom:8px}
+.edu-body li{margin-bottom:4px}
+.sim-result{background:var(--card2);border-radius:10px;padding:12px;margin-top:10px}
+.sim-result strong{color:var(--red);font-size:1.1rem}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1e3a5f;color:#fff;padding:10px 20px;border-radius:8px;font-size:.85rem;z-index:200;display:none;opacity:0;transition:opacity .3s}
+#toast.show{display:block;opacity:1}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>CreditoCL</h1>
+    <span>Gestión de Deudas Chile</span>
+  </div>
+  <button class="btn btn-outline btn-sm" style="border-color:rgba(255,255,255,.4);color:#fff" onclick="openProfile()">Perfil</button>
+</header>
+
+<nav id="nav">
+  <button class="active" onclick="showTab('resumen',this)">Resumen</button>
+  <button onclick="showTab('deudas',this)">Mis Deudas</button>
+  <button onclick="showTab('estrategias',this)">Estrategias</button>
+  <button onclick="showTab('pagos',this)">Pagos</button>
+  <button onclick="showTab('aprende',this)">Aprende</button>
+</nav>
+
+<main>
+
+<!-- ===== TAB 1: RESUMEN ===== -->
+<div id="tab-resumen" class="tab active">
+  <div class="card" style="margin-top:4px">
+    <h2>Resumen Financiero</h2>
+    <div class="grid2" id="summary-stats" style="margin-bottom:12px"></div>
+    <div id="semaforo-box"></div>
+    <button class="btn btn-primary btn-full" onclick="openPaymentModal()">+ Registrar Pago</button>
+  </div>
+  <div class="card">
+    <h2>Distribución de Deudas</h2>
+    <div class="chart-wrap"><canvas id="chart-donut"></canvas></div>
+  </div>
+  <div class="card">
+    <h2>Proyección de Payoff</h2>
+    <div class="chart-wrap"><canvas id="chart-payoff"></canvas></div>
+  </div>
+</div>
+
+<!-- ===== TAB 2: MIS DEUDAS ===== -->
+<div id="tab-deudas" class="tab">
+  <div style="display:flex;gap:8px;margin:4px 0 14px;align-items:center;justify-content:space-between">
+    <h2 style="margin:0">Mis Deudas</h2>
+    <button class="btn btn-primary btn-sm" onclick="openDebtModal()">+ Agregar</button>
+  </div>
+  <div id="debt-list"></div>
+</div>
+
+<!-- ===== TAB 3: ESTRATEGIAS ===== -->
+<div id="tab-estrategias" class="tab">
+  <div class="card" style="margin-top:4px">
+    <h2>Monto Extra Mensual</h2>
+    <div class="range-wrap">
+      <div style="display:flex;justify-content:space-between;font-size:.8rem;margin-bottom:6px">
+        <span>Pago extra disponible:</span>
+        <strong id="extra-label">$50.000</strong>
+      </div>
+      <input type="range" min="0" max="500000" step="5000" value="50000" id="extra-slider" oninput="updateStrategies()">
+      <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted);margin-top:2px"><span>$0</span><span>$500.000</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Comparación de Estrategias</h2>
+    <div style="overflow-x:auto">
+      <table>
+        <thead><tr><th>Estrategia</th><th>Tiempo</th><th>Interés Total</th><th>1er libre en</th></tr></thead>
+        <tbody id="strategy-table"></tbody>
+      </table>
+    </div>
+    <div class="chart-wrap" style="margin-top:14px"><canvas id="chart-strategy"></canvas></div>
+  </div>
+
+  <div class="card">
+    <h2>Método Bola de Nieve (Snowball)</h2>
+    <div class="info-box">Paga el mínimo en todas las deudas. El dinero extra va a la deuda con <strong>menor saldo</strong>. Victorias psicológicas frecuentes.</div>
+    <div id="snowball-detail"></div>
+  </div>
+
+  <div class="card">
+    <h2>Método Avalancha</h2>
+    <div class="info-box">Paga el mínimo en todas. El dinero extra va a la deuda con <strong>mayor tasa de interés</strong>. Matemáticamente óptimo: pagas menos interés.</div>
+    <div id="avalanche-detail"></div>
+  </div>
+
+  <div class="card">
+    <h2>Consolidación de Deudas</h2>
+    <div class="grid2">
+      <div>
+        <label>Tasa ofrecida (%/mes)</label>
+        <input type="number" id="consol-rate" value="1.5" step="0.1" min="0.1" max="5" oninput="updateConsolidation()">
+      </div>
+      <div>
+        <label>Plazo (meses)</label>
+        <input type="number" id="consol-term" value="36" min="6" max="240" oninput="updateConsolidation()">
+      </div>
+    </div>
+    <div id="consolidation-result"></div>
+  </div>
+</div>
+
+<!-- ===== TAB 4: PAGOS ===== -->
+<div id="tab-pagos" class="tab">
+  <div class="card" style="margin-top:4px">
+    <h2 id="pagos-month-title">Pagos — Marzo 2026</h2>
+    <div id="monthly-payments-list"></div>
+  </div>
+  <div class="card">
+    <h2>Presupuesto para Deudas</h2>
+    <label>Ingreso mensual disponible (CLP)</label>
+    <input type="number" id="income-input" placeholder="Ej: 1200000" oninput="updateBudget()" style="margin-bottom:6px">
+    <div id="budget-result"></div>
+  </div>
+  <div class="card">
+    <h2>Historial de Pagos</h2>
+    <div class="filter-row">
+      <select id="filter-debt" onchange="renderPaymentHistory()"><option value="">Todas las deudas</option></select>
+      <input type="month" id="filter-month" onchange="renderPaymentHistory()">
+    </div>
+    <div id="payment-history"></div>
+  </div>
+  <div class="card">
+    <h2>Pagos vs. Reducción de Deuda</h2>
+    <div class="chart-wrap-sm"><canvas id="chart-payments"></canvas></div>
+  </div>
+</div>
+
+<!-- ===== TAB 5: APRENDE ===== -->
+<div id="tab-aprende" class="tab">
+  <p style="font-size:.82rem;color:var(--muted);margin:8px 0 14px">Aprende el sistema financiero chileno y toma mejores decisiones.</p>
+
+  <div class="edu-card">
+    <div class="edu-header" onclick="toggleEdu(this)">
+      <span>DICOM / Boletín Comercial</span><span>+</span>
+    </div>
+    <div class="edu-body">
+      <h4>¿Qué es el DICOM?</h4>
+      <p>El DICOM (ahora Boletín Comercial de Equifax Chile) es una base de datos de deudas impagas. Bancos y comercios lo consultan al evaluar créditos.</p>
+      <h4>Cómo verificar tu historial</h4>
+      <ul>
+        <li>Ve a <strong>equifax.cl</strong> — gratis 1 vez al año</li>
+        <li>Lleva tu RUT y clave única</li>
+        <li>Recibes informe en línea al instante</li>
+      </ul>
+      <h4>¿Cuánto tiempo permanece?</h4>
+      <ul>
+        <li>Máximo <strong>5 años</strong> desde la fecha de ingreso</li>
+        <li>Si pagas, pide eliminación: tienes 30 días para solicitarla</li>
+        <li>La empresa acreedora debe informar el pago a Equifax</li>
+      </ul>
+      <h4>Protección CMF</h4>
+      <p>Según la Ley 19.628, nadie puede negarte servicios esenciales únicamente por estar en DICOM. Reporta abusos a la CMF: <strong>800 700 777</strong>.</p>
+    </div>
+  </div>
+
+  <div class="edu-card">
+    <div class="edu-header" onclick="toggleEdu(this)">
+      <span>CAE — Crédito con Aval del Estado</span><span>+</span>
+    </div>
+    <div class="edu-body">
+      <h4>¿Qué es el CAE?</h4>
+      <p>Crédito universitario garantizado por el Estado de Chile. Tasa: <strong>2% real anual</strong> (muy baja). Plazo: hasta 20 años. Comienza 18 meses después de egresar.</p>
+      <h4>Cuota mensual estimada</h4>
+      <p>Fórmula PMT a 2%/12 mensual por 240 cuotas. Para $5.000.000: cuota ≈ <strong>$25.300/mes</strong>.</p>
+      <h4>¿Conviene pagar anticipado?</h4>
+      <ul>
+        <li>Sí, si tienes ahorros sin rentabilidad mayor al 2% real</li>
+        <li>No, si la plata la pones en APV (rentas ~5-8%)</li>
+        <li>Portabilidad: puedes mover el CAE a otro banco si ofrecen mejor tasa</li>
+      </ul>
+      <h4>Ley 21.091 — Condonación parcial</h4>
+      <p>Algunos egresados de universidades acreditadas pueden acceder a condonación parcial. Consulta en <strong>ingresa.gob.cl</strong>.</p>
+    </div>
+  </div>
+
+  <div class="edu-card">
+    <div class="edu-header" onclick="toggleEdu(this)">
+      <span>Portabilidad Financiera (Ley 21.236)</span><span>+</span>
+    </div>
+    <div class="edu-body">
+      <h4>¿Qué permite esta ley?</h4>
+      <p>Desde 2021, puedes cambiar tu crédito hipotecario o consumo de banco sin pagar multas por prepago ni gastos operacionales al banco nuevo. El banco nuevo paga al antiguo directamente.</p>
+      <h4>¿Cuándo conviene?</h4>
+      <ul>
+        <li>Si la tasa ofrecida es al menos <strong>0.5% anual menor</strong></li>
+        <li>Si te quedan más de 5 años de crédito</li>
+        <li>Si el banco nuevo ofrece mejores condiciones de seguro</li>
+      </ul>
+      <h4>Proceso</h4>
+      <ul>
+        <li>Solicita oferta de portabilidad al banco receptor</li>
+        <li>Tienes 7 días hábiles para decidir</li>
+        <li>Si aceptas, el banco nuevo gestiona todo</li>
+        <li>Plazo total: 10 días hábiles</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="edu-card">
+    <div class="edu-header" onclick="toggleEdu(this)">
+      <span>Tasas Máximas Legales (CMF)</span><span>+</span>
+    </div>
+    <div class="edu-body">
+      <h4>Tasa Máxima Convencional</h4>
+      <p>La CMF publica mensualmente la tasa máxima legal. Para créditos de consumo y tarjetas retail: <strong>~3.97%/mes</strong> (2024). Cualquier tasa superior es <strong>usura</strong> y es ilegal.</p>
+      <h4>Tasas típicas por producto</h4>
+      <table>
+        <thead><tr><th>Producto</th><th>Tasa mensual</th></tr></thead>
+        <tbody>
+          <tr><td>CMR Falabella / Ripley / La Polar</td><td>~3.97%/mes</td></tr>
+          <tr><td>Tarjeta Banco Estado</td><td>~2.5%/mes</td></tr>
+          <tr><td>Crédito consumo bancario</td><td>1.8–2.2%/mes</td></tr>
+          <tr><td>Crédito hipotecario</td><td>~0.3–0.4%/mes</td></tr>
+          <tr><td>CAE</td><td>0.17%/mes (2% anual real)</td></tr>
+        </tbody>
+      </table>
+      <h4>Denunciar tasas abusivas</h4>
+      <p>CMF: <strong>800 700 777</strong> (lunes a viernes, 9-18h) o cmfchile.cl. También SERNAC: 800 700 100.</p>
+    </div>
+  </div>
+
+  <div class="edu-card">
+    <div class="edu-header" onclick="toggleEdu(this)">
+      <span>Reestructuración y Ayuda</span><span>+</span>
+    </div>
+    <div class="edu-body">
+      <h4>SERNAC — Mediación</h4>
+      <p>El Servicio Nacional del Consumidor puede mediar entre tú y bancos o retail. <strong>sernac.cl</strong> o 800 700 100. Útil para renegociar plazos.</p>
+      <h4>Refinanciamiento bancario</h4>
+      <ul>
+        <li>Puedes pedir al banco una "pausa" de 1-3 cuotas (mora técnica)</li>
+        <li>Renegociar el plazo para bajar la cuota mensual</li>
+        <li>Consolidar varias deudas en un solo crédito a menor tasa</li>
+      </ul>
+      <h4>FOGAPE — Para Empresas</h4>
+      <p>El Fondo de Garantía para PyMEs permite acceder a créditos con garantía estatal si tienes una pequeña empresa endeudada. Consulta en tu banco.</p>
+      <h4>Herramientas gratuitas</h4>
+      <ul>
+        <li><strong>ENDEUDA MENOS</strong> (SERNAC): simulador de deuda</li>
+        <li><strong>CMF Chile</strong> cmfchile.cl: educación financiera</li>
+        <li><strong>SENCE</strong>: cursos de finanzas personales gratuitos</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="edu-card">
+    <div class="edu-header" onclick="toggleEdu(this)">
+      <span>Simulador: Tarjeta de Crédito Retail</span><span>+</span>
+    </div>
+    <div class="edu-body">
+      <h4>¿Cuánto pagas si solo cubres el mínimo?</h4>
+      <div class="grid2">
+        <div>
+          <label>Saldo (CLP)</label>
+          <input type="number" id="sim-saldo" value="500000" oninput="runSimulator()">
+        </div>
+        <div>
+          <label>Tasa (%/mes)</label>
+          <input type="number" id="sim-tasa" value="3.97" step="0.1" oninput="runSimulator()">
+        </div>
+      </div>
+      <div>
+        <label>Pago mínimo (% del saldo)</label>
+        <input type="number" id="sim-minpct" value="3" step="0.5" min="1" max="20" oninput="runSimulator()">
+      </div>
+      <div id="sim-result"></div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<!-- MODAL: Agregar/Editar Deuda -->
+<div class="modal-backdrop" id="debt-modal">
+  <div class="modal">
+    <h2 id="debt-modal-title">Agregar Deuda</h2>
+    <label>Nombre de la deuda</label>
+    <input id="d-name" placeholder="Ej: CMR Falabella, CAE UDD">
+    <label>Tipo</label>
+    <select id="d-type">
+      <option value="Tarjeta retail">Tarjeta crédito retail</option>
+      <option value="Tarjeta bancaria">Tarjeta bancaria</option>
+      <option value="Crédito consumo">Crédito de consumo</option>
+      <option value="CAE">CAE (Educación)</option>
+      <option value="Hipotecario">Hipotecario</option>
+      <option value="Auto">Auto</option>
+      <option value="Otro">Otro</option>
+    </select>
+    <label>Entidad acreedora</label>
+    <select id="d-entity" onchange="applyPresetRate()">
+      <option value="">Otra / Ingresar manualmente</option>
+      <option value="CMR Falabella">CMR Falabella</option>
+      <option value="Ripley">Ripley</option>
+      <option value="Abcdin">Abcdin</option>
+      <option value="La Polar">La Polar</option>
+      <option value="Banco Estado">Banco Estado (tarjeta)</option>
+      <option value="CAE">CAE</option>
+      <option value="Banco Chile">Banco Chile (consumo)</option>
+      <option value="Santander">Santander (consumo)</option>
+      <option value="BCI">BCI (consumo)</option>
+    </select>
+    <div class="row">
+      <div>
+        <label>Saldo actual (CLP)</label>
+        <input type="number" id="d-balance" placeholder="320000" min="0">
+      </div>
+      <div>
+        <label>Cuotas restantes</label>
+        <input type="number" id="d-installments" placeholder="24" min="1">
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <label>Tasa interés mensual (%)</label>
+        <input type="number" id="d-rate" placeholder="3.97" step="0.01" min="0">
+      </div>
+      <div>
+        <label>Cuota mínima mensual (CLP)</label>
+        <input type="number" id="d-min-payment" placeholder="15000" min="0">
+      </div>
+    </div>
+    <label>Próximo vencimiento</label>
+    <input type="date" id="d-due-date">
+    <div class="toggle-row">
+      <span>¿Tiene seguro de desgravamen?</span>
+      <label class="toggle"><input type="checkbox" id="d-insurance"><span class="slider"></span></label>
+    </div>
+    <div class="toggle-row">
+      <span>¿Está en DICOM?</span>
+      <label class="toggle"><input type="checkbox" id="d-dicom"><span class="slider"></span></label>
+    </div>
+    <input type="hidden" id="d-edit-id">
+    <div class="modal-actions">
+      <button class="btn btn-primary" style="flex:1" onclick="saveDebt()">Guardar</button>
+      <button class="btn btn-outline" style="flex:1" onclick="closeModal('debt-modal')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Registrar Pago -->
+<div class="modal-backdrop" id="payment-modal">
+  <div class="modal">
+    <h2>Registrar Pago</h2>
+    <label>Deuda</label>
+    <select id="pay-debt-select"></select>
+    <label>Fecha de pago</label>
+    <input type="date" id="pay-date">
+    <label>Monto pagado (CLP)</label>
+    <input type="number" id="pay-amount" placeholder="0">
+    <label>Tipo de pago</label>
+    <select id="pay-type">
+      <option value="mínimo">Mínimo</option>
+      <option value="extra">Extra (sobre el mínimo)</option>
+      <option value="total">Pago total / cancelación</option>
+    </select>
+    <div class="modal-actions">
+      <button class="btn btn-primary" style="flex:1" onclick="savePayment()">Registrar</button>
+      <button class="btn btn-outline" style="flex:1" onclick="closeModal('payment-modal')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Tabla de Amortización -->
+<div class="modal-backdrop" id="amort-modal">
+  <div class="modal">
+    <h2 id="amort-title">Tabla de Amortización</h2>
+    <div id="amort-summary" style="margin-bottom:10px"></div>
+    <div class="amort-table" id="amort-table-body"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline btn-full" onclick="closeModal('amort-modal')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Perfil -->
+<div class="modal-backdrop" id="profile-modal">
+  <div class="modal">
+    <h2>Mi Perfil</h2>
+    <label>Ingreso mensual neto (CLP)</label>
+    <input type="number" id="profile-income" placeholder="1200000">
+    <label>Nombre (opcional)</label>
+    <input type="text" id="profile-name" placeholder="Ej: Carlos">
+    <div class="modal-actions">
+      <button class="btn btn-primary" style="flex:1" onclick="saveProfile()">Guardar</button>
+      <button class="btn btn-outline" style="flex:1" onclick="closeModal('profile-modal')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ===================== DATA LAYER =====================
+const STORAGE_KEY = 'creditocl_v1';
+const PRESET_RATES = {
+  'CMR Falabella': 3.97,
+  'Ripley': 3.97,
+  'Abcdin': 3.97,
+  'La Polar': 3.97,
+  'Banco Estado': 2.5,
+  'CAE': 0.165, // 2%/año real ≈ 0.165%/mes
+  'Banco Chile': 2.0,
+  'Santander': 2.1,
+  'BCI': 1.95
+};
+
+let state = {
+  debts: [],
+  payments: [],
+  profile: { income: 0, name: '' }
+};
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      state = { ...state, ...parsed };
+    }
+    if (!state.debts.length) loadDemoData();
+  } catch(e) {
+    loadDemoData();
+  }
+}
+
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+}
+
+function loadDemoData() {
+  const today = new Date();
+  const due1 = new Date(today.getFullYear(), today.getMonth(), 15).toISOString().split('T')[0];
+  const due2 = new Date(today.getFullYear(), today.getMonth(), 28).toISOString().split('T')[0];
+  const due3 = new Date(today.getFullYear(), today.getMonth(), 5).toISOString().split('T')[0];
+  state.debts = [
+    { id: 'd1', name: 'CMR Falabella', type: 'Tarjeta retail', entity: 'CMR Falabella', balance: 320000, rate: 3.97, minPayment: 14500, dueDate: due1, installments: 24, insurance: false, dicom: false },
+    { id: 'd2', name: 'CAE UDD', type: 'CAE', entity: 'CAE', balance: 4500000, rate: 0.165, minPayment: 28000, dueDate: due2, installments: 180, insurance: false, dicom: false },
+    { id: 'd3', name: 'Crédito Consumo', type: 'Crédito consumo', entity: 'Banco Chile', balance: 1200000, rate: 2.1, minPayment: 38000, dueDate: due3, installments: 36, insurance: true, dicom: false }
+  ];
+  state.payments = [];
+  saveState();
+}
+
+function genId() { return 'd' + Date.now() + Math.floor(Math.random() * 1000); }
+
+// ===================== UTILS =====================
+function clp(n) {
+  return '$' + Math.round(n).toLocaleString('es-CL');
+}
+
+function rateColor(rate) {
+  if (rate < 1) return 'badge-green';
+  if (rate <= 2.5) return 'badge-yellow';
+  return 'badge-red';
+}
+
+function daysUntil(dateStr) {
+  if (!dateStr) return null;
+  const d = new Date(dateStr);
+  const now = new Date();
+  now.setHours(0,0,0,0);
+  return Math.round((d - now) / 86400000);
+}
+
+function monthsToPayoff(balance, rate, minPayment) {
+  if (!balance || !minPayment) return Infinity;
+  const r = rate / 100;
+  if (r === 0) return Math.ceil(balance / minPayment);
+  let bal = balance;
+  let months = 0;
+  while (bal > 0 && months < 600) {
+    const interest = bal * r;
+    const principal = Math.max(0, minPayment - interest);
+    if (principal <= 0) return Infinity;
+    bal -= principal;
+    months++;
+  }
+  return months;
+}
+
+function totalInterest(balance, rate, minPayment) {
+  if (!balance || !minPayment) return 0;
+  const r = rate / 100;
+  if (r === 0) return 0;
+  let bal = balance;
+  let totalInt = 0;
+  let months = 0;
+  while (bal > 0.5 && months < 600) {
+    const interest = bal * r;
+    const principal = Math.max(0, minPayment - interest);
+    if (principal <= 0) return Infinity;
+    totalInt += interest;
+    bal -= principal;
+    months++;
+  }
+  return totalInt;
+}
+
+function pmt(rate, nper, pv) {
+  if (rate === 0) return pv / nper;
+  return (pv * rate * Math.pow(1+rate, nper)) / (Math.pow(1+rate, nper) - 1);
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ===================== NAVIGATION =====================
+function showTab(id, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+  refreshAll();
+}
+
+// ===================== RESUMEN =====================
+let chartDonut, chartPayoff;
+
+function renderResumen() {
+  const debts = state.debts;
+  const totalDebt = debts.reduce((s,d) => s+d.balance, 0);
+  const totalMin = debts.reduce((s,d) => s+d.minPayment, 0);
+  const income = state.profile.income || 0;
+  const ratio = income ? (totalMin / income * 100) : 0;
+
+  // Estimate months to payoff (minimums only)
+  let maxMonths = 0;
+  debts.forEach(d => {
+    const m = monthsToPayoff(d.balance, d.rate, d.minPayment);
+    if (m !== Infinity && m > maxMonths) maxMonths = m;
+  });
+
+  const stats = document.getElementById('summary-stats');
+  stats.innerHTML = `
+    <div class="stat-box"><div class="stat-val">${clp(totalDebt)}</div><div class="stat-lbl">Deuda Total</div></div>
+    <div class="stat-box"><div class="stat-val">${clp(totalMin)}</div><div class="stat-lbl">Cuota mínima mensual</div></div>
+    <div class="stat-box"><div class="stat-val">${debts.length}</div><div class="stat-lbl">Deudas activas</div></div>
+    <div class="stat-box"><div class="stat-val">${maxMonths < 600 ? maxMonths + ' meses' : '50+ años'}</div><div class="stat-lbl">Meses para liquidar</div></div>
+    ${income ? `<div class="stat-box" style="grid-column:1/-1"><div class="stat-val">${ratio.toFixed(1)}%</div><div class="stat-lbl">Ratio deuda/ingreso mensual</div></div>` : ''}
+  `;
+
+  // Semáforo
+  const sem = document.getElementById('semaforo-box');
+  if (!income) {
+    sem.innerHTML = `<div class="info-box">Configura tu ingreso mensual en <strong>Perfil</strong> para ver tu semáforo de salud financiera.</div>`;
+  } else if (ratio < 30) {
+    sem.innerHTML = `<div class="semaforo green"><div class="semaforo-icon">🟢</div><div class="semaforo-text"><strong>Buena situación</strong><span>Deuda < 30% de tu ingreso mensual. ¡Vas bien!</span></div></div>`;
+  } else if (ratio <= 50) {
+    sem.innerHTML = `<div class="semaforo yellow"><div class="semaforo-icon">🟡</div><div class="semaforo-text"><strong>Atención</strong><span>Entre 30–50% del ingreso. Considera reestructurar deudas.</span></div></div>`;
+  } else {
+    sem.innerHTML = `<div class="semaforo red"><div class="semaforo-icon">🔴</div><div class="semaforo-text"><strong>Situación Crítica</strong><span>Más de 50% del ingreso en deuda. Busca asesoría financiera.</span></div></div>`;
+  }
+
+  // Donut chart
+  const labels = debts.map(d => d.name);
+  const data = debts.map(d => d.balance);
+  const colors = ['#0369a1','#0ea5e9','#38bdf8','#7dd3fc','#bae6fd','#e0f2fe','#dc2626','#f97316'];
+  const ctx1 = document.getElementById('chart-donut').getContext('2d');
+  if (chartDonut) chartDonut.destroy();
+  if (!debts.length) { ctx1.clearRect(0,0,300,220); return; }
+  chartDonut = new Chart(ctx1, {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data, backgroundColor: colors.slice(0, labels.length), borderWidth: 2 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 } } } }
+  });
+
+  // Payoff line chart
+  const ctx2 = document.getElementById('chart-payoff').getContext('2d');
+  if (chartPayoff) chartPayoff.destroy();
+  const months = Math.min(maxMonths, 120);
+  const monthLabels = Array.from({length: months+1}, (_,i) => i === 0 ? 'Hoy' : `M${i}`);
+  let balances = debts.map(d => d.balance);
+  const balanceData = [balances.reduce((s,b) => s+b, 0)];
+  for (let m = 0; m < months; m++) {
+    balances = balances.map((b, i) => {
+      if (b <= 0) return 0;
+      const r = state.debts[i].rate / 100;
+      const interest = b * r;
+      const principal = Math.max(0, state.debts[i].minPayment - interest);
+      return Math.max(0, b - principal);
+    });
+    balanceData.push(balances.reduce((s,b) => s+b, 0));
+  }
+  chartPayoff = new Chart(ctx2, {
+    type: 'line',
+    data: {
+      labels: monthLabels,
+      datasets: [{
+        label: 'Deuda total',
+        data: balanceData,
+        borderColor: '#0369a1',
+        backgroundColor: 'rgba(3,105,161,.12)',
+        fill: true,
+        tension: .3,
+        pointRadius: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { ticks: { callback: v => '$' + (v/1000000).toFixed(1) + 'M', font: { size: 10 } } },
+        x: { ticks: { maxTicksLimit: 8, font: { size: 10 } } }
+      }
+    }
+  });
+}
+
+// ===================== MIS DEUDAS =====================
+function renderDeudas() {
+  const list = document.getElementById('debt-list');
+  if (!state.debts.length) {
+    list.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 14l6-6M9.5 9a.5.5 0 100-1 .5.5 0 000 1zm5 5a.5.5 0 100-1 .5.5 0 000 1zM3 12C3 7.03 7.03 3 12 3s9 4.03 9 9-4.03 9-9 9-9-4.03-9-9z"/></svg><p>No hay deudas registradas.<br>Toca <strong>+ Agregar</strong> para comenzar.</p></div>`;
+    return;
+  }
+  list.innerHTML = state.debts.map(d => {
+    const days = daysUntil(d.dueDate);
+    let dueLabel = '';
+    if (days !== null) {
+      if (days < 0) dueLabel = `<span class="badge badge-red">Vencida hace ${Math.abs(days)}d</span>`;
+      else if (days <= 5) dueLabel = `<span class="badge badge-yellow">Vence en ${days}d</span>`;
+      else dueLabel = `<span style="font-size:.75rem;color:var(--muted)">Vence ${d.dueDate}</span>`;
+    }
+    const paid = totalPaidThisMonth(d.id);
+    const paidPct = Math.min(100, d.minPayment > 0 ? paid / d.minPayment * 100 : 0);
+    const tInt = totalInterest(d.balance, d.rate, d.minPayment);
+    return `
+    <div class="debt-card">
+      <div class="debt-card-header">
+        <div>
+          <div class="debt-name">${d.name}</div>
+          <div class="debt-meta">${d.type} · ${d.entity || ''}</div>
+        </div>
+        <span class="badge ${rateColor(d.rate)}">${d.rate}%/mes</span>
+      </div>
+      <div class="grid2" style="gap:6px;margin-bottom:8px">
+        <div class="stat-box" style="padding:8px"><div style="font-weight:700;font-size:.9rem">${clp(d.balance)}</div><div style="font-size:.7rem;color:var(--muted)">Saldo</div></div>
+        <div class="stat-box" style="padding:8px"><div style="font-weight:700;font-size:.9rem">${clp(d.minPayment)}</div><div style="font-size:.7rem;color:var(--muted)">Cuota mínima</div></div>
+      </div>
+      ${d.insurance ? '<span class="badge badge-blue" style="margin-bottom:6px;display:inline-block">+ Seguro desgravamen</span>' : ''}
+      ${d.dicom ? '<span class="badge badge-red" style="margin-bottom:6px;display:inline-block;margin-left:4px">En DICOM</span>' : ''}
+      <div style="font-size:.75rem;color:var(--muted);margin-bottom:4px">Interés total estimado: <strong style="color:var(--red)">${tInt === Infinity ? 'No pagable' : clp(tInt)}</strong></div>
+      <div style="font-size:.75rem;color:var(--muted);margin-bottom:6px">${d.installments} cuotas restantes · ${dueLabel}</div>
+      <div style="font-size:.72rem;color:var(--muted);margin-bottom:2px">Pagado este mes: ${clp(paid)} / ${clp(d.minPayment)}</div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${paidPct}%;background:${paidPct>=100?'var(--green)':'var(--accent)'}"></div></div>
+      <div class="debt-actions">
+        <button class="btn btn-primary btn-sm" onclick="openPaymentModal('${d.id}')">Pagar</button>
+        <button class="btn btn-outline btn-sm" onclick="showAmortization('${d.id}')">Amortización</button>
+        <button class="btn btn-outline btn-sm" onclick="openDebtModal('${d.id}')">Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteDebt('${d.id}')">Eliminar</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function totalPaidThisMonth(debtId) {
+  const now = new Date();
+  return state.payments
+    .filter(p => p.debtId === debtId && new Date(p.date).getMonth() === now.getMonth() && new Date(p.date).getFullYear() === now.getFullYear())
+    .reduce((s,p) => s + p.amount, 0);
+}
+
+// ===================== DEBT MODAL =====================
+function openDebtModal(id) {
+  const fields = ['name','type','entity','balance','rate','min-payment','due-date','installments','insurance','dicom','edit-id'];
+  const reset = () => fields.forEach(f => {
+    const el = document.getElementById('d-' + f);
+    if (!el) return;
+    if (el.type === 'checkbox') el.checked = false;
+    else el.value = '';
+  });
+  reset();
+  document.getElementById('d-edit-id').value = '';
+  document.getElementById('debt-modal-title').textContent = 'Agregar Deuda';
+
+  if (id) {
+    const d = state.debts.find(x => x.id === id);
+    if (!d) return;
+    document.getElementById('debt-modal-title').textContent = 'Editar Deuda';
+    document.getElementById('d-name').value = d.name;
+    document.getElementById('d-type').value = d.type;
+    document.getElementById('d-entity').value = d.entity || '';
+    document.getElementById('d-balance').value = d.balance;
+    document.getElementById('d-rate').value = d.rate;
+    document.getElementById('d-min-payment').value = d.minPayment;
+    document.getElementById('d-due-date').value = d.dueDate || '';
+    document.getElementById('d-installments').value = d.installments || '';
+    document.getElementById('d-insurance').checked = d.insurance;
+    document.getElementById('d-dicom').checked = d.dicom;
+    document.getElementById('d-edit-id').value = d.id;
+  }
+  document.getElementById('debt-modal').classList.add('open');
+}
+
+function applyPresetRate() {
+  const entity = document.getElementById('d-entity').value;
+  if (PRESET_RATES[entity]) {
+    document.getElementById('d-rate').value = PRESET_RATES[entity];
+  }
+}
+
+function saveDebt() {
+  const name = document.getElementById('d-name').value.trim();
+  const balance = parseFloat(document.getElementById('d-balance').value);
+  const rate = parseFloat(document.getElementById('d-rate').value);
+  const minPayment = parseFloat(document.getElementById('d-min-payment').value);
+
+  if (!name || isNaN(balance) || isNaN(rate) || isNaN(minPayment)) {
+    showToast('Completa todos los campos obligatorios');
+    return;
+  }
+
+  const debt = {
+    id: document.getElementById('d-edit-id').value || genId(),
+    name,
+    type: document.getElementById('d-type').value,
+    entity: document.getElementById('d-entity').value,
+    balance,
+    rate,
+    minPayment,
+    dueDate: document.getElementById('d-due-date').value,
+    installments: parseInt(document.getElementById('d-installments').value) || 0,
+    insurance: document.getElementById('d-insurance').checked,
+    dicom: document.getElementById('d-dicom').checked
+  };
+
+  const editId = document.getElementById('d-edit-id').value;
+  if (editId) {
+    const idx = state.debts.findIndex(d => d.id === editId);
+    if (idx >= 0) state.debts[idx] = debt;
+  } else {
+    state.debts.push(debt);
+  }
+
+  saveState();
+  closeModal('debt-modal');
+  refreshAll();
+  showToast('Deuda guardada');
+}
+
+function deleteDebt(id) {
+  if (!confirm('¿Eliminar esta deuda?')) return;
+  state.debts = state.debts.filter(d => d.id !== id);
+  state.payments = state.payments.filter(p => p.debtId !== id);
+  saveState();
+  refreshAll();
+  showToast('Deuda eliminada');
+}
+
+// ===================== AMORTIZATION =====================
+function showAmortization(id) {
+  const d = state.debts.find(x => x.id === id);
+  if (!d) return;
+  document.getElementById('amort-title').textContent = `Amortización — ${d.name}`;
+  const r = d.rate / 100;
+  let bal = d.balance;
+  let totalInt = 0;
+  let rows = '';
+  let month = 1;
+  const maxMonths = 600;
+  while (bal > 0.5 && month <= maxMonths) {
+    const interest = bal * r;
+    const principal = Math.max(0, d.minPayment - interest);
+    if (principal <= 0) { rows += `<tr><td colspan="4" style="text-align:center;color:var(--red)">Cuota no cubre intereses — deuda nunca se paga</td></tr>`; break; }
+    totalInt += interest;
+    bal = Math.max(0, bal - principal);
+    rows += `<tr><td>${month}</td><td>${clp(d.minPayment)}</td><td>${clp(principal)}</td><td>${clp(interest)}</td></tr>`;
+    month++;
+  }
+  const summary = `<div class="grid2" style="gap:8px;margin-bottom:10px">
+    <div class="stat-box"><div style="font-weight:700">${month-1} meses</div><div style="font-size:.7rem;color:var(--muted)">Tiempo total</div></div>
+    <div class="stat-box"><div style="font-weight:700;color:var(--red)">${clp(totalInt)}</div><div style="font-size:.7rem;color:var(--muted)">Total interés</div></div>
+  </div>`;
+  document.getElementById('amort-summary').innerHTML = summary;
+  document.getElementById('amort-table-body').innerHTML = `
+    <table>
+      <thead><tr><th>Mes</th><th>Cuota</th><th>Capital</th><th>Interés</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+  document.getElementById('amort-modal').classList.add('open');
+}
+
+// ===================== STRATEGIES =====================
+let chartStrategy;
+
+function updateStrategies() {
+  const extra = parseInt(document.getElementById('extra-slider').value);
+  document.getElementById('extra-label').textContent = clp(extra);
+  const debts = state.debts.map(d => ({ ...d }));
+  if (!debts.length) {
+    document.getElementById('strategy-table').innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--muted)">Sin deudas registradas</td></tr>';
+    document.getElementById('snowball-detail').innerHTML = '';
+    document.getElementById('avalanche-detail').innerHTML = '';
+    return;
+  }
+
+  const snow = simulateStrategy(debts, extra, 'snowball');
+  const aval = simulateStrategy(debts, extra, 'avalanche');
+  const mins = simulateStrategy(debts, extra, 'none');
+
+  const tb = document.getElementById('strategy-table');
+  tb.innerHTML = `
+    <tr><td><strong>Bola de Nieve</strong></td><td>${snow.months} meses</td><td style="color:var(--red)">${clp(snow.totalInterest)}</td><td>${snow.firstFree} meses</td></tr>
+    <tr><td><strong>Avalancha</strong></td><td>${aval.months} meses</td><td style="color:var(--red)">${clp(aval.totalInterest)}</td><td>${aval.firstFree} meses</td></tr>
+    <tr style="background:#f8fbff"><td><em>Solo mínimos</em></td><td>${mins.months < 600 ? mins.months + ' meses' : '50+ años'}</td><td style="color:var(--red)">${clp(mins.totalInterest)}</td><td>—</td></tr>
+  `;
+
+  // Strategy detail
+  document.getElementById('snowball-detail').innerHTML = renderStrategyOrder(snow, 'snowball');
+  document.getElementById('avalanche-detail').innerHTML = renderStrategyOrder(aval, 'avalanche');
+
+  // Chart
+  const ctx = document.getElementById('chart-strategy').getContext('2d');
+  if (chartStrategy) chartStrategy.destroy();
+  const maxM = Math.min(Math.max(snow.months, aval.months, 12), 120);
+  const labels = Array.from({length: maxM+1}, (_,i) => `M${i}`);
+  chartStrategy = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Snowball', data: snow.curve.slice(0, maxM+1), borderColor: '#0369a1', borderWidth: 2, pointRadius: 0, tension: .3 },
+        { label: 'Avalancha', data: aval.curve.slice(0, maxM+1), borderColor: '#16a34a', borderWidth: 2, pointRadius: 0, tension: .3 },
+        { label: 'Mínimos', data: mins.curve.slice(0, maxM+1), borderColor: '#dc2626', borderWidth: 2, pointRadius: 0, tension: .3, borderDash: [5,5] }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { font: { size: 11 }, boxWidth: 12 } } },
+      scales: {
+        y: { ticks: { callback: v => '$' + (v/1000000).toFixed(1) + 'M', font: { size: 10 } } },
+        x: { ticks: { maxTicksLimit: 8, font: { size: 10 } } }
+      }
+    }
+  });
+
+  updateConsolidation();
+}
+
+function simulateStrategy(debtsInput, extra, mode) {
+  let debts = debtsInput.map(d => ({ ...d, originalBalance: d.balance }));
+  let months = 0;
+  let totalInterest = 0;
+  let firstFree = 0;
+  let paidCount = 0;
+  const curve = [debts.reduce((s,d) => s + d.balance, 0)];
+  const maxM = 600;
+
+  while (debts.some(d => d.balance > 0) && months < maxM) {
+    months++;
+    // Sort for target
+    let sorted = [...debts.filter(d => d.balance > 0)];
+    if (mode === 'snowball') sorted.sort((a,b) => a.balance - b.balance);
+    else if (mode === 'avalanche') sorted.sort((a,b) => b.rate - a.rate);
+
+    // Pay minimums
+    let extraLeft = extra;
+    debts = debts.map(d => {
+      if (d.balance <= 0) return d;
+      const r = d.rate / 100;
+      const interest = d.balance * r;
+      totalInterest += interest;
+      const principal = Math.min(d.balance, Math.max(0, d.minPayment - interest));
+      const newBal = Math.max(0, d.balance - principal);
+      if (newBal <= 0 && d.balance > 0) {
+        if (!firstFree) firstFree = months;
+      }
+      return { ...d, balance: newBal };
+    });
+
+    // Apply extra to target
+    if (mode !== 'none' && extraLeft > 0 && sorted.length > 0) {
+      const targetId = sorted[0].id;
+      debts = debts.map(d => {
+        if (d.id === targetId && d.balance > 0) {
+          const payment = Math.min(extraLeft, d.balance);
+          extraLeft -= payment;
+          const newBal = Math.max(0, d.balance - payment);
+          if (newBal <= 0 && d.balance > 0 && !firstFree) firstFree = months;
+          return { ...d, balance: newBal };
+        }
+        return d;
+      });
+    }
+
+    curve.push(Math.max(0, debts.reduce((s,d) => s + d.balance, 0)));
+  }
+
+  return { months, totalInterest, firstFree: firstFree || months, curve };
+}
+
+function renderStrategyOrder(result, mode) {
+  return `<div class="info-box">
+    <strong>Tiempo total:</strong> ${result.months} meses |
+    <strong>Interés total:</strong> <span style="color:var(--red)">${clp(result.totalInterest)}</span> |
+    <strong>Primera deuda libre:</strong> mes ${result.firstFree}
+  </div>`;
+}
+
+function updateConsolidation() {
+  const rate = parseFloat(document.getElementById('consol-rate').value);
+  const term = parseInt(document.getElementById('consol-term').value);
+  const totalDebt = state.debts.reduce((s,d) => s + d.balance, 0);
+  if (!totalDebt || isNaN(rate) || isNaN(term)) { document.getElementById('consolidation-result').innerHTML = ''; return; }
+  const monthlyPayment = pmt(rate/100, term, totalDebt);
+  const totalPay = monthlyPayment * term;
+  const totalInt = totalPay - totalDebt;
+  const currentTotalInt = state.debts.reduce((s,d) => s + totalInterest(d.balance, d.rate, d.minPayment), 0);
+  const savings = currentTotalInt - totalInt;
+  document.getElementById('consolidation-result').innerHTML = `
+    <div class="sim-result">
+      <div class="grid2">
+        <div><div style="font-size:.75rem;color:var(--muted)">Cuota mensual</div><strong>${clp(monthlyPayment)}</strong></div>
+        <div><div style="font-size:.75rem;color:var(--muted)">Interés total</div><strong style="color:var(--red)">${clp(totalInt)}</strong></div>
+        <div><div style="font-size:.75rem;color:var(--muted)">Ahorro vs actual</div><strong style="color:${savings>0?'var(--green)':'var(--red)'}">${savings > 0 ? clp(savings) : '−' + clp(-savings)}</strong></div>
+        <div><div style="font-size:.75rem;color:var(--muted)">Plazo</div><strong>${term} meses</strong></div>
+      </div>
+      ${savings > 0 ? `<div style="margin-top:8px;font-size:.8rem;color:var(--green)"><strong>Conviene consolidar</strong> — ahorras ${clp(savings)} en intereses.</div>` : `<div style="margin-top:8px;font-size:.8rem;color:var(--red)"><strong>No conviene</strong> — pagarías más interés que con tus deudas actuales.</div>`}
+    </div>`;
+}
+
+// ===================== PAGOS =====================
+let chartPayments;
+
+function renderPagos() {
+  const now = new Date();
+  const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  document.getElementById('pagos-month-title').textContent = `Pagos — ${monthNames[now.getMonth()]} ${now.getFullYear()}`;
+
+  const list = document.getElementById('monthly-payments-list');
+  if (!state.debts.length) {
+    list.innerHTML = '<div class="empty-state"><p>No hay deudas registradas.</p></div>';
+  } else {
+    list.innerHTML = state.debts.map(d => {
+      const paid = totalPaidThisMonth(d.id);
+      const isPaid = paid >= d.minPayment;
+      const days = daysUntil(d.dueDate);
+      const isOverdue = days !== null && days < 0;
+      const statusIcon = isPaid ? '✅' : isOverdue ? '🔴' : '⏳';
+      const statusText = isPaid ? 'Pagado' : isOverdue ? 'Atrasado' : 'Pendiente';
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+        <div>
+          <div style="font-weight:600;font-size:.9rem">${statusIcon} ${d.name}</div>
+          <div style="font-size:.75rem;color:var(--muted)">${statusText} · Mínimo ${clp(d.minPayment)}</div>
+          ${paid > 0 ? `<div style="font-size:.75rem;color:var(--green)">Pagado: ${clp(paid)}</div>` : ''}
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="openPaymentModal('${d.id}')">Pagar</button>
+      </div>`;
+    }).join('');
+  }
+
+  updateBudget();
+  renderPaymentHistory();
+  renderPaymentsChart();
+  updateFilterDebtSelect();
+}
+
+function updateBudget() {
+  const income = parseFloat(document.getElementById('income-input').value) || state.profile.income;
+  if (income) document.getElementById('income-input').value = income;
+  const totalMin = state.debts.reduce((s,d) => s + d.minPayment, 0);
+  const result = document.getElementById('budget-result');
+  if (!income) { result.innerHTML = '<p style="font-size:.82rem;color:var(--muted)">Ingresa tu ingreso para ver el análisis.</p>'; return; }
+  const pct = (totalMin / income * 100).toFixed(1);
+  const color = pct < 30 ? 'var(--green)' : pct < 50 ? 'var(--yellow)' : 'var(--red)';
+  result.innerHTML = `<div class="progress-bar" style="height:12px;margin:8px 0"><div class="progress-fill" style="width:${Math.min(100,pct)}%;background:${color}"></div></div>
+    <p style="font-size:.83rem"><strong style="color:${color}">${pct}%</strong> del ingreso comprometido en deudas (${clp(totalMin)} / ${clp(income)})</p>
+    ${pct > 40 ? `<div class="info-box warn" style="margin-top:8px">Más del 40% del ingreso en deudas. Considera renegociar plazos o buscar ingresos adicionales.</div>` : ''}`;
+}
+
+function renderPaymentHistory() {
+  const filterDebt = document.getElementById('filter-debt').value;
+  const filterMonth = document.getElementById('filter-month').value;
+  let payments = [...state.payments].sort((a,b) => new Date(b.date) - new Date(a.date));
+  if (filterDebt) payments = payments.filter(p => p.debtId === filterDebt);
+  if (filterMonth) payments = payments.filter(p => p.date.startsWith(filterMonth));
+
+  const container = document.getElementById('payment-history');
+  if (!payments.length) {
+    container.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted);font-size:.82rem">Sin pagos registrados.</div>';
+    return;
+  }
+  container.innerHTML = `<div style="overflow-x:auto"><table>
+    <thead><tr><th>Fecha</th><th>Deuda</th><th>Monto</th><th>Tipo</th></tr></thead>
+    <tbody>${payments.map(p => {
+      const d = state.debts.find(x => x.id === p.debtId);
+      return `<tr><td>${p.date}</td><td>${d ? d.name : '—'}</td><td>${clp(p.amount)}</td><td><span class="badge ${p.type==='extra'?'badge-green':p.type==='total'?'badge-blue':'badge-yellow'}">${p.type}</span></td></tr>`;
+    }).join('')}</tbody>
+  </table></div>`;
+}
+
+function updateFilterDebtSelect() {
+  const sel = document.getElementById('filter-debt');
+  const current = sel.value;
+  sel.innerHTML = '<option value="">Todas las deudas</option>' + state.debts.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
+  if (current) sel.value = current;
+}
+
+function renderPaymentsChart() {
+  const ctx = document.getElementById('chart-payments').getContext('2d');
+  if (chartPayments) chartPayments.destroy();
+  // Aggregate last 6 months
+  const months = [];
+  const now = new Date();
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push({ label: `${d.getMonth()+1}/${d.getFullYear().toString().slice(2)}`, year: d.getFullYear(), month: d.getMonth() });
+  }
+  const totalPaid = months.map(m => state.payments.filter(p => { const d = new Date(p.date); return d.getMonth() === m.month && d.getFullYear() === m.year; }).reduce((s,p) => s+p.amount, 0));
+  chartPayments = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: months.map(m => m.label),
+      datasets: [{ label: 'Total pagado', data: totalPaid, backgroundColor: '#0369a1', borderRadius: 4 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { ticks: { callback: v => '$' + (v/1000).toFixed(0) + 'K', font: { size: 10 } } },
+        x: { ticks: { font: { size: 10 } } }
+      }
+    }
+  });
+}
+
+// ===================== PAYMENT MODAL =====================
+function openPaymentModal(debtId) {
+  const sel = document.getElementById('pay-debt-select');
+  sel.innerHTML = state.debts.map(d => `<option value="${d.id}" ${d.id === debtId ? 'selected' : ''}>${d.name}</option>`).join('');
+  document.getElementById('pay-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('pay-amount').value = '';
+  if (debtId) {
+    const d = state.debts.find(x => x.id === debtId);
+    if (d) document.getElementById('pay-amount').value = d.minPayment;
+  }
+  document.getElementById('payment-modal').classList.add('open');
+}
+
+function savePayment() {
+  const debtId = document.getElementById('pay-debt-select').value;
+  const date = document.getElementById('pay-date').value;
+  const amount = parseFloat(document.getElementById('pay-amount').value);
+  const type = document.getElementById('pay-type').value;
+  if (!debtId || !date || isNaN(amount) || amount <= 0) { showToast('Completa todos los campos'); return; }
+  state.payments.push({ id: genId(), debtId, date, amount, type });
+  saveState();
+  closeModal('payment-modal');
+  refreshAll();
+  showToast('Pago registrado');
+}
+
+// ===================== PROFILE =====================
+function openProfile() {
+  document.getElementById('profile-income').value = state.profile.income || '';
+  document.getElementById('profile-name').value = state.profile.name || '';
+  document.getElementById('profile-modal').classList.add('open');
+}
+
+function saveProfile() {
+  state.profile.income = parseFloat(document.getElementById('profile-income').value) || 0;
+  state.profile.name = document.getElementById('profile-name').value.trim();
+  saveState();
+  closeModal('profile-modal');
+  refreshAll();
+  showToast('Perfil guardado');
+}
+
+// ===================== EDUCACIÓN =====================
+function toggleEdu(header) {
+  const body = header.nextElementSibling;
+  const icon = header.querySelector('span:last-child');
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open');
+  icon.textContent = isOpen ? '+' : '−';
+}
+
+function runSimulator() {
+  const saldo = parseFloat(document.getElementById('sim-saldo').value) || 0;
+  const tasa = parseFloat(document.getElementById('sim-tasa').value) || 0;
+  const minPct = parseFloat(document.getElementById('sim-minpct').value) || 3;
+  if (!saldo || !tasa) { document.getElementById('sim-result').innerHTML = ''; return; }
+  const r = tasa / 100;
+  let bal = saldo;
+  let totalInt = 0;
+  let months = 0;
+  const maxM = 1200;
+  while (bal > 0.5 && months < maxM) {
+    const interest = bal * r;
+    const minPay = Math.max(5000, bal * minPct / 100);
+    const principal = Math.max(0, minPay - interest);
+    if (principal <= 0) { months = maxM; break; }
+    totalInt += interest;
+    bal = Math.max(0, bal - principal);
+    months++;
+  }
+  const never = months >= maxM;
+  document.getElementById('sim-result').innerHTML = `<div class="sim-result">
+    ${never
+      ? `<div style="color:var(--red);font-weight:700;font-size:.95rem">¡NUNCA se paga!</div><p style="font-size:.82rem;margin-top:4px">El pago mínimo no alcanza a cubrir los intereses. La deuda crece indefinidamente.</p>`
+      : `<div class="grid2">
+        <div><div style="font-size:.75rem;color:var(--muted)">Tiempo para pagar</div><strong>${months} meses (${(months/12).toFixed(1)} años)</strong></div>
+        <div><div style="font-size:.75rem;color:var(--muted)">Interés total</div><strong style="color:var(--red)">${clp(totalInt)}</strong></div>
+        <div><div style="font-size:.75rem;color:var(--muted)">Total pagado</div><strong>${clp(saldo + totalInt)}</strong></div>
+        <div><div style="font-size:.75rem;color:var(--muted)">Pagas de más</div><strong style="color:var(--red)">${((totalInt/saldo)*100).toFixed(0)}% extra</strong></div>
+      </div>
+      <p style="margin-top:10px;font-size:.8rem;color:var(--red)"><strong>Ejemplo:</strong> ${clp(saldo)} de deuda en tarjeta retail pagando solo el mínimo resulta en ${clp(totalInt)} en intereses en ${months} meses.</p>`
+    }
+  </div>`;
+}
+
+// ===================== MODALS =====================
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-backdrop').forEach(el => {
+  el.addEventListener('click', function(e) { if (e.target === this) this.classList.remove('open'); });
+});
+
+// ===================== REFRESH =====================
+function refreshAll() {
+  const activeTab = document.querySelector('.tab.active');
+  if (!activeTab) return;
+  const id = activeTab.id.replace('tab-', '');
+  if (id === 'resumen') renderResumen();
+  else if (id === 'deudas') renderDeudas();
+  else if (id === 'estrategias') updateStrategies();
+  else if (id === 'pagos') renderPagos();
+}
+
+// ===================== INIT =====================
+document.addEventListener('DOMContentLoaded', () => {
+  loadState();
+  // Set default filter month
+  const now = new Date();
+  document.getElementById('filter-month').value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  renderResumen();
+  runSimulator();
+});
+</script>
+</body>
+</html>

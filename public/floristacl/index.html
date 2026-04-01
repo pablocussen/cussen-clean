@@ -1,0 +1,2382 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#db2777">
+    <meta name="description" content="FloristaCL - Sistema de gestión para florerías">
+    <title>FloristaCL - Gestión de Floristería</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="manifest" href="data:application/json,{\"name\":\"FloristaCL\",\"short_name\":\"FloristaCL\",\"start_url\":\"/\",\"display\":\"standalone\",\"background_color\":\"#ffffff\",\"theme_color\":\"#db2777\",\"scope\":\"/\"}">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: #ffffff;
+            color: #1a1a1a;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 100%;
+        }
+
+        header {
+            background: linear-gradient(135deg, #db2777 0%, #c91f68 100%);
+            color: white;
+            padding: 1rem 1.5rem;
+            box-shadow: 0 2px 8px rgba(219, 39, 119, 0.15);
+            flex-shrink: 0;
+        }
+
+        header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        header p {
+            font-size: 0.875rem;
+            opacity: 0.95;
+            margin-top: 0.25rem;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0;
+            background: #fdf2f8;
+            border-bottom: 1px solid #f0d9e8;
+            flex-shrink: 0;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .tabs::-webkit-scrollbar {
+            height: 3px;
+        }
+
+        .tabs::-webkit-scrollbar-track {
+            background: #f0d9e8;
+        }
+
+        .tabs::-webkit-scrollbar-thumb {
+            background: #db2777;
+            border-radius: 2px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            min-width: 110px;
+            padding: 1rem;
+            border: none;
+            background: transparent;
+            color: #666;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .tab-btn:hover {
+            background: rgba(219, 39, 119, 0.05);
+            color: #db2777;
+        }
+
+        .tab-btn.active {
+            color: #db2777;
+            border-bottom-color: #db2777;
+            background: rgba(219, 39, 119, 0.03);
+        }
+
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 2rem;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .section {
+            padding: 1.5rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .section h2 {
+            font-size: 1.3rem;
+            color: #db2777;
+            margin-bottom: 1.5rem;
+            font-weight: 700;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #333;
+            font-size: 0.95rem;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-family: 'Inter', sans-serif;
+            font-size: 16px;
+            transition: all 0.2s ease;
+            background: #fafafa;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #db2777;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(219, 39, 119, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        @media (max-width: 640px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        button {
+            background: linear-gradient(135deg, #db2777 0%, #c91f68 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(219, 39, 119, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button.secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        button.secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid #f0d9e8;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .card:hover {
+            border-color: #db2777;
+            box-shadow: 0 4px 12px rgba(219, 39, 119, 0.1);
+        }
+
+        .card h3 {
+            color: #db2777;
+            font-size: 1.1rem;
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+        }
+
+        .card-content {
+            font-size: 0.95rem;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .card-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1rem;
+            font-size: 0.85rem;
+            color: #999;
+        }
+
+        .badge {
+            display: inline-block;
+            background: #fdf2f8;
+            color: #db2777;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-weight: 500;
+            font-size: 0.8rem;
+        }
+
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-completed {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-cancelled {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .price {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #db2777;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .grid-item {
+            background: white;
+            border: 1px solid #f0d9e8;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .grid-item:hover {
+            border-color: #db2777;
+            box-shadow: 0 4px 12px rgba(219, 39, 119, 0.1);
+        }
+
+        .grid-item-image {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #fdf2f8 0%, #f0d9e8 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: #db2777;
+            border-bottom: 1px solid #f0d9e8;
+        }
+
+        .grid-item-content {
+            padding: 1.5rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .grid-item-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .grid-item-desc {
+            font-size: 0.85rem;
+            color: #999;
+            margin-bottom: 1rem;
+        }
+
+        .grid-item-price {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #db2777;
+            margin-bottom: 1rem;
+        }
+
+        .grid-item-footer {
+            margin-top: auto;
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .grid-item-footer button {
+            flex: 1;
+            min-width: 100px;
+            padding: 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            border: 1px solid #f0d9e8;
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            font-size: 0.9rem;
+            color: #999;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #db2777;
+        }
+
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.95rem;
+        }
+
+        .list-item:last-child {
+            border-bottom: none;
+        }
+
+        .list-item-main {
+            flex: 1;
+        }
+
+        .list-item-title {
+            font-weight: 500;
+            color: #333;
+        }
+
+        .list-item-subtitle {
+            font-size: 0.85rem;
+            color: #999;
+            margin-top: 0.25rem;
+        }
+
+        .list-item-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .list-item-actions button {
+            padding: 0.5rem 1rem;
+            font-size: 0.8rem;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            overflow-y: auto;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #f0d9e8;
+        }
+
+        .modal-header h2 {
+            color: #db2777;
+            font-size: 1.3rem;
+            margin: 0;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #999;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-btn:hover {
+            color: #db2777;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1.5rem;
+            font-size: 0.95rem;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1.5rem;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state h3 {
+            color: #999;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state p {
+            color: #ccc;
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 2rem;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin-bottom: 1.5rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th {
+            background: #fdf2f8;
+            color: #db2777;
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #f0d9e8;
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        tr:hover {
+            background: #fafafa;
+        }
+
+        .filter-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-bar select {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .tag-input {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            background: white;
+        }
+
+        .tag {
+            background: #fdf2f8;
+            color: #db2777;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .tag button {
+            background: none;
+            border: none;
+            color: #db2777;
+            cursor: pointer;
+            padding: 0;
+            font-size: 1rem;
+            margin-left: 0.25rem;
+        }
+
+        .success-message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #d4edda;
+            color: #155724;
+            padding: 1rem 1.5rem;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 2000;
+            animation: slideInRight 0.3s ease;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.25rem;
+            }
+
+            .section {
+                padding: 1rem;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .grid {
+                grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .tab-btn {
+                min-width: 90px;
+                padding: 0.875rem;
+                font-size: 0.85rem;
+            }
+
+            .modal-content {
+                padding: 1.5rem;
+            }
+
+            .list-item-actions {
+                flex-direction: column;
+            }
+
+            .list-item-actions button {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            header {
+                padding: 0.875rem 1rem;
+            }
+
+            header h1 {
+                font-size: 1.1rem;
+            }
+
+            header p {
+                font-size: 0.75rem;
+            }
+
+            .section h2 {
+                font-size: 1.1rem;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+
+            .btn-group button {
+                width: 100%;
+            }
+
+            button {
+                padding: 0.7rem 1rem;
+                font-size: 0.9rem;
+            }
+
+            table {
+                font-size: 0.8rem;
+            }
+
+            th, td {
+                padding: 0.75rem;
+            }
+        }
+
+        .flower-types {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin: 0.5rem 0;
+        }
+
+        .flower-badge {
+            background: #fdf2f8;
+            color: #db2777;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #db2777 0%, #c91f68 100%);
+            transition: width 0.3s ease;
+        }
+
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: white;
+            min-width: 160px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            padding: 0.5rem 0;
+            z-index: 1;
+            border-radius: 6px;
+            border: 1px solid #f0d9e8;
+        }
+
+        .dropdown-content a, .dropdown-content button {
+            color: #333;
+            padding: 0.75rem 1.5rem;
+            text-decoration: none;
+            display: block;
+            width: 100%;
+            text-align: left;
+            background: none;
+            border: none;
+            cursor: pointer;
+            border-radius: 0;
+            font-weight: 400;
+        }
+
+        .dropdown-content a:hover, .dropdown-content button:hover {
+            background-color: #fdf2f8;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .dropdown.active .dropdown-content {
+            display: block;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.4s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #db2777;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        .delivery-map {
+            width: 100%;
+            height: 400px;
+            background: linear-gradient(135deg, #fdf2f8 0%, #f0d9e8 100%);
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #db2777;
+            font-weight: 600;
+        }
+
+        .timeline {
+            position: relative;
+            padding: 2rem 0 2rem 2rem;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #f0d9e8;
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-bottom: 2rem;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -2.5rem;
+            top: 0;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #db2777;
+            border: 3px solid white;
+            box-shadow: 0 0 0 2px #db2777;
+        }
+
+        .timeline-item.completed::before {
+            background: #155724;
+            box-shadow: 0 0 0 2px #155724;
+        }
+
+        .timeline-content {
+            background: white;
+            padding: 1rem;
+            border-radius: 6px;
+            border: 1px solid #f0d9e8;
+        }
+
+        .tooltip {
+            position: relative;
+        }
+
+        .tooltip::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 0.5rem 1rem;
+            background: #333;
+            color: white;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            z-index: 100;
+        }
+
+        .tooltip:hover::after {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🌸 FloristaCL</h1>
+            <p>Sistema completo de gestión para tu floristería</p>
+        </header>
+
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="catalogo">CATÁLOGO</button>
+            <button class="tab-btn" data-tab="pedidos">PEDIDOS</button>
+            <button class="tab-btn" data-tab="inventario">INVENTARIO</button>
+            <button class="tab-btn" data-tab="entregas">ENTREGAS</button>
+            <button class="tab-btn" data-tab="finanzas">FINANZAS</button>
+            <button class="tab-btn" data-tab="clientes">CLIENTES</button>
+        </div>
+
+        <div class="content">
+            <!-- CATÁLOGO TAB -->
+            <div class="tab-content active" id="catalogo">
+                <div class="section">
+                    <h2>Catálogo de Arreglos Florales</h2>
+
+                    <div class="form-group">
+                        <button onclick="openAddProductModal()" style="width: 100%; padding: 1rem;">+ Agregar nuevo arreglo</button>
+                    </div>
+
+                    <div class="filter-bar">
+                        <select id="filterTipo" onchange="filterCatalog()">
+                            <option value="">Todos los tipos</option>
+                            <option value="ramo">Ramo</option>
+                            <option value="arreglo">Arreglo</option>
+                            <option value="corona">Corona</option>
+                            <option value="centro">Centro de mesa</option>
+                            <option value="bouquet">Bouquet novia</option>
+                            <option value="canasta">Canasta</option>
+                        </select>
+                        <select id="filterFlor" onchange="filterCatalog()">
+                            <option value="">Todas las flores</option>
+                            <option value="rosas">Rosas</option>
+                            <option value="lilium">Lilium</option>
+                            <option value="tulipanes">Tulipanes</option>
+                            <option value="girasoles">Girasoles</option>
+                            <option value="claveles">Claveles</option>
+                            <option value="orquídeas">Orquídeas</option>
+                            <option value="hortensias">Hortensias</option>
+                            <option value="astromelias">Astromelias</option>
+                            <option value="proteas">Proteas</option>
+                        </select>
+                    </div>
+
+                    <div class="grid" id="catalogGrid">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📦</div>
+                            <h3>Sin arreglos</h3>
+                            <p>Crea tu primer arreglo para comenzar</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PEDIDOS TAB -->
+            <div class="tab-content" id="pedidos">
+                <div class="section">
+                    <h2>Gestión de Pedidos</h2>
+
+                    <div class="form-group">
+                        <button onclick="openAddOrderModal()" style="width: 100%; padding: 1rem;">+ Crear nuevo pedido</button>
+                    </div>
+
+                    <div class="filter-bar">
+                        <select id="filterStatus" onchange="filterOrders()">
+                            <option value="">Todos los estados</option>
+                            <option value="pendiente">Pendiente</option>
+                            <option value="confirmado">Confirmado</option>
+                            <option value="preparacion">En preparación</option>
+                            <option value="listo">Listo para entregar</option>
+                            <option value="entregado">Entregado</option>
+                            <option value="cancelado">Cancelado</option>
+                        </select>
+                        <select id="filterOcasion" onchange="filterOrders()">
+                            <option value="">Todas las ocasiones</option>
+                            <option value="cumpleaños">Cumpleaños</option>
+                            <option value="aniversario">Aniversario</option>
+                            <option value="condolencias">Condolencias</option>
+                            <option value="matrimonio">Matrimonio</option>
+                            <option value="día madre">Día de la madre</option>
+                            <option value="san valentín">San Valentín</option>
+                            <option value="graduación">Graduación</option>
+                        </select>
+                    </div>
+
+                    <div id="ordersList"></div>
+                </div>
+            </div>
+
+            <!-- INVENTARIO TAB -->
+            <div class="tab-content" id="inventario">
+                <div class="section">
+                    <h2>Control de Inventario</h2>
+
+                    <div class="form-group">
+                        <button onclick="openAddInventoryModal()" style="width: 100%; padding: 1rem;">+ Registrar stock</button>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+                        <div class="stat-card">
+                            <h3>Stock total</h3>
+                            <div class="value" id="totalStock">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Tipo de flores</h3>
+                            <div class="value" id="flowerTypes">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Suministros</h3>
+                            <div class="value" id="suppliesCount">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Desperdicio</h3>
+                            <div class="value" id="wastePercent">0%</div>
+                        </div>
+                    </div>
+
+                    <h3 style="color: #db2777; margin: 2rem 0 1rem 0; font-size: 1.1rem;">Flores en stock</h3>
+                    <div id="flowersList"></div>
+
+                    <h3 style="color: #db2777; margin: 2rem 0 1rem 0; font-size: 1.1rem;">Suministros</h3>
+                    <div id="suppliesList"></div>
+                </div>
+            </div>
+
+            <!-- ENTREGAS TAB -->
+            <div class="tab-content" id="entregas">
+                <div class="section">
+                    <h2>Planificación de Entregas</h2>
+
+                    <div class="form-group">
+                        <label>Fecha de entrega</label>
+                        <input type="date" id="deliveryDate" onchange="filterDeliveries()">
+                    </div>
+
+                    <div class="filter-bar">
+                        <select id="filterDriver" onchange="filterDeliveries()">
+                            <option value="">Todos los repartidores</option>
+                            <option value="">- Asignar -</option>
+                        </select>
+                        <select id="filterDeliveryStatus" onchange="filterDeliveries()">
+                            <option value="">Todos los estados</option>
+                            <option value="programada">Programada</option>
+                            <option value="en_ruta">En ruta</option>
+                            <option value="entregada">Entregada</option>
+                            <option value="fallida">Fallida</option>
+                        </select>
+                    </div>
+
+                    <div class="delivery-map" id="deliveryMap">Mapa de entregas (próximamente)</div>
+
+                    <h3 style="color: #db2777; margin: 2rem 0 1rem 0; font-size: 1.1rem;">Ruta del día</h3>
+                    <div id="deliveriesList"></div>
+                </div>
+            </div>
+
+            <!-- FINANZAS TAB -->
+            <div class="tab-content" id="finanzas">
+                <div class="section">
+                    <h2>Análisis Financiero</h2>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+                        <div class="stat-card">
+                            <h3>Ingresos</h3>
+                            <div class="value" id="totalIncome">$0</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Costos</h3>
+                            <div class="value" id="totalCosts">$0</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Ganancia</h3>
+                            <div class="value" id="totalProfit">$0</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Margen</h3>
+                            <div class="value" id="marginPercent">0%</div>
+                        </div>
+                    </div>
+
+                    <h3 style="color: #db2777; margin: 2rem 0 1rem 0; font-size: 1.1rem;">Ingresos por ocasión</h3>
+                    <div class="chart-container">
+                        <canvas id="revenueByOccasion"></canvas>
+                    </div>
+
+                    <h3 style="color: #db2777; margin: 2rem 0 1rem 0; font-size: 1.1rem;">Arreglos más vendidos</h3>
+                    <div id="topSellingList"></div>
+
+                    <h3 style="color: #db2777; margin: 2rem 0 1rem 0; font-size: 1.1rem;">Tendencias mensuales</h3>
+                    <div class="chart-container">
+                        <canvas id="monthlyTrends"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CLIENTES TAB -->
+            <div class="tab-content" id="clientes">
+                <div class="section">
+                    <h2>Base de Clientes</h2>
+
+                    <div class="form-group">
+                        <button onclick="openAddClientModal()" style="width: 100%; padding: 1rem;">+ Agregar cliente</button>
+                    </div>
+
+                    <div class="filter-bar">
+                        <input type="text" id="clientSearch" placeholder="Buscar por nombre o teléfono" onkeyup="filterClients()">
+                    </div>
+
+                    <div id="clientsList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODALS -->
+    <!-- Add Product Modal -->
+    <div class="modal" id="addProductModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Nuevo Arreglo Floral</h2>
+                <button class="close-btn" onclick="closeModal('addProductModal')">✕</button>
+            </div>
+            <form onsubmit="saveProduct(event)">
+                <div class="form-group">
+                    <label>Nombre del arreglo *</label>
+                    <input type="text" id="productName" required>
+                </div>
+                <div class="form-group">
+                    <label>Tipo de arreglo *</label>
+                    <select id="productType" required>
+                        <option value="">Seleccionar tipo</option>
+                        <option value="ramo">Ramo</option>
+                        <option value="arreglo">Arreglo</option>
+                        <option value="corona">Corona</option>
+                        <option value="centro">Centro de mesa</option>
+                        <option value="bouquet">Bouquet novia</option>
+                        <option value="canasta">Canasta</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Flores utilizadas (selecciona varias) *</label>
+                    <select id="productFlowers" multiple required style="min-height: 120px;">
+                        <option value="rosas">Rosas</option>
+                        <option value="lilium">Lilium</option>
+                        <option value="tulipanes">Tulipanes</option>
+                        <option value="girasoles">Girasoles</option>
+                        <option value="claveles">Claveles</option>
+                        <option value="orquídeas">Orquídeas</option>
+                        <option value="hortensias">Hortensias</option>
+                        <option value="astromelias">Astromelias</option>
+                        <option value="proteas">Proteas</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Tamaño *</label>
+                        <select id="productSize" required>
+                            <option value="S">Pequeño (S)</option>
+                            <option value="M">Mediano (M)</option>
+                            <option value="L">Grande (L)</option>
+                            <option value="XL">Extra Grande (XL)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Precio (CLP) *</label>
+                        <input type="number" id="productPrice" required min="0">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Disponible</label>
+                    <label class="switch">
+                        <input type="checkbox" id="productAvailable" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>Descripción</label>
+                    <textarea id="productDescription" placeholder="Detalles del arreglo..."></textarea>
+                </div>
+                <div class="btn-group">
+                    <button type="submit">Guardar arreglo</button>
+                    <button type="button" class="secondary" onclick="closeModal('addProductModal')">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Order Modal -->
+    <div class="modal" id="addOrderModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Nuevo Pedido</h2>
+                <button class="close-btn" onclick="closeModal('addOrderModal')">✕</button>
+            </div>
+            <form onsubmit="saveOrder(event)">
+                <div class="form-group">
+                    <label>Seleccionar cliente *</label>
+                    <select id="orderClient" required>
+                        <option value="">Seleccionar cliente</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Arreglo floral *</label>
+                    <select id="orderProduct" required>
+                        <option value="">Seleccionar arreglo</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Ocasión *</label>
+                    <select id="orderOcasion" required>
+                        <option value="">Seleccionar ocasión</option>
+                        <option value="cumpleaños">Cumpleaños</option>
+                        <option value="aniversario">Aniversario</option>
+                        <option value="condolencias">Condolencias</option>
+                        <option value="matrimonio">Matrimonio</option>
+                        <option value="día madre">Día de la madre</option>
+                        <option value="san valentín">San Valentín</option>
+                        <option value="graduación">Graduación</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Fecha de entrega *</label>
+                        <input type="date" id="orderDeliveryDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Hora de entrega *</label>
+                        <input type="time" id="orderDeliveryTime" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Dirección de entrega *</label>
+                    <input type="text" id="orderAddress" required>
+                </div>
+                <div class="form-group">
+                    <label>Mensaje dedicatorio</label>
+                    <textarea id="orderMessage" placeholder="Mensaje para el cliente..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Estado del pago *</label>
+                    <select id="orderPaymentStatus" required>
+                        <option value="pendiente">Pendiente</option>
+                        <option value="pagado">Pagado</option>
+                        <option value="parcial">Pago parcial</option>
+                    </select>
+                </div>
+                <div class="btn-group">
+                    <button type="submit">Crear pedido</button>
+                    <button type="button" class="secondary" onclick="closeModal('addOrderModal')">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Inventory Modal -->
+    <div class="modal" id="addInventoryModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Registrar Stock</h2>
+                <button class="close-btn" onclick="closeModal('addInventoryModal')">✕</button>
+            </div>
+            <form onsubmit="saveInventory(event)">
+                <div class="form-group">
+                    <label>Tipo de item *</label>
+                    <select id="inventoryType" onchange="updateInventoryFields()" required>
+                        <option value="">Seleccionar tipo</option>
+                        <option value="flor">Flor</option>
+                        <option value="suministro">Suministro</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Nombre del item *</label>
+                    <input type="text" id="inventoryName" required>
+                </div>
+                <div id="flowerFields" style="display: none;">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Color</label>
+                            <input type="text" id="flowerColor" placeholder="Rojo, blanco, etc.">
+                        </div>
+                        <div class="form-group">
+                            <label>Cantidad (tallos) *</label>
+                            <input type="number" id="flowerQuantity" required min="0">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Fecha de frescura *</label>
+                            <input type="date" id="flowerFreshDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Costo por tallo (CLP) *</label>
+                            <input type="number" id="flowerCostPerUnit" required min="0">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Proveedor</label>
+                        <input type="text" id="flowerSupplier" placeholder="Nombre del proveedor">
+                    </div>
+                </div>
+                <div id="suppliesFields" style="display: none;">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Cantidad *</label>
+                            <input type="number" id="supplyQuantity" required min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Costo (CLP) *</label>
+                            <input type="number" id="supplyCost" required min="0">
+                        </div>
+                    </div>
+                </div>
+                <div class="btn-group">
+                    <button type="submit">Guardar stock</button>
+                    <button type="button" class="secondary" onclick="closeModal('addInventoryModal')">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Client Modal -->
+    <div class="modal" id="addClientModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Nuevo Cliente</h2>
+                <button class="close-btn" onclick="closeModal('addClientModal')">✕</button>
+            </div>
+            <form onsubmit="saveClient(event)">
+                <div class="form-group">
+                    <label>Nombre completo *</label>
+                    <input type="text" id="clientName" required>
+                </div>
+                <div class="form-group">
+                    <label>Teléfono *</label>
+                    <input type="tel" id="clientPhone" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="clientEmail">
+                </div>
+                <div class="form-group">
+                    <label>Dirección principal</label>
+                    <textarea id="clientAddress" placeholder="Dirección de envío..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Ocasión recurrente (aniversario automático)</label>
+                    <select id="clientRecurring">
+                        <option value="">Ninguna</option>
+                        <option value="aniversario">Aniversario</option>
+                        <option value="cumpleaños">Cumpleaños (incluir fecha)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Fecha especial (MM-DD)</label>
+                    <input type="text" id="clientSpecialDate" placeholder="ej: 03-15 para 15 de marzo">
+                </div>
+                <div class="form-group">
+                    <label>Preferencias</label>
+                    <textarea id="clientPreferences" placeholder="Flores favoritas, colores, etc."></textarea>
+                </div>
+                <div class="btn-group">
+                    <button type="submit">Guardar cliente</button>
+                    <button type="button" class="secondary" onclick="closeModal('addClientModal')">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- View Order Modal -->
+    <div class="modal" id="viewOrderModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Detalles del Pedido</h2>
+                <button class="close-btn" onclick="closeModal('viewOrderModal')">✕</button>
+            </div>
+            <div id="orderDetails"></div>
+            <div class="btn-group" style="margin-top: 1.5rem;">
+                <select id="updateOrderStatus" style="flex: 1;">
+                    <option value="">Cambiar estado</option>
+                    <option value="pendiente">Pendiente</option>
+                    <option value="confirmado">Confirmado</option>
+                    <option value="preparacion">En preparación</option>
+                    <option value="listo">Listo para entregar</option>
+                    <option value="entregado">Entregado</option>
+                    <option value="cancelado">Cancelado</option>
+                </select>
+                <button onclick="updateOrderStatus()">Actualizar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script>
+        // ==================== DATA MANAGEMENT ====================
+        let app = {
+            products: [],
+            orders: [],
+            inventory: [],
+            clients: [],
+            currentOrderId: null,
+            charts: {}
+        };
+
+        // Initialize app
+        function initApp() {
+            try {
+                const savedData = localStorage.getItem('floristaCLData');
+                if (savedData) {
+                    const data = JSON.parse(savedData);
+                    app = { ...app, ...data };
+                }
+            } catch (e) {
+                console.warn('localStorage access error:', e);
+            }
+
+            loadSampleData();
+            renderAll();
+            setupEventListeners();
+        }
+
+        function saveData() {
+            try {
+                localStorage.setItem('floristaCLData', JSON.stringify({
+                    products: app.products,
+                    orders: app.orders,
+                    inventory: app.inventory,
+                    clients: app.clients
+                }));
+            } catch (e) {
+                console.warn('localStorage save error:', e);
+            }
+        }
+
+        function loadSampleData() {
+            if (app.products.length > 0) return;
+
+            app.products = [
+                {
+                    id: 1,
+                    name: 'Ramo Clásico de Rosas',
+                    type: 'ramo',
+                    flowers: ['rosas'],
+                    size: 'M',
+                    price: 35000,
+                    available: true,
+                    description: 'Hermosas rosas rojas importadas',
+                    created: new Date().toISOString()
+                },
+                {
+                    id: 2,
+                    name: 'Arreglo Primavera',
+                    type: 'arreglo',
+                    flowers: ['tulipanes', 'lilium', 'rosas'],
+                    size: 'L',
+                    price: 55000,
+                    available: true,
+                    description: 'Combinación de flores de primavera',
+                    created: new Date().toISOString()
+                }
+            ];
+
+            app.inventory = [
+                { id: 1, type: 'flor', name: 'Rosas rojas', color: 'Rojo', quantity: 150, freshDate: '2026-03-20', costPerUnit: 500, supplier: 'Flores del Sur' },
+                { id: 2, type: 'flor', name: 'Tulipanes', color: 'Amarillo', quantity: 80, freshDate: '2026-03-19', costPerUnit: 300, supplier: 'Importaciones FL' },
+                { id: 3, type: 'suministro', name: 'Oasis floral', quantity: 50, cost: 2000 },
+                { id: 4, type: 'suministro', name: 'Cintas de seda', quantity: 100, cost: 1500 }
+            ];
+
+            app.clients = [
+                {
+                    id: 1,
+                    name: 'María González',
+                    phone: '+56912345678',
+                    email: 'maria@example.com',
+                    address: 'Calle Principal 123, Santiago',
+                    recurring: 'aniversario',
+                    specialDate: '05-14',
+                    preferences: 'Rosas rojas',
+                    created: new Date().toISOString()
+                }
+            ];
+
+            app.orders = [
+                {
+                    id: 1,
+                    client: 1,
+                    product: 1,
+                    occasion: 'cumpleaños',
+                    deliveryDate: '2026-03-25',
+                    deliveryTime: '14:00',
+                    address: 'Av. Libertad 456, Santiago',
+                    message: 'Felices 30 años',
+                    paymentStatus: 'pagado',
+                    deliveryStatus: 'preparacion',
+                    created: new Date().toISOString()
+                }
+            ];
+
+            saveData();
+        }
+
+        // ==================== UI MANAGEMENT ====================
+        function setupEventListeners() {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', switchTab);
+            });
+        }
+
+        function switchTab(e) {
+            const tabName = e.target.dataset.tab;
+
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            e.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+
+            if (tabName === 'finanzas') {
+                setTimeout(renderFinancesCharts, 100);
+            }
+        }
+
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        function showSuccess(message) {
+            const el = document.createElement('div');
+            el.className = 'success-message';
+            el.textContent = message;
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 3000);
+        }
+
+        // ==================== CATÁLOGO ====================
+        function openAddProductModal() {
+            document.getElementById('productName').value = '';
+            document.getElementById('productType').value = '';
+            document.getElementById('productFlowers').value = '';
+            document.getElementById('productSize').value = 'M';
+            document.getElementById('productPrice').value = '';
+            document.getElementById('productAvailable').checked = true;
+            document.getElementById('productDescription').value = '';
+            openModal('addProductModal');
+        }
+
+        function saveProduct(e) {
+            e.preventDefault();
+
+            const selectedFlowers = Array.from(document.getElementById('productFlowers').selectedOptions).map(opt => opt.value);
+
+            const product = {
+                id: app.products.length ? Math.max(...app.products.map(p => p.id)) + 1 : 1,
+                name: document.getElementById('productName').value,
+                type: document.getElementById('productType').value,
+                flowers: selectedFlowers,
+                size: document.getElementById('productSize').value,
+                price: parseInt(document.getElementById('productPrice').value),
+                available: document.getElementById('productAvailable').checked,
+                description: document.getElementById('productDescription').value,
+                created: new Date().toISOString()
+            };
+
+            app.products.push(product);
+            saveData();
+            renderCatalog();
+            closeModal('addProductModal');
+            showSuccess('Arreglo guardado exitosamente');
+        }
+
+        function deleteProduct(id) {
+            if (confirm('¿Eliminar este arreglo?')) {
+                app.products = app.products.filter(p => p.id !== id);
+                saveData();
+                renderCatalog();
+                showSuccess('Arreglo eliminado');
+            }
+        }
+
+        function renderCatalog() {
+            const grid = document.getElementById('catalogGrid');
+
+            if (app.products.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📦</div>
+                        <h3>Sin arreglos</h3>
+                        <p>Crea tu primer arreglo para comenzar</p>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = app.products.map(product => `
+                <div class="grid-item">
+                    <div class="grid-item-image">🌸</div>
+                    <div class="grid-item-content">
+                        <div class="grid-item-title">${product.name}</div>
+                        <div class="grid-item-desc">${product.type.toUpperCase()} - ${product.size}</div>
+                        <div class="flower-types">
+                            ${product.flowers.map(f => `<span class="flower-badge">${f}</span>`).join('')}
+                        </div>
+                        <div class="grid-item-price">$${product.price.toLocaleString()}</div>
+                        ${product.description ? `<p style="font-size: 0.8rem; color: #999; margin-bottom: 1rem;">${product.description}</p>` : ''}
+                        <div class="badge ${product.available ? 'status-active' : 'status-cancelled'}" style="align-self: flex-start;">
+                            ${product.available ? '✓ Disponible' : '✗ No disponible'}
+                        </div>
+                        <div class="grid-item-footer">
+                            <button class="secondary" onclick="editProduct(${product.id})">Editar</button>
+                            <button class="secondary" onclick="deleteProduct(${product.id})">Eliminar</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterCatalog() {
+            const tipo = document.getElementById('filterTipo').value;
+            const flor = document.getElementById('filterFlor').value;
+
+            const filtered = app.products.filter(p => {
+                return (!tipo || p.type === tipo) && (!flor || p.flowers.includes(flor));
+            });
+
+            const grid = document.getElementById('catalogGrid');
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🔍</div>
+                        <h3>Sin resultados</h3>
+                        <p>No hay arreglos que coincidan con los filtros</p>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(product => `
+                <div class="grid-item">
+                    <div class="grid-item-image">🌸</div>
+                    <div class="grid-item-content">
+                        <div class="grid-item-title">${product.name}</div>
+                        <div class="grid-item-desc">${product.type.toUpperCase()} - ${product.size}</div>
+                        <div class="flower-types">
+                            ${product.flowers.map(f => `<span class="flower-badge">${f}</span>`).join('')}
+                        </div>
+                        <div class="grid-item-price">$${product.price.toLocaleString()}</div>
+                        <div class="grid-item-footer">
+                            <button class="secondary" onclick="editProduct(${product.id})">Editar</button>
+                            <button class="secondary" onclick="deleteProduct(${product.id})">Eliminar</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function editProduct(id) {
+            const product = app.products.find(p => p.id === id);
+            if (!product) return;
+
+            document.getElementById('productName').value = product.name;
+            document.getElementById('productType').value = product.type;
+            document.getElementById('productSize').value = product.size;
+            document.getElementById('productPrice').value = product.price;
+            document.getElementById('productAvailable').checked = product.available;
+            document.getElementById('productDescription').value = product.description;
+
+            Array.from(document.getElementById('productFlowers').options).forEach(opt => {
+                opt.selected = product.flowers.includes(opt.value);
+            });
+
+            const originalSaveProduct = saveProduct;
+            window.saveProduct = function(e) {
+                e.preventDefault();
+                const selectedFlowers = Array.from(document.getElementById('productFlowers').selectedOptions).map(opt => opt.value);
+
+                Object.assign(product, {
+                    name: document.getElementById('productName').value,
+                    type: document.getElementById('productType').value,
+                    flowers: selectedFlowers,
+                    size: document.getElementById('productSize').value,
+                    price: parseInt(document.getElementById('productPrice').value),
+                    available: document.getElementById('productAvailable').checked,
+                    description: document.getElementById('productDescription').value
+                });
+
+                saveData();
+                renderCatalog();
+                closeModal('addProductModal');
+                showSuccess('Arreglo actualizado exitosamente');
+                window.saveProduct = originalSaveProduct;
+            };
+
+            openModal('addProductModal');
+        }
+
+        // ==================== PEDIDOS ====================
+        function openAddOrderModal() {
+            updateOrderDropdowns();
+            document.getElementById('orderClient').value = '';
+            document.getElementById('orderProduct').value = '';
+            document.getElementById('orderOcasion').value = '';
+            document.getElementById('orderDeliveryDate').value = '';
+            document.getElementById('orderDeliveryTime').value = '';
+            document.getElementById('orderAddress').value = '';
+            document.getElementById('orderMessage').value = '';
+            document.getElementById('orderPaymentStatus').value = 'pendiente';
+            openModal('addOrderModal');
+        }
+
+        function updateOrderDropdowns() {
+            const clientSelect = document.getElementById('orderClient');
+            clientSelect.innerHTML = '<option value="">Seleccionar cliente</option>' +
+                app.clients.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+
+            const productSelect = document.getElementById('orderProduct');
+            productSelect.innerHTML = '<option value="">Seleccionar arreglo</option>' +
+                app.products.map(p => `<option value="${p.id}">${p.name} - $${p.price.toLocaleString()}</option>`).join('');
+        }
+
+        function saveOrder(e) {
+            e.preventDefault();
+
+            const order = {
+                id: app.orders.length ? Math.max(...app.orders.map(o => o.id)) + 1 : 1,
+                client: parseInt(document.getElementById('orderClient').value),
+                product: parseInt(document.getElementById('orderProduct').value),
+                occasion: document.getElementById('orderOcasion').value,
+                deliveryDate: document.getElementById('orderDeliveryDate').value,
+                deliveryTime: document.getElementById('orderDeliveryTime').value,
+                address: document.getElementById('orderAddress').value,
+                message: document.getElementById('orderMessage').value,
+                paymentStatus: document.getElementById('orderPaymentStatus').value,
+                deliveryStatus: 'pendiente',
+                created: new Date().toISOString()
+            };
+
+            app.orders.push(order);
+            saveData();
+            renderOrders();
+            closeModal('addOrderModal');
+            showSuccess('Pedido creado exitosamente');
+        }
+
+        function renderOrders() {
+            const list = document.getElementById('ordersList');
+
+            if (app.orders.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📋</div>
+                        <h3>Sin pedidos</h3>
+                        <p>Crea tu primer pedido para comenzar</p>
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = app.orders.map(order => {
+                const client = app.clients.find(c => c.id === order.client);
+                const product = app.products.find(p => p.id === order.product);
+
+                return `
+                    <div class="card">
+                        <h3>${product?.name || 'Producto desconocido'}</h3>
+                        <div class="card-content">
+                            <strong>Cliente:</strong> ${client?.name || 'Cliente desconocido'} (${client?.phone})<br>
+                            <strong>Ocasión:</strong> ${order.occasion}<br>
+                            <strong>Entrega:</strong> ${order.deliveryDate} a las ${order.deliveryTime}<br>
+                            <strong>Dirección:</strong> ${order.address}
+                            ${order.message ? `<br><strong>Mensaje:</strong> "${order.message}"` : ''}
+                        </div>
+                        <div class="card-meta">
+                            <span class="badge ${order.paymentStatus === 'pagado' ? 'status-completed' : order.paymentStatus === 'parcial' ? 'status-pending' : 'status-cancelled'}">
+                                Pago: ${order.paymentStatus}
+                            </span>
+                            <span class="badge status-pending">
+                                Entrega: ${order.deliveryStatus}
+                            </span>
+                        </div>
+                        <div class="btn-group">
+                            <button class="secondary" onclick="openViewOrderModal(${order.id})">Ver detalles</button>
+                            <button class="secondary" onclick="deleteOrder(${order.id})">Eliminar</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function openViewOrderModal(orderId) {
+            app.currentOrderId = orderId;
+            const order = app.orders.find(o => o.id === orderId);
+            const client = app.clients.find(c => c.id === order.client);
+            const product = app.products.find(p => p.id === order.product);
+
+            const details = `
+                <div class="form-group">
+                    <label><strong>Cliente</strong></label>
+                    <p>${client?.name}<br>${client?.phone}<br>${client?.email}</p>
+                </div>
+                <div class="form-group">
+                    <label><strong>Arreglo</strong></label>
+                    <p>${product?.name}<br>$${product?.price.toLocaleString()}</p>
+                </div>
+                <div class="form-group">
+                    <label><strong>Entrega</strong></label>
+                    <p>${order.deliveryDate} a las ${order.deliveryTime}<br>${order.address}</p>
+                </div>
+                <div class="form-group">
+                    <label><strong>Estado del pago</strong></label>
+                    <p>${order.paymentStatus}</p>
+                </div>
+                ${order.message ? `<div class="form-group"><label><strong>Mensaje dedicatorio</strong></label><p>"${order.message}"</p></div>` : ''}
+            `;
+
+            document.getElementById('orderDetails').innerHTML = details;
+            document.getElementById('updateOrderStatus').value = order.deliveryStatus;
+            openModal('viewOrderModal');
+        }
+
+        function updateOrderStatus() {
+            const newStatus = document.getElementById('updateOrderStatus').value;
+            if (!newStatus || !app.currentOrderId) return;
+
+            const order = app.orders.find(o => o.id === app.currentOrderId);
+            order.deliveryStatus = newStatus;
+            saveData();
+            renderOrders();
+            closeModal('viewOrderModal');
+            showSuccess('Estado del pedido actualizado');
+        }
+
+        function filterOrders() {
+            const status = document.getElementById('filterStatus').value;
+            const ocasion = document.getElementById('filterOcasion').value;
+
+            const filtered = app.orders.filter(o => {
+                return (!status || o.deliveryStatus === status) && (!ocasion || o.occasion === ocasion);
+            });
+
+            const list = document.getElementById('ordersList');
+            if (filtered.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🔍</div>
+                        <h3>Sin resultados</h3>
+                        <p>No hay pedidos que coincidan con los filtros</p>
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = filtered.map(order => {
+                const client = app.clients.find(c => c.id === order.client);
+                const product = app.products.find(p => p.id === order.product);
+
+                return `
+                    <div class="card">
+                        <h3>${product?.name || 'Producto desconocido'}</h3>
+                        <div class="card-content">
+                            <strong>Cliente:</strong> ${client?.name || 'Cliente desconocido'}<br>
+                            <strong>Ocasión:</strong> ${order.occasion}<br>
+                            <strong>Entrega:</strong> ${order.deliveryDate} a las ${order.deliveryTime}
+                        </div>
+                        <div class="card-meta">
+                            <span class="badge status-pending">
+                                ${order.deliveryStatus}
+                            </span>
+                        </div>
+                        <div class="btn-group">
+                            <button class="secondary" onclick="openViewOrderModal(${order.id})">Ver detalles</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function deleteOrder(id) {
+            if (confirm('¿Eliminar este pedido?')) {
+                app.orders = app.orders.filter(o => o.id !== id);
+                saveData();
+                renderOrders();
+                showSuccess('Pedido eliminado');
+            }
+        }
+
+        // ==================== INVENTARIO ====================
+        function openAddInventoryModal() {
+            document.getElementById('inventoryType').value = '';
+            document.getElementById('inventoryName').value = '';
+            document.getElementById('flowerColor').value = '';
+            document.getElementById('flowerQuantity').value = '';
+            document.getElementById('flowerFreshDate').value = '';
+            document.getElementById('flowerCostPerUnit').value = '';
+            document.getElementById('flowerSupplier').value = '';
+            document.getElementById('supplyQuantity').value = '';
+            document.getElementById('supplyCost').value = '';
+            openModal('addInventoryModal');
+        }
+
+        function updateInventoryFields() {
+            const type = document.getElementById('inventoryType').value;
+            document.getElementById('flowerFields').style.display = type === 'flor' ? 'block' : 'none';
+            document.getElementById('suppliesFields').style.display = type === 'suministro' ? 'block' : 'none';
+        }
+
+        function saveInventory(e) {
+            e.preventDefault();
+
+            const type = document.getElementById('inventoryType').value;
+            const item = {
+                id: app.inventory.length ? Math.max(...app.inventory.map(i => i.id)) + 1 : 1,
+                type: type,
+                name: document.getElementById('inventoryName').value
+            };
+
+            if (type === 'flor') {
+                item.color = document.getElementById('flowerColor').value;
+                item.quantity = parseInt(document.getElementById('flowerQuantity').value);
+                item.freshDate = document.getElementById('flowerFreshDate').value;
+                item.costPerUnit = parseInt(document.getElementById('flowerCostPerUnit').value);
+                item.supplier = document.getElementById('flowerSupplier').value;
+            } else {
+                item.quantity = parseInt(document.getElementById('supplyQuantity').value);
+                item.cost = parseInt(document.getElementById('supplyCost').value);
+            }
+
+            app.inventory.push(item);
+            saveData();
+            renderInventory();
+            closeModal('addInventoryModal');
+            showSuccess('Stock registrado exitosamente');
+        }
+
+        function renderInventory() {
+            const totalStock = app.inventory.reduce((sum, i) => sum + i.quantity, 0);
+            const flowerTypes = new Set(app.inventory.filter(i => i.type === 'flor').map(i => i.name)).size;
+            const supplies = app.inventory.filter(i => i.type === 'suministro').length;
+            const flowerCosts = app.inventory.filter(i => i.type === 'flor').reduce((sum, i) => sum + (i.quantity * i.costPerUnit), 0);
+            const totalCosts = flowerCosts + app.inventory.filter(i => i.type === 'suministro').reduce((sum, i) => sum + i.cost, 0);
+
+            document.getElementById('totalStock').textContent = totalStock.toLocaleString();
+            document.getElementById('flowerTypes').textContent = flowerTypes;
+            document.getElementById('suppliesCount').textContent = supplies;
+
+            const wasteEstimate = Math.round((totalStock * 0.05) / totalStock * 100);
+            document.getElementById('wastePercent').textContent = wasteEstimate + '%';
+
+            const flowers = app.inventory.filter(i => i.type === 'flor');
+            const flowersList = document.getElementById('flowersList');
+            flowersList.innerHTML = flowers.map(f => `
+                <div class="list-item">
+                    <div class="list-item-main">
+                        <div class="list-item-title">${f.name} ${f.color ? `(${f.color})` : ''}</div>
+                        <div class="list-item-subtitle">
+                            ${f.quantity} tallos | Fresco hasta: ${f.freshDate} | ${f.supplier || 'Sin proveedor'}
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-weight: 600; color: #db2777;">$${(f.quantity * f.costPerUnit).toLocaleString()}</div>
+                        <div style="font-size: 0.8rem; color: #999;">$${f.costPerUnit}/tallo</div>
+                    </div>
+                </div>
+            `).join('');
+
+            const supplies = app.inventory.filter(i => i.type === 'suministro');
+            const suppliesList = document.getElementById('suppliesList');
+            suppliesList.innerHTML = supplies.map(s => `
+                <div class="list-item">
+                    <div class="list-item-main">
+                        <div class="list-item-title">${s.name}</div>
+                        <div class="list-item-subtitle">Cantidad: ${s.quantity}</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-weight: 600; color: #db2777;">$${s.cost.toLocaleString()}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ==================== ENTREGAS ====================
+        function filterDeliveries() {
+            const date = document.getElementById('deliveryDate').value;
+            const driver = document.getElementById('filterDriver').value;
+            const status = document.getElementById('filterDeliveryStatus').value;
+
+            const filtered = app.orders.filter(o => {
+                return (!date || o.deliveryDate === date) &&
+                       (!driver || true) &&
+                       (!status || o.deliveryStatus === status);
+            });
+
+            const list = document.getElementById('deliveriesList');
+            if (filtered.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🚚</div>
+                        <h3>Sin entregas</h3>
+                        <p>No hay entregas para esta fecha</p>
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = filtered.map((order, idx) => {
+                const client = app.clients.find(c => c.id === order.client);
+
+                return `
+                    <div class="list-item">
+                        <div class="list-item-main">
+                            <div class="list-item-title">Entrega ${idx + 1} - ${order.deliveryTime}</div>
+                            <div class="list-item-subtitle">
+                                ${client?.name} | ${client?.phone}<br>
+                                ${order.address}
+                            </div>
+                        </div>
+                        <div class="list-item-actions">
+                            <button class="secondary" onclick="updateDeliveryStatus(${order.id}, 'en_ruta')">En ruta</button>
+                            <button class="secondary" onclick="updateDeliveryStatus(${order.id}, 'entregada')">Entregada</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateDeliveryStatus(orderId, status) {
+            const order = app.orders.find(o => o.id === orderId);
+            order.deliveryStatus = status;
+            saveData();
+            filterDeliveries();
+            showSuccess('Estado de entrega actualizado');
+        }
+
+        // ==================== FINANZAS ====================
+        function renderFinances() {
+            const totalIncome = app.orders
+                .filter(o => o.paymentStatus === 'pagado' || o.paymentStatus === 'parcial')
+                .reduce((sum, o) => sum + (app.products.find(p => p.id === o.product)?.price || 0), 0);
+
+            const totalCosts = app.inventory
+                .filter(i => i.type === 'flor')
+                .reduce((sum, i) => sum + (i.quantity * i.costPerUnit), 0) +
+                app.inventory
+                .filter(i => i.type === 'suministro')
+                .reduce((sum, i) => sum + i.cost, 0);
+
+            const profit = totalIncome - totalCosts;
+            const margin = totalIncome > 0 ? Math.round((profit / totalIncome) * 100) : 0;
+
+            document.getElementById('totalIncome').textContent = '$' + totalIncome.toLocaleString();
+            document.getElementById('totalCosts').textContent = '$' + totalCosts.toLocaleString();
+            document.getElementById('totalProfit').textContent = '$' + profit.toLocaleString();
+            document.getElementById('marginPercent').textContent = margin + '%';
+
+            // Top selling
+            const topSelling = {};
+            app.orders.forEach(o => {
+                const product = app.products.find(p => p.id === o.product);
+                if (product) {
+                    topSelling[product.name] = (topSelling[product.name] || 0) + 1;
+                }
+            });
+
+            const topList = document.getElementById('topSellingList');
+            const sorted = Object.entries(topSelling).sort((a, b) => b[1] - a[1]).slice(0, 5);
+            topList.innerHTML = sorted.map(([name, count]) => `
+                <div class="list-item">
+                    <div class="list-item-main">
+                        <div class="list-item-title">${name}</div>
+                    </div>
+                    <div style="text-align: right; font-weight: 600; color: #db2777;">
+                        ${count} ordenes
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderFinancesCharts() {
+            renderFinances();
+
+            // Revenue by occasion
+            const ocasionData = {};
+            app.orders.forEach(o => {
+                ocasionData[o.occasion] = (ocasionData[o.occasion] || 0) + (app.products.find(p => p.id === o.product)?.price || 0);
+            });
+
+            const ctxOcasion = document.getElementById('revenueByOccasion');
+            if (ctxOcasion && Object.keys(ocasionData).length > 0) {
+                if (app.charts.ocasion) app.charts.ocasion.destroy();
+                app.charts.ocasion = new Chart(ctxOcasion, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(ocasionData),
+                        datasets: [{
+                            data: Object.values(ocasionData),
+                            backgroundColor: ['#db2777', '#c91f68', '#fdf2f8', '#e6508e', '#d63f7a', '#ca2e65', '#bd1d51']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom' }
+                        }
+                    }
+                });
+            }
+
+            // Monthly trends
+            const monthData = {};
+            app.orders.forEach(o => {
+                const month = o.created.substring(0, 7);
+                monthData[month] = (monthData[month] || 0) + (app.products.find(p => p.id === o.product)?.price || 0);
+            });
+
+            const ctxMonthly = document.getElementById('monthlyTrends');
+            if (ctxMonthly && Object.keys(monthData).length > 0) {
+                if (app.charts.monthly) app.charts.monthly.destroy();
+                app.charts.monthly = new Chart(ctxMonthly, {
+                    type: 'line',
+                    data: {
+                        labels: Object.keys(monthData),
+                        datasets: [{
+                            label: 'Ingresos mensuales',
+                            data: Object.values(monthData),
+                            borderColor: '#db2777',
+                            backgroundColor: 'rgba(219, 39, 119, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: true }
+                        },
+                        scales: {
+                            y: { beginAtZero: true }
+                        }
+                    }
+                });
+            }
+        }
+
+        // ==================== CLIENTES ====================
+        function openAddClientModal() {
+            document.getElementById('clientName').value = '';
+            document.getElementById('clientPhone').value = '';
+            document.getElementById('clientEmail').value = '';
+            document.getElementById('clientAddress').value = '';
+            document.getElementById('clientRecurring').value = '';
+            document.getElementById('clientSpecialDate').value = '';
+            document.getElementById('clientPreferences').value = '';
+            openModal('addClientModal');
+        }
+
+        function saveClient(e) {
+            e.preventDefault();
+
+            const client = {
+                id: app.clients.length ? Math.max(...app.clients.map(c => c.id)) + 1 : 1,
+                name: document.getElementById('clientName').value,
+                phone: document.getElementById('clientPhone').value,
+                email: document.getElementById('clientEmail').value,
+                address: document.getElementById('clientAddress').value,
+                recurring: document.getElementById('clientRecurring').value,
+                specialDate: document.getElementById('clientSpecialDate').value,
+                preferences: document.getElementById('clientPreferences').value,
+                created: new Date().toISOString()
+            };
+
+            app.clients.push(client);
+            saveData();
+            renderClients();
+            closeModal('addClientModal');
+            showSuccess('Cliente agregado exitosamente');
+        }
+
+        function renderClients() {
+            const list = document.getElementById('clientsList');
+
+            if (app.clients.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">👥</div>
+                        <h3>Sin clientes</h3>
+                        <p>Agrega tu primer cliente para comenzar</p>
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = app.clients.map(client => {
+                const orders = app.orders.filter(o => o.client === client.id).length;
+
+                return `
+                    <div class="card">
+                        <h3>${client.name}</h3>
+                        <div class="card-content">
+                            <strong>Teléfono:</strong> ${client.phone}<br>
+                            ${client.email ? `<strong>Email:</strong> ${client.email}<br>` : ''}
+                            <strong>Pedidos:</strong> ${orders} orden${orders !== 1 ? 'es' : ''}<br>
+                            ${client.recurring ? `<strong>Ocasión recurrente:</strong> ${client.recurring} (${client.specialDate})<br>` : ''}
+                            ${client.preferences ? `<strong>Preferencias:</strong> ${client.preferences}` : ''}
+                        </div>
+                        <div class="btn-group">
+                            <button class="secondary" onclick="editClient(${client.id})">Editar</button>
+                            <button class="secondary" onclick="deleteClient(${client.id})">Eliminar</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function filterClients() {
+            const search = document.getElementById('clientSearch').value.toLowerCase();
+            const filtered = app.clients.filter(c =>
+                c.name.toLowerCase().includes(search) ||
+                c.phone.includes(search)
+            );
+
+            const list = document.getElementById('clientsList');
+            if (filtered.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🔍</div>
+                        <h3>Sin resultados</h3>
+                        <p>No hay clientes que coincidan con la búsqueda</p>
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = filtered.map(client => {
+                const orders = app.orders.filter(o => o.client === client.id).length;
+
+                return `
+                    <div class="card">
+                        <h3>${client.name}</h3>
+                        <div class="card-content">
+                            <strong>Teléfono:</strong> ${client.phone}<br>
+                            ${client.email ? `<strong>Email:</strong> ${client.email}<br>` : ''}
+                            <strong>Pedidos:</strong> ${orders}
+                        </div>
+                        <div class="btn-group">
+                            <button class="secondary" onclick="editClient(${client.id})">Editar</button>
+                            <button class="secondary" onclick="deleteClient(${client.id})">Eliminar</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function editClient(id) {
+            const client = app.clients.find(c => c.id === id);
+            if (!client) return;
+
+            document.getElementById('clientName').value = client.name;
+            document.getElementById('clientPhone').value = client.phone;
+            document.getElementById('clientEmail').value = client.email || '';
+            document.getElementById('clientAddress').value = client.address || '';
+            document.getElementById('clientRecurring').value = client.recurring || '';
+            document.getElementById('clientSpecialDate').value = client.specialDate || '';
+            document.getElementById('clientPreferences').value = client.preferences || '';
+
+            const originalSaveClient = saveClient;
+            window.saveClient = function(e) {
+                e.preventDefault();
+
+                Object.assign(client, {
+                    name: document.getElementById('clientName').value,
+                    phone: document.getElementById('clientPhone').value,
+                    email: document.getElementById('clientEmail').value,
+                    address: document.getElementById('clientAddress').value,
+                    recurring: document.getElementById('clientRecurring').value,
+                    specialDate: document.getElementById('clientSpecialDate').value,
+                    preferences: document.getElementById('clientPreferences').value
+                });
+
+                saveData();
+                renderClients();
+                closeModal('addClientModal');
+                showSuccess('Cliente actualizado exitosamente');
+                window.saveClient = originalSaveClient;
+            };
+
+            openModal('addClientModal');
+        }
+
+        function deleteClient(id) {
+            if (confirm('¿Eliminar este cliente?')) {
+                app.clients = app.clients.filter(c => c.id !== id);
+                saveData();
+                renderClients();
+                showSuccess('Cliente eliminado');
+            }
+        }
+
+        // ==================== RENDER ALL ====================
+        function renderAll() {
+            renderCatalog();
+            renderOrders();
+            renderInventory();
+            filterDeliveries();
+            renderFinances();
+            renderClients();
+        }
+
+        // ==================== INITIALIZATION ====================
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initApp);
+        } else {
+            initApp();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5">
+<meta name="theme-color" content="#0369a1">
+<meta name="description" content="OdontScore - Gestión Clínica Dental">
+<title>OdontScore</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f0f6ff;--card:#ffffff;--card2:#e8f2ff;--border:#b8d4f0;--accent:#0369a1;--text:#2d5a7a;--muted:#6b8fa5;--green:#16a34a;--yellow:#d97706;--red:#dc2626;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:#1e3a5f;min-height:100vh;font-size:15px}
+header{background:linear-gradient(90deg,#0c4a7a,#0369a1);padding:13px 18px;position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between}
+header h1{color:#fff;font-size:1.15rem;font-weight:700;letter-spacing:.3px}
+header .logo-sub{color:#90c8ef;font-size:.72rem;display:block;font-weight:400}
+nav{background:#fff;border-bottom:2px solid var(--border);display:flex;overflow-x:auto;position:sticky;top:62px;z-index:40;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+nav button{flex:none;padding:11px 15px;border:none;background:none;color:var(--muted);font-size:.8rem;font-weight:500;cursor:pointer;white-space:nowrap;border-bottom:3px solid transparent;transition:all .2s;font-family:inherit}
+nav button.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+nav button:hover:not(.active){color:var(--text)}
+main{padding:14px;max-width:900px;margin:0 auto}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px}
+.card-title{font-size:.85rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
+.stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.stat-box{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:13px;text-align:center}
+.stat-box .val{font-size:1.8rem;font-weight:700;color:var(--accent);line-height:1}
+.stat-box .lbl{font-size:.72rem;color:var(--muted);margin-top:4px;font-weight:500}
+.alert-item{display:flex;align-items:flex-start;gap:9px;padding:10px 12px;border-radius:9px;margin-bottom:8px;font-size:.83rem}
+.alert-warn{background:#fffbeb;border:1px solid #fcd34d}
+.alert-err{background:#fef2f2;border:1px solid #fca5a5}
+.alert-info{background:#eff6ff;border:1px solid #93c5fd}
+.apt-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:9px;background:var(--card2);border:1px solid var(--border);margin-bottom:8px}
+.apt-time{font-size:.78rem;font-weight:600;color:var(--accent);min-width:80px}
+.apt-name{font-size:.87rem;font-weight:500}
+.apt-proc{font-size:.75rem;color:var(--muted)}
+label{display:block;font-size:.8rem;font-weight:600;color:var(--text);margin-bottom:4px}
+input,select,textarea{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:9px 11px;font-size:16px;font-family:inherit;color:#1e3a5f;background:#fff;outline:none;transition:border .2s}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+textarea{resize:vertical;min-height:70px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-group{margin-bottom:12px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 18px;border-radius:8px;border:none;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .2s;font-family:inherit}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:#0c4a7a}
+.btn-success{background:var(--green);color:#fff}
+.btn-success:hover{background:#15803d}
+.btn-danger{background:var(--red);color:#fff}
+.btn-danger:hover{background:#b91c1c}
+.btn-outline{background:#fff;color:var(--accent);border:1.5px solid var(--accent)}
+.btn-outline:hover{background:#e0f0ff}
+.btn-sm{padding:5px 11px;font-size:.78rem}
+.btn-full{width:100%}
+/* Odontogram */
+.odo-wrap{overflow-x:auto;padding:6px 0}
+.odo-svg-container{min-width:600px}
+.odo-section-label{font-size:.7rem;fill:#6b8fa5;font-weight:600}
+.tooth-group{cursor:pointer}
+.tooth-group rect.tooth-bg{stroke:#9ca3af;stroke-width:1.5;rx:4;ry:4}
+.tooth-group:hover rect.tooth-bg{stroke:var(--accent);stroke-width:2.5}
+.tooth-num{font-size:9px;fill:#374151;text-anchor:middle;font-family:Inter,sans-serif;pointer-events:none}
+.legend-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:.75rem;color:var(--text)}
+.legend-dot{width:14px;height:14px;border-radius:3px;border:1px solid #9ca3af}
+/* Treatment table */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.8rem}
+th{background:var(--card2);padding:9px 10px;text-align:left;font-weight:600;color:var(--text);white-space:nowrap;border-bottom:2px solid var(--border)}
+td{padding:9px 10px;border-bottom:1px solid #e8f2ff;vertical-align:middle}
+tr:hover td{background:#f8fbff}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:20px;font-size:.73rem;font-weight:600}
+.badge-pend{background:#fef9c3;color:#854d0e}
+.badge-proc{background:#dbeafe;color:#1d4ed8}
+.badge-done{background:#dcfce7;color:#15803d}
+/* Ficha chips */
+.chip-group{display:flex;flex-wrap:wrap;gap:7px}
+.chip{padding:5px 12px;border-radius:20px;border:1.5px solid var(--border);font-size:.78rem;cursor:pointer;background:#fff;color:var(--text);font-family:inherit;transition:all .2s}
+.chip.selected{background:var(--accent);color:#fff;border-color:var(--accent)}
+.chip-danger.selected{background:var(--red);color:#fff;border-color:var(--red)}
+/* Alert allergy */
+.allergy-alert{background:#fef2f2;border:1.5px solid #fca5a5;border-radius:8px;padding:10px 13px;margin-top:8px;font-size:.82rem;color:#991b1b;font-weight:600}
+/* Sterilization */
+.steril-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.steril-stat{background:var(--card2);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--border)}
+.steril-stat .val{font-size:1.6rem;font-weight:700;color:var(--accent)}
+.steril-stat .lbl{font-size:.72rem;color:var(--muted)}
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px;opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal-box{background:#fff;border-radius:14px;padding:20px;width:100%;max-width:420px;max-height:90vh;overflow-y:auto;transform:translateY(20px);transition:transform .2s}
+.modal-overlay.open .modal-box{transform:translateY(0)}
+.modal-title{font-size:1rem;font-weight:700;color:#1e3a5f;margin-bottom:16px}
+.modal-footer{display:flex;gap:9px;margin-top:16px;justify-content:flex-end}
+/* Patient selector */
+.patient-select-wrap{display:flex;gap:8px;margin-bottom:14px;align-items:flex-end}
+.patient-select-wrap select{flex:1}
+/* FONASA bar */
+.fonasa-bar-wrap{margin:12px 0}
+.fonasa-bar-bg{height:10px;background:#e2e8f0;border-radius:10px;overflow:hidden}
+.fonasa-bar-fill{height:10px;background:var(--green);border-radius:10px;transition:width .4s}
+.fonasa-bar-fill.warn{background:var(--yellow)}
+.fonasa-bar-fill.danger{background:var(--red)}
+.fonasa-info{display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted);margin-top:4px}
+/* RUT validation */
+.rut-err{font-size:.75rem;color:var(--red);margin-top:3px;display:none}
+.rut-err.show{display:block}
+/* Empty state */
+.empty-state{text-align:center;padding:30px 20px;color:var(--muted);font-size:.85rem}
+.empty-state .ico{font-size:2.5rem;margin-bottom:8px}
+/* Delete confirm */
+.del-confirm{background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:14px;text-align:center;font-size:.85rem;color:#991b1b}
+/* Scrollbar */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:#f0f6ff}
+::-webkit-scrollbar-thumb{background:#b8d4f0;border-radius:4px}
+@media(min-width:600px){.stats-grid{grid-template-columns:repeat(4,1fr)}.form-row-3{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>OdontScore <span style="font-weight:400;opacity:.8;font-size:.85rem">— Clínica Dental</span></h1>
+    <span class="logo-sub">Gestión clínica digital</span>
+  </div>
+  <button class="btn btn-outline btn-sm" onclick="openAddPatient()" style="flex-shrink:0">+ Paciente</button>
+</header>
+
+<nav id="mainNav">
+  <button class="active" onclick="showTab('inicio',this)">🏠 Inicio</button>
+  <button onclick="showTab('odontograma',this)">🦷 Odontograma</button>
+  <button onclick="showTab('tratamiento',this)">📋 Tratamiento</button>
+  <button onclick="showTab('ficha',this)">📄 Ficha</button>
+  <button onclick="showTab('esterilizacion',this)">🧼 Esterilización</button>
+</nav>
+
+<main>
+
+<!-- ===================== TAB 1: INICIO ===================== -->
+<div id="tab-inicio" class="tab-panel active">
+  <div class="card">
+    <div class="card-title">Resumen general</div>
+    <div class="stats-grid" id="statsGrid"></div>
+  </div>
+  <div class="card" id="alertsCard">
+    <div class="card-title">Alertas clínicas</div>
+    <div id="alertsList"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Próximas atenciones</div>
+    <div id="upcomingList"></div>
+  </div>
+</div>
+
+<!-- ===================== TAB 2: ODONTOGRAMA ===================== -->
+<div id="tab-odontograma" class="tab-panel">
+  <div class="card">
+    <div class="card-title">Paciente</div>
+    <div class="patient-select-wrap">
+      <select id="odoPatientSel" onchange="loadOdontogram()"></select>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Odontograma (Notación FDI)</div>
+    <div class="odo-wrap">
+      <div class="odo-svg-container">
+        <svg id="odontogramSVG" viewBox="0 0 640 220" xmlns="http://www.w3.org/2000/svg" width="100%"></svg>
+      </div>
+    </div>
+    <div class="legend-grid" id="odoLegend"></div>
+    <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="saveOdontogram()">💾 Guardar odontograma</button>
+      <button class="btn btn-outline btn-sm" onclick="clearOdontogram()">Limpiar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== TAB 3: TRATAMIENTO ===================== -->
+<div id="tab-tratamiento" class="tab-panel">
+  <div class="card">
+    <div class="card-title">Paciente</div>
+    <div class="patient-select-wrap">
+      <select id="tratPatientSel" onchange="loadTratamiento()"></select>
+    </div>
+  </div>
+  <div class="card" id="fonasaCard">
+    <div class="card-title">Sesiones FONASA</div>
+    <div id="fonasaBar"></div>
+  </div>
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div class="card-title" style="margin-bottom:0">Plan de tratamiento</div>
+      <button class="btn btn-primary btn-sm" onclick="openAddTreatment()">+ Agregar</button>
+    </div>
+    <div class="tbl-wrap" id="tratTable"></div>
+    <div id="tratTotals" style="margin-top:12px;font-size:.83rem;color:var(--text)"></div>
+  </div>
+</div>
+
+<!-- ===================== TAB 4: FICHA ===================== -->
+<div id="tab-ficha" class="tab-panel">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div class="card-title" style="margin-bottom:0">Seleccionar paciente</div>
+      <button class="btn btn-primary btn-sm" onclick="openAddPatient()">+ Nuevo</button>
+    </div>
+    <select id="fichaPatientSel" onchange="loadFicha()"></select>
+  </div>
+  <div id="fichaForm" style="display:none">
+    <div class="card">
+      <div class="card-title">Datos personales</div>
+      <div class="form-row">
+        <div class="form-group"><label>Nombre completo *</label><input id="fNombre" type="text" placeholder="Ej: María González"></div>
+        <div class="form-group"><label>RUT *</label><input id="fRut" type="text" placeholder="12.345.678-9" oninput="formatRUT(this)" onblur="validateRUT(this)"><div class="rut-err" id="rutErr">RUT inválido</div></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Fecha nacimiento</label><input id="fNacimiento" type="date"></div>
+        <div class="form-group"><label>Género</label><select id="fGenero"><option value="">Seleccionar</option><option>Femenino</option><option>Masculino</option><option>No binario</option><option>Prefiero no indicar</option></select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Teléfono</label><input id="fTelefono" type="tel" placeholder="+56 9 1234 5678"></div>
+        <div class="form-group"><label>Email</label><input id="fEmail" type="email" placeholder="correo@ejemplo.cl"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Previsión y cobertura</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Previsión</label>
+          <select id="fPrevision" onchange="toggleFonasaField()">
+            <option value="">Seleccionar</option>
+            <option>FONASA A</option>
+            <option>FONASA B</option>
+            <option>FONASA C</option>
+            <option>FONASA D</option>
+            <option>ISAPRE</option>
+            <option>Privado</option>
+          </select>
+        </div>
+        <div class="form-group" id="fonasaSesionesField">
+          <label>Sesiones FONASA autorizadas</label>
+          <input id="fFonasaSesiones" type="number" min="0" max="100" placeholder="Ej: 6">
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Información médica</div>
+      <div class="form-group">
+        <label>Alergias (anestésicos, medicamentos, látex)</label>
+        <input id="fAlergias" type="text" placeholder="Ej: Lidocaína, penicilina" oninput="checkAlergy()">
+        <div id="alergyAlert" class="allergy-alert" style="display:none">⚠️ ATENCIÓN: Paciente con alergias registradas. Revisar antes de procedimiento.</div>
+      </div>
+      <div class="form-group">
+        <label>Medicamentos actuales</label>
+        <textarea id="fMedicamentos" placeholder="Ej: Ácido acetilsalicílico 100mg/día, Metformina..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Enfermedades sistémicas</label>
+        <div class="chip-group" id="enfermedadesChips">
+          <button class="chip chip-danger" onclick="toggleChip(this,'Diabetes')">Diabetes</button>
+          <button class="chip chip-danger" onclick="toggleChip(this,'Hipertensión')">Hipertensión</button>
+          <button class="chip chip-danger" onclick="toggleChip(this,'Cardiopatía')">Cardiopatía</button>
+          <button class="chip chip-danger" onclick="toggleChip(this,'Anticoagulantes')">Anticoagulantes</button>
+          <button class="chip" onclick="toggleChip(this,'Embarazo')">Embarazo</button>
+          <button class="chip chip-danger" onclick="toggleChip(this,'Osteoporosis')">Osteoporosis</button>
+          <button class="chip" onclick="toggleChip(this,'Ninguna')">Ninguna</button>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Motivo de consulta</div>
+      <div class="form-group"><label>Motivo consulta inicial</label><textarea id="fMotivo" placeholder="Ej: Dolor en molar superior derecho hace 3 días..."></textarea></div>
+      <div class="form-group"><label>Observaciones clínicas</label><textarea id="fObservaciones" placeholder="Notas del profesional..."></textarea></div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+      <button class="btn btn-success btn-full" onclick="saveFicha()">💾 Guardar ficha</button>
+    </div>
+    <div class="card" id="deleteCard">
+      <div class="del-confirm">
+        <p style="margin-bottom:10px">Esta acción eliminará permanentemente al paciente y todos sus datos.</p>
+        <button class="btn btn-danger" onclick="deletePatient()">🗑️ Eliminar paciente</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== TAB 5: ESTERILIZACIÓN ===================== -->
+<div id="tab-esterilizacion" class="tab-panel">
+  <div class="steril-grid" id="sterilStats"></div>
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+      <div class="card-title" style="margin-bottom:0">Registro de ciclos</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-outline btn-sm" onclick="copyLog()">📋 Copiar log</button>
+        <button class="btn btn-primary btn-sm" onclick="openAddCycle()">+ Nuevo ciclo</button>
+      </div>
+    </div>
+    <div class="tbl-wrap" id="sterilTable"></div>
+  </div>
+</div>
+
+</main>
+
+<!-- ===================== MODALS ===================== -->
+
+<!-- Modal: Add/Edit Patient -->
+<div class="modal-overlay" id="modalPatient">
+  <div class="modal-box">
+    <div class="modal-title" id="modalPatientTitle">Nuevo paciente</div>
+    <div class="form-group"><label>Nombre completo *</label><input id="mpNombre" type="text" placeholder="Nombre Apellido"></div>
+    <div class="form-group"><label>RUT *</label><input id="mpRut" type="text" placeholder="12.345.678-9" oninput="formatRUT(this)" onblur="validateRUT(this)"><div class="rut-err" id="mpRutErr">RUT inválido</div></div>
+    <div class="form-row">
+      <div class="form-group"><label>Teléfono</label><input id="mpTelefono" type="tel" placeholder="+56 9 ..."></div>
+      <div class="form-group"><label>Previsión</label><select id="mpPrevision"><option value="">Seleccionar</option><option>FONASA A</option><option>FONASA B</option><option>FONASA C</option><option>FONASA D</option><option>ISAPRE</option><option>Privado</option></select></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modalPatient')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveNewPatient()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Tooth -->
+<div class="modal-overlay" id="modalTooth">
+  <div class="modal-box">
+    <div class="modal-title">Pieza <span id="toothModalNum"></span></div>
+    <div class="form-group">
+      <label>Estado</label>
+      <select id="toothStatus">
+        <option value="sano">Sano</option>
+        <option value="caries">Caries</option>
+        <option value="obturado">Obturado</option>
+        <option value="extraccion">Indicado extracción</option>
+        <option value="ausente">Ausente</option>
+        <option value="corona">Corona</option>
+        <option value="endodoncia">Endodoncia</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Notas clínicas</label>
+      <textarea id="toothNotes" placeholder="Observaciones sobre esta pieza..."></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modalTooth')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveToothModal()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Add Treatment -->
+<div class="modal-overlay" id="modalTreatment">
+  <div class="modal-box">
+    <div class="modal-title">Agregar tratamiento</div>
+    <div class="form-row">
+      <div class="form-group"><label>Pieza dental (FDI)</label><input id="tPieza" type="text" placeholder="Ej: 36" maxlength="3"></div>
+      <div class="form-group"><label>Fecha</label><input id="tFecha" type="date"></div>
+    </div>
+    <div class="form-group">
+      <label>Procedimiento</label>
+      <select id="tProcedimiento">
+        <option>Extracción simple</option>
+        <option>Obturación</option>
+        <option>Endodoncia</option>
+        <option>Corona</option>
+        <option>Limpieza</option>
+        <option>Ortodoncia</option>
+        <option>Blanqueamiento</option>
+        <option>Prótesis parcial</option>
+        <option>Prótesis total</option>
+        <option>Curetaje</option>
+        <option>Cirugía periapical</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Estado</label>
+        <select id="tEstado">
+          <option value="pendiente">🟡 Pendiente</option>
+          <option value="en_proceso">🔵 En proceso</option>
+          <option value="realizado">🟢 Realizado</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Costo (CLP)</label><input id="tCosto" type="number" min="0" placeholder="Ej: 45000"></div>
+    </div>
+    <div class="form-group"><label>Observaciones</label><textarea id="tObs" placeholder="Notas del procedimiento..."></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modalTreatment')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveNewTreatment()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Add Sterilization Cycle -->
+<div class="modal-overlay" id="modalCycle">
+  <div class="modal-box">
+    <div class="modal-title">Nuevo ciclo de esterilización</div>
+    <div class="form-row">
+      <div class="form-group"><label>Fecha</label><input id="cFecha" type="date"></div>
+      <div class="form-group"><label>Hora</label><input id="cHora" type="time"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>N° de ciclo</label><input id="cNum" type="number" min="1" placeholder="Ej: 42"></div>
+      <div class="form-group">
+        <label>Temperatura</label>
+        <select id="cTemp"><option>121°C</option><option>134°C</option><option>160°C</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Tiempo (min)</label>
+        <select id="cTiempo"><option>15</option><option>20</option><option>30</option><option>45</option><option>60</option></select>
+      </div>
+      <div class="form-group">
+        <label>Resultado</label>
+        <select id="cResultado"><option value="ok">✅ OK</option><option value="falla">❌ Falla</option></select>
+      </div>
+    </div>
+    <div class="form-group"><label>Instrumental esterilizado</label><input id="cInstrumental" type="text" placeholder="Ej: Kit endodoncia, Fórceps, Espejos..."></div>
+    <div class="form-group"><label>Operador</label><input id="cOperador" type="text" placeholder="Nombre del operador"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modalCycle')">Cancelar</button>
+      <button class="btn btn-success" onclick="saveNewCycle()">Registrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(100px);background:#1e3a5f;color:#fff;padding:10px 20px;border-radius:30px;font-size:.83rem;font-weight:500;z-index:999;transition:transform .3s;pointer-events:none">Guardado</div>
+
+<script>
+// ===================== DATA LAYER =====================
+const PATIENTS_KEY = 'odonto_patients';
+const STERIL_KEY = 'odonto_sterilization';
+
+function loadData(key, def) {
+  try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : def; }
+  catch(e) { return def; }
+}
+function saveData(key, val) {
+  try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) { showToast('Error al guardar'); }
+}
+
+function getPatients() { return loadData(PATIENTS_KEY, []); }
+function savePatients(p) { saveData(PATIENTS_KEY, p); }
+function getSteril() { return loadData(STERIL_KEY, []); }
+function saveSteril(s) { saveData(STERIL_KEY, s); }
+
+// Demo data pre-load
+function initDemoData() {
+  let patients = getPatients();
+  if (patients.length > 0) return;
+  patients = [
+    {
+      id: 'p1', nombre: 'María Fernanda González', rut: '12.345.678-9',
+      nacimiento: '1985-04-15', genero: 'Femenino', telefono: '+56 9 8234 5678',
+      email: 'maria.gonzalez@gmail.com', prevision: 'FONASA B', fonasaSesiones: 6,
+      alergias: '', medicamentos: 'Losartán 50mg/día', motivo: 'Control semestral y limpieza',
+      observaciones: 'Paciente colaboradora. Higiene bucal regular.',
+      enfermedades: ['Hipertensión'],
+      odontograma: {
+        11: {status:'corona',notes:'Corona porcelana 2021'},
+        16: {status:'obturado',notes:'Obturación amalgama'},
+        26: {status:'obturado',notes:'Obturación composite'},
+        36: {status:'caries',notes:'Caries incipiente OD'},
+        46: {status:'endodoncia',notes:'TCR realizado 2023'}
+      },
+      tratamientos: [
+        {id:'t1',pieza:'36',procedimiento:'Obturación',estado:'en_proceso',fecha:'2026-03-10',costo:35000,obs:'Caries oclusal'},
+        {id:'t2',pieza:'46',procedimiento:'Corona',estado:'pendiente',fecha:'2026-03-17',costo:180000,obs:'Post endodoncia'},
+        {id:'t3',pieza:'11',procedimiento:'Limpieza',estado:'realizado',fecha:'2026-02-20',costo:25000,obs:'Detartraje completo'}
+      ],
+      proximaCita: '2026-03-20',
+      createdAt: new Date().toISOString()
+    },
+    {
+      id: 'p2', nombre: 'Carlos Andrés Muñoz Rojas', rut: '9.876.543-2',
+      nacimiento: '1972-11-30', genero: 'Masculino', telefono: '+56 9 7654 3210',
+      email: 'c.munoz@empresa.cl', prevision: 'ISAPRE', fonasaSesiones: 0,
+      alergias: 'Penicilina', medicamentos: 'Metformina 850mg 2x/día, Atorvastatina 20mg',
+      motivo: 'Dolor agudo molar inferior izquierdo',
+      observaciones: 'Paciente diabético, controlar glucosa antes de anestesia.',
+      enfermedades: ['Diabetes', 'Cardiopatía'],
+      odontograma: {
+        17: {status:'ausente',notes:'Extracción previa'},
+        27: {status:'ausente',notes:'Extracción previa'},
+        37: {status:'extraccion',notes:'Indicada extracción por fractura'},
+        47: {status:'caries',notes:'Caries profunda, posible endodoncia'},
+        14: {status:'corona',notes:'Corona metal-cerámica'},
+        24: {status:'obturado',notes:'Obturación grande'}
+      },
+      tratamientos: [
+        {id:'t4',pieza:'37',procedimiento:'Extracción simple',estado:'pendiente',fecha:'2026-03-22',costo:55000,obs:'Fractura coronal'},
+        {id:'t5',pieza:'47',procedimiento:'Endodoncia',estado:'pendiente',fecha:'2026-03-22',costo:120000,obs:'Caries profunda con compromiso pulpar'},
+        {id:'t6',pieza:'14',procedimiento:'Limpieza',estado:'realizado',fecha:'2026-01-15',costo:30000,obs:'Detartraje + pulido'}
+      ],
+      proximaCita: '2026-03-22',
+      createdAt: new Date().toISOString()
+    }
+  ];
+  savePatients(patients);
+
+  let steril = getSteril();
+  if (steril.length === 0) {
+    const ops = ['Dr. Pérez','Dra. Torres','T.M. Salinas'];
+    for (let i = 1; i <= 8; i++) {
+      const d = new Date(2026, 2, i * 2 + 1);
+      steril.push({
+        id: 'c'+i, fecha: d.toISOString().split('T')[0],
+        hora: i % 2 === 0 ? '09:00' : '14:30',
+        cicloNum: i, temp: i % 3 === 0 ? '134°C' : '121°C',
+        tiempo: '20', instrumental: 'Kit extracción, Espejos, Sondas periodontales',
+        resultado: i === 4 ? 'falla' : 'ok',
+        operador: ops[i % 3]
+      });
+    }
+    saveSteril(steril);
+  }
+}
+
+// ===================== NAVIGATION =====================
+function showTab(name, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'inicio') renderInicio();
+  else if (name === 'odontograma') { populatePatientSelects(); renderOdontogram(); }
+  else if (name === 'tratamiento') { populatePatientSelects(); renderTratamiento(); }
+  else if (name === 'ficha') { populatePatientSelects(); loadFicha(); }
+  else if (name === 'esterilizacion') renderEsterilizacion();
+}
+
+// ===================== MODALS =====================
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+
+// ===================== TOAST =====================
+function showToast(msg = 'Guardado correctamente') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.transform = 'translateX(-50%) translateY(0)';
+  setTimeout(() => { t.style.transform = 'translateX(-50%) translateY(100px)'; }, 2500);
+}
+
+// ===================== RUT VALIDATION =====================
+function formatRUT(input) {
+  let v = input.value.replace(/[^0-9kK]/g, '').toUpperCase();
+  if (v.length < 2) { input.value = v; return; }
+  const dv = v.slice(-1);
+  let num = v.slice(0, -1);
+  num = num.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  input.value = num + '-' + dv;
+}
+function validateRUT(input) {
+  const errEl = input.nextElementSibling;
+  if (!errEl || !errEl.classList.contains('rut-err')) return true;
+  const clean = input.value.replace(/[^0-9kK]/g, '').toUpperCase();
+  if (clean.length < 2) { errEl.classList.remove('show'); return true; }
+  const dv = clean.slice(-1);
+  const num = parseInt(clean.slice(0, -1), 10);
+  if (isNaN(num)) { errEl.classList.add('show'); return false; }
+  let sum = 0, mul = 2;
+  let tmp = num;
+  while (tmp > 0) {
+    sum += (tmp % 10) * mul;
+    tmp = Math.floor(tmp / 10);
+    mul = mul === 7 ? 2 : mul + 1;
+  }
+  const rem = 11 - (sum % 11);
+  const expected = rem === 11 ? '0' : rem === 10 ? 'K' : String(rem);
+  const valid = dv === expected;
+  errEl.classList.toggle('show', !valid);
+  return valid;
+}
+
+// ===================== INICIO =====================
+function renderInicio() {
+  const patients = getPatients();
+  const now = new Date();
+  const weekAgo = new Date(now - 7 * 864e5);
+  const monthAgo = new Date(now - 30 * 864e5);
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  // Stats
+  let atenciones = 0, piezasMes = 0;
+  patients.forEach(p => {
+    (p.tratamientos || []).forEach(t => {
+      if (t.estado === 'realizado') {
+        const fd = new Date(t.fecha);
+        if (fd >= weekAgo) atenciones++;
+        if (fd >= monthStart) piezasMes++;
+      }
+    });
+  });
+  const steril = getSteril();
+  const sterilMes = steril.filter(s => new Date(s.fecha) >= monthStart).length;
+
+  document.getElementById('statsGrid').innerHTML = `
+    <div class="stat-box"><div class="val">${patients.length}</div><div class="lbl">Total pacientes</div></div>
+    <div class="stat-box"><div class="val">${atenciones}</div><div class="lbl">Atenciones esta semana</div></div>
+    <div class="stat-box"><div class="val">${piezasMes}</div><div class="lbl">Piezas tratadas este mes</div></div>
+    <div class="stat-box"><div class="val">${sterilMes}</div><div class="lbl">Esterilizaciones este mes</div></div>
+  `;
+
+  // Alerts
+  let alerts = [];
+  let enCurso = 0;
+  patients.forEach(p => {
+    (p.tratamientos || []).forEach(t => { if (t.estado === 'en_proceso') enCurso++; });
+    const prevision = (p.prevision || '').startsWith('FONASA');
+    if (prevision) {
+      const realizados = (p.tratamientos || []).filter(t => t.estado === 'realizado').length;
+      const total = p.fonasaSesiones || 0;
+      if (total > 0 && realizados / total >= 0.8) {
+        alerts.push({type:'warn', msg:`${p.nombre}: ${realizados}/${total} sesiones FONASA utilizadas`});
+      }
+    }
+    if (!p.proximaCita) {
+      const lastApt = (p.tratamientos || []).map(t => new Date(t.fecha)).sort((a,b)=>b-a)[0];
+      if (!lastApt || lastApt < monthAgo) {
+        alerts.push({type:'info', msg:`${p.nombre}: sin cita en más de 30 días`});
+      }
+    }
+  });
+  if (enCurso > 0) alerts.unshift({type:'warn', msg:`${enCurso} tratamiento(s) en curso sin finalizar`});
+
+  const al = document.getElementById('alertsList');
+  if (alerts.length === 0) {
+    al.innerHTML = '<div class="alert-item alert-info">✅ Sin alertas activas</div>';
+  } else {
+    al.innerHTML = alerts.map(a =>
+      `<div class="alert-item ${a.type==='err'?'alert-err':a.type==='warn'?'alert-warn':'alert-info'}">
+        ${a.type==='warn'?'⚠️':a.type==='err'?'🔴':'ℹ️'} <span>${a.msg}</span>
+      </div>`
+    ).join('');
+  }
+
+  // Upcoming
+  const upcoming = patients
+    .filter(p => p.proximaCita)
+    .sort((a,b) => new Date(a.proximaCita) - new Date(b.proximaCita))
+    .slice(0, 5);
+  const ul = document.getElementById('upcomingList');
+  if (upcoming.length === 0) {
+    ul.innerHTML = '<div class="empty-state"><div class="ico">📅</div>No hay citas programadas</div>';
+  } else {
+    ul.innerHTML = upcoming.map(p => {
+      const d = new Date(p.proximaCita + 'T12:00:00');
+      const opts = {weekday:'short', day:'numeric', month:'short'};
+      const fecha = d.toLocaleDateString('es-CL', opts);
+      const nextTrat = (p.tratamientos || []).find(t => t.estado !== 'realizado');
+      return `<div class="apt-item">
+        <div class="apt-time">📅 ${fecha}</div>
+        <div><div class="apt-name">${p.nombre}</div><div class="apt-proc">${nextTrat ? nextTrat.procedimiento : 'Control'} — ${p.prevision || 'Sin previsión'}</div></div>
+      </div>`;
+    }).join('');
+  }
+}
+
+// ===================== PATIENT SELECTS =====================
+function populatePatientSelects() {
+  const patients = getPatients();
+  const selIds = ['odoPatientSel','tratPatientSel','fichaPatientSel'];
+  selIds.forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">— Seleccionar paciente —</option>' +
+      patients.map(p => `<option value="${p.id}">${p.nombre} (${p.rut})</option>`).join('');
+    if (cur && patients.find(p => p.id === cur)) sel.value = cur;
+    else if (patients.length > 0 && !cur) sel.value = patients[0].id;
+  });
+}
+
+// ===================== ODONTOGRAM =====================
+const TOOTH_COLORS = {
+  sano: '#ffffff', caries: '#92400e', obturado: '#3b82f6',
+  extraccion: '#dc2626', ausente: '#9ca3af', corona: '#d97706', endodoncia: '#16a34a'
+};
+const TOOTH_LABELS = {
+  sano:'Sano', caries:'Caries', obturado:'Obturado',
+  extraccion:'Extracción', ausente:'Ausente', corona:'Corona', endodoncia:'Endodoncia'
+};
+const TOOTH_TEXT_COLORS = {
+  sano:'#374151', caries:'#fff', obturado:'#fff',
+  extraccion:'#fff', ausente:'#fff', corona:'#fff', endodoncia:'#fff'
+};
+
+// FDI teeth layout: [quadrant: upper-right, upper-left, lower-left, lower-right]
+const TEETH_UPPER = [18,17,16,15,14,13,12,11, 21,22,23,24,25,26,27,28];
+const TEETH_LOWER = [48,47,46,45,44,43,42,41, 31,32,33,34,35,36,37,38];
+
+let currentToothId = null;
+let currentOdoData = {};
+
+function renderOdontogram() {
+  const patients = getPatients();
+  const sel = document.getElementById('odoPatientSel');
+  if (!sel || !sel.value) {
+    if (patients.length > 0) { sel.value = patients[0].id; }
+    else return;
+  }
+  loadOdontogram();
+}
+
+function loadOdontogram() {
+  const patients = getPatients();
+  const sel = document.getElementById('odoPatientSel');
+  if (!sel.value) return;
+  const patient = patients.find(p => p.id === sel.value);
+  currentOdoData = patient ? JSON.parse(JSON.stringify(patient.odontograma || {})) : {};
+  drawOdontogram();
+}
+
+function drawOdontogram() {
+  const svg = document.getElementById('odontogramSVG');
+  svg.innerHTML = '';
+  const W = 640, TW = 34, TH = 38, GAP = 4, START_X = 20, MID_GAP = 8;
+
+  function drawTeeth(teeth, y, label) {
+    const g = document.createElementNS('http://www.w3.org/2000/svg','text');
+    g.setAttribute('x', '320'); g.setAttribute('y', String(y - 3));
+    g.setAttribute('text-anchor','middle'); g.setAttribute('class','odo-section-label');
+    g.textContent = label; svg.appendChild(g);
+
+    const totalW = 8 * (TW + GAP) - GAP + MID_GAP + 8 * (TW + GAP) - GAP;
+    let startX = (W - totalW) / 2;
+    teeth.forEach((tooth, i) => {
+      const x = i < 8
+        ? startX + i * (TW + GAP)
+        : startX + 8 * (TW + GAP) - GAP + MID_GAP + (i - 8) * (TW + GAP);
+      const tData = currentOdoData[tooth] || {status: 'sano'};
+      const color = TOOTH_COLORS[tData.status] || '#fff';
+      const textColor = TOOTH_TEXT_COLORS[tData.status] || '#374151';
+
+      const grp = document.createElementNS('http://www.w3.org/2000/svg','g');
+      grp.setAttribute('class','tooth-group');
+      grp.style.cursor = 'pointer';
+      grp.addEventListener('click', () => openToothModal(tooth));
+
+      const rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+      rect.setAttribute('x', String(x)); rect.setAttribute('y', String(y));
+      rect.setAttribute('width', String(TW)); rect.setAttribute('height', String(TH));
+      rect.setAttribute('rx','4'); rect.setAttribute('ry','4');
+      rect.setAttribute('fill', color);
+      rect.setAttribute('stroke', tData.status === 'sano' ? '#9ca3af' : color);
+      rect.setAttribute('stroke-width','1.5');
+      rect.setAttribute('class','tooth-bg');
+      grp.appendChild(rect);
+
+      const txt = document.createElementNS('http://www.w3.org/2000/svg','text');
+      txt.setAttribute('x', String(x + TW/2)); txt.setAttribute('y', String(y + TH/2 + 4));
+      txt.setAttribute('text-anchor','middle'); txt.setAttribute('class','tooth-num');
+      txt.setAttribute('fill', textColor); txt.textContent = String(tooth);
+      grp.appendChild(txt);
+
+      svg.appendChild(grp);
+    });
+  }
+
+  drawTeeth(TEETH_UPPER, 18, 'Superior');
+  // Division line
+  const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+  line.setAttribute('x1','20'); line.setAttribute('x2','620');
+  line.setAttribute('y1','70'); line.setAttribute('y2','70');
+  line.setAttribute('stroke','#b8d4f0'); line.setAttribute('stroke-width','1.5');
+  line.setAttribute('stroke-dasharray','4 3'); svg.appendChild(line);
+
+  drawTeeth(TEETH_LOWER, 80, 'Inferior');
+
+  // Legend
+  const legendEl = document.getElementById('odoLegend');
+  legendEl.innerHTML = Object.entries(TOOTH_LABELS).map(([k,v]) =>
+    `<div class="legend-item"><div class="legend-dot" style="background:${TOOTH_COLORS[k]}"></div>${v}</div>`
+  ).join('');
+}
+
+function openToothModal(toothId) {
+  currentToothId = toothId;
+  document.getElementById('toothModalNum').textContent = toothId;
+  const tData = currentOdoData[toothId] || {status:'sano', notes:''};
+  document.getElementById('toothStatus').value = tData.status;
+  document.getElementById('toothNotes').value = tData.notes || '';
+  openModal('modalTooth');
+}
+
+function saveToothModal() {
+  if (!currentToothId) return;
+  const status = document.getElementById('toothStatus').value;
+  const notes = document.getElementById('toothNotes').value;
+  currentOdoData[currentToothId] = {status, notes};
+  closeModal('modalTooth');
+  drawOdontogram();
+}
+
+function saveOdontogram() {
+  const patients = getPatients();
+  const sel = document.getElementById('odoPatientSel');
+  if (!sel.value) return;
+  const idx = patients.findIndex(p => p.id === sel.value);
+  if (idx < 0) return;
+  patients[idx].odontograma = currentOdoData;
+  savePatients(patients);
+  showToast('Odontograma guardado');
+}
+
+function clearOdontogram() {
+  if (!confirm('¿Limpiar todo el odontograma? Esta acción no se puede deshacer.')) return;
+  currentOdoData = {};
+  drawOdontogram();
+}
+
+// ===================== TRATAMIENTO =====================
+function loadTratamiento() {
+  const patients = getPatients();
+  const sel = document.getElementById('tratPatientSel');
+  if (!sel.value) { renderTratamiento(); return; }
+  renderTratamiento();
+}
+
+function renderTratamiento() {
+  const patients = getPatients();
+  const sel = document.getElementById('tratPatientSel');
+  if (!sel || !sel.value) {
+    document.getElementById('tratTable').innerHTML = '<div class="empty-state"><div class="ico">📋</div>Selecciona un paciente</div>';
+    return;
+  }
+  const patient = patients.find(p => p.id === sel.value);
+  if (!patient) return;
+  const tratamientos = patient.tratamientos || [];
+
+  // FONASA bar
+  const isFonasa = (patient.prevision || '').startsWith('FONASA');
+  const fonasaCard = document.getElementById('fonasaCard');
+  fonasaCard.style.display = isFonasa ? '' : 'none';
+  if (isFonasa) {
+    const total = patient.fonasaSesiones || 0;
+    const used = tratamientos.filter(t => t.estado === 'realizado').length;
+    const pct = total > 0 ? Math.min(100, Math.round(used/total*100)) : 0;
+    let fillClass = pct >= 90 ? 'danger' : pct >= 70 ? 'warn' : '';
+    document.getElementById('fonasaBar').innerHTML = `
+      <div style="font-size:.85rem;font-weight:600;margin-bottom:6px">${used} / ${total} sesiones utilizadas</div>
+      <div class="fonasa-bar-bg"><div class="fonasa-bar-fill ${fillClass}" style="width:${pct}%"></div></div>
+      <div class="fonasa-info"><span>${pct}% utilizado</span><span>${total - used} disponibles</span></div>
+    `;
+  }
+
+  // Table
+  if (tratamientos.length === 0) {
+    document.getElementById('tratTable').innerHTML = '<div class="empty-state"><div class="ico">📋</div>Sin tratamientos registrados</div>';
+    document.getElementById('tratTotals').innerHTML = '';
+    return;
+  }
+
+  const badgeMap = {
+    pendiente: '<span class="badge badge-pend">🟡 Pendiente</span>',
+    en_proceso: '<span class="badge badge-proc">🔵 En proceso</span>',
+    realizado: '<span class="badge badge-done">🟢 Realizado</span>'
+  };
+
+  document.getElementById('tratTable').innerHTML = `
+    <table>
+      <thead><tr><th>Pieza</th><th>Procedimiento</th><th>Estado</th><th>Fecha</th><th>Costo CLP</th><th></th></tr></thead>
+      <tbody>
+        ${tratamientos.map((t,i) => `
+          <tr>
+            <td><strong>${t.pieza || '—'}</strong></td>
+            <td>${t.procedimiento}</td>
+            <td>${badgeMap[t.estado] || t.estado}</td>
+            <td>${t.fecha ? new Date(t.fecha+'T12:00:00').toLocaleDateString('es-CL') : '—'}</td>
+            <td>$${(t.costo||0).toLocaleString('es-CL')}</td>
+            <td><button class="btn btn-danger btn-sm" onclick="deleteTreatment('${t.id}')">✕</button></td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+
+  const total = tratamientos.reduce((s,t) => s + (t.costo||0), 0);
+  const realizado = tratamientos.filter(t=>t.estado==='realizado').reduce((s,t)=>s+(t.costo||0),0);
+  document.getElementById('tratTotals').innerHTML = `
+    <div style="display:flex;gap:16px;flex-wrap:wrap;background:var(--card2);padding:10px 14px;border-radius:8px;border:1px solid var(--border)">
+      <span>Total estimado: <strong>$${total.toLocaleString('es-CL')}</strong></span>
+      <span>Realizado: <strong style="color:var(--green)">$${realizado.toLocaleString('es-CL')}</strong></span>
+      <span>Pendiente: <strong style="color:var(--yellow)">$${(total-realizado).toLocaleString('es-CL')}</strong></span>
+    </div>
+  `;
+}
+
+function openAddTreatment() {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('tPieza').value = '';
+  document.getElementById('tFecha').value = today;
+  document.getElementById('tProcedimiento').value = 'Extracción simple';
+  document.getElementById('tEstado').value = 'pendiente';
+  document.getElementById('tCosto').value = '';
+  document.getElementById('tObs').value = '';
+  openModal('modalTreatment');
+}
+
+function saveNewTreatment() {
+  const patients = getPatients();
+  const sel = document.getElementById('tratPatientSel');
+  if (!sel.value) return showToast('Selecciona un paciente');
+  const idx = patients.findIndex(p => p.id === sel.value);
+  if (idx < 0) return;
+  const t = {
+    id: 't' + Date.now(),
+    pieza: document.getElementById('tPieza').value.trim(),
+    procedimiento: document.getElementById('tProcedimiento').value,
+    estado: document.getElementById('tEstado').value,
+    fecha: document.getElementById('tFecha').value,
+    costo: parseInt(document.getElementById('tCosto').value) || 0,
+    obs: document.getElementById('tObs').value
+  };
+  if (!patients[idx].tratamientos) patients[idx].tratamientos = [];
+  patients[idx].tratamientos.push(t);
+  savePatients(patients);
+  closeModal('modalTreatment');
+  renderTratamiento();
+  showToast('Tratamiento agregado');
+}
+
+function deleteTreatment(tid) {
+  if (!confirm('¿Eliminar este tratamiento?')) return;
+  const patients = getPatients();
+  const sel = document.getElementById('tratPatientSel');
+  const idx = patients.findIndex(p => p.id === sel.value);
+  if (idx < 0) return;
+  patients[idx].tratamientos = (patients[idx].tratamientos || []).filter(t => t.id !== tid);
+  savePatients(patients);
+  renderTratamiento();
+  showToast('Tratamiento eliminado');
+}
+
+// ===================== FICHA =====================
+let selectedDiseases = [];
+
+function loadFicha() {
+  const patients = getPatients();
+  const sel = document.getElementById('fichaPatientSel');
+  if (!sel || !sel.value) {
+    document.getElementById('fichaForm').style.display = 'none';
+    return;
+  }
+  const patient = patients.find(p => p.id === sel.value);
+  if (!patient) { document.getElementById('fichaForm').style.display = 'none'; return; }
+
+  document.getElementById('fichaForm').style.display = '';
+  document.getElementById('fNombre').value = patient.nombre || '';
+  document.getElementById('fRut').value = patient.rut || '';
+  document.getElementById('fNacimiento').value = patient.nacimiento || '';
+  document.getElementById('fGenero').value = patient.genero || '';
+  document.getElementById('fTelefono').value = patient.telefono || '';
+  document.getElementById('fEmail').value = patient.email || '';
+  document.getElementById('fPrevision').value = patient.prevision || '';
+  document.getElementById('fFonasaSesiones').value = patient.fonasaSesiones || '';
+  document.getElementById('fAlergias').value = patient.alergias || '';
+  document.getElementById('fMedicamentos').value = patient.medicamentos || '';
+  document.getElementById('fMotivo').value = patient.motivo || '';
+  document.getElementById('fObservaciones').value = patient.observaciones || '';
+  toggleFonasaField();
+  checkAlergy();
+
+  selectedDiseases = patient.enfermedades || [];
+  document.querySelectorAll('#enfermedadesChips .chip').forEach(c => {
+    c.classList.toggle('selected', selectedDiseases.includes(c.textContent));
+  });
+  document.getElementById('rutErr').classList.remove('show');
+}
+
+function toggleFonasaField() {
+  const prevision = document.getElementById('fPrevision').value;
+  const field = document.getElementById('fonasaSesionesField');
+  field.style.display = prevision.startsWith('FONASA') ? '' : 'none';
+}
+
+function checkAlergy() {
+  const val = document.getElementById('fAlergias').value.trim();
+  document.getElementById('alergyAlert').style.display = val ? '' : 'none';
+}
+
+function toggleChip(btn, name) {
+  btn.classList.toggle('selected');
+  if (name === 'Ninguna') {
+    if (btn.classList.contains('selected')) {
+      selectedDiseases = ['Ninguna'];
+      document.querySelectorAll('#enfermedadesChips .chip').forEach(c => {
+        if (c.textContent !== 'Ninguna') c.classList.remove('selected');
+      });
+    } else {
+      selectedDiseases = [];
+    }
+    return;
+  }
+  if (btn.classList.contains('selected')) {
+    selectedDiseases = selectedDiseases.filter(d => d !== 'Ninguna');
+    document.querySelectorAll('#enfermedadesChips .chip').forEach(c => {
+      if (c.textContent === 'Ninguna') c.classList.remove('selected');
+    });
+    if (!selectedDiseases.includes(name)) selectedDiseases.push(name);
+  } else {
+    selectedDiseases = selectedDiseases.filter(d => d !== name);
+  }
+}
+
+function saveFicha() {
+  const patients = getPatients();
+  const sel = document.getElementById('fichaPatientSel');
+  if (!sel.value) return showToast('Selecciona un paciente');
+  const rutInput = document.getElementById('fRut');
+  if (!validateRUT(rutInput)) return showToast('RUT inválido');
+  const nombre = document.getElementById('fNombre').value.trim();
+  if (!nombre) return showToast('El nombre es requerido');
+  const idx = patients.findIndex(p => p.id === sel.value);
+  if (idx < 0) return;
+  Object.assign(patients[idx], {
+    nombre,
+    rut: document.getElementById('fRut').value,
+    nacimiento: document.getElementById('fNacimiento').value,
+    genero: document.getElementById('fGenero').value,
+    telefono: document.getElementById('fTelefono').value,
+    email: document.getElementById('fEmail').value,
+    prevision: document.getElementById('fPrevision').value,
+    fonasaSesiones: parseInt(document.getElementById('fFonasaSesiones').value) || 0,
+    alergias: document.getElementById('fAlergias').value,
+    medicamentos: document.getElementById('fMedicamentos').value,
+    motivo: document.getElementById('fMotivo').value,
+    observaciones: document.getElementById('fObservaciones').value,
+    enfermedades: [...selectedDiseases]
+  });
+  savePatients(patients);
+  populatePatientSelects();
+  showToast('Ficha guardada correctamente');
+}
+
+function deletePatient() {
+  const sel = document.getElementById('fichaPatientSel');
+  if (!sel.value) return;
+  const patients = getPatients();
+  const p = patients.find(x => x.id === sel.value);
+  if (!p) return;
+  if (!confirm(`¿Eliminar permanentemente a ${p.nombre}?`)) return;
+  const updated = patients.filter(x => x.id !== sel.value);
+  savePatients(updated);
+  document.getElementById('fichaForm').style.display = 'none';
+  populatePatientSelects();
+  showToast('Paciente eliminado');
+}
+
+// ===================== ADD PATIENT MODAL =====================
+function openAddPatient() {
+  document.getElementById('mpNombre').value = '';
+  document.getElementById('mpRut').value = '';
+  document.getElementById('mpTelefono').value = '';
+  document.getElementById('mpPrevision').value = '';
+  document.getElementById('mpRutErr').classList.remove('show');
+  openModal('modalPatient');
+}
+
+function saveNewPatient() {
+  const nombre = document.getElementById('mpNombre').value.trim();
+  if (!nombre) return showToast('El nombre es requerido');
+  const rutInput = document.getElementById('mpRut');
+  if (rutInput.value && !validateRUT(rutInput)) return showToast('RUT inválido');
+  const patients = getPatients();
+  const p = {
+    id: 'p' + Date.now(),
+    nombre,
+    rut: document.getElementById('mpRut').value,
+    telefono: document.getElementById('mpTelefono').value,
+    prevision: document.getElementById('mpPrevision').value,
+    fonasaSesiones: 0,
+    alergias: '', medicamentos: '', motivo: '', observaciones: '',
+    enfermedades: [], odontograma: {}, tratamientos: [],
+    createdAt: new Date().toISOString()
+  };
+  patients.push(p);
+  savePatients(patients);
+  closeModal('modalPatient');
+  populatePatientSelects();
+  // Switch to ficha and load the new patient
+  const fichaBtn = document.querySelector('nav button:nth-child(4)');
+  if (fichaBtn) {
+    showTab('ficha', fichaBtn);
+    document.getElementById('fichaPatientSel').value = p.id;
+    loadFicha();
+  }
+  showToast(`Paciente ${nombre} creado`);
+}
+
+// ===================== ESTERILIZACIÓN =====================
+function renderEsterilizacion() {
+  const steril = getSteril();
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const thisMes = steril.filter(s => new Date(s.fecha) >= monthStart);
+  const okCount = thisMes.filter(s => s.resultado === 'ok').length;
+  const tasa = thisMes.length > 0 ? Math.round(okCount / thisMes.length * 100) : 0;
+
+  document.getElementById('sterilStats').innerHTML = `
+    <div class="steril-stat"><div class="val">${thisMes.length}</div><div class="lbl">Ciclos este mes</div></div>
+    <div class="steril-stat"><div class="val" style="color:${tasa >= 95 ? 'var(--green)' : tasa >= 80 ? 'var(--yellow)' : 'var(--red)'}">${tasa}%</div><div class="lbl">Tasa de éxito</div></div>
+  `;
+
+  if (steril.length === 0) {
+    document.getElementById('sterilTable').innerHTML = '<div class="empty-state"><div class="ico">🧼</div>Sin ciclos registrados</div>';
+    return;
+  }
+
+  const sorted = [...steril].sort((a,b) => new Date(b.fecha+' '+b.hora) - new Date(a.fecha+' '+a.hora));
+  document.getElementById('sterilTable').innerHTML = `
+    <table>
+      <thead><tr><th>Fecha</th><th>Hora</th><th>Ciclo N°</th><th>Temp</th><th>Tiempo</th><th>Instrumental</th><th>Resultado</th><th>Operador</th><th></th></tr></thead>
+      <tbody>
+        ${sorted.map(s => `
+          <tr>
+            <td>${new Date(s.fecha+'T12:00:00').toLocaleDateString('es-CL')}</td>
+            <td>${s.hora}</td>
+            <td><strong>#${s.cicloNum}</strong></td>
+            <td>${s.temp}</td>
+            <td>${s.tiempo} min</td>
+            <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${s.instrumental}">${s.instrumental}</td>
+            <td>${s.resultado === 'ok' ? '<span class="badge badge-done">✅ OK</span>' : '<span class="badge badge-pend">❌ Falla</span>'}</td>
+            <td>${s.operador}</td>
+            <td><button class="btn btn-danger btn-sm" onclick="deleteCycle('${s.id}')">✕</button></td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+function openAddCycle() {
+  const today = new Date().toISOString().split('T')[0];
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2,'0');
+  const mm = String(now.getMinutes()).padStart(2,'0');
+  const steril = getSteril();
+  const maxCiclo = steril.length > 0 ? Math.max(...steril.map(s=>s.cicloNum||0)) + 1 : 1;
+  document.getElementById('cFecha').value = today;
+  document.getElementById('cHora').value = `${hh}:${mm}`;
+  document.getElementById('cNum').value = maxCiclo;
+  document.getElementById('cTemp').value = '134°C';
+  document.getElementById('cTiempo').value = '20';
+  document.getElementById('cResultado').value = 'ok';
+  document.getElementById('cInstrumental').value = '';
+  document.getElementById('cOperador').value = '';
+  openModal('modalCycle');
+}
+
+function saveNewCycle() {
+  const cicloNum = parseInt(document.getElementById('cNum').value);
+  if (!cicloNum || cicloNum < 1) return showToast('Número de ciclo inválido');
+  const instrumental = document.getElementById('cInstrumental').value.trim();
+  if (!instrumental) return showToast('Indica el instrumental esterilizado');
+  const steril = getSteril();
+  steril.push({
+    id: 'c' + Date.now(),
+    fecha: document.getElementById('cFecha').value,
+    hora: document.getElementById('cHora').value,
+    cicloNum,
+    temp: document.getElementById('cTemp').value,
+    tiempo: document.getElementById('cTiempo').value,
+    instrumental,
+    resultado: document.getElementById('cResultado').value,
+    operador: document.getElementById('cOperador').value
+  });
+  saveSteril(steril);
+  closeModal('modalCycle');
+  renderEsterilizacion();
+  showToast('Ciclo registrado');
+}
+
+function deleteCycle(id) {
+  if (!confirm('¿Eliminar este ciclo?')) return;
+  const steril = getSteril().filter(s => s.id !== id);
+  saveSteril(steril);
+  renderEsterilizacion();
+  showToast('Ciclo eliminado');
+}
+
+function copyLog() {
+  const steril = getSteril();
+  if (!steril.length) return showToast('Sin datos para copiar');
+  const sorted = [...steril].sort((a,b) => new Date(b.fecha+' '+b.hora) - new Date(a.fecha+' '+a.hora));
+  const header = 'Fecha\tHora\tCiclo N°\tTemp\tTiempo(min)\tInstrumental\tResultado\tOperador\n';
+  const rows = sorted.map(s =>
+    `${s.fecha}\t${s.hora}\t#${s.cicloNum}\t${s.temp}\t${s.tiempo}\t${s.instrumental}\t${s.resultado === 'ok' ? 'OK' : 'Falla'}\t${s.operador}`
+  ).join('\n');
+  const text = 'REGISTRO ESTERILIZACIÓN - OdontScore\n' + new Date().toLocaleString('es-CL') + '\n\n' + header + rows;
+  try {
+    navigator.clipboard.writeText(text).then(() => showToast('Log copiado al portapapeles'));
+  } catch(e) {
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast('Log copiado');
+  }
+}
+
+// ===================== INIT =====================
+initDemoData();
+populatePatientSelects();
+renderInicio();
+</script>
+</body>
+</html>

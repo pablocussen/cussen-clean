@@ -1,0 +1,1831 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#111827">
+    <meta name="description" content="FitnessCL - Gestión de gimnasios y entrenamientos personales en Chile">
+    <title>FitnessCL - Gestión de Gimnasio</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%23111827' width='180' height='180'/><text x='90' y='120' font-size='80' font-weight='bold' fill='%2384cc16' text-anchor='middle' font-family='Arial'>FC</text></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            font-family: 'Inter', sans-serif;
+            background: #111827;
+            color: #e5e7eb;
+            font-size: 16px;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
+            border-bottom: 2px solid #84cc16;
+            padding: 1rem;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .header h1 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: #84cc16;
+            letter-spacing: -0.5px;
+        }
+
+        .header p {
+            font-size: 0.875rem;
+            color: #9ca3af;
+            margin-top: 0.25rem;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 0;
+            background: #1f2937;
+            border-bottom: 1px solid #374151;
+            overflow-x: auto;
+            scrollbar-width: thin;
+        }
+
+        .nav-tab {
+            flex: 1;
+            min-width: 100px;
+            padding: 0.75rem;
+            border: none;
+            background: #1f2937;
+            color: #9ca3af;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+            text-align: center;
+        }
+
+        .nav-tab:hover {
+            color: #84cc16;
+            background: #374151;
+        }
+
+        .nav-tab.active {
+            color: #84cc16;
+            border-bottom-color: #84cc16;
+            background: #111827;
+        }
+
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card {
+            background: #1f2937;
+            border: 1px solid #374151;
+            border-radius: 0.5rem;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .card-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: #84cc16;
+        }
+
+        .btn {
+            padding: 0.625rem 1rem;
+            border: none;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+            display: inline-block;
+            min-height: 44px;
+            min-width: 44px;
+        }
+
+        .btn-primary {
+            background: #84cc16;
+            color: #111827;
+        }
+
+        .btn-primary:hover {
+            background: #a3e635;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(132, 204, 22, 0.3);
+        }
+
+        .btn-secondary {
+            background: #374151;
+            color: #e5e7eb;
+        }
+
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #991b1b;
+        }
+
+        .btn-sm {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.75rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #d1d5db;
+            margin-bottom: 0.375rem;
+            font-size: 0.875rem;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #374151;
+            border-radius: 0.375rem;
+            background: #111827;
+            color: #e5e7eb;
+            font-family: 'Inter', sans-serif;
+            font-size: 16px;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #84cc16;
+            box-shadow: 0 0 0 3px rgba(132, 204, 22, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.375rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .status-activo {
+            background: rgba(132, 204, 22, 0.2);
+            color: #84cc16;
+        }
+
+        .status-congelado {
+            background: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+        }
+
+        .status-vencido {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 0.375rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid;
+        }
+
+        .alert-warning {
+            background: rgba(234, 179, 8, 0.1);
+            border-color: #eab308;
+            color: #fef3c7;
+        }
+
+        .alert-success {
+            background: rgba(34, 197, 94, 0.1);
+            border-color: #22c55e;
+            color: #86efac;
+        }
+
+        .alert-danger {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: #ef4444;
+            color: #fecaca;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+
+        table thead {
+            background: #111827;
+        }
+
+        table th {
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 700;
+            color: #84cc16;
+            border-bottom: 2px solid #374151;
+        }
+
+        table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #374151;
+        }
+
+        table tbody tr:hover {
+            background: #1f2937;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.75);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #1f2937;
+            border: 1px solid #374151;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-header {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #84cc16;
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: #9ca3af;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .modal-close:hover {
+            color: #84cc16;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: #111827;
+            border: 1px solid #374151;
+            border-radius: 0.375rem;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.875rem;
+            font-weight: 800;
+            color: #84cc16;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: #9ca3af;
+            margin-top: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 1.5rem;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: #374151;
+            color: #d1d5db;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #84cc16;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #374151;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: #6b7280;
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: #111827;
+            border: 1px solid #374151;
+            border-radius: 0.375rem;
+            margin-bottom: 0.75rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .list-item-info h3 {
+            color: #e5e7eb;
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .list-item-info p {
+            color: #9ca3af;
+            font-size: 0.875rem;
+        }
+
+        .success-message {
+            background: rgba(34, 197, 94, 0.2);
+            border: 1px solid #22c55e;
+            color: #86efac;
+            padding: 1rem;
+            border-radius: 0.375rem;
+            margin-bottom: 1rem;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .no-overflow-x {
+            overflow-x: visible;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.375rem;
+            }
+
+            .nav-tab {
+                font-size: 0.75rem;
+                padding: 0.5rem;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .btn-group {
+                width: 100%;
+            }
+
+            .btn-group .btn {
+                flex: 1;
+            }
+
+            table {
+                font-size: 0.75rem;
+            }
+
+            table th, table td {
+                padding: 0.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header {
+                padding: 0.75rem;
+            }
+
+            .header h1 {
+                font-size: 1.25rem;
+            }
+
+            .content {
+                padding: 0.75rem;
+            }
+
+            .card {
+                padding: 1rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-content {
+                padding: 1rem;
+            }
+        }
+
+        .scroll-container {
+            overflow-y: auto;
+        }
+
+        .tabs-container {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .content {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💪 FitnessCL</h1>
+            <p>Gestión Integral de Gimnasios y Entrenamientos</p>
+        </div>
+
+        <div class="nav-tabs" role="tablist">
+            <button class="nav-tab active" data-tab="socios" role="tab" aria-selected="true">Socios</button>
+            <button class="nav-tab" data-tab="clases" role="tab" aria-selected="false">Clases</button>
+            <button class="nav-tab" data-tab="rutinas" role="tab" aria-selected="false">Rutinas</button>
+            <button class="nav-tab" data-tab="entrenadores" role="tab" aria-selected="false">Entrenadores</button>
+            <button class="nav-tab" data-tab="finanzas" role="tab" aria-selected="false">Finanzas</button>
+            <button class="nav-tab" data-tab="equipos" role="tab" aria-selected="false">Equipos</button>
+        </div>
+
+        <div class="content scroll-container">
+            <div id="socios" class="tab-content active">
+                <div class="card-header" style="margin-bottom: 1.5rem;">
+                    <h2 class="card-title">Gestión de Socios</h2>
+                    <button class="btn btn-primary" onclick="openMemberModal()">+ Nuevo Socio</button>
+                </div>
+
+                <div id="memberAlerts"></div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalMembers">0</div>
+                        <div class="stat-label">Total Socios</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="activeMembersCount">0</div>
+                        <div class="stat-label">Activos</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="frozenCount">0</div>
+                        <div class="stat-label">Congelados</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="expiredCount">0</div>
+                        <div class="stat-label">Vencidos</div>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>RUT</th>
+                                <th>Nombre</th>
+                                <th>Plan</th>
+                                <th>Inicio</th>
+                                <th>Vencimiento</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="memberTableBody">
+                            <tr>
+                                <td colspan="7" class="empty-state">No hay socios registrados. Agregar un nuevo socio para comenzar.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="clases" class="tab-content">
+                <div class="card-header" style="margin-bottom: 1.5rem;">
+                    <h2 class="card-title">Gestión de Clases Grupales</h2>
+                    <button class="btn btn-primary" onclick="openClassModal()">+ Nueva Clase</button>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalClasses">0</div>
+                        <div class="stat-label">Total Clases</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="thisWeekClasses">0</div>
+                        <div class="stat-label">Esta Semana</div>
+                    </div>
+                </div>
+
+                <div id="classesContainer"></div>
+            </div>
+
+            <div id="rutinas" class="tab-content">
+                <div class="card-header" style="margin-bottom: 1.5rem;">
+                    <h2 class="card-title">Planes de Entrenamiento</h2>
+                    <button class="btn btn-primary" onclick="openWorkoutModal()">+ Nueva Rutina</button>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalWorkouts">0</div>
+                        <div class="stat-label">Rutinas Activas</div>
+                    </div>
+                </div>
+
+                <div id="workoutsContainer"></div>
+            </div>
+
+            <div id="entrenadores" class="tab-content">
+                <div class="card-header" style="margin-bottom: 1.5rem;">
+                    <h2 class="card-title">Equipo de Entrenadores</h2>
+                    <button class="btn btn-primary" onclick="openTrainerModal()">+ Nuevo Entrenador</button>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalTrainers">0</div>
+                        <div class="stat-label">Entrenadores</div>
+                    </div>
+                </div>
+
+                <div id="trainersContainer"></div>
+            </div>
+
+            <div id="finanzas" class="tab-content">
+                <div class="card-header" style="margin-bottom: 1.5rem;">
+                    <h2 class="card-title">Estado Financiero</h2>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="monthlyRevenue">$0</div>
+                        <div class="stat-label">Ingresos Mes</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="monthlyExpenses">$0</div>
+                        <div class="stat-label">Gastos Mes</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="monthlyProfit">$0</div>
+                        <div class="stat-label">Ganancia Mes</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 class="card-title" style="margin-bottom: 1.5rem;">Ingresos por Concepto (Último Mes)</h3>
+                    <div class="chart-container">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 class="card-title" style="margin-bottom: 1rem;">Gastos Mensuales</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Arriendo</label>
+                            <input type="number" id="rentExpense" placeholder="0" min="0" step="1000" onchange="updateFinances()">
+                        </div>
+                        <div class="form-group">
+                            <label>Equipos</label>
+                            <input type="number" id="equipmentExpense" placeholder="0" min="0" step="1000" onchange="updateFinances()">
+                        </div>
+                        <div class="form-group">
+                            <label>Servicios</label>
+                            <input type="number" id="servicesExpense" placeholder="0" min="0" step="1000" onchange="updateFinances()">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="equipos" class="tab-content">
+                <div class="card-header" style="margin-bottom: 1.5rem;">
+                    <h2 class="card-title">Inventario de Equipos</h2>
+                    <button class="btn btn-primary" onclick="openEquipmentModal()">+ Nuevo Equipo</button>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalEquipment">0</div>
+                        <div class="stat-label">Equipos Registrados</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="maintenanceNeeded">0</div>
+                        <div class="stat-label">Requieren Mantención</div>
+                    </div>
+                </div>
+
+                <div id="equipmentContainer"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="memberModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>Nuevo Socio</span>
+                <button class="modal-close" onclick="closeMemberModal()">&times;</button>
+            </div>
+            <form id="memberForm" onsubmit="saveMember(event)">
+                <div class="form-group">
+                    <label>RUT</label>
+                    <input type="text" id="memberRut" placeholder="12345678-K" required>
+                </div>
+                <div class="form-group">
+                    <label>Nombre</label>
+                    <input type="text" id="memberName" placeholder="Juan Pérez" required>
+                </div>
+                <div class="form-group">
+                    <label>Teléfono</label>
+                    <input type="tel" id="memberPhone" placeholder="+56 9 1234 5678" required>
+                </div>
+                <div class="form-group">
+                    <label>Plan</label>
+                    <select id="memberPlan" required>
+                        <option value="">Seleccionar plan</option>
+                        <option value="mensual">Mensual - $25.000</option>
+                        <option value="trimestral">Trimestral - $65.000</option>
+                        <option value="semestral">Semestral - $120.000</option>
+                        <option value="anual">Anual - $200.000</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Condiciones de Salud</label>
+                    <textarea id="memberHealth" placeholder="Lesiones, alergias, condiciones especiales..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Contacto de Emergencia</label>
+                    <input type="text" id="memberEmergency" placeholder="Nombre y teléfono">
+                </div>
+                <div class="form-group">
+                    <label>Peso (kg)</label>
+                    <input type="number" id="memberWeight" placeholder="75" min="0" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label>Grasa Corporal (%)</label>
+                    <input type="number" id="memberFat" placeholder="20" min="0" max="100" step="0.1">
+                </div>
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Guardar Socio</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeMemberModal()" style="flex: 1;">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="classModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>Nueva Clase</span>
+                <button class="modal-close" onclick="closeClassModal()">&times;</button>
+            </div>
+            <form id="classForm" onsubmit="saveClass(event)">
+                <div class="form-group">
+                    <label>Tipo de Clase</label>
+                    <select id="classType" required>
+                        <option value="">Seleccionar tipo</option>
+                        <option value="spinning">Spinning</option>
+                        <option value="yoga">Yoga</option>
+                        <option value="pilates">Pilates</option>
+                        <option value="funcional">Funcional</option>
+                        <option value="zumba">Zumba</option>
+                        <option value="crossfit">CrossFit</option>
+                        <option value="boxeo">Boxeo</option>
+                        <option value="trx">TRX</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Instructor</label>
+                    <input type="text" id="classInstructor" placeholder="Nombre del instructor" required>
+                </div>
+                <div class="form-group">
+                    <label>Sala/Zona</label>
+                    <input type="text" id="classRoom" placeholder="Ej: Sala A, Zona Cardio" required>
+                </div>
+                <div class="form-group">
+                    <label>Capacidad</label>
+                    <input type="number" id="classCapacity" placeholder="20" min="1" required>
+                </div>
+                <div class="form-group">
+                    <label>Hora (HH:MM)</label>
+                    <input type="time" id="classTime" required>
+                </div>
+                <div class="form-group">
+                    <label>Días de la Semana</label>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem;">
+                        <label style="display: flex; align-items: center; font-weight: 400; margin: 0;">
+                            <input type="checkbox" name="days" value="lunes" style="margin-right: 0.5rem;"> Lunes
+                        </label>
+                        <label style="display: flex; align-items: center; font-weight: 400; margin: 0;">
+                            <input type="checkbox" name="days" value="martes" style="margin-right: 0.5rem;"> Martes
+                        </label>
+                        <label style="display: flex; align-items: center; font-weight: 400; margin: 0;">
+                            <input type="checkbox" name="days" value="miércoles" style="margin-right: 0.5rem;"> Miércoles
+                        </label>
+                        <label style="display: flex; align-items: center; font-weight: 400; margin: 0;">
+                            <input type="checkbox" name="days" value="jueves" style="margin-right: 0.5rem;"> Jueves
+                        </label>
+                        <label style="display: flex; align-items: center; font-weight: 400; margin: 0;">
+                            <input type="checkbox" name="days" value="viernes" style="margin-right: 0.5rem;"> Viernes
+                        </label>
+                        <label style="display: flex; align-items: center; font-weight: 400; margin: 0;">
+                            <input type="checkbox" name="days" value="sábado" style="margin-right: 0.5rem;"> Sábado
+                        </label>
+                    </div>
+                </div>
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Guardar Clase</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeClassModal()" style="flex: 1;">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="workoutModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>Nueva Rutina</span>
+                <button class="modal-close" onclick="closeWorkoutModal()">&times;</button>
+            </div>
+            <form id="workoutForm" onsubmit="saveWorkout(event)">
+                <div class="form-group">
+                    <label>Nombre de la Rutina</label>
+                    <input type="text" id="workoutName" placeholder="Ej: Full Body Monday" required>
+                </div>
+                <div class="form-group">
+                    <label>Grupo Muscular Principal</label>
+                    <select id="workoutMuscleGroup" required>
+                        <option value="">Seleccionar grupo</option>
+                        <option value="pecho">Pecho</option>
+                        <option value="espalda">Espalda</option>
+                        <option value="piernas">Piernas</option>
+                        <option value="hombros">Hombros</option>
+                        <option value="brazos">Brazos</option>
+                        <option value="core">Core</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Ejercicios (separados por coma)</label>
+                    <textarea id="workoutExercises" placeholder="Press de banca, Flexiones, Aperturas..." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Series x Repeticiones</label>
+                    <input type="text" id="workoutSets" placeholder="4x8, 3x10, 2x12" required>
+                </div>
+                <div class="form-group">
+                    <label>Peso (kg)</label>
+                    <input type="number" id="workoutWeight" placeholder="80" min="0" step="0.5">
+                </div>
+                <div class="form-group">
+                    <label>Descanso entre Series (seg)</label>
+                    <input type="number" id="workoutRest" placeholder="90" min="0" step="15">
+                </div>
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Guardar Rutina</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeWorkoutModal()" style="flex: 1;">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="trainerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>Nuevo Entrenador</span>
+                <button class="modal-close" onclick="closeTrainerModal()">&times;</button>
+            </div>
+            <form id="trainerForm" onsubmit="saveTrainer(event)">
+                <div class="form-group">
+                    <label>Nombre</label>
+                    <input type="text" id="trainerName" placeholder="Carlos González" required>
+                </div>
+                <div class="form-group">
+                    <label>Especialidad</label>
+                    <select id="trainerSpecialty" required>
+                        <option value="">Seleccionar especialidad</option>
+                        <option value="fuerza">Entrenamiento de Fuerza</option>
+                        <option value="cardio">Cardio</option>
+                        <option value="yoga">Yoga</option>
+                        <option value="pilates">Pilates</option>
+                        <option value="crossfit">CrossFit</option>
+                        <option value="boxeo">Boxeo</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Certificaciones</label>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem;">
+                        <label style="display: flex; align-items: center; font-weight: 400; margin: 0;">
+                            <input type="checkbox" name="certs" value="ACE" style="margin-right: 0.5rem;"> ACE
+                        </label>
+                        <label style="display: flex; align-items: center; font-weight: 400; margin: 0;">
+                            <input type="checkbox" name="certs" value="NSCA" style="margin-right: 0.5rem;"> NSCA
+                        </label>
+                        <label style="display: flex; align-items: center; font-weight: 400; margin: 0;">
+                            <input type="checkbox" name="certs" value="Yoga" style="margin-right: 0.5rem;"> Yoga
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Teléfono</label>
+                    <input type="tel" id="trainerPhone" placeholder="+56 9 1234 5678" required>
+                </div>
+                <div class="form-group">
+                    <label>Tarifa Hora (CLP)</label>
+                    <input type="number" id="trainerRate" placeholder="50000" min="0" step="1000" required>
+                </div>
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Guardar Entrenador</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeTrainerModal()" style="flex: 1;">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="equipmentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>Nuevo Equipo</span>
+                <button class="modal-close" onclick="closeEquipmentModal()">&times;</button>
+            </div>
+            <form id="equipmentForm" onsubmit="saveEquipment(event)">
+                <div class="form-group">
+                    <label>Tipo de Equipo</label>
+                    <select id="equipmentType" required>
+                        <option value="">Seleccionar tipo</option>
+                        <option value="trotadora">Trotadora</option>
+                        <option value="elíptica">Elíptica</option>
+                        <option value="bicicleta">Bicicleta Estática</option>
+                        <option value="pesas">Pesas Libres</option>
+                        <option value="barra">Barras</option>
+                        <option value="colchoneta">Colchoneta</option>
+                        <option value="trx">TRX</option>
+                        <option value="otros">Otros</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Marca</label>
+                    <input type="text" id="equipmentBrand" placeholder="Ej: Life Fitness" required>
+                </div>
+                <div class="form-group">
+                    <label>Modelo</label>
+                    <input type="text" id="equipmentModel" placeholder="Ej: F1 Treadmill">
+                </div>
+                <div class="form-group">
+                    <label>Cantidad</label>
+                    <input type="number" id="equipmentQuantity" placeholder="1" min="1" required>
+                </div>
+                <div class="form-group">
+                    <label>Valor de Compra (CLP)</label>
+                    <input type="number" id="equipmentValue" placeholder="5000000" min="0" step="1000">
+                </div>
+                <div class="form-group">
+                    <label>Estado</label>
+                    <select id="equipmentCondition" required>
+                        <option value="excelente">Excelente</option>
+                        <option value="bueno">Bueno</option>
+                        <option value="regular">Regular</option>
+                        <option value="necesita-mantencion">Necesita Mantención</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Próxima Mantención (dd/mm/yyyy)</label>
+                    <input type="date" id="equipmentMaintenance">
+                </div>
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Guardar Equipo</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeEquipmentModal()" style="flex: 1;">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+
+    <script>
+        const APP_NAME = 'FitnessCL';
+        let revenueChart = null;
+
+        function safeLocalStorage(key, value = null) {
+            try {
+                if (value === null) {
+                    const item = localStorage.getItem(key);
+                    return item ? JSON.parse(item) : null;
+                } else {
+                    localStorage.setItem(key, JSON.stringify(value));
+                    return true;
+                }
+            } catch (e) {
+                console.warn('localStorage access denied:', e);
+                return value === null ? null : false;
+            }
+        }
+
+        function getMembers() {
+            return safeLocalStorage('fitnesscl_members') || [];
+        }
+
+        function getClasses() {
+            return safeLocalStorage('fitnesscl_classes') || [];
+        }
+
+        function getWorkouts() {
+            return safeLocalStorage('fitnesscl_workouts') || [];
+        }
+
+        function getTrainers() {
+            return safeLocalStorage('fitnesscl_trainers') || [];
+        }
+
+        function getEquipment() {
+            return safeLocalStorage('fitnesscl_equipment') || [];
+        }
+
+        function getFinances() {
+            return safeLocalStorage('fitnesscl_finances') || {
+                rent: 0,
+                equipment: 0,
+                services: 0
+            };
+        }
+
+        function saveMembers(members) {
+            safeLocalStorage('fitnesscl_members', members);
+        }
+
+        function saveClasses(classes) {
+            safeLocalStorage('fitnesscl_classes', classes);
+        }
+
+        function saveWorkouts(workouts) {
+            safeLocalStorage('fitnesscl_workouts', workouts);
+        }
+
+        function saveTrainers(trainers) {
+            safeLocalStorage('fitnesscl_trainers', trainers);
+        }
+
+        function saveEquipment(equipment) {
+            safeLocalStorage('fitnesscl_equipment', equipment);
+        }
+
+        function saveFinances(finances) {
+            safeLocalStorage('fitnesscl_finances', finances);
+        }
+
+        function calculateMembershipEnd(startDate, plan) {
+            const start = new Date(startDate);
+            const end = new Date(start);
+
+            switch(plan) {
+                case 'mensual':
+                    end.setMonth(end.getMonth() + 1);
+                    break;
+                case 'trimestral':
+                    end.setMonth(end.getMonth() + 3);
+                    break;
+                case 'semestral':
+                    end.setMonth(end.getMonth() + 6);
+                    break;
+                case 'anual':
+                    end.setFullYear(end.getFullYear() + 1);
+                    break;
+            }
+            return end;
+        }
+
+        function formatDate(date) {
+            if (!date) return '';
+            if (typeof date === 'string') date = new Date(date);
+            return date.toLocaleDateString('es-CL', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            });
+        }
+
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('es-CL', {
+                style: 'currency',
+                currency: 'CLP',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(value);
+        }
+
+        function getMemberStatus(endDate) {
+            const today = new Date();
+            if (new Date(endDate) < today) return 'vencido';
+            return 'activo';
+        }
+
+        function openMemberModal() {
+            document.getElementById('memberModal').classList.add('active');
+        }
+
+        function closeMemberModal() {
+            document.getElementById('memberModal').classList.remove('active');
+            document.getElementById('memberForm').reset();
+        }
+
+        function saveMember(event) {
+            event.preventDefault();
+
+            const rut = document.getElementById('memberRut').value;
+            const name = document.getElementById('memberName').value;
+            const phone = document.getElementById('memberPhone').value;
+            const plan = document.getElementById('memberPlan').value;
+            const health = document.getElementById('memberHealth').value;
+            const emergency = document.getElementById('memberEmergency').value;
+            const weight = document.getElementById('memberWeight').value;
+            const fat = document.getElementById('memberFat').value;
+
+            const today = new Date();
+            const startDate = today.toISOString().split('T')[0];
+            const endDate = calculateMembershipEnd(startDate, plan);
+
+            const member = {
+                id: Date.now(),
+                rut,
+                name,
+                phone,
+                plan,
+                health,
+                emergency,
+                weight: weight ? parseFloat(weight) : null,
+                fat: fat ? parseFloat(fat) : null,
+                startDate,
+                endDate: endDate.toISOString().split('T')[0],
+                status: 'activo',
+                visits: 0,
+                checkIns: []
+            };
+
+            const members = getMembers();
+            members.push(member);
+            saveMembers(members);
+
+            closeMemberModal();
+            renderMembers();
+            showSuccessMessage('Socio agregado correctamente');
+        }
+
+        function deleteMember(id) {
+            if (!confirm('¿Estás seguro de eliminar este socio?')) return;
+
+            const members = getMembers();
+            const filtered = members.filter(m => m.id !== id);
+            saveMembers(filtered);
+            renderMembers();
+            showSuccessMessage('Socio eliminado correctamente');
+        }
+
+        function toggleFreezeMember(id) {
+            const members = getMembers();
+            const member = members.find(m => m.id === id);
+            if (!member) return;
+
+            member.status = member.status === 'activo' ? 'congelado' : 'activo';
+            saveMembers(members);
+            renderMembers();
+            showSuccessMessage(`Estado actualizado a ${member.status}`);
+        }
+
+        function recordCheckIn(id) {
+            const members = getMembers();
+            const member = members.find(m => m.id === id);
+            if (!member) return;
+
+            if (!member.checkIns) member.checkIns = [];
+            const today = new Date().toISOString().split('T')[0];
+
+            if (!member.checkIns.includes(today)) {
+                member.checkIns.push(today);
+                member.visits = (member.visits || 0) + 1;
+            }
+
+            saveMembers(members);
+            renderMembers();
+            showSuccessMessage('Check-in registrado');
+        }
+
+        function renderMembers() {
+            const members = getMembers();
+            const tbody = document.getElementById('memberTableBody');
+
+            document.getElementById('totalMembers').textContent = members.length;
+            document.getElementById('activeMembersCount').textContent = members.filter(m => m.status === 'activo').length;
+            document.getElementById('frozenCount').textContent = members.filter(m => m.status === 'congelado').length;
+            document.getElementById('expiredCount').textContent = members.filter(m => m.status === 'vencido').length;
+
+            const alerts = [];
+            const expiredSoon = members.filter(m => {
+                const end = new Date(m.endDate);
+                const days = Math.floor((end - new Date()) / (1000 * 60 * 60 * 24));
+                return days >= 0 && days <= 7 && m.status !== 'vencido';
+            });
+
+            if (expiredSoon.length > 0) {
+                alerts.push(`<div class="alert alert-warning">⚠️ ${expiredSoon.length} membresía(s) vencen en los próximos 7 días</div>`);
+            }
+
+            document.getElementById('memberAlerts').innerHTML = alerts.join('');
+
+            if (members.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No hay socios registrados.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = members.map(m => {
+                const statusClass = `status-${m.status}`;
+                return `
+                    <tr>
+                        <td><strong>${m.rut}</strong></td>
+                        <td>${m.name}</td>
+                        <td><span class="badge">${m.plan}</span></td>
+                        <td>${formatDate(m.startDate)}</td>
+                        <td>${formatDate(m.endDate)}</td>
+                        <td><span class="status-badge ${statusClass}">${m.status.toUpperCase()}</span></td>
+                        <td>
+                            <div class="btn-group" style="gap: 0.25rem;">
+                                <button class="btn btn-sm btn-secondary" onclick="recordCheckIn(${m.id})">Check-in</button>
+                                <button class="btn btn-sm btn-secondary" onclick="toggleFreezeMember(${m.id})">Congelar</button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteMember(${m.id})">Eliminar</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function openClassModal() {
+            document.getElementById('classModal').classList.add('active');
+        }
+
+        function closeClassModal() {
+            document.getElementById('classModal').classList.remove('active');
+            document.getElementById('classForm').reset();
+        }
+
+        function saveClass(event) {
+            event.preventDefault();
+
+            const type = document.getElementById('classType').value;
+            const instructor = document.getElementById('classInstructor').value;
+            const room = document.getElementById('classRoom').value;
+            const capacity = document.getElementById('classCapacity').value;
+            const time = document.getElementById('classTime').value;
+
+            const days = Array.from(document.querySelectorAll('input[name="days"]:checked'))
+                .map(cb => cb.value);
+
+            const cls = {
+                id: Date.now(),
+                type,
+                instructor,
+                room,
+                capacity: parseInt(capacity),
+                time,
+                days,
+                enrolled: 0,
+                attendance: []
+            };
+
+            const classes = getClasses();
+            classes.push(cls);
+            saveClasses(classes);
+
+            closeClassModal();
+            renderClasses();
+            showSuccessMessage('Clase agregada correctamente');
+        }
+
+        function deleteClass(id) {
+            if (!confirm('¿Estás seguro de eliminar esta clase?')) return;
+
+            const classes = getClasses();
+            const filtered = classes.filter(c => c.id !== id);
+            saveClasses(filtered);
+            renderClasses();
+            showSuccessMessage('Clase eliminada correctamente');
+        }
+
+        function renderClasses() {
+            const classes = getClasses();
+            const container = document.getElementById('classesContainer');
+
+            document.getElementById('totalClasses').textContent = classes.length;
+
+            const classTypes = {
+                spinning: '🚴',
+                yoga: '🧘',
+                pilates: '💪',
+                funcional: '⚡',
+                zumba: '💃',
+                crossfit: '🏋️',
+                boxeo: '🥊',
+                trx: '🪢'
+            };
+
+            if (classes.length === 0) {
+                container.innerHTML = '<div class="empty-state">No hay clases programadas. Crea una nueva clase para comenzar.</div>';
+                return;
+            }
+
+            container.innerHTML = classes.map(cls => `
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <h3 class="card-title">${classTypes[cls.type] || '📚'} ${cls.type.toUpperCase()}</h3>
+                            <p style="color: #9ca3af; margin-top: 0.25rem;">Instructor: ${cls.instructor}</p>
+                        </div>
+                        <button class="btn btn-danger btn-sm" onclick="deleteClass(${cls.id})">Eliminar</button>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                        <div>
+                            <p style="color: #9ca3af; font-size: 0.75rem;">Sala</p>
+                            <p style="font-weight: 600;">${cls.room}</p>
+                        </div>
+                        <div>
+                            <p style="color: #9ca3af; font-size: 0.75rem;">Horario</p>
+                            <p style="font-weight: 600;">${cls.time}</p>
+                        </div>
+                        <div>
+                            <p style="color: #9ca3af; font-size: 0.75rem;">Capacidad</p>
+                            <p style="font-weight: 600;">${cls.enrolled}/${cls.capacity}</p>
+                        </div>
+                    </div>
+                    <div style="color: #9ca3af; font-size: 0.875rem;">Días: ${cls.days.join(', ')}</div>
+                </div>
+            `).join('');
+        }
+
+        function openWorkoutModal() {
+            document.getElementById('workoutModal').classList.add('active');
+        }
+
+        function closeWorkoutModal() {
+            document.getElementById('workoutModal').classList.remove('active');
+            document.getElementById('workoutForm').reset();
+        }
+
+        function saveWorkout(event) {
+            event.preventDefault();
+
+            const name = document.getElementById('workoutName').value;
+            const muscleGroup = document.getElementById('workoutMuscleGroup').value;
+            const exercises = document.getElementById('workoutExercises').value;
+            const sets = document.getElementById('workoutSets').value;
+            const weight = document.getElementById('workoutWeight').value;
+            const rest = document.getElementById('workoutRest').value;
+
+            const workout = {
+                id: Date.now(),
+                name,
+                muscleGroup,
+                exercises: exercises.split(',').map(e => e.trim()),
+                sets,
+                weight: weight ? parseFloat(weight) : 0,
+                rest: rest ? parseInt(rest) : 0,
+                createdAt: new Date().toISOString()
+            };
+
+            const workouts = getWorkouts();
+            workouts.push(workout);
+            saveWorkouts(workouts);
+
+            closeWorkoutModal();
+            renderWorkouts();
+            showSuccessMessage('Rutina agregada correctamente');
+        }
+
+        function deleteWorkout(id) {
+            if (!confirm('¿Estás seguro de eliminar esta rutina?')) return;
+
+            const workouts = getWorkouts();
+            const filtered = workouts.filter(w => w.id !== id);
+            saveWorkouts(filtered);
+            renderWorkouts();
+            showSuccessMessage('Rutina eliminada correctamente');
+        }
+
+        function renderWorkouts() {
+            const workouts = getWorkouts();
+            const container = document.getElementById('workoutsContainer');
+
+            document.getElementById('totalWorkouts').textContent = workouts.length;
+
+            const muscleEmojis = {
+                pecho: '🏋️',
+                espalda: '💪',
+                piernas: '🦵',
+                hombros: '🎯',
+                brazos: '💪',
+                core: '✨'
+            };
+
+            if (workouts.length === 0) {
+                container.innerHTML = '<div class="empty-state">No hay rutinas creadas. Crea una nueva rutina para comenzar.</div>';
+                return;
+            }
+
+            container.innerHTML = workouts.map(w => `
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <h3 class="card-title">${muscleEmojis[w.muscleGroup] || '💪'} ${w.name}</h3>
+                            <p style="color: #9ca3af; margin-top: 0.25rem;">Grupo: ${w.muscleGroup}</p>
+                        </div>
+                        <button class="btn btn-danger btn-sm" onclick="deleteWorkout(${w.id})">Eliminar</button>
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <p style="color: #9ca3af; font-size: 0.75rem; margin-bottom: 0.5rem;">EJERCICIOS</p>
+                        <p>${w.exercises.join(' • ')}</p>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem;">
+                        <div>
+                            <p style="color: #9ca3af; font-size: 0.75rem;">Series</p>
+                            <p style="font-weight: 600;">${w.sets}</p>
+                        </div>
+                        <div>
+                            <p style="color: #9ca3af; font-size: 0.75rem;">Peso</p>
+                            <p style="font-weight: 600;">${w.weight} kg</p>
+                        </div>
+                        <div>
+                            <p style="color: #9ca3af; font-size: 0.75rem;">Descanso</p>
+                            <p style="font-weight: 600;">${w.rest}s</p>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openTrainerModal() {
+            document.getElementById('trainerModal').classList.add('active');
+        }
+
+        function closeTrainerModal() {
+            document.getElementById('trainerModal').classList.remove('active');
+            document.getElementById('trainerForm').reset();
+        }
+
+        function saveTrainer(event) {
+            event.preventDefault();
+
+            const name = document.getElementById('trainerName').value;
+            const specialty = document.getElementById('trainerSpecialty').value;
+            const phone = document.getElementById('trainerPhone').value;
+            const rate = document.getElementById('trainerRate').value;
+
+            const certs = Array.from(document.querySelectorAll('input[name="certs"]:checked'))
+                .map(cb => cb.value);
+
+            const trainer = {
+                id: Date.now(),
+                name,
+                specialty,
+                phone,
+                rate: parseInt(rate),
+                certifications: certs,
+                clients: 0,
+                schedule: []
+            };
+
+            const trainers = getTrainers();
+            trainers.push(trainer);
+            saveTrainers(trainers);
+
+            closeTrainerModal();
+            renderTrainers();
+            showSuccessMessage('Entrenador agregado correctamente');
+        }
+
+        function deleteTrainer(id) {
+            if (!confirm('¿Estás seguro de eliminar este entrenador?')) return;
+
+            const trainers = getTrainers();
+            const filtered = trainers.filter(t => t.id !== id);
+            saveTrainers(filtered);
+            renderTrainers();
+            showSuccessMessage('Entrenador eliminado correctamente');
+        }
+
+        function renderTrainers() {
+            const trainers = getTrainers();
+            const container = document.getElementById('trainersContainer');
+
+            document.getElementById('totalTrainers').textContent = trainers.length;
+
+            if (trainers.length === 0) {
+                container.innerHTML = '<div class="empty-state">No hay entrenadores registrados. Agrega un nuevo entrenador para comenzar.</div>';
+                return;
+            }
+
+            container.innerHTML = trainers.map(t => `
+                <div class="list-item">
+                    <div class="list-item-info" style="flex: 1;">
+                        <h3>${t.name}</h3>
+                        <p>${t.specialty}</p>
+                        <p style="margin-top: 0.5rem; color: #84cc16; font-weight: 600;">${formatCurrency(t.rate)}/hora</p>
+                        <p style="margin-top: 0.25rem; color: #9ca3af;">📱 ${t.phone}</p>
+                        ${t.certifications.length > 0 ? `<p style="margin-top: 0.5rem;">📜 ${t.certifications.join(', ')}</p>` : ''}
+                    </div>
+                    <button class="btn btn-danger btn-sm" onclick="deleteTrainer(${t.id})">Eliminar</button>
+                </div>
+            `).join('');
+        }
+
+        function updateFinances() {
+            const rent = parseFloat(document.getElementById('rentExpense').value) || 0;
+            const equipment = parseFloat(document.getElementById('equipmentExpense').value) || 0;
+            const services = parseFloat(document.getElementById('servicesExpense').value) || 0;
+
+            const finances = {
+                rent,
+                equipment,
+                services
+            };
+
+            saveFinances(finances);
+            renderFinances();
+        }
+
+        function renderFinances() {
+            const members = getMembers();
+            const trainers = getTrainers();
+            const finances = getFinances();
+
+            const planPrices = {
+                mensual: 25000,
+                trimestral: 65000,
+                semestral: 120000,
+                anual: 200000
+            };
+
+            let membershipRevenue = 0;
+            members.forEach(m => {
+                if (m.status === 'activo') {
+                    membershipRevenue += planPrices[m.plan] || 0;
+                }
+            });
+
+            const totalExpenses = (finances.rent || 0) + (finances.equipment || 0) + (finances.services || 0);
+            const profit = membershipRevenue - totalExpenses;
+
+            document.getElementById('monthlyRevenue').textContent = formatCurrency(membershipRevenue);
+            document.getElementById('monthlyExpenses').textContent = formatCurrency(totalExpenses);
+            document.getElementById('monthlyProfit').textContent = formatCurrency(profit);
+
+            document.getElementById('rentExpense').value = finances.rent || 0;
+            document.getElementById('equipmentExpense').value = finances.equipment || 0;
+            document.getElementById('servicesExpense').value = finances.services || 0;
+
+            if (revenueChart) {
+                revenueChart.data.datasets[0].data = [
+                    membershipRevenue,
+                    trainers.length * 2000000,
+                    0
+                ];
+                revenueChart.update();
+            }
+        }
+
+        function openEquipmentModal() {
+            document.getElementById('equipmentModal').classList.add('active');
+        }
+
+        function closeEquipmentModal() {
+            document.getElementById('equipmentModal').classList.remove('active');
+            document.getElementById('equipmentForm').reset();
+        }
+
+        function saveEquipment(event) {
+            event.preventDefault();
+
+            const type = document.getElementById('equipmentType').value;
+            const brand = document.getElementById('equipmentBrand').value;
+            const model = document.getElementById('equipmentModel').value;
+            const quantity = document.getElementById('equipmentQuantity').value;
+            const value = document.getElementById('equipmentValue').value;
+            const condition = document.getElementById('equipmentCondition').value;
+            const maintenance = document.getElementById('equipmentMaintenance').value;
+
+            const equipment = {
+                id: Date.now(),
+                type,
+                brand,
+                model,
+                quantity: parseInt(quantity),
+                value: value ? parseInt(value) : 0,
+                condition,
+                nextMaintenance: maintenance,
+                addedDate: new Date().toISOString()
+            };
+
+            const equipmentList = getEquipment();
+            equipmentList.push(equipment);
+            saveEquipment(equipmentList);
+
+            closeEquipmentModal();
+            renderEquipment();
+            showSuccessMessage('Equipo agregado correctamente');
+        }
+
+        function deleteEquipment(id) {
+            if (!confirm('¿Estás seguro de eliminar este equipo?')) return;
+
+            const equipmentList = getEquipment();
+            const filtered = equipmentList.filter(e => e.id !== id);
+            saveEquipment(filtered);
+            renderEquipment();
+            showSuccessMessage('Equipo eliminado correctamente');
+        }
+
+        function renderEquipment() {
+            const equipmentList = getEquipment();
+            const container = document.getElementById('equipmentContainer');
+
+            document.getElementById('totalEquipment').textContent = equipmentList.length;
+
+            const needsMaintenance = equipmentList.filter(e => {
+                if (e.condition === 'necesita-mantencion') return true;
+                if (e.nextMaintenance) {
+                    const date = new Date(e.nextMaintenance);
+                    return date <= new Date();
+                }
+                return false;
+            });
+
+            document.getElementById('maintenanceNeeded').textContent = needsMaintenance.length;
+
+            if (equipmentList.length === 0) {
+                container.innerHTML = '<div class="empty-state">No hay equipos registrados. Agrega un nuevo equipo para comenzar.</div>';
+                return;
+            }
+
+            container.innerHTML = equipmentList.map(e => {
+                const conditionColors = {
+                    'excelente': '#84cc16',
+                    'bueno': '#3b82f6',
+                    'regular': '#f59e0b',
+                    'necesita-mantencion': '#ef4444'
+                };
+
+                return `
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <h3 class="card-title">${e.type.charAt(0).toUpperCase() + e.type.slice(1)}</h3>
+                                <p style="color: #9ca3af; margin-top: 0.25rem;">${e.brand} ${e.model}</p>
+                            </div>
+                            <button class="btn btn-danger btn-sm" onclick="deleteEquipment(${e.id})">Eliminar</button>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+                            <div>
+                                <p style="color: #9ca3af; font-size: 0.75rem;">Cantidad</p>
+                                <p style="font-weight: 600;">${e.quantity} unidades</p>
+                            </div>
+                            <div>
+                                <p style="color: #9ca3af; font-size: 0.75rem;">Valor</p>
+                                <p style="font-weight: 600;">${formatCurrency(e.value)}</p>
+                            </div>
+                            <div>
+                                <p style="color: #9ca3af; font-size: 0.75rem;">Estado</p>
+                                <p style="font-weight: 600; color: ${conditionColors[e.condition] || '#e5e7eb'};">${e.condition}</p>
+                            </div>
+                            <div>
+                                <p style="color: #9ca3af; font-size: 0.75rem;">Próxima Mantención</p>
+                                <p style="font-weight: 600;">${e.nextMaintenance ? formatDate(e.nextMaintenance) : 'No definida'}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function showSuccessMessage(message) {
+            const alert = document.createElement('div');
+            alert.className = 'success-message';
+            alert.textContent = '✓ ' + message;
+            document.querySelector('.tab-content.active').insertAdjacentElement('afterbegin', alert);
+
+            setTimeout(() => {
+                alert.remove();
+            }, 3000);
+        }
+
+        function initRevenueChart() {
+            const ctx = document.getElementById('revenueChart');
+            if (!ctx) return;
+
+            revenueChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Membresías', 'Entrenamiento Personal', 'Otros'],
+                    datasets: [{
+                        data: [0, 0, 0],
+                        backgroundColor: [
+                            '#84cc16',
+                            '#3b82f6',
+                            '#8b5cf6'
+                        ],
+                        borderColor: '#1f2937',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#d1d5db',
+                                font: {
+                                    family: 'Inter, sans-serif',
+                                    size: 12
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            renderFinances();
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.nav-tab').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            document.getElementById(tabName).classList.add('active');
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+
+            if (tabName === 'finanzas') {
+                setTimeout(initRevenueChart, 100);
+            }
+        }
+
+        document.querySelectorAll('.nav-tab').forEach(btn => {
+            btn.addEventListener('click', function() {
+                switchTab(this.dataset.tab);
+            });
+        });
+
+        function init() {
+            renderMembers();
+            renderClasses();
+            renderWorkouts();
+            renderTrainers();
+            renderEquipment();
+            renderFinances();
+
+            if (typeof Chart !== 'undefined') {
+                setTimeout(initRevenueChart, 500);
+            }
+        }
+
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

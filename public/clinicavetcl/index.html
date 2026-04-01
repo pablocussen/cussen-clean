@@ -1,0 +1,2151 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="ClinicaVetCL - Sistema de gestión de clínicas veterinarias chilenas">
+    <meta name="theme-color" content="#14532d">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ClinicaVetCL">
+    <title>ClinicaVetCL - Gestión Veterinaria</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75' fill='%2314532d'>🐾</text></svg>">
+    <link rel="manifest" href="data:application/manifest+json,{\"name\":\"ClinicaVetCL\",\"short_name\":\"VetCL\",\"start_url\":\"/\",\"display\":\"standalone\",\"background_color\":\"#ffffff\",\"theme_color\":\"#14532d\",\"icons\":[{\"src\":\"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><text y='140' font-size='140' fill='%2314532d'>🐾</text></svg>\",\"sizes\":\"192x192\",\"type\":\"image/svg+xml\"}]}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.min.js" defer></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #14532d;
+            --primary-light: #166534;
+            --primary-dark: #0f3d20;
+            --accent: #0ea5e9;
+            --accent-dark: #0284c7;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-900);
+            line-height: 1.6;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-user-select: text;
+            user-select: text;
+        }
+
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 100%;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            padding: 1.25rem 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            flex-shrink: 0;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .header-date {
+            font-size: 0.875rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 280px;
+            background: white;
+            border-right: 1px solid var(--gray-200);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .sidebar-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem 0;
+        }
+
+        .tab-button {
+            width: 100%;
+            padding: 1rem;
+            border: none;
+            background: none;
+            color: var(--gray-600);
+            font-size: 0.95rem;
+            font-weight: 500;
+            text-align: left;
+            cursor: pointer;
+            border-left: 4px solid transparent;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .tab-button:hover {
+            background: var(--gray-50);
+            color: var(--primary);
+        }
+
+        .tab-button.active {
+            background: var(--primary-light);
+            color: white;
+            border-left-color: var(--accent);
+        }
+
+        .tab-button span {
+            margin-right: 0.75rem;
+        }
+
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .tab-content {
+            display: none;
+            flex: 1;
+            overflow-y: auto;
+            padding: 2rem;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .section {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .section h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--gray-900);
+            margin-top: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        label {
+            display: block;
+            font-size: 0.95rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: var(--gray-700);
+        }
+
+        input, select, textarea {
+            font-size: 16px;
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--gray-300);
+            border-radius: 0.5rem;
+            font-family: 'Inter', sans-serif;
+            transition: border-color 0.2s ease;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(20, 83, 45, 0.3);
+        }
+
+        .btn-accent {
+            background: var(--accent);
+            color: white;
+        }
+
+        .btn-accent:hover {
+            background: var(--accent-dark);
+        }
+
+        .btn-secondary {
+            background: var(--gray-200);
+            color: var(--gray-900);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-300);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-small {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .table th {
+            background: var(--gray-100);
+            border: 1px solid var(--gray-200);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--gray-700);
+            font-size: 0.9rem;
+        }
+
+        .table td {
+            border: 1px solid var(--gray-200);
+            padding: 1rem;
+            font-size: 0.95rem;
+        }
+
+        .table tbody tr:hover {
+            background: var(--gray-50);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.35rem 0.75rem;
+            border-radius: 0.375rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .badge-success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-danger {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge-info {
+            background: #e0f2fe;
+            color: #0c4a6e;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-color: var(--accent);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .card-body {
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 2rem;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .modal-header {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: var(--primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--gray-500);
+        }
+
+        .modal-close:hover {
+            color: var(--gray-900);
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border-left: 4px solid var(--success);
+        }
+
+        .alert-warning {
+            background: #fef3c7;
+            color: #92400e;
+            border-left: 4px solid var(--warning);
+        }
+
+        .alert-danger {
+            background: #fee2e2;
+            color: #991b1b;
+            border-left: 4px solid var(--danger);
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border-top: 4px solid var(--primary);
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .stat-change {
+            font-size: 0.85rem;
+            color: var(--gray-500);
+            margin-top: 0.5rem;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 1.5rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--gray-500);
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state-text {
+            font-size: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid var(--gray-200);
+            transition: background 0.2s ease;
+        }
+
+        .list-item:hover {
+            background: var(--gray-50);
+        }
+
+        .list-item:last-child {
+            border-bottom: none;
+        }
+
+        .list-item-main {
+            flex: 1;
+        }
+
+        .list-item-title {
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 0.25rem;
+        }
+
+        .list-item-subtitle {
+            font-size: 0.85rem;
+            color: var(--gray-600);
+        }
+
+        .list-item-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .icon-btn {
+            background: none;
+            border: none;
+            font-size: 1.25rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+            transition: background 0.2s ease;
+        }
+
+        .icon-btn:hover {
+            background: var(--gray-100);
+        }
+
+        .tabs-header {
+            display: flex;
+            gap: 1rem;
+            border-bottom: 2px solid var(--gray-200);
+            margin-bottom: 1.5rem;
+            overflow-x: auto;
+        }
+
+        .tab-link {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            background: none;
+            color: var(--gray-600);
+            font-weight: 500;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+        }
+
+        .tab-link.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .search-box {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .search-box input {
+            flex: 1;
+        }
+
+        .photo-placeholder {
+            width: 120px;
+            height: 120px;
+            border: 2px dashed var(--gray-300);
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            background: var(--gray-50);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .photo-placeholder:hover {
+            border-color: var(--accent);
+            background: var(--gray-100);
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .scroll-area {
+            overflow-y: auto;
+            max-height: calc(100vh - 300px);
+        }
+
+        .footer {
+            background: var(--gray-50);
+            border-top: 1px solid var(--gray-200);
+            padding: 1rem;
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--gray-600);
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                border-right: none;
+                border-bottom: 1px solid var(--gray-200);
+            }
+
+            .main-content {
+                flex-direction: column;
+            }
+
+            .sidebar-scroll {
+                display: flex;
+                overflow-x: auto;
+                overflow-y: hidden;
+                padding: 0;
+                max-width: 100%;
+            }
+
+            .tab-button {
+                border-left: none;
+                border-bottom: 4px solid transparent;
+                padding: 1rem;
+                white-space: nowrap;
+                flex-shrink: 0;
+            }
+
+            .tab-button.active {
+                border-left: none;
+                border-bottom-color: var(--accent);
+                background: white;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+
+            .stat-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .tab-content {
+                padding: 1.5rem 1rem;
+            }
+
+            .modal-content {
+                max-width: 90%;
+                padding: 1.5rem;
+            }
+
+            .header h1 {
+                font-size: 1.35rem;
+            }
+
+            .section {
+                padding: 1.25rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header {
+                padding: 1rem;
+            }
+
+            .header h1 {
+                font-size: 1.25rem;
+            }
+
+            .tab-content {
+                padding: 1rem;
+            }
+
+            .section {
+                padding: 1rem;
+                margin-bottom: 1rem;
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .modal-content {
+                max-width: 95%;
+            }
+        }
+
+        .input-group {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .input-group input {
+            flex: 1;
+        }
+
+        .success-message {
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .prescription-text {
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            word-break: break-word;
+            margin: 1rem 0;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid var(--gray-300);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header class="header">
+            <div class="header-content">
+                <h1><span>🐾</span> ClinicaVetCL</h1>
+                <div class="header-date" id="headerDate"></div>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <aside class="sidebar">
+                <div class="sidebar-scroll">
+                    <button class="tab-button active" data-tab="consultas"><span>📋</span> Consultas</button>
+                    <button class="tab-button" data-tab="pacientes"><span>🐕</span> Pacientes</button>
+                    <button class="tab-button" data-tab="vacunas"><span>💉</span> Vacunas</button>
+                    <button class="tab-button" data-tab="farmacia"><span>💊</span> Farmacia</button>
+                    <button class="tab-button" data-tab="finanzas"><span>💰</span> Finanzas</button>
+                    <button class="tab-button" data-tab="clientes"><span>👥</span> Clientes</button>
+                </div>
+            </aside>
+
+            <div class="content-area">
+                <!-- CONSULTAS TAB -->
+                <div id="consultas" class="tab-content active">
+                    <div class="section">
+                        <h2>📋 Consultas Veterinarias</h2>
+                        <button class="btn btn-primary" onclick="openConsultaModal()">+ Nueva Consulta</button>
+
+                        <div class="search-box">
+                            <input type="text" id="searchConsultas" placeholder="Buscar por mascota o propietario..." onkeyup="filterConsultas()">
+                        </div>
+
+                        <div class="scroll-area" id="consultasList"></div>
+                    </div>
+                </div>
+
+                <!-- PACIENTES TAB -->
+                <div id="pacientes" class="tab-content">
+                    <div class="section">
+                        <h2>🐕 Pacientes</h2>
+                        <button class="btn btn-primary" onclick="openPacienteModal()">+ Nuevo Paciente</button>
+
+                        <div class="search-box">
+                            <input type="text" id="searchPacientes" placeholder="Buscar paciente..." onkeyup="filterPacientes()">
+                        </div>
+
+                        <div class="scroll-area" id="pacientesList"></div>
+                    </div>
+                </div>
+
+                <!-- VACUNAS TAB -->
+                <div id="vacunas" class="tab-content">
+                    <div class="section">
+                        <h2>💉 Vacunas y Desparasitación</h2>
+                        <button class="btn btn-primary" onclick="openVacunaModal()">+ Nueva Aplicación</button>
+
+                        <div class="scroll-area" id="vacunasList"></div>
+                    </div>
+                </div>
+
+                <!-- FARMACIA TAB -->
+                <div id="farmacia" class="tab-content">
+                    <div class="section">
+                        <h2>💊 Farmacia e Inventario</h2>
+                        <button class="btn btn-primary" onclick="openMedicamentoModal()">+ Nuevo Medicamento</button>
+
+                        <div class="scroll-area" id="farmaciaList"></div>
+                    </div>
+                </div>
+
+                <!-- FINANZAS TAB -->
+                <div id="finanzas" class="tab-content">
+                    <div class="section">
+                        <h2>💰 Finanzas y Facturación</h2>
+
+                        <div class="stat-grid">
+                            <div class="stat-card">
+                                <div class="stat-label">Ingresos Mes</div>
+                                <div class="stat-value" id="ingresosMes">$0</div>
+                                <div class="stat-change" id="cambioIngresos"></div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">Costos Mes</div>
+                                <div class="stat-value" id="costosMes">$0</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">Utilidad Neta</div>
+                                <div class="stat-value" id="utilidadNeta">$0</div>
+                                <div class="stat-change" id="margenNeto"></div>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-accent" onclick="openTransaccionModal()">+ Nueva Transacción</button>
+
+                        <h3>Gráfico de Ingresos por Tipo de Servicio</h3>
+                        <div class="chart-container">
+                            <canvas id="chartServicio"></canvas>
+                        </div>
+
+                        <h3>Historial de Transacciones</h3>
+                        <div class="scroll-area" id="transaccionesList"></div>
+                    </div>
+                </div>
+
+                <!-- CLIENTES TAB -->
+                <div id="clientes" class="tab-content">
+                    <div class="section">
+                        <h2>👥 Clientes</h2>
+                        <button class="btn btn-primary" onclick="openClienteModal()">+ Nuevo Cliente</button>
+
+                        <div class="search-box">
+                            <input type="text" id="searchClientes" placeholder="Buscar cliente..." onkeyup="filterClientes()">
+                        </div>
+
+                        <div class="scroll-area" id="clientesList"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="footer">
+            © 2026 ClinicaVetCL • Sistema de Gestión Veterinaria | v1.0.0
+        </footer>
+    </div>
+
+    <!-- MODALS -->
+    <div id="consultaModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span id="consultaTitle">Nueva Consulta</span>
+                <button class="modal-close" onclick="closeModal('consultaModal')">&times;</button>
+            </div>
+            <form onsubmit="saveConsulta(event)">
+                <div class="form-group">
+                    <label>Paciente</label>
+                    <select id="consultaPaciente" required>
+                        <option value="">Seleccionar mascota...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Propietario</label>
+                    <input type="text" id="consultaPropietario" readonly style="background: var(--gray-100);">
+                </div>
+                <div class="form-group">
+                    <label>Fecha y Hora</label>
+                    <input type="datetime-local" id="consultaFecha" required>
+                </div>
+                <div class="form-group">
+                    <label>Motivo de Consulta</label>
+                    <textarea id="consultaMotivo" placeholder="Síntomas, quejas, etc." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Diagnóstico</label>
+                    <textarea id="consultaDiagnostico" placeholder="Diagnóstico presuntivo/confirmado"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Tratamiento Recomendado</label>
+                    <textarea id="consultaTratamiento" placeholder="Medicamentos, instrucciones, etc."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Veterinario Asignado</label>
+                    <select id="consultaVeterinario" required>
+                        <option value="Dr. García">Dr. García</option>
+                        <option value="Dra. López">Dra. López</option>
+                        <option value="Dr. Martínez">Dr. Martínez</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Precio (CLP)</label>
+                    <input type="number" id="consultaPrecio" placeholder="50000" min="0">
+                </div>
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Guardar Consulta</button>
+                    <button type="button" class="btn btn-secondary" style="flex: 1;" onclick="closeModal('consultaModal')">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="pacienteModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span id="pacienteTitle">Nuevo Paciente</span>
+                <button class="modal-close" onclick="closeModal('pacienteModal')">&times;</button>
+            </div>
+            <form onsubmit="savePaciente(event)">
+                <div class="form-group">
+                    <label>Nombre de la Mascota</label>
+                    <input type="text" id="pacienteNombre" placeholder="Ej: Firulais" required>
+                </div>
+                <div class="form-group">
+                    <label>Especie</label>
+                    <select id="pacienteEspecie" required onchange="updateBreedOptions()">
+                        <option value="">Seleccionar...</option>
+                        <option value="perro">Perro</option>
+                        <option value="gato">Gato</option>
+                        <option value="ave">Ave</option>
+                        <option value="exótico">Exótico (conejo, hamster, etc.)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Raza</label>
+                    <select id="pacienteRaza" required>
+                        <option value="">Seleccionar especie primero</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Edad (años)</label>
+                    <input type="number" id="pacienteEdad" placeholder="5" min="0" step="0.1" required>
+                </div>
+                <div class="form-group">
+                    <label>Peso (kg)</label>
+                    <input type="number" id="pacientePeso" placeholder="25.5" min="0" step="0.1" required>
+                </div>
+                <div class="form-group">
+                    <label>¿Esterilizado?</label>
+                    <select id="pacienteEsterilizado" required>
+                        <option value="no">No</option>
+                        <option value="si">Sí</option>
+                        <option value="desconocido">Desconocido</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Microchip (Nº opcional)</label>
+                    <input type="text" id="pacienteMicrochip" placeholder="Nº de microchip si tiene">
+                </div>
+                <div class="form-group">
+                    <label>Alergias Conocidas</label>
+                    <textarea id="pacienteAlergias" placeholder="Medicamentos, alimentos, etc."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Enfermedades Crónicas</label>
+                    <textarea id="pacienteEnfermedades" placeholder="Diabetes, insuficiencia renal, etc."></textarea>
+                </div>
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Guardar Paciente</button>
+                    <button type="button" class="btn btn-secondary" style="flex: 1;" onclick="closeModal('pacienteModal')">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="vacunaModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>Nueva Vacunación</span>
+                <button class="modal-close" onclick="closeModal('vacunaModal')">&times;</button>
+            </div>
+            <form onsubmit="saveVacuna(event)">
+                <div class="form-group">
+                    <label>Paciente</label>
+                    <select id="vacunaPaciente" required onchange="updateNextVacunaDate()">
+                        <option value="">Seleccionar...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Tipo de Vacuna</label>
+                    <select id="vacunaTipo" required onchange="setNextVacunaDate()">
+                        <option value="">Seleccionar...</option>
+                        <option value="Antirrábica">Antirrábica (anual)</option>
+                        <option value="Séxtuple">Séxtuple / Óctuple (perros)</option>
+                        <option value="Triple Felina">Triple Felina (gatos)</option>
+                        <option value="FeLV">FeLV - Leucemia Felina</option>
+                        <option value="Rabia Felina">Rabia Felina</option>
+                        <option value="DHPP">DHPP (Distemper, Hepatitis, Parvovirus, Parainfluenza)</option>
+                        <option value="Personalizado">Personalizado</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Fecha de Aplicación</label>
+                    <input type="date" id="vacunaFecha" required>
+                </div>
+                <div class="form-group">
+                    <label>Número de Lote</label>
+                    <input type="text" id="vacunaLote" placeholder="Ej: LOT123456">
+                </div>
+                <div class="form-group">
+                    <label>Próxima Dosis (fecha estimada)</label>
+                    <input type="date" id="vacunaProxima" required>
+                </div>
+                <div class="form-group">
+                    <label>Veterinario</label>
+                    <select id="vacunaVeterinario" required>
+                        <option value="Dr. García">Dr. García</option>
+                        <option value="Dra. López">Dra. López</option>
+                        <option value="Dr. Martínez">Dr. Martínez</option>
+                    </select>
+                </div>
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Guardar Vacuna</button>
+                    <button type="button" class="btn btn-secondary" style="flex: 1;" onclick="closeModal('vacunaModal')">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="medicamentoModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>Nuevo Medicamento/Insumo</span>
+                <button class="modal-close" onclick="closeModal('medicamentoModal')">&times;</button>
+            </div>
+            <form onsubmit="saveMedicamento(event)">
+                <div class="form-group">
+                    <label>Nombre</label>
+                    <input type="text" id="medNombre" placeholder="Ej: Bravecto Plus" required>
+                </div>
+                <div class="form-group">
+                    <label>Categoría</label>
+                    <select id="medCategoria" required>
+                        <option value="">Seleccionar...</option>
+                        <option value="Antiparasitario">Antiparasitario</option>
+                        <option value="Anestesia">Anestesia</option>
+                        <option value="Antibiótico">Antibiótico</option>
+                        <option value="Suero">Suero</option>
+                        <option value="Alimento Terapéutico">Alimento Terapéutico</option>
+                        <option value="Vitaminas">Vitaminas</option>
+                        <option value="Antiinflamatorio">Antiinflamatorio</option>
+                        <option value="Insumo Quirúrgico">Insumo Quirúrgico</option>
+                        <option value="Otro">Otro</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Stock Actual</label>
+                    <input type="number" id="medStock" placeholder="10" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label>Stock Mínimo</label>
+                    <input type="number" id="medStockMin" placeholder="5" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label>Precio por Unidad (CLP)</label>
+                    <input type="number" id="medPrecio" placeholder="15000" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label>Fecha de Expiración</label>
+                    <input type="date" id="medExpiracion" required>
+                </div>
+                <div class="form-group">
+                    <label>Proveedor</label>
+                    <input type="text" id="medProveedor" placeholder="Ej: Laboratorio XYZ">
+                </div>
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Guardar</button>
+                    <button type="button" class="btn btn-secondary" style="flex: 1;" onclick="closeModal('medicamentoModal')">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="transaccionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>Nueva Transacción</span>
+                <button class="modal-close" onclick="closeModal('transaccionModal')">&times;</button>
+            </div>
+            <form onsubmit="saveTransaccion(event)">
+                <div class="form-group">
+                    <label>Tipo</label>
+                    <select id="transTipo" required>
+                        <option value="">Seleccionar...</option>
+                        <option value="Ingreso">Ingreso</option>
+                        <option value="Gasto">Gasto</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Categoría</label>
+                    <select id="transCategoria" required>
+                        <option value="">Seleccionar...</option>
+                        <option value="Consulta">Consulta</option>
+                        <option value="Cirugía">Cirugía</option>
+                        <option value="Vacunación">Vacunación</option>
+                        <option value="Análisis">Análisis</option>
+                        <option value="Medicamentos">Medicamentos</option>
+                        <option value="Insumos">Insumos</option>
+                        <option value="Salarios">Salarios</option>
+                        <option value="Arriendo">Arriendo</option>
+                        <option value="Servicios">Servicios (agua, luz, internet)</option>
+                        <option value="Otro">Otro</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Monto (CLP)</label>
+                    <input type="number" id="transMonto" placeholder="50000" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label>Fecha</label>
+                    <input type="date" id="transFecha" required>
+                </div>
+                <div class="form-group">
+                    <label>Descripción</label>
+                    <textarea id="transDescripcion" placeholder="Detalles de la transacción"></textarea>
+                </div>
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Guardar</button>
+                    <button type="button" class="btn btn-secondary" style="flex: 1;" onclick="closeModal('transaccionModal')">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="clienteModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span id="clienteTitle">Nuevo Cliente</span>
+                <button class="modal-close" onclick="closeModal('clienteModal')">&times;</button>
+            </div>
+            <form onsubmit="saveCliente(event)">
+                <div class="form-group">
+                    <label>Nombre Completo</label>
+                    <input type="text" id="clienteNombre" placeholder="Juan Pérez" required>
+                </div>
+                <div class="form-group">
+                    <label>RUT (opcional)</label>
+                    <input type="text" id="clienteRut" placeholder="12.345.678-9">
+                </div>
+                <div class="form-group">
+                    <label>Teléfono</label>
+                    <input type="tel" id="clienteTelefono" placeholder="+56 9 1234 5678" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="clienteEmail" placeholder="juan@example.com">
+                </div>
+                <div class="form-group">
+                    <label>Dirección</label>
+                    <input type="text" id="clienteDireccion" placeholder="Calle Principal 123">
+                </div>
+                <div class="form-group">
+                    <label>Contacto de Emergencia</label>
+                    <input type="tel" id="clienteEmergencia" placeholder="+56 9 9876 5432">
+                </div>
+                <div class="form-group">
+                    <label>Veterinario Preferido</label>
+                    <select id="clienteVeterinario">
+                        <option value="">Sin preferencia</option>
+                        <option value="Dr. García">Dr. García</option>
+                        <option value="Dra. López">Dra. López</option>
+                        <option value="Dr. Martínez">Dr. Martínez</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Mascotas (separadas por coma)</label>
+                    <textarea id="clienteMascotas" placeholder="Firulais, Gatita, Loro"></textarea>
+                </div>
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Guardar Cliente</button>
+                    <button type="button" class="btn btn-secondary" style="flex: 1;" onclick="closeModal('clienteModal')">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- DETAIL MODALS -->
+    <div id="consultaDetailModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>Detalle de Consulta</span>
+                <button class="modal-close" onclick="closeModal('consultaDetailModal')">&times;</button>
+            </div>
+            <div id="consultaDetailContent"></div>
+        </div>
+    </div>
+
+    <div id="pacienteDetailModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>Ficha del Paciente</span>
+                <button class="modal-close" onclick="closeModal('pacienteDetailModal')">&times;</button>
+            </div>
+            <div id="pacienteDetailContent"></div>
+        </div>
+    </div>
+
+    <script>
+        // ============ STATE MANAGEMENT ============
+        let appState = {
+            consultas: [],
+            pacientes: [],
+            vacunas: [],
+            medicamentos: [],
+            transacciones: [],
+            clientes: []
+        };
+
+        const RAZAS = {
+            perro: ['Labrador', 'Pastor Alemán', 'Golden Retriever', 'Bulldog', 'Caniche', 'Dálmata', 'Beagle', 'Husky', 'Chihuahua', 'Otra'],
+            gato: ['Persa', 'Siamés', 'Bengalí', 'Maine Coon', 'Ragdoll', 'Angora', 'Mau Egipcio', 'Otra'],
+            ave: ['Loro', 'Canario', 'Periquito', 'Cotorra', 'Loro Amazónico', 'Otra'],
+            exótico: ['Conejo', 'Hámster', 'Cobaya', 'Chinchilla', 'Ardilla', 'Otra']
+        };
+
+        const BREEDMAP = {
+            perro: ['Labrador', 'Pastor Alemán', 'Golden Retriever', 'Bulldog Francés', 'Bulldog Inglés', 'Caniche', 'Dálmata', 'Beagle', 'Husky Siberiano', 'Chihuahua', 'Yorkshire Terrier', 'Boxer', 'Poodle', 'Cocker Spaniel', 'Schnauzer', 'Otra'],
+            gato: ['Persa', 'Siamés', 'Bengalí', 'Maine Coon', 'Ragdoll', 'Angora Turco', 'Mau Egipcio', 'Abisinio', 'Siberiano', 'Otra'],
+            ave: ['Loro Amazónico', 'Loro Gris', 'Loro Macadamia', 'Canario', 'Periquito', 'Cotorra', 'Agapornis', 'Cacatúa', 'Otra'],
+            exótico: ['Conejo', 'Conejo Enano', 'Hámster Sirio', 'Hámster Ruso', 'Cobaya', 'Chinchilla', 'Ardilla', 'Degú', 'Otra']
+        };
+
+        // ============ INITIALIZATION ============
+        document.addEventListener('DOMContentLoaded', function() {
+            loadFromStorage();
+            setupTabListeners();
+            updateConsultasList();
+            updatePacientesList();
+            updateVacunasList();
+            updateFarmaciaList();
+            updateClientesList();
+            updateFinanzas();
+            updateHeaderDate();
+            updateConsultaPacienteDropdown();
+            updateVacunaPacienteDropdown();
+
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('data:application/javascript,self.addEventListener("install",e=>self.skipWaiting());self.addEventListener("activate",e=>self.clients.claim());').catch(()=>{});
+            }
+        });
+
+        // ============ STORAGE ============
+        function loadFromStorage() {
+            try {
+                const stored = localStorage.getItem('clinicavetcl_data');
+                if (stored) {
+                    appState = JSON.parse(stored);
+                }
+            } catch (e) {
+                console.warn('Storage load failed:', e);
+            }
+        }
+
+        function saveToStorage() {
+            try {
+                localStorage.setItem('clinicavetcl_data', JSON.stringify(appState));
+            } catch (e) {
+                console.warn('Storage save failed:', e);
+            }
+        }
+
+        // ============ UI HELPERS ============
+        function setupTabListeners() {
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const tabName = this.getAttribute('data-tab');
+                    switchTab(tabName);
+                });
+            });
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            document.getElementById(tabName).classList.add('active');
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+
+            if (tabName === 'finanzas') {
+                setTimeout(() => {
+                    updateFinanzas();
+                }, 100);
+            }
+        }
+
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        function updateHeaderDate() {
+            const now = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('headerDate').textContent = now.toLocaleDateString('es-CL', options);
+        }
+
+        function showAlert(message, type = 'success') {
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type} success-message`;
+            alert.textContent = message;
+            alert.style.position = 'fixed';
+            alert.style.top = '100px';
+            alert.style.right = '20px';
+            alert.style.zIndex = '2000';
+            alert.style.maxWidth = '300px';
+            document.body.appendChild(alert);
+            setTimeout(() => alert.remove(), 3000);
+        }
+
+        function formatCLP(value) {
+            return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(value);
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('es-CL');
+        }
+
+        function formatDateTime(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('es-CL') + ' ' + date.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        // ============ CONSULTAS ============
+        function openConsultaModal() {
+            document.getElementById('consultaTitle').textContent = 'Nueva Consulta';
+            document.getElementById('consultaModal').style.display = 'none';
+            document.getElementById('consultaPaciente').value = '';
+            document.getElementById('consultaPropietario').value = '';
+            document.getElementById('consultaFecha').value = '';
+            document.getElementById('consultaMotivo').value = '';
+            document.getElementById('consultaDiagnostico').value = '';
+            document.getElementById('consultaTratamiento').value = '';
+            document.getElementById('consultaVeterinario').value = 'Dr. García';
+            document.getElementById('consultaPrecio').value = '';
+            openModal('consultaModal');
+        }
+
+        function updateConsultaPacienteDropdown() {
+            const select = document.getElementById('consultaPaciente');
+            select.innerHTML = '<option value="">Seleccionar mascota...</option>';
+            appState.pacientes.forEach(p => {
+                const option = document.createElement('option');
+                option.value = JSON.stringify(p);
+                option.textContent = p.nombre + ' (' + p.especie + ')';
+                select.appendChild(option);
+            });
+
+            select.addEventListener('change', function() {
+                if (this.value) {
+                    const paciente = JSON.parse(this.value);
+                    const cliente = appState.clientes.find(c => c.mascotas && c.mascotas.includes(paciente.nombre));
+                    document.getElementById('consultaPropietario').value = cliente ? cliente.nombre : '';
+                }
+            });
+        }
+
+        function saveConsulta(e) {
+            e.preventDefault();
+            const pacienteData = document.getElementById('consultaPaciente').value;
+            if (!pacienteData) {
+                showAlert('Selecciona un paciente', 'warning');
+                return;
+            }
+
+            const consulta = {
+                id: Date.now(),
+                paciente: JSON.parse(pacienteData).nombre,
+                pacienteData: JSON.parse(pacienteData),
+                propietario: document.getElementById('consultaPropietario').value,
+                fecha: document.getElementById('consultaFecha').value,
+                motivo: document.getElementById('consultaMotivo').value,
+                diagnostico: document.getElementById('consultaDiagnostico').value,
+                tratamiento: document.getElementById('consultaTratamiento').value,
+                veterinario: document.getElementById('consultaVeterinario').value,
+                precio: parseInt(document.getElementById('consultaPrecio').value) || 0
+            };
+
+            appState.consultas.unshift(consulta);
+            saveToStorage();
+            updateConsultasList();
+            updateFinanzas();
+            closeModal('consultaModal');
+            showAlert('Consulta guardada correctamente');
+        }
+
+        function updateConsultasList() {
+            const container = document.getElementById('consultasList');
+            if (appState.consultas.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div><div class="empty-state-text">No hay consultas registradas</div></div>';
+                return;
+            }
+
+            container.innerHTML = appState.consultas.map(c => `
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">${c.paciente}</div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <span class="badge badge-info">${c.veterinario}</span>
+                            <button class="icon-btn" onclick="deleteConsulta(${c.id}); return false;">🗑️</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Propietario:</strong> ${c.propietario}</p>
+                        <p><strong>Fecha:</strong> ${formatDateTime(c.fecha)}</p>
+                        <p><strong>Motivo:</strong> ${c.motivo}</p>
+                        <p><strong>Precio:</strong> ${formatCLP(c.precio)}</p>
+                        <button class="btn btn-accent btn-small" onclick="showConsultaDetail(${c.id})">Ver Detalle</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function deleteConsulta(id) {
+            if (confirm('¿Eliminar esta consulta?')) {
+                appState.consultas = appState.consultas.filter(c => c.id !== id);
+                saveToStorage();
+                updateConsultasList();
+                updateFinanzas();
+                showAlert('Consulta eliminada');
+            }
+        }
+
+        function showConsultaDetail(id) {
+            const consulta = appState.consultas.find(c => c.id === id);
+            if (!consulta) return;
+
+            const content = document.getElementById('consultaDetailContent');
+            content.innerHTML = `
+                <div style="margin-bottom: 1rem;">
+                    <p><strong>Paciente:</strong> ${consulta.paciente}</p>
+                    <p><strong>Especie:</strong> ${consulta.pacienteData.especie}</p>
+                    <p><strong>Edad:</strong> ${consulta.pacienteData.edad} años</p>
+                    <p><strong>Peso:</strong> ${consulta.pacienteData.peso} kg</p>
+                    <p><strong>Propietario:</strong> ${consulta.propietario}</p>
+                    <p><strong>Fecha y Hora:</strong> ${formatDateTime(consulta.fecha)}</p>
+                    <p><strong>Veterinario:</strong> ${consulta.veterinario}</p>
+                </div>
+                <h3>Motivo de Consulta</h3>
+                <p>${consulta.motivo}</p>
+                ${consulta.diagnostico ? `<h3>Diagnóstico</h3><p>${consulta.diagnostico}</p>` : ''}
+                ${consulta.tratamiento ? `<h3>Tratamiento</h3><p>${consulta.tratamiento}</p>` : ''}
+                <h3>Importe</h3>
+                <p style="font-size: 1.5rem; font-weight: bold; color: var(--primary);">${formatCLP(consulta.precio)}</p>
+                <div class="btn-group">
+                    <button class="btn btn-accent btn-small" onclick="generatePrescription(${id})">📄 Generar Receta</button>
+                    <button class="btn btn-secondary btn-small" onclick="closeModal('consultaDetailModal')">Cerrar</button>
+                </div>
+            `;
+            openModal('consultaDetailModal');
+        }
+
+        function generatePrescription(consultaId) {
+            const consulta = appState.consultas.find(c => c.id === consultaId);
+            if (!consulta) return;
+
+            const prescription = `
+*RECETA MÉDICA VETERINARIA*
+${new Date().toLocaleDateString('es-CL')}
+
+Paciente: ${consulta.paciente} (${consulta.pacienteData.especie})
+Propietario: ${consulta.propietario}
+Edad: ${consulta.pacienteData.edad} años
+Peso: ${consulta.pacienteData.peso} kg
+
+Veterinario: Dr./Dra. ${consulta.veterinario}
+
+*DIAGNÓSTICO:*
+${consulta.diagnostico || 'No especificado'}
+
+*TRATAMIENTO RECOMENDADO:*
+${consulta.tratamiento || 'No especificado'}
+
+*INSTRUCCIONES IMPORTANTES:*
+- Seguir las indicaciones exactamente como se prescriben
+- Si hay reacciones adversas, comunicarse inmediatamente
+- Conservar los medicamentos en lugar fresco y seco
+
+---
+Sistema ClinicaVetCL | Consulta #${consulta.id}
+            `;
+
+            const modal = document.getElementById('consultaDetailModal');
+            const content = document.getElementById('consultaDetailContent');
+            const prescDiv = document.createElement('div');
+            prescDiv.className = 'prescription-text';
+            prescDiv.textContent = prescription;
+            content.appendChild(prescDiv);
+
+            const copyBtn = document.createElement('button');
+            copyBtn.className = 'btn btn-accent btn-small';
+            copyBtn.textContent = '📋 Copiar para WhatsApp';
+            copyBtn.onclick = () => {
+                navigator.clipboard.writeText(prescription);
+                showAlert('Receta copiada al portapapeles');
+            };
+            content.appendChild(copyBtn);
+        }
+
+        function filterConsultas() {
+            const search = document.getElementById('searchConsultas').value.toLowerCase();
+            document.querySelectorAll('#consultasList .card').forEach(card => {
+                const text = card.textContent.toLowerCase();
+                card.style.display = text.includes(search) ? '' : 'none';
+            });
+        }
+
+        // ============ PACIENTES ============
+        function openPacienteModal() {
+            document.getElementById('pacienteTitle').textContent = 'Nuevo Paciente';
+            document.getElementById('pacienteNombre').value = '';
+            document.getElementById('pacienteEspecie').value = '';
+            document.getElementById('pacienteRaza').value = '';
+            document.getElementById('pacienteEdad').value = '';
+            document.getElementById('pacientePeso').value = '';
+            document.getElementById('pacienteEsterilizado').value = 'no';
+            document.getElementById('pacienteMicrochip').value = '';
+            document.getElementById('pacienteAlergias').value = '';
+            document.getElementById('pacienteEnfermedades').value = '';
+            openModal('pacienteModal');
+        }
+
+        function updateBreedOptions() {
+            const especie = document.getElementById('pacienteEspecie').value;
+            const razaSelect = document.getElementById('pacienteRaza');
+            razaSelect.innerHTML = '<option value="">Seleccionar raza...</option>';
+
+            if (especie && BREEDMAP[especie]) {
+                BREEDMAP[especie].forEach(raza => {
+                    const option = document.createElement('option');
+                    option.value = raza;
+                    option.textContent = raza;
+                    razaSelect.appendChild(option);
+                });
+            }
+        }
+
+        function savePaciente(e) {
+            e.preventDefault();
+            const paciente = {
+                id: Date.now(),
+                nombre: document.getElementById('pacienteNombre').value,
+                especie: document.getElementById('pacienteEspecie').value,
+                raza: document.getElementById('pacienteRaza').value,
+                edad: parseFloat(document.getElementById('pacienteEdad').value),
+                peso: parseFloat(document.getElementById('pacientePeso').value),
+                esterilizado: document.getElementById('pacienteEsterilizado').value,
+                microchip: document.getElementById('pacienteMicrochip').value,
+                alergias: document.getElementById('pacienteAlergias').value,
+                enfermedades: document.getElementById('pacienteEnfermedades').value,
+                pesoHistory: [{ fecha: new Date().toISOString().split('T')[0], peso: parseFloat(document.getElementById('pacientePeso').value) }],
+                createdAt: new Date().toISOString()
+            };
+
+            appState.pacientes.unshift(paciente);
+            saveToStorage();
+            updatePacientesList();
+            updateConsultaPacienteDropdown();
+            updateVacunaPacienteDropdown();
+            closeModal('pacienteModal');
+            showAlert('Paciente registrado correctamente');
+        }
+
+        function updatePacientesList() {
+            const container = document.getElementById('pacientesList');
+            if (appState.pacientes.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🐾</div><div class="empty-state-text">No hay pacientes registrados</div></div>';
+                return;
+            }
+
+            container.innerHTML = appState.pacientes.map(p => `
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">${p.nombre}</div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <span class="badge badge-info">${p.especie}</span>
+                            <button class="icon-btn" onclick="deletePaciente(${p.id}); return false;">🗑️</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Raza:</strong> ${p.raza}</p>
+                        <p><strong>Edad:</strong> ${p.edad} años | <strong>Peso:</strong> ${p.peso} kg</p>
+                        <p><strong>Esterilizado:</strong> ${p.esterilizado === 'si' ? '✅ Sí' : p.esterilizado === 'no' ? '❌ No' : '❓ Desconocido'}</p>
+                        ${p.microchip ? `<p><strong>Microchip:</strong> ${p.microchip}</p>` : ''}
+                        <button class="btn btn-accent btn-small" onclick="showPacienteDetail(${p.id})">Ver Ficha Completa</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function showPacienteDetail(id) {
+            const paciente = appState.pacientes.find(p => p.id === id);
+            if (!paciente) return;
+
+            const content = document.getElementById('pacienteDetailContent');
+            content.innerHTML = `
+                <div style="margin-bottom: 1rem;">
+                    <h3>${paciente.nombre}</h3>
+                    <p><strong>Especie:</strong> ${paciente.especie}</p>
+                    <p><strong>Raza:</strong> ${paciente.raza}</p>
+                    <p><strong>Edad:</strong> ${paciente.edad} años</p>
+                    <p><strong>Peso Actual:</strong> ${paciente.peso} kg</p>
+                    <p><strong>Esterilizado:</strong> ${paciente.esterilizado === 'si' ? '✅ Sí' : paciente.esterilizado === 'no' ? '❌ No' : '❓ Desconocido'}</p>
+                    ${paciente.microchip ? `<p><strong>Microchip:</strong> ${paciente.microchip}</p>` : ''}
+                </div>
+                ${paciente.alergias ? `<div><h3>Alergias Conocidas</h3><p>${paciente.alergias}</p></div>` : ''}
+                ${paciente.enfermedades ? `<div><h3>Enfermedades Crónicas</h3><p>${paciente.enfermedades}</p></div>` : ''}
+                <div style="margin-top: 1.5rem;">
+                    <h3>Registro de Pesos</h3>
+                    <div style="max-height: 200px; overflow-y: auto;">
+                        ${(paciente.pesoHistory || []).map(w => `<p>${w.fecha}: ${w.peso} kg</p>`).join('')}
+                    </div>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-secondary btn-small" onclick="closeModal('pacienteDetailModal')">Cerrar</button>
+                </div>
+            `;
+            openModal('pacienteDetailModal');
+        }
+
+        function deletePaciente(id) {
+            if (confirm('¿Eliminar este paciente? Se perderán todos sus registros.')) {
+                appState.pacientes = appState.pacientes.filter(p => p.id !== id);
+                saveToStorage();
+                updatePacientesList();
+                updateConsultaPacienteDropdown();
+                updateVacunaPacienteDropdown();
+                showAlert('Paciente eliminado');
+            }
+        }
+
+        function filterPacientes() {
+            const search = document.getElementById('searchPacientes').value.toLowerCase();
+            document.querySelectorAll('#pacientesList .card').forEach(card => {
+                const text = card.textContent.toLowerCase();
+                card.style.display = text.includes(search) ? '' : 'none';
+            });
+        }
+
+        // ============ VACUNAS ============
+        function openVacunaModal() {
+            document.getElementById('vacunaPaciente').value = '';
+            document.getElementById('vacunaTipo').value = '';
+            document.getElementById('vacunaFecha').value = new Date().toISOString().split('T')[0];
+            document.getElementById('vacunaLote').value = '';
+            document.getElementById('vacunaProxima').value = '';
+            document.getElementById('vacunaVeterinario').value = 'Dr. García';
+            openModal('vacunaModal');
+        }
+
+        function updateVacunaPacienteDropdown() {
+            const select = document.getElementById('vacunaPaciente');
+            select.innerHTML = '<option value="">Seleccionar...</option>';
+            appState.pacientes.forEach(p => {
+                const option = document.createElement('option');
+                option.value = JSON.stringify(p);
+                option.textContent = p.nombre + ' (' + p.especie + ')';
+                select.appendChild(option);
+            });
+        }
+
+        function setNextVacunaDate() {
+            const tipo = document.getElementById('vacunaTipo').value;
+            const fecha = document.getElementById('vacunaFecha').value;
+            if (!fecha) return;
+
+            const date = new Date(fecha);
+            const nextDates = {
+                'Antirrábica': 365,
+                'Séxtuple': 365,
+                'Triple Felina': 365,
+                'FeLV': 365,
+                'Rabia Felina': 365,
+                'DHPP': 365,
+                'Personalizado': 30
+            };
+
+            const days = nextDates[tipo] || 30;
+            const nextDate = new Date(date);
+            nextDate.setDate(nextDate.getDate() + days);
+            document.getElementById('vacunaProxima').value = nextDate.toISOString().split('T')[0];
+        }
+
+        function updateNextVacunaDate() {
+            setNextVacunaDate();
+        }
+
+        function saveVacuna(e) {
+            e.preventDefault();
+            const pacienteData = document.getElementById('vacunaPaciente').value;
+            if (!pacienteData) {
+                showAlert('Selecciona un paciente', 'warning');
+                return;
+            }
+
+            const vacuna = {
+                id: Date.now(),
+                paciente: JSON.parse(pacienteData).nombre,
+                pacienteId: JSON.parse(pacienteData).id,
+                tipo: document.getElementById('vacunaTipo').value,
+                fecha: document.getElementById('vacunaFecha').value,
+                lote: document.getElementById('vacunaLote').value,
+                proxima: document.getElementById('vacunaProxima').value,
+                veterinario: document.getElementById('vacunaVeterinario').value,
+                estado: 'aplicada'
+            };
+
+            appState.vacunas.unshift(vacuna);
+            saveToStorage();
+            updateVacunasList();
+            closeModal('vacunaModal');
+            showAlert('Vacuna registrada correctamente');
+        }
+
+        function updateVacunasList() {
+            const container = document.getElementById('vacunasList');
+            if (appState.vacunas.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">💉</div><div class="empty-state-text">No hay vacunaciones registradas</div></div>';
+                return;
+            }
+
+            const today = new Date().toISOString().split('T')[0];
+            container.innerHTML = appState.vacunas.map(v => {
+                const isDue = v.proxima <= today;
+                return `
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">${v.paciente} - ${v.tipo}</div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <span class="badge ${isDue ? 'badge-danger' : 'badge-success'}">${isDue ? '⚠️ VENCIDA' : '✅ Al día'}</span>
+                            <button class="icon-btn" onclick="deleteVacuna(${v.id}); return false;">🗑️</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Fecha Aplicación:</strong> ${formatDate(v.fecha)}</p>
+                        <p><strong>Lote:</strong> ${v.lote || 'No registrado'}</p>
+                        <p><strong>Próxima Dosis:</strong> ${formatDate(v.proxima)}</p>
+                        <p><strong>Veterinario:</strong> ${v.veterinario}</p>
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        function deleteVacuna(id) {
+            if (confirm('¿Eliminar este registro de vacunación?')) {
+                appState.vacunas = appState.vacunas.filter(v => v.id !== id);
+                saveToStorage();
+                updateVacunasList();
+                showAlert('Vacunación eliminada');
+            }
+        }
+
+        // ============ FARMACIA ============
+        function openMedicamentoModal() {
+            document.getElementById('medNombre').value = '';
+            document.getElementById('medCategoria').value = '';
+            document.getElementById('medStock').value = '';
+            document.getElementById('medStockMin').value = '';
+            document.getElementById('medPrecio').value = '';
+            document.getElementById('medExpiracion').value = '';
+            document.getElementById('medProveedor').value = '';
+            openModal('medicamentoModal');
+        }
+
+        function saveMedicamento(e) {
+            e.preventDefault();
+            const medicamento = {
+                id: Date.now(),
+                nombre: document.getElementById('medNombre').value,
+                categoria: document.getElementById('medCategoria').value,
+                stock: parseInt(document.getElementById('medStock').value),
+                stockMin: parseInt(document.getElementById('medStockMin').value),
+                precio: parseInt(document.getElementById('medPrecio').value),
+                expiracion: document.getElementById('medExpiracion').value,
+                proveedor: document.getElementById('medProveedor').value,
+                createdAt: new Date().toISOString()
+            };
+
+            appState.medicamentos.unshift(medicamento);
+            saveToStorage();
+            updateFarmaciaList();
+            closeModal('medicamentoModal');
+            showAlert('Medicamento agregado al inventario');
+        }
+
+        function updateFarmaciaList() {
+            const container = document.getElementById('farmaciaList');
+            if (appState.medicamentos.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📦</div><div class="empty-state-text">Farmacia vacía</div></div>';
+                return;
+            }
+
+            const today = new Date().toISOString().split('T')[0];
+            container.innerHTML = appState.medicamentos.map(m => {
+                const isExpired = m.expiracion <= today;
+                const isLowStock = m.stock <= m.stockMin;
+                return `
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">${m.nombre}</div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            ${isExpired ? '<span class="badge badge-danger">⚠️ VENCIDO</span>' : ''}
+                            ${isLowStock ? '<span class="badge badge-warning">📉 Stock bajo</span>' : ''}
+                            <button class="icon-btn" onclick="deleteMedicamento(${m.id}); return false;">🗑️</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Categoría:</strong> ${m.categoria}</p>
+                        <p><strong>Stock:</strong> ${m.stock} unidades (Mín: ${m.stockMin})</p>
+                        <p><strong>Precio Unitario:</strong> ${formatCLP(m.precio)}</p>
+                        <p><strong>Vencimiento:</strong> ${formatDate(m.expiracion)}</p>
+                        <p><strong>Proveedor:</strong> ${m.proveedor || 'No especificado'}</p>
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        function deleteMedicamento(id) {
+            if (confirm('¿Eliminar este medicamento del inventario?')) {
+                appState.medicamentos = appState.medicamentos.filter(m => m.id !== id);
+                saveToStorage();
+                updateFarmaciaList();
+                updateFinanzas();
+                showAlert('Medicamento eliminado');
+            }
+        }
+
+        // ============ FINANZAS ============
+        function openTransaccionModal() {
+            document.getElementById('transTipo').value = '';
+            document.getElementById('transCategoria').value = '';
+            document.getElementById('transMonto').value = '';
+            document.getElementById('transFecha').value = new Date().toISOString().split('T')[0];
+            document.getElementById('transDescripcion').value = '';
+            openModal('transaccionModal');
+        }
+
+        function saveTransaccion(e) {
+            e.preventDefault();
+            const transaccion = {
+                id: Date.now(),
+                tipo: document.getElementById('transTipo').value,
+                categoria: document.getElementById('transCategoria').value,
+                monto: parseInt(document.getElementById('transMonto').value),
+                fecha: document.getElementById('transFecha').value,
+                descripcion: document.getElementById('transDescripcion').value,
+                createdAt: new Date().toISOString()
+            };
+
+            appState.transacciones.unshift(transaccion);
+            saveToStorage();
+            updateFinanzas();
+            closeModal('transaccionModal');
+            showAlert('Transacción registrada');
+        }
+
+        function updateFinanzas() {
+            const currentMonth = new Date().getMonth();
+            const currentYear = new Date().getFullYear();
+
+            const monthTransactions = appState.transacciones.filter(t => {
+                const date = new Date(t.fecha);
+                return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+            });
+
+            const ingresos = monthTransactions.filter(t => t.tipo === 'Ingreso').reduce((sum, t) => sum + t.monto, 0);
+            const costos = monthTransactions.filter(t => t.tipo === 'Gasto').reduce((sum, t) => sum + t.monto, 0);
+            const consultasIngresos = appState.consultas.filter(c => {
+                const date = new Date(c.fecha);
+                return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+            }).reduce((sum, c) => sum + c.precio, 0);
+
+            const totalIngresos = ingresos + consultasIngresos;
+            const utilidad = totalIngresos - costos;
+            const margen = totalIngresos > 0 ? ((utilidad / totalIngresos) * 100).toFixed(1) : 0;
+
+            document.getElementById('ingresosMes').textContent = formatCLP(totalIngresos);
+            document.getElementById('costosMes').textContent = formatCLP(costos);
+            document.getElementById('utilidadNeta').textContent = formatCLP(utilidad);
+            document.getElementById('margenNeto').textContent = `${margen}% margen neto`;
+
+            updateTransaccionesList();
+            updateFinanzasChart();
+        }
+
+        function updateFinanzasChart() {
+            const ctx = document.getElementById('chartServicio');
+            if (!ctx) return;
+
+            const currentMonth = new Date().getMonth();
+            const currentYear = new Date().getFullYear();
+
+            const consultas = appState.consultas.filter(c => {
+                const date = new Date(c.fecha);
+                return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+            });
+
+            const servicios = {};
+            consultas.forEach(c => {
+                const motivo = c.motivo.split(' ')[0].substring(0, 15) || 'Otra';
+                servicios[motivo] = (servicios[motivo] || 0) + c.precio;
+            });
+
+            if (Object.keys(servicios).length === 0) {
+                servicios['Sin datos'] = 1;
+            }
+
+            const existingChart = Chart.helpers ? Chart.helpers.each(Chart.instances, i => i.destroy?.()) : null;
+            Chart.instances.forEach(i => i.destroy?.());
+
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(servicios),
+                    datasets: [{
+                        data: Object.values(servicios),
+                        backgroundColor: ['#14532d', '#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
+                        borderColor: 'white',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { font: { size: 12 }, padding: 15 }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateTransaccionesList() {
+            const container = document.getElementById('transaccionesList');
+            if (appState.transacciones.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-text">Sin transacciones registradas</div></div>';
+                return;
+            }
+
+            container.innerHTML = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Categoría</th>
+                            <th>Descripción</th>
+                            <th>Monto</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${appState.transacciones.slice(0, 50).map(t => `
+                            <tr>
+                                <td>${formatDate(t.fecha)}</td>
+                                <td><span class="badge ${t.tipo === 'Ingreso' ? 'badge-success' : 'badge-danger'}">${t.categoria}</span></td>
+                                <td>${t.descripcion}</td>
+                                <td style="font-weight: 600; color: ${t.tipo === 'Ingreso' ? '#10b981' : '#ef4444'}">
+                                    ${t.tipo === 'Ingreso' ? '+' : '-'}${formatCLP(t.monto)}
+                                </td>
+                                <td>
+                                    <button class="icon-btn" onclick="deleteTransaccion(${t.id}); return false;">🗑️</button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        function deleteTransaccion(id) {
+            if (confirm('¿Eliminar esta transacción?')) {
+                appState.transacciones = appState.transacciones.filter(t => t.id !== id);
+                saveToStorage();
+                updateFinanzas();
+                showAlert('Transacción eliminada');
+            }
+        }
+
+        // ============ CLIENTES ============
+        function openClienteModal() {
+            document.getElementById('clienteTitle').textContent = 'Nuevo Cliente';
+            document.getElementById('clienteNombre').value = '';
+            document.getElementById('clienteRut').value = '';
+            document.getElementById('clienteTelefono').value = '';
+            document.getElementById('clienteEmail').value = '';
+            document.getElementById('clienteDireccion').value = '';
+            document.getElementById('clienteEmergencia').value = '';
+            document.getElementById('clienteVeterinario').value = '';
+            document.getElementById('clienteMascotas').value = '';
+            openModal('clienteModal');
+        }
+
+        function saveCliente(e) {
+            e.preventDefault();
+            const cliente = {
+                id: Date.now(),
+                nombre: document.getElementById('clienteNombre').value,
+                rut: document.getElementById('clienteRut').value,
+                telefono: document.getElementById('clienteTelefono').value,
+                email: document.getElementById('clienteEmail').value,
+                direccion: document.getElementById('clienteDireccion').value,
+                emergencia: document.getElementById('clienteEmergencia').value,
+                veterinario: document.getElementById('clienteVeterinario').value,
+                mascotas: document.getElementById('clienteMascotas').value.split(',').map(m => m.trim()).filter(m => m),
+                createdAt: new Date().toISOString(),
+                visitas: 0
+            };
+
+            appState.clientes.unshift(cliente);
+            saveToStorage();
+            updateClientesList();
+            closeModal('clienteModal');
+            showAlert('Cliente registrado correctamente');
+        }
+
+        function updateClientesList() {
+            const container = document.getElementById('clientesList');
+            if (appState.clientes.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">👥</div><div class="empty-state-text">No hay clientes registrados</div></div>';
+                return;
+            }
+
+            container.innerHTML = appState.clientes.map(c => `
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">${c.nombre}</div>
+                        <button class="icon-btn" onclick="deleteCliente(${c.id}); return false;">🗑️</button>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Teléfono:</strong> ${c.telefono}</p>
+                        ${c.email ? `<p><strong>Email:</strong> ${c.email}</p>` : ''}
+                        ${c.direccion ? `<p><strong>Dirección:</strong> ${c.direccion}</p>` : ''}
+                        ${c.emergencia ? `<p><strong>Emergencia:</strong> ${c.emergencia}</p>` : ''}
+                        ${c.mascotas.length > 0 ? `<p><strong>Mascotas:</strong> ${c.mascotas.join(', ')}</p>` : ''}
+                        <p><strong>Veterinario Preferido:</strong> ${c.veterinario || 'Sin preferencia'}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function deleteCliente(id) {
+            if (confirm('¿Eliminar este cliente?')) {
+                appState.clientes = appState.clientes.filter(c => c.id !== id);
+                saveToStorage();
+                updateClientesList();
+                showAlert('Cliente eliminado');
+            }
+        }
+
+        function filterClientes() {
+            const search = document.getElementById('searchClientes').value.toLowerCase();
+            document.querySelectorAll('#clientesList .card').forEach(card => {
+                const text = card.textContent.toLowerCase();
+                card.style.display = text.includes(search) ? '' : 'none';
+            });
+        }
+    </script>
+</body>
+</html>

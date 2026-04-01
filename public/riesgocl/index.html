@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<meta name="theme-color" content="#0c4a7a"/>
+<meta name="description" content="RiesgoCL — Evaluador de riesgos naturales para comunas de Chile. Sismos, tsunamis, volcanes, incendios, inundaciones y remociones en masa."/>
+<title>RiesgoCL — Riesgos Naturales de Chile</title>
+<link rel="manifest" href="data:application/json,%7B%22name%22%3A%22RiesgoCL%22%2C%22short_name%22%3A%22RiesgoCL%22%2C%22start_url%22%3A%22.%2F%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23f0f6ff%22%2C%22theme_color%22%3A%22%230c4a7a%22%7D"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV/XN/WLcE=" crossorigin=""></script>
+<style>
+:root{
+  --bg:#f0f6ff;--card:#ffffff;--card2:#e8f2ff;--border:#b8d4f0;
+  --accent:#0369a1;--text:#1e3a5f;--muted:#6b8fa5;
+  --green:#16a34a;--yellow:#d97706;--orange:#ea580c;--red:#dc2626;
+  --none:#9ca3af;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+header{
+  background:linear-gradient(90deg,#0c4a7a,#0369a1);
+  padding:13px 18px;position:sticky;top:0;z-index:50;
+  display:flex;align-items:center;justify-content:space-between;color:white
+}
+header h1{font-size:1.15rem;font-weight:800;letter-spacing:-.3px;display:flex;align-items:center;gap:8px}
+header .subtitle{font-size:.7rem;opacity:.8;display:block;font-weight:400}
+.live-badge{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);
+  border-radius:20px;padding:3px 10px;font-size:.65rem;font-weight:600;
+  display:flex;align-items:center;gap:5px;white-space:nowrap}
+.live-dot{width:7px;height:7px;background:#4ade80;border-radius:50%;
+  animation:pulse 1.4s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+nav{
+  background:#fff;border-bottom:2px solid var(--border);
+  display:flex;overflow-x:auto;position:sticky;top:62px;z-index:40;
+  scrollbar-width:none
+}
+nav::-webkit-scrollbar{display:none}
+.nav-btn{
+  flex:none;padding:11px 16px;font-size:.8rem;font-weight:600;
+  border:none;background:none;cursor:pointer;color:var(--muted);
+  border-bottom:3px solid transparent;transition:all .2s;white-space:nowrap
+}
+.nav-btn.active{color:var(--accent);border-bottom-color:var(--accent);background:var(--card2)}
+.nav-btn:hover:not(.active){color:var(--text);background:#f8faff}
+
+.tab{display:none;padding:16px;max-width:680px;margin:0 auto}
+.tab.active{display:block}
+
+/* Comuna Tab */
+.selector-card{background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px}
+.selector-card h2{font-size:1rem;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+select{
+  width:100%;padding:12px 14px;border:1.5px solid var(--border);
+  border-radius:10px;font-family:'Inter',sans-serif;font-size:16px;
+  background:var(--card);color:var(--text);appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b8fa5' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 14px center;
+  cursor:pointer;outline:none
+}
+select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(3,105,161,.15)}
+.btn-evaluar{
+  width:100%;margin-top:14px;padding:14px;
+  background:linear-gradient(135deg,#0c4a7a,var(--accent));
+  color:white;border:none;border-radius:12px;font-size:1rem;font-weight:700;
+  cursor:pointer;transition:transform .1s,box-shadow .2s;
+  box-shadow:0 4px 14px rgba(3,105,161,.35)
+}
+.btn-evaluar:hover{box-shadow:0 6px 20px rgba(3,105,161,.45)}
+.btn-evaluar:active{transform:scale(.98)}
+
+.result-header{background:linear-gradient(135deg,var(--card2),var(--card));
+  border:1.5px solid var(--border);border-radius:14px;padding:18px;margin-bottom:14px}
+.result-header h3{font-size:1.15rem;font-weight:800}
+.result-header .region{font-size:.78rem;color:var(--muted);margin-top:3px}
+
+.risk-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+@media(min-width:480px){.risk-grid{grid-template-columns:1fr 1fr 1fr}}
+.risk-card{
+  background:var(--card);border:1.5px solid var(--border);border-radius:12px;
+  padding:14px 12px;text-align:center;transition:box-shadow .2s
+}
+.risk-card:hover{box-shadow:0 4px 12px rgba(3,105,161,.12)}
+.risk-emoji{font-size:2rem;margin-bottom:6px;display:block}
+.risk-name{font-size:.72rem;font-weight:600;color:var(--muted);margin-bottom:7px;text-transform:uppercase;letter-spacing:.3px}
+.risk-badge{
+  display:inline-block;padding:4px 11px;border-radius:20px;
+  font-size:.72rem;font-weight:700;color:white;margin-bottom:6px
+}
+.risk-detail{font-size:.68rem;color:var(--muted);line-height:1.4}
+
+.composite-card{
+  background:var(--card);border:2px solid var(--border);border-radius:14px;
+  padding:16px 18px;margin-bottom:12px;display:flex;align-items:center;gap:14px
+}
+.composite-score{
+  min-width:72px;height:72px;border-radius:50%;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;font-weight:800;color:white;
+  flex-shrink:0;box-shadow:0 4px 12px rgba(0,0,0,.2)
+}
+.composite-score .pct{font-size:1.3rem}
+.composite-score .lbl{font-size:.6rem;font-weight:600;opacity:.9}
+.composite-info h4{font-size:.95rem;font-weight:700;margin-bottom:4px}
+.composite-info p{font-size:.78rem;color:var(--muted)}
+
+.info-links{background:var(--card2);border:1.5px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:12px}
+.info-links h4{font-size:.82rem;font-weight:700;margin-bottom:10px;color:var(--accent)}
+.info-link-item{display:flex;align-items:center;gap:8px;padding:7px 0;
+  border-bottom:1px solid var(--border);font-size:.8rem}
+.info-link-item:last-child{border-bottom:none;padding-bottom:0}
+.info-link-item a{color:var(--accent);text-decoration:none;font-weight:600}
+.info-link-item a:hover{text-decoration:underline}
+
+.plan-card{background:#fefce8;border:1.5px solid #fde68a;border-radius:12px;padding:14px 16px}
+.plan-card h4{font-size:.82rem;font-weight:700;color:#92400e;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.plan-card ul{padding-left:18px}
+.plan-card li{font-size:.78rem;color:#78350f;margin-bottom:5px;line-height:1.4}
+
+/* Map Tab */
+#map{height:420px;border-radius:14px;border:1.5px solid var(--border);margin-bottom:14px;z-index:1}
+.map-legend{background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:12px}
+.map-legend h4{font-size:.82rem;font-weight:700;margin-bottom:10px}
+.legend-items{display:flex;flex-wrap:wrap;gap:8px}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:.75rem;font-weight:500}
+.legend-dot{width:13px;height:13px;border-radius:50%;flex-shrink:0}
+.map-note{background:var(--card2);border-left:4px solid var(--accent);border-radius:0 10px 10px 0;
+  padding:10px 14px;font-size:.78rem;color:var(--muted)}
+
+/* Preparacion Tab */
+.prep-section{background:var(--card);border:1.5px solid var(--border);border-radius:14px;
+  margin-bottom:12px;overflow:hidden}
+.prep-header{
+  padding:14px 16px;cursor:pointer;display:flex;align-items:center;
+  justify-content:space-between;font-weight:700;font-size:.9rem;
+  background:var(--card);transition:background .15s;user-select:none
+}
+.prep-header:hover{background:var(--card2)}
+.prep-header .emoji{font-size:1.3rem;margin-right:8px}
+.prep-body{display:none;padding:0 16px 16px;border-top:1px solid var(--border)}
+.prep-body.open{display:block}
+.prep-sub{font-size:.8rem;font-weight:700;color:var(--accent);margin:12px 0 6px;text-transform:uppercase;letter-spacing:.3px}
+.prep-list{list-style:none;padding:0}
+.prep-list li{
+  padding:7px 0 7px 22px;font-size:.82rem;line-height:1.45;
+  border-bottom:1px solid #f0f6ff;position:relative;color:var(--text)
+}
+.prep-list li:last-child{border-bottom:none}
+.prep-list li::before{content:"✓";position:absolute;left:0;color:var(--green);font-weight:700}
+.prep-list li.warn::before{content:"⚠";color:var(--orange)}
+.kit-card{background:linear-gradient(135deg,#fef3c7,#fde68a);border:1.5px solid #fcd34d;
+  border-radius:14px;padding:16px;margin-bottom:12px}
+.kit-card h3{font-size:.95rem;font-weight:800;color:#78350f;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.kit-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.kit-item{background:rgba(255,255,255,.7);border-radius:8px;padding:8px 10px;
+  font-size:.78rem;font-weight:500;color:#78350f;display:flex;align-items:center;gap:6px}
+
+/* Historia Tab */
+.historia-header{background:linear-gradient(135deg,#1e3a5f,#0369a1);border-radius:14px;
+  padding:18px;color:white;margin-bottom:14px;text-align:center}
+.historia-header h2{font-size:1.1rem;font-weight:800;margin-bottom:6px}
+.historia-header p{font-size:.8rem;opacity:.85}
+.event-card{background:var(--card);border:1.5px solid var(--border);border-radius:12px;
+  padding:14px 16px;margin-bottom:10px;display:flex;gap:12px}
+.event-year{min-width:50px;font-size:1.1rem;font-weight:800;color:var(--accent);text-align:center;padding-top:2px}
+.event-body{}
+.event-title{font-size:.88rem;font-weight:700;margin-bottom:3px}
+.event-mag{display:inline-block;padding:2px 9px;border-radius:12px;font-size:.7rem;font-weight:700;
+  color:white;margin-bottom:5px;background:var(--red)}
+.event-desc{font-size:.78rem;color:var(--muted);line-height:1.45}
+.recent-quakes{background:var(--card);border:1.5px solid var(--border);border-radius:14px;
+  padding:16px;margin-top:14px}
+.recent-quakes h3{font-size:.9rem;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.quake-item{display:flex;justify-content:space-between;align-items:center;
+  padding:8px 0;border-bottom:1px solid var(--border);font-size:.8rem}
+.quake-item:last-child{border-bottom:none}
+.quake-mag{font-weight:700;padding:3px 9px;border-radius:8px;color:white;font-size:.78rem}
+.quake-loc{color:var(--muted);font-size:.73rem;margin-top:2px}
+.fact-banner{background:linear-gradient(135deg,#dc262615,#dc262608);border:1.5px solid #fca5a5;
+  border-radius:12px;padding:14px 16px;margin-top:12px;text-align:center}
+.fact-banner strong{font-size:.85rem;color:#991b1b;font-weight:800}
+.fact-banner p{font-size:.78rem;color:#b91c1c;margin-top:4px}
+
+/* Shared */
+.loading{text-align:center;padding:24px;color:var(--muted);font-size:.85rem}
+.spinner{display:inline-block;width:22px;height:22px;border:3px solid var(--border);
+  border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin-bottom:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.error-msg{background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;
+  padding:12px 14px;font-size:.8rem;color:#991b1b}
+.section-title{font-size:.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.5px;margin:18px 0 10px;display:flex;align-items:center;gap:6px}
+.section-title::after{content:"";flex:1;height:1px;background:var(--border)}
+
+/* Risk colors */
+.r0{background:var(--none)}
+.r1{background:var(--green)}
+.r2{background:var(--yellow)}
+.r3{background:var(--orange)}
+.r4{background:var(--red)}
+.border-r0{border-left:4px solid var(--none)}
+.border-r1{border-left:4px solid var(--green)}
+.border-r2{border-left:4px solid var(--yellow)}
+.border-r3{border-left:4px solid var(--orange)}
+.border-r4{border-left:4px solid var(--red)}
+
+.chevron{transition:transform .2s;font-style:normal;margin-left:auto}
+.open-section .chevron{transform:rotate(180deg)}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>⛰️ RiesgoCL
+      <span class="subtitle">Riesgos Naturales de Chile</span>
+    </h1>
+  </div>
+  <div class="live-badge">
+    <span class="live-dot"></span>
+    USGS Live
+  </div>
+</header>
+
+<nav id="nav">
+  <button class="nav-btn active" data-tab="tab-comuna">🏘️ Mi Comuna</button>
+  <button class="nav-btn" data-tab="tab-mapa">🗺️ Mapa</button>
+  <button class="nav-btn" data-tab="tab-prep">📋 Preparación</button>
+  <button class="nav-btn" data-tab="tab-historia">📖 Historial</button>
+</nav>
+
+<!-- TAB 1: MI COMUNA -->
+<div class="tab active" id="tab-comuna">
+
+  <div class="selector-card">
+    <h2>🔍 Evalúa tu riesgo local</h2>
+    <select id="comuna-select">
+      <option value="">-- Selecciona tu comuna --</option>
+    </select>
+    <button class="btn-evaluar" id="btn-evaluar">EVALUAR RIESGO</button>
+  </div>
+
+  <div id="result-area" style="display:none">
+    <div class="result-header">
+      <h3 id="res-nombre"></h3>
+      <div class="region" id="res-coords"></div>
+    </div>
+
+    <div class="risk-grid" id="risk-grid"></div>
+
+    <div class="composite-card" id="composite-card">
+      <div class="composite-score" id="composite-score">
+        <span class="pct" id="composite-pct">--</span>
+        <span class="lbl">RIESGO</span>
+      </div>
+      <div class="composite-info">
+        <h4 id="composite-label">Riesgo Total Compuesto</h4>
+        <p id="composite-desc"></p>
+      </div>
+    </div>
+
+    <div class="info-links">
+      <h4>🔗 Recursos oficiales</h4>
+      <div class="info-link-item">🗺️ <a href="https://www.senapred.cl/mapas-de-riesgo" target="_blank" rel="noopener">Zonas de evacuación — SENAPRED</a></div>
+      <div class="info-link-item">🔬 <a href="https://www.sismologia.cl" target="_blank" rel="noopener">Red Sismológica Nacional</a></div>
+      <div class="info-link-item">🌋 <a href="https://www.sernageomin.cl/volcan" target="_blank" rel="noopener">Monitoreo volcánico — SERNAGEOMIN</a></div>
+      <div class="info-link-item">🔥 <a href="https://www.conaf.cl/incendios-forestales" target="_blank" rel="noopener">Alerta incendios — CONAF</a></div>
+    </div>
+
+    <div class="plan-card">
+      <h4>📋 Plan de emergencia familiar</h4>
+      <ul>
+        <li>Definir punto de encuentro fuera de casa (a ≥50m)</li>
+        <li>Guardar números de emergencia: 131 Bomberos, 133 Carabineros, 132 SAMU</li>
+        <li>Mantener mochila de emergencia lista con agua, linterna y documentos</li>
+        <li>Conocer las rutas de evacuación de tu barrio</li>
+        <li>Practicar simulacro familiar al menos 2 veces al año</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+<!-- TAB 2: MAPA -->
+<div class="tab" id="tab-mapa">
+  <div id="map"></div>
+
+  <div class="map-legend">
+    <h4>📊 Leyenda — Riesgo compuesto</h4>
+    <div class="legend-items">
+      <div class="legend-item"><div class="legend-dot" style="background:#9ca3af"></div>Sin datos</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#16a34a"></div>Bajo</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#d97706"></div>Medio</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#ea580c"></div>Alto</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#dc2626"></div>Extremo</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#7c3aed;transform:rotate(0) skew(10deg)"></div>Sismo reciente</div>
+    </div>
+  </div>
+
+  <div class="map-note">
+    🌐 <strong>Zona de Subducción Nazca-Sudamericana:</strong> Chile está ubicado sobre una de las zonas de subducción más activas del planeta, lo que genera una sismicidad continua y explica la presencia del arco volcánico andino.
+  </div>
+
+  <div class="recent-quakes" id="map-quakes-list" style="display:none">
+    <h3>🔴 Sismos recientes Chile (USGS, últimos 7 días, M≥3.5)</h3>
+    <div id="map-quakes-content"></div>
+  </div>
+
+  <div id="map-quakes-loading" class="loading">
+    <div class="spinner"></div><br/>Cargando sismos recientes…
+  </div>
+
+</div>
+
+<!-- TAB 3: PREPARACION -->
+<div class="tab" id="tab-prep">
+
+  <div class="kit-card">
+    <h3>🎒 Kit básico de emergencia (72 horas)</h3>
+    <div class="kit-grid">
+      <div class="kit-item">💧 Agua: 3L/persona/día × 3 días</div>
+      <div class="kit-item">🍱 Alimentos no perecibles</div>
+      <div class="kit-item">🔦 Linterna + pilas extra</div>
+      <div class="kit-item">📻 Radio a pilas o manivela</div>
+      <div class="kit-item">💊 Medicamentos y botiquín</div>
+      <div class="kit-item">📄 Documentos en copia</div>
+      <div class="kit-item">🔑 Copia de llaves</div>
+      <div class="kit-item">💵 Dinero en efectivo</div>
+      <div class="kit-item">🧥 Ropa de abrigo</div>
+      <div class="kit-item">📱 Cargador portátil</div>
+    </div>
+  </div>
+
+  <!-- Sismos -->
+  <div class="prep-section">
+    <div class="prep-header" onclick="togglePrep(this)">
+      <span><span class="emoji">🏔️</span>Sismos y Terremotos</span>
+      <i class="chevron">▼</i>
+    </div>
+    <div class="prep-body">
+      <div class="prep-sub">Antes</div>
+      <ul class="prep-list">
+        <li>Identifica las zonas seguras de tu hogar (bajo mesas sólidas, marcos de puertas)</li>
+        <li>Asegura muebles altos, estantes y calefones a la pared</li>
+        <li>Conoce cómo cortar gas, agua y electricidad en tu hogar</li>
+        <li>Prepara el kit de emergencia y el plan familiar</li>
+        <li>Practica simulacros con tu familia (agacharse-cubrirse-sujetarse)</li>
+      </ul>
+      <div class="prep-sub">Durante</div>
+      <ul class="prep-list">
+        <li>AGÁCHATE, CÚBRETE y SUJÉTATE (bajo mesa o junto a pared interior)</li>
+        <li class="warn">No corras hacia afuera durante el movimiento</li>
+        <li class="warn">Aléjate de ventanas, espejos y objetos que puedan caer</li>
+        <li>Si estás en cama, protege tu cabeza con una almohada</li>
+        <li class="warn">No uses ascensores en ningún caso</li>
+      </ul>
+      <div class="prep-sub">Después</div>
+      <ul class="prep-list">
+        <li>Revisa fugas de gas: si hueles gas, abre ventanas y sal sin encender nada</li>
+        <li>Inspecciona daños estructurales antes de entrar al edificio</li>
+        <li>Mantente alejado de cables eléctricos caídos</li>
+        <li>Sigue instrucciones de SENAPRED y autoridades locales</li>
+        <li>Prepárate para réplicas: pueden durar días o semanas</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Tsunami -->
+  <div class="prep-section">
+    <div class="prep-header" onclick="togglePrep(this)">
+      <span><span class="emoji">🌊</span>Tsunamis y Maremotos</span>
+      <i class="chevron">▼</i>
+    </div>
+    <div class="prep-body">
+      <div class="prep-sub">Señales naturales de alerta</div>
+      <ul class="prep-list">
+        <li>Sismo fuerte o prolongado en zona costera</li>
+        <li>Retiro inusual y rápido del mar (exposición del fondo marino)</li>
+        <li>Ruido intenso como de tren o explosión desde el mar</li>
+        <li>Olor intenso a sal marina o algas fuera de lo común</li>
+      </ul>
+      <div class="prep-sub">Evacuación</div>
+      <ul class="prep-list">
+        <li>Ante sismo fuerte en zona costera, EVACÚA INMEDIATAMENTE sin esperar alerta oficial</li>
+        <li>Dirígete a terreno alto: mínimo 30 metros sobre el nivel del mar (SNM)</li>
+        <li>Sigue las rutas de evacuación señalizadas (flechas azules en calles)</li>
+        <li class="warn">No vuelvas a la costa hasta que autoridades declaren fin de alerta</li>
+        <li>La primera ola no siempre es la más grande: pueden llegar varias</li>
+      </ul>
+      <div class="prep-sub">Zona de encuentro</div>
+      <ul class="prep-list">
+        <li>Define previamente un punto de reunión familiar en zona segura (>30m SNM)</li>
+        <li>Conoce el Plan Comunal de Emergencia de tu municipio</li>
+        <li>Inscríbete en alertas SENAPRED: +56 2 2363 0000</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Incendio -->
+  <div class="prep-section">
+    <div class="prep-header" onclick="togglePrep(this)">
+      <span><span class="emoji">🔥</span>Incendios Forestales</span>
+      <i class="chevron">▼</i>
+    </div>
+    <div class="prep-body">
+      <div class="prep-sub">Prevención en el hogar</div>
+      <ul class="prep-list">
+        <li>Mantén un cortafuegos de 5m alrededor de tu hogar (sin vegetación seca)</li>
+        <li>Usa materiales de techo no inflamables (teja, zinc, hormigón)</li>
+        <li>Limpia canaletas y techos de hojas secas regularmente</li>
+        <li class="warn">Nunca realices quemas en periodos de alerta o viento fuerte</li>
+        <li>Instala detectores de humo en tu hogar</li>
+      </ul>
+      <div class="prep-sub">Plan de evacuación</div>
+      <ul class="prep-list">
+        <li>Prepara el kit de 72h con anterioridad a la temporada (Nov-Mar)</li>
+        <li>Conoce las 2 rutas de salida desde tu vivienda o sector</li>
+        <li>Mantén el depósito del auto con combustible en temporada alta</li>
+        <li>Atiende las alertas de CONAF y SENAPRED</li>
+      </ul>
+      <div class="prep-sub">Durante un incendio cercano</div>
+      <ul class="prep-list">
+        <li>Evacúa inmediatamente al recibir la orden o ante humo visible cercano</li>
+        <li>Cierra puertas y ventanas antes de salir (retrasa la propagación)</li>
+        <li class="warn">No intentes defender tu hogar si el incendio está próximo</li>
+        <li>Cubre boca y nariz con tela húmeda al desplazarte en zonas con humo</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Volcán -->
+  <div class="prep-section">
+    <div class="prep-header" onclick="togglePrep(this)">
+      <span><span class="emoji">🌋</span>Erupciones Volcánicas</span>
+      <i class="chevron">▼</i>
+    </div>
+    <div class="prep-body">
+      <div class="prep-sub">Niveles de alerta SERNAGEOMIN</div>
+      <ul class="prep-list">
+        <li>🟢 Verde: Sin actividad anómala — monitoreo habitual</li>
+        <li>🟡 Amarillo: Actividad moderada — prepararse para evacuar</li>
+        <li>🟠 Naranja: Actividad elevada — EVACUACIÓN PREVENTIVA</li>
+        <li>🔴 Rojo: Erupción inminente o en curso — EVACUACIÓN INMEDIATA</li>
+      </ul>
+      <div class="prep-sub">Riesgos volcánicos</div>
+      <ul class="prep-list">
+        <li>Lahares (flujos de lodo volcánico): siguen cauces de ríos y quebradas</li>
+        <li>Piroclastos y bombas volcánicas: proyectiles de roca incandescente</li>
+        <li>Ceniza volcánica: irrita ojos y pulmones, daña motores y cultivos</li>
+        <li>Gases volcánicos (SO₂, H₂S): tóxicos en concentración alta</li>
+      </ul>
+      <div class="prep-sub">Protección</div>
+      <ul class="prep-list">
+        <li>Usa mascarilla N95 o tapabocas húmedo para ceniza</li>
+        <li>Protege ojos con gafas herméticas ante caída de ceniza</li>
+        <li>Evacúa la zona de peligro definida por SERNAGEOMIN</li>
+        <li class="warn">No regreses a la zona de exclusión hasta que se levante la alerta</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Inundaciones -->
+  <div class="prep-section">
+    <div class="prep-header" onclick="togglePrep(this)">
+      <span><span class="emoji">💧</span>Inundaciones y Aluviones</span>
+      <i class="chevron">▼</i>
+    </div>
+    <div class="prep-body">
+      <div class="prep-sub">Prevención</div>
+      <ul class="prep-list">
+        <li>Conoce la cota de crecida histórica de ríos cercanos</li>
+        <li class="warn">No construyas ni habites en lechos de ríos ni quebradas</li>
+        <li>Mantén limpios canales y desagües alrededor de tu vivienda</li>
+        <li>Eleva equipos eléctricos a nivel superior en zonas propensas</li>
+      </ul>
+      <div class="prep-sub">Durante una inundación</div>
+      <ul class="prep-list">
+        <li class="warn">NUNCA cruces cauces en crecida a pie ni en vehículo</li>
+        <li>30cm de agua en movimiento puede derribar a un adulto; 60cm arrastra un auto</li>
+        <li>Desconecta la electricidad si entra agua a la vivienda</li>
+        <li>Evacúa a zona alta ante alerta de aluvión o crecida repentina</li>
+      </ul>
+      <div class="prep-sub">Aluviones (zonas andinas)</div>
+      <ul class="prep-list">
+        <li>Son repentinos y extremadamente destructivos: evacúa ante aviso</li>
+        <li>Señal: aumento repentino del ruido del río o agua turbia y lodosa</li>
+        <li>Sube a terreno alto alejado de quebradas</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Remociones -->
+  <div class="prep-section">
+    <div class="prep-header" onclick="togglePrep(this)">
+      <span><span class="emoji">⛰️</span>Remociones en Masa (Deslizamientos)</span>
+      <i class="chevron">▼</i>
+    </div>
+    <div class="prep-body">
+      <div class="prep-sub">Señales de alerta</div>
+      <ul class="prep-list">
+        <li>Grietas en el terreno o en las paredes de la vivienda</li>
+        <li>Árboles, postes o cercas que se inclinan hacia abajo del talud</li>
+        <li>Sonido de crujidos en el suelo o paredes</li>
+        <li>Agua turbia en ríos o vertientes cercanas</li>
+      </ul>
+      <div class="prep-sub">Prevención</div>
+      <ul class="prep-list">
+        <li class="warn">No construyas en laderas con más de 30° de inclinación sin estudio geológico</li>
+        <li>Planta vegetación nativa para estabilizar taludes</li>
+        <li>No deforestes laderas: las raíces sostienen el suelo</li>
+        <li>Construye muros de contención certificados en zonas de riesgo</li>
+      </ul>
+      <div class="prep-sub">Durante un deslizamiento</div>
+      <ul class="prep-list">
+        <li>Evacúa la zona inmediatamente: los deslizamientos son muy rápidos</li>
+        <li>Aléjate de la trayectoria: los materiales pueden viajar cientos de metros</li>
+        <li>Si no puedes huir, enróllate en posición fetal protegiendo cabeza</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+<!-- TAB 4: HISTORIAL -->
+<div class="tab" id="tab-historia">
+
+  <div class="historia-header">
+    <h2>📖 Historia sísmica y de desastres de Chile</h2>
+    <p>Chile representa el <strong>80% de la energía sísmica</strong> liberada en el mundo</p>
+  </div>
+
+  <div class="section-title">Los 10 mayores desastres históricos</div>
+
+  <div class="event-card border-r4">
+    <div class="event-year">1960</div>
+    <div class="event-body">
+      <div class="event-title">🏔️ Gran Terremoto de Valdivia</div>
+      <span class="event-mag">M 9.5 — El más fuerte de la historia</span>
+      <div class="event-desc">El sismo más grande jamás registrado por instrumentos. Destruyó gran parte de Valdivia y generó un megatsunami que afectó Chile, Hawai, Japón y Filipinas. Más de 2.000 fallecidos estimados.</div>
+    </div>
+  </div>
+
+  <div class="event-card border-r4">
+    <div class="event-year">1868</div>
+    <div class="event-body">
+      <div class="event-title">🌊 Tsunami de Arica e Iquique</div>
+      <span class="event-mag">M ~8.5 — Olas de 15-20m</span>
+      <div class="event-desc">Un sismo de gran magnitud en la costa del Pacífico generó olas devastadoras que arrasaron los puertos de Arica e Iquique (entonces territorio peruano-boliviano). El tsunami alcanzó Nueva Zelanda y Japón.</div>
+    </div>
+  </div>
+
+  <div class="event-card border-r4">
+    <div class="event-year">2010</div>
+    <div class="event-body">
+      <div class="event-title">🌊 Terremoto y Tsunami del Biobío</div>
+      <span class="event-mag">M 8.8 + Tsunami</span>
+      <div class="event-desc">El quinto terremoto más poderoso registrado en la historia. Generó un tsunami que devastó las costas del Maule y Biobío. Más de 500 fallecidos, 800.000 viviendas dañadas y 2 millones de damnificados.</div>
+    </div>
+  </div>
+
+  <div class="event-card border-r3">
+    <div class="event-year">2014</div>
+    <div class="event-body">
+      <div class="event-title">🏔️ Terremoto de Iquique</div>
+      <span class="event-mag">M 8.2 — Norte de Chile</span>
+      <div class="event-desc">Sismo de gran profundidad frente a las costas de Iquique. Generó un tsunami que produjo olas de hasta 2 metros. Destruyó viviendas en Iquique y Alto Hospicio y desencadenó una serie de réplicas importantes.</div>
+    </div>
+  </div>
+
+  <div class="event-card border-r4">
+    <div class="event-year">2015</div>
+    <div class="event-body">
+      <div class="event-title">🌋 Erupción Volcán Villarrica</div>
+      <span class="event-mag">Nivel Rojo — 3.000 evacuados</span>
+      <div class="event-desc">Una de las erupciones más espectaculares del volcán más activo de Sudamérica. La columna de lava y piroclastos obligó a la evacuación inmediata de Pucón y alrededores. Actividad explosiva de alta energía.</div>
+    </div>
+  </div>
+
+  <div class="event-card border-r4">
+    <div class="event-year">2015</div>
+    <div class="event-body">
+      <div class="event-title">💧 Aluviones del Atacama</div>
+      <span class="event-mag">30 fallecidos — 5 comunas afectadas</span>
+      <div class="event-desc">Lluvias extraordinarias ("lluvias del desierto") desencadenaron aluviones que arrasaron Copiapó, Chañaral, Diego de Almagro y otras comunas. Destruyeron infraestructura vial, viviendas y la planta de agua potable.</div>
+    </div>
+  </div>
+
+  <div class="event-card border-r4">
+    <div class="event-year">2015</div>
+    <div class="event-body">
+      <div class="event-title">🌋 Erupción Volcán Calbuco</div>
+      <span class="event-mag">Nivel Rojo — 2 columnas eruptivas</span>
+      <div class="event-desc">Después de 43 años inactivo, el Calbuco generó dos explosivas columnas de ceniza de más de 15 km de altura en menos de 24 horas. 4.000 evacuados en Puerto Montt y Ensenada. Ceniza llegó hasta Argentina.</div>
+    </div>
+  </div>
+
+  <div class="event-card border-r4">
+    <div class="event-year">2014</div>
+    <div class="event-body">
+      <div class="event-title">🔥 Incendios de Valparaíso</div>
+      <span class="event-mag">15 fallecidos — 3.000 viviendas</span>
+      <div class="event-desc">El mayor incendio urbano de la historia reciente de Chile. El fuego avanzó por los cerros de Valparaíso impulsado por el viento, destruyendo más de 3.000 viviendas y dejando a más de 10.000 personas sin hogar.</div>
+    </div>
+  </div>
+
+  <div class="event-card border-r4">
+    <div class="event-year">2017</div>
+    <div class="event-body">
+      <div class="event-title">🔥 Mega-incendios del Biobío y Maule</div>
+      <span class="event-mag">11 fallecidos — 600.000 há quemadas</span>
+      <div class="event-desc">La peor temporada de incendios forestales de la historia chilena. Decenas de incendios simultáneos arrasaron plantaciones y bosque nativo en las regiones del Biobío, Maule y Araucanía. Declarado catástrofe nacional.</div>
+    </div>
+  </div>
+
+  <div class="event-card border-r3">
+    <div class="event-year">1965</div>
+    <div class="event-body">
+      <div class="event-title">🏔️ Terremoto de La Ligua</div>
+      <span class="event-mag">M 7.4 — Zona central</span>
+      <div class="event-desc">Sismo que causó severos daños en las provincias de Aconcagua y Valparaíso. 400 fallecidos y miles de viviendas destruidas en los valles de Petorca, Ligua y Quillota. Evidenció vulnerabilidad de la zona central.</div>
+    </div>
+  </div>
+
+  <div class="recent-quakes" id="historia-quakes">
+    <h3>🔴 Sismos recientes en Chile (USGS, últimos 7 días, M≥4.0)</h3>
+    <div id="historia-quakes-content">
+      <div class="loading"><div class="spinner"></div><br/>Cargando datos USGS…</div>
+    </div>
+  </div>
+
+  <div class="fact-banner">
+    <strong>⚡ Chile: el país más sísmico del mundo</strong>
+    <p>Con el 80% de la energía sísmica global liberada en su territorio, Chile ha experimentado 13 de los 20 terremotos más grandes de la historia instrumental.</p>
+  </div>
+
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+// DATA
+// ─────────────────────────────────────────────
+const COMUNAS_RIESGO = {
+  'Arica':       {lat:-18.48,lon:-70.33,sismos:3,tsunami:4,volcan:0,incendio:1,inundacion:2,remociones:2},
+  'Iquique':     {lat:-20.21,lon:-70.15,sismos:4,tsunami:4,volcan:0,incendio:2,inundacion:1,remociones:2},
+  'Calama':      {lat:-22.46,lon:-68.93,sismos:3,tsunami:0,volcan:3,incendio:0,inundacion:2,remociones:2},
+  'Antofagasta': {lat:-23.65,lon:-70.40,sismos:3,tsunami:3,volcan:0,incendio:1,inundacion:1,remociones:3},
+  'Copiapó':     {lat:-27.37,lon:-70.33,sismos:3,tsunami:2,volcan:0,incendio:2,inundacion:3,remociones:2},
+  'La Serena':   {lat:-29.90,lon:-71.25,sismos:3,tsunami:3,volcan:0,incendio:2,inundacion:2,remociones:2},
+  'Valparaíso':  {lat:-33.05,lon:-71.62,sismos:3,tsunami:3,volcan:0,incendio:4,inundacion:2,remociones:3},
+  'Quilpué':     {lat:-33.05,lon:-71.44,sismos:3,tsunami:1,volcan:0,incendio:4,inundacion:2,remociones:3},
+  'Viña del Mar':{lat:-33.02,lon:-71.55,sismos:3,tsunami:3,volcan:0,incendio:3,inundacion:2,remociones:3},
+  'San Antonio': {lat:-33.59,lon:-71.62,sismos:3,tsunami:3,volcan:0,incendio:3,inundacion:2,remociones:2},
+  'Santiago':    {lat:-33.45,lon:-70.67,sismos:3,tsunami:0,volcan:0,incendio:3,inundacion:2,remociones:3},
+  'Rancagua':    {lat:-34.17,lon:-70.74,sismos:3,tsunami:0,volcan:1,incendio:3,inundacion:2,remociones:2},
+  'Curicó':      {lat:-34.98,lon:-71.24,sismos:3,tsunami:0,volcan:0,incendio:4,inundacion:2,remociones:2},
+  'Talca':       {lat:-35.43,lon:-71.66,sismos:3,tsunami:0,volcan:0,incendio:4,inundacion:3,remociones:2},
+  'Linares':     {lat:-35.85,lon:-71.60,sismos:3,tsunami:0,volcan:0,incendio:3,inundacion:3,remociones:2},
+  'Chillán':     {lat:-36.61,lon:-72.10,sismos:4,tsunami:0,volcan:3,incendio:3,inundacion:2,remociones:2},
+  'Talcahuano':  {lat:-36.72,lon:-73.11,sismos:4,tsunami:4,volcan:0,incendio:2,inundacion:3,remociones:2},
+  'Concepción':  {lat:-36.82,lon:-73.05,sismos:4,tsunami:3,volcan:0,incendio:3,inundacion:3,remociones:3},
+  'Angol':       {lat:-37.80,lon:-72.71,sismos:3,tsunami:0,volcan:2,incendio:4,inundacion:3,remociones:3},
+  'Los Ángeles': {lat:-37.47,lon:-72.35,sismos:3,tsunami:0,volcan:2,incendio:4,inundacion:3,remociones:3},
+  'Temuco':      {lat:-38.73,lon:-72.59,sismos:3,tsunami:0,volcan:2,incendio:3,inundacion:3,remociones:3},
+  'Villarrica':  {lat:-39.28,lon:-72.23,sismos:3,tsunami:0,volcan:4,incendio:3,inundacion:2,remociones:3},
+  'Pucón':       {lat:-39.27,lon:-71.98,sismos:3,tsunami:0,volcan:4,incendio:3,inundacion:2,remociones:4},
+  'Valdivia':    {lat:-39.81,lon:-73.24,sismos:4,tsunami:2,volcan:1,incendio:2,inundacion:4,remociones:3},
+  'Osorno':      {lat:-40.57,lon:-73.13,sismos:3,tsunami:0,volcan:3,incendio:2,inundacion:3,remociones:3},
+  'Puerto Montt':{lat:-41.47,lon:-72.94,sismos:3,tsunami:2,volcan:2,incendio:2,inundacion:3,remociones:3},
+  'Castro':      {lat:-42.48,lon:-73.77,sismos:3,tsunami:2,volcan:0,incendio:1,inundacion:3,remociones:3},
+  'Coyhaique':   {lat:-45.57,lon:-72.07,sismos:2,tsunami:0,volcan:1,incendio:2,inundacion:3,remociones:4},
+  'Puerto Natales':{lat:-51.73,lon:-72.50,sismos:2,tsunami:0,volcan:0,incendio:2,inundacion:3,remociones:3},
+  'Punta Arenas':{lat:-53.15,lon:-70.92,sismos:2,tsunami:1,volcan:0,incendio:1,inundacion:2,remociones:2}
+};
+
+const VOLCANO_NEAREST = {
+  'Calama':'Láscar (154 km)',
+  'Chillán':'Nevados de Chillán (15 km)',
+  'Los Ángeles':'Antuco (65 km)',
+  'Temuco':'Llaima (85 km)',
+  'Villarrica':'Villarrica (8 km)',
+  'Pucón':'Villarrica (10 km)',
+  'Valdivia':'Mocho-Choshuenco (80 km)',
+  'Osorno':'Osorno (35 km)',
+  'Puerto Montt':'Calbuco (30 km)',
+  'Angol':'Llaima (115 km)',
+  'Rancagua':'Tinguiririca (90 km)',
+  'Coyhaique':'Hudson (195 km)',
+};
+
+const RISK_LABELS = ['Sin riesgo','Riesgo bajo','Riesgo medio','Riesgo alto','Riesgo extremo'];
+const RISK_COLORS = ['#9ca3af','#16a34a','#d97706','#ea580c','#dc2626'];
+const RISK_CSS    = ['r0','r1','r2','r3','r4'];
+
+const HAZARDS = [
+  {key:'sismos',    emoji:'🏔️', name:'Sismos'},
+  {key:'tsunami',   emoji:'🌊', name:'Tsunami'},
+  {key:'volcan',    emoji:'🌋', name:'Volcán'},
+  {key:'incendio',  emoji:'🔥', name:'Incendio forestal'},
+  {key:'inundacion',emoji:'💧', name:'Inundación'},
+  {key:'remociones',emoji:'⛰️', name:'Remociones en masa'},
+];
+
+// ─────────────────────────────────────────────
+// NAVIGATION
+// ─────────────────────────────────────────────
+let mapInitialized = false;
+
+document.querySelectorAll('.nav-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    const tabId = btn.dataset.tab;
+    document.getElementById(tabId).classList.add('active');
+    if (tabId === 'tab-mapa' && !mapInitialized) {
+      initMap();
+      mapInitialized = true;
+    }
+    if (tabId === 'tab-historia') {
+      loadHistoriaQuakes();
+    }
+  });
+});
+
+// ─────────────────────────────────────────────
+// COMMUNE SELECTOR
+// ─────────────────────────────────────────────
+const sel = document.getElementById('comuna-select');
+Object.keys(COMUNAS_RIESGO).sort().forEach(name => {
+  const opt = document.createElement('option');
+  opt.value = name;
+  opt.textContent = name;
+  sel.appendChild(opt);
+});
+
+document.getElementById('btn-evaluar').addEventListener('click', () => {
+  const nombre = sel.value;
+  if (!nombre) { sel.focus(); return; }
+  showRisk(nombre);
+});
+
+sel.addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('btn-evaluar').click();
+});
+
+function showRisk(nombre) {
+  const d = COMUNAS_RIESGO[nombre];
+  document.getElementById('res-nombre').textContent = nombre;
+  document.getElementById('res-coords').textContent =
+    `Lat ${d.lat.toFixed(2)}, Lon ${d.lon.toFixed(2)} · Región de Chile`;
+
+  const grid = document.getElementById('risk-grid');
+  grid.innerHTML = '';
+
+  HAZARDS.forEach(h => {
+    const lvl = d[h.key];
+    const card = document.createElement('div');
+    card.className = 'risk-card';
+    card.style.borderTop = `4px solid ${RISK_COLORS[lvl]}`;
+
+    let detail = '';
+    if (h.key === 'tsunami') {
+      const distKm = Math.abs(d.lon - (-71)) * 111 | 0;
+      detail = lvl > 0
+        ? `Distancia est. a costa: ~${distKm} km`
+        : 'Sin costa cercana';
+    } else if (h.key === 'volcan') {
+      detail = lvl > 0
+        ? (VOLCANO_NEAREST[nombre] || 'Volcanes en región')
+        : 'Sin volcanes activos cercanos';
+    } else if (h.key === 'incendio') {
+      detail = 'Temporada alta: Nov – Mar';
+    }
+
+    card.innerHTML = `
+      <span class="risk-emoji">${h.emoji}</span>
+      <div class="risk-name">${h.name}</div>
+      <span class="risk-badge ${RISK_CSS[lvl]}">${RISK_LABELS[lvl]}</span>
+      ${detail ? `<div class="risk-detail">${detail}</div>` : ''}
+    `;
+    grid.appendChild(card);
+  });
+
+  const sum = d.sismos + d.tsunami + d.volcan + d.incendio + d.inundacion + d.remociones;
+  const pct = Math.round(sum / 24 * 100);
+  const compositeLevel = pct >= 70 ? 4 : pct >= 52 ? 3 : pct >= 35 ? 2 : pct >= 18 ? 1 : 0;
+
+  const scoreEl = document.getElementById('composite-score');
+  scoreEl.className = `composite-score ${RISK_CSS[compositeLevel]}`;
+  document.getElementById('composite-pct').textContent = pct + '%';
+  document.getElementById('composite-label').textContent = 'Riesgo Total Compuesto — ' + RISK_LABELS[compositeLevel];
+  document.getElementById('composite-desc').textContent =
+    `Suma ponderada de los 6 amenazas: ${sum} / 24 puntos máximos`;
+
+  document.getElementById('result-area').style.display = 'block';
+  document.getElementById('result-area').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+// ─────────────────────────────────────────────
+// MAP
+// ─────────────────────────────────────────────
+let leafletMap, communeMarkers = {};
+
+function compositeLevel(d) {
+  const sum = d.sismos + d.tsunami + d.volcan + d.incendio + d.inundacion + d.remociones;
+  const pct = sum / 24 * 100;
+  return pct >= 70 ? 4 : pct >= 52 ? 3 : pct >= 35 ? 2 : pct >= 18 ? 1 : 0;
+}
+
+function initMap() {
+  leafletMap = L.map('map', {
+    center: [-35.5, -71.5],
+    zoom: 5,
+    zoomControl: true
+  });
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    maxZoom: 18
+  }).addTo(leafletMap);
+
+  Object.entries(COMUNAS_RIESGO).forEach(([nombre, d]) => {
+    const lvl = compositeLevel(d);
+    const color = RISK_COLORS[lvl];
+    const marker = L.circleMarker([d.lat, d.lon], {
+      radius: 11,
+      fillColor: color,
+      color: '#fff',
+      weight: 2,
+      opacity: 1,
+      fillOpacity: 0.85
+    });
+
+    const popupHtml = `
+      <div style="font-family:Inter,sans-serif;min-width:160px">
+        <div style="font-weight:800;font-size:.92rem;margin-bottom:6px;color:#1e3a5f">${nombre}</div>
+        ${HAZARDS.map(h => `
+          <div style="display:flex;justify-content:space-between;font-size:.75rem;padding:2px 0;border-bottom:1px solid #f0f0f0">
+            <span>${h.emoji} ${h.name}</span>
+            <span style="font-weight:700;color:${RISK_COLORS[d[h.key]]}">${RISK_LABELS[d[h.key]]}</span>
+          </div>
+        `).join('')}
+        <div style="font-size:.75rem;font-weight:700;margin-top:6px;color:${RISK_COLORS[lvl]}">
+          Riesgo compuesto: ${RISK_LABELS[lvl]}
+        </div>
+      </div>
+    `;
+    marker.bindPopup(popupHtml, {maxWidth: 240});
+    marker.addTo(leafletMap);
+    communeMarkers[nombre] = marker;
+  });
+
+  // Highlight selected commune if any
+  const currentCommune = sel.value;
+  if (currentCommune && communeMarkers[currentCommune]) {
+    highlightMapCommune(currentCommune);
+  }
+
+  loadMapQuakes();
+}
+
+function highlightMapCommune(nombre) {
+  Object.entries(communeMarkers).forEach(([n, m]) => {
+    const d = COMUNAS_RIESGO[n];
+    const lvl = compositeLevel(d);
+    m.setStyle({
+      radius: n === nombre ? 18 : 11,
+      weight: n === nombre ? 4 : 2,
+      color: n === nombre ? '#0c4a7a' : '#fff'
+    });
+  });
+}
+
+sel.addEventListener('change', () => {
+  if (mapInitialized && sel.value) {
+    highlightMapCommune(sel.value);
+    const d = COMUNAS_RIESGO[sel.value];
+    if (d) leafletMap.setView([d.lat, d.lon], 8, {animate: true});
+  }
+});
+
+// ─────────────────────────────────────────────
+// USGS FETCH — shared
+// ─────────────────────────────────────────────
+const CACHE_KEY_QUAKES = 'riesgocl_usgs_quakes';
+const CACHE_TTL = 5 * 60 * 1000; // 5 min
+
+async function fetchUSGSQuakes(minMag = 3.5, limit = 50) {
+  const cached = localStorage.getItem(CACHE_KEY_QUAKES);
+  if (cached) {
+    try {
+      const {ts, data} = JSON.parse(cached);
+      if (Date.now() - ts < CACHE_TTL) return data;
+    } catch(e) {}
+  }
+
+  const end = new Date();
+  const start = new Date(end - 7 * 24 * 3600 * 1000);
+  const fmt = d => d.toISOString().split('T')[0];
+
+  const url = `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson`
+    + `&starttime=${fmt(start)}&endtime=${fmt(end)}`
+    + `&minlatitude=-56&maxlatitude=-17`
+    + `&minlongitude=-76&maxlongitude=-66`
+    + `&minmagnitude=${minMag}`
+    + `&orderby=time&limit=${limit}`;
+
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 10000);
+  try {
+    const res = await fetch(url, {signal: ctrl.signal});
+    clearTimeout(timer);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const json = await res.json();
+    const data = json.features || [];
+    localStorage.setItem(CACHE_KEY_QUAKES, JSON.stringify({ts: Date.now(), data}));
+    return data;
+  } catch(e) {
+    clearTimeout(timer);
+    throw e;
+  }
+}
+
+function magColor(m) {
+  if (m >= 7) return '#dc2626';
+  if (m >= 6) return '#ea580c';
+  if (m >= 5) return '#d97706';
+  if (m >= 4) return '#16a34a';
+  return '#6b8fa5';
+}
+
+function timeAgo(ts) {
+  const diff = Date.now() - ts;
+  const h = Math.floor(diff / 3600000);
+  const d = Math.floor(h / 24);
+  if (d > 0) return `hace ${d}d`;
+  if (h > 0) return `hace ${h}h`;
+  return 'hace <1h';
+}
+
+// ─────────────────────────────────────────────
+// MAP QUAKES
+// ─────────────────────────────────────────────
+async function loadMapQuakes() {
+  try {
+    const features = await fetchUSGSQuakes(3.5, 50);
+    document.getElementById('map-quakes-loading').style.display = 'none';
+
+    if (!features.length) return;
+
+    const triangleIcon = (mag, color) => L.divIcon({
+      html: `<div style="width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-bottom:14px solid ${color};filter:drop-shadow(0 1px 2px rgba(0,0,0,.4))"></div>`,
+      className: '',
+      iconSize: [14, 14],
+      iconAnchor: [7, 14]
+    });
+
+    features.forEach(f => {
+      const [lon, lat] = f.geometry.coordinates;
+      const mag = f.properties.mag;
+      const color = magColor(mag);
+      const marker = L.marker([lat, lon], {
+        icon: triangleIcon(mag, color),
+        zIndexOffset: 1000
+      });
+      marker.bindPopup(`
+        <div style="font-family:Inter,sans-serif;font-size:.8rem">
+          <strong style="color:#dc2626">M ${mag.toFixed(1)}</strong><br/>
+          <span style="color:#6b8fa5">${f.properties.place || 'Chile'}</span><br/>
+          <span style="color:#9ca3af;font-size:.72rem">${timeAgo(f.properties.time)}</span>
+        </div>
+      `);
+      marker.addTo(leafletMap);
+    });
+
+    // List below map
+    const container = document.getElementById('map-quakes-content');
+    const shown = features.filter(f => f.properties.mag >= 4.0).slice(0, 8);
+    if (shown.length) {
+      container.innerHTML = shown.map(f => {
+        const mag = f.properties.mag;
+        return `<div class="quake-item">
+          <div>
+            <div>${(f.properties.place || 'Chile').replace('Chile', '').trim().replace(/^,\s*/,'')}</div>
+            <div class="quake-loc">${timeAgo(f.properties.time)}</div>
+          </div>
+          <span class="quake-mag" style="background:${magColor(mag)}">M ${mag.toFixed(1)}</span>
+        </div>`;
+      }).join('');
+      document.getElementById('map-quakes-list').style.display = 'block';
+    }
+  } catch(e) {
+    document.getElementById('map-quakes-loading').innerHTML =
+      `<div class="error-msg">No se pudo cargar datos USGS. Verifica tu conexión.</div>`;
+  }
+}
+
+// ─────────────────────────────────────────────
+// HISTORIA QUAKES
+// ─────────────────────────────────────────────
+let historiaLoaded = false;
+async function loadHistoriaQuakes() {
+  if (historiaLoaded) return;
+  historiaLoaded = true;
+  const container = document.getElementById('historia-quakes-content');
+  try {
+    const features = await fetchUSGSQuakes(4.0, 30);
+    if (!features.length) {
+      container.innerHTML = '<div class="error-msg">Sin eventos recientes M≥4.0 en los últimos 7 días.</div>';
+      return;
+    }
+    container.innerHTML = features.slice(0, 12).map(f => {
+      const mag = f.properties.mag;
+      const place = (f.properties.place || 'Chile').replace(', Chile', '');
+      return `<div class="quake-item">
+        <div>
+          <div style="font-size:.82rem">${place}</div>
+          <div class="quake-loc">${timeAgo(f.properties.time)} · ${new Date(f.properties.time).toLocaleDateString('es-CL')}</div>
+        </div>
+        <span class="quake-mag" style="background:${magColor(mag)}">M ${mag.toFixed(1)}</span>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    container.innerHTML = '<div class="error-msg">No se pudo conectar con USGS. Intenta más tarde.</div>';
+  }
+}
+
+// ─────────────────────────────────────────────
+// PREPARACION ACCORDION
+// ─────────────────────────────────────────────
+function togglePrep(header) {
+  const body = header.nextElementSibling;
+  const section = header.parentElement;
+  const isOpen = body.classList.contains('open');
+
+  // Close all
+  document.querySelectorAll('.prep-body').forEach(b => b.classList.remove('open'));
+  document.querySelectorAll('.prep-header').forEach(h => h.classList.remove('open-section'));
+
+  if (!isOpen) {
+    body.classList.add('open');
+    header.classList.add('open-section');
+  }
+}
+
+// ─────────────────────────────────────────────
+// PWA Service Worker
+// ─────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  const swCode = `
+    const CACHE = 'riesgocl-v1';
+    const STATIC = ['./'];
+    self.addEventListener('install', e => {
+      e.waitUntil(caches.open(CACHE).then(c => c.addAll(STATIC)));
+      self.skipWaiting();
+    });
+    self.addEventListener('fetch', e => {
+      if (e.request.url.includes('earthquake.usgs.gov') ||
+          e.request.url.includes('tile.openstreetmap') ||
+          e.request.url.includes('fonts.googleapis')) return;
+      e.respondWith(
+        caches.match(e.request).then(r => r || fetch(e.request))
+      );
+    });
+  `;
+  const blob = new Blob([swCode], {type: 'text/javascript'});
+  const swUrl = URL.createObjectURL(blob);
+  navigator.serviceWorker.register(swUrl).catch(() => {});
+}
+</script>
+</body>
+</html>

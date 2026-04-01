@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Procesos 24h | Fábrica Biochar Fresia</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&family=Roboto:wght@300;400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../../assets/style.css">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+        }
+        .mono {
+            font-family: 'Roboto Mono', monospace;
+        }
+        .reactor-card, .team-card {
+            transition: all 0.3s ease-in-out;
+            border-width: 4px;
+        }
+        .progress-bar {
+            transition: width 0.1s linear;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800">
+
+    <div class="max-w-7xl mx-auto p-4 sm:p-8">
+
+        <header class="text-center mb-12">
+            <h1 class="text-4xl md:text-6xl font-black text-slate-800 mb-4" data-es="Simulador de Procesos" data-en="Process Simulator">Simulador de Procesos</h1>
+            <p class="text-xl md:text-2xl font-bold text-teal-700" data-es="Ciclo de Operación de 24 Horas" data-en="24-Hour Operation Cycle">Ciclo de Operación de 24 Horas</p>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8 text-center">
+            <div class="bg-white p-4 rounded-xl shadow-md">
+                <h3 class="font-bold text-slate-500" data-es="Reloj (24h)" data-en="Clock (24h)">Reloj (24h)</h3>
+                <p id="clock" class="text-4xl font-bold mono text-blue-600">08:00</p>
+            </div>
+             <div class="bg-white p-4 rounded-xl shadow-md">
+                <h3 class="font-bold text-slate-500" data-es="Turno Activo" data-en="Active Shift">Turno Activo</h3>
+                <p id="shift-status" class="text-4xl font-bold mono text-gray-800">-</p>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow-md">
+                <h3 class="font-bold text-slate-500" data-es="Ciclo / Reactor" data-en="Cycle / Reactor">Ciclo / Reactor</h3>
+                <p class="text-4xl font-bold mono text-teal-600" data-es="8 Horas" data-en="8 Hours">8 Horas</p>
+            </div>
+             <div class="bg-white p-4 rounded-xl shadow-md">
+                <h3 class="font-bold text-slate-500" data-es="Servicio / Reactor" data-en="Service / Reactor">Servicio / Reactor</h3>
+                <p class="text-4xl font-bold mono text-amber-600">31 Min</p>
+            </div>
+            <div id="team-status-card" class="team-card bg-slate-200 border-slate-400 p-4 rounded-xl shadow-md">
+                <h3 class="font-bold text-slate-500" data-es="Equipo de Turno" data-en="Shift Team">Equipo de Turno</h3>
+                <p id="team-status" class="text-2xl font-bold text-slate-700 mono" data-es="EN ESPERA" data-en="STANDBY">EN ESPERA</p>
+            </div>
+        </div>
+
+        <div class="flex justify-center gap-4 mb-12">
+            <button id="startButton" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105" data-es="&#9654; Iniciar Simulación 24h" data-en="&#9654; Start 24h Simulation">
+                &#9654; Iniciar Simulación 24h
+            </button>
+            <button id="resetButton" class="bg-slate-500 hover:bg-slate-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105" data-es="&#8635; Reiniciar" data-en="&#8635; Reset">
+                &#8635; Reiniciar
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6" id="reactors-grid">
+            </div>
+
+            <div id="log-container" class="bg-white p-6 rounded-xl shadow-md">
+                <h2 class="font-bold text-xl mb-4 border-b-2 pb-2" data-es="Bitácora de Operaciones" data-en="Operations Log">Bitácora de Operaciones</h2>
+                <div id="log" class="text-sm text-slate-700 space-y-2 h-[450px] overflow-y-auto">
+                    <p class="text-slate-400" data-es="Esperando inicio de simulación..." data-en="Waiting for simulation to start...">Esperando inicio de simulación...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="report-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl w-full text-center transform transition-all duration-300 scale-95 opacity-0">
+            <h2 class="text-3xl font-black text-slate-800 mb-4" data-es="Fin de la Jornada de 24 Horas" data-en="End of 24-Hour Shift">Fin de la Jornada de 24 Horas</h2>
+            <p class="text-slate-600 mb-6" data-es="A continuación se detalla el resumen de productividad de cada reactor, desglosado por turno." data-en="Below is the productivity summary for each reactor, broken down by shift.">A continuación se detalla el resumen de productividad de cada reactor, desglosado por turno.</p>
+            <div id="report-content" class="text-left border-t border-b py-4">
+            </div>
+            <button id="close-modal" class="mt-8 bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-6 rounded-lg" data-es="Cerrar Reporte" data-en="Close Report">Cerrar Reporte</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const reactorsGrid = document.getElementById('reactors-grid');
+            const logElement = document.getElementById('log');
+            const startButton = document.getElementById('startButton');
+            const resetButton = document.getElementById('resetButton');
+            const clockElement = document.getElementById('clock');
+            const teamStatusElement = document.getElementById('team-status');
+            const teamStatusCard = document.getElementById('team-status-card');
+            const shiftStatusElement = document.getElementById('shift-status');
+            const reportModal = document.getElementById('report-modal');
+            const reportContent = document.getElementById('report-content');
+            const closeModalButton = document.getElementById('close-modal');
+
+            let simulationInterval;
+            let reactors = [];
+            const TOTAL_REACTORS = 6;
+            const SIMULATION_SPEED_MS = 10;
+
+            const CYCLE_DURATION_MIN = 8 * 60;
+            const SERVICE_TIME_MIN = 31;
+            const SHIFT_DURATION_MIN = 12 * 60;
+            const SIMULATION_DURATION_MIN = 24 * 60;
+            const START_TIME_MIN = 8 * 60;
+
+            const states = {
+                PRODUCING: { text: 'PRODUCIENDO', bgColor: 'bg-blue-100', borderColor: 'border-blue-500', textColor: 'text-blue-800' },
+                AWAITING_SERVICE: { text: 'LISTO PARA SERVICIO', bgColor: 'bg-indigo-100', borderColor: 'border-indigo-500', textColor: 'text-indigo-800' },
+                SERVICING: { text: 'EN SERVICIO', bgColor: 'bg-amber-100', borderColor: 'border-amber-500', textColor: 'text-amber-800' },
+            };
+
+            const teamStates = {
+                IDLE: { text: 'EN ESPERA', bgColor: 'bg-slate-200', borderColor: 'border-slate-400', textColor: 'text-slate-700' },
+                SERVICING: { text: 'TRABAJANDO', bgColor: 'bg-amber-100', borderColor: 'border-amber-500', textColor: 'text-amber-800' }
+            };
+
+            function createReactors() {
+                reactorsGrid.innerHTML = '';
+                reactors = [];
+                for (let i = 0; i < TOTAL_REACTORS; i++) {
+                    const reactor = {
+                        id: i + 1,
+                        state: 'AWAITING_SERVICE',
+                        cycleEndTime: 0,
+                        completedCycles: { shift1: 0, shift2: 0 },
+                    };
+                    reactors.push(reactor);
+                    reactorsGrid.innerHTML += `
+                        <div id="reactor-${reactor.id}" class="reactor-card p-4 rounded-xl shadow-md ${states.AWAITING_SERVICE.bgColor} ${states.AWAITING_SERVICE.borderColor}">
+                            <h3 class="font-bold text-lg">Reactor ${reactor.id}</h3>
+                            <p id="status-${reactor.id}" class="font-semibold text-sm mb-2 mono ${states.AWAITING_SERVICE.textColor}">${states.AWAITING_SERVICE.text}</p>
+                            <div class="w-full bg-slate-300 rounded-full h-4">
+                                <div id="progress-${reactor.id}" class="bg-teal-500 h-4 rounded-full progress-bar" style="width: 100%;"></div>
+                            </div>
+                            <p id="timer-${reactor.id}" class="text-xs text-slate-500 mono mt-2">Fin ciclo: --:--</p>
+                        </div>
+                    `;
+                }
+            }
+
+            function formatTime(totalMinutes) {
+                const hours = Math.floor(totalMinutes / 60) % 24;
+                const minutes = Math.floor(totalMinutes % 60);
+                return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+            }
+
+            function updateLog(message, time) {
+                const p = document.createElement('p');
+                p.innerHTML = `<span class="font-bold text-slate-500 mono">[${formatTime(time)}]</span> ${message}`;
+                logElement.prepend(p);
+            }
+
+            function updateTeamUI(teamName, state, target = null) {
+                const stateInfo = teamStates[state];
+                teamStatusCard.className = `team-card p-4 rounded-xl shadow-md ${stateInfo.bgColor} ${stateInfo.borderColor}`;
+                teamStatusElement.className = `text-2xl font-bold mono ${stateInfo.textColor}`;
+                const targetText = target ? ` (R${target})` : '';
+                teamStatusElement.innerHTML = `${teamName}${targetText}<br><span class="text-lg">${stateInfo.text}</span>`;
+            }
+
+            function updateUI(reactor, currentTime) {
+                const statusElement = document.getElementById(`status-${reactor.id}`);
+                const progressElement = document.getElementById(`progress-${reactor.id}`);
+                const timerElement = document.getElementById(`timer-${reactor.id}`);
+                const stateInfo = states[reactor.state];
+
+                document.getElementById(`reactor-${reactor.id}`).className = `reactor-card p-4 rounded-xl shadow-md ${stateInfo.bgColor} ${stateInfo.borderColor}`;
+                statusElement.className = `font-semibold text-sm mb-2 mono ${stateInfo.textColor}`;
+                statusElement.textContent = stateInfo.text;
+
+                let progressPercentage = 0;
+                if(reactor.state === 'PRODUCING') {
+                    const elapsed = reactor.cycleEndTime - currentTime;
+                    progressPercentage = 100 - (elapsed / CYCLE_DURATION_MIN) * 100;
+                    timerElement.textContent = `Fin ciclo: ${formatTime(reactor.cycleEndTime)}`;
+                } else if (reactor.state === 'SERVICING') {
+                    const elapsed = team.serviceEndTime - currentTime;
+                    progressPercentage = 100 - (elapsed / SERVICE_TIME_MIN) * 100;
+                    timerElement.textContent = `Fin servicio: ${formatTime(team.serviceEndTime)}`;
+                } else if (reactor.state === 'AWAITING_SERVICE') {
+                    progressPercentage = 100;
+                    timerElement.textContent = `Fin ciclo: --:--`;
+                }
+                progressElement.style.width = `${progressPercentage}%`;
+            }
+
+            let serviceQueue = [];
+            let team = { state: 'IDLE', currentTarget: null, serviceEndTime: 0, name: 'Equipo A' };
+            let virtualTime = START_TIME_MIN;
+            let currentShift = 1;
+
+            function startSimulation() {
+                if (simulationInterval) return;
+                startButton.disabled = true;
+                startButton.classList.add('opacity-50', 'cursor-not-allowed');
+                logElement.innerHTML = '';
+                updateLog(`<strong>Turno 1 (Equipo A)</strong> iniciado.`, virtualTime);
+                shiftStatusElement.textContent = "Turno 1";
+                serviceQueue = reactors.map(r => r.id);
+
+                simulationInterval = setInterval(() => {
+                    virtualTime++;
+                    clockElement.textContent = formatTime(virtualTime);
+
+                    if (virtualTime >= START_TIME_MIN + SIMULATION_DURATION_MIN) {
+                        clearInterval(simulationInterval);
+                        updateLog("<strong>Fin de la jornada de 24h.</strong> Generando reporte...", virtualTime);
+                        updateTeamUI(team.name, 'IDLE');
+                        generateReport();
+                        return;
+                    }
+
+                    const timeIntoDay = virtualTime - START_TIME_MIN;
+                    if (currentShift === 1 && timeIntoDay >= SHIFT_DURATION_MIN) {
+                        currentShift = 2;
+                        team.name = 'Equipo B';
+                        shiftStatusElement.textContent = "Turno 2";
+                        updateLog(`<strong>Cambio de turno. Inicia Turno 2 (Equipo B)</strong>.`, virtualTime);
+                    }
+
+                    reactors.forEach(reactor => {
+                        if (reactor.state === 'PRODUCING' && virtualTime >= reactor.cycleEndTime) {
+                            reactor.state = 'AWAITING_SERVICE';
+                            serviceQueue.push(reactor.id);
+                            updateLog(`Reactor ${reactor.id} listo para servicio.`, virtualTime);
+                        }
+                    });
+
+                    if (team.state === 'IDLE' && serviceQueue.length > 0) {
+                        const nextReactorId = serviceQueue.shift();
+                        const reactor = reactors[nextReactorId - 1];
+
+                        team.state = 'SERVICING';
+                        team.currentTarget = nextReactorId;
+                        team.serviceEndTime = virtualTime + SERVICE_TIME_MIN;
+
+                        reactor.state = 'SERVICING';
+                        updateLog(`${team.name} comienza servicio en <strong>Reactor ${nextReactorId}</strong>.`, virtualTime);
+                    }
+
+                    if (team.state === 'SERVICING' && virtualTime >= team.serviceEndTime) {
+                        const servicedReactor = reactors[team.currentTarget - 1];
+                        servicedReactor.state = 'PRODUCING';
+                        servicedReactor.cycleEndTime = virtualTime + CYCLE_DURATION_MIN;
+
+                        if (currentShift === 1) servicedReactor.completedCycles.shift1++;
+                        else servicedReactor.completedCycles.shift2++;
+
+                        updateLog(`Servicio en <strong>Reactor ${servicedReactor.id}</strong> completado por ${team.name}. Inicia ciclo de 8h.`, virtualTime);
+
+                        team.state = 'IDLE';
+                        team.currentTarget = null;
+                    }
+
+                    updateTeamUI(team.name, team.state, team.currentTarget);
+                    reactors.forEach(r => updateUI(r, virtualTime));
+
+                }, SIMULATION_SPEED_MS);
+            }
+
+            function generateReport() {
+                reportContent.innerHTML = '';
+                const table = document.createElement('table');
+                table.className = 'w-full text-lg';
+                table.innerHTML = `<thead><tr class="border-b"><th class="text-left pb-2">Reactor</th><th class="text-center pb-2">Ciclos Turno 1</th><th class="text-center pb-2">Ciclos Turno 2</th><th class="text-right pb-2">Total Día</th></tr></thead>`;
+                const tbody = document.createElement('tbody');
+                let totalShift1 = 0;
+                let totalShift2 = 0;
+                reactors.forEach(r => {
+                    const totalCycles = r.completedCycles.shift1 + r.completedCycles.shift2;
+                    totalShift1 += r.completedCycles.shift1;
+                    totalShift2 += r.completedCycles.shift2;
+                    const row = document.createElement('tr');
+                    row.innerHTML = `<td class="py-2">Reactor #${r.id}</td><td class="text-center font-bold mono">${r.completedCycles.shift1}</td><td class="text-center font-bold mono">${r.completedCycles.shift2}</td><td class="text-right font-bold mono">${totalCycles}</td>`;
+                    tbody.appendChild(row);
+                });
+                const tfoot = document.createElement('tfoot');
+                tfoot.innerHTML = `<tr class="border-t-2 font-black"><td class="py-2">TOTAL PLANTA</td><td class="text-center mono">${totalShift1}</td><td class="text-center mono">${totalShift2}</td><td class="text-right mono">${totalShift1 + totalShift2}</td></tr>`;
+                table.appendChild(tbody);
+                table.appendChild(tfoot);
+
+                reportContent.appendChild(table);
+                reportModal.classList.remove('hidden');
+                setTimeout(() => reportModal.querySelector('div').classList.remove('scale-95', 'opacity-0'), 10);
+            }
+
+            function resetSimulation() {
+                clearInterval(simulationInterval);
+                simulationInterval = null;
+                startButton.disabled = false;
+                startButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                logElement.innerHTML = '<p class="text-slate-400">Simulación reiniciada. Esperando inicio de turno...</p>';
+                virtualTime = START_TIME_MIN;
+                clockElement.textContent = formatTime(virtualTime);
+                shiftStatusElement.textContent = "-";
+                serviceQueue = [];
+                team = { state: 'IDLE', currentTarget: null, serviceEndTime: 0, name: 'Equipo A' };
+                currentShift = 1;
+                updateTeamUI(team.name, 'IDLE');
+                createReactors();
+            }
+
+            startButton.addEventListener('click', startSimulation);
+            resetButton.addEventListener('click', resetSimulation);
+            closeModalButton.addEventListener('click', () => reportModal.querySelector('div').classList.add('scale-95', 'opacity-0'), setTimeout(()=> reportModal.classList.add('hidden'),300));
+
+            createReactors();
+        });
+    </script>
+    <script src="../../../assets/i18n.js"></script>
+</body>
+</html>

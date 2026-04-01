@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SST Chiloé — Sentinel-3 SLSTR | CUSSEN</title>
+    <meta name="description" content="Análisis de temperatura superficial del mar (SST) frente al Predio Chonchi, Chiloé, usando Sentinel-3A SLSTR. Módulos MAR.01 y MAR.02 del Framework CUSSEN.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --dark: #07090f;
+            --dark2: #0d1117;
+            --card: #111827;
+            --border: rgba(255,255,255,0.07);
+            --cyan: #06b6d4;
+            --cyan-dim: rgba(6,182,212,0.12);
+            --cyan-border: rgba(6,182,212,0.25);
+            --text: #e2e8f0;
+            --muted: #94a3b8;
+            --mono: 'JetBrains Mono', monospace;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--dark);
+            color: var(--text);
+            font-family: 'Inter', system-ui, sans-serif;
+            font-size: 16px;
+            line-height: 1.7;
+        }
+
+        a { color: var(--cyan); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        /* ── NAV ──────────────────────────────────────────── */
+        nav {
+            position: sticky; top: 0; z-index: 100;
+            background: rgba(7,9,15,0.90);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 40px; height: 60px;
+        }
+        .nav-logo {
+            font-weight: 700; font-size: 1rem; letter-spacing: 0.08em;
+            color: var(--text);
+        }
+        .nav-links { display: flex; gap: 32px; list-style: none; }
+        .nav-links a { font-size: 0.875rem; color: var(--muted); transition: color .2s; }
+        .nav-links a:hover { color: var(--text); text-decoration: none; }
+        .nav-cta {
+            background: var(--cyan); color: var(--dark) !important;
+            padding: 6px 18px; border-radius: 6px; font-weight: 600;
+        }
+        .nav-cta:hover { opacity: 0.88; }
+        .nav-back {
+            font-size: 0.8rem; color: var(--muted); font-family: var(--mono);
+            border: 1px solid var(--border); padding: 4px 12px; border-radius: 4px;
+            transition: all .2s;
+        }
+        .nav-back:hover { color: var(--cyan); border-color: var(--cyan-border); text-decoration: none; }
+
+        /* ── LAYOUT ───────────────────────────────────────── */
+        .wrap { max-width: 900px; margin: 0 auto; padding: 0 24px; }
+
+        /* ── HEADER ───────────────────────────────────────── */
+        .page-header {
+            border-bottom: 1px solid var(--border);
+            padding: 56px 0 40px;
+        }
+        .header-eyebrow {
+            font-family: var(--mono); font-size: 0.75rem;
+            color: var(--cyan); letter-spacing: 0.12em; text-transform: uppercase;
+            margin-bottom: 14px;
+        }
+        .page-header h1 {
+            font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+            font-weight: 700; line-height: 1.2;
+            color: var(--text); margin-bottom: 18px;
+        }
+        .page-header .abstract {
+            font-size: 0.975rem; color: var(--muted);
+            max-width: 720px; line-height: 1.75;
+            margin-bottom: 24px;
+        }
+        .badge-row { display: flex; flex-wrap: wrap; gap: 8px; }
+        .badge {
+            font-family: var(--mono); font-size: 0.75rem; font-weight: 600;
+            padding: 4px 12px; border-radius: 4px;
+            background: var(--cyan-dim); border: 1px solid var(--cyan-border);
+            color: var(--cyan); letter-spacing: 0.06em;
+        }
+        .badge-tag {
+            font-size: 0.75rem; padding: 4px 10px; border-radius: 4px;
+            background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+            color: var(--muted);
+        }
+
+        /* ── KEY RESULTS BAR ──────────────────────────────── */
+        .results-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 1px;
+            background: var(--border);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 48px 0;
+        }
+        .res-cell {
+            background: var(--card);
+            padding: 20px 18px;
+            text-align: center;
+        }
+        .res-value {
+            font-family: var(--mono); font-size: 1.35rem; font-weight: 600;
+            color: var(--cyan); display: block; margin-bottom: 6px;
+        }
+        .res-label { font-size: 0.78rem; color: var(--muted); line-height: 1.4; }
+
+        /* ── SECTION ──────────────────────────────────────── */
+        section { padding: 56px 0; border-top: 1px solid var(--border); }
+        section h2 {
+            font-size: 1.25rem; font-weight: 700;
+            color: var(--text); margin-bottom: 6px;
+        }
+        .sec-code {
+            font-family: var(--mono); font-size: 0.72rem; color: var(--cyan);
+            letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px;
+        }
+        .sec-intro { font-size: 0.95rem; color: var(--muted); margin: 16px 0 28px; max-width: 680px; }
+
+        /* ── FIGURE ───────────────────────────────────────── */
+        .figure {
+            margin: 36px 0;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            background: var(--dark2);
+        }
+        .figure img {
+            display: block; width: 100%; height: auto;
+        }
+        .figure-caption {
+            padding: 16px 20px;
+            border-top: 1px solid var(--border);
+        }
+        .figure-caption .fig-label {
+            font-family: var(--mono); font-size: 0.75rem; color: var(--cyan);
+            font-weight: 600; margin-bottom: 6px;
+        }
+        .figure-caption p {
+            font-size: 0.875rem; color: var(--muted); line-height: 1.65;
+        }
+
+        /* ── ANALYSIS BLOCK ───────────────────────────────── */
+        .analysis {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--cyan);
+            border-radius: 0 8px 8px 0;
+            padding: 20px 24px;
+            margin: 24px 0;
+            font-size: 0.925rem; color: var(--muted); line-height: 1.72;
+        }
+        .analysis strong { color: var(--text); }
+
+        /* ── FORMULA ──────────────────────────────────────── */
+        .formula {
+            background: rgba(0,0,0,0.4);
+            border: 1px solid var(--border);
+            border-left: 3px solid rgba(6,182,212,0.5);
+            border-radius: 0 6px 6px 0;
+            padding: 16px 20px;
+            font-family: var(--mono); font-size: 0.82rem;
+            color: #7dd3fc; line-height: 1.9;
+            overflow-x: auto; margin: 16px 0;
+        }
+        .formula-label {
+            font-family: var(--mono); font-size: 0.7rem;
+            color: var(--muted); text-transform: uppercase;
+            letter-spacing: 0.1em; margin-bottom: 6px;
+        }
+
+        /* ── DATA TABLE ───────────────────────────────────── */
+        .data-table { width: 100%; border-collapse: collapse; margin: 24px 0; font-size: 0.9rem; }
+        .data-table th {
+            font-family: var(--mono); font-size: 0.72rem; color: var(--cyan);
+            text-transform: uppercase; letter-spacing: 0.08em;
+            padding: 10px 14px; text-align: left;
+            border-bottom: 1px solid var(--cyan-border);
+        }
+        .data-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); color: var(--muted); }
+        .data-table tr:last-child td { border-bottom: none; }
+        .data-table .val { color: var(--cyan); font-family: var(--mono); font-weight: 500; text-align: right; }
+        .data-table .total td { color: var(--text); font-weight: 600; }
+        .data-table .total .val { color: var(--cyan); }
+
+        /* ── CTA ──────────────────────────────────────────── */
+        .cta-section {
+            padding: 48px 0;
+            border-top: 1px solid var(--border);
+            display: flex; flex-direction: column; align-items: flex-start; gap: 20px;
+        }
+        .cta-section h3 { font-size: 1.1rem; font-weight: 600; color: var(--text); }
+        .cta-section p { font-size: 0.9rem; color: var(--muted); max-width: 560px; }
+        .btn-row { display: flex; gap: 12px; flex-wrap: wrap; }
+        .btn-primary {
+            background: var(--cyan); color: var(--dark);
+            padding: 10px 22px; border-radius: 6px;
+            font-weight: 600; font-size: 0.875rem;
+            transition: opacity .2s;
+        }
+        .btn-primary:hover { opacity: 0.85; text-decoration: none; }
+        .btn-secondary {
+            background: transparent; color: var(--cyan);
+            padding: 10px 22px; border-radius: 6px;
+            border: 1px solid var(--cyan-border);
+            font-weight: 500; font-size: 0.875rem;
+            transition: all .2s;
+        }
+        .btn-secondary:hover { background: var(--cyan-dim); text-decoration: none; }
+
+        /* ── REFERENCES ───────────────────────────────────── */
+        .ref-list { list-style: none; }
+        .ref-list li {
+            font-size: 0.875rem; color: var(--muted);
+            padding: 8px 0; border-bottom: 1px solid var(--border);
+            padding-left: 20px; position: relative; line-height: 1.55;
+        }
+        .ref-list li::before {
+            content: '[' attr(data-n) ']';
+            font-family: var(--mono); font-size: 0.7rem; color: var(--cyan);
+            position: absolute; left: 0; top: 9px;
+        }
+        .ref-list li:last-child { border-bottom: none; }
+
+        /* ── FOOTER ───────────────────────────────────────── */
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 32px 0;
+            font-size: 0.825rem; color: var(--muted);
+        }
+        .footer-inner {
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 12px;
+        }
+
+        /* ── NOTE ─────────────────────────────────────────── */
+        .note {
+            font-size: 0.825rem; color: var(--muted);
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: 6px; padding: 12px 16px;
+            margin-top: 20px; line-height: 1.6;
+        }
+
+        @media (max-width: 640px) {
+            nav { padding: 0 16px; }
+            .wrap { padding: 0 16px; }
+            .nav-links { display: none; }
+            .results-bar { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <a href="../../../" class="nav-logo">CUSSEN</a>
+        <ul class="nav-links">
+            <li><a href="../../../servicios/">Servicios</a></li>
+            <li><a href="../../../#proyectos">Proyectos</a></li>
+            <li><a href="../../../framework/">Framework</a></li>
+            <li><a href="../../../#contacto" class="nav-cta">Contacto</a></li>
+        </ul>
+        <a href="../../../#proyectos" class="nav-back">← Portfolio</a>
+    </nav>
+
+    <div class="wrap">
+
+        <!-- ── HEADER ── -->
+        <header class="page-header">
+            <div class="header-eyebrow">Teledetección Oceánica — RS.01 / MAR.01 / MAR.02</div>
+            <h1>Temperatura Superficial del Mar frente a Chiloé<br>
+                mediante Sentinel-3A SLSTR</h1>
+            <p class="abstract">
+                Análisis de la estructura térmica oceánica frente al Predio Chonchi (42.6°S, 74.1°W)
+                usando datos Level-1B del radiómetro SLSTR (Sentinel-3A). Se aplican el algoritmo
+                split-window sobre las bandas S8/S9 para estimar SST, y los módulos
+                <strong>MAR.01</strong> (solubilidad CO₂, Weiss 1974 + Wanninkhof 2014) y
+                <strong>MAR.02</strong> (hábitat kelp KHAI, Krause-Jensen &amp; Duarte 2016)
+                del Framework CUSSEN para cuantificar el potencial de carbono azul
+                en la costa occidental de la Isla Grande de Chiloé.
+            </p>
+            <div class="badge-row">
+                <span class="badge">MAR.01</span>
+                <span class="badge">MAR.02</span>
+                <span class="badge-tag">Sentinel-3 SLSTR</span>
+                <span class="badge-tag">Split-Window SST</span>
+                <span class="badge-tag">Blue Carbon</span>
+                <span class="badge-tag">Kelp KHAI</span>
+                <span class="badge-tag">Chiloé · 42.6°S</span>
+                <span class="badge-tag">Feb 2025</span>
+            </div>
+        </header>
+
+        <!-- ── KEY RESULTS ── -->
+        <div class="results-bar">
+            <div class="res-cell">
+                <span class="res-value">12–17°C</span>
+                <span class="res-label">SST frente a Chiloé (Feb 2025)</span>
+            </div>
+            <div class="res-cell">
+                <span class="res-value">29,360 km²</span>
+                <span class="res-label">Área KHAI &gt; 0.5 (hábitat óptimo kelp)</span>
+            </div>
+            <div class="res-cell">
+                <span class="res-value">−0.69 tCO₂/ha/yr</span>
+                <span class="res-label">Flujo aire-mar zona upwelling</span>
+            </div>
+            <div class="res-cell">
+                <span class="res-value">3,631 tCO₂/yr</span>
+                <span class="res-label">Estimación Predio Chonchi (800 ha)</span>
+            </div>
+            <div class="res-cell">
+                <span class="res-value">1 km</span>
+                <span class="res-label">Resolución espacial SLSTR TIR</span>
+            </div>
+            <div class="res-cell">
+                <span class="res-value">SL_1_RBT</span>
+                <span class="res-label">Producto L1B — 15 Feb 2025 03:42 UTC</span>
+            </div>
+        </div>
+
+        <!-- ── FIGURA 1: TIR FALSE COLOR ── -->
+        <section>
+            <div class="sec-code">Figura 1 — Composición Falso Color TIR</div>
+            <h2>Estructura de la escena nocturna: S9:S8:S7</h2>
+            <p class="sec-intro">
+                Composición falso color de las tres bandas TIR del SLSTR (S9→R, S8→G, S7→B).
+                La pasada nocturna elimina la reflexión solar, permitiendo leer directamente
+                la emisión térmica del océano y la cobertura nubosa.
+            </p>
+
+            <div class="figure">
+                <img src="assets/fig1_TIR.png"
+                     alt="Composición falso color TIR Sentinel-3A SLSTR — Chiloé 15 Feb 2025">
+                <div class="figure-caption">
+                    <div class="fig-label">Fig. 1 — Composición falso color TIR (S9:S8:S7) · Sentinel-3A SLSTR · 15 Feb 2025 03:42 UTC · Pasada nocturna (00:42 hora local)</div>
+                    <p>
+                        Las nubes aparecen en tonos violeta/azul profundo por su baja temperatura de brillo
+                        (BT &lt; 260 K). El océano expuesto muestra gradiente cálido (tonos verdes-amarillos)
+                        coherente con la SST de verano austral (14–17°C). La Isla Grande de Chiloé es visible
+                        por contraste suelo-océano, enfriada durante la noche (&lt;290 K en tierra vs &gt;285 K en agua).
+                        La cobertura nubosa supera el 60% de la escena, característica de la Patagonia norte.
+                    </p>
+                </div>
+            </div>
+
+            <div class="analysis">
+                <strong>Interpretación:</strong> La composición TIR confirma la geometría de la swath (~1400 km)
+                y la posición de la zona costera de Chiloé en el margen del corte nuboso, donde se concentran
+                los píxeles válidos para el cálculo de SST. El contraste tierra-océano valida la calibración
+                relativa de las bandas: la emisividad del océano (~0.99) produce BT muy próximas a la temperatura
+                cinética superficial, mientras que la tierra (emisividad ~0.95) subestima levemente la temperatura real.
+            </div>
+        </section>
+
+        <!-- ── FIGURA 2: SST MAP ── -->
+        <section>
+            <div class="sec-code">Figura 2 — SST Split-Window</div>
+            <h2>Temperatura Superficial del Mar — Algoritmo Split-Window S8/S9</h2>
+            <p class="sec-intro">
+                La SST se estima aplicando el algoritmo split-window simplificado (NLSST)
+                sobre las bandas S8 (10.85 µm) y S9 (12.0 µm), con máscara de calidad
+                bit-flag (ocean, cloud, land) del producto confidence_in.
+            </p>
+
+            <div class="formula-label">Algoritmo Split-Window (primer orden)</div>
+            <div class="formula">SST<sub>skin</sub> = T<sub>S8</sub> + a·(T<sub>S8</sub> − T<sub>S9</sub>) + b
+  a = 1.0,  b = 0.5 K
+  Máscara válida: is_ocean AND NOT is_cloud AND 6°C &lt; SST &lt; 24°C</div>
+
+            <div class="figure">
+                <img src="assets/fig4_SST.png"
+                     alt="Mapa SST Chiloé Sentinel-3 SLSTR — Split-Window estimado">
+                <div class="figure-caption">
+                    <div class="fig-label">Fig. 2 — SST estimada (°C) · Algoritmo split-window S8/S9 · Paleta cmocean.thermal · 15 Feb 2025</div>
+                    <p>
+                        El mapa muestra la distribución espacial de SST en la zona de
+                        transición oceanográfica (~38°–46°S). Las aguas costeras frías (12–13°C)
+                        corresponden a la surgencia costera frente al talud de Chiloé;
+                        las aguas oceánicas abiertas presentan 15–17°C. La zona gris indica
+                        píxeles enmascarados por nubosidad o tierra.
+                    </p>
+                </div>
+            </div>
+
+            <div class="analysis">
+                <strong>Frente térmico costero:</strong> El gradiente latitudinal de SST (~0.3°C/°lat) es
+                consistente con la bifurcación de la Corriente del Pacífico Sur en ~43°S (Strub et al., 2019).
+                La zona costera frente al Predio Chonchi (42.6°S, 74.1°W) queda parcialmente bajo cobertura
+                nubosa en esta escena; los píxeles válidos adyacentes indican SST de <strong>12–14°C</strong>,
+                coherentes con upwelling de verano austral. La diferencia S8−S9 promedio sobre el océano sin nubes
+                es de +2.1 K, proxy del contenido integrado de vapor de agua atmosférico.
+            </div>
+
+            <table class="data-table">
+                <thead>
+                    <tr><th>Zona</th><th>SST media (°C)</th><th>N píxeles válidos</th><th>Descripción</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Aguas costeras (&lt;150 km)</td><td class="val">12.8 ± 1.2</td><td class="val">~4,200</td><td>Surgencia costera (upwelling)</td></tr>
+                    <tr><td>Aguas oceánicas abiertas</td><td class="val">16.1 ± 0.9</td><td class="val">~18,600</td><td>Pacífico Sur Oriental abierto</td></tr>
+                    <tr><td>Frente térmico (~42°S)</td><td class="val">13.5–15.0</td><td class="val">variable</td><td>Zona de mezcla SPC bifurcación</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- ── FIGURA 3: KHAI / BLUE CARBON ── -->
+        <section>
+            <div class="sec-code">Figura 3 — MAR.02 KHAI + Blue Carbon</div>
+            <h2>Hábitat Kelp y Estimación de Carbono Azul</h2>
+            <p class="sec-intro">
+                El módulo MAR.02 calcula el <em>Kelp Habitat Affinity Index</em> (KHAI) a partir de
+                la SST y estima la remoción de CO₂ combinando el flujo océano-atmósfera (MAR.01)
+                con el potencial de secuestro por kelp (<em>Macrocystis pyrifera</em>).
+            </p>
+
+            <div class="formula-label">Módulo MAR.02 — KHAI (Krause-Jensen &amp; Duarte 2016)</div>
+            <div class="formula">KHAI = max(0,  1 − |SST − T_opt| / ΔT)
+  T_opt = 12°C  (temperatura óptima Macrocystis pyrifera)
+  ΔT    = ±4°C  (rango de tolerancia térmica)
+  KHAI ∈ [0, 1]  →  1 = hábitat óptimo,  0 = fuera de rango
+
+Blue carbon kelp:
+  NPP_kelp = 1.5 kgC/m²/yr
+  f_seq    = 7% (fracción secuestrada &gt;200 m profundidad)
+  BC_kelp  = NPP × f_seq × (44/12) = 3.85 tCO₂/ha/yr</div>
+
+            <div class="figure">
+                <img src="assets/fig9_blue_carbon.png"
+                     alt="KHAI mapa hábitat kelp y estimación blue carbon Predio Chonchi">
+                <div class="figure-caption">
+                    <div class="fig-label">Fig. 3 — Izq: KHAI (Kelp Habitat Affinity Index) · Der: Estimación remoción CO₂ Predio Chonchi (800 ha) · 15 Feb 2025</div>
+                    <p>
+                        El panel izquierdo muestra la distribución espacial del KHAI calculado sobre la escena.
+                        Verde intenso (KHAI &gt; 0.75): hábitat óptimo para kelp, coincidente con la franja
+                        costera de aguas frías (&lt;14°C). El panel derecho desglosa los dos componentes de
+                        remoción de carbono para las 800 ha de frente costero del Predio Chonchi.
+                    </p>
+                </div>
+            </div>
+
+            <div class="analysis">
+                <strong>Resultado integrado MAR.01 + MAR.02:</strong> Las aguas de upwelling frente a Chiloé
+                (~12°C) tienen un KHAI promedio de <strong>0.82</strong>, indicando condiciones muy favorables
+                para <em>Macrocystis pyrifera</em>. La solubilidad K₀ en la zona fría supera en 10.7% la de las
+                aguas oceánicas cálidas, amplificando el flujo océano→atmósfera negativo (sumidero).
+                La estimación de carbono azul combina ambos flujos: absorción directa de CO₂ oceánico
+                (~551 tCO₂/yr en 800 ha) y potencial de secuestro por biomasa de kelp (~3,080 tCO₂/yr),
+                arrojando un total de <strong>3,631 tCO₂/yr</strong> para el frente costero del predio.
+                Esta cifra es contextual y requiere validación con inventario de kelp in-situ.
+            </div>
+
+            <table class="data-table">
+                <thead>
+                    <tr><th>Componente</th><th>Parámetro clave</th><th>Estimación</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Flujo aire-mar (MAR.01)</td><td>F = k · K₀ · ΔpCO₂, u₁₀ = 9 m/s</td><td class="val">−0.688 tCO₂/ha/yr</td></tr>
+                    <tr><td>Blue carbon kelp (MAR.02)</td><td>NPP × 7% × 44/12</td><td class="val">3.85 tCO₂/ha/yr</td></tr>
+                    <tr><td>Área KHAI &gt; 0.5</td><td>Escena 15 Feb 2025</td><td class="val">29,360 km²</td></tr>
+                    <tr><td>Flujo aire-mar (predio, 800 ha)</td><td>MAR.01 × 800 ha</td><td class="val">551 tCO₂/yr</td></tr>
+                    <tr><td>Blue carbon kelp (predio, 800 ha)</td><td>MAR.02 × 800 ha</td><td class="val">3,080 tCO₂/yr</td></tr>
+                    <tr class="total"><td><strong>TOTAL — Predio Chonchi</strong></td><td>MAR.01 + MAR.02</td><td class="val">3,631 tCO₂/yr</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- ── METODOLOGÍA ── -->
+        <section>
+            <div class="sec-code">Metodología</div>
+            <h2>Datos, procesamiento y stack técnico</h2>
+
+            <table class="data-table" style="margin-top:16px">
+                <thead>
+                    <tr><th>Parámetro</th><th>Detalle</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Sensor</td><td class="val">Sentinel-3A SLSTR — Level-1B (SL_1_RBT)</td></tr>
+                    <tr><td>Fecha / hora</td><td class="val">15 Feb 2025 · 03:42 UTC (00:42 hora local)</td></tr>
+                    <tr><td>Bandas utilizadas</td><td class="val">S7 (3.74 µm), S8 (10.85 µm), S9 (12.0 µm)</td></tr>
+                    <tr><td>Resolución espacial</td><td class="val">1 km (grilla nadir TIR)</td></tr>
+                    <tr><td>Fuente de descarga</td><td class="val">Copernicus Data Space (dataspace.copernicus.eu)</td></tr>
+                    <tr><td>Formato</td><td class="val">SAFE / NetCDF4</td></tr>
+                    <tr><td>Flags de calidad</td><td class="val">confidence_in: bit 1 (ocean), bit 3 (land), bit 14 (cloud)</td></tr>
+                    <tr><td>Lenguaje</td><td class="val">Python 3.12</td></tr>
+                    <tr><td>Librerías</td><td class="val">netCDF4 · numpy · matplotlib · cartopy · cmocean</td></tr>
+                    <tr><td>Contexto</td><td class="val">METE1311 — Magíster Teledetección · Universidad Mayor · 2025</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- ── REFERENCIAS ── -->
+        <section>
+            <div class="sec-code">Referencias</div>
+            <h2>Bibliografía</h2>
+            <ul class="ref-list" style="margin-top:20px">
+                <li data-n="1">Weiss, R.F. (1974). Carbon dioxide in water and seawater: the solubility of a non-ideal gas. <em>Marine Chemistry</em>, 2(3), 203–215.</li>
+                <li data-n="2">Wanninkhof, R. (2014). Relationship between wind speed and gas exchange over the ocean revisited. <em>Limnology &amp; Oceanography: Methods</em>, 12(6), 351–362.</li>
+                <li data-n="3">Krause-Jensen, D. &amp; Duarte, C.M. (2016). Substantial role of macroalgae in marine carbon sequestration. <em>Nature Geoscience</em>, 9(10), 737–742.</li>
+                <li data-n="4">Strub, P.T., James, C., Montecino, V., Rutllant, J.A. &amp; Blanco, J.L. (2019). Ocean circulation along the southern Chile transition region (38°–46°S). <em>Progress in Oceanography</em>, 172, 159–198.</li>
+                <li data-n="5">Saldías, G.S. et al. (2021). Seasonal Variability of SST Fronts in the Inner Sea of Chiloé. <em>Remote Sensing</em>, 13(2), 181.</li>
+                <li data-n="6">González-Haro, C. et al. (2020). Ocean Surface Currents Reconstruction from SST. <em>JGR: Oceans</em>, 125, e2019JC015958.</li>
+            </ul>
+        </section>
+
+        <!-- ── CTA ── -->
+        <div class="cta-section">
+            <h3>Informe completo del análisis</h3>
+            <p>Notebook Jupyter con código fuente, figuras adicionales y análisis completo de SST,
+            split-window, espectros de temperatura de brillo y estimación de carbono azul para el Predio Chonchi.</p>
+            <div class="btn-row">
+                <a href="assets/Proyecto_SST_Chiloe_PabloCussen.html" class="btn-primary" target="_blank">Ver Informe HTML</a>
+                <a href="../../../#contacto" class="btn-secondary">Solicitar análisis similar</a>
+            </div>
+        </div>
+
+    </div>
+
+    <footer>
+        <div class="wrap">
+            <div class="footer-inner">
+                <span>CUSSEN — Inteligencia Geoespacial · Patagonia, Chile</span>
+                <a href="../../../#proyectos">← Volver al portfolio</a>
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>

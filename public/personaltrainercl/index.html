@@ -1,0 +1,1758 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1e1b4b">
+    <meta name="description" content="PersonalTrainerCL - Gestión profesional de entrenamiento personal">
+    <title>PersonalTrainerCL</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%231e1b4b' width='180' height='180'/><text x='90' y='90' font-size='60' font-weight='bold' fill='%23f97316' text-anchor='middle' dominant-baseline='central' font-family='sans-serif'>PT</text></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
+    <style>
+        :root {
+            --dark: #1e1b4b;
+            --card: #312e81;
+            --orange: #f97316;
+            --cyan: #22d3ee;
+            --text: #f1f5f9;
+            --border: #4c1d95;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            width: 100%;
+            font-family: 'Inter', sans-serif;
+            background: var(--dark);
+            color: var(--text);
+            height: 100%;
+        }
+
+        body {
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 100%;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--dark) 0%, var(--card) 100%);
+            padding: 1rem;
+            border-bottom: 2px solid var(--orange);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--orange);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .status-bar {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.875rem;
+            align-items: center;
+        }
+
+        .status-badge {
+            background: var(--card);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            border-left: 3px solid var(--cyan);
+        }
+
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 1rem;
+        }
+
+        .tab-btn {
+            background: transparent;
+            color: var(--text);
+            border: none;
+            padding: 0.75rem 1.25rem;
+            cursor: pointer;
+            font-size: 1rem;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .tab-btn:hover {
+            color: var(--orange);
+        }
+
+        .tab-btn.active {
+            color: var(--orange);
+            border-bottom-color: var(--orange);
+        }
+
+        .btn {
+            background: var(--orange);
+            color: var(--dark);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s ease;
+            min-height: 44px;
+        }
+
+        .btn:hover {
+            background: #ea580c;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--card);
+            color: var(--text);
+            border: 1px solid var(--cyan);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border);
+            border-color: var(--orange);
+        }
+
+        .btn-small {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            min-height: 36px;
+        }
+
+        .btn-danger {
+            background: #dc2626;
+        }
+
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: var(--orange);
+            box-shadow: 0 8px 16px rgba(249, 115, 22, 0.2);
+            transform: translateY(-4px);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--orange);
+        }
+
+        .card-badge {
+            background: var(--orange);
+            color: var(--dark);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .card-badge.success { background: #10b981; color: white; }
+        .card-badge.warning { background: #f59e0b; color: var(--dark); }
+        .card-badge.info { background: var(--cyan); color: var(--dark); }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--dark);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            font-size: 16px;
+            transition: border 0.3s ease;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--orange);
+            box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+        }
+
+        input::placeholder {
+            color: #94a3b8;
+        }
+
+        .input-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        @media (max-width: 640px) {
+            .input-row {
+                grid-template-columns: 1fr;
+            }
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            .tabs {
+                gap: 0.25rem;
+            }
+            .tab-btn {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.875rem;
+            }
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 1rem;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--orange);
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--text);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-btn:hover {
+            color: var(--orange);
+        }
+
+        .macro-bar {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .macro-item {
+            text-align: center;
+            padding: 1rem;
+            background: var(--dark);
+            border-radius: 8px;
+            border-left: 3px solid var(--orange);
+        }
+
+        .macro-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--orange);
+        }
+
+        .macro-label {
+            font-size: 0.875rem;
+            color: #cbd5e1;
+            margin-top: 0.5rem;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 2rem 0;
+            background: var(--dark);
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .calendar {
+            background: var(--dark);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .calendar-nav {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .calendar-nav button {
+            background: var(--orange);
+            color: var(--dark);
+            border: none;
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            min-height: 36px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .day-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 0.5rem;
+        }
+
+        .day-cell {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 1rem;
+            min-height: 120px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .day-cell:hover {
+            border-color: var(--orange);
+            box-shadow: 0 4px 12px rgba(249, 115, 22, 0.2);
+        }
+
+        .day-number {
+            font-weight: 700;
+            color: var(--orange);
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .day-slot {
+            font-size: 0.8rem;
+            color: var(--cyan);
+            margin-bottom: 0.25rem;
+            word-break: break-word;
+        }
+
+        .slot-count {
+            margin-top: auto;
+            padding-top: 0.5rem;
+            border-top: 1px solid var(--border);
+            font-size: 0.75rem;
+            color: #cbd5e1;
+        }
+
+        .list-item {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            gap: 1rem;
+            flex-wrap: wrap;
+            transition: all 0.3s ease;
+        }
+
+        .list-item:hover {
+            border-color: var(--orange);
+            background: var(--dark);
+        }
+
+        .list-item-content {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .list-item-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+        }
+
+        .list-item-meta {
+            font-size: 0.875rem;
+            color: #cbd5e1;
+        }
+
+        .list-item-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1.5rem;
+            color: #cbd5e1;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--orange);
+            margin-top: 2rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .exercise-item {
+            background: var(--dark);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .exercise-item:hover {
+            border-color: var(--orange);
+            background: var(--card);
+        }
+
+        .exercise-name {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .exercise-details {
+            font-size: 0.875rem;
+            color: #cbd5e1;
+            margin-top: 0.25rem;
+        }
+
+        .food-item {
+            background: var(--dark);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .food-item:hover {
+            border-color: var(--cyan);
+            background: var(--card);
+        }
+
+        .food-name {
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+        }
+
+        .food-macros {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.5rem;
+            font-size: 0.75rem;
+            text-align: center;
+        }
+
+        .food-macro {
+            color: #cbd5e1;
+        }
+
+        .food-macro-value {
+            color: var(--cyan);
+            font-weight: 600;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            background: var(--card);
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        .filter-btn.active {
+            background: var(--orange);
+            color: var(--dark);
+            border-color: var(--orange);
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 0.5rem 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--orange), var(--cyan));
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        footer {
+            padding: 1rem;
+            text-align: center;
+            border-top: 1px solid var(--border);
+            color: #94a3b8;
+            font-size: 0.875rem;
+            background: var(--dark);
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid var(--border);
+            border-top-color: var(--orange);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 1rem;
+            background: var(--orange);
+            color: var(--dark);
+            padding: 1rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 600;
+            z-index: 2000;
+            animation: slideUp 0.3s ease;
+            max-width: 400px;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .badge {
+            display: inline-block;
+            background: var(--border);
+            color: var(--text);
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+
+        .measurement-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        @media (max-width: 640px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            .input-row {
+                grid-template-columns: 1fr;
+            }
+            .modal {
+                padding: 1.5rem;
+            }
+            .day-grid {
+                grid-template-columns: repeat(7, 1fr);
+            }
+            .day-cell {
+                min-height: 80px;
+                padding: 0.75rem;
+            }
+            .macro-bar {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <div class="logo">
+                    💪 PersonalTrainerCL
+                </div>
+                <div class="status-bar">
+                    <div class="status-badge">
+                        Alumnos: <span id="alumnoCount">0</span>
+                    </div>
+                    <div class="status-badge">
+                        Hoy: <span id="todayCount">0</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="content">
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="alumnos">👥 Alumnos</button>
+                <button class="tab-btn" data-tab="rutinas">💪 Rutinas</button>
+                <button class="tab-btn" data-tab="nutricion">🍗 Nutrición</button>
+                <button class="tab-btn" data-tab="progreso">📈 Progreso</button>
+                <button class="tab-btn" data-tab="agenda">📅 Agenda</button>
+            </div>
+
+            <!-- TAB 1: ALUMNOS -->
+            <div id="alumnos" class="tab-content active">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                    <h2 style="font-size: 1.75rem; color: var(--orange);">Gestión de Alumnos</h2>
+                    <button class="btn" id="addAlumnoBtn">+ Nuevo Alumno</button>
+                </div>
+
+                <div class="filter-group" id="statusFilter">
+                    <button class="filter-btn active" data-status="all">Todos</button>
+                    <button class="filter-btn" data-status="Activo">Activos</button>
+                    <button class="filter-btn" data-status="Pausa">Pausa</button>
+                    <button class="filter-btn" data-status="Evaluación">Evaluación</button>
+                </div>
+
+                <div class="grid" id="alumnosGrid">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📋</div>
+                        <p>No hay alumnos registrados</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: RUTINAS -->
+            <div id="rutinas" class="tab-content">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                    <h2 style="font-size: 1.75rem; color: var(--orange);">Generador de Rutinas</h2>
+                    <button class="btn" id="addRutinaBtn">+ Nueva Rutina</button>
+                </div>
+
+                <div class="list-item">
+                    <div class="list-item-content">
+                        <div class="list-item-title">Selecciona un día para comenzar</div>
+                        <div class="list-item-meta">Las rutinas se guardan automáticamente</div>
+                    </div>
+                </div>
+
+                <div id="rutinasContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;">
+                    <!-- Rutinas se cargarán aquí -->
+                </div>
+            </div>
+
+            <!-- TAB 3: NUTRICIÓN -->
+            <div id="nutricion" class="tab-content">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                    <h2 style="font-size: 1.75rem; color: var(--orange);">Nutrición & Macros</h2>
+                    <button class="btn" id="addPlanBtn">+ Nuevo Plan</button>
+                </div>
+
+                <div class="card" style="margin-bottom: 2rem;">
+                    <h3 style="color: var(--orange); margin-bottom: 1rem;">Calculadora de Macros</h3>
+                    <div class="input-row">
+                        <div class="form-group">
+                            <label>Peso (kg)</label>
+                            <input type="number" id="macroWeight" placeholder="70" min="40" max="200">
+                        </div>
+                        <div class="form-group">
+                            <label>Nivel Actividad</label>
+                            <select id="macroActivity">
+                                <option value="sedentario">Sedentario</option>
+                                <option value="ligero">Ligero (2-3x/semana)</option>
+                                <option value="moderado" selected>Moderado (4-5x/semana)</option>
+                                <option value="intenso">Intenso (6-7x/semana)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="input-row">
+                        <div class="form-group">
+                            <label>Objetivo</label>
+                            <select id="macroGoal">
+                                <option value="bajar">Bajar Peso</option>
+                                <option value="ganar">Ganar Músculo</option>
+                                <option value="mantener" selected>Mantener</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <button class="btn" id="calcMacroBtn" style="margin-top: 1.75rem; width: 100%;">Calcular</button>
+                        </div>
+                    </div>
+                    <div class="macro-bar" id="macroResults" style="display: none;">
+                        <div class="macro-item">
+                            <div class="macro-value" id="proteinValue">0</div>
+                            <div class="macro-label">Proteína (g)</div>
+                        </div>
+                        <div class="macro-item">
+                            <div class="macro-value" id="carbValue">0</div>
+                            <div class="macro-label">Carbos (g)</div>
+                        </div>
+                        <div class="macro-item">
+                            <div class="macro-value" id="fatValue">0</div>
+                            <div class="macro-label">Grasas (g)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 class="section-title">Banco de Alimentos Chilenos</h3>
+                <div id="foodBank" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;">
+                    <!-- Alimentos se cargarán aquí -->
+                </div>
+            </div>
+
+            <!-- TAB 4: PROGRESO -->
+            <div id="progreso" class="tab-content">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                    <h2 style="font-size: 1.75rem; color: var(--orange);">Seguimiento de Progreso</h2>
+                    <button class="btn" id="logProgressBtn">+ Registrar</button>
+                </div>
+
+                <div class="card" style="margin-bottom: 2rem;">
+                    <h3 style="color: var(--orange); margin-bottom: 1rem;">Selecciona Alumno</h3>
+                    <select id="progressAlumno" style="margin-bottom: 1.5rem;">
+                        <option value="">Cargar alumno...</option>
+                    </select>
+
+                    <div class="chart-container" id="chartContainer" style="display: none;">
+                        <canvas id="progressChart"></canvas>
+                    </div>
+
+                    <div id="progressData" style="display: none;">
+                        <div class="list-item" style="margin-bottom: 1rem;">
+                            <div class="list-item-content">
+                                <div class="list-item-title">Hitos Alcanzados</div>
+                                <div id="milestones" style="margin-top: 1rem;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="progressRecords"></div>
+            </div>
+
+            <!-- TAB 5: AGENDA -->
+            <div id="agenda" class="tab-content">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                    <h2 style="font-size: 1.75rem; color: var(--orange);">Agenda Semanal</h2>
+                </div>
+
+                <div class="calendar">
+                    <div class="calendar-header">
+                        <h3 id="weekTitle" style="color: var(--orange); margin: 0;">Semana 1</h3>
+                        <div class="calendar-nav">
+                            <button id="prevWeekBtn">← Anterior</button>
+                            <button id="nextWeekBtn">Siguiente →</button>
+                        </div>
+                    </div>
+
+                    <div class="day-grid" id="agendaGrid">
+                        <!-- Días se cargarán aquí -->
+                    </div>
+                </div>
+
+                <div style="margin-top: 2rem;">
+                    <h3 class="section-title">Agregar Sesión</h3>
+                    <div class="card">
+                        <div class="form-group">
+                            <label>Alumno</label>
+                            <select id="agendaAlumno">
+                                <option value="">Seleccionar...</option>
+                            </select>
+                        </div>
+                        <div class="input-row">
+                            <div class="form-group">
+                                <label>Día</label>
+                                <select id="agendaDia">
+                                    <option value="Lunes">Lunes</option>
+                                    <option value="Martes">Martes</option>
+                                    <option value="Miércoles">Miércoles</option>
+                                    <option value="Jueves">Jueves</option>
+                                    <option value="Viernes">Viernes</option>
+                                    <option value="Sábado">Sábado</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Hora (HH:MM)</label>
+                                <input type="time" id="agendaHora" value="10:00">
+                            </div>
+                        </div>
+                        <button class="btn" id="addSessionBtn" style="width: 100%;">Agregar Sesión</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>PersonalTrainerCL © 2026 | Gestión Profesional de Entrenamiento Personal</p>
+        </footer>
+    </div>
+
+    <!-- MODALES -->
+    <div class="modal-overlay" id="alumnoModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title" id="alumnoModalTitle">Nuevo Alumno</h2>
+                <button class="close-btn" id="closeAlumnoModal">&times;</button>
+            </div>
+            <div id="alumnoFormContainer"></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="rutinaModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">Nueva Rutina</h2>
+                <button class="close-btn" id="closeRutinaModal">&times;</button>
+            </div>
+            <div id="rutinaFormContainer"></div>
+        </div>
+    </div>
+
+    <!-- MANIFEST.JSON -->
+    <script id="manifest">
+        const manifest = {
+            "name": "PersonalTrainerCL",
+            "short_name": "PTCL",
+            "description": "Gestión profesional de entrenamiento personal",
+            "start_url": "/",
+            "display": "standalone",
+            "background_color": "#1e1b4b",
+            "theme_color": "#f97316",
+            "scope": "/",
+            "icons": [
+                {
+                    "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%231e1b4b' width='192' height='192'/><text x='96' y='96' font-size='80' font-weight='bold' fill='%23f97316' text-anchor='middle' dominant-baseline='central' font-family='sans-serif'>PT</text></svg>",
+                    "sizes": "192x192",
+                    "type": "image/svg+xml",
+                    "purpose": "any"
+                }
+            ]
+        };
+        document.currentScript.parentElement.appendChild(
+            Object.assign(document.createElement('link'), {
+                rel: 'manifest',
+                href: 'data:application/manifest+json,' + encodeURIComponent(JSON.stringify(manifest))
+            })
+        );
+    </script>
+
+    <!-- SERVICE WORKER INLINE -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            const swCode = `
+                const CACHE_NAME = 'personaltrainercl-v1';
+                const urlsToCache = ['/'];
+
+                self.addEventListener('install', event => {
+                    event.waitUntil(
+                        caches.open(CACHE_NAME).then(cache => {
+                            return cache.addAll(urlsToCache).catch(() => {});
+                        })
+                    );
+                });
+
+                self.addEventListener('activate', event => {
+                    event.waitUntil(
+                        caches.keys().then(cacheNames => {
+                            return Promise.all(
+                                cacheNames.map(cacheName => {
+                                    if (cacheName !== CACHE_NAME) {
+                                        return caches.delete(cacheName);
+                                    }
+                                })
+                            );
+                        })
+                    );
+                });
+
+                self.addEventListener('fetch', event => {
+                    event.respondWith(
+                        caches.match(event.request).then(response => {
+                            return response || fetch(event.request);
+                        }).catch(() => {
+                            return caches.match('/');
+                        })
+                    );
+                });
+            `;
+
+            const blob = new Blob([swCode], { type: 'application/javascript' });
+            const swUrl = URL.createObjectURL(blob);
+            navigator.serviceWorker.register(swUrl).catch(() => {});
+        }
+    </script>
+
+    <!-- MAIN APP JAVASCRIPT -->
+    <script>
+        // ============ UTILITIES ============
+        const safeGet = (key, defaultValue = null) => {
+            try {
+                const item = localStorage.getItem(key);
+                return item ? JSON.parse(item) : defaultValue;
+            } catch (e) {
+                console.error(`Error getting ${key}:`, e);
+                return defaultValue;
+            }
+        };
+
+        const safeSet = (key, value) => {
+            try {
+                localStorage.setItem(key, JSON.stringify(value));
+                return true;
+            } catch (e) {
+                console.error(`Error setting ${key}:`, e);
+                return false;
+            }
+        };
+
+        const safeRemove = (key) => {
+            try {
+                localStorage.removeItem(key);
+                return true;
+            } catch (e) {
+                console.error(`Error removing ${key}:`, e);
+                return false;
+            }
+        };
+
+        const showToast = (message) => {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        };
+
+        // ============ DATA INITIALIZATION ============
+        const EXERCISE_LIBRARY = {
+            'Pecho': [
+                { name: 'Press Banca', series: 4, reps: 8, rest: 90 },
+                { name: 'Press Inclinado', series: 3, reps: 10, rest: 75 },
+                { name: 'Aperturas Mancuernas', series: 3, reps: 12, rest: 60 },
+                { name: 'Flexiones', series: 4, reps: 12, rest: 60 },
+                { name: 'Crossover', series: 3, reps: 15, rest: 45 }
+            ],
+            'Espalda': [
+                { name: 'Dominadas', series: 4, reps: 8, rest: 90 },
+                { name: 'Remo Barra', series: 4, reps: 8, rest: 90 },
+                { name: 'Peso Muerto', series: 3, reps: 6, rest: 120 },
+                { name: 'Pulldown Lat', series: 3, reps: 12, rest: 60 },
+                { name: 'Remo Máquina', series: 3, reps: 10, rest: 60 }
+            ],
+            'Piernas': [
+                { name: 'Sentadilla', series: 4, reps: 8, rest: 120 },
+                { name: 'Prensa Piernas', series: 3, reps: 10, rest: 90 },
+                { name: 'Extensiones', series: 3, reps: 12, rest: 60 },
+                { name: 'Curl de Pierna', series: 3, reps: 12, rest: 60 },
+                { name: 'Zancadas', series: 3, reps: 10, rest: 60 },
+                { name: 'Hip Thrust', series: 3, reps: 12, rest: 60 }
+            ],
+            'Hombros': [
+                { name: 'Press Militar', series: 4, reps: 8, rest: 90 },
+                { name: 'Laterales', series: 3, reps: 12, rest: 60 },
+                { name: 'Face Pull', series: 3, reps: 15, rest: 45 }
+            ],
+            'Brazos': [
+                { name: 'Curl Barra', series: 3, reps: 10, rest: 60 },
+                { name: 'Extensión Tríceps', series: 3, reps: 12, rest: 60 },
+                { name: 'Curl Martillo', series: 3, reps: 12, rest: 60 },
+                { name: 'Fondos', series: 3, reps: 10, rest: 60 }
+            ],
+            'Core': [
+                { name: 'Plancha', series: 3, reps: 60, rest: 45 },
+                { name: 'Crunches', series: 3, reps: 20, rest: 45 },
+                { name: 'Russian Twist', series: 3, reps: 20, rest: 45 }
+            ],
+            'Cardio': [
+                { name: 'Correr', series: 1, reps: 30, rest: 0 },
+                { name: 'Bicicleta', series: 1, reps: 30, rest: 0 },
+                { name: 'Cuerda', series: 3, reps: 60, rest: 60 },
+                { name: 'HIIT', series: 8, reps: 20, rest: 10 }
+            ]
+        };
+
+        const FOOD_BANK = [
+            { name: 'Pollo Pechuga', cal: 165, prot: 31, carb: 0, fat: 3.6 },
+            { name: 'Arroz Integral', cal: 111, prot: 2.6, carb: 23, fat: 0.9 },
+            { name: 'Huevos', cal: 155, prot: 13, carb: 1.1, fat: 11 },
+            { name: 'Palta', cal: 160, prot: 2, carb: 9, fat: 15 },
+            { name: 'Legumbres', cal: 130, prot: 9, carb: 23, fat: 0.4 },
+            { name: 'Avena', cal: 389, prot: 17, carb: 66, fat: 6.9 },
+            { name: 'Plátano', cal: 89, prot: 1.1, carb: 23, fat: 0.3 },
+            { name: 'Atún Lata', cal: 132, prot: 29, carb: 0, fat: 1.3 },
+            { name: 'Salmón', cal: 206, prot: 22, carb: 0, fat: 13 },
+            { name: 'Leche Entera', cal: 61, prot: 3.2, carb: 4.8, fat: 3.3 },
+            { name: 'Queso Fresco', cal: 264, prot: 21, carb: 1.3, fat: 21 },
+            { name: 'Papa', cal: 77, prot: 2, carb: 17, fat: 0.1 },
+            { name: 'Batata', cal: 86, prot: 1.6, carb: 20, fat: 0.1 },
+            { name: 'Almendras', cal: 579, prot: 21, carb: 22, fat: 50 },
+            { name: 'Pan Integral', cal: 265, prot: 9, carb: 48, fat: 3.3 }
+        ];
+
+        // ============ TAB NAVIGATION ============
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                e.target.classList.add('active');
+                const tabId = e.target.getAttribute('data-tab');
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+
+        // ============ TAB 1: ALUMNOS ============
+        const loadAlumnos = () => {
+            const alumnos = safeGet('alumnos', []);
+            const grid = document.getElementById('alumnosGrid');
+            const filter = document.querySelector('.filter-group [data-status].active')?.getAttribute('data-status') || 'all';
+
+            const filtered = filter === 'all' ? alumnos : alumnos.filter(a => a.status === filter);
+            document.getElementById('alumnoCount').textContent = alumnos.length;
+
+            if (filtered.length === 0) {
+                grid.innerHTML = '<div class="empty-state" style="grid-column: 1/-1;"><div class="empty-state-icon">📋</div><p>No hay alumnos con este filtro</p></div>';
+                return;
+            }
+
+            grid.innerHTML = filtered.map(alumno => `
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">${alumno.nombre}</div>
+                            <div style="font-size: 0.875rem; color: #cbd5e1; margin-top: 0.25rem;">📞 ${alumno.telefono}</div>
+                        </div>
+                        <div class="card-badge ${alumno.status === 'Activo' ? 'success' : alumno.status === 'Pausa' ? 'warning' : 'info'}">${alumno.status}</div>
+                    </div>
+                    <div style="margin-bottom: 1rem; font-size: 0.9rem;">
+                        <div>Edad: ${alumno.edad} años</div>
+                        <div>Peso: ${alumno.peso}kg | Altura: ${alumno.altura}cm</div>
+                        <div style="margin-top: 0.5rem; color: var(--cyan);">Objetivo: ${alumno.goal}</div>
+                    </div>
+                    <div style="margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border); font-size: 0.85rem;">
+                        <div>Condiciones: ${alumno.condiciones || 'Ninguna'}</div>
+                        <div>Lesiones: ${alumno.lesiones || 'Ninguna'}</div>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button class="btn btn-secondary btn-small" onclick="editAlumno('${alumno.id}')">Editar</button>
+                        <button class="btn btn-danger btn-small" onclick="deleteAlumno('${alumno.id}')">Eliminar</button>
+                    </div>
+                </div>
+            `).join('');
+        };
+
+        document.getElementById('addAlumnoBtn').addEventListener('click', () => {
+            const form = `
+                <div class="form-group">
+                    <label>Nombre</label>
+                    <input type="text" id="formNombre" placeholder="Juan Pérez" required>
+                </div>
+                <div class="input-row">
+                    <div class="form-group">
+                        <label>Teléfono</label>
+                        <input type="tel" id="formTelefono" placeholder="+56 9 XXXX XXXX" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Edad</label>
+                        <input type="number" id="formEdad" placeholder="25" min="15" max="100">
+                    </div>
+                </div>
+                <div class="input-row">
+                    <div class="form-group">
+                        <label>Peso (kg)</label>
+                        <input type="number" id="formPeso" placeholder="75" min="30" max="200" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label>Altura (cm)</label>
+                        <input type="number" id="formAltura" placeholder="175" min="100" max="230">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Objetivo</label>
+                    <select id="formGoal">
+                        <option value="Bajar peso">Bajar peso</option>
+                        <option value="Ganar músculo">Ganar músculo</option>
+                        <option value="Tonificar">Tonificar</option>
+                        <option value="Rendimiento">Rendimiento</option>
+                        <option value="Salud">Salud</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Condiciones Médicas</label>
+                    <input type="text" id="formCondiciones" placeholder="Ej: Asma, Presión alta">
+                </div>
+                <div class="form-group">
+                    <label>Lesiones/Limitaciones</label>
+                    <input type="text" id="formLesiones" placeholder="Ej: Tendinitis codo derecho">
+                </div>
+                <div class="section-title">Medidas Corporales (cm)</div>
+                <div class="measurement-grid">
+                    <div class="form-group">
+                        <label>Pecho</label>
+                        <input type="number" id="formPecho" placeholder="105" min="50" max="200" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label>Cintura</label>
+                        <input type="number" id="formCintura" placeholder="85" min="40" max="200" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label>Cadera</label>
+                        <input type="number" id="formCadera" placeholder="95" min="50" max="200" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label>Brazo</label>
+                        <input type="number" id="formBrazo" placeholder="35" min="15" max="100" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label>Pierna</label>
+                        <input type="number" id="formPierna" placeholder="58" min="25" max="150" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label>Grasa Corporal %</label>
+                        <input type="number" id="formGrasa" placeholder="20" min="5" max="60" step="0.1">
+                    </div>
+                </div>
+                <div class="input-row">
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select id="formStatus">
+                            <option value="Activo">Activo</option>
+                            <option value="Pausa">Pausa</option>
+                            <option value="Evaluación">Evaluación</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Mensualidad (CLP)</label>
+                        <input type="number" id="formMensualidad" placeholder="50000" min="0">
+                    </div>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button class="btn" style="flex: 1;" onclick="saveAlumno()">Guardar Alumno</button>
+                    <button class="btn btn-secondary" style="flex: 1;" id="closeAlumnoModal2">Cancelar</button>
+                </div>
+            `;
+            document.getElementById('alumnoFormContainer').innerHTML = form;
+            document.getElementById('alumnoModalTitle').textContent = 'Nuevo Alumno';
+            document.getElementById('alumnoModal').classList.add('active');
+            document.getElementById('closeAlumnoModal2').addEventListener('click', () => {
+                document.getElementById('alumnoModal').classList.remove('active');
+            });
+        });
+
+        const saveAlumno = () => {
+            const alumno = {
+                id: Date.now().toString(),
+                nombre: document.getElementById('formNombre').value,
+                telefono: document.getElementById('formTelefono').value,
+                edad: parseInt(document.getElementById('formEdad').value) || 0,
+                peso: parseFloat(document.getElementById('formPeso').value) || 0,
+                altura: parseInt(document.getElementById('formAltura').value) || 0,
+                goal: document.getElementById('formGoal').value,
+                condiciones: document.getElementById('formCondiciones').value,
+                lesiones: document.getElementById('formLesiones').value,
+                medidas: {
+                    pecho: parseFloat(document.getElementById('formPecho').value) || 0,
+                    cintura: parseFloat(document.getElementById('formCintura').value) || 0,
+                    cadera: parseFloat(document.getElementById('formCadera').value) || 0,
+                    brazo: parseFloat(document.getElementById('formBrazo').value) || 0,
+                    pierna: parseFloat(document.getElementById('formPierna').value) || 0,
+                    grasa: parseFloat(document.getElementById('formGrasa').value) || 0
+                },
+                status: document.getElementById('formStatus').value,
+                mensualidad: parseInt(document.getElementById('formMensualidad').value) || 0
+            };
+
+            if (!alumno.nombre || !alumno.telefono) {
+                showToast('❌ Nombre y teléfono requeridos');
+                return;
+            }
+
+            const alumnos = safeGet('alumnos', []);
+            alumnos.push(alumno);
+            safeSet('alumnos', alumnos);
+            showToast('✅ Alumno guardado');
+            document.getElementById('alumnoModal').classList.remove('active');
+            loadAlumnos();
+        };
+
+        const deleteAlumno = (id) => {
+            if (confirm('¿Eliminar alumno?')) {
+                const alumnos = safeGet('alumnos', []).filter(a => a.id !== id);
+                safeSet('alumnos', alumnos);
+                showToast('✅ Alumno eliminado');
+                loadAlumnos();
+            }
+        };
+
+        document.getElementById('closeAlumnoModal').addEventListener('click', () => {
+            document.getElementById('alumnoModal').classList.remove('active');
+        });
+
+        document.querySelectorAll('[data-status]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('[data-status]').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                loadAlumnos();
+            });
+        });
+
+        // ============ TAB 2: RUTINAS ============
+        const DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+
+        const loadRutinas = () => {
+            const container = document.getElementById('rutinasContainer');
+            const rutinas = safeGet('rutinas', {});
+
+            container.innerHTML = DIAS.map(dia => {
+                const ejercicios = rutinas[dia] || [];
+                return `
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">${dia}</div>
+                            <button class="btn btn-small" onclick="editarRutina('${dia}')">Editar</button>
+                        </div>
+                        ${ejercicios.length === 0
+                            ? '<div style="color: #cbd5e1; text-align: center; padding: 1rem;">Sin ejercicios</div>'
+                            : ejercicios.map(e => `
+                                <div style="margin-bottom: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border);">
+                                    <div style="font-weight: 600;">${e.nombre}</div>
+                                    <div style="font-size: 0.85rem; color: #cbd5e1;">${e.series} × ${e.reps} reps | ${e.peso || 0}kg | ${e.descanso}s descanso</div>
+                                </div>
+                            `).join('')
+                        }
+                    </div>
+                `;
+            }).join('');
+        };
+
+        const editarRutina = (dia) => {
+            const rutinas = safeGet('rutinas', {});
+            const ejercicios = rutinas[dia] || [];
+
+            let form = `
+                <div style="margin-bottom: 1.5rem;">
+                    <h3 style="color: var(--orange); margin-bottom: 1rem;">Ejercicios de ${dia}</h3>
+                    ${Object.entries(EXERCISE_LIBRARY).map(([grupo, ejercs]) => `
+                        <div style="margin-bottom: 1rem;">
+                            <h4 style="color: var(--cyan); margin-bottom: 0.75rem; font-size: 0.95rem;">${grupo}</h4>
+                            ${ejercs.map(ej => `
+                                <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                    <input type="checkbox" id="ej_${dia}_${ej.name}"
+                                        ${ejercicios.some(e => e.nombre === ej.name) ? 'checked' : ''}
+                                        class="day-exercise" data-day="${dia}" data-name="${ej.name}"
+                                        data-series="${ej.series}" data-reps="${ej.reps}" data-rest="${ej.rest}">
+                                    <label for="ej_${dia}_${ej.name}" style="margin: 0;">${ej.name}</label>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `).join('')}
+                </div>
+                <div style="display: flex; gap: 1rem;">
+                    <button class="btn" style="flex: 1;" onclick="guardarRutina('${dia}')">Guardar</button>
+                    <button class="btn btn-secondary" style="flex: 1;" id="closeRutinaModal2">Cancelar</button>
+                </div>
+            `;
+
+            document.getElementById('rutinaFormContainer').innerHTML = form;
+            document.getElementById('rutinaModal').classList.add('active');
+            document.getElementById('closeRutinaModal2').addEventListener('click', () => {
+                document.getElementById('rutinaModal').classList.remove('active');
+            });
+        };
+
+        const guardarRutina = (dia) => {
+            const ejercicios = [];
+            document.querySelectorAll(`input[data-day="${dia}"]:checked`).forEach(cb => {
+                ejercicios.push({
+                    nombre: cb.getAttribute('data-name'),
+                    series: parseInt(cb.getAttribute('data-series')),
+                    reps: parseInt(cb.getAttribute('data-reps')),
+                    descanso: parseInt(cb.getAttribute('data-rest')),
+                    peso: 0
+                });
+            });
+
+            const rutinas = safeGet('rutinas', {});
+            rutinas[dia] = ejercicios;
+            safeSet('rutinas', rutinas);
+            showToast('✅ Rutina guardada');
+            document.getElementById('rutinaModal').classList.remove('active');
+            loadRutinas();
+        };
+
+        document.getElementById('closeRutinaModal').addEventListener('click', () => {
+            document.getElementById('rutinaModal').classList.remove('active');
+        });
+
+        // ============ TAB 3: NUTRICIÓN ============
+        const loadFoodBank = () => {
+            const bank = document.getElementById('foodBank');
+            bank.innerHTML = FOOD_BANK.map(food => `
+                <div class="food-item" onclick="selectFood('${food.name}', ${food.cal}, ${food.prot}, ${food.carb}, ${food.fat})">
+                    <div class="food-name">${food.name}</div>
+                    <div class="food-macros">
+                        <div class="food-macro">Cal<br><span class="food-macro-value">${food.cal}</span></div>
+                        <div class="food-macro">Prot<br><span class="food-macro-value">${food.prot}g</span></div>
+                        <div class="food-macro">Carb<br><span class="food-macro-value">${food.carb}g</span></div>
+                        <div class="food-macro">Gra<br><span class="food-macro-value">${food.fat}g</span></div>
+                    </div>
+                </div>
+            `).join('');
+        };
+
+        document.getElementById('calcMacroBtn').addEventListener('click', () => {
+            const weight = parseFloat(document.getElementById('macroWeight').value);
+            const activity = document.getElementById('macroActivity').value;
+            const goal = document.getElementById('macroGoal').value;
+
+            if (!weight || weight < 40) {
+                showToast('❌ Ingresa peso válido');
+                return;
+            }
+
+            let multiplier = 1.3;
+            if (activity === 'ligero') multiplier = 1.5;
+            if (activity === 'moderado') multiplier = 1.7;
+            if (activity === 'intenso') multiplier = 1.9;
+
+            let calories = weight * 24 * multiplier;
+            let protein = weight * 2.2;
+            let fat = calories * 0.25 / 9;
+            let carbs = (calories - (protein * 4) - (fat * 9)) / 4;
+
+            if (goal === 'bajar') {
+                calories *= 0.85;
+                carbs *= 0.8;
+            } else if (goal === 'ganar') {
+                calories *= 1.15;
+                carbs *= 1.2;
+            }
+
+            document.getElementById('proteinValue').textContent = protein.toFixed(0);
+            document.getElementById('carbValue').textContent = carbs.toFixed(0);
+            document.getElementById('fatValue').textContent = fat.toFixed(0);
+            document.getElementById('macroResults').style.display = 'grid';
+            showToast('✅ Macros calculados');
+        });
+
+        // ============ TAB 4: PROGRESO ============
+        let progressChart = null;
+
+        const loadProgressAlumnos = () => {
+            const alumnos = safeGet('alumnos', []);
+            const select = document.getElementById('progressAlumno');
+            select.innerHTML = '<option value="">Seleccionar alumno...</option>' +
+                alumnos.map(a => `<option value="${a.id}">${a.nombre}</option>`).join('');
+
+            select.addEventListener('change', (e) => {
+                if (e.target.value) loadProgressData(e.target.value);
+                else document.getElementById('progressData').style.display = 'none';
+            });
+        };
+
+        const loadProgressData = (alumnoId) => {
+            const alumnos = safeGet('alumnos', []);
+            const alumno = alumnos.find(a => a.id === alumnoId);
+            const progressLogs = safeGet('progressLogs', []);
+            const logs = progressLogs.filter(l => l.alumnoId === alumnoId).sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            document.getElementById('progressData').style.display = 'block';
+
+            if (logs.length === 0) {
+                document.getElementById('progressRecords').innerHTML = '<div class="empty-state"><div class="empty-state-icon">📊</div><p>Sin registros de progreso</p></div>';
+                return;
+            }
+
+            const ctx = document.getElementById('progressChart').getContext('2d');
+            if (progressChart) progressChart.destroy();
+
+            const dates = logs.map(l => new Date(l.date).toLocaleDateString('es-CL'));
+            const weights = logs.map(l => l.peso);
+            const bodyFats = logs.map(l => l.bodyFat || 0);
+
+            progressChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [
+                        {
+                            label: 'Peso (kg)',
+                            data: weights,
+                            borderColor: '#f97316',
+                            backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                            fill: true,
+                            tension: 0.3,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Grasa Corp. (%)',
+                            data: bodyFats,
+                            borderColor: '#22d3ee',
+                            backgroundColor: 'rgba(34, 211, 238, 0.1)',
+                            fill: true,
+                            tension: 0.3,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: { legend: { labels: { color: '#f1f5f9' } } },
+                    scales: {
+                        y: { type: 'linear', display: true, position: 'left', ticks: { color: '#f1f5f9' }, grid: { color: '#4c1d95' } },
+                        y1: { type: 'linear', display: true, position: 'right', ticks: { color: '#f1f5f9' }, grid: { drawOnChartArea: false } },
+                        x: { ticks: { color: '#f1f5f9' }, grid: { color: '#4c1d95' } }
+                    }
+                }
+            });
+
+            document.getElementById('chartContainer').style.display = 'block';
+
+            const milestones = logs.filter(l => l.hito).map(l => `
+                <div style="padding: 0.5rem; background: var(--dark); border-left: 3px solid var(--orange); margin-bottom: 0.5rem;">
+                    ${new Date(l.date).toLocaleDateString('es-CL')} - ${l.hito}
+                </div>
+            `).join('');
+
+            document.getElementById('milestones').innerHTML = milestones || '<div style="color: #cbd5e1;">Sin hitos registrados</div>';
+
+            document.getElementById('progressRecords').innerHTML = logs.map(l => `
+                <div class="list-item">
+                    <div class="list-item-content">
+                        <div class="list-item-title">${new Date(l.date).toLocaleDateString('es-CL')}</div>
+                        <div class="list-item-meta">Peso: ${l.peso}kg | Grasa: ${l.bodyFat || 'N/A'}% | Pecho: ${l.medidas?.pecho || '-'}cm</div>
+                    </div>
+                    <button class="btn btn-danger btn-small" onclick="deleteProgress('${l.id}')">Eliminar</button>
+                </div>
+            `).join('');
+        };
+
+        document.getElementById('logProgressBtn').addEventListener('click', () => {
+            const alumnos = safeGet('alumnos', []);
+            if (alumnos.length === 0) {
+                showToast('❌ Crea un alumno primero');
+                return;
+            }
+
+            const form = `
+                <div class="form-group">
+                    <label>Alumno</label>
+                    <select id="progressFormAlumno">
+                        ${alumnos.map(a => `<option value="${a.id}">${a.nombre}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="input-row">
+                    <div class="form-group">
+                        <label>Peso (kg)</label>
+                        <input type="number" id="progressFormPeso" placeholder="75" step="0.1" min="30">
+                    </div>
+                    <div class="form-group">
+                        <label>Grasa Corp. (%)</label>
+                        <input type="number" id="progressFormGrasa" placeholder="20" step="0.1" min="5" max="60">
+                    </div>
+                </div>
+                <div class="measurement-grid">
+                    <div class="form-group">
+                        <label>Pecho (cm)</label>
+                        <input type="number" id="progressFormPecho" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label>Cintura (cm)</label>
+                        <input type="number" id="progressFormCintura" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label>Cadera (cm)</label>
+                        <input type="number" id="progressFormCadera" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label>Brazo (cm)</label>
+                        <input type="number" id="progressFormBrazo" step="0.1">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Hito/PR (ej: Nuevo PR Sentadilla 140kg)</label>
+                    <input type="text" id="progressFormHito" placeholder="Opcional">
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button class="btn" style="flex: 1;" onclick="saveProgress()">Guardar Registro</button>
+                    <button class="btn btn-secondary" style="flex: 1;" id="closeProgressModal">Cancelar</button>
+                </div>
+            `;
+            document.getElementById('alumnoFormContainer').innerHTML = form;
+            document.getElementById('alumnoModalTitle').textContent = 'Registrar Progreso';
+            document.getElementById('alumnoModal').classList.add('active');
+            document.getElementById('closeProgressModal').addEventListener('click', () => {
+                document.getElementById('alumnoModal').classList.remove('active');
+            });
+        });
+
+        const saveProgress = () => {
+            const log = {
+                id: Date.now().toString(),
+                alumnoId: document.getElementById('progressFormAlumno').value,
+                date: new Date().toISOString().split('T')[0],
+                peso: parseFloat(document.getElementById('progressFormPeso').value),
+                bodyFat: parseFloat(document.getElementById('progressFormGrasa').value) || 0,
+                medidas: {
+                    pecho: parseFloat(document.getElementById('progressFormPecho').value) || 0,
+                    cintura: parseFloat(document.getElementById('progressFormCintura').value) || 0,
+                    cadera: parseFloat(document.getElementById('progressFormCadera').value) || 0,
+                    brazo: parseFloat(document.getElementById('progressFormBrazo').value) || 0
+                },
+                hito: document.getElementById('progressFormHito').value
+            };
+
+            if (!log.peso || log.peso < 30) {
+                showToast('❌ Peso válido requerido');
+                return;
+            }
+
+            const logs = safeGet('progressLogs', []);
+            logs.push(log);
+            safeSet('progressLogs', logs);
+            showToast('✅ Progreso registrado');
+            document.getElementById('alumnoModal').classList.remove('active');
+            loadProgressData(log.alumnoId);
+        };
+
+        const deleteProgress = (id) => {
+            if (confirm('¿Eliminar registro?')) {
+                const logs = safeGet('progressLogs', []).filter(l => l.id !== id);
+                safeSet('progressLogs', logs);
+                showToast('✅ Registro eliminado');
+                const alumnoId = document.getElementById('progressAlumno').value;
+                if (alumnoId) loadProgressData(alumnoId);
+            }
+        };
+
+        // ============ TAB 5: AGENDA ============
+        const loadAgenda = () => {
+            const sessions = safeGet('sessions', {});
+            const agendaGrid = document.getElementById('agendaGrid');
+            const alumnos = safeGet('alumnos', []);
+
+            agendaGrid.innerHTML = DIAS.map(dia => {
+                const daySessions = Object.values(sessions).filter(s => s.dia === dia) || [];
+                const sesionesHtml = daySessions.slice(0, 3).map(s => {
+                    const alumno = alumnos.find(a => a.id === s.alumnoId);
+                    return `<div class="day-slot">${s.hora} - ${alumno?.nombre || 'Sin alumno'}</div>`;
+                }).join('');
+
+                return `
+                    <div class="day-cell" onclick="openDayDetail('${dia}')">
+                        <div class="day-number">${DIAS.indexOf(dia) + 1}</div>
+                        <strong>${dia}</strong>
+                        ${sesionesHtml}
+                        <div class="slot-count">${daySessions.length} sesión${daySessions.length !== 1 ? 'es' : ''}</div>
+                    </div>
+                `;
+            }).join('');
+
+            const today = new Date().toLocaleDateString('es-CL', { weekday: 'long' }).split(',')[0];
+            const todayDia = DIAS.find(d => d.toLowerCase().includes(today.toLowerCase()));
+            const todaySessions = Object.values(sessions).filter(s => s.dia === todayDia) || [];
+            document.getElementById('todayCount').textContent = todaySessions.length;
+        };
+
+        const loadAgendaAlumnos = () => {
+            const alumnos = safeGet('alumnos', []);
+            const select = document.getElementById('agendaAlumno');
+            select.innerHTML = '<option value="">Seleccionar...</option>' +
+                alumnos.map(a => `<option value="${a.id}">${a.nombre}</option>`).join('');
+        };
+
+        document.getElementById('addSessionBtn').addEventListener('click', () => {
+            const alumnoId = document.getElementById('agendaAlumno').value;
+            const dia = document.getElementById('agendaDia').value;
+            const hora = document.getElementById('agendaHora').value;
+
+            if (!alumnoId) {
+                showToast('❌ Selecciona alumno');
+                return;
+            }
+
+            const session = {
+                id: Date.now().toString(),
+                alumnoId,
+                dia,
+                hora
+            };
+
+            const sessions = safeGet('sessions', {});
+            sessions[session.id] = session;
+            safeSet('sessions', sessions);
+            showToast('✅ Sesión agendada');
+            document.getElementById('agendaAlumno').value = '';
+            loadAgenda();
+        });
+
+        let currentWeek = 0;
+        document.getElementById('prevWeekBtn').addEventListener('click', () => {
+            currentWeek--;
+            document.getElementById('weekTitle').textContent = `Semana ${Math.abs(currentWeek)}`;
+        });
+        document.getElementById('nextWeekBtn').addEventListener('click', () => {
+            currentWeek++;
+            document.getElementById('weekTitle').textContent = `Semana ${currentWeek || 1}`;
+        });
+
+        // ============ INITIALIZATION ============
+        const init = () => {
+            loadAlumnos();
+            loadRutinas();
+            loadFoodBank();
+            loadProgressAlumnos();
+            loadAgendaAlumnos();
+            loadAgenda();
+        };
+
+        init();
+    </script>
+</body>
+</html>

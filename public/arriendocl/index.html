@@ -1,0 +1,1477 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0369a1">
+<title>ArriendoCL - Gestión de Arriendos</title>
+<link rel="manifest" href="data:application/json,{%22name%22:%22ArriendoCL%22,%22short_name%22:%22ArriendoCL%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%23f0f6ff%22,%22theme_color%22:%22%230369a1%22}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{--bg:#f0f6ff;--card:#ffffff;--card2:#e8f2ff;--border:#b8d4f0;--accent:#0369a1;--text:#1e3a5f;--muted:#6b8fa5;--green:#16a34a;--yellow:#d97706;--red:#dc2626;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:15px}
+header{background:linear-gradient(90deg,#0c4a7a,#0369a1);padding:13px 18px;position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;color:white}
+header h1{font-size:1.15rem;font-weight:700;letter-spacing:-0.3px}
+header span{font-size:0.75rem;opacity:0.8}
+nav{background:#fff;border-bottom:2px solid var(--border);display:flex;overflow-x:auto;position:sticky;top:62px;z-index:40;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+.nav-btn{flex:none;padding:12px 16px;background:none;border:none;border-bottom:3px solid transparent;color:var(--muted);font-family:'Inter',sans-serif;font-size:0.8rem;font-weight:600;cursor:pointer;white-space:nowrap;transition:all 0.2s}
+.nav-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab{display:none;padding:16px;max-width:700px;margin:0 auto}
+.tab.active{display:block}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px}
+.card2{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:13px;margin-bottom:10px}
+.card-title{font-size:0.8rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center}
+.stat-val{font-size:1.5rem;font-weight:700;color:var(--accent)}
+.stat-lbl{font-size:0.72rem;color:var(--muted);margin-top:3px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 16px;border-radius:8px;border:none;cursor:pointer;font-family:'Inter',sans-serif;font-size:0.85rem;font-weight:600;transition:all 0.2s}
+.btn-primary{background:var(--accent);color:white}
+.btn-primary:hover{background:#0284c7}
+.btn-green{background:var(--green);color:white}
+.btn-red{background:var(--red);color:white}
+.btn-outline{background:white;color:var(--accent);border:1.5px solid var(--accent)}
+.btn-sm{padding:6px 12px;font-size:0.78rem}
+.btn-group{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:0.72rem;font-weight:600}
+.badge-green{background:#dcfce7;color:var(--green)}
+.badge-yellow{background:#fef3c7;color:var(--yellow)}
+.badge-red{background:#fee2e2;color:var(--red)}
+.badge-blue{background:#dbeafe;color:#1d4ed8}
+.badge-gray{background:#f1f5f9;color:#64748b}
+.alert-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.alert-row:last-child{border-bottom:none}
+.alert-icon{font-size:1.1rem;flex-shrink:0}
+.alert-text{flex:1;font-size:0.83rem}
+.alert-text strong{display:block;font-size:0.85rem}
+.prop-card{background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:12px;overflow:hidden;cursor:pointer;transition:box-shadow 0.2s}
+.prop-card:hover{box-shadow:0 4px 16px rgba(3,105,161,0.12)}
+.prop-thumb{height:80px;background:linear-gradient(135deg,#0369a1,#0ea5e9);display:flex;align-items:center;justify-content:center;font-size:2.5rem}
+.prop-body{padding:14px}
+.prop-name{font-weight:700;font-size:1rem;margin-bottom:2px}
+.prop-addr{font-size:0.78rem;color:var(--muted);margin-bottom:8px}
+.prop-row{display:flex;justify-content:space-between;align-items:center;margin-top:6px}
+.label{font-size:0.75rem;color:var(--muted);margin-bottom:2px}
+.value{font-size:0.9rem;font-weight:600}
+input,select,textarea{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:'Inter',sans-serif;font-size:16px;color:var(--text);background:white;margin-bottom:10px;transition:border-color 0.2s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
+textarea{resize:vertical;min-height:70px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-label{font-size:0.8rem;font-weight:600;color:var(--text);margin-bottom:4px;display:block}
+.form-group{margin-bottom:2px}
+.section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.section-title{font-size:1rem;font-weight:700}
+.payment-grid{display:grid;gap:10px}
+.payment-row{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;display:flex;align-items:center;justify-content:space-between}
+.tenant-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px;cursor:pointer;transition:box-shadow 0.2s}
+.tenant-card:hover{box-shadow:0 4px 16px rgba(3,105,161,0.12)}
+.tenant-name{font-weight:700;font-size:1rem}
+.tenant-prop{font-size:0.78rem;color:var(--muted)}
+.chart-wrap{position:relative;height:200px;margin-top:10px}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;align-items:flex-end;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:white;border-radius:20px 20px 0 0;padding:20px 18px 30px;width:100%;max-width:600px;max-height:90vh;overflow-y:auto}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.modal-title{font-size:1.05rem;font-weight:700}
+.modal-close{background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--muted);padding:4px}
+.sep{height:1px;background:var(--border);margin:14px 0}
+.toggle-wrap{display:flex;align-items:center;justify-content:space-between;padding:8px 0}
+.toggle{position:relative;display:inline-block;width:44px;height:24px}
+.toggle input{opacity:0;width:0;height:0}
+.slider{position:absolute;cursor:pointer;inset:0;background:#cbd5e1;border-radius:24px;transition:0.3s}
+.slider:before{position:absolute;content:"";height:18px;width:18px;left:3px;bottom:3px;background:white;border-radius:50%;transition:0.3s}
+input:checked+.slider{background:var(--accent)}
+input:checked+.slider:before{transform:translateX(20px)}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:0.82rem}
+th{background:var(--card2);padding:9px 10px;text-align:left;font-weight:600;color:var(--muted);font-size:0.75rem}
+td{padding:9px 10px;border-bottom:1px solid var(--border)}
+tr:last-child td{border-bottom:none}
+.expense-type{font-size:0.75rem;padding:3px 8px;border-radius:6px;background:var(--card2);color:var(--accent);font-weight:600}
+.detail-view{display:none}
+.detail-view.open{display:block}
+.back-btn{display:flex;align-items:center;gap:6px;background:none;border:none;color:var(--accent);font-family:'Inter',sans-serif;font-size:0.9rem;font-weight:600;cursor:pointer;margin-bottom:14px;padding:0}
+.receipt-box{background:#1e3a5f;color:white;border-radius:10px;padding:16px;font-family:monospace;font-size:0.82rem;line-height:1.6;white-space:pre-wrap;margin:10px 0}
+.filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.filter-row select,.filter-row input{width:auto;flex:1;min-width:100px;margin-bottom:0}
+.roi-box{background:linear-gradient(135deg,#0c4a7a,#0369a1);color:white;border-radius:12px;padding:16px;margin-bottom:14px}
+.roi-val{font-size:2rem;font-weight:700}
+.roi-lbl{font-size:0.78rem;opacity:0.85}
+.empty{text-align:center;padding:40px 20px;color:var(--muted)}
+.empty-icon{font-size:3rem;margin-bottom:10px}
+.comprobante-area{display:none}
+@media(min-width:600px){
+  .stats-grid{grid-template-columns:repeat(4,1fr)}
+  .form-row{grid-template-columns:1fr 1fr 1fr}
+}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px}
+.dot-green{background:var(--green)}
+.dot-yellow{background:var(--yellow)}
+.dot-red{background:var(--red)}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>🏠 ArriendoCL</h1>
+    <span>Gestión de Arriendos Chile</span>
+  </div>
+  <div style="font-size:0.75rem;opacity:0.85;text-align:right">
+    <div id="hdr-date"></div>
+    <div id="hdr-uf" style="margin-top:2px"></div>
+  </div>
+</header>
+
+<nav id="main-nav">
+  <button class="nav-btn active" onclick="showTab('resumen')">📊 Resumen</button>
+  <button class="nav-btn" onclick="showTab('propiedades')">🏠 Propiedades</button>
+  <button class="nav-btn" onclick="showTab('arrendatarios')">👤 Arrendatarios</button>
+  <button class="nav-btn" onclick="showTab('pagos')">💰 Pagos</button>
+  <button class="nav-btn" onclick="showTab('gastos')">📉 Gastos</button>
+</nav>
+
+<!-- ===================== TAB 1: RESUMEN ===================== -->
+<div class="tab active" id="tab-resumen">
+  <div class="stats-grid" id="stats-grid"></div>
+
+  <div class="card">
+    <div class="card-title">Estado de pagos — <span id="month-label"></span></div>
+    <div id="payment-status-cards"></div>
+  </div>
+
+  <div class="btn-group">
+    <button class="btn btn-primary btn-sm" onclick="openModal('modal-pago')">💰 Registrar pago</button>
+    <button class="btn btn-outline btn-sm" onclick="openModal('modal-gasto')">🔧 Nuevo gasto</button>
+    <button class="btn btn-outline btn-sm" onclick="showTab('arrendatarios')">📄 Ver contratos</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Ingresos vs Gastos — últimos 6 meses</div>
+    <div class="chart-wrap"><canvas id="chart-resumen"></canvas></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Alertas próximas</div>
+    <div id="alerts-list"></div>
+  </div>
+</div>
+
+<!-- ===================== TAB 2: PROPIEDADES ===================== -->
+<div class="tab" id="tab-propiedades">
+  <div class="detail-view" id="prop-detail">
+    <button class="back-btn" onclick="closePropDetail()">← Volver</button>
+    <div id="prop-detail-content"></div>
+  </div>
+  <div id="prop-list-view">
+    <div class="section-header">
+      <span class="section-title">Propiedades</span>
+      <button class="btn btn-primary btn-sm" onclick="openModal('modal-prop')">+ Agregar</button>
+    </div>
+    <div id="prop-list"></div>
+  </div>
+</div>
+
+<!-- ===================== TAB 3: ARRENDATARIOS ===================== -->
+<div class="tab" id="tab-arrendatarios">
+  <div class="detail-view" id="tenant-detail">
+    <button class="back-btn" onclick="closeTenantDetail()">← Volver</button>
+    <div id="tenant-detail-content"></div>
+  </div>
+  <div id="tenant-list-view">
+    <div class="section-header">
+      <span class="section-title">Arrendatarios</span>
+      <button class="btn btn-primary btn-sm" onclick="openModal('modal-tenant')">+ Agregar</button>
+    </div>
+    <div id="tenant-list"></div>
+  </div>
+</div>
+
+<!-- ===================== TAB 4: PAGOS ===================== -->
+<div class="tab" id="tab-pagos">
+  <div class="section-header">
+    <span class="section-title">Pagos</span>
+    <button class="btn btn-primary btn-sm" onclick="openModal('modal-pago')">+ Registrar</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Cuadro de pagos — <span id="pay-month-label"></span></div>
+    <div id="pay-grid"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Resumen de atrasos</div>
+    <div id="arrears-summary"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Historial de pagos</div>
+    <div class="filter-row">
+      <select id="filter-prop" onchange="renderPayHistory()"><option value="">Todas las propiedades</option></select>
+      <select id="filter-year" onchange="renderPayHistory()"></select>
+      <select id="filter-month" onchange="renderPayHistory()">
+        <option value="">Todos los meses</option>
+        <option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option>
+        <option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option>
+        <option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option>
+        <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+      </select>
+    </div>
+    <div class="table-wrap"><table id="pay-history-table">
+      <thead><tr><th>Propiedad</th><th>Período</th><th>Monto</th><th>Estado</th><th>Forma</th></tr></thead>
+      <tbody id="pay-history-body"></tbody>
+    </table></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Ingresos — últimos 12 meses</div>
+    <div class="chart-wrap"><canvas id="chart-income"></canvas></div>
+  </div>
+</div>
+
+<!-- ===================== TAB 5: GASTOS ===================== -->
+<div class="tab" id="tab-gastos">
+  <div class="section-header">
+    <span class="section-title">Gastos y Rentabilidad</span>
+    <button class="btn btn-primary btn-sm" onclick="openModal('modal-gasto')">+ Agregar gasto</button>
+  </div>
+
+  <div id="roi-section"></div>
+
+  <div class="card">
+    <div class="card-title">Gastos registrados</div>
+    <div class="filter-row">
+      <select id="filter-exp-prop" onchange="renderExpenses()"><option value="">Todas las propiedades</option></select>
+      <select id="filter-exp-type" onchange="renderExpenses()">
+        <option value="">Todos los tipos</option>
+        <option>Contribuciones</option><option>Reparación</option><option>Pintura</option>
+        <option>Plomería</option><option>Electricidad</option><option>Jardín</option>
+        <option>Administración</option><option>SOAP</option><option>Seguro</option><option>Otro</option>
+      </select>
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Fecha</th><th>Propiedad</th><th>Tipo</th><th>Monto</th><th>Arrendatario</th></tr></thead>
+      <tbody id="exp-table-body"></tbody>
+    </table></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Nota tributaria — Renta Presunta</div>
+    <div id="tax-note" style="font-size:0.83rem;line-height:1.6;color:var(--text)"></div>
+  </div>
+</div>
+
+<!-- ===================== MODALS ===================== -->
+
+<!-- Modal: Agregar/Editar Propiedad -->
+<div class="modal-bg" id="modal-prop" onclick="handleModalBgClick(event,'modal-prop')">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="prop-modal-title">Nueva Propiedad</span>
+      <button class="modal-close" onclick="closeModal('modal-prop')">✕</button>
+    </div>
+    <input type="hidden" id="prop-edit-id">
+    <div class="form-group"><label class="form-label">Nombre / Alias *</label><input type="text" id="prop-nombre" placeholder="Ej: Depto Santiago Centro"></div>
+    <div class="form-group"><label class="form-label">Dirección *</label><input type="text" id="prop-dir" placeholder="Ej: Huérfanos 1234, Dpto 501, Santiago"></div>
+    <div class="form-group"><label class="form-label">Tipo</label>
+      <select id="prop-tipo">
+        <option>Departamento</option><option>Casa</option><option>Local comercial</option><option>Oficina</option><option>Bodega</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">m²</label><input type="number" id="prop-m2" min="1"></div>
+      <div class="form-group"><label class="form-label">Habitaciones</label><input type="number" id="prop-hab" min="0"></div>
+      <div class="form-group"><label class="form-label">Baños</label><input type="number" id="prop-ban" min="0"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Estacionamientos</label><input type="number" id="prop-est" min="0" value="0"></div>
+      <div class="form-group"><label class="form-label">Bodega</label>
+        <select id="prop-bodega"><option value="0">No</option><option value="1">Sí</option></select>
+      </div>
+    </div>
+    <div class="sep"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Renta mensual</label><input type="number" id="prop-renta" placeholder="450000"></div>
+      <div class="form-group"><label class="form-label">Moneda</label>
+        <select id="prop-moneda"><option value="CLP">CLP (pesos)</option><option value="UF">UF</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Día de pago (1-28)</label><input type="number" id="prop-dia-pago" min="1" max="28" value="5"></div>
+      <div class="form-group"><label class="form-label">Valor propiedad CLP (para ROI)</label><input type="number" id="prop-valor" placeholder="80000000"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Estado</label>
+      <select id="prop-estado"><option value="Arrendado">Arrendado</option><option value="Disponible">Disponible</option><option value="En mantención">En mantención</option></select>
+    </div>
+    <div class="sep"></div>
+    <div class="card-title">Gastos fijos del propietario (mensual CLP)</div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Contribuciones</label><input type="number" id="prop-contrib" placeholder="0"></div>
+      <div class="form-group"><label class="form-label">Seguro</label><input type="number" id="prop-seguro" placeholder="0"></div>
+      <div class="form-group"><label class="form-label">Mantención estimada</label><input type="number" id="prop-mant" placeholder="0"></div>
+    </div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:6px" onclick="saveProp()">Guardar propiedad</button>
+  </div>
+</div>
+
+<!-- Modal: Agregar/Editar Arrendatario -->
+<div class="modal-bg" id="modal-tenant" onclick="handleModalBgClick(event,'modal-tenant')">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="tenant-modal-title">Nuevo Arrendatario</span>
+      <button class="modal-close" onclick="closeModal('modal-tenant')">✕</button>
+    </div>
+    <input type="hidden" id="tenant-edit-id">
+    <div class="form-group"><label class="form-label">Nombre completo *</label><input type="text" id="t-nombre" placeholder="Ej: Juan Pérez González"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">RUT</label><input type="text" id="t-rut" placeholder="12.345.678-9"></div>
+      <div class="form-group"><label class="form-label">Teléfono</label><input type="tel" id="t-tel" placeholder="+56 9 1234 5678"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Correo electrónico</label><input type="email" id="t-email" placeholder="juan@mail.com"></div>
+    <div class="form-group"><label class="form-label">Propiedad arrendada</label>
+      <select id="t-prop"><option value="">— Seleccionar —</option></select>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Inicio contrato</label><input type="date" id="t-inicio"></div>
+      <div class="form-group"><label class="form-label">Término contrato</label><input type="date" id="t-termino"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Tipo contrato</label>
+        <select id="t-tipo-contrato"><option>Fijo</option><option>Indefinido</option></select>
+      </div>
+      <div class="form-group"><label class="form-label">Forma de pago</label>
+        <select id="t-forma"><option>Transferencia</option><option>Efectivo</option><option>Cheque</option></select>
+      </div>
+    </div>
+    <div class="sep"></div>
+    <div class="card-title">Cuenta bancaria</div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Banco</label>
+        <select id="t-banco">
+          <option value="">—</option>
+          <option>Banco de Chile</option><option>BancoEstado</option><option>Santander</option>
+          <option>BCI</option><option>Scotiabank</option><option>Itaú</option><option>BICE</option>
+          <option>Falabella</option><option>Ripley</option><option>Mercado Pago</option><option>Otro</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Tipo cuenta</label>
+        <select id="t-tipo-cta"><option value="">—</option><option>Cuenta Corriente</option><option>Cuenta Vista</option><option>Chequera Electrónica</option><option>Cuenta RUT</option></select>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Número de cuenta</label><input type="text" id="t-num-cta" placeholder="Número"></div>
+    <div class="sep"></div>
+    <div class="card-title">Fiador (opcional)</div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Nombre fiador</label><input type="text" id="t-fiador-nombre" placeholder="Nombre completo"></div>
+      <div class="form-group"><label class="form-label">RUT fiador</label><input type="text" id="t-fiador-rut" placeholder="12.345.678-9"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Teléfono fiador</label><input type="tel" id="t-fiador-tel" placeholder="+56 9 ..."></div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:6px" onclick="saveTenant()">Guardar arrendatario</button>
+  </div>
+</div>
+
+<!-- Modal: Registrar Pago -->
+<div class="modal-bg" id="modal-pago" onclick="handleModalBgClick(event,'modal-pago')">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Registrar Pago</span>
+      <button class="modal-close" onclick="closeModal('modal-pago')">✕</button>
+    </div>
+    <input type="hidden" id="pay-edit-id">
+    <div class="form-group"><label class="form-label">Propiedad *</label>
+      <select id="pay-prop" onchange="fillPayDefault()"><option value="">— Seleccionar —</option></select>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Período (mes/año)</label>
+        <select id="pay-mes">
+          <option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option>
+          <option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option>
+          <option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option>
+          <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Año</label><input type="number" id="pay-anio" value="2026"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Monto recibido (CLP)</label><input type="number" id="pay-monto" placeholder="450000"></div>
+      <div class="form-group"><label class="form-label">Fecha de pago</label><input type="date" id="pay-fecha"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Forma de pago</label>
+      <select id="pay-forma"><option>Transferencia</option><option>Efectivo</option><option>Cheque</option></select>
+    </div>
+    <div class="form-group"><label class="form-label">Notas</label><textarea id="pay-notas" placeholder="Ej: Pago con 2 días de atraso"></textarea></div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:6px" onclick="savePago()">Guardar pago</button>
+  </div>
+</div>
+
+<!-- Modal: Agregar Gasto -->
+<div class="modal-bg" id="modal-gasto" onclick="handleModalBgClick(event,'modal-gasto')">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Registrar Gasto</span>
+      <button class="modal-close" onclick="closeModal('modal-gasto')">✕</button>
+    </div>
+    <input type="hidden" id="exp-edit-id">
+    <div class="form-group"><label class="form-label">Propiedad</label>
+      <select id="exp-prop"><option value="">General (sin propiedad específica)</option></select>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Fecha</label><input type="date" id="exp-fecha"></div>
+      <div class="form-group"><label class="form-label">Tipo</label>
+        <select id="exp-tipo">
+          <option>Contribuciones</option><option>Reparación</option><option>Pintura</option>
+          <option>Plomería</option><option>Electricidad</option><option>Jardín</option>
+          <option>Administración</option><option>SOAP</option><option>Seguro</option><option>Otro</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Monto (CLP)</label><input type="number" id="exp-monto" placeholder="0"></div>
+    <div class="form-group"><label class="form-label">Descripción</label><textarea id="exp-desc" placeholder="Ej: Reparación filtraciones baño"></textarea></div>
+    <div class="toggle-wrap">
+      <span style="font-size:0.85rem;font-weight:600">¿Cobrar al arrendatario?</span>
+      <label class="toggle"><input type="checkbox" id="exp-cobrar"><span class="slider"></span></label>
+    </div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:10px" onclick="saveGasto()">Guardar gasto</button>
+  </div>
+</div>
+
+<!-- Modal: Comprobante -->
+<div class="modal-bg" id="modal-comprobante" onclick="handleModalBgClick(event,'modal-comprobante')">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Comprobante de Pago</span>
+      <button class="modal-close" onclick="closeModal('modal-comprobante')">✕</button>
+    </div>
+    <div class="receipt-box" id="comprobante-text"></div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:10px" onclick="copyComprobante()">📋 Copiar para WhatsApp</button>
+  </div>
+</div>
+
+<script>
+// ==================== STATE ====================
+const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const now = new Date();
+const CY = now.getFullYear();
+const CM = now.getMonth() + 1;
+
+let db = {props:[], tenants:[], payments:[], expenses:[]};
+let charts = {};
+
+function loadDB() {
+  try {
+    const raw = localStorage.getItem('arriendocl_db');
+    if (raw) db = JSON.parse(raw);
+  } catch(e) {}
+}
+
+function saveDB() {
+  try { localStorage.setItem('arriendocl_db', JSON.stringify(db)); } catch(e) {}
+}
+
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+function fmt(n) {
+  if (!n && n !== 0) return '$0';
+  return '$' + Math.round(n).toLocaleString('es-CL');
+}
+
+function fmtDate(d) {
+  if (!d) return '—';
+  const [y,m,dd] = d.split('-');
+  return `${dd}/${m}/${y}`;
+}
+
+// ==================== DEMO DATA ====================
+function seedDemo() {
+  if (db.props.length > 0) return;
+  const p1 = uid();
+  const p2 = uid();
+  const t1 = uid();
+  const t2 = uid();
+  db.props = [
+    {id:p1, nombre:'Depto. Santiago Centro', dir:'Huérfanos 1234, Dpto 501, Santiago', tipo:'Departamento', m2:45, hab:2, ban:1, est:1, bodega:0, renta:450000, moneda:'CLP', diaPago:5, valor:85000000, estado:'Arrendado', contrib:25000, seguro:8000, mant:15000, tenantId:t1},
+    {id:p2, nombre:'Casa Ñuñoa', dir:'Irarrázaval 2890, Ñuñoa, Santiago', tipo:'Casa', m2:80, hab:3, ban:2, est:2, bodega:1, renta:680000, moneda:'CLP', diaPago:1, valor:150000000, estado:'Arrendado', contrib:45000, seguro:12000, mant:20000, tenantId:t2}
+  ];
+  const inicio1 = `${CY-1}-03-01`;
+  const inicio2 = `${CY-1}-07-01`;
+  const term1 = `${CY+1}-03-01`;
+  const term2 = `${CY}-07-01`;
+  db.tenants = [
+    {id:t1, nombre:'Juan Pérez González', rut:'12.345.678-9', tel:'+56 9 8765 4321', email:'juan.perez@gmail.com', propId:p1, inicio:inicio1, termino:term1, tipoContrato:'Fijo', forma:'Transferencia', banco:'Banco de Chile', tipoCta:'Cuenta Corriente', numCta:'00123456789', fiadorNombre:'', fiadorRut:'', fiadorTel:''},
+    {id:t2, nombre:'María López Soto', rut:'9.876.543-2', tel:'+56 9 1234 5678', email:'maria.lopez@gmail.com', propId:p2, inicio:inicio2, termino:term2, tipoContrato:'Fijo', forma:'Transferencia', banco:'BancoEstado', tipoCta:'Cuenta Vista', numCta:'98765432', fiadorNombre:'Pedro López', fiadorRut:'8.765.432-1', fiadorTel:'+56 9 9999 1111'}
+  ];
+  // Payments: p1 paid this month, p2 overdue
+  const m = CM, y = CY;
+  const prevM = (m - 1) || 12, prevY = m === 1 ? y - 1 : y;
+  const prev2M = (prevM - 1) || 12, prev2Y = prevM === 1 ? prevY - 1 : prevY;
+  db.payments = [
+    {id:uid(), propId:p1, mes:m, anio:y, monto:450000, fecha:`${y}-${String(m).padStart(2,'0')}-03`, forma:'Transferencia', notas:''},
+    {id:uid(), propId:p1, mes:prevM, anio:prevY, monto:450000, fecha:`${prevY}-${String(prevM).padStart(2,'0')}-04`, forma:'Transferencia', notas:''},
+    {id:uid(), propId:p1, mes:prev2M, anio:prev2Y, monto:450000, fecha:`${prev2Y}-${String(prev2M).padStart(2,'0')}-05`, forma:'Transferencia', notas:''},
+    {id:uid(), propId:p2, mes:prevM, anio:prevY, monto:680000, fecha:`${prevY}-${String(prevM).padStart(2,'0')}-01`, forma:'Transferencia', notas:''},
+    {id:uid(), propId:p2, mes:prev2M, anio:prev2Y, monto:680000, fecha:`${prev2Y}-${String(prev2M).padStart(2,'0')}-01`, forma:'Transferencia', notas:''},
+  ];
+  // María López has NO payment for current month → overdue (dia pago = 1, we are past day 1)
+  const today = now.getDate();
+  // Expenses
+  const months = [
+    {m:m, y:y}, {m:prevM, y:prevY}, {m:prev2M, y:prev2Y}
+  ];
+  db.expenses = [
+    {id:uid(), propId:p1, fecha:`${months[1].y}-${String(months[1].m).padStart(2,'0')}-10`, tipo:'Contribuciones', monto:25000, desc:'Contribuciones trimestre 1', cobrar:false},
+    {id:uid(), propId:p2, fecha:`${months[0].y}-${String(months[0].m).padStart(2,'0')}-05`, tipo:'Reparación', monto:85000, desc:'Reparación filtración techo', cobrar:true},
+    {id:uid(), propId:p2, fecha:`${months[1].y}-${String(months[1].m).padStart(2,'0')}-15`, tipo:'Pintura', monto:120000, desc:'Pintura living comedor', cobrar:false},
+    {id:uid(), propId:p1, fecha:`${months[2].y}-${String(months[2].m).padStart(2,'0')}-20`, tipo:'Seguro', monto:8000, desc:'Prima seguro mensual', cobrar:false},
+    {id:uid(), propId:'', fecha:`${months[0].y}-${String(months[0].m).padStart(2,'0')}-01`, tipo:'Administración', monto:30000, desc:'Software gestión', cobrar:false},
+    {id:uid(), propId:p2, fecha:`${months[2].y}-${String(months[2].m).padStart(2,'0')}-12`, tipo:'Contribuciones', monto:45000, desc:'Contribuciones trimestre', cobrar:false},
+  ];
+  saveDB();
+}
+
+// ==================== HEADER ====================
+function initHeader() {
+  const opts = {weekday:'long', year:'numeric', month:'long', day:'numeric'};
+  document.getElementById('hdr-date').textContent = now.toLocaleDateString('es-CL', opts);
+  document.getElementById('hdr-uf').textContent = 'UF ≈ $38.458';
+}
+
+// ==================== TAB NAVIGATION ====================
+function showTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  const btns = document.querySelectorAll('.nav-btn');
+  const map = {resumen:0, propiedades:1, arrendatarios:2, pagos:3, gastos:4};
+  btns[map[name]].classList.add('active');
+  if (name === 'resumen') renderResumen();
+  if (name === 'propiedades') renderProps();
+  if (name === 'arrendatarios') renderTenants();
+  if (name === 'pagos') renderPagos();
+  if (name === 'gastos') renderGastos();
+}
+
+// ==================== MODAL ====================
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  if (id === 'modal-pago') prefillPayModal();
+  if (id === 'modal-gasto') prefillExpModal();
+  refreshPropSelects();
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+  clearPayForm();
+}
+
+function handleModalBgClick(e, id) {
+  if (e.target === document.getElementById(id)) closeModal(id);
+}
+
+function refreshPropSelects() {
+  ['pay-prop','exp-prop','filter-prop','filter-exp-prop'].forEach(sel => {
+    const el = document.getElementById(sel);
+    if (!el) return;
+    const hasGeneral = sel.startsWith('filter') || sel === 'exp-prop';
+    const cur = el.value;
+    el.innerHTML = '';
+    if (hasGeneral) {
+      const opt = document.createElement('option');
+      opt.value = ''; opt.textContent = sel === 'exp-prop' ? 'General (sin propiedad específica)' : 'Todas las propiedades';
+      el.appendChild(opt);
+    } else {
+      const opt = document.createElement('option'); opt.value = ''; opt.textContent = '— Seleccionar —';
+      el.appendChild(opt);
+    }
+    db.props.forEach(p => {
+      const o = document.createElement('option');
+      o.value = p.id; o.textContent = p.nombre;
+      if (p.id === cur) o.selected = true;
+      el.appendChild(o);
+    });
+  });
+  const tprop = document.getElementById('t-prop');
+  if (tprop) {
+    const cur = tprop.value;
+    tprop.innerHTML = '<option value="">— Seleccionar —</option>';
+    db.props.forEach(p => {
+      const o = document.createElement('option');
+      o.value = p.id; o.textContent = p.nombre;
+      if (p.id === cur) o.selected = true;
+      tprop.appendChild(o);
+    });
+  }
+}
+
+function prefillPayModal() {
+  document.getElementById('pay-mes').value = CM;
+  document.getElementById('pay-anio').value = CY;
+  const td = now.toISOString().split('T')[0];
+  document.getElementById('pay-fecha').value = td;
+  refreshPropSelects();
+}
+
+function prefillExpModal() {
+  const td = now.toISOString().split('T')[0];
+  document.getElementById('exp-fecha').value = td;
+}
+
+function clearPayForm() {
+  ['pay-edit-id','pay-monto','pay-notas','exp-edit-id','exp-monto','exp-desc'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+}
+
+function fillPayDefault() {
+  const pid = document.getElementById('pay-prop').value;
+  const p = db.props.find(x => x.id === pid);
+  if (p) document.getElementById('pay-monto').value = p.renta;
+}
+
+// ==================== RESUMEN ====================
+function renderResumen() {
+  const totalProps = db.props.length;
+  const totalTenants = db.tenants.length;
+  const occupied = db.props.filter(p => p.estado === 'Arrendado').length;
+  const occ = totalProps ? Math.round(occupied/totalProps*100) : 0;
+  const monthIncome = db.payments.filter(p => p.mes === CM && p.anio === CY).reduce((s,p) => s + (p.monto||0), 0);
+
+  document.getElementById('stats-grid').innerHTML = `
+    <div class="stat-card"><div class="stat-val">${totalProps}</div><div class="stat-lbl">Propiedades</div></div>
+    <div class="stat-card"><div class="stat-val">${totalTenants}</div><div class="stat-lbl">Arrendatarios</div></div>
+    <div class="stat-card"><div class="stat-val">${fmt(monthIncome)}</div><div class="stat-lbl">Ingresos ${MONTHS[CM-1]}</div></div>
+    <div class="stat-card"><div class="stat-val">${occ}%</div><div class="stat-lbl">Ocupación</div></div>
+  `;
+
+  document.getElementById('month-label').textContent = MONTHS[CM-1] + ' ' + CY;
+  document.getElementById('pay-month-label').textContent = MONTHS[CM-1] + ' ' + CY;
+
+  // Payment status
+  let paid=[], pending=[], overdue=[];
+  db.props.filter(p => p.estado === 'Arrendado').forEach(p => {
+    const payThis = db.payments.find(x => x.propId === p.id && x.mes === CM && x.anio === CY);
+    if (payThis) {
+      paid.push(p);
+    } else {
+      const today = now.getDate();
+      if (today > (p.diaPago || 5)) overdue.push(p);
+      else pending.push(p);
+    }
+  });
+
+  document.getElementById('payment-status-cards').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+      <div style="background:#dcfce7;border-radius:8px;padding:10px;text-align:center">
+        <div style="font-size:1.3rem">✅</div>
+        <div style="font-weight:700;color:var(--green)">${paid.length}</div>
+        <div style="font-size:0.72rem;color:var(--green)">Pagados</div>
+      </div>
+      <div style="background:#fef3c7;border-radius:8px;padding:10px;text-align:center">
+        <div style="font-size:1.3rem">⏳</div>
+        <div style="font-weight:700;color:var(--yellow)">${pending.length}</div>
+        <div style="font-size:0.72rem;color:var(--yellow)">Pendientes</div>
+      </div>
+      <div style="background:#fee2e2;border-radius:8px;padding:10px;text-align:center">
+        <div style="font-size:1.3rem">🔴</div>
+        <div style="font-weight:700;color:var(--red)">${overdue.length}</div>
+        <div style="font-size:0.72rem;color:var(--red)">Atrasados</div>
+      </div>
+    </div>
+    ${paid.length ? `<div style="margin-top:10px;font-size:0.8rem;color:var(--green)">${paid.map(p => p.nombre).join(', ')}</div>` : ''}
+    ${overdue.length ? `<div style="margin-top:6px;font-size:0.8rem;color:var(--red)">⚠️ Atrasado: ${overdue.map(p => p.nombre).join(', ')}</div>` : ''}
+  `;
+
+  // Alerts
+  const alerts = [];
+  db.props.filter(p => p.estado === 'Arrendado').forEach(p => {
+    const pay = db.payments.find(x => x.propId === p.id && x.mes === CM && x.anio === CY);
+    if (!pay) {
+      const daysLate = now.getDate() - (p.diaPago || 5);
+      if (daysLate > 0) {
+        alerts.push({icon:'🔴', title:`Arriendo atrasado: ${p.nombre}`, text:`${daysLate} día${daysLate>1?'s':''} de atraso`});
+      } else {
+        const daysUntil = (p.diaPago || 5) - now.getDate();
+        if (daysUntil <= 7) alerts.push({icon:'⏰', title:`Vence pronto: ${p.nombre}`, text:`Vence en ${daysUntil} día${daysUntil!==1?'s':''}`});
+      }
+    }
+  });
+  db.tenants.forEach(t => {
+    if (!t.termino) return;
+    const exp = new Date(t.termino);
+    const diff = Math.round((exp - now)/(1000*60*60*24));
+    if (diff > 0 && diff <= 30) alerts.push({icon:'📄', title:`Contrato por vencer: ${t.nombre}`, text:`Vence en ${diff} días (${fmtDate(t.termino)})`});
+    if (diff <= 0 && diff > -60) alerts.push({icon:'⚠️', title:`Contrato vencido: ${t.nombre}`, text:`Venció el ${fmtDate(t.termino)}`});
+  });
+
+  const al = document.getElementById('alerts-list');
+  if (alerts.length === 0) {
+    al.innerHTML = '<div style="color:var(--muted);font-size:0.85rem;padding:10px 0">Sin alertas activas. Todo en orden ✅</div>';
+  } else {
+    al.innerHTML = alerts.map(a => `
+      <div class="alert-row">
+        <div class="alert-icon">${a.icon}</div>
+        <div class="alert-text"><strong>${a.title}</strong>${a.text}</div>
+      </div>
+    `).join('');
+  }
+
+  // Chart
+  const labels = [];
+  const incomeData = [];
+  const expData = [];
+  for (let i = 5; i >= 0; i--) {
+    let m2 = CM - i; let y2 = CY;
+    if (m2 <= 0) { m2 += 12; y2--; }
+    labels.push(MONTHS[m2-1].slice(0,3));
+    const inc = db.payments.filter(p => p.mes === m2 && p.anio === y2).reduce((s,p) => s + (p.monto||0), 0);
+    const exp = db.expenses.filter(e => {
+      if (!e.fecha) return false;
+      const [ey, em] = e.fecha.split('-').map(Number);
+      return em === m2 && ey === y2;
+    }).reduce((s,e) => s + (e.monto||0), 0);
+    incomeData.push(inc);
+    expData.push(exp);
+  }
+
+  if (charts.resumen) charts.resumen.destroy();
+  const ctx = document.getElementById('chart-resumen').getContext('2d');
+  charts.resumen = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels,
+      datasets:[
+        {label:'Ingresos', data:incomeData, backgroundColor:'#0369a1', borderRadius:5},
+        {label:'Gastos', data:expData, backgroundColor:'#dc2626', borderRadius:5}
+      ]
+    },
+    options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{labels:{font:{family:'Inter',size:11}}}}, scales:{y:{ticks:{callback:v=>'$'+v.toLocaleString('es-CL'), font:{size:10}}, grid:{color:'#e2ecf7'}}, x:{grid:{display:false},ticks:{font:{size:11}}}}}
+  });
+}
+
+// ==================== PROPIEDADES ====================
+function renderProps() {
+  const cont = document.getElementById('prop-list');
+  if (db.props.length === 0) {
+    cont.innerHTML = '<div class="empty"><div class="empty-icon">🏠</div><div>No hay propiedades registradas</div><button class="btn btn-primary" style="margin-top:14px" onclick="openModal(\'modal-prop\')">+ Agregar primera propiedad</button></div>';
+    return;
+  }
+  cont.innerHTML = db.props.map(p => {
+    const tenant = db.tenants.find(t => t.id === p.tenantId);
+    const pay = db.payments.find(x => x.propId === p.id && x.mes === CM && x.anio === CY);
+    let statusBadge = '';
+    if (p.estado === 'Arrendado') {
+      statusBadge = pay ? '<span class="badge badge-green">✅ Pagado</span>' : '<span class="badge badge-red">⚠️ Sin pago</span>';
+    } else if (p.estado === 'Disponible') {
+      statusBadge = '<span class="badge badge-yellow">🟡 Disponible</span>';
+    } else {
+      statusBadge = '<span class="badge badge-gray">🔧 Mantención</span>';
+    }
+    const icons = {'Departamento':'🏢','Casa':'🏠','Local comercial':'🏪','Oficina':'🏛️','Bodega':'📦'};
+    return `
+      <div class="prop-card" onclick="openPropDetail('${p.id}')">
+        <div class="prop-thumb">${icons[p.tipo]||'🏠'}</div>
+        <div class="prop-body">
+          <div class="prop-row">
+            <div class="prop-name">${p.nombre}</div>
+            ${statusBadge}
+          </div>
+          <div class="prop-addr">📍 ${p.dir}</div>
+          <div class="prop-row">
+            <div><span class="badge badge-blue">${p.tipo}</span> &nbsp; ${p.m2}m² · ${p.hab} hab · ${p.ban} baños</div>
+          </div>
+          <div class="prop-row">
+            <div><div class="label">Arriendo</div><div class="value">${fmt(p.renta)} ${p.moneda !== 'CLP' ? p.moneda : ''}</div></div>
+            <div style="text-align:right"><div class="label">Arrendatario</div><div class="value" style="font-size:0.82rem">${tenant ? tenant.nombre : '—'}</div></div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function openPropDetail(pid) {
+  const p = db.props.find(x => x.id === pid);
+  if (!p) return;
+  document.getElementById('prop-list-view').style.display = 'none';
+  const detail = document.getElementById('prop-detail');
+  detail.classList.add('open');
+  const tenant = db.tenants.find(t => t.id === p.tenantId);
+  const pays = db.payments.filter(x => x.propId === pid).sort((a,b) => b.anio!==a.anio ? b.anio-a.anio : b.mes-a.mes);
+  const exps = db.expenses.filter(x => x.propId === pid).sort((a,b) => b.fecha?.localeCompare(a.fecha||'')||0);
+  const icons = {'Departamento':'🏢','Casa':'🏠','Local comercial':'🏪','Oficina':'🏛️','Bodega':'📦'};
+  document.getElementById('prop-detail-content').innerHTML = `
+    <div style="background:linear-gradient(135deg,#0c4a7a,#0369a1);border-radius:12px;padding:24px;color:white;margin-bottom:14px;text-align:center;font-size:3rem">${icons[p.tipo]||'🏠'}</div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">
+      <div><h2 style="font-size:1.2rem;margin-bottom:4px">${p.nombre}</h2><div style="font-size:0.82rem;color:var(--muted)">📍 ${p.dir}</div></div>
+      <button class="btn btn-outline btn-sm" onclick="editProp('${p.id}')">✏️ Editar</button>
+    </div>
+    <div class="card">
+      <div class="card-title">Detalles</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:0.85rem">
+        <div><div class="label">Tipo</div><div class="value">${p.tipo}</div></div>
+        <div><div class="label">Estado</div><div class="value">${p.estado}</div></div>
+        <div><div class="label">Superficie</div><div class="value">${p.m2} m²</div></div>
+        <div><div class="label">Habitaciones</div><div class="value">${p.hab}</div></div>
+        <div><div class="label">Baños</div><div class="value">${p.ban}</div></div>
+        <div><div class="label">Estac.</div><div class="value">${p.est}</div></div>
+        <div><div class="label">Bodega</div><div class="value">${p.bodega ? 'Sí' : 'No'}</div></div>
+        <div><div class="label">Día de pago</div><div class="value">Día ${p.diaPago} de cada mes</div></div>
+        <div><div class="label">Arriendo mensual</div><div class="value">${fmt(p.renta)} ${p.moneda !== 'CLP' ? p.moneda : ''}</div></div>
+        <div><div class="label">Valor propiedad</div><div class="value">${p.valor ? fmt(p.valor) : '—'}</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Gastos fijos mensuales propietario</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:0.83rem;text-align:center">
+        <div><div class="label">Contribuciones</div><div class="value">${fmt(p.contrib||0)}</div></div>
+        <div><div class="label">Seguro</div><div class="value">${fmt(p.seguro||0)}</div></div>
+        <div><div class="label">Mantención</div><div class="value">${fmt(p.mant||0)}</div></div>
+      </div>
+    </div>
+    ${tenant ? `
+    <div class="card">
+      <div class="card-title">Arrendatario actual</div>
+      <div style="font-size:0.9rem"><strong>${tenant.nombre}</strong> · ${tenant.rut||'—'}</div>
+      <div style="font-size:0.82rem;color:var(--muted);margin-top:4px">📞 ${tenant.tel||'—'} · ✉️ ${tenant.email||'—'}</div>
+      <div style="font-size:0.82rem;margin-top:6px">Contrato ${tenant.tipoContrato} · ${fmtDate(tenant.inicio)} al ${fmtDate(tenant.termino)}</div>
+    </div>` : ''}
+    <div class="card">
+      <div class="card-title">Historial de pagos</div>
+      ${pays.length === 0 ? '<div style="color:var(--muted);font-size:0.85rem">Sin pagos registrados</div>' : `
+      <div class="table-wrap"><table>
+        <thead><tr><th>Período</th><th>Monto</th><th>Fecha</th><th>Forma</th><th></th></tr></thead>
+        <tbody>${pays.map(pay => `
+          <tr>
+            <td>${MONTHS[pay.mes-1]} ${pay.anio}</td>
+            <td>${fmt(pay.monto)}</td>
+            <td>${fmtDate(pay.fecha)}</td>
+            <td>${pay.forma||'—'}</td>
+            <td><button class="btn btn-outline btn-sm" onclick="showComprobante('${pay.id}')">🧾</button></td>
+          </tr>
+        `).join('')}</tbody>
+      </table></div>`}
+    </div>
+    <div class="card">
+      <div class="card-title">Gastos de esta propiedad</div>
+      ${exps.length === 0 ? '<div style="color:var(--muted);font-size:0.85rem">Sin gastos registrados</div>' : `
+      <div class="table-wrap"><table>
+        <thead><tr><th>Fecha</th><th>Tipo</th><th>Monto</th><th>Descripción</th></tr></thead>
+        <tbody>${exps.map(e => `
+          <tr>
+            <td>${fmtDate(e.fecha)}</td>
+            <td><span class="expense-type">${e.tipo}</span></td>
+            <td>${fmt(e.monto)}</td>
+            <td style="font-size:0.8rem">${e.desc||'—'}</td>
+          </tr>
+        `).join('')}</tbody>
+      </table></div>`}
+    </div>
+    <button class="btn btn-red btn-sm" style="margin-top:4px" onclick="deleteProp('${p.id}')">🗑️ Eliminar propiedad</button>
+  `;
+}
+
+function closePropDetail() {
+  document.getElementById('prop-list-view').style.display = '';
+  document.getElementById('prop-detail').classList.remove('open');
+  renderProps();
+}
+
+function editProp(pid) {
+  const p = db.props.find(x => x.id === pid);
+  if (!p) return;
+  document.getElementById('prop-modal-title').textContent = 'Editar Propiedad';
+  document.getElementById('prop-edit-id').value = p.id;
+  document.getElementById('prop-nombre').value = p.nombre || '';
+  document.getElementById('prop-dir').value = p.dir || '';
+  document.getElementById('prop-tipo').value = p.tipo || 'Departamento';
+  document.getElementById('prop-m2').value = p.m2 || '';
+  document.getElementById('prop-hab').value = p.hab || '';
+  document.getElementById('prop-ban').value = p.ban || '';
+  document.getElementById('prop-est').value = p.est || 0;
+  document.getElementById('prop-bodega').value = p.bodega || 0;
+  document.getElementById('prop-renta').value = p.renta || '';
+  document.getElementById('prop-moneda').value = p.moneda || 'CLP';
+  document.getElementById('prop-dia-pago').value = p.diaPago || 5;
+  document.getElementById('prop-valor').value = p.valor || '';
+  document.getElementById('prop-estado').value = p.estado || 'Arrendado';
+  document.getElementById('prop-contrib').value = p.contrib || '';
+  document.getElementById('prop-seguro').value = p.seguro || '';
+  document.getElementById('prop-mant').value = p.mant || '';
+  openModal('modal-prop');
+}
+
+function saveProp() {
+  const nombre = document.getElementById('prop-nombre').value.trim();
+  const dir = document.getElementById('prop-dir').value.trim();
+  if (!nombre || !dir) { alert('Nombre y dirección son obligatorios'); return; }
+  const eid = document.getElementById('prop-edit-id').value;
+  const data = {
+    nombre, dir,
+    tipo: document.getElementById('prop-tipo').value,
+    m2: Number(document.getElementById('prop-m2').value) || 0,
+    hab: Number(document.getElementById('prop-hab').value) || 0,
+    ban: Number(document.getElementById('prop-ban').value) || 0,
+    est: Number(document.getElementById('prop-est').value) || 0,
+    bodega: Number(document.getElementById('prop-bodega').value) || 0,
+    renta: Number(document.getElementById('prop-renta').value) || 0,
+    moneda: document.getElementById('prop-moneda').value,
+    diaPago: Number(document.getElementById('prop-dia-pago').value) || 5,
+    valor: Number(document.getElementById('prop-valor').value) || 0,
+    estado: document.getElementById('prop-estado').value,
+    contrib: Number(document.getElementById('prop-contrib').value) || 0,
+    seguro: Number(document.getElementById('prop-seguro').value) || 0,
+    mant: Number(document.getElementById('prop-mant').value) || 0,
+  };
+  if (eid) {
+    const idx = db.props.findIndex(x => x.id === eid);
+    if (idx >= 0) Object.assign(db.props[idx], data);
+  } else {
+    db.props.push({id: uid(), tenantId: '', ...data});
+  }
+  saveDB();
+  closeModal('modal-prop');
+  document.getElementById('prop-edit-id').value = '';
+  document.getElementById('prop-modal-title').textContent = 'Nueva Propiedad';
+  renderProps();
+}
+
+function deleteProp(pid) {
+  if (!confirm('¿Eliminar esta propiedad? Se perderá el historial asociado.')) return;
+  db.props = db.props.filter(x => x.id !== pid);
+  db.payments = db.payments.filter(x => x.propId !== pid);
+  db.expenses = db.expenses.filter(x => x.propId !== pid);
+  db.tenants.forEach(t => { if (t.propId === pid) t.propId = ''; });
+  saveDB();
+  closePropDetail();
+}
+
+// ==================== ARRENDATARIOS ====================
+function renderTenants() {
+  const cont = document.getElementById('tenant-list');
+  if (db.tenants.length === 0) {
+    cont.innerHTML = '<div class="empty"><div class="empty-icon">👤</div><div>No hay arrendatarios registrados</div><button class="btn btn-primary" style="margin-top:14px" onclick="openModal(\'modal-tenant\')">+ Agregar arrendatario</button></div>';
+    return;
+  }
+  refreshPropSelects();
+  cont.innerHTML = db.tenants.map(t => {
+    const prop = db.props.find(p => p.id === t.propId);
+    let contractBadge = '';
+    if (t.termino) {
+      const exp = new Date(t.termino);
+      const diff = Math.round((exp - now)/(1000*60*60*24));
+      if (diff < 0) contractBadge = '<span class="badge badge-red">Vencido</span>';
+      else if (diff <= 30) contractBadge = `<span class="badge badge-yellow">Vence en ${diff}d</span>`;
+      else contractBadge = `<span class="badge badge-green">Vigente</span>`;
+    }
+    const payThis = prop && db.payments.find(x => x.propId === prop.id && x.mes === CM && x.anio === CY);
+    return `
+      <div class="tenant-card" onclick="openTenantDetail('${t.id}')">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div>
+            <div class="tenant-name">👤 ${t.nombre}</div>
+            <div class="tenant-prop">${prop ? prop.nombre : '— Sin propiedad asignada —'}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+            ${contractBadge}
+            ${prop ? (payThis ? '<span class="badge badge-green">✅ Al día</span>' : '<span class="badge badge-red">⚠️ Sin pago</span>') : ''}
+          </div>
+        </div>
+        <div style="font-size:0.78rem;color:var(--muted);margin-top:8px">
+          ${t.rut ? `RUT: ${t.rut} · ` : ''}${t.tel || ''} · ${t.tipoContrato || ''} · ${t.forma || ''}
+        </div>
+        ${prop ? `<div style="font-size:0.82rem;margin-top:6px;font-weight:600;color:var(--accent)">Arriendo: ${fmt(prop.renta)}/mes</div>` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+function openTenantDetail(tid) {
+  const t = db.tenants.find(x => x.id === tid);
+  if (!t) return;
+  document.getElementById('tenant-list-view').style.display = 'none';
+  const detail = document.getElementById('tenant-detail');
+  detail.classList.add('open');
+  const prop = db.props.find(p => p.id === t.propId);
+  const pays = prop ? db.payments.filter(x => x.propId === prop.id).sort((a,b) => b.anio!==a.anio ? b.anio-a.anio : b.mes-a.mes) : [];
+  let contractInfo = '';
+  if (t.termino) {
+    const exp = new Date(t.termino);
+    const diff = Math.round((exp - now)/(1000*60*60*24));
+    contractInfo = `<div style="font-size:0.82rem;margin-top:6px;color:${diff<0?'var(--red)':diff<30?'var(--yellow)':'var(--green)'}">
+      ${diff < 0 ? `⚠️ Contrato vencido hace ${Math.abs(diff)} días` : `📅 ${diff} días para vencer el contrato`}
+    </div>`;
+  }
+  document.getElementById('tenant-detail-content').innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">
+      <div><h2 style="font-size:1.15rem">👤 ${t.nombre}</h2><div style="font-size:0.82rem;color:var(--muted)">${t.rut||''}</div></div>
+      <button class="btn btn-outline btn-sm" onclick="editTenant('${t.id}')">✏️ Editar</button>
+    </div>
+    <div class="card">
+      <div class="card-title">Información personal</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.85rem">
+        <div><div class="label">Teléfono</div><div class="value">${t.tel||'—'}</div></div>
+        <div><div class="label">Correo</div><div class="value" style="font-size:0.78rem">${t.email||'—'}</div></div>
+        <div><div class="label">Banco</div><div class="value">${t.banco||'—'}</div></div>
+        <div><div class="label">N° cuenta</div><div class="value">${t.numCta||'—'}</div></div>
+        <div><div class="label">Tipo cuenta</div><div class="value">${t.tipoCta||'—'}</div></div>
+        <div><div class="label">Forma de pago</div><div class="value">${t.forma||'—'}</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Contrato</div>
+      <div style="font-size:0.85rem">
+        <div>Propiedad: <strong>${prop ? prop.nombre : '—'}</strong></div>
+        <div style="margin-top:6px">Tipo: ${t.tipoContrato||'—'} · Inicio: ${fmtDate(t.inicio)} · Término: ${fmtDate(t.termino)}</div>
+        ${contractInfo}
+      </div>
+      ${t.termino ? `<button class="btn btn-outline btn-sm" style="margin-top:10px" onclick="renewContract('${t.id}')">🔄 Renovar contrato (+1 año)</button>` : ''}
+    </div>
+    ${(t.fiadorNombre) ? `
+    <div class="card">
+      <div class="card-title">Fiador</div>
+      <div style="font-size:0.85rem">${t.fiadorNombre} · RUT: ${t.fiadorRut||'—'} · Tel: ${t.fiadorTel||'—'}</div>
+    </div>` : ''}
+    <div class="card">
+      <div class="card-title">Historial de pagos</div>
+      ${pays.length === 0 ? '<div style="color:var(--muted);font-size:0.85rem">Sin pagos registrados</div>' : `
+      <div class="table-wrap"><table>
+        <thead><tr><th>Período</th><th>Monto</th><th>Fecha</th><th>Estado</th><th></th></tr></thead>
+        <tbody>
+          ${pays.slice(0,12).map(pay => {
+            const propForPay = db.props.find(p => p.id === pay.propId);
+            const diaPago = propForPay ? (propForPay.diaPago || 5) : 5;
+            const payDay = pay.fecha ? parseInt(pay.fecha.split('-')[2]) : 0;
+            const isLate = payDay > diaPago;
+            return `<tr>
+              <td>${MONTHS[pay.mes-1]} ${pay.anio}</td>
+              <td>${fmt(pay.monto)}</td>
+              <td>${fmtDate(pay.fecha)}</td>
+              <td>${isLate ? `<span class="badge badge-yellow">Atrasado ${payDay-diaPago}d</span>` : '<span class="badge badge-green">A tiempo</span>'}</td>
+              <td><button class="btn btn-outline btn-sm" onclick="showComprobante('${pay.id}')">🧾</button></td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table></div>`}
+    </div>
+    <button class="btn btn-red btn-sm" style="margin-top:4px" onclick="deleteTenant('${t.id}')">🗑️ Eliminar arrendatario</button>
+  `;
+}
+
+function renewContract(tid) {
+  const t = db.tenants.find(x => x.id === tid);
+  if (!t || !t.termino) return;
+  const d = new Date(t.termino);
+  d.setFullYear(d.getFullYear() + 1);
+  t.termino = d.toISOString().split('T')[0];
+  saveDB();
+  openTenantDetail(tid);
+}
+
+function closeTenantDetail() {
+  document.getElementById('tenant-list-view').style.display = '';
+  document.getElementById('tenant-detail').classList.remove('open');
+  renderTenants();
+}
+
+function editTenant(tid) {
+  const t = db.tenants.find(x => x.id === tid);
+  if (!t) return;
+  document.getElementById('tenant-modal-title').textContent = 'Editar Arrendatario';
+  document.getElementById('tenant-edit-id').value = t.id;
+  document.getElementById('t-nombre').value = t.nombre || '';
+  document.getElementById('t-rut').value = t.rut || '';
+  document.getElementById('t-tel').value = t.tel || '';
+  document.getElementById('t-email').value = t.email || '';
+  document.getElementById('t-inicio').value = t.inicio || '';
+  document.getElementById('t-termino').value = t.termino || '';
+  document.getElementById('t-tipo-contrato').value = t.tipoContrato || 'Fijo';
+  document.getElementById('t-forma').value = t.forma || 'Transferencia';
+  document.getElementById('t-banco').value = t.banco || '';
+  document.getElementById('t-tipo-cta').value = t.tipoCta || '';
+  document.getElementById('t-num-cta').value = t.numCta || '';
+  document.getElementById('t-fiador-nombre').value = t.fiadorNombre || '';
+  document.getElementById('t-fiador-rut').value = t.fiadorRut || '';
+  document.getElementById('t-fiador-tel').value = t.fiadorTel || '';
+  refreshPropSelects();
+  document.getElementById('t-prop').value = t.propId || '';
+  openModal('modal-tenant');
+}
+
+function saveTenant() {
+  const nombre = document.getElementById('t-nombre').value.trim();
+  if (!nombre) { alert('El nombre es obligatorio'); return; }
+  const eid = document.getElementById('tenant-edit-id').value;
+  const propId = document.getElementById('t-prop').value;
+  const data = {
+    nombre,
+    rut: document.getElementById('t-rut').value.trim(),
+    tel: document.getElementById('t-tel').value.trim(),
+    email: document.getElementById('t-email').value.trim(),
+    propId,
+    inicio: document.getElementById('t-inicio').value,
+    termino: document.getElementById('t-termino').value,
+    tipoContrato: document.getElementById('t-tipo-contrato').value,
+    forma: document.getElementById('t-forma').value,
+    banco: document.getElementById('t-banco').value,
+    tipoCta: document.getElementById('t-tipo-cta').value,
+    numCta: document.getElementById('t-num-cta').value.trim(),
+    fiadorNombre: document.getElementById('t-fiador-nombre').value.trim(),
+    fiadorRut: document.getElementById('t-fiador-rut').value.trim(),
+    fiadorTel: document.getElementById('t-fiador-tel').value.trim(),
+  };
+  if (eid) {
+    const idx = db.tenants.findIndex(x => x.id === eid);
+    if (idx >= 0) Object.assign(db.tenants[idx], data);
+  } else {
+    db.tenants.push({id: uid(), ...data});
+  }
+  // Link property to tenant
+  if (propId) {
+    const prop = db.props.find(p => p.id === propId);
+    if (prop) {
+      const newTenantId = eid || db.tenants[db.tenants.length-1].id;
+      prop.tenantId = newTenantId;
+    }
+  }
+  saveDB();
+  closeModal('modal-tenant');
+  document.getElementById('tenant-edit-id').value = '';
+  document.getElementById('tenant-modal-title').textContent = 'Nuevo Arrendatario';
+  renderTenants();
+}
+
+function deleteTenant(tid) {
+  if (!confirm('¿Eliminar este arrendatario?')) return;
+  db.tenants = db.tenants.filter(x => x.id !== tid);
+  db.props.forEach(p => { if (p.tenantId === tid) p.tenantId = ''; });
+  saveDB();
+  closeTenantDetail();
+}
+
+// ==================== PAGOS ====================
+function renderPagos() {
+  document.getElementById('pay-month-label').textContent = MONTHS[CM-1] + ' ' + CY;
+  refreshPropSelects();
+
+  // Payment grid
+  const grid = document.getElementById('pay-grid');
+  if (db.props.length === 0) {
+    grid.innerHTML = '<div style="color:var(--muted);font-size:0.85rem;padding:10px 0">No hay propiedades registradas</div>';
+  } else {
+    grid.innerHTML = db.props.map(p => {
+      const pay = db.payments.find(x => x.propId === p.id && x.mes === CM && x.anio === CY);
+      const tenant = db.tenants.find(t => t.id === p.tenantId);
+      const today = now.getDate();
+      const daysLate = pay ? 0 : Math.max(0, today - (p.diaPago||5));
+      return `
+        <div class="payment-row">
+          <div style="flex:1">
+            <div style="font-weight:600;font-size:0.9rem">${p.nombre}</div>
+            <div style="font-size:0.78rem;color:var(--muted)">${tenant ? tenant.nombre : '—'} · ${fmt(p.renta)}/mes</div>
+            ${pay ? `<div style="font-size:0.75rem;color:var(--green);margin-top:3px">Pagado el ${fmtDate(pay.fecha)} · ${fmt(pay.monto)}</div>` :
+              `<div style="font-size:0.75rem;color:${daysLate>0?'var(--red)':'var(--yellow)'};margin-top:3px">${daysLate > 0 ? `⚠️ ${daysLate} día${daysLate>1?'s':''} de atraso` : `Vence el día ${p.diaPago||5}`}</div>`}
+          </div>
+          <div style="display:flex;gap:6px;align-items:center">
+            ${pay ? `<span class="badge badge-green">✅</span><button class="btn btn-outline btn-sm" onclick="showComprobante('${pay.id}')">🧾</button>` :
+              `<button class="btn btn-primary btn-sm" onclick="quickPay('${p.id}')">Pagar</button>`}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // Arrears
+  const arrears = document.getElementById('arrears-summary');
+  const overdueList = db.props.filter(p => {
+    const pay = db.payments.find(x => x.propId === p.id && x.mes === CM && x.anio === CY);
+    return !pay && p.estado === 'Arrendado' && now.getDate() > (p.diaPago||5);
+  });
+  if (overdueList.length === 0) {
+    arrears.innerHTML = '<div style="color:var(--green);font-size:0.85rem">✅ Sin atrasos este mes</div>';
+  } else {
+    const total = overdueList.reduce((s,p) => s + p.renta, 0);
+    arrears.innerHTML = `
+      <div style="color:var(--red);font-weight:600;margin-bottom:8px">Total adeudado: ${fmt(total)}</div>
+      ${overdueList.map(p => {
+        const tenant = db.tenants.find(t => t.id === p.tenantId);
+        const daysLate = now.getDate() - (p.diaPago||5);
+        return `<div class="card2" style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-weight:600;font-size:0.88rem">${p.nombre}</div>
+            <div style="font-size:0.78rem;color:var(--muted)">${tenant ? tenant.nombre : '—'} · Tel: ${tenant ? tenant.tel : '—'}</div>
+            <div style="font-size:0.75rem;color:var(--red)">${daysLate} día${daysLate>1?'s':''} de atraso</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-weight:700;color:var(--red)">${fmt(p.renta)}</div>
+            <button class="btn btn-primary btn-sm" style="margin-top:4px" onclick="quickPay('${p.id}')">Registrar</button>
+          </div>
+        </div>`;
+      }).join('')}
+    `;
+  }
+
+  // History filters
+  const fy = document.getElementById('filter-year');
+  const years = [...new Set(db.payments.map(p => p.anio))].sort((a,b) => b-a);
+  if (!years.includes(CY)) years.unshift(CY);
+  const curYear = fy.value || CY;
+  fy.innerHTML = years.map(y => `<option value="${y}" ${y==curYear?'selected':''}>${y}</option>`).join('');
+
+  renderPayHistory();
+
+  // Chart: 12-month income
+  const labels12 = [];
+  const inc12 = [];
+  for (let i = 11; i >= 0; i--) {
+    let m2 = CM - i; let y2 = CY;
+    if (m2 <= 0) { m2 += 12; y2--; }
+    labels12.push(MONTHS[m2-1].slice(0,3) + ' ' + String(y2).slice(2));
+    const inc = db.payments.filter(p => p.mes === m2 && p.anio === y2).reduce((s,p) => s + (p.monto||0), 0);
+    inc12.push(inc);
+  }
+  if (charts.income) charts.income.destroy();
+  const ctx = document.getElementById('chart-income').getContext('2d');
+  charts.income = new Chart(ctx, {
+    type:'line',
+    data:{
+      labels:labels12,
+      datasets:[{label:'Ingresos CLP', data:inc12, borderColor:'#0369a1', backgroundColor:'rgba(3,105,161,0.1)', borderWidth:2.5, fill:true, tension:0.3, pointRadius:4, pointBackgroundColor:'#0369a1'}]
+    },
+    options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{ticks:{callback:v=>'$'+v.toLocaleString('es-CL'), font:{size:10}}, grid:{color:'#e2ecf7'}}, x:{ticks:{font:{size:9}}, grid:{display:false}}}}
+  });
+}
+
+function renderPayHistory() {
+  const filterProp = document.getElementById('filter-prop').value;
+  const filterYear = document.getElementById('filter-year').value;
+  const filterMonth = document.getElementById('filter-month').value;
+
+  let pays = [...db.payments].sort((a,b) => b.anio!==a.anio ? b.anio-a.anio : b.mes-a.mes);
+  if (filterProp) pays = pays.filter(p => p.propId === filterProp);
+  if (filterYear) pays = pays.filter(p => p.anio == filterYear);
+  if (filterMonth) pays = pays.filter(p => p.mes == filterMonth);
+
+  const tbody = document.getElementById('pay-history-body');
+  if (pays.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px">Sin pagos para los filtros seleccionados</td></tr>';
+    return;
+  }
+  tbody.innerHTML = pays.map(pay => {
+    const prop = db.props.find(p => p.id === pay.propId);
+    return `
+      <tr>
+        <td style="font-size:0.82rem">${prop ? prop.nombre : '—'}</td>
+        <td>${MONTHS[(pay.mes||1)-1]} ${pay.anio}</td>
+        <td style="font-weight:600">${fmt(pay.monto)}</td>
+        <td><span class="badge badge-green">Pagado</span></td>
+        <td>${pay.forma||'—'}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function quickPay(pid) {
+  refreshPropSelects();
+  document.getElementById('pay-prop').value = pid;
+  document.getElementById('pay-mes').value = CM;
+  document.getElementById('pay-anio').value = CY;
+  const td = now.toISOString().split('T')[0];
+  document.getElementById('pay-fecha').value = td;
+  fillPayDefault();
+  openModal('modal-pago');
+}
+
+function savePago() {
+  const propId = document.getElementById('pay-prop').value;
+  if (!propId) { alert('Selecciona una propiedad'); return; }
+  const monto = Number(document.getElementById('pay-monto').value);
+  if (!monto) { alert('Ingresa el monto'); return; }
+  const mes = Number(document.getElementById('pay-mes').value);
+  const anio = Number(document.getElementById('pay-anio').value);
+  // Check duplicate
+  const eid = document.getElementById('pay-edit-id').value;
+  const exists = db.payments.find(p => p.propId === propId && p.mes === mes && p.anio === anio && p.id !== eid);
+  if (exists && !confirm('Ya existe un pago para este período. ¿Continuar de todas formas?')) return;
+  const data = {
+    propId, mes, anio, monto,
+    fecha: document.getElementById('pay-fecha').value,
+    forma: document.getElementById('pay-forma').value,
+    notas: document.getElementById('pay-notas').value,
+  };
+  if (eid) {
+    const idx = db.payments.findIndex(x => x.id === eid);
+    if (idx >= 0) Object.assign(db.payments[idx], data);
+  } else {
+    db.payments.push({id: uid(), ...data});
+  }
+  saveDB();
+  closeModal('modal-pago');
+  renderPagos();
+  if (document.getElementById('tab-resumen').classList.contains('active')) renderResumen();
+}
+
+function showComprobante(payId) {
+  const pay = db.payments.find(x => x.id === payId);
+  if (!pay) return;
+  const prop = db.props.find(p => p.id === pay.propId);
+  const tenant = prop ? db.tenants.find(t => t.id === prop.tenantId) : null;
+  const text = `COMPROBANTE DE PAGO ARRIENDO
+━━━━━━━━━━━━━━━━━━━━━━━
+Propiedad:    ${prop ? prop.nombre : '—'}
+Arrendatario: ${tenant ? tenant.nombre : '—'}
+Período:      ${MONTHS[(pay.mes||1)-1]} ${pay.anio}
+Monto:        ${fmt(pay.monto)}
+Forma pago:   ${pay.forma||'—'}
+Fecha pago:   ${fmtDate(pay.fecha)}
+${pay.notas ? `Notas: ${pay.notas}` : ''}
+━━━━━━━━━━━━━━━━━━━━━━━
+ArriendoCL • Gestión de Arriendos`;
+  document.getElementById('comprobante-text').textContent = text;
+  openModal('modal-comprobante');
+}
+
+function copyComprobante() {
+  const text = document.getElementById('comprobante-text').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.querySelector('#modal-comprobante .btn-primary');
+    btn.textContent = '✅ ¡Copiado!';
+    setTimeout(() => btn.textContent = '📋 Copiar para WhatsApp', 2000);
+  }).catch(() => alert('No se pudo copiar. Selecciona el texto manualmente.'));
+}
+
+// ==================== GASTOS ====================
+function renderGastos() {
+  refreshPropSelects();
+
+  // ROI section
+  const roi = document.getElementById('roi-section');
+  const annualIncome = db.payments.filter(p => p.anio === CY).reduce((s,p) => s + (p.monto||0), 0);
+  const annualExp = db.expenses.filter(e => {
+    if (!e.fecha) return false;
+    return parseInt(e.fecha.split('-')[0]) === CY;
+  }).reduce((s,e) => s + (e.monto||0), 0);
+  const netIncome = annualIncome - annualExp;
+
+  let roiHtml = `<div class="roi-box">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;text-align:center">
+      <div><div class="roi-val" style="font-size:1.3rem">${fmt(annualIncome)}</div><div class="roi-lbl">Ingresos ${CY}</div></div>
+      <div><div class="roi-val" style="font-size:1.3rem">${fmt(annualExp)}</div><div class="roi-lbl">Gastos ${CY}</div></div>
+      <div><div class="roi-val" style="font-size:1.3rem;color:${netIncome>=0?'#86efac':'#fca5a5'}">${fmt(netIncome)}</div><div class="roi-lbl">Resultado neto</div></div>
+    </div>
+  </div>`;
+
+  // Per-property ROI
+  const propRois = db.props.map(p => {
+    const inc = db.payments.filter(x => x.propId === p.id && x.anio === CY).reduce((s,x) => s + (x.monto||0), 0);
+    const exp = db.expenses.filter(e => e.propId === p.id && e.fecha && parseInt(e.fecha.split('-')[0]) === CY).reduce((s,e) => s + (e.monto||0), 0);
+    const fixed = ((p.contrib||0) + (p.seguro||0) + (p.mant||0)) * 12;
+    const totalExp = exp + fixed;
+    const net = inc - totalExp;
+    const roi = p.valor && p.valor > 0 ? ((net / p.valor) * 100).toFixed(1) : null;
+    return {p, inc, exp: totalExp, net, roi};
+  });
+
+  if (propRois.length > 0) {
+    roiHtml += `<div class="card"><div class="card-title">Rentabilidad por propiedad (${CY})</div>
+      ${propRois.map(({p, inc, exp, net, roi}) => `
+        <div class="card2">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div style="font-weight:600">${p.nombre}</div>
+            ${roi ? `<span class="badge ${parseFloat(roi)>=5?'badge-green':parseFloat(roi)>=2?'badge-yellow':'badge-red'}">ROI ${roi}%</span>` : '<span class="badge badge-gray">ROI: sin valor</span>'}
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px;font-size:0.82rem">
+            <div><div class="label">Ingresos</div><div style="font-weight:600;color:var(--green)">${fmt(inc)}</div></div>
+            <div><div class="label">Gastos totales</div><div style="font-weight:600;color:var(--red)">${fmt(exp)}</div></div>
+            <div><div class="label">Neto</div><div style="font-weight:600;color:${net>=0?'var(--green)':'var(--red)'}">${fmt(net)}</div></div>
+          </div>
+        </div>
+      `).join('')}
+    </div>`;
+  }
+  roi.innerHTML = roiHtml;
+
+  // Tax note
+  const uta = 65104; // UTM aprox 2026
+  document.getElementById('tax-note').innerHTML = `
+    <strong>Renta Presunta Agrícola</strong><br>
+    Propietarios de bienes raíces no agrícolas pueden tributar por renta presunta si la renta anual es inferior a <strong>40 UTM</strong> (aprox. ${fmt(40*uta)}/año).<br><br>
+    Tu renta anual estimada: <strong>${fmt(annualIncome)}</strong> ${annualIncome < 40*uta ? '→ <span style="color:var(--green)">Bajo el límite de renta presunta</span>' : '→ <span style="color:var(--yellow)">Supera el límite, debe declarar renta efectiva</span>'}<br><br>
+    <strong>Renta presunta:</strong> El impuesto se calcula sobre el <strong>7% del avalúo fiscal</strong> del inmueble (no sobre la renta real).<br>
+    <strong>Renta efectiva:</strong> Declara ingresos reales menos gastos necesarios en <strong>Formulario 22</strong> (Servicio de Impuestos Internos).<br><br>
+    <em style="color:var(--muted)">⚠️ Consulta con un contador para determinar el régimen más conveniente para tu situación.</em>
+  `;
+
+  renderExpenses();
+}
+
+function renderExpenses() {
+  const filterProp = document.getElementById('filter-exp-prop').value;
+  const filterType = document.getElementById('filter-exp-type').value;
+
+  let exps = [...db.expenses].sort((a,b) => (b.fecha||'').localeCompare(a.fecha||''));
+  if (filterProp) exps = exps.filter(e => e.propId === filterProp);
+  if (filterType) exps = exps.filter(e => e.tipo === filterType);
+
+  const tbody = document.getElementById('exp-table-body');
+  if (exps.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px">Sin gastos para los filtros seleccionados</td></tr>';
+    return;
+  }
+  tbody.innerHTML = exps.map(e => {
+    const prop = db.props.find(p => p.id === e.propId);
+    return `
+      <tr>
+        <td>${fmtDate(e.fecha)}</td>
+        <td style="font-size:0.82rem">${prop ? prop.nombre : 'General'}</td>
+        <td><span class="expense-type">${e.tipo}</span></td>
+        <td style="font-weight:600">${fmt(e.monto)}</td>
+        <td>${e.cobrar ? '<span class="badge badge-yellow">A cobrar</span>' : '<span class="badge badge-gray">Propietario</span>'}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function saveGasto() {
+  const monto = Number(document.getElementById('exp-monto').value);
+  if (!monto) { alert('Ingresa el monto'); return; }
+  const eid = document.getElementById('exp-edit-id').value;
+  const data = {
+    propId: document.getElementById('exp-prop').value,
+    fecha: document.getElementById('exp-fecha').value,
+    tipo: document.getElementById('exp-tipo').value,
+    monto,
+    desc: document.getElementById('exp-desc').value.trim(),
+    cobrar: document.getElementById('exp-cobrar').checked,
+  };
+  if (eid) {
+    const idx = db.expenses.findIndex(x => x.id === eid);
+    if (idx >= 0) Object.assign(db.expenses[idx], data);
+  } else {
+    db.expenses.push({id: uid(), ...data});
+  }
+  saveDB();
+  closeModal('modal-gasto');
+  if (document.getElementById('tab-gastos').classList.contains('active')) renderGastos();
+  if (document.getElementById('tab-resumen').classList.contains('active')) renderResumen();
+}
+
+// ==================== INIT ====================
+function init() {
+  loadDB();
+  seedDemo();
+  initHeader();
+  renderResumen();
+  // Set current month in selects
+  const mes = document.getElementById('pay-mes');
+  if (mes) mes.value = CM;
+}
+
+init();
+</script>
+</body>
+</html>

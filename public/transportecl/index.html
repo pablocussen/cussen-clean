@@ -1,0 +1,2020 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#1e293b">
+    <meta name="description" content="TransporteCL - Gestión profesional de flota y logística para transportistas chilenos">
+    <title>TransporteCL - Gestión de Flota</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            font-family: 'Inter', sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+        }
+
+        body {
+            overflow-y: auto;
+        }
+
+        input, textarea, select {
+            font-family: 'Inter', sans-serif;
+            font-size: 16px;
+        }
+
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: #f8fafc;
+        }
+
+        .app-header {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            color: white;
+            padding: 1rem;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            flex-shrink: 0;
+        }
+
+        .app-header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .app-header p {
+            font-size: 0.875rem;
+            opacity: 0.9;
+        }
+
+        .content-wrapper {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .tab-container {
+            display: none;
+        }
+
+        .tab-container.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .tab-nav {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            overflow-x: auto;
+            padding-bottom: 0.5rem;
+            flex-shrink: 0;
+        }
+
+        .tab-btn {
+            padding: 0.75rem 1.25rem;
+            border: none;
+            background: white;
+            color: #64748b;
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            border-radius: 0.5rem;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .tab-btn.active {
+            background: #f97316;
+            color: white;
+            box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+        }
+
+        .tab-btn:hover:not(.active) {
+            background: #e2e8f0;
+        }
+
+        .card {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .card h2 {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            color: #1e293b;
+            font-weight: 700;
+        }
+
+        .card h3 {
+            font-size: 1rem;
+            margin-bottom: 0.75rem;
+            color: #334155;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            font-size: 0.875rem;
+            color: #334155;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            font-size: 16px;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #f97316;
+            box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: #f97316;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #ea580c;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #334155;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e1;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+
+        table thead {
+            background: #f1f5f9;
+        }
+
+        table th {
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+            color: #334155;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        table tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.25rem;
+            font-weight: 500;
+            font-size: 0.75rem;
+        }
+
+        .badge-success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .badge-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-danger {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge-info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .alert-info {
+            background: #dbeafe;
+            color: #1e40af;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .alert-warning {
+            background: #fef3c7;
+            color: #92400e;
+            border-left: 4px solid #f59e0b;
+        }
+
+        .alert-danger {
+            background: #fee2e2;
+            color: #991b1b;
+            border-left: 4px solid #ef4444;
+        }
+
+        .alert-success {
+            background: #dcfce7;
+            color: #166534;
+            border-left: 4px solid #22c55e;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal.active {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 25px rgba(0,0,0,0.15);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-header h2 {
+            font-size: 1.25rem;
+            color: #1e293b;
+            font-weight: 700;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #64748b;
+        }
+
+        .modal-close:hover {
+            color: #1e293b;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: #64748b;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #f97316;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 1rem;
+        }
+
+        .text-muted {
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .mt-1 { margin-top: 0.5rem; }
+        .mt-2 { margin-top: 1rem; }
+        .mb-1 { margin-bottom: 0.5rem; }
+        .mb-2 { margin-bottom: 1rem; }
+
+        .input-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .input-group input {
+            flex: 1;
+        }
+
+        .input-group button {
+            white-space: nowrap;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: #64748b;
+        }
+
+        .empty-state p {
+            margin-bottom: 1rem;
+        }
+
+        .success-message {
+            display: none;
+            padding: 1rem;
+            background: #dcfce7;
+            color: #166534;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid #22c55e;
+        }
+
+        .success-message.show {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .warning-icon {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            background: #f59e0b;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-right: 0.5rem;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: flex-end;
+        }
+
+        .action-btn {
+            padding: 0.5rem 0.75rem;
+            border: none;
+            border-radius: 0.375rem;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .action-btn-edit {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .action-btn-edit:hover {
+            background: #bfdbfe;
+        }
+
+        .action-btn-delete {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .action-btn-delete:hover {
+            background: #fecaca;
+        }
+
+        .tab-content-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 640px) {
+            .app-header h1 {
+                font-size: 1.25rem;
+            }
+
+            .card {
+                padding: 1rem;
+            }
+
+            .tab-nav {
+                gap: 0.25rem;
+            }
+
+            .tab-btn {
+                padding: 0.5rem 0.875rem;
+                font-size: 0.75rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .action-btn {
+                width: 100%;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="app-header">
+            <h1>🚚 TransporteCL</h1>
+            <p>Gestión profesional de flota y logística</p>
+        </div>
+
+        <div class="tab-nav" id="tabNav">
+            <button class="tab-btn active" onclick="switchTab(0)">Viajes</button>
+            <button class="tab-btn" onclick="switchTab(1)">Flota</button>
+            <button class="tab-btn" onclick="switchTab(2)">Conductores</button>
+            <button class="tab-btn" onclick="switchTab(3)">Combustible</button>
+            <button class="tab-btn" onclick="switchTab(4)">Finanzas</button>
+            <button class="tab-btn" onclick="switchTab(5)">Clientes</button>
+        </div>
+
+        <div class="content-wrapper">
+            <!-- TAB 1: VIAJES -->
+            <div class="tab-container active" id="tab-viajes">
+                <div class="tab-content-inner">
+                    <div class="success-message" id="viajesSuccessMsg"></div>
+
+                    <div class="card">
+                        <h2>Nuevo Viaje</h2>
+                        <form id="viajeForm" onsubmit="addViaje(event)">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Origen</label>
+                                    <select id="viajeOrigen" required>
+                                        <option value="">Seleccionar ciudad</option>
+                                        <option value="Santiago">Santiago</option>
+                                        <option value="Valparaíso">Valparaíso</option>
+                                        <option value="Concepción">Concepción</option>
+                                        <option value="Temuco">Temuco</option>
+                                        <option value="Puerto Montt">Puerto Montt</option>
+                                        <option value="Antofagasta">Antofagasta</option>
+                                        <option value="Coyhaique">Coyhaique</option>
+                                        <option value="Punta Arenas">Punta Arenas</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Destino</label>
+                                    <select id="viajeDestino" required>
+                                        <option value="">Seleccionar ciudad</option>
+                                        <option value="Santiago">Santiago</option>
+                                        <option value="Valparaíso">Valparaíso</option>
+                                        <option value="Concepción">Concepción</option>
+                                        <option value="Temuco">Temuco</option>
+                                        <option value="Puerto Montt">Puerto Montt</option>
+                                        <option value="Antofagasta">Antofagasta</option>
+                                        <option value="Coyhaique">Coyhaique</option>
+                                        <option value="Punta Arenas">Punta Arenas</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Fecha Salida</label>
+                                    <input type="date" id="viajeFecha" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Tipo de Carga</label>
+                                    <select id="viajeCargo" required>
+                                        <option value="">Seleccionar tipo</option>
+                                        <option value="Frutas">Frutas</option>
+                                        <option value="Electrónica">Electrónica</option>
+                                        <option value="Químicos">Químicos</option>
+                                        <option value="Minerales">Minerales</option>
+                                        <option value="Construcción">Construcción</option>
+                                        <option value="General">Carga General</option>
+                                        <option value="Refrigerado">Refrigerado</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Peso (tons)</label>
+                                    <input type="number" id="viajePeso" min="0.1" step="0.1" placeholder="15.5" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Distancia (km)</label>
+                                    <input type="number" id="viajeDistancia" min="1" placeholder="486" required>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Precio (CLP)</label>
+                                    <input type="number" id="viajePrecio" min="0" placeholder="250000" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Estado</label>
+                                    <select id="viajeEstado" required>
+                                        <option value="programado">Programado</option>
+                                        <option value="en ruta">En Ruta</option>
+                                        <option value="entregado">Entregado</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">Registrar Viaje</button>
+                        </form>
+                    </div>
+
+                    <div class="card">
+                        <h2>Viajes Registrados</h2>
+                        <div class="table-wrapper">
+                            <table id="viajesTable">
+                                <thead>
+                                    <tr>
+                                        <th>Origen → Destino</th>
+                                        <th>Fecha</th>
+                                        <th>Carga</th>
+                                        <th>Peso (ton)</th>
+                                        <th>Distancia (km)</th>
+                                        <th>Precio CLP</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="viajesList">
+                                    <tr><td colspan="8" class="text-center text-muted">No hay viajes registrados</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: FLOTA -->
+            <div class="tab-container" id="tab-flota">
+                <div class="tab-content-inner">
+                    <div class="success-message" id="flotaSuccessMsg"></div>
+
+                    <div class="card">
+                        <h2>Nuevo Camión</h2>
+                        <form id="flotaForm" onsubmit="addFlota(event)">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Marca</label>
+                                    <select id="flotaMarca" required>
+                                        <option value="">Seleccionar marca</option>
+                                        <option value="Mercedes-Benz">Mercedes-Benz</option>
+                                        <option value="Volvo">Volvo</option>
+                                        <option value="Scania">Scania</option>
+                                        <option value="Freightliner">Freightliner</option>
+                                        <option value="Hyundai">Hyundai</option>
+                                        <option value="Iveco">Iveco</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Modelo</label>
+                                    <input type="text" id="flotaModelo" placeholder="Actros 2651" required>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Patente</label>
+                                    <input type="text" id="flotaPatente" placeholder="XXXX12" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Año</label>
+                                    <input type="number" id="flotaAno" min="2000" max="2026" placeholder="2022" required>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>KM Actual</label>
+                                    <input type="number" id="flotaKm" min="0" placeholder="45000" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Capacidad (tons)</label>
+                                    <input type="number" id="flotaCapacidad" min="1" step="0.1" placeholder="25.5" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Estado</label>
+                                <select id="flotaEstado" required>
+                                    <option value="activo">Activo</option>
+                                    <option value="mantención">Mantención</option>
+                                    <option value="fuera de servicio">Fuera de Servicio</option>
+                                </select>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">Agregar Camión</button>
+                        </form>
+                    </div>
+
+                    <div class="card">
+                        <h2>Flota Disponible</h2>
+                        <div class="table-wrapper">
+                            <table id="flotaTable">
+                                <thead>
+                                    <tr>
+                                        <th>Patente</th>
+                                        <th>Marca - Modelo</th>
+                                        <th>Año</th>
+                                        <th>KM</th>
+                                        <th>Capacidad (ton)</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="flotaList">
+                                    <tr><td colspan="7" class="text-center text-muted">No hay camiones registrados</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>Alertas de Mantención</h3>
+                        <div id="mantencionAlerts"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: CONDUCTORES -->
+            <div class="tab-container" id="tab-conductores">
+                <div class="tab-content-inner">
+                    <div class="success-message" id="conductoresSuccessMsg"></div>
+
+                    <div class="card">
+                        <h2>Nuevo Conductor</h2>
+                        <form id="conductorForm" onsubmit="addConductor(event)">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Nombre Completo</label>
+                                    <input type="text" id="conductorNombre" placeholder="Juan González" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>RUT</label>
+                                    <input type="text" id="conductorRut" placeholder="12.345.678-9" required>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Licencia</label>
+                                    <select id="conductorLicencia" required>
+                                        <option value="">Seleccionar tipo</option>
+                                        <option value="A3">A3 (Autos)</option>
+                                        <option value="A4">A4 (Camiones ligeros)</option>
+                                        <option value="A5">A5 (Camiones pesados)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Vencimiento Licencia</label>
+                                    <input type="date" id="conductorVencimiento" required>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Teléfono</label>
+                                    <input type="tel" id="conductorTelefono" placeholder="+56 9 1234 5678" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Email</label>
+                                    <input type="email" id="conductorEmail" placeholder="juan@email.com">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>KM Conducidos (Aproximado)</label>
+                                    <input type="number" id="conductorKm" min="0" placeholder="125000" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Infracciones</label>
+                                    <input type="number" id="conductorInfracciones" min="0" placeholder="0" required>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">Registrar Conductor</button>
+                        </form>
+                    </div>
+
+                    <div class="card">
+                        <h2>Registro de Conductores</h2>
+                        <div class="table-wrapper">
+                            <table id="conductoresTable">
+                                <thead>
+                                    <tr>
+                                        <th>Nombre</th>
+                                        <th>RUT</th>
+                                        <th>Licencia</th>
+                                        <th>Vence</th>
+                                        <th>Teléfono</th>
+                                        <th>KM</th>
+                                        <th>Infracciones</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="conductoresList">
+                                    <tr><td colspan="8" class="text-center text-muted">No hay conductores registrados</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>Advertencias de Licencia</h3>
+                        <div id="licenseAlerts"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: COMBUSTIBLE -->
+            <div class="tab-container" id="tab-combustible">
+                <div class="tab-content-inner">
+                    <div class="success-message" id="combustibleSuccessMsg"></div>
+
+                    <div class="card">
+                        <h2>Registro de Carga de Combustible</h2>
+                        <form id="combustibleForm" onsubmit="addCombustible(event)">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Patente Camión</label>
+                                    <select id="combustiblePatente" required>
+                                        <option value="">Seleccionar camión</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Fecha</label>
+                                    <input type="date" id="combustibleFecha" required>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Litros Cargados</label>
+                                    <input type="number" id="combustibleLitros" min="0.1" step="0.1" placeholder="200" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Precio por Litro (CLP)</label>
+                                    <input type="number" id="combustiblePrecio" min="0" placeholder="950" required>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>KM Recorridos desde última carga</label>
+                                    <input type="number" id="combustibleKm" min="0" placeholder="1200" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Estación de Combustible</label>
+                                    <input type="text" id="combustibleEstacion" placeholder="Shell, Santiago" required>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">Registrar Carga</button>
+                        </form>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">Consumo Promedio (km/L)</div>
+                            <div class="stat-value" id="statPromedio">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Total Litros (Mes)</div>
+                            <div class="stat-value" id="statLitros">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Gasto Total (CLP)</div>
+                            <div class="stat-value" id="statGasto">$0</div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>Historial de Combustible</h3>
+                        <div class="table-wrapper">
+                            <table id="combustibleTable">
+                                <thead>
+                                    <tr>
+                                        <th>Patente</th>
+                                        <th>Fecha</th>
+                                        <th>Litros</th>
+                                        <th>Precio/L (CLP)</th>
+                                        <th>Total (CLP)</th>
+                                        <th>KM Recorridos</th>
+                                        <th>Rendimiento (km/L)</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="combustibleList">
+                                    <tr><td colspan="8" class="text-center text-muted">No hay registros de combustible</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>Consumo Mensual por Camión</h3>
+                        <div class="chart-container">
+                            <canvas id="combustibleChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 5: FINANZAS -->
+            <div class="tab-container" id="tab-finanzas">
+                <div class="tab-content-inner">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">Ingresos Totales (CLP)</div>
+                            <div class="stat-value" id="statIngresos">$0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Gastos Combustible (CLP)</div>
+                            <div class="stat-value" id="statCombustible">$0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Gastos Mantención (CLP)</div>
+                            <div class="stat-value" id="statMantencion">$0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Peajes (CLP)</div>
+                            <div class="stat-value" id="statPeajes">$0</div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h2>Nuevo Gasto</h2>
+                        <form id="gastoForm" onsubmit="addGasto(event)">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Tipo de Gasto</label>
+                                    <select id="gastoTipo" required>
+                                        <option value="">Seleccionar tipo</option>
+                                        <option value="mantención">Mantención</option>
+                                        <option value="peajes">Peajes</option>
+                                        <option value="repuestos">Repuestos</option>
+                                        <option value="seguro">Seguro</option>
+                                        <option value="otro">Otro</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Monto (CLP)</label>
+                                    <input type="number" id="gastoMonto" min="0" placeholder="50000" required>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Patente Camión (opcional)</label>
+                                    <select id="gastoPatente">
+                                        <option value="">Todos</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Fecha</label>
+                                    <input type="date" id="gastoFecha" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Descripción</label>
+                                <textarea id="gastoDescripcion" placeholder="Cambio de aceite, filtros..." rows="2"></textarea>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">Registrar Gasto</button>
+                        </form>
+                    </div>
+
+                    <div class="card">
+                        <h3>Resumen Financiero Mensual</h3>
+                        <div class="chart-container">
+                            <canvas id="financesChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>Gasto por Categoría</h3>
+                        <div id="gastosSummary"></div>
+                    </div>
+
+                    <div class="card">
+                        <h2>Historial de Gastos</h2>
+                        <div class="table-wrapper">
+                            <table id="gastosTable">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Tipo</th>
+                                        <th>Patente</th>
+                                        <th>Descripción</th>
+                                        <th>Monto (CLP)</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="gastosList">
+                                    <tr><td colspan="6" class="text-center text-muted">No hay gastos registrados</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>Rentabilidad por Ruta</h3>
+                        <div class="table-wrapper">
+                            <table id="rentabilidadTable">
+                                <thead>
+                                    <tr>
+                                        <th>Ruta</th>
+                                        <th>Viajes</th>
+                                        <th>Ingresos (CLP)</th>
+                                        <th>Gastos (CLP)</th>
+                                        <th>Ganancia (CLP)</th>
+                                        <th>Margen %</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="rentabilidadList">
+                                    <tr><td colspan="6" class="text-center text-muted">No hay datos suficientes</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 6: CLIENTES -->
+            <div class="tab-container" id="tab-clientes">
+                <div class="tab-content-inner">
+                    <div class="success-message" id="clientesSuccessMsg"></div>
+
+                    <div class="card">
+                        <h2>Nuevo Cliente</h2>
+                        <form id="clienteForm" onsubmit="addCliente(event)">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Nombre Empresa</label>
+                                    <input type="text" id="clienteNombre" placeholder="Transportes ABC" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>RUT Empresa</label>
+                                    <input type="text" id="clienteRut" placeholder="12.345.678-K" required>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Persona Contacto</label>
+                                    <input type="text" id="clienteContacto" placeholder="Carlos Pérez" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Teléfono</label>
+                                    <input type="tel" id="clienteTelefono" placeholder="+56 2 1234 5678" required>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Email</label>
+                                    <input type="email" id="clienteEmail" placeholder="contacto@empresa.com" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Términos de Pago</label>
+                                    <select id="clientePago" required>
+                                        <option value="">Seleccionar plazo</option>
+                                        <option value="Al Contado">Al Contado</option>
+                                        <option value="30 días">30 días</option>
+                                        <option value="60 días">60 días</option>
+                                        <option value="90 días">90 días</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Rutas Frecuentes</label>
+                                <input type="text" id="clienteRutas" placeholder="Santiago - Valparaíso, Santiago - Concepción">
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">Registrar Cliente</button>
+                        </form>
+                    </div>
+
+                    <div class="card">
+                        <h2>Cartera de Clientes</h2>
+                        <div class="table-wrapper">
+                            <table id="clientesTable">
+                                <thead>
+                                    <tr>
+                                        <th>Empresa</th>
+                                        <th>RUT</th>
+                                        <th>Contacto</th>
+                                        <th>Teléfono</th>
+                                        <th>Pago</th>
+                                        <th>Viajes</th>
+                                        <th>Ingresos (CLP)</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="clientesList">
+                                    <tr><td colspan="8" class="text-center text-muted">No hay clientes registrados</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>Historial Facturación</h3>
+                        <div class="table-wrapper">
+                            <table id="facturacionTable">
+                                <thead>
+                                    <tr>
+                                        <th>Empresa</th>
+                                        <th>Fecha Viaje</th>
+                                        <th>Ruta</th>
+                                        <th>Monto (CLP)</th>
+                                        <th>Vence</th>
+                                        <th>Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="facturacionList">
+                                    <tr><td colspan="6" class="text-center text-muted">No hay facturas registradas</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL EDIT VIAJE -->
+    <div class="modal" id="editViajeModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Editar Viaje</h2>
+                <button class="modal-close" onclick="closeModal('editViajeModal')">×</button>
+            </div>
+            <form id="editViajeForm" onsubmit="saveViajeEdit(event)">
+                <input type="hidden" id="editViajeId">
+                <div class="form-group">
+                    <label>Estado</label>
+                    <select id="editViajeEstado" required>
+                        <option value="programado">Programado</option>
+                        <option value="en ruta">En Ruta</option>
+                        <option value="entregado">Entregado</option>
+                    </select>
+                </div>
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('editViajeModal')">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const STORAGE_KEYS = {
+            VIAJES: 'transportecl_viajes',
+            FLOTA: 'transportecl_flota',
+            CONDUCTORES: 'transportecl_conductores',
+            COMBUSTIBLE: 'transportecl_combustible',
+            GASTOS: 'transportecl_gastos',
+            CLIENTES: 'transportecl_clientes'
+        };
+
+        const ROUTE_DISTANCES = {
+            'Santiago-Valparaíso': 120,
+            'Valparaíso-Santiago': 120,
+            'Santiago-Concepción': 486,
+            'Concepción-Santiago': 486,
+            'Santiago-Temuco': 686,
+            'Temuco-Santiago': 686,
+            'Santiago-Puerto Montt': 1014,
+            'Puerto Montt-Santiago': 1014,
+            'Santiago-Antofagasta': 1391,
+            'Antofagasta-Santiago': 1391,
+            'Valparaíso-Concepción': 430,
+            'Concepción-Valparaíso': 430,
+            'Temuco-Puerto Montt': 350,
+            'Puerto Montt-Temuco': 350
+        };
+
+        let currentTab = 0;
+        let chartInstances = {};
+
+        // Safe localStorage wrapper
+        function safeStorage(action, key, data) {
+            try {
+                if (action === 'get') {
+                    const item = localStorage.getItem(key);
+                    return item ? JSON.parse(item) : [];
+                } else if (action === 'set') {
+                    localStorage.setItem(key, JSON.stringify(data));
+                    return true;
+                }
+            } catch (e) {
+                console.warn('Storage error:', e);
+                return action === 'get' ? [] : false;
+            }
+        }
+
+        function switchTab(index) {
+            const tabs = document.querySelectorAll('.tab-container');
+            const btns = document.querySelectorAll('.tab-btn');
+
+            tabs.forEach((tab, i) => {
+                tab.classList.toggle('active', i === index);
+            });
+
+            btns.forEach((btn, i) => {
+                btn.classList.toggle('active', i === index);
+            });
+
+            currentTab = index;
+
+            // Refresh charts when switching to relevant tabs
+            if (index === 3) setTimeout(() => updateCombustibleChart(), 100);
+            if (index === 4) setTimeout(() => updateFinancesChart(), 100);
+        }
+
+        function showSuccess(message, tabId) {
+            const msgEl = document.getElementById(tabId);
+            msgEl.textContent = message;
+            msgEl.classList.add('show');
+            setTimeout(() => msgEl.classList.remove('show'), 3000);
+        }
+
+        function formatCLP(value) {
+            return new Intl.NumberFormat('es-CL', {
+                style: 'currency',
+                currency: 'CLP',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(value);
+        }
+
+        function formatDate(dateStr) {
+            return new Date(dateStr).toLocaleDateString('es-CL');
+        }
+
+        function getStatusBadge(status) {
+            const badges = {
+                'programado': 'badge-info',
+                'en ruta': 'badge-warning',
+                'entregado': 'badge-success',
+                'activo': 'badge-success',
+                'mantención': 'badge-warning',
+                'fuera de servicio': 'badge-danger'
+            };
+            return `<span class="badge ${badges[status] || 'badge-info'}">${status.charAt(0).toUpperCase() + status.slice(1)}</span>`;
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        // ============ VIAJES ============
+        function addViaje(event) {
+            event.preventDefault();
+
+            const viaje = {
+                id: Date.now(),
+                origen: document.getElementById('viajeOrigen').value,
+                destino: document.getElementById('viajeDestino').value,
+                fecha: document.getElementById('viajeFecha').value,
+                cargo: document.getElementById('viajeCargo').value,
+                peso: parseFloat(document.getElementById('viajePeso').value),
+                distancia: parseInt(document.getElementById('viajeDistancia').value),
+                precio: parseInt(document.getElementById('viajePrecio').value),
+                estado: document.getElementById('viajeEstado').value
+            };
+
+            const viajes = safeStorage('get', STORAGE_KEYS.VIAJES);
+            viajes.push(viaje);
+            safeStorage('set', STORAGE_KEYS.VIAJES, viajes);
+
+            document.getElementById('viajeForm').reset();
+            showSuccess('✓ Viaje registrado correctamente', 'viajesSuccessMsg');
+            renderViajes();
+            updateFinancesData();
+        }
+
+        function renderViajes() {
+            const viajes = safeStorage('get', STORAGE_KEYS.VIAJES);
+            const tbody = document.getElementById('viajesList');
+
+            if (viajes.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No hay viajes registrados</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = viajes.map(v => `
+                <tr>
+                    <td><strong>${v.origen}</strong> → ${v.destino}</td>
+                    <td>${formatDate(v.fecha)}</td>
+                    <td>${v.cargo}</td>
+                    <td>${v.peso.toFixed(1)}</td>
+                    <td>${v.distancia}</td>
+                    <td>${formatCLP(v.precio)}</td>
+                    <td>${getStatusBadge(v.estado)}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="action-btn action-btn-edit" onclick="editViajeModal(${v.id})">Editar</button>
+                            <button class="action-btn action-btn-delete" onclick="deleteViaje(${v.id})">Eliminar</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function editViajeModal(viajeId) {
+            const viajes = safeStorage('get', STORAGE_KEYS.VIAJES);
+            const viaje = viajes.find(v => v.id === viajeId);
+            if (!viaje) return;
+
+            document.getElementById('editViajeId').value = viajeId;
+            document.getElementById('editViajeEstado').value = viaje.estado;
+            document.getElementById('editViajeModal').classList.add('active');
+        }
+
+        function saveViajeEdit(event) {
+            event.preventDefault();
+            const viajeId = parseInt(document.getElementById('editViajeId').value);
+            const nuevoEstado = document.getElementById('editViajeEstado').value;
+
+            let viajes = safeStorage('get', STORAGE_KEYS.VIAJES);
+            viajes = viajes.map(v => v.id === viajeId ? { ...v, estado: nuevoEstado } : v);
+            safeStorage('set', STORAGE_KEYS.VIAJES, viajes);
+
+            closeModal('editViajeModal');
+            showSuccess('✓ Viaje actualizado', 'viajesSuccessMsg');
+            renderViajes();
+            updateFinancesData();
+        }
+
+        function deleteViaje(viajeId) {
+            if (!confirm('¿Eliminar este viaje?')) return;
+            let viajes = safeStorage('get', STORAGE_KEYS.VIAJES);
+            viajes = viajes.filter(v => v.id !== viajeId);
+            safeStorage('set', STORAGE_KEYS.VIAJES, viajes);
+            renderViajes();
+            updateFinancesData();
+        }
+
+        // ============ FLOTA ============
+        function addFlota(event) {
+            event.preventDefault();
+
+            const camion = {
+                id: Date.now(),
+                marca: document.getElementById('flotaMarca').value,
+                modelo: document.getElementById('flotaModelo').value,
+                patente: document.getElementById('flotaPatente').value.toUpperCase(),
+                ano: parseInt(document.getElementById('flotaAno').value),
+                km: parseInt(document.getElementById('flotaKm').value),
+                capacidad: parseFloat(document.getElementById('flotaCapacidad').value),
+                estado: document.getElementById('flotaEstado').value
+            };
+
+            const flota = safeStorage('get', STORAGE_KEYS.FLOTA);
+            flota.push(camion);
+            safeStorage('set', STORAGE_KEYS.FLOTA, flota);
+
+            document.getElementById('flotaForm').reset();
+            showSuccess('✓ Camión registrado correctamente', 'flotaSuccessMsg');
+            renderFlota();
+            updateCombustibleSelectOptions();
+            updateGastoSelectOptions();
+        }
+
+        function renderFlota() {
+            const flota = safeStorage('get', STORAGE_KEYS.FLOTA);
+            const tbody = document.getElementById('flotaList');
+
+            if (flota.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No hay camiones registrados</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = flota.map(c => `
+                <tr>
+                    <td><strong>${c.patente}</strong></td>
+                    <td>${c.marca} ${c.modelo}</td>
+                    <td>${c.ano}</td>
+                    <td>${c.km.toLocaleString('es-CL')} km</td>
+                    <td>${c.capacidad.toFixed(1)} t</td>
+                    <td>${getStatusBadge(c.estado)}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="action-btn action-btn-delete" onclick="deleteFlota(${c.id})">Eliminar</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+
+            renderMantencionAlerts();
+        }
+
+        function renderMantencionAlerts() {
+            const flota = safeStorage('get', STORAGE_KEYS.FLOTA);
+            const alertsContainer = document.getElementById('mantencionAlerts');
+
+            const alerts = flota
+                .filter(c => c.km > 100000 || (new Date().getFullYear() - c.ano > 5))
+                .map(c => {
+                    let reason = [];
+                    if (c.km > 100000) reason.push(`Alto km: ${c.km.toLocaleString()}`);
+                    if (new Date().getFullYear() - c.ano > 5) reason.push('Antigüedad > 5 años');
+
+                    return `
+                        <div class="alert alert-warning">
+                            <div>
+                                <span class="warning-icon">⚠</span>
+                                <strong>${c.patente}</strong> - ${reason.join(' | ')}
+                            </div>
+                        </div>
+                    `;
+                });
+
+            alertsContainer.innerHTML = alerts.length ? alerts.join('') : '<p class="text-muted">Todos los camiones en buen estado.</p>';
+        }
+
+        function deleteFlota(camionId) {
+            if (!confirm('¿Eliminar este camión?')) return;
+            let flota = safeStorage('get', STORAGE_KEYS.FLOTA);
+            flota = flota.filter(c => c.id !== camionId);
+            safeStorage('set', STORAGE_KEYS.FLOTA, flota);
+            renderFlota();
+            updateCombustibleSelectOptions();
+            updateGastoSelectOptions();
+        }
+
+        // ============ CONDUCTORES ============
+        function addConductor(event) {
+            event.preventDefault();
+
+            const conductor = {
+                id: Date.now(),
+                nombre: document.getElementById('conductorNombre').value,
+                rut: document.getElementById('conductorRut').value,
+                licencia: document.getElementById('conductorLicencia').value,
+                vencimiento: document.getElementById('conductorVencimiento').value,
+                telefono: document.getElementById('conductorTelefono').value,
+                email: document.getElementById('conductorEmail').value,
+                km: parseInt(document.getElementById('conductorKm').value),
+                infracciones: parseInt(document.getElementById('conductorInfracciones').value)
+            };
+
+            const conductores = safeStorage('get', STORAGE_KEYS.CONDUCTORES);
+            conductores.push(conductor);
+            safeStorage('set', STORAGE_KEYS.CONDUCTORES, conductores);
+
+            document.getElementById('conductorForm').reset();
+            showSuccess('✓ Conductor registrado correctamente', 'conductoresSuccessMsg');
+            renderConductores();
+        }
+
+        function renderConductores() {
+            const conductores = safeStorage('get', STORAGE_KEYS.CONDUCTORES);
+            const tbody = document.getElementById('conductoresList');
+
+            if (conductores.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No hay conductores registrados</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = conductores.map(c => `
+                <tr>
+                    <td><strong>${c.nombre}</strong></td>
+                    <td>${c.rut}</td>
+                    <td><span class="badge badge-info">${c.licencia}</span></td>
+                    <td>${formatDate(c.vencimiento)}</td>
+                    <td>${c.telefono}</td>
+                    <td>${c.km.toLocaleString('es-CL')} km</td>
+                    <td><span class="badge ${c.infracciones > 0 ? 'badge-danger' : 'badge-success'}">${c.infracciones}</span></td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="action-btn action-btn-delete" onclick="deleteConductor(${c.id})">Eliminar</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+
+            renderLicenseAlerts();
+        }
+
+        function renderLicenseAlerts() {
+            const conductores = safeStorage('get', STORAGE_KEYS.CONDUCTORES);
+            const alertsContainer = document.getElementById('licenseAlerts');
+
+            const today = new Date();
+            const alerts = conductores
+                .filter(c => {
+                    const vence = new Date(c.vencimiento);
+                    const diasRestantes = Math.ceil((vence - today) / (1000 * 60 * 60 * 24));
+                    return diasRestantes <= 90 && diasRestantes > 0;
+                })
+                .map(c => {
+                    const vence = new Date(c.vencimiento);
+                    const diasRestantes = Math.ceil((vence - today) / (1000 * 60 * 60 * 24));
+
+                    return `
+                        <div class="alert alert-warning">
+                            <div>
+                                <span class="warning-icon">⚠</span>
+                                <strong>${c.nombre}</strong> - Licencia ${c.licencia} vence en ${diasRestantes} días (${formatDate(c.vencimiento)})
+                            </div>
+                        </div>
+                    `;
+                });
+
+            alertsContainer.innerHTML = alerts.length ? alerts.join('') : '<p class="text-muted">Todas las licencias vigentes.</p>';
+        }
+
+        function deleteConductor(conductorId) {
+            if (!confirm('¿Eliminar este conductor?')) return;
+            let conductores = safeStorage('get', STORAGE_KEYS.CONDUCTORES);
+            conductores = conductores.filter(c => c.id !== conductorId);
+            safeStorage('set', STORAGE_KEYS.CONDUCTORES, conductores);
+            renderConductores();
+        }
+
+        // ============ COMBUSTIBLE ============
+        function updateCombustibleSelectOptions() {
+            const flota = safeStorage('get', STORAGE_KEYS.FLOTA);
+            const select = document.getElementById('combustiblePatente');
+
+            select.innerHTML = '<option value="">Seleccionar camión</option>' +
+                flota.map(c => `<option value="${c.patente}">${c.patente} - ${c.marca} ${c.modelo}</option>`).join('');
+        }
+
+        function addCombustible(event) {
+            event.preventDefault();
+
+            const registro = {
+                id: Date.now(),
+                patente: document.getElementById('combustiblePatente').value,
+                fecha: document.getElementById('combustibleFecha').value,
+                litros: parseFloat(document.getElementById('combustibleLitros').value),
+                precioPorLitro: parseInt(document.getElementById('combustiblePrecio').value),
+                km: parseInt(document.getElementById('combustibleKm').value),
+                estacion: document.getElementById('combustibleEstacion').value
+            };
+
+            const combustible = safeStorage('get', STORAGE_KEYS.COMBUSTIBLE);
+            combustible.push(registro);
+            safeStorage('set', STORAGE_KEYS.COMBUSTIBLE, combustible);
+
+            document.getElementById('combustibleForm').reset();
+            updateCombustibleSelectOptions();
+            showSuccess('✓ Carga de combustible registrada', 'combustibleSuccessMsg');
+            renderCombustible();
+        }
+
+        function renderCombustible() {
+            const combustible = safeStorage('get', STORAGE_KEYS.COMBUSTIBLE);
+            const tbody = document.getElementById('combustibleList');
+
+            if (combustible.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No hay registros de combustible</td></tr>';
+                updateCombustibleStats();
+                return;
+            }
+
+            tbody.innerHTML = combustible.map(c => {
+                const rendimiento = c.km > 0 ? (c.km / c.litros).toFixed(2) : '0';
+                return `
+                    <tr>
+                        <td><strong>${c.patente}</strong></td>
+                        <td>${formatDate(c.fecha)}</td>
+                        <td>${c.litros.toFixed(1)}</td>
+                        <td>${c.precioPorLitro.toLocaleString()}</td>
+                        <td>${formatCLP(c.litros * c.precioPorLitro)}</td>
+                        <td>${c.km}</td>
+                        <td>${rendimiento} km/L</td>
+                        <td>
+                            <div class="action-buttons">
+                                <button class="action-btn action-btn-delete" onclick="deleteCombustible(${c.id})">Eliminar</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            updateCombustibleStats();
+        }
+
+        function updateCombustibleStats() {
+            const combustible = safeStorage('get', STORAGE_KEYS.COMBUSTIBLE);
+
+            const totalLitros = combustible.reduce((sum, c) => sum + c.litros, 0);
+            const totalGasto = combustible.reduce((sum, c) => sum + (c.litros * c.precioPorLitro), 0);
+            const totalKm = combustible.reduce((sum, c) => sum + c.km, 0);
+            const promedio = totalLitros > 0 ? (totalKm / totalLitros).toFixed(2) : 0;
+
+            document.getElementById('statPromedio').textContent = promedio;
+            document.getElementById('statLitros').textContent = totalLitros.toFixed(1);
+            document.getElementById('statGasto').textContent = formatCLP(totalGasto);
+        }
+
+        function deleteCombustible(combustibleId) {
+            if (!confirm('¿Eliminar este registro?')) return;
+            let combustible = safeStorage('get', STORAGE_KEYS.COMBUSTIBLE);
+            combustible = combustible.filter(c => c.id !== combustibleId);
+            safeStorage('set', STORAGE_KEYS.COMBUSTIBLE, combustible);
+            renderCombustible();
+        }
+
+        function updateCombustibleChart() {
+            const combustible = safeStorage('get', STORAGE_KEYS.COMBUSTIBLE);
+            const canvas = document.getElementById('combustibleChart');
+
+            const byPatente = {};
+            combustible.forEach(c => {
+                if (!byPatente[c.patente]) byPatente[c.patente] = 0;
+                byPatente[c.patente] += c.litros;
+            });
+
+            if (chartInstances.combustible) chartInstances.combustible.destroy();
+
+            chartInstances.combustible = new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(byPatente),
+                    datasets: [{
+                        label: 'Litros Consumidos',
+                        data: Object.values(byPatente),
+                        backgroundColor: '#f97316',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        // ============ FINANZAS ============
+        function updateGastoSelectOptions() {
+            const flota = safeStorage('get', STORAGE_KEYS.FLOTA);
+            const select = document.getElementById('gastoPatente');
+
+            select.innerHTML = '<option value="">Todos</option>' +
+                flota.map(c => `<option value="${c.patente}">${c.patente}</option>`).join('');
+        }
+
+        function addGasto(event) {
+            event.preventDefault();
+
+            const gasto = {
+                id: Date.now(),
+                tipo: document.getElementById('gastoTipo').value,
+                monto: parseInt(document.getElementById('gastoMonto').value),
+                patente: document.getElementById('gastoPatente').value,
+                fecha: document.getElementById('gastoFecha').value,
+                descripcion: document.getElementById('gastoDescripcion').value
+            };
+
+            const gastos = safeStorage('get', STORAGE_KEYS.GASTOS);
+            gastos.push(gasto);
+            safeStorage('set', STORAGE_KEYS.GASTOS, gastos);
+
+            document.getElementById('gastoForm').reset();
+            updateGastoSelectOptions();
+            showSuccess('✓ Gasto registrado correctamente', 'combustibleSuccessMsg');
+            renderGastos();
+            updateFinancesData();
+        }
+
+        function renderGastos() {
+            const gastos = safeStorage('get', STORAGE_KEYS.GASTOS);
+            const tbody = document.getElementById('gastosList');
+
+            if (gastos.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No hay gastos registrados</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = gastos.map(g => `
+                <tr>
+                    <td>${formatDate(g.fecha)}</td>
+                    <td><strong>${g.tipo.charAt(0).toUpperCase() + g.tipo.slice(1)}</strong></td>
+                    <td>${g.patente || 'General'}</td>
+                    <td>${g.descripcion}</td>
+                    <td>${formatCLP(g.monto)}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="action-btn action-btn-delete" onclick="deleteGasto(${g.id})">Eliminar</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function deleteGasto(gastoId) {
+            if (!confirm('¿Eliminar este gasto?')) return;
+            let gastos = safeStorage('get', STORAGE_KEYS.GASTOS);
+            gastos = gastos.filter(g => g.id !== gastoId);
+            safeStorage('set', STORAGE_KEYS.GASTOS, gastos);
+            renderGastos();
+            updateFinancesData();
+        }
+
+        function updateFinancesData() {
+            const viajes = safeStorage('get', STORAGE_KEYS.VIAJES);
+            const gastos = safeStorage('get', STORAGE_KEYS.GASTOS);
+            const combustible = safeStorage('get', STORAGE_KEYS.COMBUSTIBLE);
+
+            const ingresos = viajes.reduce((sum, v) => sum + v.precio, 0);
+            const gastosCombustible = combustible.reduce((sum, c) => sum + (c.litros * c.precioPorLitro), 0);
+            const gastosMantencion = gastos.filter(g => g.tipo === 'mantención').reduce((sum, g) => sum + g.monto, 0);
+            const gastosPeajes = gastos.filter(g => g.tipo === 'peajes').reduce((sum, g) => sum + g.monto, 0);
+
+            document.getElementById('statIngresos').textContent = formatCLP(ingresos);
+            document.getElementById('statCombustible').textContent = formatCLP(gastosCombustible);
+            document.getElementById('statMantencion').textContent = formatCLP(gastosMantencion);
+            document.getElementById('statPeajes').textContent = formatCLP(gastosPeajes);
+
+            updateGastosSummary();
+            updateRentabilidad();
+        }
+
+        function updateGastosSummary() {
+            const gastos = safeStorage('get', STORAGE_KEYS.GASTOS);
+            const combustible = safeStorage('get', STORAGE_KEYS.COMBUSTIBLE);
+
+            const summary = {};
+            gastos.forEach(g => {
+                if (!summary[g.tipo]) summary[g.tipo] = 0;
+                summary[g.tipo] += g.monto;
+            });
+            if (combustible.length > 0) {
+                const totalComb = combustible.reduce((sum, c) => sum + (c.litros * c.precioPorLitro), 0);
+                summary['combustible'] = totalComb;
+            }
+
+            const container = document.getElementById('gastosSummary');
+            container.innerHTML = Object.entries(summary)
+                .map(([tipo, monto]) => `
+                    <div style="display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid #e2e8f0;">
+                        <span><strong>${tipo.charAt(0).toUpperCase() + tipo.slice(1)}</strong></span>
+                        <span>${formatCLP(monto)}</span>
+                    </div>
+                `)
+                .join('');
+        }
+
+        function updateRentabilidad() {
+            const viajes = safeStorage('get', STORAGE_KEYS.VIAJES);
+            const gastos = safeStorage('get', STORAGE_KEYS.GASTOS);
+            const combustible = safeStorage('get', STORAGE_KEYS.COMBUSTIBLE);
+
+            const byRoute = {};
+            viajes.forEach(v => {
+                const ruta = `${v.origen} → ${v.destino}`;
+                if (!byRoute[ruta]) byRoute[ruta] = {
+                    viajes: 0,
+                    ingresos: 0,
+                    km: 0
+                };
+                byRoute[ruta].viajes++;
+                byRoute[ruta].ingresos += v.precio;
+                byRoute[ruta].km += v.distancia;
+            });
+
+            const tbody = document.getElementById('rentabilidadList');
+            if (Object.keys(byRoute).length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No hay datos suficientes</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = Object.entries(byRoute).map(([ruta, data]) => {
+                // Estimate gastos por km
+                const costoKmPromedio = combustible.length > 0
+                    ? combustible.reduce((sum, c) => sum + (c.litros * c.precioPorLitro), 0) / combustible.reduce((sum, c) => sum + c.km, 0)
+                    : 0;
+                const gastoEstimado = data.km * costoKmPromedio;
+                const ganancia = data.ingresos - gastoEstimado;
+                const margen = data.ingresos > 0 ? ((ganancia / data.ingresos) * 100).toFixed(1) : 0;
+
+                return `
+                    <tr>
+                        <td><strong>${ruta}</strong></td>
+                        <td>${data.viajes}</td>
+                        <td>${formatCLP(data.ingresos)}</td>
+                        <td>${formatCLP(gastoEstimado)}</td>
+                        <td>${formatCLP(ganancia)}</td>
+                        <td><span class="badge ${ganancia > 0 ? 'badge-success' : 'badge-danger'}">${margen}%</span></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function updateFinancesChart() {
+            const viajes = safeStorage('get', STORAGE_KEYS.VIAJES);
+            const gastos = safeStorage('get', STORAGE_KEYS.GASTOS);
+            const combustible = safeStorage('get', STORAGE_KEYS.COMBUSTIBLE);
+            const canvas = document.getElementById('financesChart');
+
+            const ingresos = viajes.reduce((sum, v) => sum + v.precio, 0);
+            const gastosCombustible = combustible.reduce((sum, c) => sum + (c.litros * c.precioPorLitro), 0);
+            const gastosMantencion = gastos.filter(g => g.tipo === 'mantención').reduce((sum, g) => sum + g.monto, 0);
+            const gastosPeajes = gastos.filter(g => g.tipo === 'peajes').reduce((sum, g) => sum + g.monto, 0);
+            const gastosOtros = gastos.filter(g => !['mantención', 'peajes'].includes(g.tipo)).reduce((sum, g) => sum + g.monto, 0);
+
+            if (chartInstances.finances) chartInstances.finances.destroy();
+
+            chartInstances.finances = new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels: ['Ingresos', 'Combustible', 'Mantención', 'Peajes', 'Otros'],
+                    datasets: [{
+                        label: 'CLP',
+                        data: [ingresos, -gastosCombustible, -gastosMantencion, -gastosPeajes, -gastosOtros],
+                        backgroundColor: ['#22c55e', '#ef4444', '#f59e0b', '#ef4444', '#94a3b8'],
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        // ============ CLIENTES ============
+        function addCliente(event) {
+            event.preventDefault();
+
+            const cliente = {
+                id: Date.now(),
+                nombre: document.getElementById('clienteNombre').value,
+                rut: document.getElementById('clienteRut').value,
+                contacto: document.getElementById('clienteContacto').value,
+                telefono: document.getElementById('clienteTelefono').value,
+                email: document.getElementById('clienteEmail').value,
+                pago: document.getElementById('clientePago').value,
+                rutas: document.getElementById('clienteRutas').value
+            };
+
+            const clientes = safeStorage('get', STORAGE_KEYS.CLIENTES);
+            clientes.push(cliente);
+            safeStorage('set', STORAGE_KEYS.CLIENTES, clientes);
+
+            document.getElementById('clienteForm').reset();
+            showSuccess('✓ Cliente registrado correctamente', 'clientesSuccessMsg');
+            renderClientes();
+        }
+
+        function renderClientes() {
+            const clientes = safeStorage('get', STORAGE_KEYS.CLIENTES);
+            const viajes = safeStorage('get', STORAGE_KEYS.VIAJES);
+            const tbody = document.getElementById('clientesList');
+
+            if (clientes.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No hay clientes registrados</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = clientes.map(cliente => {
+                const viajesCliente = viajes.filter(v => v.cliente === cliente.id);
+                const ingresosCliente = viajesCliente.reduce((sum, v) => sum + v.precio, 0);
+
+                return `
+                    <tr>
+                        <td><strong>${cliente.nombre}</strong></td>
+                        <td>${cliente.rut}</td>
+                        <td>${cliente.contacto}</td>
+                        <td>${cliente.telefono}</td>
+                        <td><span class="badge badge-info">${cliente.pago}</span></td>
+                        <td>${viajesCliente.length}</td>
+                        <td>${formatCLP(ingresosCliente)}</td>
+                        <td>
+                            <div class="action-buttons">
+                                <button class="action-btn action-btn-delete" onclick="deleteCliente(${cliente.id})">Eliminar</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            renderFacturacion();
+        }
+
+        function renderFacturacion() {
+            const viajes = safeStorage('get', STORAGE_KEYS.VIAJES);
+            const clientes = safeStorage('get', STORAGE_KEYS.CLIENTES);
+            const tbody = document.getElementById('facturacionList');
+
+            const facturas = viajes.map(v => {
+                // Find cliente info - simplified for this demo
+                return {
+                    empresa: 'Cliente General',
+                    fecha: v.fecha,
+                    ruta: `${v.origen} → ${v.destino}`,
+                    monto: v.precio,
+                    vence: new Date(new Date(v.fecha).getTime() + 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // +60 días
+                    estado: 'pendiente'
+                };
+            });
+
+            if (facturas.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No hay facturas registradas</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = facturas.slice(-10).map(f => `
+                <tr>
+                    <td>${f.empresa}</td>
+                    <td>${formatDate(f.fecha)}</td>
+                    <td>${f.ruta}</td>
+                    <td>${formatCLP(f.monto)}</td>
+                    <td>${formatDate(f.vence)}</td>
+                    <td><span class="badge badge-warning">${f.estado}</span></td>
+                </tr>
+            `).join('');
+        }
+
+        function deleteCliente(clienteId) {
+            if (!confirm('¿Eliminar este cliente?')) return;
+            let clientes = safeStorage('get', STORAGE_KEYS.CLIENTES);
+            clientes = clientes.filter(c => c.id !== clienteId);
+            safeStorage('set', STORAGE_KEYS.CLIENTES, clientes);
+            renderClientes();
+        }
+
+        // ============ INITIALIZATION ============
+        function initApp() {
+            renderViajes();
+            renderFlota();
+            renderConductores();
+            renderCombustible();
+            updateCombustibleSelectOptions();
+            updateGastoSelectOptions();
+            renderGastos();
+            updateFinancesData();
+            renderClientes();
+
+            // Set today's date as default in date inputs
+            const today = new Date().toISOString().split('T')[0];
+            const dateInputs = document.querySelectorAll('input[type="date"]');
+            dateInputs.forEach(input => {
+                if (!input.value) input.value = today;
+            });
+        }
+
+        // Run on load
+        document.addEventListener('DOMContentLoaded', initApp);
+
+        // Prevent body overflow (iOS safety)
+        document.body.style.overflowX = 'hidden';
+    </script>
+</body>
+</html>

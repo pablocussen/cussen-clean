@@ -1,0 +1,2176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="GymCL - Sistema de gestión para gimnasios y centros de fitness en Chile">
+    <meta name="theme-color" content="#111827">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="GymCL">
+
+    <title>GymCL - Gestión de Gimnasios</title>
+
+    <link rel="manifest" href="/gymcl/manifest.json">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%23111827' width='192' height='192'/><text x='96' y='120' font-size='80' font-weight='bold' fill='%2322c55e' text-anchor='middle' font-family='Arial'>💪</text></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%23111827' width='192' height='192'/><text x='96' y='120' font-size='80' font-weight='bold' fill='%2322c55e' text-anchor='middle' font-family='Arial'>💪</text></svg>">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            font-family: 'Inter', sans-serif;
+            background: #0f172a;
+            color: #e5e7eb;
+            line-height: 1.6;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 100%;
+        }
+
+        header {
+            background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
+            border-bottom: 2px solid #22c55e;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .header-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #22c55e;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .header-info {
+            font-size: 0.85rem;
+            color: #9ca3af;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 0.25rem;
+            padding: 0.5rem;
+            background: #111827;
+            border-bottom: 1px solid #374151;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .nav-tab {
+            padding: 0.75rem 1rem;
+            background: #1f2937;
+            border: none;
+            color: #9ca3af;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            font-size: 16px;
+        }
+
+        .nav-tab:hover {
+            background: #374151;
+            color: #d1d5db;
+        }
+
+        .nav-tab.active {
+            color: #22c55e;
+            border-bottom-color: #22c55e;
+            background: #1f2937;
+        }
+
+        main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            display: flex;
+        }
+
+        .tab-content {
+            display: none;
+            width: 100%;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #d1d5db;
+            font-size: 0.9rem;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 0.75rem;
+            background: #1f2937;
+            border: 1px solid #374151;
+            border-radius: 0.5rem;
+            color: #e5e7eb;
+            font-family: 'Inter', sans-serif;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #22c55e;
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            background: #22c55e;
+            color: #111827;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 16px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        button:hover {
+            background: #16a34a;
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: #374151;
+            color: #e5e7eb;
+        }
+
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-small {
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+
+        .card {
+            background: #1f2937;
+            border: 1px solid #374151;
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: #22c55e;
+            box-shadow: 0 0 15px rgba(34, 197, 94, 0.1);
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #22c55e;
+            margin-bottom: 0.75rem;
+        }
+
+        .card-text {
+            font-size: 0.9rem;
+            color: #d1d5db;
+            margin-bottom: 0.5rem;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin-top: 1rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th {
+            background: #111827;
+            color: #22c55e;
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 700;
+            border-bottom: 2px solid #374151;
+        }
+
+        td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #374151;
+            color: #d1d5db;
+        }
+
+        tr:hover {
+            background: #111827;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.35rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-active {
+            background: rgba(34, 197, 94, 0.2);
+            color: #86efac;
+        }
+
+        .status-expired {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+        }
+
+        .status-frozen {
+            background: rgba(59, 130, 246, 0.2);
+            color: #93c5fd;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .alert-info {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid #3b82f6;
+            color: #93c5fd;
+        }
+
+        .alert-success {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid #22c55e;
+            color: #86efac;
+        }
+
+        .alert-warning {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid #f59e0b;
+            color: #fcd34d;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 2rem 0;
+            background: #1f2937;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            border: 1px solid #374151;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            border-left: 4px solid #22c55e;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #9ca3af;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #22c55e;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.75);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #1f2937;
+            border: 1px solid #374151;
+            border-radius: 0.75rem;
+            padding: 2rem;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid #374151;
+            padding-bottom: 1rem;
+        }
+
+        .modal-title {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #22c55e;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: #9ca3af;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        .close-btn:hover {
+            color: #e5e7eb;
+        }
+
+        .exercise-group {
+            margin-bottom: 1.5rem;
+            background: #111827;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border-left: 3px solid #22c55e;
+        }
+
+        .exercise-group-title {
+            font-weight: 700;
+            color: #22c55e;
+            margin-bottom: 0.75rem;
+            font-size: 0.95rem;
+        }
+
+        .exercise-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 0;
+            font-size: 0.9rem;
+            color: #d1d5db;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .exercise-item:hover {
+            color: #22c55e;
+        }
+
+        .exercise-item input[type="checkbox"] {
+            width: auto;
+            cursor: pointer;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .action-buttons button {
+            flex: 1;
+            min-width: 100px;
+        }
+
+        .expiry-alert {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid #ef4444;
+            color: #fca5a5;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        .waitlist-item {
+            background: #111827;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            color: #d1d5db;
+            border-left: 3px solid #f59e0b;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .header-title {
+                font-size: 1.25rem;
+            }
+
+            .nav-tabs {
+                gap: 0;
+            }
+
+            .nav-tab {
+                padding: 0.65rem 0.8rem;
+                font-size: 0.8rem;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            table {
+                font-size: 0.8rem;
+            }
+
+            th, td {
+                padding: 0.5rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .chart-container {
+                height: 300px;
+            }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #9ca3af;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #22c55e;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .divider {
+            height: 1px;
+            background: #374151;
+            margin: 2rem 0;
+        }
+
+        .text-muted {
+            color: #9ca3af;
+            font-size: 0.85rem;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            background: rgba(34, 197, 94, 0.15);
+            color: #86efac;
+            border-radius: 0.35rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid #374151;
+            border-top-color: #22c55e;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .input-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .input-group input {
+            flex: 1;
+        }
+
+        .input-group button {
+            flex: 0 0 auto;
+        }
+
+        .success-message {
+            background: rgba(34, 197, 94, 0.15);
+            color: #86efac;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-1rem);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 0;
+            font-weight: 500;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-title">
+                💪 GymCL
+            </div>
+            <div class="header-info">
+                <span id="current-date"></span>
+            </div>
+        </header>
+
+        <nav class="nav-tabs" id="nav-tabs">
+            <button class="nav-tab active" data-tab="socios">📋 Socios</button>
+            <button class="nav-tab" data-tab="clases">🏋️ Clases</button>
+            <button class="nav-tab" data-tab="rutinas">💪 Rutinas</button>
+            <button class="nav-tab" data-tab="equipos">⚙️ Equipos</button>
+            <button class="nav-tab" data-tab="finanzas">💰 Finanzas</button>
+            <button class="nav-tab" data-tab="asistencia">📊 Asistencia</button>
+        </nav>
+
+        <main>
+            <!-- TAB: SOCIOS -->
+            <div class="tab-content active" id="tab-socios">
+                <div style="width: 100%;">
+                    <div class="section-title">
+                        📋 Gestión de Socios
+                    </div>
+
+                    <button class="btn" style="margin-bottom: 1rem;" onclick="openModal('modal-add-socio')">+ Agregar Socio</button>
+
+                    <div id="alerts-socios"></div>
+
+                    <div id="socios-list" class="grid"></div>
+
+                    <div id="empty-socios" class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <p>No hay socios registrados. ¡Comienza agregando uno!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: CLASES -->
+            <div class="tab-content" id="tab-clases">
+                <div style="width: 100%;">
+                    <div class="section-title">
+                        🏋️ Programación de Clases
+                    </div>
+
+                    <button class="btn" style="margin-bottom: 1rem;" onclick="openModal('modal-add-clase')">+ Crear Clase</button>
+
+                    <div id="clases-list" class="grid"></div>
+
+                    <div id="empty-clases" class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <p>No hay clases programadas. ¡Crea una ahora!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: RUTINAS -->
+            <div class="tab-content" id="tab-rutinas">
+                <div style="width: 100%;">
+                    <div class="section-title">
+                        💪 Rutinas de Entrenamiento
+                    </div>
+
+                    <button class="btn" style="margin-bottom: 1rem;" onclick="openModal('modal-add-rutina')">+ Crear Rutina</button>
+
+                    <div id="rutinas-list" class="grid"></div>
+
+                    <div id="empty-rutinas" class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <p>No hay rutinas creadas. ¡Diseña una para tus socios!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: EQUIPOS -->
+            <div class="tab-content" id="tab-equipos">
+                <div style="width: 100%;">
+                    <div class="section-title">
+                        ⚙️ Inventario de Equipos
+                    </div>
+
+                    <button class="btn" style="margin-bottom: 1rem;" onclick="openModal('modal-add-equipo')">+ Registrar Equipo</button>
+
+                    <div id="equipos-list" class="grid"></div>
+
+                    <div id="empty-equipos" class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <p>No hay equipos registrados. ¡Agrega tu primer equipo!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: FINANZAS -->
+            <div class="tab-content" id="tab-finanzas">
+                <div style="width: 100%;">
+                    <div class="section-title">
+                        💰 Finanzas y Ingresos
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">Ingresos Este Mes</div>
+                            <div class="stat-value">$<span id="stat-ingresos">0</span></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Socios Activos</div>
+                            <div class="stat-value" id="stat-activos">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Socios Vencidos</div>
+                            <div class="stat-value" id="stat-vencidos">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Promedio Membresía</div>
+                            <div class="stat-value">$<span id="stat-promedio">0</span></div>
+                        </div>
+                    </div>
+
+                    <button class="btn" style="margin-bottom: 1rem;" onclick="openModal('modal-add-pago')">+ Registrar Pago</button>
+
+                    <div class="chart-container">
+                        <canvas id="chart-ingresos"></canvas>
+                    </div>
+
+                    <div style="margin-top: 2rem;">
+                        <h3 style="color: #22c55e; margin-bottom: 1rem;">Últimos Pagos</h3>
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Socio</th>
+                                        <th>Monto</th>
+                                        <th>Tipo</th>
+                                        <th>Fecha</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pagos-table">
+                                    <tr><td colspan="4" style="text-align: center; color: #9ca3af;">Cargando pagos...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: ASISTENCIA -->
+            <div class="tab-content" id="tab-asistencia">
+                <div style="width: 100%;">
+                    <div class="section-title">
+                        📊 Registro de Asistencia
+                    </div>
+
+                    <div class="input-group" style="margin-bottom: 1.5rem;">
+                        <input type="text" id="asistencia-buscar" placeholder="Buscar socio para registrar asistencia..." font-size="16px">
+                        <button onclick="registrarAsistencia()" class="btn">Registrar</button>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">Asistencias Hoy</div>
+                            <div class="stat-value" id="stat-asistencias-hoy">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Promedio Semanal</div>
+                            <div class="stat-value" id="stat-promedio-semanal">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Pico de Hora</div>
+                            <div class="stat-value" id="stat-pico-hora">--:--</div>
+                        </div>
+                    </div>
+
+                    <div class="chart-container">
+                        <canvas id="chart-asistencia"></canvas>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <h3 style="color: #22c55e; margin: 1.5rem 0 1rem;">Asistencias Recientes</h3>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Socio</th>
+                                    <th>Hora</th>
+                                    <th>Área</th>
+                                    <th>Fecha</th>
+                                </tr>
+                            </thead>
+                            <tbody id="asistencias-table">
+                                <tr><td colspan="4" style="text-align: center; color: #9ca3af;">Cargando registros...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL: Add Socio -->
+    <div id="modal-add-socio" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Agregar Nuevo Socio</div>
+                <button class="close-btn" onclick="closeModal('modal-add-socio')">&times;</button>
+            </div>
+            <form onsubmit="addSocio(event)">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nombre Completo *</label>
+                        <input type="text" id="socio-nombre" required>
+                    </div>
+                    <div class="form-group">
+                        <label>RUT *</label>
+                        <input type="text" id="socio-rut" placeholder="12.345.678-K" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Teléfono *</label>
+                        <input type="tel" id="socio-telefono" placeholder="+56 9 ____" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="socio-email">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Plan *</label>
+                        <select id="socio-plan" required>
+                            <option value="">Seleccionar</option>
+                            <option value="mensual">Mensual - $25.000</option>
+                            <option value="trimestral">Trimestral - $65.000</option>
+                            <option value="semestral">Semestral - $120.000</option>
+                            <option value="anual">Anual - $220.000</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha de Inicio *</label>
+                        <input type="date" id="socio-fecha-inicio" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Contacto de Emergencia</label>
+                    <input type="text" id="socio-emergencia" placeholder="Nombre y teléfono">
+                </div>
+                <div class="action-buttons">
+                    <button type="button" class="btn-secondary btn-small" onclick="closeModal('modal-add-socio')">Cancelar</button>
+                    <button type="submit" class="btn">Guardar Socio</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Add Clase -->
+    <div id="modal-add-clase" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Crear Nueva Clase</div>
+                <button class="close-btn" onclick="closeModal('modal-add-clase')">&times;</button>
+            </div>
+            <form onsubmit="addClass(event)">
+                <div class="form-group">
+                    <label>Nombre de Clase *</label>
+                    <select id="clase-nombre" required>
+                        <option value="">Seleccionar</option>
+                        <option value="spinning">🚴 Spinning</option>
+                        <option value="yoga">🧘 Yoga</option>
+                        <option value="pilates">🤸 Pilates</option>
+                        <option value="crossfit">⚡ CrossFit</option>
+                        <option value="zumba">💃 Zumba</option>
+                        <option value="boxeo">🥊 Boxeo</option>
+                        <option value="trx">🪢 TRX</option>
+                        <option value="funcional">🏃 Funcional</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Instructor *</label>
+                        <input type="text" id="clase-instructor" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Capacidad *</label>
+                        <input type="number" id="clase-capacidad" min="1" max="100" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Día de la Semana *</label>
+                        <select id="clase-dia" required>
+                            <option value="">Seleccionar</option>
+                            <option value="lunes">Lunes</option>
+                            <option value="martes">Martes</option>
+                            <option value="miércoles">Miércoles</option>
+                            <option value="jueves">Jueves</option>
+                            <option value="viernes">Viernes</option>
+                            <option value="sábado">Sábado</option>
+                            <option value="domingo">Domingo</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Hora *</label>
+                        <input type="time" id="clase-hora" required>
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button type="button" class="btn-secondary btn-small" onclick="closeModal('modal-add-clase')">Cancelar</button>
+                    <button type="submit" class="btn">Crear Clase</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Add Rutina -->
+    <div id="modal-add-rutina" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Crear Nueva Rutina</div>
+                <button class="close-btn" onclick="closeModal('modal-add-rutina')">&times;</button>
+            </div>
+            <form onsubmit="addRutina(event)">
+                <div class="form-group">
+                    <label>Nombre de Rutina *</label>
+                    <input type="text" id="rutina-nombre" placeholder="ej: Upper Body Monday" required>
+                </div>
+                <div class="form-group">
+                    <label>Seleccionar Ejercicios</label>
+                    <div id="ejercicios-container"></div>
+                </div>
+                <div id="rutina-ejercicios-selected" style="margin: 1rem 0; padding: 1rem; background: #111827; border-radius: 0.5rem; display: none;">
+                    <p style="color: #22c55e; margin-bottom: 0.5rem; font-weight: 600;">Ejercicios Seleccionados:</p>
+                    <div id="rutina-ejercicios-list"></div>
+                </div>
+                <div class="action-buttons">
+                    <button type="button" class="btn-secondary btn-small" onclick="closeModal('modal-add-rutina')">Cancelar</button>
+                    <button type="submit" class="btn">Crear Rutina</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Add Equipo -->
+    <div id="modal-add-equipo" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Registrar Equipo</div>
+                <button class="close-btn" onclick="closeModal('modal-add-equipo')">&times;</button>
+            </div>
+            <form onsubmit="addEquipo(event)">
+                <div class="form-group">
+                    <label>Tipo de Equipo *</label>
+                    <select id="equipo-tipo" required>
+                        <option value="">Seleccionar</option>
+                        <option value="trotadora">🏃 Trotadora</option>
+                        <option value="bicicleta">🚴 Bicicleta Estática</option>
+                        <option value="eliptica">⚡ Elíptica</option>
+                        <option value="rack">🏋️ Rack de Sentadillas</option>
+                        <option value="banco">🏋️ Banco de Press</option>
+                        <option value="mancernas">💪 Mancernas</option>
+                        <option value="barras">🏋️ Barras</option>
+                        <option value="polea">🪢 Máquina Polea</option>
+                        <option value="trx">🪢 TRX</option>
+                        <option value="cuerdas">🪢 Cuerdas de Batalla</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Marca</label>
+                        <input type="text" id="equipo-marca" placeholder="ej: Life Fitness">
+                    </div>
+                    <div class="form-group">
+                        <label>Ubicación</label>
+                        <select id="equipo-ubicacion">
+                            <option value="sala pesas">Sala de Pesas</option>
+                            <option value="cardio">Área de Cardio</option>
+                            <option value="funcional">Zona Funcional</option>
+                            <option value="clases">Sala de Clases</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Estado *</label>
+                        <select id="equipo-condicion" required>
+                            <option value="excelente">Excelente</option>
+                            <option value="bueno">Bueno</option>
+                            <option value="regular">Regular</option>
+                            <option value="mantenimiento">Mantenimiento</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Próx. Mantenimiento</label>
+                        <input type="date" id="equipo-mantenimiento">
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button type="button" class="btn-secondary btn-small" onclick="closeModal('modal-add-equipo')">Cancelar</button>
+                    <button type="submit" class="btn">Registrar Equipo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Add Pago -->
+    <div id="modal-add-pago" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Registrar Pago</div>
+                <button class="close-btn" onclick="closeModal('modal-add-pago')">&times;</button>
+            </div>
+            <form onsubmit="addPago(event)">
+                <div class="form-group">
+                    <label>Socio *</label>
+                    <select id="pago-socio" required>
+                        <option value="">Seleccionar socio</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Monto ($) *</label>
+                        <input type="number" id="pago-monto" min="1000" step="1000" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Método de Pago *</label>
+                        <select id="pago-metodo" required>
+                            <option value="efectivo">Efectivo</option>
+                            <option value="debito">Débito</option>
+                            <option value="credito">Crédito</option>
+                            <option value="transferencia">Transferencia</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Observaciones</label>
+                    <textarea id="pago-notas" rows="3" placeholder="Notas adicionales..."></textarea>
+                </div>
+                <div class="action-buttons">
+                    <button type="button" class="btn-secondary btn-small" onclick="closeModal('modal-add-pago')">Cancelar</button>
+                    <button type="submit" class="btn">Guardar Pago</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // EJERCICIOS DATABASE (50+ ejercicios)
+        // ============================================
+        const EJERCICIOS_DB = {
+            pecho: [
+                'Press Banca Plano',
+                'Press Banca Inclinado',
+                'Press Banca Declinado',
+                'Flexiones',
+                'Aperturas con Mancuernas',
+                'Peck Deck',
+                'Press Máquina',
+            ],
+            espalda: [
+                'Dominadas',
+                'Jalones Polea',
+                'Remo Barra',
+                'Remo Mancuerna',
+                'Remo Máquina',
+                'Deadlift',
+                'Peso Muerto Rumano',
+                'Good Mornings',
+            ],
+            hombros: [
+                'Press Militar',
+                'Press Mancuerna',
+                'Elevaciones Frontales',
+                'Elevaciones Laterales',
+                'Pájaros Inversos',
+                'Shrugs',
+                'Rotaciones de Hombro',
+            ],
+            biceps: [
+                'Curl Barra',
+                'Curl Mancuerna',
+                'Curl Martillo',
+                'Curl Polea',
+                'Curl Máquina',
+                'Curl Concentrado',
+            ],
+            triceps: [
+                'Press Francés',
+                'Fondos',
+                'Extensión Polea',
+                'Extensión Mancuerna',
+                'Patadas Tríceps',
+                'Extensión Máquina',
+            ],
+            piernas: [
+                'Sentadilla Libre',
+                'Sentadilla Máquina',
+                'Leg Press',
+                'Extensiones Pierna',
+                'Flexiones Pierna',
+                'Zancadas',
+                'Prensa Inclinada',
+                'Hackenschmidt',
+                'Sentadilla Búlgara',
+            ],
+            core: [
+                'Planchas',
+                'Abdominales',
+                'Crunches',
+                'Levantamiento de Rodillas',
+                'Woodchoppers',
+                'Rotaciones Rusa',
+                'V-ups',
+            ],
+            cardio: [
+                'Trote',
+                'Ciclismo',
+                'Elíptica',
+                'Saltos con Cuerda',
+                'Burpees',
+                'Mountain Climbers',
+                'High Knees',
+            ],
+        };
+
+        // ============================================
+        // STATE MANAGEMENT
+        // ============================================
+        const state = {
+            socios: [],
+            clases: [],
+            rutinas: [],
+            equipos: [],
+            pagos: [],
+            asistencias: [],
+            rutinaActualSeleccionados: [],
+        };
+
+        // ============================================
+        // STORAGE OPERATIONS (with try/catch for iOS)
+        // ============================================
+        function saveToLocalStorage() {
+            try {
+                localStorage.setItem('gymcl_state', JSON.stringify(state));
+            } catch (e) {
+                console.error('Error saving to localStorage:', e);
+            }
+        }
+
+        function loadFromLocalStorage() {
+            try {
+                const stored = localStorage.getItem('gymcl_state');
+                if (stored) {
+                    Object.assign(state, JSON.parse(stored));
+                }
+            } catch (e) {
+                console.error('Error loading from localStorage:', e);
+            }
+        }
+
+        // ============================================
+        // INIT & TAB NAVIGATION
+        // ============================================
+        document.addEventListener('DOMContentLoaded', function() {
+            loadFromLocalStorage();
+            initializeApp();
+            setupTabNavigation();
+            setupServiceWorker();
+            updateCurrentDate();
+            setInterval(updateCurrentDate, 60000);
+        });
+
+        function initializeApp() {
+            renderAllData();
+            populateExercises();
+            populatePagoSocios();
+        }
+
+        function setupTabNavigation() {
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabName = this.dataset.tab;
+                    switchTab(tabName);
+                });
+            });
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.nav-tab').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            document.getElementById('tab-' + tabName).classList.add('active');
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+
+            if (tabName === 'finanzas') {
+                setTimeout(renderFinanzasCharts, 100);
+            } else if (tabName === 'asistencia') {
+                setTimeout(renderAsistenciaCharts, 100);
+            }
+        }
+
+        function updateCurrentDate() {
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const today = new Date().toLocaleDateString('es-CL', options);
+            document.getElementById('current-date').textContent = today;
+        }
+
+        // ============================================
+        // SOCIOS (Members Management)
+        // ============================================
+        function addSocio(event) {
+            event.preventDefault();
+            const socio = {
+                id: Date.now().toString(),
+                nombre: document.getElementById('socio-nombre').value.trim(),
+                rut: document.getElementById('socio-rut').value.trim(),
+                telefono: document.getElementById('socio-telefono').value.trim(),
+                email: document.getElementById('socio-email').value.trim() || 'N/A',
+                plan: document.getElementById('socio-plan').value,
+                fechaInicio: document.getElementById('socio-fecha-inicio').value,
+                emergencia: document.getElementById('socio-emergencia').value.trim() || 'N/A',
+                status: 'activo',
+            };
+
+            const planDays = {
+                mensual: 30,
+                trimestral: 90,
+                semestral: 180,
+                anual: 365,
+            };
+
+            const startDate = new Date(socio.fechaInicio);
+            const endDate = new Date(startDate);
+            endDate.setDate(endDate.getDate() + planDays[socio.plan]);
+            socio.fechaVencimiento = endDate.toISOString().split('T')[0];
+
+            state.socios.push(socio);
+            saveToLocalStorage();
+            renderSocios();
+            closeModal('modal-add-socio');
+            showSuccessMessage('Socio agregado exitosamente', 'tab-socios');
+            document.getElementById('modal-add-socio').querySelector('form').reset();
+        }
+
+        function renderSocios() {
+            const container = document.getElementById('socios-list');
+            const empty = document.getElementById('empty-socios');
+
+            if (state.socios.length === 0) {
+                container.innerHTML = '';
+                empty.style.display = 'block';
+                return;
+            }
+
+            empty.style.display = 'none';
+            container.innerHTML = state.socios.map(socio => {
+                const hoy = new Date();
+                const vencimiento = new Date(socio.fechaVencimiento);
+                const diasRestantes = Math.ceil((vencimiento - hoy) / (1000 * 60 * 60 * 24));
+                const estado = diasRestantes < 0 ? 'vencido' : 'activo';
+                const statusClass = estado === 'activo' ? 'status-active' : 'status-expired';
+
+                let alertaHTML = '';
+                if (diasRestantes < 0) {
+                    alertaHTML = `<div class="expiry-alert">⚠️ Membresía vencida desde ${Math.abs(diasRestantes)} días</div>`;
+                } else if (diasRestantes <= 7) {
+                    alertaHTML = `<div class="expiry-alert">⚠️ Vence en ${diasRestantes} días</div>`;
+                }
+
+                const planPrecio = {
+                    mensual: '25.000',
+                    trimestral: '65.000',
+                    semestral: '120.000',
+                    anual: '220.000',
+                };
+
+                return `
+                    <div class="card">
+                        <div class="card-title">${socio.nombre}</div>
+                        <div class="card-text"><strong>RUT:</strong> ${socio.rut}</div>
+                        <div class="card-text"><strong>Teléfono:</strong> ${socio.telefono}</div>
+                        <div class="card-text"><strong>Email:</strong> ${socio.email}</div>
+                        <div class="card-text" style="margin-top: 0.75rem;">
+                            <span class="status-badge ${statusClass}">${estado.toUpperCase()}</span>
+                            <span class="badge">${socio.plan}</span>
+                        </div>
+                        <div class="card-text" style="margin-top: 0.5rem;">
+                            <strong>Plan:</strong> $${planPrecio[socio.plan]}<br>
+                            <strong>Inicio:</strong> ${new Date(socio.fechaInicio).toLocaleDateString('es-CL')}<br>
+                            <strong>Vencimiento:</strong> ${new Date(socio.fechaVencimiento).toLocaleDateString('es-CL')}
+                        </div>
+                        ${alertaHTML}
+                        <div class="action-buttons">
+                            <button class="btn-secondary btn-small" onclick="editSocio('${socio.id}')">Editar</button>
+                            <button class="btn-danger btn-small" onclick="deleteSocio('${socio.id}')">Eliminar</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            renderExpiryAlerts();
+        }
+
+        function renderExpiryAlerts() {
+            const container = document.getElementById('alerts-socios');
+            const vencidos = state.socios.filter(s => {
+                const vencimiento = new Date(s.fechaVencimiento);
+                const diasRestantes = Math.ceil((vencimiento - new Date()) / (1000 * 60 * 60 * 24));
+                return diasRestantes <= 7 && diasRestantes >= 0;
+            });
+
+            if (vencidos.length > 0) {
+                container.innerHTML = `
+                    <div class="alert alert-warning">
+                        ⚠️ ${vencidos.length} socio(s) con membresía por vencer próximamente
+                    </div>
+                `;
+            } else {
+                container.innerHTML = '';
+            }
+        }
+
+        function editSocio(id) {
+            const socio = state.socios.find(s => s.id === id);
+            if (!socio) return;
+            document.getElementById('socio-nombre').value = socio.nombre;
+            document.getElementById('socio-rut').value = socio.rut;
+            document.getElementById('socio-telefono').value = socio.telefono;
+            document.getElementById('socio-email').value = socio.email;
+            document.getElementById('socio-plan').value = socio.plan;
+            document.getElementById('socio-fecha-inicio').value = socio.fechaInicio;
+            document.getElementById('socio-emergencia').value = socio.emergencia;
+
+            const originalForm = document.getElementById('modal-add-socio').querySelector('form');
+            const submitBtn = originalForm.querySelector('button[type="submit"]');
+            submitBtn.textContent = 'Actualizar Socio';
+
+            originalForm.onsubmit = function(e) {
+                e.preventDefault();
+                socio.nombre = document.getElementById('socio-nombre').value.trim();
+                socio.rut = document.getElementById('socio-rut').value.trim();
+                socio.telefono = document.getElementById('socio-telefono').value.trim();
+                socio.email = document.getElementById('socio-email').value.trim();
+                socio.plan = document.getElementById('socio-plan').value;
+                socio.fechaInicio = document.getElementById('socio-fecha-inicio').value;
+                socio.emergencia = document.getElementById('socio-emergencia').value.trim();
+
+                const planDays = {
+                    mensual: 30,
+                    trimestral: 90,
+                    semestral: 180,
+                    anual: 365,
+                };
+
+                const startDate = new Date(socio.fechaInicio);
+                const endDate = new Date(startDate);
+                endDate.setDate(endDate.getDate() + planDays[socio.plan]);
+                socio.fechaVencimiento = endDate.toISOString().split('T')[0];
+
+                saveToLocalStorage();
+                renderSocios();
+                closeModal('modal-add-socio');
+                showSuccessMessage('Socio actualizado', 'tab-socios');
+                originalForm.onsubmit = null;
+                submitBtn.textContent = 'Guardar Socio';
+            };
+
+            openModal('modal-add-socio');
+        }
+
+        function deleteSocio(id) {
+            if (confirm('¿Eliminar este socio de forma permanente?')) {
+                state.socios = state.socios.filter(s => s.id !== id);
+                saveToLocalStorage();
+                renderSocios();
+            }
+        }
+
+        // ============================================
+        // CLASES (Group Classes)
+        // ============================================
+        function addClass(event) {
+            event.preventDefault();
+            const clase = {
+                id: Date.now().toString(),
+                nombre: document.getElementById('clase-nombre').value,
+                instructor: document.getElementById('clase-instructor').value.trim(),
+                capacidad: parseInt(document.getElementById('clase-capacidad').value),
+                dia: document.getElementById('clase-dia').value,
+                hora: document.getElementById('clase-hora').value,
+                inscritos: 0,
+                waitlist: [],
+            };
+            state.clases.push(clase);
+            saveToLocalStorage();
+            renderClases();
+            closeModal('modal-add-clase');
+            showSuccessMessage('Clase creada exitosamente', 'tab-clases');
+            document.getElementById('modal-add-clase').querySelector('form').reset();
+        }
+
+        function renderClases() {
+            const container = document.getElementById('clases-list');
+            const empty = document.getElementById('empty-clases');
+
+            if (state.clases.length === 0) {
+                container.innerHTML = '';
+                empty.style.display = 'block';
+                return;
+            }
+
+            empty.style.display = 'none';
+            container.innerHTML = state.clases.map(clase => {
+                const disponibles = clase.capacidad - clase.inscritos;
+                const estado = disponibles > 0 ? 'Disponible' : 'Lleno';
+                const estadoClass = disponibles > 0 ? 'status-active' : 'status-expired';
+
+                return `
+                    <div class="card">
+                        <div class="card-title">${clase.nombre}</div>
+                        <div class="card-text"><strong>Instructor:</strong> ${clase.instructor}</div>
+                        <div class="card-text"><strong>Día/Hora:</strong> ${clase.dia} ${clase.hora}</div>
+                        <div class="card-text"><strong>Inscritos:</strong> ${clase.inscritos}/${clase.capacidad}</div>
+                        ${clase.waitlist.length > 0 ? `<div class="waitlist-item">📋 ${clase.waitlist.length} en lista de espera</div>` : ''}
+                        <div style="margin-top: 0.75rem;">
+                            <span class="status-badge ${estadoClass}">${estado}</span>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-small" onclick="inscribirClase('${clase.id}')">+ Inscribir</button>
+                            <button class="btn-danger btn-small" onclick="deleteClase('${clase.id}')">Eliminar</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function inscribirClase(claseId) {
+            const clase = state.clases.find(c => c.id === claseId);
+            if (!clase) return;
+
+            const socioNombre = prompt('Nombre del socio a inscribir:');
+            if (!socioNombre) return;
+
+            if (clase.inscritos < clase.capacidad) {
+                clase.inscritos++;
+                saveToLocalStorage();
+                renderClases();
+                showSuccessMessage(`${socioNombre} inscrito en ${clase.nombre}`, 'tab-clases');
+            } else {
+                clase.waitlist.push(socioNombre);
+                saveToLocalStorage();
+                renderClases();
+                showSuccessMessage(`${socioNombre} agregado a lista de espera`, 'tab-clases');
+            }
+        }
+
+        function deleteClase(id) {
+            if (confirm('¿Eliminar esta clase?')) {
+                state.clases = state.clases.filter(c => c.id !== id);
+                saveToLocalStorage();
+                renderClases();
+            }
+        }
+
+        // ============================================
+        // RUTINAS (Workout Routines)
+        // ============================================
+        function populateExercises() {
+            const container = document.getElementById('ejercicios-container');
+            let html = '';
+            for (const [grupo, ejercicios] of Object.entries(EJERCICIOS_DB)) {
+                const grupoLabel = grupo.charAt(0).toUpperCase() + grupo.slice(1);
+                html += `
+                    <div class="exercise-group">
+                        <div class="exercise-group-title">💪 ${grupoLabel}</div>
+                        ${ejercicios.map((ej, idx) => `
+                            <label class="exercise-item">
+                                <input type="checkbox" value="${ej}" onchange="updateRutinaSeleccionados('${ej}', this.checked)">
+                                ${ej}
+                            </label>
+                        `).join('')}
+                    </div>
+                `;
+            }
+            container.innerHTML = html;
+        }
+
+        function updateRutinaSeleccionados(ejercicio, checked) {
+            if (checked) {
+                if (!state.rutinaActualSeleccionados.includes(ejercicio)) {
+                    state.rutinaActualSeleccionados.push(ejercicio);
+                }
+            } else {
+                state.rutinaActualSeleccionados = state.rutinaActualSeleccionados.filter(e => e !== ejercicio);
+            }
+            renderRutinaSeleccionados();
+        }
+
+        function renderRutinaSeleccionados() {
+            const container = document.getElementById('rutina-ejercicios-selected');
+            const list = document.getElementById('rutina-ejercicios-list');
+
+            if (state.rutinaActualSeleccionados.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+
+            container.style.display = 'block';
+            list.innerHTML = state.rutinaActualSeleccionados.map((ej, idx) => `
+                <div style="padding: 0.5rem 0; color: #d1d5db; font-size: 0.9rem;">
+                    ${idx + 1}. ${ej}
+                    <button type="button" class="btn-small" style="float: right; padding: 0.25rem 0.5rem;"
+                            onclick="removeEjercicio('${ej.replace(/'/g, "\\'")}')">✕</button>
+                </div>
+            `).join('');
+        }
+
+        function removeEjercicio(ejercicio) {
+            state.rutinaActualSeleccionados = state.rutinaActualSeleccionados.filter(e => e !== ejercicio);
+            document.querySelectorAll('#ejercicios-container input[type="checkbox"]').forEach(cb => {
+                if (cb.value === ejercicio) cb.checked = false;
+            });
+            renderRutinaSeleccionados();
+        }
+
+        function addRutina(event) {
+            event.preventDefault();
+            if (state.rutinaActualSeleccionados.length === 0) {
+                alert('Selecciona al menos un ejercicio');
+                return;
+            }
+
+            const rutina = {
+                id: Date.now().toString(),
+                nombre: document.getElementById('rutina-nombre').value.trim(),
+                ejercicios: [...state.rutinaActualSeleccionados],
+            };
+
+            state.rutinas.push(rutina);
+            state.rutinaActualSeleccionados = [];
+            saveToLocalStorage();
+            renderRutinas();
+            closeModal('modal-add-rutina');
+            showSuccessMessage('Rutina creada exitosamente', 'tab-rutinas');
+            document.getElementById('rutina-nombre').value = '';
+            document.querySelectorAll('#ejercicios-container input[type="checkbox"]').forEach(cb => cb.checked = false);
+            document.getElementById('rutina-ejercicios-selected').style.display = 'none';
+        }
+
+        function renderRutinas() {
+            const container = document.getElementById('rutinas-list');
+            const empty = document.getElementById('empty-rutinas');
+
+            if (state.rutinas.length === 0) {
+                container.innerHTML = '';
+                empty.style.display = 'block';
+                return;
+            }
+
+            empty.style.display = 'none';
+            container.innerHTML = state.rutinas.map(rutina => `
+                <div class="card">
+                    <div class="card-title">${rutina.nombre}</div>
+                    <div class="card-text"><strong>Ejercicios:</strong> ${rutina.ejercicios.length}</div>
+                    <div style="margin-top: 1rem;">
+                        <details style="color: #d1d5db;">
+                            <summary style="cursor: pointer; color: #22c55e; font-weight: 600;">Ver ejercicios →</summary>
+                            <ul style="margin-left: 1.5rem; margin-top: 0.75rem;">
+                                ${rutina.ejercicios.map(ej => `<li>${ej}</li>`).join('')}
+                            </ul>
+                        </details>
+                    </div>
+                    <div class="action-buttons">
+                        <button class="btn btn-small" onclick="asignarRutina('${rutina.id}')">Asignar</button>
+                        <button class="btn-danger btn-small" onclick="deleteRutina('${rutina.id}')">Eliminar</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function asignarRutina(rutinaId) {
+            const rutina = state.rutinas.find(r => r.id === rutinaId);
+            if (!rutina) return;
+            const socioNombre = prompt('¿A qué socio asignar esta rutina?');
+            if (socioNombre) {
+                showSuccessMessage(`Rutina "${rutina.nombre}" asignada a ${socioNombre}`, 'tab-rutinas');
+            }
+        }
+
+        function deleteRutina(id) {
+            if (confirm('¿Eliminar esta rutina?')) {
+                state.rutinas = state.rutinas.filter(r => r.id !== id);
+                saveToLocalStorage();
+                renderRutinas();
+            }
+        }
+
+        // ============================================
+        // EQUIPOS (Equipment Inventory)
+        // ============================================
+        function addEquipo(event) {
+            event.preventDefault();
+            const equipo = {
+                id: Date.now().toString(),
+                tipo: document.getElementById('equipo-tipo').value,
+                marca: document.getElementById('equipo-marca').value.trim() || 'N/A',
+                ubicacion: document.getElementById('equipo-ubicacion').value,
+                condicion: document.getElementById('equipo-condicion').value,
+                proximoMantenimiento: document.getElementById('equipo-mantenimiento').value,
+                fechaRegistro: new Date().toISOString().split('T')[0],
+            };
+            state.equipos.push(equipo);
+            saveToLocalStorage();
+            renderEquipos();
+            closeModal('modal-add-equipo');
+            showSuccessMessage('Equipo registrado exitosamente', 'tab-equipos');
+            document.getElementById('modal-add-equipo').querySelector('form').reset();
+        }
+
+        function renderEquipos() {
+            const container = document.getElementById('equipos-list');
+            const empty = document.getElementById('empty-equipos');
+
+            if (state.equipos.length === 0) {
+                container.innerHTML = '';
+                empty.style.display = 'block';
+                return;
+            }
+
+            empty.style.display = 'none';
+            container.innerHTML = state.equipos.map(equipo => {
+                const condicionClass = {
+                    'excelente': 'status-active',
+                    'bueno': 'status-active',
+                    'regular': 'status-expired',
+                    'mantenimiento': 'status-frozen',
+                }[equipo.condicion] || 'status-expired';
+
+                const equipoEmoji = {
+                    'trotadora': '🏃',
+                    'bicicleta': '🚴',
+                    'eliptica': '⚡',
+                    'rack': '🏋️',
+                    'banco': '🏋️',
+                    'mancernas': '💪',
+                    'barras': '🏋️',
+                    'polea': '🪢',
+                    'trx': '🪢',
+                    'cuerdas': '🪢',
+                };
+
+                return `
+                    <div class="card">
+                        <div class="card-title">${equipoEmoji[equipo.tipo] || '⚙️'} ${equipo.tipo.toUpperCase()}</div>
+                        <div class="card-text"><strong>Marca:</strong> ${equipo.marca}</div>
+                        <div class="card-text"><strong>Ubicación:</strong> ${equipo.ubicacion}</div>
+                        <div class="card-text"><strong>Registrado:</strong> ${new Date(equipo.fechaRegistro).toLocaleDateString('es-CL')}</div>
+                        <div style="margin-top: 0.75rem;">
+                            <span class="status-badge ${condicionClass}">${equipo.condicion.toUpperCase()}</span>
+                        </div>
+                        ${equipo.proximoMantenimiento ? `
+                            <div class="card-text" style="margin-top: 0.5rem; color: #f59e0b;">
+                                📅 Mantenimiento: ${new Date(equipo.proximoMantenimiento).toLocaleDateString('es-CL')}
+                            </div>
+                        ` : ''}
+                        <div class="action-buttons">
+                            <button class="btn-secondary btn-small" onclick="editEquipo('${equipo.id}')">Editar</button>
+                            <button class="btn-danger btn-small" onclick="deleteEquipo('${equipo.id}')">Eliminar</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function editEquipo(id) {
+            const equipo = state.equipos.find(e => e.id === id);
+            if (!equipo) return;
+            document.getElementById('equipo-tipo').value = equipo.tipo;
+            document.getElementById('equipo-marca').value = equipo.marca;
+            document.getElementById('equipo-ubicacion').value = equipo.ubicacion;
+            document.getElementById('equipo-condicion').value = equipo.condicion;
+            document.getElementById('equipo-mantenimiento').value = equipo.proximoMantenimiento;
+
+            const form = document.getElementById('modal-add-equipo').querySelector('form');
+            const submitBtn = form.querySelector('button[type="submit"]');
+            submitBtn.textContent = 'Actualizar Equipo';
+
+            form.onsubmit = function(e) {
+                e.preventDefault();
+                equipo.tipo = document.getElementById('equipo-tipo').value;
+                equipo.marca = document.getElementById('equipo-marca').value.trim() || 'N/A';
+                equipo.ubicacion = document.getElementById('equipo-ubicacion').value;
+                equipo.condicion = document.getElementById('equipo-condicion').value;
+                equipo.proximoMantenimiento = document.getElementById('equipo-mantenimiento').value;
+                saveToLocalStorage();
+                renderEquipos();
+                closeModal('modal-add-equipo');
+                showSuccessMessage('Equipo actualizado', 'tab-equipos');
+                form.onsubmit = null;
+                submitBtn.textContent = 'Registrar Equipo';
+            };
+
+            openModal('modal-add-equipo');
+        }
+
+        function deleteEquipo(id) {
+            if (confirm('¿Eliminar este equipo?')) {
+                state.equipos = state.equipos.filter(e => e.id !== id);
+                saveToLocalStorage();
+                renderEquipos();
+            }
+        }
+
+        // ============================================
+        // FINANZAS (Finance & Revenue)
+        // ============================================
+        function populatePagoSocios() {
+            const select = document.getElementById('pago-socio');
+            select.innerHTML = '<option value="">Seleccionar socio</option>' + state.socios.map(s =>
+                `<option value="${s.id}">${s.nombre}</option>`
+            ).join('');
+        }
+
+        function addPago(event) {
+            event.preventDefault();
+            const socioId = document.getElementById('pago-socio').value;
+            const socio = state.socios.find(s => s.id === socioId);
+            if (!socio) {
+                alert('Selecciona un socio');
+                return;
+            }
+
+            const pago = {
+                id: Date.now().toString(),
+                socioId: socioId,
+                socioNombre: socio.nombre,
+                monto: parseInt(document.getElementById('pago-monto').value),
+                metodo: document.getElementById('pago-metodo').value,
+                notas: document.getElementById('pago-notas').value.trim(),
+                fecha: new Date().toISOString().split('T')[0],
+                hora: new Date().toTimeString().slice(0, 5),
+            };
+
+            state.pagos.push(pago);
+            saveToLocalStorage();
+            renderPagos();
+            closeModal('modal-add-pago');
+            showSuccessMessage(`Pago de $${pago.monto.toLocaleString()} registrado`, 'tab-finanzas');
+            document.getElementById('modal-add-pago').querySelector('form').reset();
+            populatePagoSocios();
+        }
+
+        function renderPagos() {
+            const tabla = document.getElementById('pagos-table');
+            const pagosRecientes = state.pagos.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).slice(0, 15);
+
+            if (pagosRecientes.length === 0) {
+                tabla.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #9ca3af;">Sin pagos registrados</td></tr>';
+                return;
+            }
+
+            tabla.innerHTML = pagosRecientes.map(pago => `
+                <tr>
+                    <td>${pago.socioNombre}</td>
+                    <td style="color: #86efac; font-weight: 600;">$${pago.monto.toLocaleString()}</td>
+                    <td>${pago.metodo}</td>
+                    <td>${pago.fecha}</td>
+                </tr>
+            `).join('');
+        }
+
+        function renderFinanzasStats() {
+            const hoy = new Date();
+            const mesActual = hoy.getFullYear() + '-' + String(hoy.getMonth() + 1).padStart(2, '0');
+            const pagosEsteMes = state.pagos.filter(p => p.fecha.startsWith(mesActual));
+            const ingresosTotales = pagosEsteMes.reduce((sum, p) => sum + p.monto, 0);
+
+            const sociosActivos = state.socios.filter(s => {
+                const vencimiento = new Date(s.fechaVencimiento);
+                return vencimiento > new Date();
+            }).length;
+
+            const sociosVencidos = state.socios.length - sociosActivos;
+            const promedioPago = state.pagos.length > 0
+                ? Math.round(state.pagos.reduce((sum, p) => sum + p.monto, 0) / state.pagos.length)
+                : 0;
+
+            document.getElementById('stat-ingresos').textContent = ingresosTotales.toLocaleString();
+            document.getElementById('stat-activos').textContent = sociosActivos;
+            document.getElementById('stat-vencidos').textContent = sociosVencidos;
+            document.getElementById('stat-promedio').textContent = promedioPago.toLocaleString();
+        }
+
+        function renderFinanzasCharts() {
+            renderFinanzasStats();
+            renderPagos();
+
+            const ctx = document.getElementById('chart-ingresos');
+            if (!ctx) return;
+
+            const últimos7Días = [];
+            const ingresoPorDía = {};
+
+            for (let i = 6; i >= 0; i--) {
+                const fecha = new Date();
+                fecha.setDate(fecha.getDate() - i);
+                const fechaStr = fecha.toISOString().split('T')[0];
+                últimos7Días.push(fechaStr);
+                ingresoPorDía[fechaStr] = 0;
+            }
+
+            state.pagos.forEach(pago => {
+                if (ingresoPorDía.hasOwnProperty(pago.fecha)) {
+                    ingresoPorDía[pago.fecha] += pago.monto;
+                }
+            });
+
+            const datos = últimos7Días.map(fecha => ingresoPorDía[fecha]);
+            const etiquetas = últimos7Días.map(f => {
+                const d = new Date(f);
+                return d.toLocaleDateString('es-CL', { weekday: 'short', month: 'short', day: 'numeric' });
+            });
+
+            if (window.chartIngresosInstance) {
+                window.chartIngresosInstance.destroy();
+            }
+
+            window.chartIngresosInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: etiquetas,
+                    datasets: [{
+                        label: 'Ingresos Diarios ($)',
+                        data: datos,
+                        backgroundColor: 'rgba(34, 197, 94, 0.7)',
+                        borderColor: '#22c55e',
+                        borderWidth: 2,
+                        borderRadius: 6,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#d1d5db', font: { size: 12 } }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            ticks: { color: '#9ca3af' },
+                            grid: { color: 'rgba(55, 65, 81, 0.3)' },
+                        },
+                        x: {
+                            ticks: { color: '#9ca3af' },
+                            grid: { color: 'rgba(55, 65, 81, 0.3)' },
+                        }
+                    }
+                }
+            });
+        }
+
+        // ============================================
+        // ASISTENCIA (Attendance & Check-in)
+        // ============================================
+        function registrarAsistencia() {
+            const buscar = document.getElementById('asistencia-buscar').value.trim();
+            if (!buscar) {
+                alert('Ingresa el nombre del socio');
+                return;
+            }
+
+            const socio = state.socios.find(s =>
+                s.nombre.toLowerCase().includes(buscar.toLowerCase())
+            );
+
+            if (!socio) {
+                alert('Socio no encontrado');
+                return;
+            }
+
+            const area = prompt('Área de entrada (sala pesas/cardio/clases/funcional):', 'sala pesas');
+            if (!area) return;
+
+            const asistencia = {
+                id: Date.now().toString(),
+                socioId: socio.id,
+                socioNombre: socio.nombre,
+                fecha: new Date().toISOString().split('T')[0],
+                hora: new Date().toTimeString().slice(0, 5),
+                area: area,
+            };
+
+            state.asistencias.push(asistencia);
+            saveToLocalStorage();
+            renderAsistencias();
+            document.getElementById('asistencia-buscar').value = '';
+            showSuccessMessage(`${socio.nombre} registrado en ${area}`, 'tab-asistencia');
+        }
+
+        function renderAsistencias() {
+            const tabla = document.getElementById('asistencias-table');
+            const asistenciasRecientes = state.asistencias.sort((a, b) =>
+                new Date(b.fecha + ' ' + b.hora) - new Date(a.fecha + ' ' + a.hora)
+            ).slice(0, 20);
+
+            if (asistenciasRecientes.length === 0) {
+                tabla.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #9ca3af;">Sin asistencias registradas</td></tr>';
+                return;
+            }
+
+            tabla.innerHTML = asistenciasRecientes.map(asistencia => `
+                <tr>
+                    <td>${asistencia.socioNombre}</td>
+                    <td>${asistencia.hora}</td>
+                    <td>${asistencia.area}</td>
+                    <td>${new Date(asistencia.fecha).toLocaleDateString('es-CL')}</td>
+                </tr>
+            `).join('');
+        }
+
+        function renderAsistenciaCharts() {
+            renderAsistencias();
+
+            const hoy = new Date().toISOString().split('T')[0];
+            const asistenciasHoy = state.asistencias.filter(a => a.fecha === hoy).length;
+            document.getElementById('stat-asistencias-hoy').textContent = asistenciasHoy;
+
+            const hace7Días = new Date();
+            hace7Días.setDate(hace7Días.getDate() - 6);
+            const asistencias7Días = state.asistencias.filter(a =>
+                new Date(a.fecha) >= hace7Días
+            ).length;
+            const promedio7 = Math.round(asistencias7Días / 7);
+            document.getElementById('stat-promedio-semanal').textContent = promedio7;
+
+            // Peak hour analysis
+            const horaConteos = {};
+            state.asistencias.forEach(a => {
+                const hora = a.hora.split(':')[0];
+                horaConteos[hora] = (horaConteos[hora] || 0) + 1;
+            });
+
+            let picoHora = '--:--';
+            let maxConteo = 0;
+            for (const [hora, conteo] of Object.entries(horaConteos)) {
+                if (conteo > maxConteo) {
+                    maxConteo = conteo;
+                    picoHora = hora + ':00';
+                }
+            }
+            document.getElementById('stat-pico-hora').textContent = picoHora;
+
+            // Chart: Asistencias por día
+            const últimos7Días = [];
+            const asistenciasPorDía = {};
+
+            for (let i = 6; i >= 0; i--) {
+                const fecha = new Date();
+                fecha.setDate(fecha.getDate() - i);
+                const fechaStr = fecha.toISOString().split('T')[0];
+                últimos7Días.push(fechaStr);
+                asistenciasPorDía[fechaStr] = 0;
+            }
+
+            state.asistencias.forEach(asistencia => {
+                if (asistenciasPorDía.hasOwnProperty(asistencia.fecha)) {
+                    asistenciasPorDía[asistencia.fecha]++;
+                }
+            });
+
+            const datos = últimos7Días.map(fecha => asistenciasPorDía[fecha]);
+            const etiquetas = últimos7Días.map(f => {
+                const d = new Date(f);
+                return d.toLocaleDateString('es-CL', { weekday: 'short', month: 'short', day: 'numeric' });
+            });
+
+            const ctx = document.getElementById('chart-asistencia');
+            if (!ctx) return;
+
+            if (window.chartAsistenciaInstance) {
+                window.chartAsistenciaInstance.destroy();
+            }
+
+            window.chartAsistenciaInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: etiquetas,
+                    datasets: [{
+                        label: 'Asistencias Diarias',
+                        data: datos,
+                        borderColor: '#22c55e',
+                        backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#22c55e',
+                        pointBorderColor: '#111827',
+                        pointBorderWidth: 2,
+                        pointRadius: 5,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#d1d5db', font: { size: 12 } }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            ticks: { color: '#9ca3af' },
+                            grid: { color: 'rgba(55, 65, 81, 0.3)' },
+                        },
+                        x: {
+                            ticks: { color: '#9ca3af' },
+                            grid: { color: 'rgba(55, 65, 81, 0.3)' },
+                        }
+                    }
+                }
+            });
+        }
+
+        // ============================================
+        // UTILITY FUNCTIONS
+        // ============================================
+        function renderAllData() {
+            renderSocios();
+            renderClases();
+            renderRutinas();
+            renderEquipos();
+            renderPagos();
+            renderAsistencias();
+        }
+
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        function showSuccessMessage(message, tabId) {
+            const container = document.getElementById(`alerts-${tabId.replace('tab-', '')}`) ||
+                             document.querySelector(`#${tabId} > div:first-child`);
+            if (!container) return;
+
+            const msg = document.createElement('div');
+            msg.className = 'success-message';
+            msg.textContent = '✅ ' + message;
+            container.insertBefore(msg, container.firstChild);
+
+            setTimeout(() => msg.remove(), 3000);
+        }
+
+        // Close modals on background click
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) closeModal(this.id);
+            });
+        });
+
+        // ============================================
+        // SERVICE WORKER (PWA OFFLINE SUPPORT)
+        // ============================================
+        function setupServiceWorker() {
+            if ('serviceWorker' in navigator) {
+                const swCode = `
+                    const CACHE_NAME = 'gymcl-v1';
+                    const ASSETS = [
+                        '/',
+                        '/index.html',
+                        'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap',
+                        'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js'
+                    ];
+
+                    self.addEventListener('install', (e) => {
+                        e.waitUntil(
+                            caches.open(CACHE_NAME).then((cache) => {
+                                return cache.addAll(ASSETS).catch(() => {});
+                            })
+                        );
+                    });
+
+                    self.addEventListener('fetch', (e) => {
+                        if (e.request.method !== 'GET') return;
+                        e.respondWith(
+                            caches.match(e.request)
+                                .then((response) => response || fetch(e.request))
+                                .catch(() => caches.match('/'))
+                        );
+                    });
+                `;
+
+                const blob = new Blob([swCode], { type: 'application/javascript' });
+                const swUrl = URL.createObjectURL(blob);
+                navigator.serviceWorker.register(swUrl).catch(() => {});
+            }
+        }
+
+        // Manifest.json equivalent
+        if (!document.querySelector('link[rel="manifest"]').href.includes('data:')) {
+            const manifest = {
+                name: 'GymCL - Gestión de Gimnasios',
+                short_name: 'GymCL',
+                description: 'Sistema de gestión para gimnasios y centros de fitness',
+                start_url: '/',
+                scope: '/',
+                display: 'standalone',
+                orientation: 'portrait-primary',
+                theme_color: '#111827',
+                background_color: '#0f172a',
+                icons: [
+                    {
+                        src: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192"><rect fill="%23111827" width="192" height="192"/><text x="96" y="120" font-size="80" font-weight="bold" fill="%2322c55e" text-anchor="middle" font-family="Arial">💪</text></svg>',
+                        sizes: '192x192',
+                        type: 'image/svg+xml',
+                        purpose: 'any'
+                    }
+                ],
+                categories: ['fitness', 'business'],
+                screenshots: [
+                    {
+                        src: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 540 720"><rect fill="%23111827" width="540" height="720"/></svg>',
+                        sizes: '540x720',
+                        type: 'image/svg+xml'
+                    }
+                ]
+            };
+
+            const link = document.querySelector('link[rel="manifest"]');
+            link.href = 'data:application/manifest+json,' + encodeURIComponent(JSON.stringify(manifest));
+        }
+    </script>
+</body>
+</html>

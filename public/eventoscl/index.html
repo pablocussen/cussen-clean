@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="EventosCL">
+  <meta name="theme-color" content="#312e81">
+  <meta name="description" content="Planificador profesional de eventos para organizadores chilenos">
+  <title>EventosCL - Gestor de Eventos Profesional</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8f9fa; color: #1a1a1a; line-height: 1.6; }
+    .container { max-width: 100%; margin: 0 auto; padding: 0; }
+    header { background: linear-gradient(135deg, #312e81 0%, #4c1d95 100%); color: white; padding: 1.25rem; box-shadow: 0 2px 8px rgba(49, 46, 129, 0.15); position: sticky; top: 0; z-index: 100; }
+    header h1 { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.5rem; letter-spacing: -0.5px; }
+    header p { font-size: 0.875rem; opacity: 0.9; }
+    .tabs { display: flex; gap: 0; background: white; border-bottom: 1px solid #e5e7eb; overflow-x: auto; scroll-behavior: smooth; position: sticky; top: 0; z-index: 99; }
+    .tab { flex: 0 0 auto; padding: 0.875rem 1rem; border: none; background: none; cursor: pointer; font-size: 0.9375rem; font-weight: 500; color: #6b7280; white-space: nowrap; transition: all 0.2s; border-bottom: 3px solid transparent; min-height: 44px; display: flex; align-items: center; }
+    .tab:hover { color: #312e81; background: #f9fafb; }
+    .tab.active { color: #312e81; border-bottom-color: #f43f5e; }
+    .content { padding: 1.5rem; min-height: calc(100vh - 200px); }
+    .tab-content { display: none; animation: fadeIn 0.2s ease-in; }
+    .tab-content.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+    .card { background: white; border-radius: 0.75rem; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); border: 1px solid #e5e7eb; }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    .card h2 { font-size: 1.25rem; margin-bottom: 0.75rem; color: #312e81; }
+    .card h3 { font-size: 1rem; margin-bottom: 0.5rem; color: #1a1a1a; }
+    .btn { font-size: 1rem; padding: 0.75rem 1.25rem; border: none; border-radius: 0.5rem; cursor: pointer; font-weight: 500; transition: all 0.2s; min-height: 44px; display: inline-flex; align-items: center; gap: 0.5rem; font-family: 'Inter', sans-serif; }
+    .btn-primary { background: #312e81; color: white; }
+    .btn-primary:hover { background: #2a2670; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(49, 46, 129, 0.25); }
+    .btn-secondary { background: #e5e7eb; color: #1a1a1a; }
+    .btn-secondary:hover { background: #d1d5db; }
+    .btn-accent { background: #f43f5e; color: white; }
+    .btn-accent:hover { background: #e11d48; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(244, 63, 94, 0.25); }
+    .btn-small { font-size: 0.875rem; padding: 0.5rem 0.875rem; min-height: 36px; }
+    .btn-danger { background: #ef4444; color: white; }
+    .btn-danger:hover { background: #dc2626; }
+    .form-group { margin-bottom: 1rem; }
+    label { display: block; margin-bottom: 0.375rem; font-weight: 500; color: #374151; font-size: 0.9375rem; }
+    input, select, textarea { width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem; font-family: 'Inter', sans-serif; transition: all 0.2s; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: #312e81; box-shadow: 0 0 0 3px rgba(49, 46, 129, 0.1); }
+    textarea { resize: vertical; min-height: 100px; }
+    .grid { display: grid; gap: 1.5rem; margin-bottom: 1.5rem; }
+    .grid-2 { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+    @media (max-width: 768px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+    .event-item { background: white; border: 1px solid #e5e7eb; border-radius: 0.75rem; padding: 1rem; margin-bottom: 1rem; transition: all 0.2s; }
+    .event-item:hover { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); border-color: #f43f5e; }
+    .event-item-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; }
+    .event-item-title { font-size: 1.125rem; font-weight: 600; color: #1a1a1a; }
+    .event-item-date { font-size: 0.875rem; color: #6b7280; margin-top: 0.25rem; }
+    .badge { display: inline-block; padding: 0.375rem 0.75rem; border-radius: 0.375rem; font-size: 0.8125rem; font-weight: 500; }
+    .badge-info { background: #dbeafe; color: #1e40af; }
+    .badge-success { background: #dcfce7; color: #166534; }
+    .badge-warning { background: #fef3c7; color: #b45309; }
+    .badge-danger { background: #fee2e2; color: #991b1b; }
+    .countdown { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 0.75rem; margin: 1.5rem 0; }
+    .countdown-item { text-align: center; background: linear-gradient(135deg, #312e81 0%, #4c1d95 100%); color: white; padding: 1rem; border-radius: 0.5rem; }
+    .countdown-number { font-size: 1.875rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .countdown-label { font-size: 0.75rem; opacity: 0.9; text-transform: uppercase; letter-spacing: 0.5px; }
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 1000; align-items: center; justify-content: center; padding: 1rem; }
+    .modal.active { display: flex; }
+    .modal-content { background: white; border-radius: 0.75rem; padding: 1.5rem; max-width: 500px; width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 25px rgba(0, 0, 0, 0.15); }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #e5e7eb; }
+    .modal-header h2 { margin: 0; color: #312e81; }
+    .close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6b7280; min-height: 44px; width: 44px; display: flex; align-items: center; justify-content: center; }
+    .close-btn:hover { color: #1a1a1a; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    th { background: #f3f4f6; padding: 0.875rem; text-align: left; font-weight: 600; color: #374151; font-size: 0.875rem; border-bottom: 2px solid #e5e7eb; }
+    td { padding: 0.875rem; border-bottom: 1px solid #e5e7eb; }
+    tr:hover { background: #f9fafb; }
+    .stat-card { background: linear-gradient(135deg, #312e81 0%, #4c1d95 100%); color: white; padding: 1.25rem; border-radius: 0.75rem; margin-bottom: 1rem; }
+    .stat-value { font-size: 2rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .stat-label { font-size: 0.875rem; opacity: 0.9; }
+    .chart-container { position: relative; height: 300px; margin: 1.5rem 0; }
+    input[type="text"], input[type="email"], input[type="tel"], input[type="date"], input[type="number"], select, textarea { min-height: 44px; }
+    input[type="checkbox"], input[type="radio"] { width: 18px; height: 18px; cursor: pointer; }
+    @media (max-width: 640px) { header h1 { font-size: 1.5rem; } .content { padding: 1rem; } .card { padding: 1rem; margin-bottom: 1rem; } .tab { padding: 0.75rem 0.875rem; font-size: 0.85rem; } .btn { width: 100%; justify-content: center; } .modal-content { max-height: 95vh; } }
+    .mt-1 { margin-top: 0.5rem; } .mt-2 { margin-top: 1rem; } .mt-3 { margin-top: 1.5rem; }
+    .mb-1 { margin-bottom: 0.5rem; } .mb-2 { margin-bottom: 1rem; } .mb-3 { margin-bottom: 1.5rem; }
+    .gap-1 { gap: 0.5rem; } .gap-2 { gap: 1rem; }
+    .flex { display: flex; } .flex-between { display: flex; justify-content: space-between; align-items: center; } .flex-center { display: flex; justify-content: center; align-items: center; }
+    .text-center { text-align: center; } .text-muted { color: #6b7280; } .text-small { font-size: 0.875rem; } .hidden { display: none !important; }
+    .alert { padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; }
+    .alert-info { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
+    .alert-success { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+    .alert-warning { background: #fef3c7; color: #b45309; border: 1px solid #fde047; }
+    .alert-danger { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>EventosCL</h1>
+      <p>Gestor profesional de eventos para organizadores chilenos</p>
+    </header>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="eventos">EVENTOS</button>
+      <button class="tab" data-tab="proveedores">PROVEEDORES</button>
+      <button class="tab" data-tab="timeline">TIMELINE</button>
+      <button class="tab" data-tab="presupuesto">PRESUPUESTO</button>
+      <button class="tab" data-tab="finanzas">FINANZAS</button>
+      <button class="tab" data-tab="clientes">CLIENTES</button>
+    </div>
+
+    <div class="content">
+      <div id="eventos" class="tab-content active">
+        <div class="card-header"><h2>Mis Eventos</h2><button class="btn btn-primary" id="btnNuevoEvento">+ Nuevo</button></div>
+        <div class="grid grid-2" id="eventosGrid"></div>
+      </div>
+
+      <div id="proveedores" class="tab-content">
+        <div class="card-header"><h2>Base de Proveedores</h2><button class="btn btn-primary" id="btnNuevoProveedor">+ Agregar</button></div>
+        <div class="form-group"><input type="text" id="searchProveedores" placeholder="Buscar por nombre, servicio o teléfono..."></div>
+        <div class="grid grid-3" id="proveedoresGrid"></div>
+      </div>
+
+      <div id="timeline" class="tab-content">
+        <div class="card-header"><h2>Cronograma del Evento</h2><button class="btn btn-primary" id="btnNuevoTimeline">+ Agregar Horario</button></div>
+        <div id="timelineContent"><p class="text-muted">Selecciona un evento para ver su cronograma</p></div>
+      </div>
+
+      <div id="presupuesto" class="tab-content">
+        <div class="card-header"><h2>Gestión de Presupuestos</h2></div>
+        <div id="presupuestoContent"><p class="text-muted">Selecciona un evento para gestionar su presupuesto</p></div>
+      </div>
+
+      <div id="finanzas" class="tab-content">
+        <div class="card-header"><h2>Finanzas y Análisis</h2></div>
+        <div class="grid grid-3">
+          <div class="stat-card"><div class="stat-value" id="totalIngresos">$0</div><div class="stat-label">Ingresos Totales</div></div>
+          <div class="stat-card"><div class="stat-value" id="totalGastos">$0</div><div class="stat-label">Gastos Totales</div></div>
+          <div class="stat-card"><div class="stat-value" id="totalGanancia">$0</div><div class="stat-label">Ganancia Neta</div></div>
+        </div>
+        <div class="card"><h3>Ingresos Mensuales</h3><div class="chart-container"><canvas id="chartIngresos"></canvas></div></div>
+        <div class="card"><h3>Eventos por Tipo</h3><div class="chart-container"><canvas id="chartTipos"></canvas></div></div>
+        <div class="card"><h3>Márgenes de Ganancia por Tipo</h3><div class="chart-container"><canvas id="chartMargenes"></canvas></div></div>
+      </div>
+
+      <div id="clientes" class="tab-content">
+        <div class="card-header"><h2>Base de Clientes</h2><button class="btn btn-primary" id="btnNuevoCliente">+ Nuevo</button></div>
+        <div class="form-group"><input type="text" id="searchClientes" placeholder="Buscar cliente..."></div>
+        <div id="clientesGrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="modalEvento" class="modal">
+    <div class="modal-content">
+      <div class="modal-header"><h2>Nuevo Evento</h2><button class="close-btn" onclick="closeModal('modalEvento')">&times;</button></div>
+      <form id="formEvento">
+        <div class="form-group"><label>Nombre del Evento</label><input type="text" name="nombre" required></div>
+        <div class="form-group"><label>Tipo de Evento</label><select name="tipo" required><option value="">Seleccionar...</option><option value="matrimonio">Matrimonio</option><option value="cumpleaños">Cumpleaños</option><option value="corporativo">Corporativo</option><option value="graduación">Graduación</option><option value="baby_shower">Baby Shower</option><option value="fiesta_temática">Fiesta Temática</option></select></div>
+        <div class="form-group"><label>Fecha del Evento</label><input type="date" name="fecha" required></div>
+        <div class="form-group"><label>Lugar</label><input type="text" name="lugar" required></div>
+        <div class="form-group"><label>Capacidad Máxima de Personas</label><input type="number" name="capacidad" min="1" required></div>
+        <div class="form-group"><label>Presupuesto Estimado (CLP)</label><input type="number" name="presupuesto" min="0" required></div>
+        <div class="form-group"><label>Estado</label><select name="estado" required><option value="cotización">Cotización</option><option value="confirmado">Confirmado</option><option value="en_preparación">En Preparación</option><option value="ejecutado">Ejecutado</option></select></div>
+        <div class="form-group"><label>Notas</label><textarea name="notas"></textarea></div>
+        <div class="flex gap-2"><button type="submit" class="btn btn-primary" style="flex:1;">Crear</button><button type="button" class="btn btn-secondary" onclick="closeModal('modalEvento')" style="flex:1;">Cancelar</button></div>
+      </form>
+    </div>
+  </div>
+
+  <div id="modalProveedor" class="modal">
+    <div class="modal-content">
+      <div class="modal-header"><h2>Nuevo Proveedor</h2><button class="close-btn" onclick="closeModal('modalProveedor')">&times;</button></div>
+      <form id="formProveedor">
+        <div class="form-group"><label>Nombre del Proveedor</label><input type="text" name="nombre" required></div>
+        <div class="form-group"><label>Servicio</label><select name="servicio" required><option value="">Seleccionar...</option><option value="catering">Catering</option><option value="dj">DJ</option><option value="decoración">Decoración</option><option value="fotografía">Fotografía</option><option value="arriendo_mobiliario">Arriendo Mobiliario</option><option value="iluminación">Iluminación</option><option value="tortas">Tortas</option></select></div>
+        <div class="form-group"><label>Teléfono</label><input type="tel" name="telefono" required></div>
+        <div class="form-group"><label>Email</label><input type="email" name="email" required></div>
+        <div class="form-group"><label>Valor por Servicio (CLP)</label><input type="number" name="precio" min="0" required></div>
+        <div class="form-group"><label>Calificación (1-5)</label><input type="number" name="calificacion" min="1" max="5" step="0.1" value="5"></div>
+        <div class="form-group"><label>Disponibilidad</label><input type="text" name="disponibilidad" placeholder="Ej: Lunes a Viernes, Sábados"></div>
+        <div class="flex gap-2"><button type="submit" class="btn btn-primary" style="flex:1;">Agregar</button><button type="button" class="btn btn-secondary" onclick="closeModal('modalProveedor')" style="flex:1;">Cancelar</button></div>
+      </form>
+    </div>
+  </div>
+
+  <div id="modalCliente" class="modal">
+    <div class="modal-content">
+      <div class="modal-header"><h2>Nuevo Cliente</h2><button class="close-btn" onclick="closeModal('modalCliente')">&times;</button></div>
+      <form id="formCliente">
+        <div class="form-group"><label>Nombre Completo</label><input type="text" name="nombre" required></div>
+        <div class="form-group"><label>Teléfono</label><input type="tel" name="telefono" required></div>
+        <div class="form-group"><label>Email</label><input type="email" name="email" required></div>
+        <div class="form-group"><label>Dirección</label><input type="text" name="direccion"></div>
+        <div class="form-group"><label>Temas Preferidos</label><input type="text" name="temas" placeholder="Ej: Minimalista, Tropical"></div>
+        <div class="form-group"><label>Colores Favoritos</label><input type="text" name="colores" placeholder="Ej: Blanco, dorado"></div>
+        <div class="form-group"><label>Restricciones Alimentarias</label><textarea name="restricciones"></textarea></div>
+        <div class="form-group"><label>Referido de (Cliente)</label><input type="text" name="referido_de"></div>
+        <div class="flex gap-2"><button type="submit" class="btn btn-primary" style="flex:1;">Crear</button><button type="button" class="btn btn-secondary" onclick="closeModal('modalCliente')" style="flex:1;">Cancelar</button></div>
+      </form>
+    </div>
+  </div>
+
+  <div id="modalTimeline" class="modal">
+    <div class="modal-content">
+      <div class="modal-header"><h2>Agregar Horario</h2><button class="close-btn" onclick="closeModal('modalTimeline')">&times;</button></div>
+      <form id="formTimeline">
+        <input type="hidden" name="eventoId">
+        <div class="form-group"><label>Hora</label><input type="time" name="hora" required></div>
+        <div class="form-group"><label>Actividad/Fase</label><select name="fase" required><option value="">Seleccionar...</option><option value="montaje">Montaje</option><option value="recepción">Recepción</option><option value="ceremonia">Ceremonia</option><option value="cocktail">Cocktail</option><option value="fiesta">Fiesta</option><option value="cena">Cena</option><option value="brindis">Brindis</option><option value="desmontaje">Desmontaje</option></select></div>
+        <div class="form-group"><label>Descripción</label><textarea name="descripcion"></textarea></div>
+        <div class="form-group"><label>Personal Responsable</label><input type="text" name="responsable"></div>
+        <div class="flex gap-2"><button type="submit" class="btn btn-primary" style="flex:1;">Agregar</button><button type="button" class="btn btn-secondary" onclick="closeModal('modalTimeline')" style="flex:1;">Cancelar</button></div>
+      </form>
+    </div>
+  </div>
+
+  <div id="modalPresupuesto" class="modal">
+    <div class="modal-content">
+      <div class="modal-header"><h2>Presupuesto del Evento</h2><button class="close-btn" onclick="closeModal('modalPresupuesto')">&times;</button></div>
+      <form id="formPresupuesto">
+        <input type="hidden" name="eventoId">
+        <div class="form-group"><label>Cobro al Cliente (CLP)</label><input type="number" name="ingreso" min="0" step="1000" required></div>
+        <div class="form-group"><label>Gastos Totales (CLP)</label><input type="number" name="gastos" min="0" step="1000" required></div>
+        <div class="form-group"><label>Estado Pago</label><select name="estadoPago" required><option value="abono">Abono</option><option value="saldo">Saldo</option><option value="pagado">Pagado</option></select></div>
+        <div class="form-group"><label>Notas</label><textarea name="notas"></textarea></div>
+        <div class="flex gap-2"><button type="submit" class="btn btn-primary" style="flex:1;">Guardar</button><button type="button" class="btn btn-secondary" onclick="closeModal('modalPresupuesto')" style="flex:1;">Cancelar</button></div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+const SafeStorage={getItem(k){try{return localStorage.getItem(k)}catch(e){return null}},setItem(k,v){try{localStorage.setItem(k,v);return true}catch(e){return false}},removeItem(k){try{localStorage.removeItem(k);return true}catch(e){return false}}};const AppData={getEventos(){const d=SafeStorage.getItem('eventoscl_eventos');return d?JSON.parse(d):[]},setEventos(e){SafeStorage.setItem('eventoscl_eventos',JSON.stringify(e))},getProveedores(){const d=SafeStorage.getItem('eventoscl_proveedores');return d?JSON.parse(d):[]},setProveedores(p){SafeStorage.setItem('eventoscl_proveedores',JSON.stringify(p))},getClientes(){const d=SafeStorage.getItem('eventoscl_clientes');return d?JSON.parse(d):[]},setClientes(c){SafeStorage.setItem('eventoscl_clientes',JSON.stringify(c))},getTimelines(){const d=SafeStorage.getItem('eventoscl_timelines');return d?JSON.parse(d):[]},setTimelines(t){SafeStorage.setItem('eventoscl_timelines',JSON.stringify(t))},getPresupuestos(){const d=SafeStorage.getItem('eventoscl_presupuestos');return d?JSON.parse(d):[]},setPresupuestos(p){SafeStorage.setItem('eventoscl_presupuestos',JSON.stringify(p))}};const formatCLP=v=>new Intl.NumberFormat('es-CL',{style:'currency',currency:'CLP',minimumFractionDigits:0}).format(v);const formatDate=d=>new Intl.DateTimeFormat('es-CL',{year:'numeric',month:'long',day:'numeric'}).format(new Date(d));const formatDateShort=d=>new Intl.DateTimeFormat('es-CL',{year:'2-digit',month:'2-digit',day:'2-digit'}).format(new Date(d));const getCountdown=f=>{const now=new Date();const e=new Date(f);const diff=e-now;if(diff<=0)return{dias:0,horas:0,minutos:0,segundos:0};return{dias:Math.floor(diff/(1000*60*60*24)),horas:Math.floor((diff/(1000*60*60))%24),minutos:Math.floor((diff/1000/60)%60),segundos:Math.floor((diff/1000)%60)}};const openModal=id=>{const m=document.getElementById(id);if(m)m.classList.add('active')};const closeModal=id=>{const m=document.getElementById(id);if(m)m.classList.remove('active')};const generateId=()=>Date.now().toString(36)+Math.random().toString(36).substr(2);document.querySelectorAll('.tab').forEach(tab=>{tab.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.tab-content').forEach(tc=>tc.classList.remove('active'));tab.classList.add('active');const tabId=tab.getAttribute('data-tab');document.getElementById(tabId).classList.add('active');if(tabId==='finanzas')setTimeout(renderFinancesCharts,100);else if(tabId==='timeline')renderTimeline();else if(tabId==='presupuesto')renderPresupuestos()})});document.querySelectorAll('.modal').forEach(modal=>{modal.addEventListener('click',e=>{if(e.target===modal)closeModal(modal.id)})});document.getElementById('btnNuevoEvento').addEventListener('click',()=>{document.getElementById('formEvento').reset();document.getElementById('formEvento').onsubmit=null;openModal('modalEvento')});document.getElementById('formEvento').addEventListener('submit',e=>{e.preventDefault();const fd=new FormData(e.target);const evento={id:generateId(),nombre:fd.get('nombre'),tipo:fd.get('tipo'),fecha:fd.get('fecha'),lugar:fd.get('lugar'),capacidad:parseInt(fd.get('capacidad')),presupuesto:parseFloat(fd.get('presupuesto')),estado:fd.get('estado'),notas:fd.get('notas'),createdAt:new Date().toISOString(),invitados:0,confirmados:0};const eventos=AppData.getEventos();eventos.push(evento);AppData.setEventos(eventos);closeModal('modalEvento');renderEventos()});const renderEventos=()=>{const eventos=AppData.getEventos();const grid=document.getElementById('eventosGrid');grid.innerHTML='';eventos.forEach(e=>{const cd=getCountdown(e.fecha);const sc={'cotización':'badge-warning','confirmado':'badge-success','en_preparación':'badge-info','ejecutado':'badge-danger'};const html=`<div class="card"><div class="event-item"><div class="event-item-header"><div><div class="event-item-title">${e.nombre}</div><div class="event-item-date">${formatDate(e.fecha)}</div></div><span class="badge ${sc[e.estado]||'badge-info'}">${e.estado.replace(/_/g,' ')}</span></div><div style="margin-bottom:1rem"><span class="badge badge-info">${e.tipo.replace(/_/g,' ')}</span></div><div style="margin-bottom:0.75rem;font-size:0.875rem"><strong>📍 ${e.lugar}</strong><br><strong>👥 Capacidad:</strong> ${e.capacidad} personas<br><strong>💰 Presupuesto:</strong> ${formatCLP(e.presupuesto)}</div>${cd.dias>=0?`<div class="countdown"><div class="countdown-item"><div class="countdown-number">${cd.dias}</div><div class="countdown-label">Días</div></div><div class="countdown-item"><div class="countdown-number">${cd.horas}</div><div class="countdown-label">Horas</div></div><div class="countdown-item"><div class="countdown-number">${cd.minutos}</div><div class="countdown-label">Min</div></div></div>`:'<div class="alert alert-info">Evento ejecutado ✓</div>'}<div class="flex gap-2" style="margin-top:1rem"><button class="btn btn-secondary btn-small" onclick="editEvento('${e.id}')" style="flex:1">Editar</button><button class="btn btn-accent btn-small" onclick="viewEventoDetail('${e.id}')" style="flex:1">Detalles</button><button class="btn btn-danger btn-small" onclick="deleteEvento('${e.id}')">Eliminar</button></div></div></div>`;grid.insertAdjacentHTML('beforeend',html)});if(eventos.length===0)grid.innerHTML='<p class="text-muted" style="grid-column:1/-1">No hay eventos. Crea uno para comenzar.</p>'};const editEvento=id=>{const eventos=AppData.getEventos();const e=eventos.find(ev=>ev.id===id);if(!e)return;const form=document.getElementById('formEvento');form.nombre.value=e.nombre;form.tipo.value=e.tipo;form.fecha.value=e.fecha;form.lugar.value=e.lugar;form.capacidad.value=e.capacidad;form.presupuesto.value=e.presupuesto;form.estado.value=e.estado;form.notas.value=e.notas;form.onsubmit=ev=>{ev.preventDefault();const idx=eventos.findIndex(x=>x.id===id);if(idx>=0){const fd=new FormData(form);eventos[idx]={...eventos[idx],nombre:fd.get('nombre'),tipo:fd.get('tipo'),fecha:fd.get('fecha'),lugar:fd.get('lugar'),capacidad:parseInt(fd.get('capacidad')),presupuesto:parseFloat(fd.get('presupuesto')),estado:fd.get('estado'),notas:fd.get('notas')};AppData.setEventos(eventos);closeModal('modalEvento');renderEventos();form.onsubmit=null}};openModal('modalEvento')};const deleteEvento=id=>{if(confirm('¿Deseas eliminar este evento?')){let eventos=AppData.getEventos();eventos=eventos.filter(e=>e.id!==id);AppData.setEventos(eventos);renderEventos()}};const viewEventoDetail=id=>{const eventos=AppData.getEventos();const e=eventos.find(ev=>ev.id===id);if(!e)return;alert(`📌 ${e.nombre}\n📅 ${formatDate(e.fecha)}\n📍 ${e.lugar}\n👥 Capacidad: ${e.capacidad}\n💰 Presupuesto: ${formatCLP(e.presupuesto)}\n📊 Estado: ${e.estado}\n📝 Notas: ${e.notas||'Sin notas'}`)};document.getElementById('btnNuevoProveedor').addEventListener('click',()=>{document.getElementById('formProveedor').reset();document.getElementById('formProveedor').onsubmit=null;openModal('modalProveedor')});document.getElementById('formProveedor').addEventListener('submit',e=>{e.preventDefault();const fd=new FormData(e.target);const p={id:generateId(),nombre:fd.get('nombre'),servicio:fd.get('servicio'),telefono:fd.get('telefono'),email:fd.get('email'),precio:parseFloat(fd.get('precio')),calificacion:parseFloat(fd.get('calificacion')),disponibilidad:fd.get('disponibilidad'),createdAt:new Date().toISOString()};const ps=AppData.getProveedores();ps.push(p);AppData.setProveedores(ps);closeModal('modalProveedor');renderProveedores()});const renderProveedores=(s='')=>{let ps=AppData.getProveedores();if(s)ps=ps.filter(p=>p.nombre.toLowerCase().includes(s.toLowerCase())||p.servicio.toLowerCase().includes(s.toLowerCase())||p.telefono.includes(s));const g=document.getElementById('proveedoresGrid');g.innerHTML='';ps.forEach(p=>{const st='⭐'.repeat(Math.floor(p.calificacion));const h=`<div class="card"><div style="margin-bottom:0.75rem"><div style="font-weight:600;color:#312e81">${p.nombre}</div><div style="font-size:0.875rem;color:#6b7280">${p.servicio.replace(/_/g,' ')}</div></div><div style="margin-bottom:0.75rem;font-size:0.875rem"><div>${st} ${p.calificacion.toFixed(1)}</div><div><strong>📞</strong> ${p.telefono}</div><div><strong>✉️</strong> ${p.email}</div><div style="margin-top:0.5rem"><strong>Valor:</strong> ${formatCLP(p.precio)}</div><div style="margin-top:0.25rem;font-size:0.75rem;color:#6b7280">📅 ${p.disponibilidad}</div></div><div class="flex gap-1"><button class="btn btn-secondary btn-small" onclick="editProveedor('${p.id}')" style="flex:1">Editar</button><button class="btn btn-danger btn-small" onclick="deleteProveedor('${p.id}')">Eliminar</button></div></div>`;g.insertAdjacentHTML('beforeend',h)});if(ps.length===0)g.innerHTML='<p class="text-muted" style="grid-column:1/-1">No hay proveedores encontrados.</p>'};const editProveedor=id=>{const ps=AppData.getProveedores();const p=ps.find(pr=>pr.id===id);if(!p)return;const f=document.getElementById('formProveedor');f.nombre.value=p.nombre;f.servicio.value=p.servicio;f.telefono.value=p.telefono;f.email.value=p.email;f.precio.value=p.precio;f.calificacion.value=p.calificacion;f.disponibilidad.value=p.disponibilidad;f.onsubmit=e=>{e.preventDefault();const idx=ps.findIndex(pr=>pr.id===id);if(idx>=0){const fd=new FormData(f);ps[idx]={...ps[idx],nombre:fd.get('nombre'),servicio:fd.get('servicio'),telefono:fd.get('telefono'),email:fd.get('email'),precio:parseFloat(fd.get('precio')),calificacion:parseFloat(fd.get('calificacion')),disponibilidad:fd.get('disponibilidad')};AppData.setProveedores(ps);closeModal('modalProveedor');renderProveedores();f.onsubmit=null}};openModal('modalProveedor')};const deleteProveedor=id=>{if(confirm('¿Eliminar este proveedor?')){let ps=AppData.getProveedores();ps=ps.filter(p=>p.id!==id);AppData.setProveedores(ps);renderProveedores()}};document.getElementById('searchProveedores').addEventListener('input',e=>{renderProveedores(e.target.value)});document.getElementById('btnNuevoCliente').addEventListener('click',()=>{document.getElementById('formCliente').reset();document.getElementById('formCliente').onsubmit=null;openModal('modalCliente')});document.getElementById('formCliente').addEventListener('submit',e=>{e.preventDefault();const fd=new FormData(e.target);const c={id:generateId(),nombre:fd.get('nombre'),telefono:fd.get('telefono'),email:fd.get('email'),direccion:fd.get('direccion'),temas:fd.get('temas'),colores:fd.get('colores'),restricciones:fd.get('restricciones'),referido_de:fd.get('referido_de'),createdAt:new Date().toISOString(),eventos:0};const cs=AppData.getClientes();cs.push(c);AppData.setClientes(cs);closeModal('modalCliente');renderClientes()});const renderClientes=(s='')=>{let cs=AppData.getClientes();if(s)cs=cs.filter(c=>c.nombre.toLowerCase().includes(s.toLowerCase())||c.telefono.includes(s)||c.email.toLowerCase().includes(s.toLowerCase()));const g=document.getElementById('clientesGrid');g.innerHTML='';cs.forEach(c=>{const h=`<div class="card"><div style="margin-bottom:0.75rem"><div style="font-weight:600;color:#312e81;font-size:1.1rem">${c.nombre}</div></div><div style="margin-bottom:1rem;font-size:0.875rem"><div><strong>📞</strong> ${c.telefono}</div><div><strong>✉️</strong> ${c.email}</div><div><strong>📍</strong> ${c.direccion||'No especificada'}</div>${c.temas?`<div style="margin-top:0.5rem"><strong>Temas:</strong> ${c.temas}</div>`:''}${c.colores?`<div><strong>Colores:</strong> ${c.colores}</div>`:''}${c.restricciones?`<div><strong>Restricciones:</strong> ${c.restricciones}</div>`:''}${c.referido_de?`<div style="margin-top:0.5rem;padding-top:0.5rem;border-top:1px solid #e5e7eb;font-size:0.75rem;color:#6b7280">👥 Referido de: ${c.referido_de}</div>`:''}</div><div class="flex gap-1"><button class="btn btn-secondary btn-small" onclick="editCliente('${c.id}')" style="flex:1">Editar</button><button class="btn btn-danger btn-small" onclick="deleteCliente('${c.id}')">Eliminar</button></div></div>`;g.insertAdjacentHTML('beforeend',h)});if(cs.length===0)g.innerHTML='<p class="text-muted" style="grid-column:1/-1">No hay clientes.</p>'};const editCliente=id=>{const cs=AppData.getClientes();const c=cs.find(cl=>cl.id===id);if(!c)return;const f=document.getElementById('formCliente');f.nombre.value=c.nombre;f.telefono.value=c.telefono;f.email.value=c.email;f.direccion.value=c.direccion;f.temas.value=c.temas;f.colores.value=c.colores;f.restricciones.value=c.restricciones;f.referido_de.value=c.referido_de;f.onsubmit=e=>{e.preventDefault();const idx=cs.findIndex(cl=>cl.id===id);if(idx>=0){const fd=new FormData(f);cs[idx]={...cs[idx],nombre:fd.get('nombre'),telefono:fd.get('telefono'),email:fd.get('email'),direccion:fd.get('direccion'),temas:fd.get('temas'),colores:fd.get('colores'),restricciones:fd.get('restricciones'),referido_de:fd.get('referido_de')};AppData.setClientes(cs);closeModal('modalCliente');renderClientes();f.onsubmit=null}};openModal('modalCliente')};const deleteCliente=id=>{if(confirm('¿Eliminar este cliente?')){let cs=AppData.getClientes();cs=cs.filter(c=>c.id!==id);AppData.setClientes(cs);renderClientes()}};document.getElementById('searchClientes').addEventListener('input',e=>{renderClientes(e.target.value)});document.getElementById('btnNuevoTimeline').addEventListener('click',()=>{const es=AppData.getEventos();if(es.length===0){alert('Debes crear un evento primero');return}const f=document.getElementById('formTimeline');f.reset();f.onsubmit=null;const sel=document.createElement('select');sel.style.cssText='width:100%;margin-bottom:1rem;padding:0.75rem;border:1px solid #d1d5db;border-radius:0.5rem;font-size:1rem;';sel.innerHTML='<option value="">Selecciona un evento...</option>'+es.map(e=>`<option value="${e.id}">${e.nombre}</option>`).join('');const mc=document.querySelector('#modalTimeline .modal-content');const es2=mc.querySelector('select[data-evento-selector]');if(es2)es2.remove();sel.setAttribute('data-evento-selector','true');mc.insertBefore(sel,f);sel.addEventListener('change',e=>{f.querySelector('input[name="eventoId"]').value=e.target.value});openModal('modalTimeline')});document.getElementById('formTimeline').addEventListener('submit',e=>{e.preventDefault();const fd=new FormData(e.target);const eid=fd.get('eventoId');if(!eid){alert('Selecciona un evento primero');return}const t={id:generateId(),eventoId:eid,hora:fd.get('hora'),fase:fd.get('fase'),descripcion:fd.get('descripcion'),responsable:fd.get('responsable'),completado:false,createdAt:new Date().toISOString()};const ts=AppData.getTimelines();ts.push(t);AppData.setTimelines(ts);closeModal('modalTimeline');renderTimeline()});const renderTimeline=()=>{const es=AppData.getEventos();const ts=AppData.getTimelines();const c=document.getElementById('timelineContent');if(es.length===0){c.innerHTML='<p class="text-muted">No hay eventos creados.</p>';return}let h='<div>';es.forEach(e=>{const ets=ts.filter(t=>t.eventoId===e.id).sort((a,b)=>a.hora.localeCompare(b.hora));h+=`<div class="card"><h3>${e.nombre} - ${formatDateShort(e.fecha)}</h3>${ets.length>0?`<div style="margin-top:1rem">${ets.map(t=>`<div style="display:flex;gap:1rem;padding:1rem;border-left:4px solid #f43f5e;background:#fef2f2;margin-bottom:0.75rem;border-radius:0.5rem"><div style="min-width:60px;font-weight:600;color:#312e81">${t.hora}</div><div style="flex:1"><div style="font-weight:600;margin-bottom:0.25rem">${t.fase.replace(/_/g,' ')}</div>${t.descripcion?`<div style="font-size:0.875rem;color:#6b7280;margin-bottom:0.25rem">${t.descripcion}</div>`:''}${t.responsable?`<div style="font-size:0.875rem;color:#6b7280">👤 ${t.responsable}</div>`:''}</div><button class="btn btn-danger btn-small" onclick="deleteTimeline('${t.id}')">Eliminar</button></div>`).join('')}</div>`:'<p class="text-muted" style="margin-top:0.75rem">Sin horarios definidos</p>'}</div>`});h+='</div>';c.innerHTML=h};const deleteTimeline=id=>{if(confirm('¿Eliminar este horario?')){let ts=AppData.getTimelines();ts=ts.filter(t=>t.id!==id);AppData.setTimelines(ts);renderTimeline()}};const renderPresupuestos=()=>{const es=AppData.getEventos();const ps=AppData.getPresupuestos();const c=document.getElementById('presupuestoContent');if(es.length===0){c.innerHTML='<p class="text-muted">No hay eventos creados.</p>';return}let h='<div>';es.forEach(e=>{const p=ps.find(pr=>pr.eventoId===e.id);const iva=0.19;let ing=p?.ingreso||0;let gas=p?.gastos||0;let ivaamt=ing*iva;let net=ing-ivaamt-gas;h+=`<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><h3>${e.nombre}</h3><button class="btn btn-accent btn-small" onclick="editPresupuesto('${e.id}')">Editar</button></div><div class="grid grid-3"><div style="background:#f0fdf4;padding:1rem;border-radius:0.5rem;border:1px solid #bbf7d0"><div style="font-size:0.875rem;color:#6b7280">Cobro Cliente</div><div style="font-size:1.5rem;font-weight:700;color:#166534">${formatCLP(ing)}</div></div><div style="background:#fee2e2;padding:1rem;border-radius:0.5rem;border:1px solid #fca5a5"><div style="font-size:0.875rem;color:#6b7280">Gastos Totales</div><div style="font-size:1.5rem;font-weight:700;color:#991b1b">${formatCLP(gas)}</div></div><div style="background:#dbeafe;padding:1rem;border-radius:0.5rem;border:1px solid #93c5fd"><div style="font-size:0.875rem;color:#6b7280">Ganancia Neta</div><div style="font-size:1.5rem;font-weight:700;color:#1e40af">${formatCLP(net)}</div></div></div><div style="margin-top:1rem;padding:1rem;background:#f9fafb;border-radius:0.5rem;border:1px solid #e5e7eb"><div style="display:flex;justify-content:space-between;margin-bottom:0.5rem"><span>IVA 19% (descuento):</span><span style="font-weight:600">-${formatCLP(ivaamt)}</span></div><div style="display:flex;justify-content:space-between;margin-bottom:0.5rem"><span>Margen de Ganancia:</span><span style="font-weight:600;color:#312e81">${((net/(ing-ivaamt))*100).toFixed(1)}%</span></div>${p?.estadoPago?`<div style="margin-top:0.5rem;padding-top:0.5rem;border-top:1px solid #d1d5db"><strong>Estado Pago:</strong> ${p.estadoPago.toUpperCase()}</div>`:''}</div></div>`});h+='</div>';c.innerHTML=h};const editPresupuesto=eid=>{const ps=AppData.getPresupuestos();const p=ps.find(pr=>pr.eventoId===eid);const f=document.getElementById('formPresupuesto');f.querySelector('input[name="eventoId"]').value=eid;f.querySelector('input[name="ingreso"]').value=p?.ingreso||'';f.querySelector('input[name="gastos"]').value=p?.gastos||'';f.querySelector('select[name="estadoPago"]').value=p?.estadoPago||'abono';f.querySelector('textarea[name="notas"]').value=p?.notas||'';f.onsubmit=e=>{e.preventDefault();const fd=new FormData(f);const idx=ps.findIndex(pr=>pr.eventoId===eid);const np={id:p?.id||generateId(),eventoId:eid,ingreso:parseFloat(fd.get('ingreso')),gastos:parseFloat(fd.get('gastos')),estadoPago:fd.get('estadoPago'),notas:fd.get('notas'),createdAt:p?.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()};if(idx>=0)ps[idx]=np;else ps.push(np);AppData.setPresupuestos(ps);closeModal('modalPresupuesto');renderPresupuestos();f.onsubmit=null};openModal('modalPresupuesto')};const renderFinancesCharts=()=>{const es=AppData.getEventos();const ps=AppData.getPresupuestos();let ti=0,tg=0;ps.forEach(p=>{ti+=p.ingreso||0;tg+=p.gastos||0});const g=ti-tg;document.getElementById('totalIngresos').textContent=formatCLP(ti);document.getElementById('totalGastos').textContent=formatCLP(tg);document.getElementById('totalGanancia').textContent=formatCLP(g);const mo=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];const md=new Array(12).fill(0);ps.forEach(p=>{const d=new Date(p.createdAt);md[d.getMonth()]+=p.ingreso||0});const ctx1=document.getElementById('chartIngresos');if(ctx1&&ctx1.parentElement)new Chart(ctx1,{type:'line',data:{labels:mo,datasets:[{label:'Ingresos (CLP)',data:md,borderColor:'#312e81',backgroundColor:'rgba(49,46,129,0.1)',borderWidth:2,fill:true,tension:0.4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true}}}});const tc={};es.forEach(e=>{tc[e.tipo]=(tc[e.tipo]||0)+1});const ctx2=document.getElementById('chartTipos');if(ctx2&&ctx2.parentElement)new Chart(ctx2,{type:'doughnut',data:{labels:Object.keys(tc).map(k=>k.replace(/_/g,' ')),datasets:[{data:Object.values(tc),backgroundColor:['#312e81','#f43f5e','#8b5cf6','#06b6d4','#ec4899','#f59e0b']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}});const tm={};es.forEach(e=>{if(!tm[e.tipo])tm[e.tipo]={ing:0,gast:0};const pr=ps.find(p=>p.eventoId===e.id);if(pr){tm[e.tipo].ing+=pr.ingreso||0;tm[e.tipo].gast+=pr.gastos||0}});const ctx3=document.getElementById('chartMargenes');if(ctx3&&ctx3.parentElement){const lb=Object.keys(tm);const mr=lb.map(t=>{const ing=tm[t].ing;const gst=tm[t].gast;return ing>0?(((ing-gst)/ing)*100):0});new Chart(ctx3,{type:'bar',data:{labels:lb.map(k=>k.replace(/_/g,' ')),datasets:[{label:'Margen de Ganancia (%)',data:mr,backgroundColor:'#f43f5e'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true,max:100}}}})}};const init=()=>{renderEventos();renderProveedores();renderClientes()};document.addEventListener('DOMContentLoaded',init);
+  </script>
+</body>
+</html>

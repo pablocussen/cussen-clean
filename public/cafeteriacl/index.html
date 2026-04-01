@@ -1,0 +1,2087 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="CafeteriaCL">
+  <meta name="theme-color" content="#3e2723">
+  <title>CafeteriaCL - Gestión de Cafeterías</title>
+  <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22CafeteriaCL%22,%22short_name%22:%22Cafetería%22,%22start_url%22:%22/%22,%22display%22:%22standalone%22,%22background_color%22:%22%23ffffff%22,%22theme_color%22:%22%233e2723%22,%22scope%22:%22/%22}">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><circle cx='32' cy='32' r='30' fill='%233e2723'/><path d='M25 20 Q25 15 30 15 Q35 15 35 20 L35 30 Q35 32 33 32 L27 32 Q25 32 25 30 Z' fill='%23fef3c7'/><ellipse cx='30' cy='38' rx='8' ry='6' fill='%23d4af37'/></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #faf8f3;
+      color: #2c2c2c;
+      line-height: 1.6;
+      -webkit-user-select: none;
+      user-select: none;
+      height: 100vh;
+      width: 100vw;
+      position: fixed;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: linear-gradient(135deg, #3e2723 0%, #5c4033 100%);
+      color: #fef3c7;
+      padding: 16px 20px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(62, 39, 35, 0.15);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    header h1 {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    header .subtitle {
+      font-size: 12px;
+      opacity: 0.9;
+    }
+
+    main {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .container {
+      max-width: 100%;
+      padding: 16px;
+    }
+
+    .tab-content {
+      display: none;
+      animation: fadeIn 0.3s ease-in;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .tab-nav {
+      position: sticky;
+      top: 0;
+      background: #fff;
+      border-bottom: 2px solid #e8dcc8;
+      display: flex;
+      gap: 0;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      z-index: 50;
+    }
+
+    .tab-nav button {
+      flex: 1;
+      min-width: 70px;
+      padding: 12px 8px;
+      border: none;
+      background: transparent;
+      color: #999;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      transition: all 0.3s;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .tab-nav button.active {
+      color: #3e2723;
+      border-bottom-color: #d4af37;
+    }
+
+    button, input[type="button"], input[type="submit"] {
+      font-family: 'Inter', sans-serif;
+    }
+
+    input, textarea, select {
+      font-size: 16px;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .btn {
+      padding: 12px 16px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn-primary {
+      background: #3e2723;
+      color: #fef3c7;
+    }
+
+    .btn-primary:active {
+      background: #2c1810;
+      transform: scale(0.98);
+    }
+
+    .btn-secondary {
+      background: #e8dcc8;
+      color: #3e2723;
+    }
+
+    .btn-secondary:active {
+      background: #d9cbb5;
+      transform: scale(0.98);
+    }
+
+    .btn-success {
+      background: #10b981;
+      color: #fff;
+    }
+
+    .btn-success:active {
+      background: #059669;
+    }
+
+    .btn-danger {
+      background: #ef4444;
+      color: #fff;
+    }
+
+    .btn-danger:active {
+      background: #dc2626;
+    }
+
+    .btn-small {
+      padding: 8px 12px;
+      font-size: 12px;
+    }
+
+    input[type="text"], input[type="number"], input[type="email"], input[type="tel"], select, textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #d9cbb5;
+      border-radius: 6px;
+      margin-bottom: 12px;
+      background: #fff;
+      color: #2c2c2c;
+    }
+
+    input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus, input[type="tel"]:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #d4af37;
+      box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+      color: #3e2723;
+      font-size: 14px;
+    }
+
+    .grid {
+      display: grid;
+      gap: 16px;
+    }
+
+    .grid-2 {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .grid-3 {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    @media (max-width: 600px) {
+      .grid-2, .grid-3 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      transition: all 0.3s;
+    }
+
+    .card:active {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    }
+
+    .product-card {
+      cursor: pointer;
+      user-select: text;
+    }
+
+    .product-card h3 {
+      font-size: 16px;
+      color: #3e2723;
+      margin-bottom: 4px;
+    }
+
+    .product-card p {
+      font-size: 13px;
+      color: #999;
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+
+    .product-card .price {
+      color: #d4af37;
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .badge-category {
+      background: #f0e6d2;
+      color: #3e2723;
+    }
+
+    .badge-seasonal {
+      background: #fbbf24;
+      color: #fff;
+    }
+
+    .badge-available {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .badge-unavailable {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px;
+      max-width: 500px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .modal-header {
+      font-size: 20px;
+      font-weight: 700;
+      color: #3e2723;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 24px;
+      color: #999;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .size-buttons {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .size-btn {
+      flex: 1;
+      padding: 10px;
+      border: 2px solid #d9cbb5;
+      background: #fff;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .size-btn.active {
+      border-color: #d4af37;
+      background: #fffbf0;
+      color: #d4af37;
+    }
+
+    .cart-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      border-bottom: 1px solid #f0e6d2;
+      background: #fff;
+      margin-bottom: 8px;
+      border-radius: 6px;
+    }
+
+    .cart-item-info h4 {
+      font-size: 14px;
+      color: #3e2723;
+      margin-bottom: 4px;
+    }
+
+    .cart-item-info p {
+      font-size: 12px;
+      color: #999;
+    }
+
+    .cart-item-price {
+      font-weight: 700;
+      color: #d4af37;
+      font-size: 15px;
+    }
+
+    .cart-summary {
+      background: #f9f3e6;
+      padding: 16px;
+      border-radius: 8px;
+      margin: 16px 0;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    .summary-row.total {
+      border-top: 2px solid #d9cbb5;
+      padding-top: 12px;
+      margin-top: 12px;
+      font-weight: 700;
+      font-size: 16px;
+      color: #3e2723;
+    }
+
+    .payment-method {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .payment-btn {
+      flex: 1;
+      min-width: 100px;
+      padding: 12px;
+      border: 2px solid #d9cbb5;
+      background: #fff;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-size: 13px;
+    }
+
+    .payment-btn.active {
+      border-color: #3e2723;
+      background: #3e2723;
+      color: #fef3c7;
+    }
+
+    .inventory-item {
+      background: #fff;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .inventory-item-info {
+      flex: 1;
+    }
+
+    .inventory-item-info h4 {
+      font-size: 14px;
+      color: #3e2723;
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+
+    .inventory-item-info p {
+      font-size: 12px;
+      color: #999;
+    }
+
+    .stock-level {
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      min-width: 50px;
+      text-align: center;
+    }
+
+    .stock-good {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .stock-warning {
+      background: #fef08a;
+      color: #92400e;
+    }
+
+    .stock-critical {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .recipe-card {
+      background: #fff;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      border-left: 4px solid #d4af37;
+    }
+
+    .recipe-card h3 {
+      color: #3e2723;
+      font-size: 16px;
+      margin-bottom: 12px;
+    }
+
+    .recipe-detail {
+      display: grid;
+      gap: 8px;
+      font-size: 13px;
+    }
+
+    .recipe-detail-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid #f0e6d2;
+    }
+
+    .recipe-detail-label {
+      color: #3e2723;
+      font-weight: 600;
+    }
+
+    .recipe-detail-value {
+      color: #666;
+    }
+
+    .chart-container {
+      position: relative;
+      height: 300px;
+      margin: 20px 0;
+      background: #fff;
+      padding: 16px;
+      border-radius: 8px;
+    }
+
+    .stat-box {
+      background: linear-gradient(135deg, #3e2723 0%, #5c4033 100%);
+      color: #fef3c7;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      opacity: 0.9;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      margin-top: 6px;
+    }
+
+    .loyalty-card {
+      background: linear-gradient(135deg, #d4af37 0%, #e8c547 100%);
+      color: #3e2723;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2);
+    }
+
+    .loyalty-header {
+      font-size: 14px;
+      opacity: 0.9;
+      margin-bottom: 8px;
+    }
+
+    .loyalty-phone {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .stamp-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      margin: 16px 0;
+    }
+
+    .stamp {
+      width: 100%;
+      aspect-ratio: 1;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 700;
+      border: 2px solid rgba(62, 39, 35, 0.2);
+    }
+
+    .stamp.filled {
+      background: #3e2723;
+      color: #fef3c7;
+      border-color: #3e2723;
+    }
+
+    .message {
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .message.success {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .message.error {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .message.info {
+      background: #dbeafe;
+      color: #0c4a6e;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #999;
+    }
+
+    .empty-state h3 {
+      font-size: 18px;
+      color: #3e2723;
+      margin-bottom: 8px;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 28px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: 0.3s;
+      border-radius: 14px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 22px;
+      width: 22px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: 0.3s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: #10b981;
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(22px);
+    }
+
+    @media (max-width: 480px) {
+      header h1 {
+        font-size: 20px;
+      }
+
+      .container {
+        padding: 12px;
+      }
+
+      .card {
+        padding: 12px;
+      }
+
+      .grid-3 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @supports (padding: max(0px)) {
+      header {
+        padding: 16px max(16px, env(safe-area-inset-right)) 16px max(16px, env(safe-area-inset-left));
+      }
+
+      main {
+        padding-bottom: env(safe-area-inset-bottom);
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>☕ CafeteriaCL</h1>
+    <div class="subtitle">Gestión profesional de cafeterías</div>
+  </header>
+
+  <nav class="tab-nav">
+    <button class="tab-btn active" data-tab="menu">Menú</button>
+    <button class="tab-btn" data-tab="sales">Ventas</button>
+    <button class="tab-btn" data-tab="inventory">Inventario</button>
+    <button class="tab-btn" data-tab="recipes">Recetas</button>
+    <button class="tab-btn" data-tab="finance">Finanzas</button>
+    <button class="tab-btn" data-tab="loyalty">Fidelidad</button>
+  </nav>
+
+  <main>
+    <div class="container">
+      <!-- TAB 1: MENÚ -->
+      <div id="menu" class="tab-content active">
+        <div class="form-group">
+          <input type="text" id="productSearch" placeholder="🔍 Buscar producto...">
+        </div>
+
+        <div class="form-group">
+          <label>Categoría</label>
+          <select id="categoryFilter">
+            <option value="">Todas las categorías</option>
+            <option value="cafe-espresso">Café Espresso</option>
+            <option value="cafe-filtro">Café Filtro</option>
+            <option value="cafe-frio">Café Frío</option>
+            <option value="te">Té</option>
+            <option value="chocolate">Chocolate</option>
+            <option value="jugos">Jugos</option>
+            <option value="pasteleria">Pastelería</option>
+            <option value="sandwiches">Sándwiches</option>
+            <option value="desayunos">Desayunos</option>
+          </select>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+          <button class="btn btn-primary" style="width: 100%;" onclick="openAddProductModal()">+ Agregar Producto</button>
+        </div>
+
+        <div id="productsList" class="grid grid-2"></div>
+
+        <div id="productEmpty" class="empty-state" style="display: none;">
+          <h3>Sin productos</h3>
+          <p>Agrega tu primer producto para comenzar</p>
+        </div>
+      </div>
+
+      <!-- TAB 2: VENTAS -->
+      <div id="sales" class="tab-content">
+        <div class="grid grid-2" style="margin-bottom: 20px;">
+          <div class="stat-box">
+            <div class="stat-label">Ventas Hoy</div>
+            <div class="stat-value" id="todaySalesAmount">$0</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Transacciones</div>
+            <div class="stat-value" id="todayTransactions">0</div>
+          </div>
+        </div>
+
+        <div id="bestSellers" style="background: #fff; padding: 16px; border-radius: 8px; margin-bottom: 16px; display: none;">
+          <h3 style="color: #3e2723; margin-bottom: 12px; font-size: 16px;">Top Vendidos Hoy</h3>
+          <div id="bestSellersList"></div>
+        </div>
+
+        <h3 style="color: #3e2723; margin: 20px 0 16px 0; font-size: 16px;">Productos Disponibles</h3>
+        <div id="salesProductGrid" class="grid grid-3"></div>
+
+        <div style="margin: 20px 0;">
+          <h3 style="color: #3e2723; margin-bottom: 16px; font-size: 16px;">Carrito (Orden #<span id="currentOrderNum">001</span>)</h3>
+          <div id="cartItemsList"></div>
+        </div>
+
+        <div id="cartSummary" class="cart-summary" style="display: none;">
+          <div class="summary-row">
+            <span>Subtotal:</span>
+            <span id="cartSubtotal">$0</span>
+          </div>
+          <div class="summary-row">
+            <span>Descuento:</span>
+            <span id="cartDiscount">$0</span>
+          </div>
+          <div class="summary-row total">
+            <span>Total:</span>
+            <span id="cartTotal">$0</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Método de Pago</label>
+          <div class="payment-method">
+            <button class="payment-btn active" onclick="selectPaymentMethod('efectivo')">Efectivo</button>
+            <button class="payment-btn" onclick="selectPaymentMethod('debito')">Débito</button>
+            <button class="payment-btn" onclick="selectPaymentMethod('credito')">Crédito</button>
+            <button class="payment-btn" onclick="selectPaymentMethod('transferencia')">Transferencia</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <input type="number" id="discountAmount" placeholder="Descuento ($)" min="0">
+        </div>
+
+        <div class="form-group" style="display: flex; gap: 10px;">
+          <button class="btn btn-danger" style="flex: 1;" onclick="clearCart()">Limpiar</button>
+          <button class="btn btn-success" style="flex: 1;" onclick="completeSale()">Cobrar</button>
+        </div>
+
+        <div id="salesEmpty" class="empty-state" style="display: none; margin-top: 40px;">
+          <h3>Sin ventas hoy</h3>
+          <p>Comienza a registrar transacciones</p>
+        </div>
+      </div>
+
+      <!-- TAB 3: INVENTARIO -->
+      <div id="inventory" class="tab-content">
+        <div style="margin-bottom: 20px;">
+          <button class="btn btn-primary" style="width: 100%;" onclick="openAddInventoryModal()">+ Agregar Producto</button>
+        </div>
+
+        <h3 style="color: #3e2723; margin: 20px 0 16px 0; font-size: 16px;">Granos de Café</h3>
+        <div id="coffeeBeansInventory"></div>
+
+        <h3 style="color: #3e2723; margin: 20px 0 16px 0; font-size: 16px;">Lácteos</h3>
+        <div id="milkInventory"></div>
+
+        <h3 style="color: #3e2723; margin: 20px 0 16px 0; font-size: 16px;">Jarabes & Extras</h3>
+        <div id="syrupsInventory"></div>
+
+        <h3 style="color: #3e2723; margin: 20px 0 16px 0; font-size: 16px;">Empaques</h3>
+        <div id="packagingInventory"></div>
+      </div>
+
+      <!-- TAB 4: RECETAS -->
+      <div id="recipes" class="tab-content">
+        <div class="form-group">
+          <input type="text" id="recipeSearch" placeholder="🔍 Buscar receta...">
+        </div>
+
+        <div id="recipesList"></div>
+
+        <div id="recipeEmpty" class="empty-state" style="display: none;">
+          <h3>Sin recetas</h3>
+          <p>Las recetas de barista aparecerán aquí</p>
+        </div>
+      </div>
+
+      <!-- TAB 5: FINANZAS -->
+      <div id="finance" class="tab-content">
+        <div class="grid grid-2" style="margin-bottom: 20px;">
+          <div class="stat-box">
+            <div class="stat-label">Ingresos Este Mes</div>
+            <div class="stat-value" id="monthlyRevenue">$0</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Costo de Bienes</div>
+            <div class="stat-value" id="monthlyCogs">$0</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Margen Bruto</div>
+            <div class="stat-value" id="monthlyMargin">0%</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Ganancia Neta</div>
+            <div class="stat-value" id="monthlyProfit">$0</div>
+          </div>
+        </div>
+
+        <h3 style="color: #3e2723; margin: 20px 0 16px 0; font-size: 16px;">Ingresos por Categoría</h3>
+        <div class="chart-container">
+          <canvas id="categoryChart"></canvas>
+        </div>
+
+        <h3 style="color: #3e2723; margin: 20px 0 16px 0; font-size: 16px;">Ventas Diarias (Últimos 7 días)</h3>
+        <div class="chart-container">
+          <canvas id="dailyChart"></canvas>
+        </div>
+
+        <h3 style="color: #3e2723; margin: 20px 0 16px 0; font-size: 16px;">Margen por Producto</h3>
+        <div id="marginsList"></div>
+      </div>
+
+      <!-- TAB 6: FIDELIDAD -->
+      <div id="loyalty" class="tab-content">
+        <div style="margin-bottom: 20px;">
+          <input type="tel" id="customerPhone" placeholder="+56 9 XXXX XXXX" maxlength="15">
+          <button class="btn btn-primary" style="width: 100%;" onclick="searchCustomer()">Buscar o Crear Cliente</button>
+        </div>
+
+        <div id="loyaltyCard" style="display: none;">
+          <div class="loyalty-card">
+            <div class="loyalty-header">Tarjeta de Fidelización</div>
+            <div class="loyalty-phone" id="loyaltyPhone"></div>
+            <div style="font-size: 13px; margin-bottom: 12px;">
+              <strong id="loyaltyName">Cliente</strong><br>
+              <small id="loyaltyEmail" style="color: rgba(62, 39, 35, 0.7);"></small>
+            </div>
+            <div class="stamp-grid" id="stampGrid"></div>
+            <div style="margin-top: 12px; font-size: 12px;">
+              <div>Cafés completados: <strong id="completedStamps">0</strong>/10</div>
+              <div>Puntos bonus: <strong id="bonusPoints">0</strong></div>
+            </div>
+          </div>
+
+          <div style="margin: 20px 0;">
+            <button class="btn btn-success" style="width: 100%;" onclick="addStamp()">+ Registrar Café</button>
+            <button class="btn btn-secondary" style="width: 100%; margin-top: 10px;" onclick="redeemFree()">Reclamar Café Gratis</button>
+          </div>
+
+          <h3 style="color: #3e2723; margin: 20px 0 16px 0; font-size: 16px;">Historial de Canjes</h3>
+          <div id="redemptionHistory"></div>
+        </div>
+
+        <div id="loyaltyEmpty" class="empty-state" style="display: none;">
+          <h3>Busca un cliente</h3>
+          <p>Ingresa el teléfono del cliente para ver su tarjeta</p>
+        </div>
+
+        <div id="loyaltyMemberList" style="display: none;">
+          <h3 style="color: #3e2723; margin-bottom: 16px; font-size: 16px;">Base de Datos de Clientes</h3>
+          <div id="membersList"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- MODAL: Agregar Producto -->
+  <div id="addProductModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span>Agregar Producto</span>
+        <button class="modal-close" onclick="closeModal('addProductModal')">✕</button>
+      </div>
+      <div class="form-group">
+        <label>Nombre</label>
+        <input type="text" id="productName" placeholder="Ej: Espresso Doble">
+      </div>
+      <div class="form-group">
+        <label>Descripción</label>
+        <textarea id="productDesc" placeholder="Descripción corta" rows="2"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Categoría</label>
+        <select id="productCategory">
+          <option value="cafe-espresso">Café Espresso</option>
+          <option value="cafe-filtro">Café Filtro</option>
+          <option value="cafe-frio">Café Frío</option>
+          <option value="te">Té</option>
+          <option value="chocolate">Chocolate</option>
+          <option value="jugos">Jugos</option>
+          <option value="pasteleria">Pastelería</option>
+          <option value="sandwiches">Sándwiches</option>
+          <option value="desayunos">Desayunos</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>¿Especial de temporada?</label>
+        <input type="checkbox" id="productSeasonal" style="width: auto; margin-right: 8px;">
+        <span>Sí, es especial</span>
+      </div>
+      <div class="form-group">
+        <label>Precio Pequeño (S)</label>
+        <input type="number" id="productPriceS" placeholder="2500" min="0">
+      </div>
+      <div class="form-group">
+        <label>Precio Mediano (M)</label>
+        <input type="number" id="productPriceM" placeholder="3500" min="0">
+      </div>
+      <div class="form-group">
+        <label>Precio Grande (L)</label>
+        <input type="number" id="productPriceL" placeholder="4500" min="0">
+      </div>
+      <button class="btn btn-success" style="width: 100%;" onclick="saveProduct()">Guardar Producto</button>
+    </div>
+  </div>
+
+  <!-- MODAL: Seleccionar Tamaño -->
+  <div id="sizeModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span id="sizeModalTitle">Seleccionar Tamaño</span>
+        <button class="modal-close" onclick="closeModal('sizeModal')">✕</button>
+      </div>
+      <p id="sizeModalDesc" style="margin-bottom: 20px; color: #666;"></p>
+      <div class="size-buttons" id="sizeButtonsContainer"></div>
+      <button class="btn btn-primary" style="width: 100%;" onclick="addToCart()">Agregar al Carrito</button>
+    </div>
+  </div>
+
+  <!-- MODAL: Agregar Inventario -->
+  <div id="addInventoryModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span>Agregar al Inventario</span>
+        <button class="modal-close" onclick="closeModal('addInventoryModal')">✕</button>
+      </div>
+      <div class="form-group">
+        <label>Tipo</label>
+        <select id="inventoryType">
+          <option value="coffee">Grano de Café</option>
+          <option value="milk">Lácteo</option>
+          <option value="syrup">Jarabe/Extra</option>
+          <option value="packaging">Empaque</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Nombre</label>
+        <input type="text" id="inventoryName" placeholder="Ej: Café Colombia Premium">
+      </div>
+      <div class="form-group">
+        <label>Cantidad</label>
+        <input type="number" id="inventoryQty" placeholder="1000" min="0">
+      </div>
+      <div class="form-group">
+        <label>Unidad</label>
+        <input type="text" id="inventoryUnit" placeholder="gr, L, unidades">
+      </div>
+      <div class="form-group">
+        <label>Costo Unitario ($)</label>
+        <input type="number" id="inventoryCost" placeholder="5.50" min="0" step="0.1">
+      </div>
+      <button class="btn btn-success" style="width: 100%;" onclick="saveInventory()">Agregar Inventario</button>
+    </div>
+  </div>
+
+  <script>
+    // ==================== APP STATE ====================
+    const app = {
+      products: [],
+      sales: [],
+      inventory: [],
+      recipes: [
+        {
+          id: 'espresso',
+          name: 'Espresso',
+          brewMethod: 'Máquina espresso',
+          grindSize: 'Fino',
+          doseGrams: 18,
+          yieldMls: 30,
+          extractionSecs: 25,
+          tempCelsius: 90,
+          notes: 'Presión 9 bares, agua a 90-93°C'
+        },
+        {
+          id: 'americano',
+          name: 'Americano',
+          brewMethod: 'Máquina espresso + agua caliente',
+          grindSize: 'Fino',
+          doseGrams: 18,
+          yieldMls: 150,
+          extractionSecs: 25,
+          tempCelsius: 90,
+          notes: '30ml espresso + 120ml agua caliente'
+        },
+        {
+          id: 'cortado',
+          name: 'Cortado',
+          brewMethod: 'Espresso + leche vaporizada',
+          grindSize: 'Fino',
+          doseGrams: 18,
+          yieldMls: 60,
+          extractionSecs: 25,
+          tempCelsius: 65,
+          notes: '30ml espresso + 30ml leche vaporizada'
+        },
+        {
+          id: 'cappuccino',
+          name: 'Cappuccino',
+          brewMethod: 'Espresso + leche vaporizada y espuma',
+          grindSize: 'Fino',
+          doseGrams: 18,
+          yieldMls: 210,
+          extractionSecs: 25,
+          tempCelsius: 65,
+          notes: '30ml espresso + 60ml leche + 120ml espuma'
+        },
+        {
+          id: 'latte',
+          name: 'Latte',
+          brewMethod: 'Espresso + leche al vapor',
+          grindSize: 'Fino',
+          doseGrams: 18,
+          yieldMls: 240,
+          extractionSecs: 25,
+          tempCelsius: 65,
+          notes: '30ml espresso + 210ml leche caliente'
+        },
+        {
+          id: 'flatwhite',
+          name: 'Flat White',
+          brewMethod: 'Doble espresso + microspuma de leche',
+          grindSize: 'Fino',
+          doseGrams: 36,
+          yieldMls: 180,
+          extractionSecs: 50,
+          tempCelsius: 65,
+          notes: '60ml espresso + 120ml microspuma'
+        },
+        {
+          id: 'mocha',
+          name: 'Mocha',
+          brewMethod: 'Espresso + chocolate + leche',
+          grindSize: 'Fino',
+          doseGrams: 18,
+          yieldMls: 240,
+          extractionSecs: 25,
+          tempCelsius: 65,
+          notes: '30ml espresso + 30ml chocolate + 180ml leche'
+        },
+        {
+          id: 'coldbrew',
+          name: 'Cold Brew',
+          brewMethod: 'Infusión en frío',
+          grindSize: 'Muy grueso',
+          doseGrams: 100,
+          yieldMls: 300,
+          extractionSecs: 43200,
+          tempCelsius: 4,
+          notes: '12 horas en frío, razón 1:3 café:agua'
+        },
+        {
+          id: 'affogato',
+          name: 'Affogato',
+          brewMethod: 'Helado + espresso caliente',
+          grindSize: 'Fino',
+          doseGrams: 18,
+          yieldMls: 200,
+          extractionSecs: 25,
+          tempCelsius: 90,
+          notes: 'Cuchara de helado vainilla + espresso doble'
+        }
+      ],
+      customers: [],
+      cart: [],
+      currentOrderNum: 1,
+      selectedPaymentMethod: 'efectivo',
+      selectedSize: null,
+      selectedProduct: null,
+      currentCustomerPhone: null
+    };
+
+    // ==================== STORAGE HELPERS ====================
+    function safeLocalStorage(action, key, value = null) {
+      try {
+        if (action === 'get') {
+          return localStorage.getItem(key);
+        } else if (action === 'set') {
+          localStorage.setItem(key, value);
+        } else if (action === 'remove') {
+          localStorage.removeItem(key);
+        }
+      } catch (e) {
+        console.warn('localStorage error:', e);
+      }
+      return null;
+    }
+
+    // ==================== INITIALIZATION ====================
+    function initApp() {
+      loadDataFromStorage();
+      renderProducts();
+      renderSalesTab();
+      renderRecipes();
+      renderInventory();
+      renderLoyaltyTab();
+      updateFinanceCharts();
+      setupEventListeners();
+    }
+
+    function loadDataFromStorage() {
+      const stored = safeLocalStorage('get', 'cafeteriacl-data');
+      if (stored) {
+        try {
+          const data = JSON.parse(stored);
+          app.products = data.products || [];
+          app.sales = data.sales || [];
+          app.inventory = data.inventory || [];
+          app.customers = data.customers || [];
+          app.currentOrderNum = data.currentOrderNum || 1;
+        } catch (e) {
+          console.warn('Parse error:', e);
+          initializeDefaultData();
+        }
+      } else {
+        initializeDefaultData();
+      }
+    }
+
+    function initializeDefaultData() {
+      app.products = [
+        {
+          id: 1,
+          name: 'Espresso Doble',
+          desc: 'Café espresso concentrado',
+          category: 'cafe-espresso',
+          seasonal: false,
+          sizes: { S: 2800, M: 3500, L: 0 },
+          available: true,
+          costCLP: 800
+        },
+        {
+          id: 2,
+          name: 'Cappuccino',
+          desc: 'Espresso con leche y espuma',
+          category: 'cafe-espresso',
+          seasonal: false,
+          sizes: { S: 3500, M: 4200, L: 5000 },
+          available: true,
+          costCLP: 1200
+        },
+        {
+          id: 3,
+          name: 'Café Filtro',
+          desc: 'Café de gotero chileno',
+          category: 'cafe-filtro',
+          seasonal: false,
+          sizes: { S: 2500, M: 3200, L: 3800 },
+          available: true,
+          costCLP: 600
+        },
+        {
+          id: 4,
+          name: 'Agua Fresca',
+          desc: 'Café frío con hielo',
+          category: 'cafe-frio',
+          seasonal: false,
+          sizes: { S: 3000, M: 3800, L: 4500 },
+          available: true,
+          costCLP: 900
+        },
+        {
+          id: 5,
+          name: 'Té de Hierbas',
+          desc: 'Té natural variado',
+          category: 'te',
+          seasonal: false,
+          sizes: { S: 2000, M: 2500, L: 3000 },
+          available: true,
+          costCLP: 400
+        },
+        {
+          id: 6,
+          name: 'Chocolate Caliente',
+          desc: 'Chocolate belga premium',
+          category: 'chocolate',
+          seasonal: true,
+          sizes: { S: 3500, M: 4000, L: 4800 },
+          available: true,
+          costCLP: 1100
+        },
+        {
+          id: 7,
+          name: 'Croissant',
+          desc: 'Croissant de mantequilla',
+          category: 'pasteleria',
+          seasonal: false,
+          sizes: { S: 3200, M: 0, L: 0 },
+          available: true,
+          costCLP: 900
+        },
+        {
+          id: 8,
+          name: 'Sándwich Jamón y Queso',
+          desc: 'Pan tostado con jamón y queso',
+          category: 'sandwiches',
+          seasonal: false,
+          sizes: { S: 4500, M: 5500, L: 0 },
+          available: true,
+          costCLP: 1500
+        },
+        {
+          id: 9,
+          name: 'Desayuno Completo',
+          desc: 'Café + tostadas + frutas',
+          category: 'desayunos',
+          seasonal: false,
+          sizes: { S: 8000, M: 10000, L: 0 },
+          available: true,
+          costCLP: 3000
+        },
+        {
+          id: 10,
+          name: 'Jugo Natural',
+          desc: 'Jugo de naranja recién hecho',
+          category: 'jugos',
+          seasonal: false,
+          sizes: { S: 2500, M: 3500, L: 4500 },
+          available: true,
+          costCLP: 800
+        }
+      ];
+
+      app.inventory = [
+        { id: 'cb-col', type: 'coffee', name: 'Café Colombia', qty: 5000, unit: 'gr', cost: 5.50, category: 'origen-Colombia' },
+        { id: 'cb-bra', type: 'coffee', name: 'Café Brasil', qty: 3500, unit: 'gr', cost: 4.20, category: 'origen-Brasil' },
+        { id: 'cb-eth', type: 'coffee', name: 'Café Etiopía', qty: 2000, unit: 'gr', cost: 7.80, category: 'origen-Etiopía' },
+        { id: 'cb-mix', type: 'coffee', name: 'Blend Propio', qty: 4000, unit: 'gr', cost: 6.00, category: 'origen-Blend' },
+        { id: 'mk-ent', type: 'milk', name: 'Leche Entera', qty: 50, unit: 'L', cost: 2.50, category: 'tipo-Entera' },
+        { id: 'mk-des', type: 'milk', name: 'Leche Descremada', qty: 30, unit: 'L', cost: 2.20, category: 'tipo-Descremada' },
+        { id: 'mk-veg', type: 'milk', name: 'Leche Vegetal', qty: 20, unit: 'L', cost: 3.50, category: 'tipo-Vegetal' },
+        { id: 'sy-van', type: 'syrup', name: 'Jarabe Vainilla', qty: 2000, unit: 'ml', cost: 0.15, category: 'sabor-Vainilla' },
+        { id: 'sy-avl', type: 'syrup', name: 'Jarabe Avellana', qty: 1500, unit: 'ml', cost: 0.18, category: 'sabor-Avellana' },
+        { id: 'pk-vso', type: 'packaging', name: 'Vasos 12oz', qty: 500, unit: 'unidades', cost: 0.40, category: 'tamaño-12oz' },
+        { id: 'pk-tap', type: 'packaging', name: 'Tapas', qty: 600, unit: 'unidades', cost: 0.15, category: 'tipo-Tapa' },
+        { id: 'pk-ser', type: 'packaging', name: 'Servilletas', qty: 2000, unit: 'unidades', cost: 0.05, category: 'tipo-Servilleta' }
+      ];
+
+      saveDataToStorage();
+    }
+
+    function saveDataToStorage() {
+      const data = {
+        products: app.products,
+        sales: app.sales,
+        inventory: app.inventory,
+        customers: app.customers,
+        currentOrderNum: app.currentOrderNum
+      };
+      safeLocalStorage('set', 'cafeteriacl-data', JSON.stringify(data));
+    }
+
+    // ==================== TAB NAVIGATION ====================
+    function setupEventListeners() {
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const tabName = this.dataset.tab;
+          switchTab(tabName);
+        });
+      });
+
+      document.getElementById('categoryFilter').addEventListener('change', renderProducts);
+      document.getElementById('productSearch').addEventListener('input', renderProducts);
+      document.getElementById('recipeSearch').addEventListener('input', renderRecipes);
+      document.getElementById('discountAmount').addEventListener('change', updateCartSummary);
+    }
+
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById(tabName).classList.add('active');
+      document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+
+      if (tabName === 'finance') {
+        setTimeout(() => updateFinanceCharts(), 100);
+      }
+    }
+
+    // ==================== MENÚ TAB ====================
+    function renderProducts() {
+      const search = document.getElementById('productSearch').value.toLowerCase();
+      const category = document.getElementById('categoryFilter').value;
+
+      let filtered = app.products.filter(p => {
+        const matchSearch = p.name.toLowerCase().includes(search) || p.desc.toLowerCase().includes(search);
+        const matchCategory = !category || p.category === category;
+        return matchSearch && matchCategory;
+      });
+
+      const container = document.getElementById('productsList');
+      const empty = document.getElementById('productEmpty');
+
+      if (filtered.length === 0) {
+        container.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+      }
+
+      empty.style.display = 'none';
+      container.innerHTML = filtered.map(p => `
+        <div class="card product-card" onclick="openSizeModal(${p.id})">
+          <div>
+            ${p.seasonal ? '<span class="badge badge-seasonal">Especial</span>' : ''}
+            <span class="badge badge-category">${getCategoryLabel(p.category)}</span>
+          </div>
+          <h3>${p.name}</h3>
+          <p>${p.desc}</p>
+          <div class="price">
+            ${Object.entries(p.sizes)
+              .filter(([_, price]) => price > 0)
+              .map(([size, price]) => `$${price.toLocaleString()}`)
+              .join(' - ')}
+          </div>
+          <span class="badge" style="background: ${p.available ? '#d1fae5' : '#fee2e2'}; color: ${p.available ? '#065f46' : '#991b1b'};margin-top:8px;">
+            ${p.available ? '✓ Disponible' : '✕ Sin Stock'}
+          </span>
+        </div>
+      `).join('');
+    }
+
+    function getCategoryLabel(cat) {
+      const labels = {
+        'cafe-espresso': '☕ Espresso',
+        'cafe-filtro': '🫖 Filtro',
+        'cafe-frio': '❄️ Frío',
+        'te': '🍵 Té',
+        'chocolate': '🍫 Chocolate',
+        'jugos': '🧃 Jugo',
+        'pasteleria': '🥐 Pastelería',
+        'sandwiches': '🥪 Sándwich',
+        'desayunos': '🥞 Desayuno'
+      };
+      return labels[cat] || cat;
+    }
+
+    function openAddProductModal() {
+      document.getElementById('addProductModal').classList.add('active');
+    }
+
+    function saveProduct() {
+      const name = document.getElementById('productName').value;
+      const desc = document.getElementById('productDesc').value;
+      const category = document.getElementById('productCategory').value;
+      const seasonal = document.getElementById('productSeasonal').checked;
+      const priceS = parseInt(document.getElementById('productPriceS').value) || 0;
+      const priceM = parseInt(document.getElementById('productPriceM').value) || 0;
+      const priceL = parseInt(document.getElementById('productPriceL').value) || 0;
+
+      if (!name || (!priceS && !priceM && !priceL)) {
+        alert('Por favor completa nombre y al menos un precio');
+        return;
+      }
+
+      const newProduct = {
+        id: Math.max(...app.products.map(p => p.id), 0) + 1,
+        name,
+        desc,
+        category,
+        seasonal,
+        sizes: { S: priceS, M: priceM, L: priceL },
+        available: true,
+        costCLP: 500
+      };
+
+      app.products.push(newProduct);
+      saveDataToStorage();
+      closeModal('addProductModal');
+      renderProducts();
+      renderSalesTab();
+
+      document.getElementById('productName').value = '';
+      document.getElementById('productDesc').value = '';
+      document.getElementById('productPriceS').value = '';
+      document.getElementById('productPriceM').value = '';
+      document.getElementById('productPriceL').value = '';
+      document.getElementById('productSeasonal').checked = false;
+    }
+
+    function openSizeModal(productId) {
+      app.selectedProduct = app.products.find(p => p.id === productId);
+      const modal = document.getElementById('sizeModal');
+      document.getElementById('sizeModalTitle').textContent = app.selectedProduct.name;
+      document.getElementById('sizeModalDesc').textContent = app.selectedProduct.desc;
+
+      const sizes = app.selectedProduct.sizes;
+      const buttons = Object.entries(sizes)
+        .filter(([_, price]) => price > 0)
+        .map(([size, price]) => `
+          <button class="size-btn" onclick="selectSize('${size}')">
+            ${size}<br><small>$${price.toLocaleString()}</small>
+          </button>
+        `).join('');
+
+      document.getElementById('sizeButtonsContainer').innerHTML = buttons;
+      app.selectedSize = null;
+      modal.classList.add('active');
+    }
+
+    function selectSize(size) {
+      app.selectedSize = size;
+      document.querySelectorAll('.size-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.closest('.size-btn').classList.add('active');
+    }
+
+    function addToCart() {
+      if (!app.selectedSize) {
+        alert('Selecciona un tamaño');
+        return;
+      }
+
+      const price = app.selectedProduct.sizes[app.selectedSize];
+      const item = {
+        productId: app.selectedProduct.id,
+        name: app.selectedProduct.name,
+        size: app.selectedSize,
+        price,
+        quantity: 1,
+        timestamp: Date.now()
+      };
+
+      const existing = app.cart.find(c => c.productId === item.productId && c.size === item.size);
+      if (existing) {
+        existing.quantity++;
+      } else {
+        app.cart.push(item);
+      }
+
+      closeModal('sizeModal');
+      renderSalesTab();
+      showMessage('Producto agregado al carrito', 'success');
+    }
+
+    // ==================== VENTAS TAB ====================
+    function renderSalesTab() {
+      // Top stats
+      const today = new Date().toDateString();
+      const todaysSales = app.sales.filter(s => new Date(s.timestamp).toDateString() === today);
+      const todayAmount = todaysSales.reduce((sum, s) => sum + s.total, 0);
+      document.getElementById('todaySalesAmount').textContent = `$${todayAmount.toLocaleString()}`;
+      document.getElementById('todayTransactions').textContent = todaysSales.length;
+
+      // Best sellers
+      const sellers = {};
+      todaysSales.forEach(sale => {
+        sale.items.forEach(item => {
+          const key = `${item.name} (${item.size})`;
+          sellers[key] = (sellers[key] || 0) + item.quantity;
+        });
+      });
+
+      const topSellers = Object.entries(sellers)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5);
+
+      if (topSellers.length > 0) {
+        document.getElementById('bestSellers').style.display = 'block';
+        document.getElementById('bestSellersList').innerHTML = topSellers.map(([name, qty]) => `
+          <div style="padding: 8px 0; border-bottom: 1px solid #f0e6d2; font-size: 13px;">
+            <strong>${name}</strong><span style="float:right;color:#d4af37;font-weight:700;">${qty}x</span>
+          </div>
+        `).join('');
+      } else {
+        document.getElementById('bestSellers').style.display = 'none';
+      }
+
+      // Available products for sales
+      const available = app.products.filter(p => p.available);
+      document.getElementById('salesProductGrid').innerHTML = available.map(p => {
+        const defaultSize = p.sizes.M > 0 ? 'M' : (p.sizes.S > 0 ? 'S' : 'L');
+        const defaultPrice = p.sizes[defaultSize];
+        return `
+          <div class="card" style="cursor:pointer;text-align:center;" onclick="addProductDirectToCart(${p.id})">
+            <h3 style="font-size:14px;margin-bottom:8px;">${p.name}</h3>
+            <div style="color:#d4af37;font-weight:700;font-size:16px;">$${defaultPrice.toLocaleString()}</div>
+            <small style="color:#999;">Tamaño ${defaultSize}</small>
+          </div>
+        `;
+      }).join('');
+
+      // Cart
+      document.getElementById('currentOrderNum').textContent = String(app.currentOrderNum).padStart(3, '0');
+      renderCart();
+    }
+
+    function addProductDirectToCart(productId) {
+      const product = app.products.find(p => p.id === productId);
+      const defaultSize = product.sizes.M > 0 ? 'M' : (product.sizes.S > 0 ? 'S' : 'L');
+      const price = product.sizes[defaultSize];
+
+      const item = {
+        productId,
+        name: product.name,
+        size: defaultSize,
+        price,
+        quantity: 1,
+        timestamp: Date.now()
+      };
+
+      const existing = app.cart.find(c => c.productId === item.productId && c.size === item.size);
+      if (existing) {
+        existing.quantity++;
+      } else {
+        app.cart.push(item);
+      }
+
+      renderCart();
+    }
+
+    function renderCart() {
+      const container = document.getElementById('cartItemsList');
+      const summary = document.getElementById('cartSummary');
+
+      if (app.cart.length === 0) {
+        container.innerHTML = '<div class="empty-state" style="padding:20px;"><p>Carrito vacío</p></div>';
+        summary.style.display = 'none';
+        return;
+      }
+
+      container.innerHTML = app.cart.map((item, idx) => `
+        <div class="cart-item">
+          <div class="cart-item-info">
+            <h4>${item.name}</h4>
+            <p>Tamaño ${item.size} × ${item.quantity}</p>
+          </div>
+          <div style="text-align: right;">
+            <div class="cart-item-price">$${(item.price * item.quantity).toLocaleString()}</div>
+            <button class="btn-small btn-secondary" style="margin-top:6px;padding:4px 8px;font-size:11px;" onclick="removeCartItem(${idx})">Quitar</button>
+          </div>
+        </div>
+      `).join('');
+
+      updateCartSummary();
+    }
+
+    function removeCartItem(idx) {
+      app.cart.splice(idx, 1);
+      renderCart();
+    }
+
+    function updateCartSummary() {
+      const subtotal = app.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      const discount = parseInt(document.getElementById('discountAmount').value) || 0;
+      const total = subtotal - discount;
+
+      document.getElementById('cartSubtotal').textContent = `$${subtotal.toLocaleString()}`;
+      document.getElementById('cartDiscount').textContent = `$${discount.toLocaleString()}`;
+      document.getElementById('cartTotal').textContent = `$${Math.max(0, total).toLocaleString()}`;
+
+      if (app.cart.length > 0) {
+        document.getElementById('cartSummary').style.display = 'block';
+      }
+    }
+
+    function clearCart() {
+      if (confirm('¿Limpiar carrito?')) {
+        app.cart = [];
+        document.getElementById('discountAmount').value = '';
+        renderCart();
+      }
+    }
+
+    function selectPaymentMethod(method) {
+      app.selectedPaymentMethod = method;
+      document.querySelectorAll('.payment-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+    }
+
+    function completeSale() {
+      if (app.cart.length === 0) {
+        alert('Agrega productos al carrito');
+        return;
+      }
+
+      const subtotal = app.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      const discount = parseInt(document.getElementById('discountAmount').value) || 0;
+      const total = subtotal - discount;
+
+      const sale = {
+        orderNum: app.currentOrderNum,
+        items: [...app.cart],
+        subtotal,
+        discount,
+        total,
+        paymentMethod: app.selectedPaymentMethod,
+        timestamp: Date.now()
+      };
+
+      app.sales.push(sale);
+      app.currentOrderNum++;
+      app.cart = [];
+      document.getElementById('discountAmount').value = '';
+
+      saveDataToStorage();
+      renderSalesTab();
+      showMessage(`Venta completada - Orden #${sale.orderNum}`, 'success');
+    }
+
+    // ==================== INVENTARIO TAB ====================
+    function renderInventory() {
+      renderInventorySection('coffee', 'coffeeBeansInventory', 'Granos de Café');
+      renderInventorySection('milk', 'milkInventory', 'Lácteos');
+      renderInventorySection('syrup', 'syrupsInventory', 'Jarabes & Extras');
+      renderInventorySection('packaging', 'packagingInventory', 'Empaques');
+    }
+
+    function renderInventorySection(type, containerId, title) {
+      const items = app.inventory.filter(i => i.type === type);
+      const container = document.getElementById(containerId);
+
+      container.innerHTML = items.map(item => {
+        let stockLevel = 'stock-good';
+        if (item.qty < 500) stockLevel = 'stock-critical';
+        else if (item.qty < 1500) stockLevel = 'stock-warning';
+
+        return `
+          <div class="inventory-item">
+            <div class="inventory-item-info">
+              <h4>${item.name}</h4>
+              <p>${item.qty} ${item.unit} | Costo: $${item.cost.toFixed(2)}/u</p>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <div class="stock-level ${stockLevel}">${item.qty}</div>
+              <button class="btn-small btn-secondary" onclick="editInventory(${app.inventory.indexOf(item)})">✎</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function openAddInventoryModal() {
+      document.getElementById('addInventoryModal').classList.add('active');
+    }
+
+    function saveInventory() {
+      const type = document.getElementById('inventoryType').value;
+      const name = document.getElementById('inventoryName').value;
+      const qty = parseInt(document.getElementById('inventoryQty').value) || 0;
+      const unit = document.getElementById('inventoryUnit').value;
+      const cost = parseFloat(document.getElementById('inventoryCost').value) || 0;
+
+      if (!name || !qty || !unit || !cost) {
+        alert('Por favor completa todos los campos');
+        return;
+      }
+
+      const newItem = {
+        id: 'inv-' + Date.now(),
+        type,
+        name,
+        qty,
+        unit,
+        cost,
+        category: `tipo-${type}`
+      };
+
+      app.inventory.push(newItem);
+      saveDataToStorage();
+      closeModal('addInventoryModal');
+      renderInventory();
+
+      document.getElementById('inventoryName').value = '';
+      document.getElementById('inventoryQty').value = '';
+      document.getElementById('inventoryUnit').value = '';
+      document.getElementById('inventoryCost').value = '';
+    }
+
+    function editInventory(idx) {
+      const item = app.inventory[idx];
+      const newQty = prompt(`Actualizar cantidad de ${item.name}:`, item.qty);
+      if (newQty !== null) {
+        item.qty = parseInt(newQty) || 0;
+        saveDataToStorage();
+        renderInventory();
+      }
+    }
+
+    // ==================== RECETAS TAB ====================
+    function renderRecipes() {
+      const search = document.getElementById('recipeSearch').value.toLowerCase();
+      const filtered = app.recipes.filter(r => r.name.toLowerCase().includes(search));
+
+      const container = document.getElementById('recipesList');
+      const empty = document.getElementById('recipeEmpty');
+
+      if (filtered.length === 0) {
+        container.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+      }
+
+      empty.style.display = 'none';
+      container.innerHTML = filtered.map(r => `
+        <div class="recipe-card">
+          <h3>${r.name}</h3>
+          <div class="recipe-detail">
+            <div class="recipe-detail-row">
+              <span class="recipe-detail-label">Método:</span>
+              <span class="recipe-detail-value">${r.brewMethod}</span>
+            </div>
+            <div class="recipe-detail-row">
+              <span class="recipe-detail-label">Tamaño grano:</span>
+              <span class="recipe-detail-value">${r.grindSize}</span>
+            </div>
+            <div class="recipe-detail-row">
+              <span class="recipe-detail-label">Dosis:</span>
+              <span class="recipe-detail-value">${r.doseGrams}g</span>
+            </div>
+            <div class="recipe-detail-row">
+              <span class="recipe-detail-label">Rendimiento:</span>
+              <span class="recipe-detail-value">${r.yieldMls}ml</span>
+            </div>
+            <div class="recipe-detail-row">
+              <span class="recipe-detail-label">Extracción:</span>
+              <span class="recipe-detail-value">${r.extractionSecs}s</span>
+            </div>
+            <div class="recipe-detail-row">
+              <span class="recipe-detail-label">Temperatura:</span>
+              <span class="recipe-detail-value">${r.tempCelsius}°C</span>
+            </div>
+            <div class="recipe-detail-row">
+              <span class="recipe-detail-label">Notas:</span>
+              <span class="recipe-detail-value">${r.notes}</span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // ==================== FINANZAS TAB ====================
+    function updateFinanceCharts() {
+      updateFinanceStats();
+      renderCategoryChart();
+      renderDailyChart();
+      renderMarginsList();
+    }
+
+    function updateFinanceStats() {
+      const now = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const monthSales = app.sales.filter(s => new Date(s.timestamp) >= monthStart);
+
+      const revenue = monthSales.reduce((sum, s) => sum + s.total, 0);
+      const cogs = monthSales.reduce((sum, s) => sum + s.items.reduce((itemSum, item) => {
+        const product = app.products.find(p => p.id === item.productId);
+        return itemSum + (product?.costCLP || 500) * item.quantity;
+      }, 0), 0);
+
+      const margin = revenue > 0 ? Math.round((revenue - cogs) / revenue * 100) : 0;
+      const profit = revenue - cogs;
+
+      document.getElementById('monthlyRevenue').textContent = `$${revenue.toLocaleString()}`;
+      document.getElementById('monthlyCogs').textContent = `$${cogs.toLocaleString()}`;
+      document.getElementById('monthlyMargin').textContent = `${margin}%`;
+      document.getElementById('monthlyProfit').textContent = `$${profit.toLocaleString()}`;
+    }
+
+    function renderCategoryChart() {
+      const ctx = document.getElementById('categoryChart');
+      if (!ctx) return;
+
+      const now = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const monthSales = app.sales.filter(s => new Date(s.timestamp) >= monthStart);
+
+      const categoryRevenue = {};
+      monthSales.forEach(sale => {
+        sale.items.forEach(item => {
+          const product = app.products.find(p => p.id === item.productId);
+          const category = getCategoryLabel(product?.category || 'otro');
+          categoryRevenue[category] = (categoryRevenue[category] || 0) + (item.price * item.quantity);
+        });
+      });
+
+      const labels = Object.keys(categoryRevenue);
+      const data = Object.values(categoryRevenue);
+
+      new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels,
+          datasets: [{
+            data,
+            backgroundColor: ['#3e2723', '#5c4033', '#6d4c41', '#795548', '#8d6e63', '#a1887f', '#bcaaa4', '#d7ccc8', '#d4af37', '#e8dcc8'],
+            borderColor: '#fff',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom' } }
+        }
+      });
+    }
+
+    function renderDailyChart() {
+      const ctx = document.getElementById('dailyChart');
+      if (!ctx) return;
+
+      const dailyData = {};
+      const now = new Date();
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date(now);
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toLocaleDateString('es-CL', { month: 'short', day: 'numeric' });
+        dailyData[dateStr] = 0;
+      }
+
+      app.sales.forEach(sale => {
+        const saleDate = new Date(sale.timestamp);
+        const dateStr = saleDate.toLocaleDateString('es-CL', { month: 'short', day: 'numeric' });
+        if (dateStr in dailyData) dailyData[dateStr] += sale.total;
+      });
+
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: Object.keys(dailyData),
+          datasets: [{
+            label: 'Ventas',
+            data: Object.values(dailyData),
+            borderColor: '#d4af37',
+            backgroundColor: 'rgba(212, 175, 55, 0.1)',
+            tension: 0.4,
+            fill: true,
+            pointBackgroundColor: '#3e2723',
+            pointRadius: 5,
+            pointHoverRadius: 7
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: true } },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { callback: v => '$' + v.toLocaleString() }
+            }
+          }
+        }
+      });
+    }
+
+    function renderMarginsList() {
+      const container = document.getElementById('marginsList');
+
+      const margins = app.products.map(p => {
+        const salesForProduct = app.sales.flatMap(s => s.items.filter(item => item.productId === p.id));
+        const soldQty = salesForProduct.length;
+        if (soldQty === 0) return null;
+
+        const revenue = salesForProduct.reduce((sum, item) => sum + item.price, 0);
+        const cost = p.costCLP * soldQty;
+        const margin = Math.round((revenue - cost) / revenue * 100) || 0;
+
+        return { name: p.name, revenue, cost, margin, soldQty };
+      }).filter(Boolean).sort((a, b) => b.revenue - a.revenue);
+
+      container.innerHTML = margins.map(m => `
+        <div style="background: #fff; padding: 12px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <h4 style="font-size: 14px; color: #3e2723; margin-bottom: 4px;">${m.name}</h4>
+            <small style="color: #999;">Vendidos: ${m.soldQty} | Ingreso: $${m.revenue.toLocaleString()}</small>
+          </div>
+          <div style="text-align: right;">
+            <div style="color: #d4af37; font-weight: 700; font-size: 16px;">${m.margin}%</div>
+            <small style="color: #999;">margen</small>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // ==================== FIDELIDAD TAB ====================
+    function renderLoyaltyTab() {
+      document.getElementById('loyaltyEmpty').style.display = 'block';
+      document.getElementById('loyaltyCard').style.display = 'none';
+      document.getElementById('loyaltyMemberList').style.display = 'none';
+    }
+
+    function searchCustomer() {
+      const phone = document.getElementById('customerPhone').value.trim();
+      if (!phone) {
+        alert('Ingresa un teléfono');
+        return;
+      }
+
+      let customer = app.customers.find(c => c.phone === phone);
+      if (!customer) {
+        customer = {
+          phone,
+          name: prompt('Nombre del cliente:') || 'Cliente',
+          email: '',
+          stamps: 0,
+          bonusPoints: 0,
+          redemptions: [],
+          createdAt: Date.now()
+        };
+        app.customers.push(customer);
+        saveDataToStorage();
+      }
+
+      app.currentCustomerPhone = phone;
+      renderCustomerCard(customer);
+    }
+
+    function renderCustomerCard(customer) {
+      document.getElementById('loyaltyEmpty').style.display = 'none';
+      document.getElementById('loyaltyCard').style.display = 'block';
+      document.getElementById('loyaltyPhone').textContent = customer.phone;
+      document.getElementById('loyaltyName').textContent = customer.name;
+      document.getElementById('loyaltyEmail').textContent = customer.email || '—';
+      document.getElementById('completedStamps').textContent = customer.stamps;
+      document.getElementById('bonusPoints').textContent = customer.bonusPoints;
+
+      const stamps = [];
+      for (let i = 0; i < 10; i++) {
+        const filled = i < (customer.stamps % 10);
+        stamps.push(`<div class="stamp ${filled ? 'filled' : ''}">☕</div>`);
+      }
+      document.getElementById('stampGrid').innerHTML = stamps.join('');
+
+      const redeemHistory = customer.redemptions.map(r => `
+        <div style="padding: 8px 0; border-bottom: 1px solid #f0e6d2; font-size: 12px;">
+          <div><strong>${r.date}</strong> - Café Gratis <span style="float:right;color:#065f46;">✓</span></div>
+        </div>
+      `).join('');
+
+      document.getElementById('redemptionHistory').innerHTML = redeemHistory || '<p style="color:#999;font-size:13px;">Sin canjes aún</p>';
+    }
+
+    function addStamp() {
+      if (!app.currentCustomerPhone) {
+        alert('Selecciona un cliente');
+        return;
+      }
+
+      const customer = app.customers.find(c => c.phone === app.currentCustomerPhone);
+      customer.stamps++;
+      saveDataToStorage();
+      renderCustomerCard(customer);
+      showMessage('☕ Café registrado', 'success');
+    }
+
+    function redeemFree() {
+      if (!app.currentCustomerPhone) {
+        alert('Selecciona un cliente');
+        return;
+      }
+
+      const customer = app.customers.find(c => c.phone === app.currentCustomerPhone);
+      if (customer.stamps < 10) {
+        alert(`Faltan ${10 - customer.stamps} cafés`);
+        return;
+      }
+
+      customer.stamps = 0;
+      customer.redemptions.push({
+        date: new Date().toLocaleDateString('es-CL'),
+        amount: 1
+      });
+      saveDataToStorage();
+      renderCustomerCard(customer);
+      showMessage('🎉 ¡Café gratis canjeado!', 'success');
+    }
+
+    // ==================== MODALS ====================
+    function closeModal(modalId) {
+      document.getElementById(modalId).classList.remove('active');
+    }
+
+    // Close modals on background click
+    document.querySelectorAll('.modal').forEach(modal => {
+      modal.addEventListener('click', function(e) {
+        if (e.target === this) {
+          this.classList.remove('active');
+        }
+      });
+    });
+
+    // ==================== UTILITIES ====================
+    function showMessage(text, type) {
+      const msg = document.createElement('div');
+      msg.className = `message ${type}`;
+      msg.innerHTML = `<span>${text}</span>`;
+      document.body.appendChild(msg);
+      setTimeout(() => msg.remove(), 3000);
+    }
+
+    // ==================== PWA REGISTRATION ====================
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('data:application/javascript,self.addEventListener("install",e=>self.skipWaiting());self.addEventListener("activate",e=>self.clients.claim());').catch(() => {});
+    }
+
+    // Initialize on load
+    window.addEventListener('load', initApp);
+    document.addEventListener('touchmove', function(e) {
+      if (e.target.closest('input') && e.target.type !== 'text' && e.target.type !== 'number' && e.target.type !== 'tel' && e.target.type !== 'email') {
+        return;
+      }
+    }, { passive: true });
+  </script>
+</body>
+</html>

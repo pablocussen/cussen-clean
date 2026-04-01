@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRISM Marte — Jezero Crater | CUSSEN</title>
+    <meta name="description" content="Mineral mapping of Jezero Crater (Mars) using CRISM hyperspectral data. Detection of Mg-carbonates, phyllosilicates and mafic minerals. Custom CMPI indices.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --dark: #07090f;
+            --dark2: #0d1117;
+            --card: #111827;
+            --border: rgba(255,255,255,0.07);
+            --cyan: #06b6d4;
+            --cyan-dim: rgba(6,182,212,0.12);
+            --cyan-border: rgba(6,182,212,0.25);
+            --text: #e2e8f0;
+            --muted: #94a3b8;
+            --mono: 'JetBrains Mono', monospace;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background:
+                radial-gradient(ellipse 800px 600px at 85% 15%, rgba(239,68,68,0.12) 0%, transparent 70%),
+                radial-gradient(ellipse 600px 500px at 10% 75%, rgba(245,158,11,0.10) 0%, transparent 70%),
+                radial-gradient(ellipse 500px 400px at 50% 40%, rgba(180,83,9,0.08) 0%, transparent 60%),
+                linear-gradient(180deg, rgba(127,29,29,0.06) 0%, transparent 40%),
+                var(--dark);
+            color: var(--text);
+            font-family: "Inter", system-ui, sans-serif;
+            font-size: 16px;
+            line-height: 1.7;
+        }
+
+        a { color: var(--cyan); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        /* -- NAV ------------------------------------------------ */
+        nav {
+            position: sticky; top: 0; z-index: 100;
+            background: rgba(7,9,15,0.90);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 40px; height: 60px;
+        }
+        .nav-logo {
+            font-weight: 700; font-size: 1rem; letter-spacing: 0.08em;
+            color: var(--text);
+        }
+        .nav-links { display: flex; gap: 32px; list-style: none; }
+        .nav-links a { font-size: 0.875rem; color: var(--muted); transition: color .2s; }
+        .nav-links a:hover { color: var(--text); text-decoration: none; }
+        .nav-cta {
+            background: var(--cyan); color: var(--dark) !important;
+            padding: 6px 18px; border-radius: 6px; font-weight: 600;
+        }
+        .nav-cta:hover { opacity: 0.88; }
+        .nav-back {
+            font-size: 0.8rem; color: var(--muted); font-family: var(--mono);
+            border: 1px solid var(--border); padding: 4px 12px; border-radius: 4px;
+            transition: all .2s;
+        }
+        .nav-back:hover { color: var(--cyan); border-color: var(--cyan-border); text-decoration: none; }
+
+        /* -- LAYOUT --------------------------------------------- */
+        .wrap { max-width: 900px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+        /* -- BG PLANET (Mars) --------------------------------------- */
+        .bg-planet {
+            position: fixed;
+            top: 3%;
+            right: -50px;
+            width: 490px;
+            height: 490px;
+            border-radius: 50%;
+            background: url('assets/mars-real.jpg') center/115% no-repeat;
+            box-shadow:
+                0 0 70px 20px rgba(193,68,14,0.15),
+                0 0 180px 50px rgba(139,37,0,0.06);
+            opacity: 0.40;
+            z-index: 0;
+            pointer-events: none;
+            animation: planetFloat 45s ease-in-out infinite;
+        }
+        .bg-starfield {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            pointer-events: none;
+            background:
+                radial-gradient(1.5px 1.5px at 7% 10%, rgba(255,255,255,0.55), transparent),
+                radial-gradient(1px 1px at 20% 50%, rgba(255,255,255,0.4), transparent),
+                radial-gradient(1.5px 1.5px at 32% 18%, rgba(255,255,255,0.5), transparent),
+                radial-gradient(1px 1px at 45% 72%, rgba(255,255,255,0.3), transparent),
+                radial-gradient(2px 2px at 58% 6%, rgba(255,255,255,0.45), transparent),
+                radial-gradient(1px 1px at 68% 85%, rgba(255,255,255,0.35), transparent),
+                radial-gradient(1.5px 1.5px at 75% 48%, rgba(255,255,255,0.4), transparent),
+                radial-gradient(1px 1px at 85% 28%, rgba(255,255,255,0.3), transparent),
+                radial-gradient(1px 1px at 90% 70%, rgba(255,255,255,0.4), transparent),
+                radial-gradient(1.5px 1.5px at 5% 88%, rgba(255,255,255,0.45), transparent),
+                radial-gradient(1px 1px at 38% 92%, rgba(255,255,255,0.3), transparent),
+                radial-gradient(2px 2px at 70% 15%, rgba(255,255,255,0.5), transparent),
+                radial-gradient(1px 1px at 50% 40%, rgba(255,255,255,0.25), transparent),
+                radial-gradient(1px 1px at 15% 65%, rgba(255,255,255,0.35), transparent);
+        }
+        .bg-comet {
+            position: fixed;
+            top: 18%;
+            left: -100px;
+            width: 100px;
+            height: 1.5px;
+            background: linear-gradient(90deg, transparent, rgba(255,200,150,0.7), rgba(255,140,80,0.3), transparent);
+            border-radius: 50%;
+            z-index: -1;
+            pointer-events: none;
+            opacity: 0;
+            animation: cometShoot 14s ease-in-out infinite;
+            animation-delay: 5s;
+        }
+        .bg-comet:nth-child(2) {
+            top: 45%;
+            animation-delay: 11s;
+            animation-duration: 11s;
+            width: 70px;
+        }
+        @keyframes cometShoot {
+            0%, 90%, 100% { transform: translateX(0) rotate(-20deg); opacity: 0; }
+            5% { opacity: 0.8; }
+            15% { transform: translateX(calc(100vw + 200px)) rotate(-20deg); opacity: 0; }
+        }
+        @keyframes planetFloat {
+            0% { transform: translateY(0) translateX(0); }
+            25% { transform: translateY(-12px) translateX(4px); }
+            50% { transform: translateY(-22px) translateX(0); }
+            75% { transform: translateY(-8px) translateX(-4px); }
+            100% { transform: translateY(0) translateX(0); }
+        }
+
+        /* -- HEADER --------------------------------------------- */
+        .page-header {
+            border-bottom: 1px solid var(--border);
+            padding: 56px 0 40px;
+        }
+        .header-eyebrow {
+            font-family: var(--mono); font-size: 0.75rem;
+            color: var(--cyan); letter-spacing: 0.12em; text-transform: uppercase;
+            margin-bottom: 14px;
+        }
+        .page-header h1 {
+            font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+            font-weight: 700; line-height: 1.2;
+            color: var(--text); margin-bottom: 18px;
+        }
+        .page-header .abstract {
+            font-size: 0.975rem; color: var(--muted);
+            max-width: 720px; line-height: 1.75;
+            margin-bottom: 24px; text-align: justify;
+        }
+        .badge-row { display: flex; flex-wrap: wrap; gap: 8px; }
+        .badge {
+            font-family: var(--mono); font-size: 0.75rem; font-weight: 600;
+            padding: 4px 12px; border-radius: 4px;
+            background: var(--cyan-dim); border: 1px solid var(--cyan-border);
+            color: var(--cyan); letter-spacing: 0.06em;
+        }
+        .badge-tag {
+            font-size: 0.75rem; padding: 4px 10px; border-radius: 4px;
+            background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+            color: var(--muted);
+        }
+
+        /* -- KEY RESULTS BAR ------------------------------------ */
+        .results-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 1px;
+            background: var(--border);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 48px 0;
+        }
+        .res-cell {
+            background: var(--card);
+            padding: 20px 18px;
+            text-align: center;
+        }
+        .res-value {
+            font-family: var(--mono); font-size: 1.35rem; font-weight: 600;
+            color: var(--cyan); display: block; margin-bottom: 6px;
+        }
+        .res-label { font-size: 0.78rem; color: var(--muted); line-height: 1.4; }
+
+        /* -- SECTION -------------------------------------------- */
+        section { padding: 56px 0; border-top: 1px solid var(--border); }
+        section h2 {
+            font-size: 1.25rem; font-weight: 700;
+            color: var(--text); margin-bottom: 6px;
+        }
+        .sec-code {
+            font-family: var(--mono); font-size: 0.72rem; color: var(--cyan);
+            letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px;
+        }
+        .sec-intro { text-align: justify; font-size: 0.95rem; color: var(--muted); margin: 16px 0 28px; max-width: 680px; }
+
+        /* -- FIGURE --------------------------------------------- */
+        .figure {
+            margin: 36px 0;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            background: var(--dark2);
+        }
+        .figure img {
+            display: block; width: 100%; height: auto;
+        }
+        .figure-placeholder {
+            display: flex; align-items: center; justify-content: center;
+            min-height: 320px; padding: 40px;
+            background: linear-gradient(135deg, rgba(6,182,212,0.04) 0%, rgba(6,182,212,0.01) 100%);
+            border-bottom: 1px solid var(--border);
+            text-align: center;
+        }
+        .figure-placeholder span {
+            font-family: var(--mono); font-size: 0.82rem;
+            color: var(--muted); line-height: 1.7;
+            max-width: 520px;
+        }
+        .figure-caption {
+            padding: 16px 20px;
+            border-top: 1px solid var(--border);
+        }
+        .figure-caption .fig-label {
+            font-family: var(--mono); font-size: 0.75rem; color: var(--cyan);
+            font-weight: 600; margin-bottom: 6px;
+        }
+        .figure-caption p {
+            font-size: 0.875rem; color: var(--muted); line-height: 1.65; text-align: justify;
+        }
+
+        /* -- ANALYSIS BLOCK ------------------------------------- */
+        .analysis { text-align: justify;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--cyan);
+            border-radius: 0 8px 8px 0;
+            padding: 20px 24px;
+            margin: 24px 0;
+            font-size: 0.925rem; color: var(--muted); line-height: 1.72;
+        }
+        .analysis strong { color: var(--text); }
+
+        /* -- FORMULA -------------------------------------------- */
+        .formula {
+            background: rgba(0,0,0,0.4);
+            border: 1px solid var(--border);
+            border-left: 3px solid rgba(6,182,212,0.5);
+            border-radius: 0 6px 6px 0;
+            padding: 16px 20px;
+            font-family: var(--mono); font-size: 0.82rem;
+            color: #7dd3fc; line-height: 1.9;
+            overflow-x: auto; margin: 16px 0;
+        }
+        .formula-label {
+            font-family: var(--mono); font-size: 0.7rem;
+            color: var(--muted); text-transform: uppercase;
+            letter-spacing: 0.1em; margin-bottom: 6px;
+        }
+
+        /* -- DATA TABLE ----------------------------------------- */
+        .data-table { width: 100%; border-collapse: collapse; margin: 24px 0; font-size: 0.9rem; }
+        .data-table th {
+            font-family: var(--mono); font-size: 0.72rem; color: var(--cyan);
+            text-transform: uppercase; letter-spacing: 0.08em;
+            padding: 10px 14px; text-align: left;
+            border-bottom: 1px solid var(--cyan-border);
+        }
+        .data-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); color: var(--muted); }
+        .data-table tr:last-child td { border-bottom: none; }
+        .data-table .val { color: var(--cyan); font-family: var(--mono); font-weight: 500; text-align: right; }
+        .data-table .total td { color: var(--text); font-weight: 600; }
+        .data-table .total .val { color: var(--cyan); }
+
+        /* -- CTA ------------------------------------------------ */
+        .cta-section {
+            padding: 48px 0;
+            border-top: 1px solid var(--border);
+            display: flex; flex-direction: column; align-items: flex-start; gap: 20px;
+        }
+        .cta-section h3 { font-size: 1.1rem; font-weight: 600; color: var(--text); }
+        .cta-section p { font-size: 0.9rem; color: var(--muted); max-width: 560px; }
+        .btn-row { display: flex; gap: 12px; flex-wrap: wrap; }
+        .btn-primary {
+            background: var(--cyan); color: var(--dark);
+            padding: 10px 22px; border-radius: 6px;
+            font-weight: 600; font-size: 0.875rem;
+            transition: opacity .2s;
+        }
+        .btn-primary:hover { opacity: 0.85; text-decoration: none; }
+        .btn-secondary {
+            background: transparent; color: var(--cyan);
+            padding: 10px 22px; border-radius: 6px;
+            border: 1px solid var(--cyan-border);
+            font-weight: 500; font-size: 0.875rem;
+            transition: all .2s;
+        }
+        .btn-secondary:hover { background: var(--cyan-dim); text-decoration: none; }
+
+        /* -- REFERENCES ----------------------------------------- */
+        .ref-list { list-style: none; }
+        .ref-list li {
+            font-size: 0.875rem; color: var(--muted);
+            padding: 8px 0; border-bottom: 1px solid var(--border);
+            padding-left: 20px; position: relative; line-height: 1.55;
+        }
+        .ref-list li::before {
+            content: '[' attr(data-n) ']';
+            font-family: var(--mono); font-size: 0.7rem; color: var(--cyan);
+            position: absolute; left: 0; top: 9px;
+        }
+        .ref-list li:last-child { border-bottom: none; }
+
+        /* -- FOOTER --------------------------------------------- */
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 32px 0;
+            font-size: 0.825rem; color: var(--muted);
+        }
+        .footer-inner {
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 12px;
+        }
+
+        /* -- NOTE ----------------------------------------------- */
+        .note {
+            font-size: 0.825rem; color: var(--muted);
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: 6px; padding: 12px 16px;
+            margin-top: 20px; line-height: 1.6;
+        }
+
+        /* -- LANG TOGGLE ---------------------------------------- */
+        .lang-toggle {
+            display: inline-flex; gap: 0; border: 1px solid var(--border); border-radius: 4px; overflow: hidden;
+            margin-left: 16px; font-size: 0.75rem; font-family: var(--mono);
+        }
+        .lang-toggle button {
+            background: transparent; color: var(--muted); border: none;
+            padding: 4px 10px; cursor: pointer; transition: all .2s;
+            font-family: var(--mono); font-size: 0.75rem;
+        }
+        .lang-toggle button.active {
+            background: var(--cyan-dim); color: var(--cyan); border-color: var(--cyan-border);
+        }
+        .lang-toggle button:hover { color: var(--text); }
+        [lang-en] { display: none; }
+        body.en [lang-es] { display: none; }
+        body.en [lang-en] { display: revert; }
+
+        @media (max-width: 768px) {
+            nav { padding: 0 12px; }
+            .wrap { padding: 0 16px; }
+            .nav-links { display: none; }
+            .results-bar { grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 16px; }
+            .page-header h1 { font-size: 1.6rem; }
+            .page-header .abstract { font-size: 0.9rem; }
+            .figure img { border-radius: 4px; }
+            .figure-caption { padding: 12px 14px; }
+            .analysis { padding: 14px 16px; font-size: 0.875rem; }
+            .data-table { font-size: 0.8rem; }
+            .data-table td, .data-table th { padding: 6px 8px; }
+            h2 { font-size: 1.2rem; }
+            .sec-intro { font-size: 0.875rem; }
+            .ref-list li { font-size: 0.8rem; padding: 8px 0; }
+        }
+
+        @media (max-width: 480px) {
+            .results-bar { grid-template-columns: repeat(2, 1fr); gap: 8px; padding: 12px; }
+            .results-bar .r-val { font-size: 1rem; }
+            .badge-row { gap: 4px; }
+            .badge { font-size: 0.65rem; padding: 3px 8px; }
+            .page-header h1 { font-size: 1.3rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-starfield"></div>
+    <div class="bg-comet"></div>
+    <div class="bg-comet"></div>
+    <div class="bg-planet"></div>
+
+    <nav>
+        <a href="../../../" class="nav-logo">CUSSEN</a>
+        <ul class="nav-links">
+            <li><a href="../../../servicios/">Servicios</a></li>
+            <li><a href="../../../#proyectos">Proyectos</a></li>
+            <li><a href="../../../framework/">Framework</a></li>
+            <li><a href="../../../#contacto" class="nav-cta">Contacto</a></li>
+        </ul>
+        <div style="display:flex;align-items:center;gap:8px;">
+            <div class="lang-toggle">
+                <button class="active" onclick="setLang('es')">ES</button>
+                <button onclick="setLang('en')">EN</button>
+            </div>
+            <a href="../../../#proyectos" class="nav-back">&larr; Portfolio</a>
+        </div>
+    </nav>
+
+    <div class="wrap">
+
+        <!-- == HEADER == -->
+        <header class="page-header">
+            <div class="header-eyebrow">SP.04 &middot; Inteligencia Planetaria</div>
+            <h1>
+                <span lang-es>An&aacute;lisis CRISM Marte &mdash; Cr&aacute;ter Jezero<br>
+                Mapeo mineral&oacute;gico para detecci&oacute;n de carbonatos y arcillas</span>
+                <span lang-en>CRISM Mars Analysis &mdash; Jezero Crater<br>
+                Mineral Mapping for Carbonate and Clay Detection</span>
+            </h1>
+            <p class="abstract">
+                <span lang-es>
+                    An&aacute;lisis hiperespectral del cr&aacute;ter Jezero (~18.4&deg;N, 77.7&deg;E) utilizando datos
+                    CRISM (<em>Compact Reconnaissance Imaging Spectrometer for Mars</em>) a bordo del MRO.
+                    Se procesan productos TRDR con 545 canales (VNIR 362&ndash;1053 nm + IR 1002&ndash;3920 nm)
+                    para mapear la distribuci&oacute;n de <strong>Mg-carbonato</strong> en los dep&oacute;sitos del delta,
+                    <strong>arcillas Fe/Mg esmect&iacute;ticas</strong>, olivino y piroxeno.
+                    Se aplican 7 productos sumarios est&aacute;ndar (Viviano-Beck et al., 2014) y se proponen
+                    &iacute;ndices propios <strong>CMPI</strong> (<em>Cussen Mars Prospection Indices</em>)
+                    para evaluaci&oacute;n de historia acuosa y potencial astrobiol&oacute;gico.
+                </span>
+                <span lang-en>
+                    Hyperspectral analysis of Jezero Crater (~18.4&deg;N, 77.7&deg;E) using CRISM
+                    (<em>Compact Reconnaissance Imaging Spectrometer for Mars</em>) data aboard MRO.
+                    TRDR products with 545 channels (VNIR 362&ndash;1053 nm + IR 1002&ndash;3920 nm)
+                    are processed to map the distribution of <strong>Mg-carbonate</strong> in delta deposits,
+                    <strong>Fe/Mg smectite clays</strong>, olivine, and pyroxene.
+                    Seven standard summary products (Viviano-Beck et al., 2014) are applied, and custom
+                    <strong>CMPI</strong> (<em>Cussen Mars Prospection Indices</em>) are proposed
+                    for aqueous history assessment and astrobiological potential evaluation.
+                </span>
+            </p>
+            <div class="badge-row">
+                <span class="badge">CMPI-01</span>
+                <span class="badge">CMPI-02</span>
+                <span class="badge">CMPI-03</span>
+                <span class="badge-tag">MRO CRISM</span>
+                <span class="badge-tag">TRDR Hyperspectral</span>
+                <span class="badge-tag">Mg-Carbonate</span>
+                <span class="badge-tag">Phyllosilicates</span>
+                <span class="badge-tag">Jezero &middot; 18.4&deg;N</span>
+                <span class="badge-tag">Mars 2020</span>
+            </div>
+        </header>
+
+        <!-- == KEY RESULTS == -->
+        <div class="results-bar">
+            <div class="res-cell">
+                <span class="res-value">545</span>
+                <span class="res-label">
+                    <span lang-es>Canales espectrales VNIR + IR</span>
+                    <span lang-en>Spectral channels VNIR + IR</span>
+                </span>
+            </div>
+            <div class="res-cell">
+                <span class="res-value">18 m/px</span>
+                <span class="res-label">
+                    <span lang-es>Resoluci&oacute;n espacial CRISM FRT</span>
+                    <span lang-en>CRISM FRT spatial resolution</span>
+                </span>
+            </div>
+            <div class="res-cell">
+                <span class="res-value">7</span>
+                <span class="res-label">
+                    <span lang-es>Productos sumarios minerales</span>
+                    <span lang-en>Mineral summary products</span>
+                </span>
+            </div>
+            <div class="res-cell">
+                <span class="res-value">3</span>
+                <span class="res-label">
+                    <span lang-es>&Iacute;ndices CMPI propuestos</span>
+                    <span lang-en>Custom CMPI indices</span>
+                </span>
+            </div>
+            <div class="res-cell">
+                <span class="res-value">~45 km</span>
+                <span class="res-label">
+                    <span lang-es>Di&aacute;metro cr&aacute;ter Jezero</span>
+                    <span lang-en>Jezero Crater diameter</span>
+                </span>
+            </div>
+            <div class="res-cell">
+                <span class="res-value">PDS3</span>
+                <span class="res-label">
+                    <span lang-es>Formato de datos NASA PDS</span>
+                    <span lang-en>NASA PDS data format</span>
+                </span>
+            </div>
+        </div>
+
+        <!-- == FIGURA 1: MAFIC COMPOSITE == -->
+        <section>
+            <div class="sec-code">
+                <span lang-es>Figura 1 &mdash; Composici&oacute;n M&aacute;fica</span>
+                <span lang-en>Figure 1 &mdash; Mafic Composite</span>
+            </div>
+            <h2>
+                <span lang-es>CRISM Mafic Composite &mdash; Distribuci&oacute;n de olivino + LCP + HCP</span>
+                <span lang-en>CRISM Mafic Composite &mdash; Olivine + LCP + HCP Distribution</span>
+            </h2>
+            <p class="sec-intro">
+                <span lang-es>
+                    Composici&oacute;n RGB de los &iacute;ndices m&aacute;ficos OLINDEX3 (R), LCPINDEX2 (G) y HCPINDEX2 (B)
+                    para identificar la distribuci&oacute;n de minerales de origen &iacute;gneo en el suelo del cr&aacute;ter
+                    Jezero y los alrededores de Nili Fossae.
+                </span>
+                <span lang-en>
+                    RGB composite of mafic indices OLINDEX3 (R), LCPINDEX2 (G), and HCPINDEX2 (B)
+                    to identify the distribution of igneous-origin minerals across the Jezero Crater floor
+                    and surrounding Nili Fossae region.
+                </span>
+            </p>
+
+            <div class="figure">
+                <img src="assets/fig_crism_01_spectra.png" alt="CRISM Spectral Profiles" style="width:100%;border-radius:8px;border:1px solid var(--border);">
+                <div class="figure-caption">
+                    <div class="fig-label">Fig. 1 &mdash; CRISM Mafic Composite (OLINDEX3:LCPINDEX2:HCPINDEX2) &middot; Jezero Crater &middot; TRDR I/F</div>
+                    <p>
+                        <span lang-es>
+                            El olivino (rojo) domina el suelo del cr&aacute;ter, consistente con la unidad &iacute;gnea
+                            de olivino-carbonato descrita por Ehlmann et al. (2008). Las zonas de piroxeno
+                            (verde/azul) marcan el basamento noachiano expuesto en los bordes del cr&aacute;ter.
+                            La mezcla olivino-LCP en el margen occidental indica posible
+                            alteraci&oacute;n parcial del manto original.
+                        </span>
+                        <span lang-en>
+                            Olivine (red) dominates the crater floor, consistent with the olivine-carbonate
+                            igneous unit described by Ehlmann et al. (2008). Pyroxene zones (green/blue)
+                            mark Noachian basement exposed at crater rims.
+                            The olivine-LCP mixture on the western margin suggests possible
+                            partial alteration of the original mantle.
+                        </span>
+                    </p>
+                </div>
+            </div>
+
+            <div class="analysis">
+                <span lang-es>
+                    <strong>Interpretaci&oacute;n:</strong> La distribuci&oacute;n m&aacute;fica confirma la naturaleza
+                    &iacute;gnea del suelo del cr&aacute;ter. OLINDEX3 detecta la banda de absorci&oacute;n ~1050 nm
+                    caracter&iacute;stica de olivino (Fo60&ndash;Fo80). Los valores elevados de LCPINDEX2 en los bordes
+                    norte y sur corresponden a ortopiroxeno (posiblemente enstatita), mientras que HCPINDEX2
+                    registra clinopiroxeno (augita) en unidades basales m&aacute;s profundas. La separaci&oacute;n
+                    espectral entre LCP y HCP es robusta gracias a la cobertura IR del CRISM hasta 3920 nm.
+                </span>
+                <span lang-en>
+                    <strong>Interpretation:</strong> The mafic distribution confirms the igneous nature of the
+                    crater floor. OLINDEX3 detects the ~1050 nm absorption feature characteristic of
+                    olivine (Fo60&ndash;Fo80). Elevated LCPINDEX2 values at north and south rims correspond
+                    to orthopyroxene (possibly enstatite), while HCPINDEX2 records clinopyroxene (augite)
+                    in deeper basal units. The spectral separation between LCP and HCP is robust thanks
+                    to CRISM IR coverage up to 3920 nm.
+                </span>
+            </div>
+        </section>
+
+        <!-- == FIGURA 2: HYDRATION/ALTERATION COMPOSITE == -->
+        <section>
+            <div class="sec-code">
+                <span lang-es>Figura 2 &mdash; Composici&oacute;n Hidrataci&oacute;n/Alteraci&oacute;n</span>
+                <span lang-en>Figure 2 &mdash; Hydration/Alteration Composite</span>
+            </div>
+            <h2>
+                <span lang-es>Filosilicatos y minerales hidratados en el delta</span>
+                <span lang-en>Phyllosilicates and Hydrated Minerals in the Delta</span>
+            </h2>
+            <p class="sec-intro">
+                <span lang-es>
+                    Composici&oacute;n RGB usando BD1900r2 (R), D2300 (G) y BD2300 (B) para mapear la presencia
+                    de minerales hidratados, arcillas Fe/Mg esmect&iacute;ticas y fases de alteraci&oacute;n acuosa
+                    concentradas en los dep&oacute;sitos delt&aacute;icos del cr&aacute;ter Jezero.
+                </span>
+                <span lang-en>
+                    RGB composite using BD1900r2 (R), D2300 (G), and BD2300 (B) to map the presence of
+                    hydrated minerals, Fe/Mg smectite clays, and aqueous alteration phases concentrated
+                    in the deltaic deposits of Jezero Crater.
+                </span>
+            </p>
+
+            <div class="formula-label">
+                <span lang-es>Productos sumarios de arcillas (Viviano-Beck et al., 2014)</span>
+                <span lang-en>Clay summary products (Viviano-Beck et al., 2014)</span>
+            </div>
+            <div class="formula">BD1900r2  &rarr;  H&#8322;O / OH  bound water (~1900 nm absorption)
+D2300     &rarr;  2300 nm drop:  Fe/Mg phyllosilicate (smectite, vermiculite)
+BD2300    &rarr;  2300 nm band depth:  Mg-OH absorption in clays
+MIN2295_2480 &rarr;  minimum between 2295 and 2480 nm: carbonate vs. phyllosilicate</div>
+
+            <div class="figure">
+                <img src="assets/fig_crism_02_mineral_maps.png" alt="CRISM Mineral Maps" style="width:100%;border-radius:8px;border:1px solid var(--border);">
+                <div class="figure-caption">
+                    <div class="fig-label">Fig. 2 &mdash; Hydration/Alteration Composite (BD1900r2:D2300:BD2300) &middot; Jezero Delta &middot; TRDR I/F</div>
+                    <p>
+                        <span lang-es>
+                            La se&ntilde;al de filosilicatos (verde/cian) se concentra a lo largo del frente
+                            del delta occidental, donde los sedimentos fluviales preservan arcillas esmect&iacute;ticas
+                            transportadas desde la cuenca de captaci&oacute;n. BD1900r2 (rojo) indica agua
+                            molecular ligada, extendida por todo el dep&oacute;sito delt&aacute;ico. Los afloramientos
+                            ricos en filosilicatos a lo largo de Nili Fossae aparecen en tonos cian brillante.
+                        </span>
+                        <span lang-en>
+                            The phyllosilicate signal (green/cyan) concentrates along the western delta front,
+                            where fluvial sediments preserve smectite clays transported from the catchment basin.
+                            BD1900r2 (red) indicates bound molecular water, spread across the entire deltaic deposit.
+                            Phyllosilicate-rich outcrops along Nili Fossae appear in bright cyan tones.
+                        </span>
+                    </p>
+                </div>
+            </div>
+
+            <div class="analysis">
+                <span lang-es>
+                    <strong>Significancia astrobiol&oacute;gica:</strong> Las arcillas esmect&iacute;ticas tienen alta
+                    capacidad de preservaci&oacute;n de biofirmas. La concentraci&oacute;n de BD1900r2 + D2300 en el
+                    delta confirma que el agua l&iacute;quida transport&oacute; y deposit&oacute; materiales alterados
+                    qu&iacute;micamente &mdash; un requisito fundamental para la habitabilidad. Estos son precisamente
+                    los objetivos de muestreo de Perseverance en la campa&ntilde;a del delta (2023&ndash;2024).
+                </span>
+                <span lang-en>
+                    <strong>Astrobiological significance:</strong> Smectite clays have high biosignature
+                    preservation capacity. The concentration of BD1900r2 + D2300 in the delta confirms that
+                    liquid water transported and deposited chemically altered materials &mdash; a fundamental
+                    requirement for habitability. These are precisely the sampling targets of Perseverance
+                    during the delta campaign (2023&ndash;2024).
+                </span>
+            </div>
+
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th><span lang-es>Producto Sumario</span><span lang-en>Summary Product</span></th>
+                        <th><span lang-es>Mineral objetivo</span><span lang-en>Target Mineral</span></th>
+                        <th><span lang-es>Banda clave</span><span lang-en>Key Band</span></th>
+                        <th><span lang-es>Se&ntilde;al en Jezero</span><span lang-en>Signal in Jezero</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>OLINDEX3</td><td><span lang-es>Olivino</span><span lang-en>Olivine</span></td><td class="val">~1050 nm</td><td class="val"><span lang-es>Fuerte (suelo)</span><span lang-en>Strong (floor)</span></td></tr>
+                    <tr><td>LCPINDEX2</td><td><span lang-es>Piroxeno bajo Ca</span><span lang-en>Low-Ca pyroxene</span></td><td class="val">~1800 nm</td><td class="val"><span lang-es>Moderada (bordes)</span><span lang-en>Moderate (rims)</span></td></tr>
+                    <tr><td>HCPINDEX2</td><td><span lang-es>Piroxeno alto Ca</span><span lang-en>High-Ca pyroxene</span></td><td class="val">~2100 nm</td><td class="val"><span lang-es>Baja (basamento)</span><span lang-en>Low (basement)</span></td></tr>
+                    <tr><td>BD1900r2</td><td>H&#8322;O / OH</td><td class="val">~1900 nm</td><td class="val"><span lang-es>Fuerte (delta)</span><span lang-en>Strong (delta)</span></td></tr>
+                    <tr><td>BD2300</td><td>Mg-OH</td><td class="val">~2300 nm</td><td class="val"><span lang-es>Fuerte (arcillas)</span><span lang-en>Strong (clays)</span></td></tr>
+                    <tr><td>D2300</td><td><span lang-es>Esmectita Fe/Mg</span><span lang-en>Fe/Mg smectite</span></td><td class="val">~2300 nm</td><td class="val"><span lang-es>Fuerte (delta + Nili)</span><span lang-en>Strong (delta + Nili)</span></td></tr>
+                    <tr><td>MIN2295_2480</td><td><span lang-es>Carbonato vs. filosilicato</span><span lang-en>Carbonate vs. phyllosilicate</span></td><td class="val">2295&ndash;2480 nm</td><td class="val"><span lang-es>Variable</span><span lang-en>Variable</span></td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- == FIGURA 3: CMPI PROSPECTION COMPOSITE == -->
+        <section>
+            <div class="sec-code">
+                <span lang-es>Figura 3 &mdash; CMPI Prospecci&oacute;n</span>
+                <span lang-en>Figure 3 &mdash; CMPI Prospection</span>
+            </div>
+            <h2>
+                <span lang-es>CMPI Prospection Composite &mdash; Mapeo de historia acuosa</span>
+                <span lang-en>CMPI Prospection Composite &mdash; Aqueous History Mapping</span>
+            </h2>
+            <p class="sec-intro">
+                <span lang-es>
+                    Composici&oacute;n RGB de los tres &iacute;ndices CMPI propuestos: CMPI-01 HMI (R),
+                    CMPI-02 CBI (G) y CMPI-03 AHI (B) para integrar la informaci&oacute;n de
+                    hidrataci&oacute;n, carbonatos y filosilicatos en un &uacute;nico compuesto de prospecci&oacute;n
+                    astrobiol&oacute;gica.
+                </span>
+                <span lang-en>
+                    RGB composite of the three proposed CMPI indices: CMPI-01 HMI (R),
+                    CMPI-02 CBI (G), and CMPI-03 AHI (B) to integrate hydration, carbonate,
+                    and phyllosilicate information into a single astrobiological prospection
+                    composite.
+                </span>
+            </p>
+
+            <div class="formula-label">CMPI &mdash; Cussen Mars Prospection Indices (proposed)</div>
+            <div class="formula">CMPI-01  HMI (Hydrated Mineral Index):
+  HMI = norm(BD1900r2) + norm(BD2300)
+  &rarr; targets bound water + Mg-OH absorption
+
+CMPI-02  CBI (Carbonate Bearing Index):
+  CBI = norm(MIN2295_2480) &times; weight(2300&ndash;2500 nm region)
+  &rarr; targets Mg-carbonate at 2300&ndash;2500 nm
+
+CMPI-03  AHI (Aqueous History Index):
+  AHI = (HMI + CBI + norm(D2300)) / 3
+  &rarr; composite: hydration + carbonate + phyllosilicate</div>
+
+            <div class="figure">
+                <img src="assets/fig_crism_03_prospection.png" alt="CMPI Prospection" style="width:100%;border-radius:8px;border:1px solid var(--border);">
+                <div class="figure-caption">
+                    <div class="fig-label">Fig. 3 &mdash; CMPI Prospection Composite (HMI:CBI:AHI) &middot; Jezero Crater &middot; Custom Indices</div>
+                    <p>
+                        <span lang-es>
+                            El &iacute;ndice integrado CMPI-03 AHI resalta en magenta/blanco las zonas con
+                            m&aacute;xima convergencia de se&ntilde;ales de hidrataci&oacute;n, carbonatos y filosilicatos,
+                            correspondientes al frente del delta y los afloramientos de carbonato de Mg
+                            descritos por Goudge et al. (2015). Estas son las zonas de mayor inter&eacute;s
+                            astrobiol&oacute;gico para preservaci&oacute;n de biofirmas.
+                        </span>
+                        <span lang-en>
+                            The integrated CMPI-03 AHI index highlights in magenta/white the zones with
+                            maximum convergence of hydration, carbonate, and phyllosilicate signals,
+                            corresponding to the delta front and the Mg-carbonate outcrops described by
+                            Goudge et al. (2015). These are the zones of highest astrobiological interest
+                            for biosignature preservation.
+                        </span>
+                    </p>
+                </div>
+            </div>
+
+            <div class="analysis">
+                <span lang-es>
+                    <strong>Hallazgos clave:</strong> El CMPI-03 AHI identifica tres zonas de m&aacute;ximo inter&eacute;s:
+                    (1) el frente delt&aacute;ico occidental, donde la superposici&oacute;n de carbonato de Mg y arcillas
+                    esmect&iacute;ticas indica diagenesis acu&aacute;tica prolongada; (2) los afloramientos de Nili Fossae,
+                    con se&ntilde;ales intensas de filosilicatos y agua ligada; (3) la unidad de olivino-carbonato
+                    en el suelo del cr&aacute;ter, donde la coexistencia de olivino y carbonato implica
+                    interacci&oacute;n agua-roca a temperaturas moderadas. Estas tres zonas son consistentes
+                    con los sitios prioritarios de muestreo de la misi&oacute;n Mars 2020.
+                </span>
+                <span lang-en>
+                    <strong>Key findings:</strong> CMPI-03 AHI identifies three zones of maximum interest:
+                    (1) the western delta front, where Mg-carbonate and smectite clay overlap indicates
+                    prolonged aqueous diagenesis; (2) the Nili Fossae outcrops, with intense phyllosilicate
+                    and bound water signals; (3) the olivine-carbonate unit on the crater floor, where
+                    olivine-carbonate coexistence implies water-rock interaction at moderate temperatures.
+                    These three zones are consistent with Mars 2020 priority sampling sites.
+                </span>
+            </div>
+
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th><span lang-es>&Iacute;ndice</span><span lang-en>Index</span></th>
+                        <th><span lang-es>Nombre</span><span lang-en>Name</span></th>
+                        <th><span lang-es>Componentes</span><span lang-en>Components</span></th>
+                        <th><span lang-es>Objetivo</span><span lang-en>Target</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="val">CMPI-01</td>
+                        <td>HMI &mdash; Hydrated Mineral Index</td>
+                        <td>BD1900r2 + BD2300</td>
+                        <td class="val"><span lang-es>Agua ligada + Mg-OH</span><span lang-en>Bound water + Mg-OH</span></td>
+                    </tr>
+                    <tr>
+                        <td class="val">CMPI-02</td>
+                        <td>CBI &mdash; Carbonate Bearing Index</td>
+                        <td>MIN2295_2480 &times; weight</td>
+                        <td class="val"><span lang-es>Mg-carbonato 2300&ndash;2500 nm</span><span lang-en>Mg-carbonate 2300&ndash;2500 nm</span></td>
+                    </tr>
+                    <tr>
+                        <td class="val">CMPI-03</td>
+                        <td>AHI &mdash; Aqueous History Index</td>
+                        <td>(HMI + CBI + D2300) / 3</td>
+                        <td class="val"><span lang-es>Potencial astrobiol&oacute;gico</span><span lang-en>Astrobiological potential</span></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="note">
+                <span lang-es>
+                    <strong>Nota:</strong> Los &iacute;ndices CMPI son propuestos como parte de este an&aacute;lisis
+                    y est&aacute;n pendientes de validaci&oacute;n. No provienen de la literatura publicada. Su aplicaci&oacute;n
+                    requiere calibraci&oacute;n con datos de laboratorio y validaci&oacute;n cruzada con mineralog&iacute;a in-situ
+                    (e.g., PIXL/SuperCam de Perseverance).
+                </span>
+                <span lang-en>
+                    <strong>Note:</strong> The CMPI indices are proposed as part of this analysis and are
+                    pending validation. They are not from published literature. Their application requires
+                    laboratory calibration and cross-validation with in-situ mineralogy
+                    (e.g., PIXL/SuperCam from Perseverance).
+                </span>
+            </div>
+        </section>
+
+        <!-- == KEY FINDINGS == -->
+        <section>
+            <div class="sec-code">
+                <span lang-es>Hallazgos principales</span>
+                <span lang-en>Key findings</span>
+            </div>
+            <h2>
+                <span lang-es>Resultados e implicaciones</span>
+                <span lang-en>Results and Implications</span>
+            </h2>
+
+            <div class="analysis" style="margin-top:24px">
+                <span lang-es>
+                    <strong>1. Carbonato de Mg concentrado en el delta:</strong> Los dep&oacute;sitos del abanico
+                    delt&aacute;ico muestran se&ntilde;ales intensas de MIN2295_2480 y CMPI-02 CBI, confirmando
+                    la presencia de carbonato de magnesio consistente con un ambiente lacustre de pH alcalino.
+                    Estos carbonatos tienen alto potencial de preservaci&oacute;n de biofirmas.<br><br>
+
+                    <strong>2. Filosilicatos a lo largo de Nili Fossae:</strong> Afloramientos ricos en
+                    arcillas esmect&iacute;ticas (D2300, BD2300) a lo largo de la fractura tect&oacute;nica,
+                    indicando alteraci&oacute;n acu&aacute;tica extensa del basamento noachiano.<br><br>
+
+                    <strong>3. Olivino en el suelo del cr&aacute;ter:</strong> OLINDEX3 confirma una unidad
+                    de olivino (Fo60&ndash;Fo80) extendida por todo el piso del cr&aacute;ter, parcialmente
+                    alterada a carbonato, un marcador de interacci&oacute;n agua-roca.<br><br>
+
+                    <strong>4. CMPI-03 AHI como herramienta de prospecci&oacute;n:</strong> El &iacute;ndice
+                    integrado de historia acuosa resalta las zonas de m&aacute;ximo inter&eacute;s astrobiol&oacute;gico,
+                    coincidentes con los objetivos de muestreo de Mars 2020 Perseverance.
+                </span>
+                <span lang-en>
+                    <strong>1. Mg-carbonate concentrated in delta deposits:</strong> Delta fan deposits
+                    show intense MIN2295_2480 and CMPI-02 CBI signals, confirming the presence of
+                    magnesium carbonate consistent with an alkaline-pH lacustrine environment.
+                    These carbonates have high biosignature preservation potential.<br><br>
+
+                    <strong>2. Phyllosilicate-rich outcrops along Nili Fossae:</strong> Smectite
+                    clay-rich outcrops (D2300, BD2300) along the tectonic fracture, indicating
+                    extensive aqueous alteration of the Noachian basement.<br><br>
+
+                    <strong>3. Olivine-bearing unit across crater floor:</strong> OLINDEX3 confirms an
+                    olivine unit (Fo60&ndash;Fo80) spanning the entire crater floor, partially altered
+                    to carbonate &mdash; a marker of water-rock interaction.<br><br>
+
+                    <strong>4. CMPI-03 AHI as prospection tool:</strong> The integrated aqueous
+                    history index highlights zones of maximum astrobiological interest, coincident
+                    with Mars 2020 Perseverance sampling targets.
+                </span>
+            </div>
+        </section>
+
+        <!-- == METHODOLOGY == -->
+        <section>
+            <div class="sec-code">
+                <span lang-es>Metodolog&iacute;a</span>
+                <span lang-en>Methodology</span>
+            </div>
+            <h2>
+                <span lang-es>Datos, procesamiento y stack t&eacute;cnico</span>
+                <span lang-en>Data, Processing, and Tech Stack</span>
+            </h2>
+
+            <table class="data-table" style="margin-top:16px">
+                <thead>
+                    <tr>
+                        <th><span lang-es>Par&aacute;metro</span><span lang-en>Parameter</span></th>
+                        <th><span lang-es>Detalle</span><span lang-en>Detail</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td><span lang-es>Instrumento</span><span lang-en>Instrument</span></td><td class="val">CRISM (Compact Reconnaissance Imaging Spectrometer for Mars)</td></tr>
+                    <tr><td><span lang-es>Plataforma</span><span lang-en>Platform</span></td><td class="val">Mars Reconnaissance Orbiter (MRO) &mdash; NASA/JPL</td></tr>
+                    <tr><td><span lang-es>Producto</span><span lang-en>Product</span></td><td class="val">TRDR (Targeted Reduced Data Record) &mdash; I/F reflectance</td></tr>
+                    <tr><td><span lang-es>Rango espectral</span><span lang-en>Spectral range</span></td><td class="val">VNIR: 362&ndash;1053 nm &middot; IR: 1002&ndash;3920 nm &middot; 545 canales</td></tr>
+                    <tr><td><span lang-es>Resoluci&oacute;n espacial</span><span lang-en>Spatial resolution</span></td><td class="val">~18 m/px (FRT mode)</td></tr>
+                    <tr><td><span lang-es>Objetivo</span><span lang-en>Target</span></td><td class="val"><span lang-es>Cr&aacute;ter Jezero ~18.4&deg;N, 77.7&deg;E</span><span lang-en>Jezero Crater ~18.4&deg;N, 77.7&deg;E</span></td></tr>
+                    <tr><td><span lang-es>Brecha del detector</span><span lang-en>Detector gap</span></td><td class="val"><span lang-es>Uni&oacute;n VNIR/IR 1000&ndash;1030 nm (interpolada)</span><span lang-en>VNIR/IR junction 1000&ndash;1030 nm (interpolated)</span></td></tr>
+                    <tr><td><span lang-es>Productos sumarios</span><span lang-en>Summary products</span></td><td class="val">OLINDEX3, LCPINDEX2, HCPINDEX2, BD1900r2, BD2300, D2300, MIN2295_2480</td></tr>
+                    <tr><td><span lang-es>Fuente de datos</span><span lang-en>Data source</span></td><td class="val">NASA PDS Geosciences Node (pds-geosciences.wustl.edu)</td></tr>
+                    <tr><td><span lang-es>Formato</span><span lang-en>Format</span></td><td class="val">PDS3 &mdash; IMG + LBL</td></tr>
+                    <tr><td><span lang-es>Lenguaje</span><span lang-en>Language</span></td><td class="val">Python 3.12</td></tr>
+                    <tr><td><span lang-es>Librer&iacute;as</span><span lang-en>Libraries</span></td><td class="val">spectral (SPy) &middot; pvl &middot; NumPy &middot; SciPy &middot; Matplotlib</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- == REFERENCES == -->
+        <section>
+            <div class="sec-code">
+                <span lang-es>Referencias</span>
+                <span lang-en>References</span>
+            </div>
+            <h2>
+                <span lang-es>Bibliograf&iacute;a</span>
+                <span lang-en>Bibliography</span>
+            </h2>
+            <ul class="ref-list" style="margin-top:20px">
+                <li data-n="1">Murchie, S.L. et al. (2007). Compact Reconnaissance Imaging Spectrometer for Mars (CRISM) on Mars Reconnaissance Orbiter (MRO). <em>Journal of Geophysical Research</em>, 112(E5), E05S03.</li>
+                <li data-n="2">Ehlmann, B.L. et al. (2008). Orbital identification of carbonate-bearing rocks on Mars. <em>Science</em>, 322(5909), 1828&ndash;1832.</li>
+                <li data-n="3">Viviano-Beck, C.E. et al. (2014). Revised CRISM spectral parameters and summary products based on the currently detected mineral diversity on Mars. <em>Journal of Geophysical Research: Planets</em>, 119(6), 1403&ndash;1431.</li>
+                <li data-n="4">Goudge, T.A. et al. (2015). Assessing the mineralogy of the watershed and fan deposits of the Jezero crater paleolake system, Mars. <em>Journal of Geophysical Research: Planets</em>, 120(4), 775&ndash;808.</li>
+            </ul>
+        </section>
+
+        <!-- == CTA == -->
+        <div class="cta-section">
+            <h3>
+                <span lang-es>An&aacute;lisis completo</span>
+                <span lang-en>Full Analysis</span>
+            </h3>
+            <p>
+                <span lang-es>
+                    Notebook con c&oacute;digo fuente, figuras de alta resoluci&oacute;n y an&aacute;lisis espectral
+                    completo de los minerales del cr&aacute;ter Jezero, incluyendo perfiles espectrales por
+                    p&iacute;xel, validaci&oacute;n con libreria USGS y composiciones CMPI a m&uacute;ltiples escalas.
+                </span>
+                <span lang-en>
+                    Notebook with source code, high-resolution figures, and complete spectral analysis
+                    of Jezero Crater minerals, including per-pixel spectral profiles, USGS library
+                    validation, and multi-scale CMPI composites.
+                </span>
+            </p>
+            <div class="btn-row">
+                <a href="../../../#contacto" class="btn-secondary">
+                    <span lang-es>Solicitar an&aacute;lisis similar</span>
+                    <span lang-en>Request similar analysis</span>
+                </a>
+            </div>
+        </div>
+
+    </div>
+
+    <footer>
+        <div class="wrap">
+            <div class="footer-inner">
+                <span>
+                    <span lang-es>CUSSEN &mdash; Inteligencia Geoespacial &middot; Patagonia, Chile</span>
+                    <span lang-en>CUSSEN &mdash; Geospatial Intelligence &middot; Patagonia, Chile</span>
+                </span>
+                <a href="../../../#proyectos">
+                    <span lang-es>&larr; Volver al portfolio</span>
+                    <span lang-en>&larr; Back to portfolio</span>
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        function setLang(lang) {
+            document.body.classList.toggle('en', lang === 'en');
+            document.querySelectorAll('.lang-toggle button').forEach(b => {
+                b.classList.toggle('active', b.textContent.trim() === lang.toUpperCase());
+            });
+            localStorage.setItem('cussen-lang', lang);
+        }
+        // Restore saved language preference
+        const saved = localStorage.getItem('cussen-lang');
+        if (saved) setLang(saved);
+    </script>
+
+</body>
+</html>

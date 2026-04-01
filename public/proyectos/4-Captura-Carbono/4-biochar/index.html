@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proyecto Biochar Rinconada | Cussen</title>
+    <meta name="description" content="Estudio de línea base y monitoreo de aplicación de biochar en Rinconada, Chile, utilizando una década de datos satelitales para medir el impacto en la productividad agrícola y el secuestro de carbono.">
+    <meta name="keywords" content="biochar, teledetección, Sentinel-2, Landsat, secuestro de carbono, agricultura sostenible, Google Earth Engine">
+
+    <meta property="og:title" content="Proyecto Biochar Rinconada | Cussen">
+    <meta property="og:description" content="Análisis de 10 años de datos satelitales como línea base para un proyecto de aplicación de biochar con impacto medible y certificable.">
+    <meta property="og:image" content="../../../assets/biochar-og-image.jpg">
+    <meta property="og:url" content="https://cussen.cl/proyectos/biochar/">
+
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+    /* --- Animated Background --- */
+    @keyframes gradientShift {
+        0%   { background-position: 0% 50%; }
+        50%  { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    /* --- Reset & Base --- */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html {
+        scroll-behavior: smooth;
+        scroll-padding-top: 56px;
+    }
+
+    body {
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        background-color: #07090f;
+        background-image: linear-gradient(135deg, #07090f 0%, #0c1220 25%, #07090f 50%, #091118 75%, #07090f 100%);
+        background-size: 400% 400%;
+        animation: gradientShift 20s ease infinite;
+        color: #d1d5db;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+    }
+
+    /* --- Container --- */
+    .container {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 0 24px;
+    }
+
+    /* --- Nav --- */
+    nav {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        background: rgba(7, 9, 15, 0.85);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        height: 56px;
+        display: flex;
+        align-items: center;
+        padding: 0 24px;
+    }
+
+    nav .logo {
+        font-weight: 900;
+        color: #ffffff;
+        font-size: 14px;
+        letter-spacing: -0.5px;
+        text-decoration: none;
+        flex-shrink: 0;
+    }
+
+    nav .nav-links {
+        display: flex;
+        gap: 20px;
+        margin-left: 28px;
+        font-size: 13px;
+        font-weight: 500;
+        overflow-x: auto;
+        white-space: nowrap;
+        flex: 1;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    nav .nav-links a {
+        text-decoration: none;
+        color: #6b7280;
+        padding: 4px 0;
+        flex-shrink: 0;
+        transition: color 0.2s ease;
+    }
+
+    nav .nav-links a:hover {
+        color: #06b6d4;
+    }
+
+    /* --- Hero / Summary Section --- */
+    .hero {
+        padding: 80px 0 60px;
+        text-align: center;
+    }
+
+    .hero h1 {
+        font-size: clamp(2rem, 5vw, 3rem);
+        font-weight: 800;
+        color: #f9fafb;
+        letter-spacing: -1px;
+        line-height: 1.15;
+    }
+
+    .hero .subtitle {
+        max-width: 680px;
+        margin: 20px auto 0;
+        font-size: 1.05rem;
+        color: #9ca3af;
+        line-height: 1.7;
+        font-weight: 400;
+    }
+
+    /* --- Metric Cards --- */
+    .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        margin-top: 48px;
+    }
+
+    .metric-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(6, 182, 212, 0.2);
+        border-radius: 12px;
+        padding: 24px 16px;
+        text-align: center;
+        transition: border-color 0.25s ease, transform 0.25s ease;
+    }
+
+    .metric-card:hover {
+        border-color: rgba(6, 182, 212, 0.5);
+        transform: translateY(-2px);
+    }
+
+    .metric-card h4 {
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: #06b6d4;
+        margin-bottom: 6px;
+        font-family: 'JetBrains Mono', monospace;
+    }
+
+    .metric-card p {
+        font-size: 0.8rem;
+        color: #9ca3af;
+        font-weight: 500;
+    }
+
+    /* --- Section Shared --- */
+    section {
+        padding: 72px 0;
+    }
+
+    .section-title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #f9fafb;
+        text-align: center;
+        margin-bottom: 16px;
+        letter-spacing: -0.5px;
+    }
+
+    .section-intro {
+        text-align: center;
+        max-width: 700px;
+        margin: 0 auto 40px;
+        color: #9ca3af;
+        font-size: 1rem;
+        line-height: 1.7;
+    }
+
+    /* --- Executive Summary / Takeaway Cards --- */
+    .executive-summary {
+        margin-top: 64px;
+    }
+
+    .executive-summary h3 {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #f9fafb;
+        text-align: center;
+        margin-bottom: 32px;
+    }
+
+    .takeaway-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+    }
+
+    .takeaway-card {
+        background: rgba(255, 255, 255, 0.025);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-left: 3px solid #06b6d4;
+        border-radius: 10px;
+        padding: 24px;
+        transition: transform 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+    }
+
+    .takeaway-card:hover {
+        transform: translateY(-2px);
+        background: rgba(255, 255, 255, 0.04);
+        border-left-color: #10b981;
+    }
+
+    .takeaway-card h4 {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #10b981;
+        margin-bottom: 8px;
+    }
+
+    .takeaway-card p {
+        font-size: 0.925rem;
+        color: #d1d5db;
+        line-height: 1.65;
+    }
+
+    /* --- Visualizations --- */
+    .visuals-section {
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .visual-wrapper {
+        max-width: 780px;
+        margin: 0 auto;
+        text-align: center;
+    }
+
+    .visual-wrapper img {
+        width: 100%;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        display: block;
+    }
+
+    .visual-wrapper h3 {
+        margin-top: 20px;
+        font-size: 1.15rem;
+        font-weight: 600;
+        color: #f9fafb;
+    }
+
+    .visual-wrapper p {
+        margin-top: 8px;
+        font-size: 0.925rem;
+        color: #9ca3af;
+        line-height: 1.65;
+    }
+
+    /* --- Methodology --- */
+    .methodology-section {
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .method-steps {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        max-width: 740px;
+        margin: 0 auto;
+    }
+
+    .method-step {
+        background: rgba(255, 255, 255, 0.025);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 10px;
+        padding: 28px;
+        position: relative;
+        transition: border-color 0.25s ease;
+    }
+
+    .method-step:hover {
+        border-color: rgba(6, 182, 212, 0.3);
+    }
+
+    .method-step h4 {
+        font-size: 1.05rem;
+        font-weight: 600;
+        color: #06b6d4;
+        margin-bottom: 10px;
+    }
+
+    .method-step p {
+        font-size: 0.925rem;
+        color: #d1d5db;
+        line-height: 1.7;
+    }
+
+    .method-step strong {
+        color: #f9fafb;
+    }
+
+    .method-step code {
+        font-family: 'JetBrains Mono', monospace;
+        background: rgba(6, 182, 212, 0.1);
+        color: #06b6d4;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.85em;
+    }
+
+    /* --- Resources --- */
+    .resources-section {
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .downloads-grid {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 14px;
+        margin-top: 32px;
+    }
+
+    .download-btn {
+        display: inline-block;
+        padding: 10px 24px;
+        border: 1px solid rgba(6, 182, 212, 0.4);
+        border-radius: 999px;
+        color: #06b6d4;
+        text-decoration: none;
+        font-size: 0.9rem;
+        font-weight: 500;
+        transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+    }
+
+    .download-btn:hover {
+        background: rgba(6, 182, 212, 0.12);
+        border-color: #06b6d4;
+        color: #22d3ee;
+    }
+
+    /* --- Footer --- */
+    footer {
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+        padding: 32px 0;
+        text-align: center;
+    }
+
+    footer p {
+        font-size: 0.825rem;
+        color: #6b7280;
+    }
+
+    /* --- Responsive --- */
+    @media (max-width: 768px) {
+        .metrics-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .takeaway-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .hero {
+            padding: 56px 0 40px;
+        }
+
+        section {
+            padding: 52px 0;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .metrics-grid {
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .metric-card {
+            padding: 18px 12px;
+        }
+
+        nav .nav-links {
+            gap: 14px;
+            margin-left: 16px;
+        }
+    }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <a href="/index.html" class="logo">CUSSEN</a>
+        <div class="nav-links">
+            <a href="#resumen" data-es="Resumen" data-en="Summary">Resumen</a>
+            <a href="#visualizaciones" data-es="Visualizaciones" data-en="Visualizations">Visualizaciones</a>
+            <a href="#metodologia" data-es="Metodología" data-en="Methodology">Metodología</a>
+            <a href="#recursos" data-es="Recursos" data-en="Resources">Recursos</a>
+        </div>
+    </nav>
+
+    <main>
+
+        <section id="resumen" class="hero">
+            <div class="container">
+                <h1 data-es="Proyecto Biochar Rinconada" data-en="Biochar Rinconada Project">Proyecto Biochar Rinconada</h1>
+                <p class="subtitle" data-es="Un experimento científico formal para medir el impacto del biochar en la productividad agrícola y el secuestro de carbono, con miras a la certificación de créditos de carbono." data-en="A formal scientific experiment to measure the impact of biochar on agricultural productivity and carbon sequestration, aimed at carbon credit certification.">Un experimento científico formal para medir el impacto del biochar en la productividad agrícola y el secuestro de carbono, con miras a la certificación de créditos de carbono.</p>
+
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <h4>IPP</h4>
+                        <p data-es="Índice de Productividad Ponderado" data-en="Weighted Productivity Index">Índice de Productividad Ponderado</p>
+                    </div>
+                    <div class="metric-card">
+                        <h4 data-es="10 Años" data-en="10 Years">10 Años</h4>
+                        <p data-es="Línea Base (2015-2024)" data-en="Baseline (2015-2024)">Línea Base (2015-2024)</p>
+                    </div>
+                    <div class="metric-card">
+                        <h4 data-es="Regresión Armónica" data-en="Harmonic Regression">Regresión Armónica</h4>
+                        <p data-es="Modelado de Estacionalidad" data-en="Seasonality Modeling">Modelado de Estacionalidad</p>
+                    </div>
+                    <div class="metric-card">
+                        <h4>Cert.</h4>
+                        <p data-es="Certificación de Carbono" data-en="Carbon Certification">Certificación de Carbono</p>
+                    </div>
+                </div>
+
+                <div class="executive-summary">
+                    <h3 data-es="Resumen Ejecutivo" data-en="Executive Summary">Resumen Ejecutivo</h3>
+                    <div class="takeaway-grid">
+                        <div class="takeaway-card">
+                            <h4 data-es="Experimento Científico Formal" data-en="Formal Scientific Experiment">Experimento Científico Formal</h4>
+                            <p data-es="Este no es solo un proyecto de monitoreo, sino un experimento científico riguroso con diseño de control y tratamiento." data-en="This is not just a monitoring project, but a rigorous scientific experiment with a control and treatment design.">Este no es solo un proyecto de monitoreo, sino un experimento científico riguroso con diseño de control y tratamiento.</p>
+                        </div>
+                        <div class="takeaway-card">
+                            <h4 data-es="Línea de Base de una Década" data-en="Decade-Long Baseline">Línea de Base de una Década</h4>
+                            <p data-es="Se estableció una robusta línea de base de 10 años (2015-2024), validando estadísticamente la homogeneidad de las zonas (&lt;1% de diferencia inicial)." data-en="A robust 10-year baseline (2015-2024) was established, statistically validating the homogeneity of the zones (&lt;1% initial difference).">Se estableció una robusta línea de base de 10 años (2015-2024), validando estadísticamente la homogeneidad de las zonas (&lt;1% de diferencia inicial).</p>
+                        </div>
+                        <div class="takeaway-card">
+                            <h4 data-es="Metodología Avanzada" data-en="Advanced Methodology">Metodología Avanzada</h4>
+                            <p data-es="Se utiliza un Índice de Productividad Ponderado (IPP) basado en IA y modelos de regresión armónica para una detección precisa de anomalías." data-en="A Weighted Productivity Index (IPP) based on AI and harmonic regression models is used for precise anomaly detection.">Se utiliza un Índice de Productividad Ponderado (IPP) basado en IA y modelos de regresión armónica para una detección precisa de anomalías.</p>
+                        </div>
+                        <div class="takeaway-card">
+                            <h4 data-es="Objetivos de Alto Impacto" data-en="High-Impact Objectives">Objetivos de Alto Impacto</h4>
+                            <p data-es="El proyecto busca generar datos para una tesis de magíster, publicaciones científicas y la certificación de créditos de carbono." data-en="The project aims to generate data for a master's thesis, scientific publications, and carbon credit certification.">El proyecto busca generar datos para una tesis de magíster, publicaciones científicas y la certificación de créditos de carbono.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="visualizaciones" class="visuals-section">
+            <div class="container">
+                <h2 class="section-title" data-es="Visualizaciones y Datos" data-en="Visualizations & Data">Visualizaciones y Datos</h2>
+                <div class="visual-wrapper">
+                    <img src="./Analisis_Resultados_y_Visualizaciones/Graficos_Reportes/ee-chart.png" alt="Gráfico de Línea Base de 10 Años">
+                    <h3 data-es="Línea Base de Productividad (2015-2024)" data-en="Productivity Baseline (2015-2024)">Línea Base de Productividad (2015-2024)</h3>
+                    <p data-es="Serie temporal del Índice de Productividad Ponderado (IPP) para las zonas de control y tratamiento, demostrando su homogeneidad antes del experimento." data-en="Time series of the Weighted Productivity Index (IPP) for control and treatment zones, demonstrating their homogeneity before the experiment.">Serie temporal del Índice de Productividad Ponderado (IPP) para las zonas de control y tratamiento, demostrando su homogeneidad antes del experimento.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="metodologia" class="methodology-section">
+            <div class="container">
+                <h2 class="section-title" data-es="Metodología Científica" data-en="Scientific Methodology">Metodología Científica</h2>
+                <p class="section-intro" data-es="El proyecto se basa en un diseño experimental robusto y un análisis de series de tiempo de una década utilizando datos de Sentinel-2 y Landsat en Google Earth Engine." data-en="The project is based on a robust experimental design and a decade-long time series analysis using Sentinel-2 and Landsat data in Google Earth Engine.">El proyecto se basa en un diseño experimental robusto y un análisis de series de tiempo de una década utilizando datos de Sentinel-2 y Landsat en Google Earth Engine.</p>
+                <div class="method-steps">
+                    <div class="method-step">
+                        <h4 data-es="1. Índice de Productividad Ponderado (IPP)" data-en="1. Weighted Productivity Index (IPP)">1. Índice de Productividad Ponderado (IPP)</h4>
+                        <p data-es="Se desarrolló un índice personalizado, &lt;strong&gt;IPP = f(EVI, SAVI, BSI)&lt;/strong&gt;, donde &lt;code&gt;f&lt;/code&gt; es un modelo entrenado con IA para ponderar la contribución del verdor (EVI, SAVI) y reducir el ruido del suelo desnudo (BSI)." data-en="A custom index was developed, &lt;strong&gt;IPP = f(EVI, SAVI, BSI)&lt;/strong&gt;, where &lt;code&gt;f&lt;/code&gt; is an AI-trained model to weight the contribution of greenness (EVI, SAVI) and reduce bare soil noise (BSI).">Se desarrolló un índice personalizado, <strong>IPP = f(EVI, SAVI, BSI)</strong>, donde <code>f</code> es un modelo entrenado con IA para ponderar la contribución del verdor (EVI, SAVI) y reducir el ruido del suelo desnudo (BSI).</p>
+                    </div>
+                    <div class="method-step">
+                        <h4 data-es="2. Modelado de Regresión Armónica" data-en="2. Harmonic Regression Modeling">2. Modelado de Regresión Armónica</h4>
+                        <p data-es="Se aplica un modelo de regresión armónica a la serie temporal de 10 años del IPP. Esto modela el ciclo fenológico natural de la pradera, permitiendo que cualquier desviación post-aplicación de biochar sea detectada como una anomalía significativa." data-en="A harmonic regression model is applied to the 10-year IPP time series. This models the natural phenological cycle of the grassland, allowing any post-biochar deviation to be detected as a significant anomaly.">Se aplica un modelo de regresión armónica a la serie temporal de 10 años del IPP. Esto modela el ciclo fenológico natural de la pradera, permitiendo que cualquier desviación post-aplicación de biochar sea detectada como una anomalía significativa.</p>
+                    </div>
+                    <div class="method-step">
+                        <h4 data-es="3. Diseño Experimental y Potencia" data-en="3. Experimental Design & Power">3. Diseño Experimental y Potencia</h4>
+                        <p data-es="Se definieron una zona de tratamiento (2.8 ha) y una de control (1.6 ha). Un análisis de potencia estadística confirmó que el diseño puede detectar un cambio en la productividad >5% con un 80% de certeza, asegurando la validez de los resultados." data-en="A treatment zone (2.8 ha) and a control zone (1.6 ha) were defined. A statistical power analysis confirmed that the design can detect a productivity change >5% with 80% certainty, ensuring the validity of the results.">Se definieron una zona de tratamiento (2.8 ha) y una de control (1.6 ha). Un análisis de potencia estadística confirmó que el diseño puede detectar un cambio en la productividad >5% con un 80% de certeza, asegurando la validez de los resultados.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="recursos" class="resources-section">
+            <div class="container">
+                <h2 class="section-title" data-es="Recursos y Documentación" data-en="Resources & Documentation">Recursos y Documentación</h2>
+                <div class="downloads-grid">
+                    <a href="./README.md" class="download-btn" download data-es="README del Proyecto (.md)" data-en="Project README (.md)">README del Proyecto (.md)</a>
+                    <a href="./outputs/SCRIPT_OPTIMIZADO_Biochar.js" class="download-btn" download data-es="Script GEE (.js)" data-en="GEE Script (.js)">Script GEE (.js)</a>
+                    <a href="./analisis.html" class="download-btn" data-es="Análisis Interactivo" data-en="Interactive Analysis">Análisis Interactivo</a>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer>
+        <div class="container">
+            <p data-es="&copy; 2025 Cussen - Teledetección &amp; Sustentabilidad. Todos los derechos reservados." data-en="&copy; 2025 Cussen - Remote Sensing &amp; Sustainability. All rights reserved.">&copy; 2025 Cussen - Teledetección &amp; Sustentabilidad. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <script src="../../../assets/i18n.js"></script>
+
+</body>
+</html>

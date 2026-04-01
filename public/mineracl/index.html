@@ -1,0 +1,2081 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="MineraCL - Gestión integral de operaciones mineras chilenas">
+    <meta name="theme-color" content="#92400e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="MineraCL">
+    <title>MineraCL — Operaciones Mineras</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #92400e;
+            --primary-dark: #78340c;
+            --primary-light: #b8560f;
+            --accent: #6b7280;
+            --accent-light: #9ca3af;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg: #ffffff;
+            --bg-secondary: #f9fafb;
+            --border: #e5e7eb;
+            --text: #111827;
+            --text-secondary: #6b7280;
+        }
+
+        html, body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: var(--bg-secondary);
+            color: var(--text);
+            height: 100%;
+            font-size: 16px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        input, textarea, select {
+            font-size: 16px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        header h1 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            margin-bottom: 0.25rem;
+        }
+
+        header p {
+            font-size: 0.875rem;
+            opacity: 0.95;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0;
+            background: white;
+            border-bottom: 1px solid var(--border);
+            overflow-x: auto;
+            position: sticky;
+            top: 0;
+            z-index: 99;
+        }
+
+        .tabs::-webkit-scrollbar {
+            height: 3px;
+        }
+
+        .tabs::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 2px;
+        }
+
+        .tab-button {
+            flex: 0 0 auto;
+            padding: 1rem 1.25rem;
+            border: none;
+            background: white;
+            color: var(--accent);
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            font-size: 0.9375rem;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab-button:active {
+            background: var(--bg-secondary);
+        }
+
+        .tab-button.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+            background: var(--bg-secondary);
+        }
+
+        .content {
+            flex: 1;
+            padding: 1.5rem;
+            max-width: 100%;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.2s ease-in;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .card {
+            background: white;
+            border-radius: 0.5rem;
+            border: 1px solid var(--border);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .card h2 {
+            font-size: 1.25rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+            font-size: 0.9375rem;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="email"],
+        input[type="date"],
+        input[type="time"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 0.375rem;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        input[type="email"]:focus,
+        input[type="date"]:focus,
+        input[type="time"]:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(146, 64, 14, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 5rem;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+
+        .button-group.single {
+            grid-template-columns: 1fr;
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.375rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9375rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:active {
+            background: var(--primary-dark);
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:active {
+            background: var(--border);
+        }
+
+        .btn-small {
+            padding: 0.5rem 1rem;
+            font-size: 0.8125rem;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:active {
+            background: #dc2626;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .grid.cols-2 {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        @media (max-width: 768px) {
+            .grid.cols-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .stat-box {
+            background: var(--bg-secondary);
+            padding: 1rem;
+            border-radius: 0.375rem;
+            border-left: 4px solid var(--primary);
+        }
+
+        .stat-box h3 {
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-box .value {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .stat-box.success {
+            border-left-color: var(--success);
+        }
+
+        .stat-box.success .value {
+            color: var(--success);
+        }
+
+        .stat-box.warning {
+            border-left-color: var(--warning);
+        }
+
+        .stat-box.warning .value {
+            color: var(--warning);
+        }
+
+        .stat-box.danger {
+            border-left-color: var(--danger);
+        }
+
+        .stat-box.danger .value {
+            color: var(--danger);
+        }
+
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            gap: 1rem;
+        }
+
+        .list-item:last-child {
+            border-bottom: none;
+        }
+
+        .list-item-left {
+            flex: 1;
+        }
+
+        .list-item-title {
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 0.25rem;
+        }
+
+        .list-item-subtitle {
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+        }
+
+        .list-item-right {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .badge.primary {
+            background: rgba(146, 64, 14, 0.15);
+            color: var(--primary);
+        }
+
+        .badge.success {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+        }
+
+        .badge.warning {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--warning);
+        }
+
+        .badge.danger {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--danger);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1.5rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state h3 {
+            font-size: 1.125rem;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.2s;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            max-width: 95%;
+            max-height: 90vh;
+            overflow-y: auto;
+            width: 100%;
+            max-width: 500px;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+            padding: 0;
+            width: 2rem;
+            height: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-close:active {
+            color: var(--primary);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 1.5rem 0;
+        }
+
+        .incident-matrix {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .matrix-cell {
+            padding: 1rem;
+            border-radius: 0.375rem;
+            text-align: center;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+            background: var(--bg-secondary);
+        }
+
+        .matrix-cell:active {
+            border-color: var(--primary);
+        }
+
+        .matrix-cell.selected {
+            background: rgba(146, 64, 14, 0.15);
+            border-color: var(--primary);
+        }
+
+        .matrix-cell h4 {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+            text-transform: uppercase;
+        }
+
+        .matrix-cell .name {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .sernageomin-checklist {
+            list-style: none;
+        }
+
+        .sernageomin-checklist li {
+            display: flex;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border);
+            align-items: flex-start;
+        }
+
+        .sernageomin-checklist li:last-child {
+            border-bottom: none;
+        }
+
+        .sernageomin-checklist input[type="checkbox"] {
+            width: 1.25rem;
+            height: 1.25rem;
+            margin-top: 0.125rem;
+            flex-shrink: 0;
+            cursor: pointer;
+            accent-color: var(--primary);
+        }
+
+        .sernageomin-checklist label {
+            flex: 1;
+            margin: 0;
+            cursor: pointer;
+            font-weight: 400;
+        }
+
+        .turno-selector {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .turno-option {
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 0.375rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: white;
+        }
+
+        .turno-option.selected {
+            border-color: var(--primary);
+            background: rgba(146, 64, 14, 0.15);
+        }
+
+        .turno-option .label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-bottom: 0.25rem;
+        }
+
+        .turno-option .value {
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 0.375rem;
+            margin-bottom: 1rem;
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-start;
+        }
+
+        .alert.success {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+            border: 1px solid var(--success);
+        }
+
+        .alert.error {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--danger);
+            border: 1px solid var(--danger);
+        }
+
+        .alert.warning {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--warning);
+            border: 1px solid var(--warning);
+        }
+
+        .alert.info {
+            background: rgba(146, 64, 14, 0.15);
+            color: var(--primary);
+            border: 1px solid var(--primary);
+        }
+
+        .footer {
+            text-align: center;
+            padding: 2rem 1.5rem;
+            color: var(--text-secondary);
+            font-size: 0.8125rem;
+            border-top: 1px solid var(--border);
+            background: var(--bg-secondary);
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 640px) {
+            .content {
+                padding: 1rem;
+            }
+
+            .card {
+                padding: 1rem;
+                margin-bottom: 1rem;
+            }
+
+            .tab-button {
+                padding: 0.875rem 1rem;
+                font-size: 0.875rem;
+            }
+
+            header h1 {
+                font-size: 1.5rem;
+            }
+
+            .button-group {
+                grid-template-columns: 1fr;
+            }
+
+            .grid.cols-2 {
+                grid-template-columns: 1fr;
+            }
+
+            .incident-matrix {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⛏️ MineraCL</h1>
+            <p>Gestión integral de operaciones mineras chilenas</p>
+        </header>
+
+        <div class="tabs" id="tabs">
+            <button class="tab-button active" data-tab="faenas">Faenas</button>
+            <button class="tab-button" data-tab="produccion">Producción</button>
+            <button class="tab-button" data-tab="equipos">Equipos</button>
+            <button class="tab-button" data-tab="seguridad">Seguridad</button>
+            <button class="tab-button" data-tab="finanzas">Finanzas</button>
+            <button class="tab-button" data-tab="personal">Personal</button>
+        </div>
+
+        <div class="content">
+            <!-- FAENAS TAB -->
+            <div id="faenas" class="tab-content active">
+                <div class="card">
+                    <h2>🏭 Agregar Nueva Faena</h2>
+                    <div class="form-group">
+                        <label for="faena_nombre">Nombre de la Faena</label>
+                        <input type="text" id="faena_nombre" placeholder="Ej: Faena Esperanza">
+                    </div>
+                    <div class="form-group">
+                        <label for="faena_region">Región</label>
+                        <select id="faena_region">
+                            <option value="">Seleccionar región</option>
+                            <option value="Antofagasta">Antofagasta</option>
+                            <option value="Atacama">Atacama</option>
+                            <option value="Coquimbo">Coquimbo</option>
+                            <option value="Valparaíso">Valparaíso</option>
+                            <option value="Metropolitana">Metropolitana</option>
+                            <option value="Araucanía">Araucanía</option>
+                            <option value="Los Lagos">Los Lagos</option>
+                            <option value="Aysén">Aysén</option>
+                            <option value="Magallanes">Magallanes</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="faena_comuna">Comuna</label>
+                        <input type="text" id="faena_comuna" placeholder="Ej: Calama">
+                    </div>
+                    <div class="grid cols-2">
+                        <div class="form-group">
+                            <label for="faena_mineral">Mineral Principal</label>
+                            <select id="faena_mineral">
+                                <option value="">Seleccionar mineral</option>
+                                <option value="Cobre">Cobre</option>
+                                <option value="Oro">Oro</option>
+                                <option value="Plata">Plata</option>
+                                <option value="Litio">Litio</option>
+                                <option value="Molibdeno">Molibdeno</option>
+                                <option value="Hierro">Hierro</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="faena_tipo">Tipo de Explotación</label>
+                            <select id="faena_tipo">
+                                <option value="">Seleccionar tipo</option>
+                                <option value="Rajo Abierto">Rajo Abierto</option>
+                                <option value="Subterránea">Subterránea</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="grid cols-2">
+                        <div class="form-group">
+                            <label for="faena_estado">Estado Operacional</label>
+                            <select id="faena_estado">
+                                <option value="">Seleccionar estado</option>
+                                <option value="Activa">Activa</option>
+                                <option value="Suspendida">Suspendida</option>
+                                <option value="Cierre">En cierre</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="faena_pertenencia">Pertenencia Minera</label>
+                            <input type="text" id="faena_pertenencia" placeholder="Ej: Pertenencia 123456">
+                        </div>
+                    </div>
+                    <div class="button-group single">
+                        <button class="btn-primary" onclick="agregarFaena()">Registrar Faena</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>📋 Listado de Faenas</h2>
+                    <div id="faenas-list" class="empty-state">
+                        <h3>No hay faenas registradas</h3>
+                        <p>Agrega tu primera faena minera arriba</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PRODUCCION TAB -->
+            <div id="produccion" class="tab-content">
+                <div class="card">
+                    <h2>📊 Registro de Producción Diaria</h2>
+                    <div class="form-group">
+                        <label for="prod_faena">Faena</label>
+                        <select id="prod_faena"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="prod_fecha">Fecha</label>
+                        <input type="date" id="prod_fecha">
+                    </div>
+                    <div class="grid cols-2">
+                        <div class="form-group">
+                            <label for="prod_extraidas">Toneladas Extraídas</label>
+                            <input type="number" id="prod_extraidas" placeholder="0" min="0" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label for="prod_procesadas">Toneladas Procesadas</label>
+                            <input type="number" id="prod_procesadas" placeholder="0" min="0" step="0.01">
+                        </div>
+                    </div>
+                    <div class="grid cols-2">
+                        <div class="form-group">
+                            <label for="prod_ley">Ley de Mineral (%)</label>
+                            <input type="number" id="prod_ley" placeholder="0.00" min="0" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label for="prod_recuperacion">Recuperación (%)</label>
+                            <input type="number" id="prod_recuperacion" placeholder="0.00" min="0" max="100" step="0.01">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="prod_concentrado">Concentrado Producido (Tons)</label>
+                        <input type="number" id="prod_concentrado" placeholder="0" min="0" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label for="prod_notas">Notas</label>
+                        <textarea id="prod_notas" placeholder="Incidencias, ajustes, observaciones..."></textarea>
+                    </div>
+                    <div class="button-group single">
+                        <button class="btn-primary" onclick="registrarProduccion()">Guardar Registro</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>📈 Estadísticas de Producción</h2>
+                    <div class="grid cols-2">
+                        <div class="stat-box success">
+                            <h3>Promedio Diario (Tons)</h3>
+                            <div class="value" id="prod-avg-diario">0</div>
+                        </div>
+                        <div class="stat-box success">
+                            <h3>Ley Promedio (%)</h3>
+                            <div class="value" id="prod-avg-ley">0</div>
+                        </div>
+                    </div>
+                    <div class="grid cols-2">
+                        <div class="stat-box">
+                            <h3>Recuperación Promedio (%)</h3>
+                            <div class="value" id="prod-avg-recuperacion">0</div>
+                        </div>
+                        <div class="stat-box success">
+                            <h3>Concentrado Total (Tons)</h3>
+                            <div class="value" id="prod-total-concentrado">0</div>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chart-produccion"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>📝 Historial de Producción</h2>
+                    <div id="produccion-list" class="empty-state">
+                        <h3>No hay registros de producción</h3>
+                        <p>Los registros aparecerán aquí</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- EQUIPOS TAB -->
+            <div id="equipos" class="tab-content">
+                <div class="card">
+                    <h2>🚛 Agregar Equipamiento</h2>
+                    <div class="form-group">
+                        <label for="equipo_faena">Faena</label>
+                        <select id="equipo_faena"></select>
+                    </div>
+                    <div class="grid cols-2">
+                        <div class="form-group">
+                            <label for="equipo_tipo">Tipo de Equipo</label>
+                            <select id="equipo_tipo">
+                                <option value="">Seleccionar tipo</option>
+                                <option value="Camión CAT">Camión CAT</option>
+                                <option value="Camión Komatsu">Camión Komatsu</option>
+                                <option value="Pala">Pala</option>
+                                <option value="Perforadora">Perforadora</option>
+                                <option value="Chancador">Chancador</option>
+                                <option value="Molino">Molino</option>
+                                <option value="Excavadora">Excavadora</option>
+                                <option value="Dozer">Dozer</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="equipo_marca">Marca/Modelo</label>
+                            <input type="text" id="equipo_marca" placeholder="Ej: CAT 390F">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="equipo_codigo">Código de Activo</label>
+                        <input type="text" id="equipo_codigo" placeholder="Ej: EQP-2024-001">
+                    </div>
+                    <div class="grid cols-2">
+                        <div class="form-group">
+                            <label for="equipo_horasop">Horas Operación Iniciales</label>
+                            <input type="number" id="equipo_horasop" placeholder="0" min="0" step="0.1">
+                        </div>
+                        <div class="form-group">
+                            <label for="equipo_manten">Próxima Mantención (hrs)</label>
+                            <input type="number" id="equipo_manten" placeholder="500" min="0" step="1">
+                        </div>
+                    </div>
+                    <div class="button-group single">
+                        <button class="btn-primary" onclick="agregarEquipo()">Registrar Equipo</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>⚙️ Dashboard de Equipos</h2>
+                    <div class="grid cols-2">
+                        <div class="stat-box success">
+                            <h3>Equipos Operativos</h3>
+                            <div class="value" id="equipo-operativos">0</div>
+                        </div>
+                        <div class="stat-box warning">
+                            <h3>Disponibilidad Promedio</h3>
+                            <div class="value" id="equipo-disponibilidad">0%</div>
+                        </div>
+                    </div>
+                    <div class="grid cols-2">
+                        <div class="stat-box danger">
+                            <h3>En Mantención</h3>
+                            <div class="value" id="equipo-mantencion">0</div>
+                        </div>
+                        <div class="stat-box warning">
+                            <h3>Próxima Mantención (≤7 días)</h3>
+                            <div class="value" id="equipo-proxima">0</div>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chart-disponibilidad"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>🔧 Equipamiento Registrado</h2>
+                    <div id="equipos-list" class="empty-state">
+                        <h3>No hay equipos registrados</h3>
+                        <p>Agrega tu primer equipo arriba</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SEGURIDAD TAB -->
+            <div id="seguridad" class="tab-content">
+                <div class="card">
+                    <h2>⚠️ Registrar Incidente de Seguridad</h2>
+                    <div class="form-group">
+                        <label for="seg_faena">Faena</label>
+                        <select id="seg_faena"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="seg_fecha">Fecha y Hora</label>
+                        <input type="datetime-local" id="seg_fecha">
+                    </div>
+                    <div class="form-group">
+                        <label>Tipo de Incidente</label>
+                        <div class="incident-matrix">
+                            <div class="matrix-cell" data-type="near-miss" onclick="selectIncidentType('near-miss')">
+                                <h4>Tipo 1</h4>
+                                <div class="name">Near-Miss</div>
+                            </div>
+                            <div class="matrix-cell" data-type="accidente-menor" onclick="selectIncidentType('accidente-menor')">
+                                <h4>Tipo 2</h4>
+                                <div class="name">Accidente Menor</div>
+                            </div>
+                            <div class="matrix-cell" data-type="accidente-grave" onclick="selectIncidentType('accidente-grave')">
+                                <h4>Tipo 3</h4>
+                                <div class="name">Accidente Grave</div>
+                            </div>
+                            <div class="matrix-cell" data-type="incidente-ambiental" onclick="selectIncidentType('incidente-ambiental')">
+                                <h4>Tipo 4</h4>
+                                <div class="name">Ambiental</div>
+                            </div>
+                            <div class="matrix-cell" data-type="incidente-operacional" onclick="selectIncidentType('incidente-operacional')">
+                                <h4>Tipo 5</h4>
+                                <div class="name">Operacional</div>
+                            </div>
+                            <div class="matrix-cell" data-type="no-conformidad" onclick="selectIncidentType('no-conformidad')">
+                                <h4>Tipo 6</h4>
+                                <div class="name">No Conformidad</div>
+                            </div>
+                        </div>
+                        <input type="hidden" id="seg_tipo">
+                    </div>
+                    <div class="form-group">
+                        <label for="seg_descripcion">Descripción del Incidente</label>
+                        <textarea id="seg_descripcion" placeholder="Detallar qué sucedió, dónde y cómo..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="seg_personas">Personal Involucrado</label>
+                        <input type="text" id="seg_personas" placeholder="Nombres y cargos">
+                    </div>
+                    <div class="form-group">
+                        <label for="seg_acciones">Acciones Correctivas Inmediatas</label>
+                        <textarea id="seg_acciones" placeholder="Medidas tomadas..."></textarea>
+                    </div>
+                    <div class="button-group single">
+                        <button class="btn-primary" onclick="registrarIncidente()">Registrar Incidente</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>🛡️ Indicadores de Seguridad</h2>
+                    <div class="grid cols-2">
+                        <div class="stat-box success">
+                            <h3>Días sin Accidentes</h3>
+                            <div class="value" id="seg-dias-sin-accidentes">0</div>
+                        </div>
+                        <div class="stat-box">
+                            <h3>Total Incidentes (30 días)</h3>
+                            <div class="value" id="seg-total-incidentes">0</div>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chart-seguridad"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>✓ SERNAGEOMIN - Lista de Cumplimiento</h2>
+                    <ul class="sernageomin-checklist" id="sernageomin-checklist">
+                        <li>
+                            <input type="checkbox" id="sern-1" onchange="updateSernageomin()">
+                            <label for="sern-1">Plan de Seguridad y Salud Ocupacional actualizado</label>
+                        </li>
+                        <li>
+                            <input type="checkbox" id="sern-2" onchange="updateSernageomin()">
+                            <label for="sern-2">Designación de Superintendente de Seguridad</label>
+                        </li>
+                        <li>
+                            <input type="checkbox" id="sern-3" onchange="updateSernageomin()">
+                            <label for="sern-3">Investigación de incidentes completada</label>
+                        </li>
+                        <li>
+                            <input type="checkbox" id="sern-4" onchange="updateSernageomin()">
+                            <label for="sern-4">Registro de enfermedades ocupacionales</label>
+                        </li>
+                        <li>
+                            <input type="checkbox" id="sern-5" onchange="updateSernageomin()">
+                            <label for="sern-5">Capacitación en seguridad documentada</label>
+                        </li>
+                        <li>
+                            <input type="checkbox" id="sern-6" onchange="updateSernageomin()">
+                            <label for="sern-6">Inspecciones de equipos de protección personal</label>
+                        </li>
+                        <li>
+                            <input type="checkbox" id="sern-7" onchange="updateSernageomin()">
+                            <label for="sern-7">Mantención de equipos de control críticos</label>
+                        </li>
+                        <li>
+                            <input type="checkbox" id="sern-8" onchange="updateSernageomin()">
+                            <label for="sern-8">Comité de Seguridad operativo</label>
+                        </li>
+                    </ul>
+                    <div style="margin-top: 1rem;">
+                        <div class="stat-box success">
+                            <h3>Cumplimiento SERNAGEOMIN</h3>
+                            <div class="value" id="sernageomin-progress">0%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>📋 Historial de Incidentes</h2>
+                    <div id="incidentes-list" class="empty-state">
+                        <h3>No hay incidentes registrados</h3>
+                        <p>¡Esperamos mantener un registro limpio!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FINANZAS TAB -->
+            <div id="finanzas" class="tab-content">
+                <div class="card">
+                    <h2>💰 Precio LME - Cobre</h2>
+                    <div class="grid cols-2">
+                        <div class="stat-box">
+                            <h3>Precio Actual (USD/lb)</h3>
+                            <div class="value" id="lme-precio">---</div>
+                        </div>
+                        <div class="stat-box">
+                            <label for="lme-custom" style="margin-bottom: 0.5rem;">Precio Manual (USD/lb)</label>
+                            <input type="number" id="lme-custom" placeholder="Ej: 4.50" step="0.01" min="0" style="margin-bottom: 0.5rem;">
+                            <button class="btn-small btn-secondary" style="width: 100%;" onclick="actualizarPrecioLME()">Actualizar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>📊 Registro de Costos</h2>
+                    <div class="form-group">
+                        <label for="fin_faena">Faena</label>
+                        <select id="fin_faena"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="fin_mes">Mes (AAAA-MM)</label>
+                        <input type="month" id="fin_mes">
+                    </div>
+                    <div class="grid cols-2">
+                        <div class="form-group">
+                            <label for="fin_costos-variables">Costos Operativos (MUSD)</label>
+                            <input type="number" id="fin_costos-variables" placeholder="0.00" min="0" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label for="fin_costos-fijos">Costos Fijos (MUSD)</label>
+                            <input type="number" id="fin_costos-fijos" placeholder="0.00" min="0" step="0.01">
+                        </div>
+                    </div>
+                    <div class="grid cols-2">
+                        <div class="form-group">
+                            <label for="fin_capex">CAPEX (MUSD)</label>
+                            <input type="number" id="fin_capex" placeholder="0.00" min="0" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label for="fin_royalty">Royalty Minero (MUSD)</label>
+                            <input type="number" id="fin_royalty" placeholder="0.00" min="0" step="0.01">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="fin_ingresos">Ingresos Cobre (Tons)</label>
+                        <input type="number" id="fin_ingresos" placeholder="0" min="0" step="0.01">
+                    </div>
+                    <div class="grid cols-2">
+                        <div class="form-group">
+                            <label for="fin_tasa-cambio">Tasa CLP/USD</label>
+                            <input type="number" id="fin_tasa-cambio" placeholder="800" min="0" step="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="fin_notas">Notas</label>
+                            <input type="text" id="fin_notas" placeholder="Observaciones...">
+                        </div>
+                    </div>
+                    <div class="button-group single">
+                        <button class="btn-primary" onclick="registrarFinanza()">Guardar Mes</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>📈 Dashboard Financiero</h2>
+                    <div class="grid cols-2">
+                        <div class="stat-box success">
+                            <h3>Ingresos Total (MUSD)</h3>
+                            <div class="value" id="fin-ingresos-total">0</div>
+                        </div>
+                        <div class="stat-box danger">
+                            <h3>Costos Total (MUSD)</h3>
+                            <div class="value" id="fin-costos-total">0</div>
+                        </div>
+                    </div>
+                    <div class="grid cols-2">
+                        <div class="stat-box success">
+                            <h3>Ganancia Operativa (MUSD)</h3>
+                            <div class="value" id="fin-ganancia">0</div>
+                        </div>
+                        <div class="stat-box">
+                            <h3>Margen Operativo (%)</h3>
+                            <div class="value" id="fin-margen">0%</div>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chart-finanzas"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>💵 Calculadora: Costo por Libra de Cobre</h2>
+                    <div class="form-group">
+                        <label for="calc-costos">Costos Operativos (USD)</label>
+                        <input type="number" id="calc-costos" placeholder="0" min="0" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label for="calc-produccion">Producción de Cobre Fino (lbs)</label>
+                        <input type="number" id="calc-produccion" placeholder="0" min="0" step="0.01">
+                    </div>
+                    <div class="grid cols-2">
+                        <div class="form-group">
+                            <label for="calc-capex">CAPEX (USD)</label>
+                            <input type="number" id="calc-capex" placeholder="0" min="0" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label for="calc-depreciacion">Años de Depreciación</label>
+                            <input type="number" id="calc-depreciacion" placeholder="5" min="1" step="1">
+                        </div>
+                    </div>
+                    <div class="button-group single">
+                        <button class="btn-primary" onclick="calcularCostoPorLibra()">Calcular</button>
+                    </div>
+                    <div id="calc-resultado" style="margin-top: 1rem; display: none;">
+                        <div class="alert info">
+                            <div>
+                                <strong>Costo Total por Libra:</strong> <span id="calc-resultado-valor">$ --</span> USD/lb
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>📝 Historial Financiero</h2>
+                    <div id="finanzas-list" class="empty-state">
+                        <h3>No hay registros financieros</h3>
+                        <p>Los registros aparecerán aquí</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PERSONAL TAB -->
+            <div id="personal" class="tab-content">
+                <div class="card">
+                    <h2>👨‍💼 Agregar Personal</h2>
+                    <div class="form-group">
+                        <label for="pers_nombre">Nombre Completo</label>
+                        <input type="text" id="pers_nombre" placeholder="Ej: Juan García González">
+                    </div>
+                    <div class="grid cols-2">
+                        <div class="form-group">
+                            <label for="pers_rut">RUT</label>
+                            <input type="text" id="pers_rut" placeholder="12.345.678-9">
+                        </div>
+                        <div class="form-group">
+                            <label for="pers_cargo">Cargo</label>
+                            <input type="text" id="pers_cargo" placeholder="Ej: Operador de Pala">
+                        </div>
+                    </div>
+                    <div class="grid cols-2">
+                        <div class="form-group">
+                            <label for="pers_area">Área</label>
+                            <select id="pers_area">
+                                <option value="">Seleccionar área</option>
+                                <option value="Mina">Mina</option>
+                                <option value="Planta">Planta</option>
+                                <option value="Mantención">Mantención</option>
+                                <option value="Geología">Geología</option>
+                                <option value="Administración">Administración</option>
+                                <option value="Seguridad">Seguridad</option>
+                                <option value="RRHH">RRHH</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="pers_email">Email</label>
+                            <input type="email" id="pers_email" placeholder="juan@ejemplo.cl">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Sistema de Turno</label>
+                        <div class="turno-selector">
+                            <div class="turno-option" data-turno="7x7" onclick="selectTurno('7x7')">
+                                <div class="label">Turno 1</div>
+                                <div class="value">7x7</div>
+                            </div>
+                            <div class="turno-option" data-turno="4x3" onclick="selectTurno('4x3')">
+                                <div class="label">Turno 2</div>
+                                <div class="value">4x3</div>
+                            </div>
+                            <div class="turno-option" data-turno="5x2" onclick="selectTurno('5x2')">
+                                <div class="label">Turno 3</div>
+                                <div class="value">5x2</div>
+                            </div>
+                        </div>
+                        <input type="hidden" id="pers_turno">
+                    </div>
+                    <div class="form-group">
+                        <label for="pers_certificaciones">Certificaciones/Licencias (separadas por coma)</label>
+                        <textarea id="pers_certificaciones" placeholder="Ej: Licencia operador, Certificación SEC, Primeros auxilios" style="min-height: 3rem;"></textarea>
+                    </div>
+                    <div class="button-group single">
+                        <button class="btn-primary" onclick="agregarPersonal()">Registrar Personal</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>📊 Composición de Equipo</h2>
+                    <div class="grid cols-2">
+                        <div class="stat-box">
+                            <h3>Total Personal</h3>
+                            <div class="value" id="pers-total">0</div>
+                        </div>
+                        <div class="stat-box">
+                            <h3>Por Área (Principal)</h3>
+                            <div class="value" id="pers-area-principal">---</div>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chart-personal"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>👥 Directorio de Personal</h2>
+                    <div id="personal-list" class="empty-state">
+                        <h3>No hay personal registrado</h3>
+                        <p>Agrega tu primer miembro del equipo arriba</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <p>MineraCL v1.0 © 2026 — Herramienta de gestión para minería chilena | Datos almacenados localmente en tu dispositivo</p>
+        </footer>
+    </div>
+
+    <script>
+        // ========== STORAGE HELPERS ==========
+        function safeGetStorage(key, defaultValue = null) {
+            try {
+                const item = localStorage.getItem(key);
+                return item ? JSON.parse(item) : defaultValue;
+            } catch (e) {
+                console.warn(`Storage read error for ${key}:`, e);
+                return defaultValue;
+            }
+        }
+
+        function safeSetStorage(key, value) {
+            try {
+                localStorage.setItem(key, JSON.stringify(value));
+                return true;
+            } catch (e) {
+                console.warn(`Storage write error for ${key}:`, e);
+                return false;
+            }
+        }
+
+        // ========== DATA INITIALIZATION ==========
+        let faenas = safeGetStorage('mineracl_faenas', []);
+        let produccion = safeGetStorage('mineracl_produccion', []);
+        let equipos = safeGetStorage('mineracl_equipos', []);
+        let incidentes = safeGetStorage('mineracl_incidentes', []);
+        let finanzas = safeGetStorage('mineracl_finanzas', []);
+        let personal = safeGetStorage('mineracl_personal', []);
+        let sernageomin = safeGetStorage('mineracl_sernageomin', {});
+        let precioLME = safeGetStorage('mineracl_precio_lme', 4.25);
+
+        let selectedIncidentType = null;
+        let selectedTurno = null;
+
+        // ========== TAB SWITCHING ==========
+        document.querySelectorAll('.tab-button').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+                e.target.classList.add('active');
+                const tabName = e.target.dataset.tab;
+                document.getElementById(tabName).classList.add('active');
+                renderAllLists();
+            });
+        });
+
+        // ========== INITIALIZE ==========
+        function initializeApp() {
+            // Set today's date
+            const today = new Date().toISOString().split('T')[0];
+            const elements = ['prod_fecha', 'seg_fecha', 'fin_mes'];
+            elements.forEach(id => {
+                const el = document.getElementById(id);
+                if (el && !el.value) {
+                    if (id === 'seg_fecha') {
+                        el.value = new Date().toISOString().slice(0, 16);
+                    } else if (id === 'fin_mes') {
+                        el.value = today.slice(0, 7);
+                    } else {
+                        el.value = today;
+                    }
+                }
+            });
+
+            // Set default tasa cambio
+            if (!document.getElementById('fin_tasa-cambio').value) {
+                document.getElementById('fin_tasa-cambio').value = 800;
+            }
+
+            renderAllLists();
+            updateAllDashboards();
+            loadSernageomin();
+        }
+
+        // ========== FAENAS ==========
+        function agregarFaena() {
+            const nombre = document.getElementById('faena_nombre').value.trim();
+            const region = document.getElementById('faena_region').value;
+            const comuna = document.getElementById('faena_comuna').value.trim();
+            const mineral = document.getElementById('faena_mineral').value;
+            const tipo = document.getElementById('faena_tipo').value;
+            const estado = document.getElementById('faena_estado').value;
+            const pertenencia = document.getElementById('faena_pertenencia').value.trim();
+
+            if (!nombre || !region || !mineral || !tipo || !estado) {
+                alert('Por favor completa todos los campos requeridos');
+                return;
+            }
+
+            const faena = {
+                id: Date.now(),
+                nombre,
+                region,
+                comuna,
+                mineral,
+                tipo,
+                estado,
+                pertenencia,
+                fechaCreacion: new Date().toISOString()
+            };
+
+            faenas.push(faena);
+            safeSetStorage('mineracl_faenas', faenas);
+
+            // Clear form
+            ['faena_nombre', 'faena_region', 'faena_comuna', 'faena_mineral', 'faena_tipo', 'faena_estado', 'faena_pertenencia'].forEach(id => {
+                document.getElementById(id).value = '';
+            });
+
+            renderFaenas();
+            updateFaenaSelects();
+        }
+
+        function renderFaenas() {
+            const container = document.getElementById('faenas-list');
+            if (faenas.length === 0) {
+                container.innerHTML = '<div class="empty-state"><h3>No hay faenas registradas</h3><p>Agrega tu primera faena minera arriba</p></div>';
+                return;
+            }
+
+            container.innerHTML = faenas.map(faena => `
+                <div class="list-item">
+                    <div class="list-item-left">
+                        <div class="list-item-title">${faena.nombre}</div>
+                        <div class="list-item-subtitle">${faena.region} • ${faena.mineral} • ${faena.tipo}</div>
+                    </div>
+                    <div class="list-item-right">
+                        <span class="badge ${faena.estado === 'Activa' ? 'success' : 'warning'}">${faena.estado}</span>
+                        <button class="btn-small btn-danger" onclick="eliminarFaena(${faena.id})">Eliminar</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function eliminarFaena(id) {
+            if (!confirm('¿Eliminar esta faena? Los datos asociados permanecerán.')) return;
+            faenas = faenas.filter(f => f.id !== id);
+            safeSetStorage('mineracl_faenas', faenas);
+            renderFaenas();
+            updateFaenaSelects();
+        }
+
+        function updateFaenaSelects() {
+            const selectors = ['prod_faena', 'equipo_faena', 'seg_faena', 'fin_faena'];
+            selectors.forEach(id => {
+                const select = document.getElementById(id);
+                if (select) {
+                    const currentValue = select.value;
+                    select.innerHTML = '<option value="">Seleccionar faena</option>' +
+                        faenas.map(f => `<option value="${f.id}">${f.nombre}</option>`).join('');
+                    select.value = currentValue;
+                }
+            });
+        }
+
+        // ========== PRODUCCIÓN ==========
+        function registrarProduccion() {
+            const faenaId = document.getElementById('prod_faena').value;
+            const fecha = document.getElementById('prod_fecha').value;
+            const extraidas = parseFloat(document.getElementById('prod_extraidas').value) || 0;
+            const procesadas = parseFloat(document.getElementById('prod_procesadas').value) || 0;
+            const ley = parseFloat(document.getElementById('prod_ley').value) || 0;
+            const recuperacion = parseFloat(document.getElementById('prod_recuperacion').value) || 0;
+            const concentrado = parseFloat(document.getElementById('prod_concentrado').value) || 0;
+            const notas = document.getElementById('prod_notas').value.trim();
+
+            if (!faenaId || !fecha) {
+                alert('Completa faena y fecha');
+                return;
+            }
+
+            const reg = {
+                id: Date.now(),
+                faenaId: parseInt(faenaId),
+                fecha,
+                extraidas,
+                procesadas,
+                ley,
+                recuperacion,
+                concentrado,
+                notas
+            };
+
+            produccion.push(reg);
+            safeSetStorage('mineracl_produccion', produccion);
+
+            ['prod_extraidas', 'prod_procesadas', 'prod_ley', 'prod_recuperacion', 'prod_concentrado', 'prod_notas'].forEach(id => {
+                document.getElementById(id).value = '';
+            });
+
+            renderProduccion();
+            updateProduccionChart();
+        }
+
+        function renderProduccion() {
+            const container = document.getElementById('produccion-list');
+            const porFaena = {};
+            produccion.forEach(p => {
+                if (!porFaena[p.faenaId]) porFaena[p.faenaId] = [];
+                porFaena[p.faenaId].push(p);
+            });
+
+            if (produccion.length === 0) {
+                container.innerHTML = '<div class="empty-state"><h3>No hay registros de producción</h3></div>';
+                return;
+            }
+
+            container.innerHTML = Object.entries(porFaena).map(([faenaId, regs]) => {
+                const faena = faenas.find(f => f.id === parseInt(faenaId));
+                return `
+                    <div style="margin-bottom: 1rem;">
+                        <h4 style="color: var(--primary); margin-bottom: 0.5rem;">${faena ? faena.nombre : 'Faena desconocida'}</h4>
+                        ${regs.map(r => `
+                            <div class="list-item">
+                                <div class="list-item-left">
+                                    <div class="list-item-title">${r.fecha}</div>
+                                    <div class="list-item-subtitle">${r.extraidas} tons / Ley: ${r.ley.toFixed(2)}%</div>
+                                </div>
+                                <div class="list-item-right">
+                                    <button class="btn-small btn-danger" onclick="eliminarProduccion(${r.id})">Eliminar</button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function eliminarProduccion(id) {
+            produccion = produccion.filter(p => p.id !== id);
+            safeSetStorage('mineracl_produccion', produccion);
+            renderProduccion();
+            updateProduccionChart();
+        }
+
+        function updateProduccionChart() {
+            const avgDiario = produccion.length > 0 ? (produccion.reduce((s, p) => s + p.extraidas, 0) / produccion.length).toFixed(2) : 0;
+            const avgLey = produccion.length > 0 ? (produccion.reduce((s, p) => s + p.ley, 0) / produccion.length).toFixed(2) : 0;
+            const avgRecuperacion = produccion.length > 0 ? (produccion.reduce((s, p) => s + p.recuperacion, 0) / produccion.length).toFixed(2) : 0;
+            const totalConcentrado = produccion.reduce((s, p) => s + p.concentrado, 0).toFixed(2);
+
+            document.getElementById('prod-avg-diario').textContent = avgDiario;
+            document.getElementById('prod-avg-ley').textContent = avgLey;
+            document.getElementById('prod-avg-recuperacion').textContent = avgRecuperacion;
+            document.getElementById('prod-total-concentrado').textContent = totalConcentrado;
+
+            // Chart
+            const ctx = document.getElementById('chart-produccion');
+            if (ctx) {
+                const sorted = [...produccion].sort((a, b) => new Date(a.fecha) - new Date(b.fecha)).slice(-30);
+                if (window.prodChart) window.prodChart.destroy();
+                window.prodChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: sorted.map(p => p.fecha),
+                        datasets: [
+                            {
+                                label: 'Tons Extraídas',
+                                data: sorted.map(p => p.extraidas),
+                                borderColor: '#92400e',
+                                backgroundColor: 'rgba(146, 64, 14, 0.1)',
+                                tension: 0.3
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom' } }
+                    }
+                });
+            }
+        }
+
+        // ========== EQUIPOS ==========
+        function agregarEquipo() {
+            const faenaId = document.getElementById('equipo_faena').value;
+            const tipo = document.getElementById('equipo_tipo').value;
+            const marca = document.getElementById('equipo_marca').value.trim();
+            const codigo = document.getElementById('equipo_codigo').value.trim();
+            const horasop = parseFloat(document.getElementById('equipo_horasop').value) || 0;
+            const manten = parseFloat(document.getElementById('equipo_manten').value) || 500;
+
+            if (!faenaId || !tipo || !marca) {
+                alert('Completa campos requeridos');
+                return;
+            }
+
+            const eq = {
+                id: Date.now(),
+                faenaId: parseInt(faenaId),
+                tipo,
+                marca,
+                codigo,
+                horasop,
+                mantencadasActualmente: horasop,
+                proximo: manten,
+                estado: 'Operativo'
+            };
+
+            equipos.push(eq);
+            safeSetStorage('mineracl_equipos', equipos);
+
+            ['equipo_tipo', 'equipo_marca', 'equipo_codigo', 'equipo_horasop', 'equipo_manten'].forEach(id => {
+                document.getElementById(id).value = '';
+            });
+
+            renderEquipos();
+            updateEquiposChart();
+        }
+
+        function renderEquipos() {
+            const container = document.getElementById('equipos-list');
+            if (equipos.length === 0) {
+                container.innerHTML = '<div class="empty-state"><h3>No hay equipos registrados</h3></div>';
+                return;
+            }
+
+            container.innerHTML = equipos.map(eq => {
+                const faena = faenas.find(f => f.id === eq.faenaId);
+                return `
+                    <div class="list-item">
+                        <div class="list-item-left">
+                            <div class="list-item-title">${eq.marca}</div>
+                            <div class="list-item-subtitle">${eq.tipo} • ${faena ? faena.nombre : 'Sin faena'}</div>
+                        </div>
+                        <div class="list-item-right">
+                            <span class="badge primary">${eq.horasop.toFixed(1)} hrs</span>
+                            <button class="btn-small btn-danger" onclick="eliminarEquipo(${eq.id})">Eliminar</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function eliminarEquipo(id) {
+            equipos = equipos.filter(e => e.id !== id);
+            safeSetStorage('mineracl_equipos', equipos);
+            renderEquipos();
+            updateEquiposChart();
+        }
+
+        function updateEquiposChart() {
+            const operativos = equipos.length;
+            const disponibilidad = equipos.length > 0 ? ((equipos.filter(e => e.estado === 'Operativo').length / equipos.length) * 100).toFixed(0) : 0;
+            const mantencion = equipos.filter(e => e.estado === 'Mantención').length;
+            const proxima = equipos.filter(e => e.proximo - e.horasop <= 500 && e.proximo - e.horasop > 0).length;
+
+            document.getElementById('equipo-operativos').textContent = operativos;
+            document.getElementById('equipo-disponibilidad').textContent = disponibilidad + '%';
+            document.getElementById('equipo-mantencion').textContent = mantencion;
+            document.getElementById('equipo-proxima').textContent = proxima;
+
+            // Chart
+            const ctx = document.getElementById('chart-disponibilidad');
+            if (ctx && equipos.length > 0) {
+                const tipos = {};
+                equipos.forEach(e => {
+                    tipos[e.tipo] = (tipos[e.tipo] || 0) + 1;
+                });
+
+                if (window.dispChart) window.dispChart.destroy();
+                window.dispChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(tipos),
+                        datasets: [{
+                            data: Object.values(tipos),
+                            backgroundColor: ['#92400e', '#6b7280', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom' } }
+                    }
+                });
+            }
+        }
+
+        // ========== SEGURIDAD ==========
+        function selectIncidentType(type) {
+            selectedIncidentType = type;
+            document.querySelectorAll('.matrix-cell').forEach(cell => cell.classList.remove('selected'));
+            document.querySelector(`[data-type="${type}"]`).classList.add('selected');
+            document.getElementById('seg_tipo').value = type;
+        }
+
+        function registrarIncidente() {
+            const faenaId = document.getElementById('seg_faena').value;
+            const fecha = document.getElementById('seg_fecha').value;
+            const tipo = document.getElementById('seg_tipo').value;
+            const descripcion = document.getElementById('seg_descripcion').value.trim();
+            const personas = document.getElementById('seg_personas').value.trim();
+            const acciones = document.getElementById('seg_acciones').value.trim();
+
+            if (!faenaId || !tipo || !descripcion) {
+                alert('Completa los campos requeridos');
+                return;
+            }
+
+            const incidente = {
+                id: Date.now(),
+                faenaId: parseInt(faenaId),
+                fecha,
+                tipo,
+                descripcion,
+                personas,
+                acciones
+            };
+
+            incidentes.push(incidente);
+            safeSetStorage('mineracl_incidentes', incidentes);
+
+            ['seg_descripcion', 'seg_personas', 'seg_acciones'].forEach(id => {
+                document.getElementById(id).value = '';
+            });
+            document.getElementById('seg_tipo').value = '';
+            selectedIncidentType = null;
+            document.querySelectorAll('.matrix-cell').forEach(cell => cell.classList.remove('selected'));
+
+            renderIncidentes();
+            updateSeguridadDashboard();
+        }
+
+        function renderIncidentes() {
+            const container = document.getElementById('incidentes-list');
+            if (incidentes.length === 0) {
+                container.innerHTML = '<div class="empty-state"><h3>No hay incidentes registrados</h3></div>';
+                return;
+            }
+
+            container.innerHTML = incidentes.map(inc => {
+                const faena = faenas.find(f => f.id === inc.faenaId);
+                return `
+                    <div class="list-item">
+                        <div class="list-item-left">
+                            <div class="list-item-title">${inc.tipo.replace(/[-_]/g, ' ')}</div>
+                            <div class="list-item-subtitle">${inc.fecha} • ${faena ? faena.nombre : 'Sin faena'}</div>
+                        </div>
+                        <div class="list-item-right">
+                            <button class="btn-small btn-danger" onclick="eliminarIncidente(${inc.id})">Eliminar</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function eliminarIncidente(id) {
+            incidentes = incidentes.filter(i => i.id !== id);
+            safeSetStorage('mineracl_incidentes', incidentes);
+            renderIncidentes();
+            updateSeguridadDashboard();
+        }
+
+        function updateSeguridadDashboard() {
+            const ultimoAccidente = incidentes
+                .filter(i => i.tipo === 'accidente-grave' || i.tipo === 'accidente-menor')
+                .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))[0];
+
+            let diasSin = 0;
+            if (ultimoAccidente) {
+                const diff = new Date() - new Date(ultimoAccidente.fecha);
+                diasSin = Math.floor(diff / (1000 * 60 * 60 * 24));
+            } else {
+                diasSin = incidentes.length === 0 ? 365 : 0;
+            }
+
+            const hace30 = new Date();
+            hace30.setDate(hace30.getDate() - 30);
+            const totalUltimos30 = incidentes.filter(i => new Date(i.fecha) >= hace30).length;
+
+            document.getElementById('seg-dias-sin-accidentes').textContent = diasSin;
+            document.getElementById('seg-total-incidentes').textContent = totalUltimos30;
+
+            // Chart
+            const ctx = document.getElementById('chart-seguridad');
+            if (ctx) {
+                const tiposCount = {};
+                incidentes.forEach(i => {
+                    tiposCount[i.tipo] = (tiposCount[i.tipo] || 0) + 1;
+                });
+
+                if (window.segChart) window.segChart.destroy();
+                window.segChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(tiposCount).map(k => k.replace(/[-_]/g, ' ')),
+                        datasets: [{
+                            label: 'Incidentes',
+                            data: Object.values(tiposCount),
+                            backgroundColor: '#ef4444'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        indexAxis: 'y',
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }
+        }
+
+        function loadSernageomin() {
+            const stored = safeGetStorage('mineracl_sernageomin', {});
+            for (let i = 1; i <= 8; i++) {
+                const cb = document.getElementById(`sern-${i}`);
+                if (cb && stored[`sern-${i}`]) {
+                    cb.checked = stored[`sern-${i}`];
+                }
+            }
+            updateSernageomin();
+        }
+
+        function updateSernageomin() {
+            const checked = document.querySelectorAll('#sernageomin-checklist input:checked').length;
+            const total = 8;
+            const percent = ((checked / total) * 100).toFixed(0);
+
+            document.getElementById('sernageomin-progress').textContent = percent + '%';
+
+            const stored = {};
+            for (let i = 1; i <= 8; i++) {
+                stored[`sern-${i}`] = document.getElementById(`sern-${i}`).checked;
+            }
+            safeSetStorage('mineracl_sernageomin', stored);
+        }
+
+        // ========== FINANZAS ==========
+        function actualizarPrecioLME() {
+            const custom = parseFloat(document.getElementById('lme-custom').value);
+            if (custom && custom > 0) {
+                precioLME = custom;
+                safeSetStorage('mineracl_precio_lme', precioLME);
+                document.getElementById('lme-precio').textContent = precioLME.toFixed(2);
+            }
+        }
+
+        function registrarFinanza() {
+            const faenaId = document.getElementById('fin_faena').value;
+            const mes = document.getElementById('fin_mes').value;
+            const costosVar = parseFloat(document.getElementById('fin_costos-variables').value) || 0;
+            const costosFijos = parseFloat(document.getElementById('fin_costos-fijos').value) || 0;
+            const capex = parseFloat(document.getElementById('fin_capex').value) || 0;
+            const royalty = parseFloat(document.getElementById('fin_royalty').value) || 0;
+            const ingresos = parseFloat(document.getElementById('fin_ingresos').value) || 0;
+            const tasaCambio = parseFloat(document.getElementById('fin_tasa-cambio').value) || 800;
+            const notas = document.getElementById('fin_notas').value.trim();
+
+            if (!faenaId || !mes) {
+                alert('Completa faena y mes');
+                return;
+            }
+
+            const precioUSD = precioLME;
+            const ingresosUSD = ingresos * precioUSD;
+            const costosTotal = costosVar + costosFijos + royalty;
+            const ganancia = ingresosUSD - costosTotal - capex;
+
+            const fin = {
+                id: Date.now(),
+                faenaId: parseInt(faenaId),
+                mes,
+                costosVar,
+                costosFijos,
+                capex,
+                royalty,
+                ingresos,
+                ingresosUSD: ingresosUSD.toFixed(2),
+                costosTotal,
+                ganancia: ganancia.toFixed(2),
+                tasaCambio,
+                notas
+            };
+
+            finanzas.push(fin);
+            safeSetStorage('mineracl_finanzas', finanzas);
+
+            ['fin_costos-variables', 'fin_costos-fijos', 'fin_capex', 'fin_royalty', 'fin_ingresos', 'fin_notas'].forEach(id => {
+                document.getElementById(id).value = '';
+            });
+
+            renderFinanzas();
+            updateFinanzasChart();
+        }
+
+        function renderFinanzas() {
+            const container = document.getElementById('finanzas-list');
+            const sorted = [...finanzas].sort((a, b) => new Date(b.mes) - new Date(a.mes));
+            if (sorted.length === 0) {
+                container.innerHTML = '<div class="empty-state"><h3>No hay registros financieros</h3></div>';
+                return;
+            }
+
+            container.innerHTML = sorted.map(f => {
+                const faena = faenas.find(fa => fa.id === f.faenaId);
+                return `
+                    <div class="list-item">
+                        <div class="list-item-left">
+                            <div class="list-item-title">${f.mes}</div>
+                            <div class="list-item-subtitle">${faena ? faena.nombre : 'Sin faena'} • Ingresos: ${f.ingresosUSD} MUSD</div>
+                        </div>
+                        <div class="list-item-right">
+                            <span class="badge ${parseFloat(f.ganancia) >= 0 ? 'success' : 'danger'}">${f.ganancia} MUSD</span>
+                            <button class="btn-small btn-danger" onclick="eliminarFinanza(${f.id})">Eliminar</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function eliminarFinanza(id) {
+            finanzas = finanzas.filter(f => f.id !== id);
+            safeSetStorage('mineracl_finanzas', finanzas);
+            renderFinanzas();
+            updateFinanzasChart();
+        }
+
+        function updateFinanzasChart() {
+            const ingresosTotal = finanzas.reduce((s, f) => s + parseFloat(f.ingresosUSD), 0).toFixed(2);
+            const costosTotal = finanzas.reduce((s, f) => s + f.costosTotal, 0).toFixed(2);
+            const ganancia = finanzas.reduce((s, f) => s + parseFloat(f.ganancia), 0).toFixed(2);
+            const margen = ingresosTotal > 0 ? ((ganancia / ingresosTotal) * 100).toFixed(0) : 0;
+
+            document.getElementById('fin-ingresos-total').textContent = ingresosTotal;
+            document.getElementById('fin-costos-total').textContent = costosTotal;
+            document.getElementById('fin-ganancia').textContent = ganancia;
+            document.getElementById('fin-margen').textContent = margen + '%';
+
+            const ctx = document.getElementById('chart-finanzas');
+            if (ctx && finanzas.length > 0) {
+                const sorted = [...finanzas].sort((a, b) => new Date(a.mes) - new Date(b.mes)).slice(-12);
+                if (window.finChart) window.finChart.destroy();
+                window.finChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: sorted.map(f => f.mes),
+                        datasets: [
+                            {
+                                label: 'Ganancia (MUSD)',
+                                data: sorted.map(f => parseFloat(f.ganancia)),
+                                backgroundColor: sorted.map(f => parseFloat(f.ganancia) >= 0 ? '#10b981' : '#ef4444')
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }
+        }
+
+        function calcularCostoPorLibra() {
+            const costos = parseFloat(document.getElementById('calc-costos').value) || 0;
+            const produccion = parseFloat(document.getElementById('calc-produccion').value) || 1;
+            const capex = parseFloat(document.getElementById('calc-capex').value) || 0;
+            const depreciacion = parseFloat(document.getElementById('calc-depreciacion').value) || 5;
+
+            if (produccion <= 0) {
+                alert('La producción debe ser mayor a 0');
+                return;
+            }
+
+            const deprecAnnual = capex / depreciacion;
+            const costoPorLibra = (costos + deprecAnnual) / produccion;
+
+            document.getElementById('calc-resultado').style.display = 'block';
+            document.getElementById('calc-resultado-valor').textContent = costoPorLibra.toFixed(2);
+        }
+
+        // ========== PERSONAL ==========
+        function selectTurno(turno) {
+            selectedTurno = turno;
+            document.querySelectorAll('.turno-option').forEach(opt => opt.classList.remove('selected'));
+            document.querySelector(`[data-turno="${turno}"]`).classList.add('selected');
+            document.getElementById('pers_turno').value = turno;
+        }
+
+        function agregarPersonal() {
+            const nombre = document.getElementById('pers_nombre').value.trim();
+            const rut = document.getElementById('pers_rut').value.trim();
+            const cargo = document.getElementById('pers_cargo').value.trim();
+            const area = document.getElementById('pers_area').value;
+            const email = document.getElementById('pers_email').value.trim();
+            const turno = document.getElementById('pers_turno').value;
+            const certificaciones = document.getElementById('pers_certificaciones').value.trim();
+
+            if (!nombre || !cargo || !area || !turno) {
+                alert('Completa los campos requeridos');
+                return;
+            }
+
+            const pers = {
+                id: Date.now(),
+                nombre,
+                rut,
+                cargo,
+                area,
+                email,
+                turno,
+                certificaciones
+            };
+
+            personal.push(pers);
+            safeSetStorage('mineracl_personal', personal);
+
+            ['pers_nombre', 'pers_rut', 'pers_cargo', 'pers_email', 'pers_certificaciones'].forEach(id => {
+                document.getElementById(id).value = '';
+            });
+            document.getElementById('pers_area').value = '';
+            document.getElementById('pers_turno').value = '';
+            selectedTurno = null;
+            document.querySelectorAll('.turno-option').forEach(opt => opt.classList.remove('selected'));
+
+            renderPersonal();
+            updatePersonalChart();
+        }
+
+        function renderPersonal() {
+            const container = document.getElementById('personal-list');
+            if (personal.length === 0) {
+                container.innerHTML = '<div class="empty-state"><h3>No hay personal registrado</h3></div>';
+                return;
+            }
+
+            container.innerHTML = personal.map(p => `
+                <div class="list-item">
+                    <div class="list-item-left">
+                        <div class="list-item-title">${p.nombre}</div>
+                        <div class="list-item-subtitle">${p.cargo} • ${p.area} (${p.turno})</div>
+                    </div>
+                    <div class="list-item-right">
+                        <span class="badge primary">${p.turno}</span>
+                        <button class="btn-small btn-danger" onclick="eliminarPersonal(${p.id})">Eliminar</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function eliminarPersonal(id) {
+            personal = personal.filter(p => p.id !== id);
+            safeSetStorage('mineracl_personal', personal);
+            renderPersonal();
+            updatePersonalChart();
+        }
+
+        function updatePersonalChart() {
+            const areas = {};
+            personal.forEach(p => {
+                areas[p.area] = (areas[p.area] || 0) + 1;
+            });
+
+            const areaPrincipal = Object.entries(areas).sort((a, b) => b[1] - a[1])[0];
+            document.getElementById('pers-total').textContent = personal.length;
+            document.getElementById('pers-area-principal').textContent = areaPrincipal ? areaPrincipal[0] : '---';
+
+            const ctx = document.getElementById('chart-personal');
+            if (ctx && personal.length > 0) {
+                if (window.persChart) window.persChart.destroy();
+                window.persChart = new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: Object.keys(areas),
+                        datasets: [{
+                            data: Object.values(areas),
+                            backgroundColor: ['#92400e', '#6b7280', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom' } }
+                    }
+                });
+            }
+        }
+
+        // ========== UTILITIES ==========
+        function renderAllLists() {
+            renderFaenas();
+            renderProduccion();
+            renderEquipos();
+            renderIncidentes();
+            renderFinanzas();
+            renderPersonal();
+        }
+
+        function updateAllDashboards() {
+            updateFaenaSelects();
+            updateProduccionChart();
+            updateEquiposChart();
+            updateSeguridadDashboard();
+            updateFinanzasChart();
+            updatePersonalChart();
+            document.getElementById('lme-precio').textContent = precioLME.toFixed(2);
+        }
+
+        // ========== STARTUP ==========
+        window.addEventListener('load', initializeApp);
+    </script>
+</body>
+</html>

@@ -1,0 +1,1282 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#059669">
+<meta name="description" content="EnfermeraCL — Herramientas Clínicas para Enfermeras Chile. Cálculo de dosis, escalas clínicas, protocolos y FONASA.">
+<title>EnfermeraCL — Herramientas Clínicas</title>
+<link rel="manifest" href="#" id="pwa-manifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f0fdf4;--card:#ffffff;--card2:#dcfce7;--border:#86efac;--accent:#059669;--text:#064e3b;--muted:#6b7280;--red:#dc2626;--yellow:#d97706;--blue:#0369a1;--purple:#7c3aed;--shadow:0 2px 8px rgba(0,0,0,.08)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:15px}
+header{background:linear-gradient(90deg,#064e3b,#059669);padding:13px 18px;position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;color:white;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+header h1{font-size:1.1rem;font-weight:700;letter-spacing:-.3px}
+header span{font-size:.75rem;opacity:.85}
+nav{background:#fff;border-bottom:2px solid var(--border);display:flex;overflow-x:auto;position:sticky;top:62px;z-index:40;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+nav button{flex-shrink:0;padding:10px 14px;border:none;background:none;font-family:'Inter',sans-serif;font-size:.78rem;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;transition:all .2s;white-space:nowrap}
+nav button.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab{display:none;padding:16px}
+.tab.active{display:block}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
+.card-title{font-size:.9rem;font-weight:700;color:var(--accent);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.card-title .icon{font-size:1.1rem}
+label{display:block;font-size:.8rem;font-weight:600;color:var(--text);margin-bottom:4px;margin-top:10px}
+label:first-of-type{margin-top:0}
+input[type=number],input[type=text],select,textarea{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:'Inter',sans-serif;font-size:16px;color:var(--text);background:#fff;transition:border .2s;-webkit-appearance:none}
+input[type=number]:focus,input[type=text]:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:11px 18px;border:none;border-radius:8px;font-family:'Inter',sans-serif;font-size:.87rem;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:#047857}
+.btn-block{width:100%;margin-top:12px}
+.btn-sm{padding:7px 12px;font-size:.78rem}
+.btn-outline{background:transparent;border:1.5px solid var(--accent);color:var(--accent)}
+.btn-red{background:var(--red);color:#fff}
+.result{background:var(--card2);border:1.5px solid var(--border);border-radius:10px;padding:14px;margin-top:12px}
+.result-main{font-size:1.8rem;font-weight:700;color:var(--accent);text-align:center}
+.result-sub{font-size:.82rem;color:var(--muted);text-align:center;margin-top:4px}
+.result-formula{font-size:.78rem;color:var(--blue);text-align:center;margin-top:6px;font-style:italic}
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:600}
+.badge-green{background:#dcfce7;color:#166534}
+.badge-yellow{background:#fef9c3;color:#854d0e}
+.badge-orange{background:#fed7aa;color:#9a3412}
+.badge-red{background:#fee2e2;color:#991b1b}
+.badge-blue{background:#dbeafe;color:#1e40af}
+.badge-purple{background:#ede9fe;color:#5b21b6}
+.scale-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.scale-row label{margin:0;min-width:180px;font-size:.8rem}
+.scale-row select{font-size:14px;padding:7px 10px}
+table{width:100%;border-collapse:collapse;font-size:.8rem}
+th{background:var(--card2);color:var(--text);padding:8px;text-align:left;font-weight:600;border:1px solid var(--border)}
+td{padding:7px 8px;border:1px solid var(--border)}
+tr:nth-child(even) td{background:#f9fafb}
+.protocol-step{background:#f0fdf4;border-left:4px solid var(--accent);padding:10px 14px;margin-bottom:8px;border-radius:0 8px 8px 0;font-size:.83rem}
+.protocol-step strong{color:var(--accent);display:block;margin-bottom:3px;font-size:.86rem}
+.alert{border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:.82rem}
+.alert-yellow{background:#fef9c3;border:1px solid #fde047;color:#713f12}
+.alert-red{background:#fee2e2;border:1px solid #fca5a5;color:#7f1d1d}
+.alert-blue{background:#dbeafe;border:1px solid #93c5fd;color:#1e3a5f}
+.alert-green{background:#dcfce7;border:1px solid #86efac;color:#14532d}
+.history-item{background:#f9fafb;border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:6px;font-size:.8rem}
+.history-item .ts{color:var(--muted);font-size:.72rem}
+.disclaimer{background:#fef9c3;border:1px solid #fde047;border-radius:10px;padding:14px;margin-bottom:16px;font-size:.82rem;color:#713f12}
+.disclaimer strong{display:block;margin-bottom:4px}
+.drug-card{background:#f0fdf4;border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:8px}
+.drug-card h4{font-size:.83rem;font-weight:700;color:var(--accent);margin-bottom:4px}
+.drug-card p{font-size:.78rem;color:var(--text);line-height:1.5}
+.drug-card .warn{color:var(--red);font-weight:600;font-size:.76rem}
+.slider-wrap{position:relative;padding:10px 0}
+input[type=range]{width:100%;-webkit-appearance:none;height:8px;border-radius:4px;background:linear-gradient(to right,#059669 var(--val,0%),#e5e7eb var(--val,0%));border:none;outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--accent);border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.25);cursor:pointer}
+.slider-labels{display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted);margin-top:4px}
+.fonasa-table td:first-child{font-weight:600;font-size:.75rem}
+.tab-section{margin-bottom:20px}
+h3{font-size:.88rem;font-weight:700;color:var(--text);margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid var(--border)}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.show{display:flex}
+.modal{background:#fff;border-radius:14px;padding:20px;max-width:440px;width:100%;max-height:80vh;overflow-y:auto}
+.modal h3{font-size:1rem;color:var(--accent);border:none;margin-bottom:12px}
+.close-btn{position:absolute;right:16px;top:16px;background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--muted)}
+.flex-end{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
+.news-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;align-items:center}
+.news-row label{min-width:150px;margin:0;font-size:.8rem;font-weight:600}
+.news-row input{width:90px;font-size:15px;padding:7px 10px}
+.news-row select{width:120px;font-size:14px;padding:7px 10px}
+@media(max-width:400px){.row{grid-template-columns:1fr}.row3{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+
+<!-- DISCLAIMER MODAL -->
+<div class="modal-overlay show" id="disclaimerModal">
+  <div class="modal" style="position:relative">
+    <h3>⚕ EnfermeraCL — Aviso Importante</h3>
+    <p style="font-size:.85rem;line-height:1.6;color:var(--text)">
+      Esta aplicación es una <strong>herramienta de apoyo clínico educativa</strong> para profesionales de enfermería en Chile.<br><br>
+      Todas las fórmulas y protocolos están basados en guías clínicas validadas (AHA, MINSAL, OPS), pero <strong>siempre debe verificarse con los protocolos institucionales, farmacéutico clínico y equipo médico tratante</strong>.<br><br>
+      No reemplaza el juicio clínico profesional ni los sistemas oficiales de prescripción.
+    </p>
+    <div class="flex-end">
+      <button class="btn btn-primary" onclick="document.getElementById('disclaimerModal').classList.remove('show')">Entendido — Ingresar</button>
+    </div>
+  </div>
+</div>
+
+<header>
+  <div>
+    <h1>⚕ EnfermeraCL</h1>
+    <span>Herramientas Clínicas Chile</span>
+  </div>
+  <div style="text-align:right;font-size:.72rem;opacity:.85;line-height:1.4">
+    <div id="clockDisplay"></div>
+    <div>P. García, 68a, 72kg</div>
+  </div>
+</header>
+
+<nav id="mainNav">
+  <button class="active" onclick="showTab(0)">💊 Dosis</button>
+  <button onclick="showTab(1)">📋 Escalas</button>
+  <button onclick="showTab(2)">🧮 Cálculos</button>
+  <button onclick="showTab(3)">🚨 Protocolos</button>
+  <button onclick="showTab(4)">🏥 FONASA</button>
+</nav>
+
+<!-- ===== TAB 1: DOSIS Y MEDICAMENTOS ===== -->
+<div class="tab active" id="tab0">
+
+  <div class="card">
+    <div class="card-title"><span class="icon">💊</span> Calculadora de Dosis Universal</div>
+
+    <label>Tipo de cálculo</label>
+    <select id="doseType" onchange="updateDoseUI()">
+      <option value="total">Dosis total → Volumen a administrar</option>
+      <option value="weight">Dosis por peso (mg/kg/dosis)</option>
+      <option value="infusion">Infusión continua (mcg/kg/min → ml/hr)</option>
+    </select>
+
+    <div id="doseInputs">
+      <div class="row">
+        <div>
+          <label>Dosis prescrita</label>
+          <input type="number" id="dosePrescribed" placeholder="ej. 500" min="0" step="any">
+        </div>
+        <div>
+          <label>Unidad dosis</label>
+          <select id="doseUnit">
+            <option>mg</option><option>mcg</option><option>g</option><option>mEq</option><option>UI</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>Concentración disponible</label>
+          <input type="number" id="doseConc" placeholder="ej. 50" min="0" step="any">
+        </div>
+        <div>
+          <label>Unidad concentración</label>
+          <select id="doseConcUnit">
+            <option>mg/ml</option><option>mg/tab</option><option>mcg/ml</option><option>g/dl</option><option>UI/ml</option><option>mEq/ml</option>
+          </select>
+        </div>
+      </div>
+      <div id="weightRow" style="display:none">
+        <label>Peso del paciente (kg)</label>
+        <input type="number" id="doseWeight" placeholder="72" min="0" step=".1" value="72">
+      </div>
+    </div>
+
+    <div id="infusionInputs" style="display:none">
+      <div class="row">
+        <div>
+          <label>Dosis (mcg/kg/min)</label>
+          <input type="number" id="infDose" placeholder="5" min="0" step="any">
+        </div>
+        <div>
+          <label>Peso paciente (kg)</label>
+          <input type="number" id="infWeight" placeholder="72" value="72" min="0" step=".1">
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>Concentración (mg/ml)</label>
+          <input type="number" id="infConc" placeholder="0.8" min="0" step="any">
+        </div>
+        <div>
+          <label>Volumen solución (ml)</label>
+          <input type="number" id="infVol" placeholder="250" min="0" step="1">
+        </div>
+      </div>
+    </div>
+
+    <button class="btn btn-primary btn-block" onclick="calcDose()">Calcular Dosis</button>
+    <div id="doseResult" style="display:none" class="result">
+      <div class="result-main" id="doseMainResult">—</div>
+      <div class="result-sub" id="doseSubResult"></div>
+      <div class="result-formula" id="doseFormula"></div>
+    </div>
+    <div class="alert alert-yellow" style="margin-top:12px;margin-bottom:0">
+      <strong>⚠ Nota legal:</strong> Este calculador es una ayuda — siempre verificar con protocolo institucional y farmacéutico.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="icon">💧</span> Velocidad de Infusión (Goteo)</div>
+    <div class="row">
+      <div>
+        <label>Volumen a infundir (ml)</label>
+        <input type="number" id="goteVol" placeholder="500" min="0">
+      </div>
+      <div>
+        <label>Tiempo de infusión (hr)</label>
+        <input type="number" id="goteTime" placeholder="8" min="0" step=".5">
+      </div>
+    </div>
+    <label>Tipo de equipo</label>
+    <select id="goteEquip">
+      <option value="20">Macrogotero (20 gts/ml)</option>
+      <option value="60">Microgotero (60 gts/ml)</option>
+      <option value="0">Bomba de infusión</option>
+    </select>
+    <button class="btn btn-primary btn-block" onclick="calcGoteo()">Calcular Goteo</button>
+    <div id="goteoResult" style="display:none" class="result">
+      <div class="result-main" id="goteoMainResult">—</div>
+      <div class="result-sub" id="goteoSubResult"></div>
+      <div class="result-formula" id="goteoFormula"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="icon">🧪</span> Diluciones</div>
+    <div class="row">
+      <div>
+        <label>Stock disponible (mg/ml)</label>
+        <input type="number" id="dilStock" placeholder="10" min="0" step="any">
+      </div>
+      <div>
+        <label>Dilución deseada (mg/ml)</label>
+        <input type="number" id="dilDesired" placeholder="1" min="0" step="any">
+      </div>
+    </div>
+    <label>Volumen final deseado (ml)</label>
+    <input type="number" id="dilFinal" placeholder="100" min="0">
+    <button class="btn btn-primary btn-block" onclick="calcDilucion()">Calcular Dilución</button>
+    <div id="dilResult" style="display:none" class="result">
+      <div class="result-main" id="dilMainResult">—</div>
+      <div class="result-sub" id="dilSubResult"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="icon">⚠</span> Medicamentos de Alto Riesgo</div>
+    <div class="alert alert-red" style="margin-bottom:10px">Protocolo de doble verificación obligatorio en todos los medicamentos listados.</div>
+    <div class="drug-card">
+      <h4>Heparina</h4>
+      <p>Dilución: 25.000 UI en 250 ml SF → 100 UI/ml<br>Infusión: según nomograma institucional<br>Monitoreo: TTPA cada 6 hr</p>
+      <p class="warn">⚠ Verificar TTPA antes de cada ajuste. Antídoto: protamina.</p>
+    </div>
+    <div class="drug-card">
+      <h4>Insulina Regular EV</h4>
+      <p>Dilución: 100 UI en 100 ml SF → 1 UI/ml<br>Inicio: 0.1 UI/kg/hr. Ajustar glicemia c/1h<br>Objetivo glicemia: 140-180 mg/dL UCI</p>
+      <p class="warn">⚠ Cambiar solución cada 24h. Monitoreo c/1-4h.</p>
+    </div>
+    <div class="drug-card">
+      <h4>Cloruro de Potasio (KCl)</h4>
+      <p>Concentración máx periférica: 40 mEq/L<br>Velocidad máx: 10-20 mEq/hr (periférico). Hasta 40 mEq/hr en vía central con monitoreo ECG<br>NUNCA en bolo EV directo</p>
+      <p class="warn">⚠ NUNCA administrar sin dilución. Riesgo paro cardíaco.</p>
+    </div>
+    <div class="drug-card">
+      <h4>Morfina</h4>
+      <p>Dilución: 10 mg en 10 ml SF → 1 mg/ml<br>Dosis adulto: 2-5 mg EV lento cada 4-6h<br>Infusión continua: 1-5 mg/hr</p>
+      <p class="warn">⚠ Monitoreo respiratorio. Antídoto: naloxona 0.4 mg EV.</p>
+    </div>
+    <div class="drug-card">
+      <h4>Dopamina</h4>
+      <p>Dilución: 200 mg en 250 ml D5W → 0.8 mg/ml<br>Rango: 2-20 mcg/kg/min<br>2-5 mcg/kg/min: renal; 5-10: inotrópico; >10: vasopresor</p>
+      <p class="warn">⚠ Vía central preferente. Monitoreo FC y ritmo.</p>
+    </div>
+    <div class="drug-card">
+      <h4>Dobutamina</h4>
+      <p>Dilución: 250 mg en 250 ml SF → 1 mg/ml<br>Rango: 2-20 mcg/kg/min<br>Indicación principal: IC con bajo gasto</p>
+      <p class="warn">⚠ Puede inducir taquicardia y arritmias. ECG continuo.</p>
+    </div>
+    <div class="drug-card">
+      <h4>Midazolam</h4>
+      <p>Presentación: 15 mg/3 ml (5 mg/ml)<br>Sedación consciente: 1-2.5 mg EV lento (titular)<br>Infusión UCI: 0.02-0.1 mg/kg/hr</p>
+      <p class="warn">⚠ Depresión respiratoria. Antídoto: flumazenil 0.2 mg EV.</p>
+    </div>
+    <div class="drug-card">
+      <h4>Amiodarona</h4>
+      <p>PCR: 300 mg bolo EV diluido en 20 ml D5W<br>Dosis carga: 150 mg en 10 min, luego 1 mg/min x 6h, luego 0.5 mg/min x 18h<br>Dilución mantenimiento: 450 mg en 250 ml D5W</p>
+      <p class="warn">⚠ Hipotensión, bradicardia. Monitoreo ECG continuo.</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- ===== TAB 2: ESCALAS CLÍNICAS ===== -->
+<div class="tab" id="tab1">
+
+  <div class="card">
+    <div class="card-title"><span class="icon">🧠</span> Escala de Glasgow (GCS)</div>
+    <div class="scale-row">
+      <label>Apertura ocular</label>
+      <select id="gcsOcular" onchange="calcGCS()">
+        <option value="4">4 — Espontánea</option>
+        <option value="3">3 — A la voz</option>
+        <option value="2">2 — Al dolor</option>
+        <option value="1">1 — Sin respuesta</option>
+      </select>
+    </div>
+    <div class="scale-row">
+      <label>Respuesta verbal</label>
+      <select id="gcsVerbal" onchange="calcGCS()">
+        <option value="5">5 — Orientada</option>
+        <option value="4">4 — Confusa</option>
+        <option value="3">3 — Palabras</option>
+        <option value="2">2 — Sonidos</option>
+        <option value="1">1 — Sin respuesta</option>
+      </select>
+    </div>
+    <div class="scale-row">
+      <label>Respuesta motora</label>
+      <select id="gcsMotor" onchange="calcGCS()">
+        <option value="6">6 — Obedece órdenes</option>
+        <option value="5">5 — Localiza el dolor</option>
+        <option value="4">4 — Retira al dolor</option>
+        <option value="3">3 — Flexión anormal</option>
+        <option value="2">2 — Extensión anormal</option>
+        <option value="1">1 — Sin respuesta</option>
+      </select>
+    </div>
+    <div id="gcsResult" class="result">
+      <div class="result-main" id="gcsScore">15 / 15</div>
+      <div id="gcsBadge" style="text-align:center;margin-top:6px"><span class="badge badge-green">TCE Leve</span></div>
+      <div class="result-sub" id="gcsInterp">Puntaje normal. Vigilar evolución.</div>
+    </div>
+    <button class="btn btn-outline btn-sm" style="margin-top:8px;width:100%" onclick="saveGCS()">Guardar lectura con hora</button>
+    <div id="gcsHistory" style="margin-top:8px"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="icon">😣</span> Escala de Dolor EVA / NRS (0-10)</div>
+    <label>Intensidad del dolor</label>
+    <div class="slider-wrap">
+      <input type="range" id="evaSlider" min="0" max="10" value="0" step="1" oninput="updateEVA(this.value)" style="--val:0%">
+      <div class="slider-labels"><span>0<br>Sin dolor</span><span>2<br>Leve</span><span>4<br>Mod.</span><span>6<br>Intenso</span><span>8<br>Severo</span><span>10<br>Máximo</span></div>
+    </div>
+    <div id="evaResult" class="result" style="margin-top:6px">
+      <div class="result-main" id="evaScore">0 / 10</div>
+      <div id="evaBadge" style="text-align:center;margin-top:6px"><span class="badge badge-green">Sin dolor</span></div>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <div><label>ID paciente (opcional)</label><input type="text" id="evaPatient" placeholder="ej. cama 12"></div>
+      <div style="display:flex;align-items:flex-end"><button class="btn btn-outline btn-sm" style="width:100%" onclick="saveEVA()">Registrar</button></div>
+    </div>
+    <div id="evaHistory" style="margin-top:8px"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="icon">🛡</span> Escala de Braden (Riesgo Úlceras Presión)</div>
+    <div class="scale-row"><label>Percepción sensorial (1-4)</label><select id="bPerc" onchange="calcBraden()"><option value="4">4 — Sin limitación</option><option value="3">3 — Levemente limitada</option><option value="2">2 — Muy limitada</option><option value="1">1 — Completamente limitada</option></select></div>
+    <div class="scale-row"><label>Humedad (1-4)</label><select id="bHum" onchange="calcBraden()"><option value="4">4 — Raramente húmeda</option><option value="3">3 — Ocasionalmente húmeda</option><option value="2">2 — Muy húmeda</option><option value="1">1 — Constantemente húmeda</option></select></div>
+    <div class="scale-row"><label>Actividad (1-4)</label><select id="bAct" onchange="calcBraden()"><option value="4">4 — Camina frecuentemente</option><option value="3">3 — Camina ocasionalmente</option><option value="2">2 — En silla</option><option value="1">1 — En cama</option></select></div>
+    <div class="scale-row"><label>Movilidad (1-4)</label><select id="bMov" onchange="calcBraden()"><option value="4">4 — Sin limitación</option><option value="3">3 — Levemente limitada</option><option value="2">2 — Muy limitada</option><option value="1">1 — Completamente inmóvil</option></select></div>
+    <div class="scale-row"><label>Nutrición (1-4)</label><select id="bNut" onchange="calcBraden()"><option value="4">4 — Excelente</option><option value="3">3 — Adecuada</option><option value="2">2 — Probablemente inadecuada</option><option value="1">1 — Muy mala</option></select></div>
+    <div class="scale-row"><label>Fricción/Cizallamiento (1-3)</label><select id="bFric" onchange="calcBraden()"><option value="3">3 — Sin problema aparente</option><option value="2">2 — Problema potencial</option><option value="1">1 — Problema</option></select></div>
+    <div id="bradenResult" class="result">
+      <div class="result-main" id="bradenScore">23 / 23</div>
+      <div id="bradenBadge" style="text-align:center;margin-top:6px"><span class="badge badge-green">Sin riesgo</span></div>
+      <div class="result-sub" id="bradenInterp">Mantener cuidados preventivos estándar.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="icon">🚶</span> Escala de Morse (Riesgo de Caídas)</div>
+    <div class="scale-row"><label>Historial de caídas</label><select id="morseF1" onchange="calcMorse()"><option value="0">No (0)</option><option value="25">Sí (25)</option></select></div>
+    <div class="scale-row"><label>Diagnóstico secundario</label><select id="morseF2" onchange="calcMorse()"><option value="0">No (0)</option><option value="15">Sí (15)</option></select></div>
+    <div class="scale-row"><label>Ayuda para deambular</label><select id="morseF3" onchange="calcMorse()"><option value="0">Ninguna / Reposo (0)</option><option value="15">Muletas / Bastón (15)</option><option value="30">Muebles / Paredes (30)</option></select></div>
+    <div class="scale-row"><label>Medicación IV / Heparina</label><select id="morseF4" onchange="calcMorse()"><option value="0">No (0)</option><option value="20">Sí (20)</option></select></div>
+    <div class="scale-row"><label>Marcha</label><select id="morseF5" onchange="calcMorse()"><option value="0">Normal (0)</option><option value="10">Debilitado (10)</option><option value="20">Deteriorado (20)</option></select></div>
+    <div class="scale-row"><label>Estado mental</label><select id="morseF6" onchange="calcMorse()"><option value="0">Orientado / Consciente (0)</option><option value="15">Sobreestima capacidades (15)</option></select></div>
+    <div id="morseResult" class="result">
+      <div class="result-main" id="morseScore">0 / 125</div>
+      <div id="morseBadge" style="text-align:center;margin-top:6px"><span class="badge badge-green">Riesgo bajo</span></div>
+      <div class="result-sub" id="morseInterp">Precauciones estándar de caídas.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="icon">👶</span> Escala APGAR (Neonatal)</div>
+    <div style="overflow-x:auto">
+    <table>
+      <tr><th>Criterio</th><th>0</th><th>1</th><th>2</th><th>Punt.</th></tr>
+      <tr><td>FC</td><td>Ausente</td><td>&lt;100/min</td><td>≥100/min</td><td><select id="apgar1" onchange="calcAPGAR()"><option value="0">0</option><option value="1">1</option><option value="2" selected>2</option></select></td></tr>
+      <tr><td>Respiración</td><td>Ausente</td><td>Irregular/débil</td><td>Llanto fuerte</td><td><select id="apgar2" onchange="calcAPGAR()"><option value="0">0</option><option value="1">1</option><option value="2" selected>2</option></select></td></tr>
+      <tr><td>Tono muscular</td><td>Flácido</td><td>Flexión parcial</td><td>Movim. activos</td><td><select id="apgar3" onchange="calcAPGAR()"><option value="0">0</option><option value="1">1</option><option value="2" selected>2</option></select></td></tr>
+      <tr><td>Irritabilidad</td><td>Sin respuesta</td><td>Mueca</td><td>Llanto/tos</td><td><select id="apgar4" onchange="calcAPGAR()"><option value="0">0</option><option value="1">1</option><option value="2" selected>2</option></select></td></tr>
+      <tr><td>Color</td><td>Cianótico</td><td>Acrocianosis</td><td>Rosado</td><td><select id="apgar5" onchange="calcAPGAR()"><option value="0">0</option><option value="1">1</option><option value="2" selected>2</option></select></td></tr>
+    </table>
+    </div>
+    <div id="apgarResult" class="result">
+      <div class="result-main" id="apgarScore">10 / 10</div>
+      <div id="apgarBadge" style="text-align:center;margin-top:6px"><span class="badge badge-green">Normal</span></div>
+      <div class="result-sub">1° min y 5° min — registrar ambos</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="icon">💤</span> Escala de Ramsay (Sedación)</div>
+    <label>Nivel de sedación</label>
+    <select id="ramsayLevel" onchange="calcRamsay()" style="font-size:14px">
+      <option value="1">1 — Ansioso, agitado o inquieto</option>
+      <option value="2">2 — Cooperador, orientado y tranquilo</option>
+      <option value="3">3 — Somnoliento, responde a órdenes</option>
+      <option value="4">4 — Dormido, responde rápido a estímulos</option>
+      <option value="5">5 — Dormido, respuesta lenta a estímulos</option>
+      <option value="6">6 — Sin respuesta</option>
+    </select>
+    <div id="ramsayResult" class="result" style="margin-top:10px">
+      <div class="result-main" id="ramsayScore">Ramsay 1</div>
+      <div class="result-sub" id="ramsayInterp">Nivel de alerta — valorar ansiolítico si necesario</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="icon">📡</span> NEWS2 — National Early Warning Score</div>
+    <div class="news-row">
+      <label>FR (resp/min)</label>
+      <input type="number" id="newsFR" placeholder="16" min="0" max="60" oninput="calcNEWS2()">
+    </div>
+    <div class="news-row">
+      <label>SpO2 (%)</label>
+      <input type="number" id="newsSPO2" placeholder="97" min="0" max="100" oninput="calcNEWS2()">
+    </div>
+    <div class="news-row">
+      <label>¿EPOC conocido?</label>
+      <select id="newsEPOC" onchange="calcNEWS2()"><option value="0">No</option><option value="1">Sí</option></select>
+    </div>
+    <div class="news-row">
+      <label>Oxígeno suplementario</label>
+      <select id="newsO2" onchange="calcNEWS2()"><option value="0">No (aire ambiental)</option><option value="2">Sí (O2 suplementario)</option></select>
+    </div>
+    <div class="news-row">
+      <label>PAS (mmHg)</label>
+      <input type="number" id="newsPAS" placeholder="120" min="0" max="250" oninput="calcNEWS2()">
+    </div>
+    <div class="news-row">
+      <label>FC (lat/min)</label>
+      <input type="number" id="newsFC" placeholder="80" min="0" max="250" oninput="calcNEWS2()">
+    </div>
+    <div class="news-row">
+      <label>Temperatura (°C)</label>
+      <input type="number" id="newsTemp" placeholder="36.8" min="30" max="45" step="0.1" oninput="calcNEWS2()">
+    </div>
+    <div class="news-row">
+      <label>Conciencia</label>
+      <select id="newsConc" onchange="calcNEWS2()"><option value="0">Alerta</option><option value="3">Confuso / CVPU</option></select>
+    </div>
+    <div id="news2Result" class="result" style="margin-top:10px">
+      <div class="result-main" id="news2Score">—</div>
+      <div id="news2Badge" style="text-align:center;margin-top:6px"></div>
+      <div class="result-sub" id="news2Interp">Ingrese parámetros para calcular</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ===== TAB 3: CÁLCULOS CLÍNICOS ===== -->
+<div class="tab" id="tab2">
+
+  <div class="card">
+    <div class="card-title"><span class="icon">⚖</span> IMC y Peso Ideal</div>
+    <div class="row">
+      <div>
+        <label>Talla (cm)</label>
+        <input type="number" id="imcTalla" placeholder="170" min="50" max="250" step="1">
+      </div>
+      <div>
+        <label>Peso real (kg)</label>
+        <input type="number" id="imcPeso" placeholder="72" min="1" max="300" step=".1">
+      </div>
+    </div>
+    <label>Sexo biológico</label>
+    <select id="imcSexo"><option value="m">Masculino</option><option value="f">Femenino</option></select>
+    <button class="btn btn-primary btn-block" onclick="calcIMC()">Calcular IMC</button>
+    <div id="imcResult" style="display:none" class="result">
+      <div class="result-main" id="imcValue">—</div>
+      <div id="imcBadge" style="text-align:center;margin-top:6px"></div>
+      <div class="result-sub" id="imcSub"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="icon">💧</span> Balance Hídrico</div>
+    <h3>Ingresos</h3>
+    <div class="row">
+      <div><label>Suero IV (ml)</label><input type="number" id="bhSuero" placeholder="0" min="0"></div>
+      <div><label>Medicamentos IV (ml)</label><input type="number" id="bhMeds" placeholder="0" min="0"></div>
+    </div>
+    <div class="row">
+      <div><label>Vía oral (ml)</label><input type="number" id="bhOral" placeholder="0" min="0"></div>
+      <div><label>SNG (ml)</label><input type="number" id="bhSNG" placeholder="0" min="0"></div>
+    </div>
+    <h3 style="margin-top:14px">Egresos</h3>
+    <div class="row">
+      <div><label>Diuresis (ml)</label><input type="number" id="bhDiuresis" placeholder="0" min="0"></div>
+      <div><label>Vómitos (ml)</label><input type="number" id="bhVomitos" placeholder="0" min="0"></div>
+    </div>
+    <div class="row">
+      <div><label>Drenajes (ml)</label><input type="number" id="bhDrenajes" placeholder="0" min="0"></div>
+      <div><label>Peso (kg) p/pérd.ins.</label><input type="number" id="bhPeso" placeholder="72" value="72" min="0"></div>
+    </div>
+    <label>¿Fiebre?</label>
+    <select id="bhFiebre">
+      <option value="0">No / Afebril</option>
+      <option value="38.5">Subfebril (38.5°C)</option>
+      <option value="39">Fiebre (39°C)</option>
+      <option value="40">Fiebre alta (40°C)</option>
+    </select>
+    <button class="btn btn-primary btn-block" onclick="calcBalance()">Calcular Balance</button>
+    <div id="balanceResult" style="display:none" class="result">
+      <div class="result-main" id="balanceMain">—</div>
+      <div class="result-sub" id="balanceSub"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="icon">🩺</span> Diuresis por Hora</div>
+    <div class="row">
+      <div>
+        <label>Diuresis última hora (ml)</label>
+        <input type="number" id="diurHora" placeholder="60" min="0">
+      </div>
+      <div>
+        <label>Peso paciente (kg)</label>
+        <input type="number" id="diurPeso" placeholder="72" value="72" min="0" step=".1">
+      </div>
+    </div>
+    <label>Tipo de paciente</label>
+    <select id="diurTipo">
+      <option value="adult">Adulto (mín 0.5 ml/kg/hr)</option>
+      <option value="child">Niño (mín 1 ml/kg/hr)</option>
+    </select>
+    <button class="btn btn-primary btn-block" onclick="calcDiuresis()">Evaluar Diuresis</button>
+    <div id="diuresisResult" style="display:none" class="result">
+      <div class="result-main" id="diuresisMain">—</div>
+      <div class="result-sub" id="diuresisSub"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="icon">🫁</span> Oxigenoterapia y FiO2</div>
+    <label>Método de administración de O2</label>
+    <select id="o2Method" onchange="updateO2()">
+      <option value="nasal">Cánula nasal (CN)</option>
+      <option value="simple">Mascarilla simple</option>
+      <option value="reservorio">Mascarilla con reservorio (NRM)</option>
+      <option value="venturi">Mascarilla Venturi</option>
+      <option value="oaf">OAF (Oxígeno Alto Flujo)</option>
+    </select>
+    <div id="o2FlowDiv">
+      <label>Flujo de O2 (L/min)</label>
+      <input type="number" id="o2Flow" placeholder="2" min="1" max="60" oninput="updateO2()">
+    </div>
+    <div id="o2FiO2Row" style="display:none">
+      <label>FiO2 configurada (%)</label>
+      <input type="number" id="o2FiO2Set" placeholder="40" min="21" max="100" oninput="updateO2()">
+    </div>
+    <div id="o2Result" class="result" style="margin-top:10px">
+      <div class="result-main" id="o2MainResult">Seleccione flujo</div>
+      <div class="result-sub" id="o2SubResult"></div>
+    </div>
+    <div class="alert alert-blue" style="margin-top:10px;margin-bottom:0">
+      SpO2 objetivo: <strong>≥95%</strong> general | <strong>88-92%</strong> EPOC/hipercapnia | <strong>≥92%</strong> embarazo
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="icon">🧂</span> Corrección de Electrolitos</div>
+    <label>Electrolito a corregir</label>
+    <select id="electrolito" onchange="updateElectrolito()">
+      <option value="na">Hiponatremia — Déficit de Na+</option>
+      <option value="k">Hipokalemia — Déficit de K+</option>
+    </select>
+    <div id="elecInputs">
+      <div class="row">
+        <div><label id="elecLabel1">Na actual (mEq/L)</label><input type="number" id="elecActual" placeholder="128" step="any"></div>
+        <div><label id="elecLabel2">Na deseado (mEq/L)</label><input type="number" id="elecDeseado" placeholder="135" step="any"></div>
+      </div>
+      <div>
+        <label>Peso paciente (kg)</label>
+        <input type="number" id="elecPeso" placeholder="72" value="72" step=".1">
+      </div>
+    </div>
+    <button class="btn btn-primary btn-block" onclick="calcElectrolito()">Calcular Déficit</button>
+    <div id="elecResult" style="display:none" class="result">
+      <div class="result-main" id="elecMainResult">—</div>
+      <div class="result-sub" id="elecSubResult"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="icon">📐</span> Superficie Corporal (BSA)</div>
+    <div class="row">
+      <div><label>Talla (cm)</label><input type="number" id="bsaTalla" placeholder="170" min="50"></div>
+      <div><label>Peso (kg)</label><input type="number" id="bsaPeso" placeholder="72" min="1" step=".1"></div>
+    </div>
+    <button class="btn btn-primary btn-block" onclick="calcBSA()">Calcular BSA</button>
+    <div id="bsaResult" style="display:none" class="result">
+      <div class="result-main" id="bsaMain">—</div>
+      <div class="result-sub" id="bsaSub"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ===== TAB 4: PROTOCOLOS ===== -->
+<div class="tab" id="tab3">
+
+  <div class="card">
+    <div class="card-title"><span class="icon">🫀</span> RCP — AHA 2020 (Adulto)</div>
+    <div class="alert alert-red">Sin pulso confirmado → ACTIVAR CÓDIGO + RCP INMEDIATA</div>
+    <div class="protocol-step"><strong>1. Compresiones torácicas</strong>Frecuencia: 100-120/min | Profundidad: 5-6 cm | Relación: 30:2 | Permitir reexpansión completa | Rotar cada 2 min</div>
+    <div class="protocol-step"><strong>2. Manejo de vía aérea</strong>Mascarilla + bolsa → IOT en cuanto sea posible | No interrumpir compresiones >10 seg</div>
+    <div class="protocol-step"><strong>3. DEA / Desfibrilador</strong>Encender → colocar parches → analizar → seguir instrucciones | Reanudar RCP inmediatamente tras choque</div>
+    <div class="protocol-step"><strong>4. Medicamentos (FV/TVSP)</strong>
+      Adrenalina 1 mg EV cada 3-5 min (iniciar tras 3er choque en FV)<br>
+      Amiodarona 300 mg EV (FV refractaria) → 2da dosis 150 mg<br>
+      Bicarbonato 1 mEq/kg considerar si pH &lt;7.1 o hipercalemia
+    </div>
+    <div class="protocol-step"><strong>5. Causas reversibles (4H/4T)</strong>
+      Hipoxia | Hipovolemia | Hipo/Hiperkalemia | Hipotermia<br>
+      Neumotórax | Taponamiento | Tóxicos | Trombosis
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="icon">🫁</span> Vía Aérea — IOT Secuencia Rápida</div>
+    <div class="protocol-step"><strong>Preparación (checklist)</strong>Laringoscopio + blade | TET calibre adecuado (H: 7.5-8, M: 7-7.5) | Jeringa 10ml | Estilete | Aspiración | Capnógrafo</div>
+    <div class="protocol-step"><strong>Premedicación</strong>Atropina 0.5 mg EV (si FC &lt;60) | Lidocaína 1.5 mg/kg EV (si HTE)</div>
+    <div class="protocol-step"><strong>Inducción</strong>Etomidato 0.3 mg/kg EV (hemocirculatoriamente inestable)<br>Propofol 1-2 mg/kg EV (estable) | Ketamina 1-2 mg/kg (broncoespasmo, hipotensión)</div>
+    <div class="protocol-step"><strong>Parálisis</strong>Succinilcolina 1.5 mg/kg EV (contraindicado: hipercalemia, gran quemado >48h, lesión medular)<br>Rocuronio 1.2 mg/kg EV (alternativa)</div>
+    <div class="protocol-step"><strong>Verificación post-IOT</strong>Capnografía (gold standard) | Auscultación bilateral | Elevación simétrica tórax | Rx tórax portátil</div>
+    <div class="protocol-step"><strong>Ventilación inicial (ARM)</strong>VT: 6-8 ml/kg peso ideal | FR: 14-18/min | PEEP: 5 cmH2O | FiO2: 100% → reducir a objetivo SpO2 ≥94%</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="icon">⚡</span> Manejo del Shock</div>
+    <div class="protocol-step"><strong>Shock Hipovolémico</strong>Bolo SF 500 ml rápido IV → repetir hasta respuesta<br>Transfusión GR si Hb &lt;8 o hemorragia activa | PFC si coagulopatía | Cirugía si hemorragia incontrolable</div>
+    <div class="protocol-step"><strong>Shock Séptico — Bundle 1 hora (Surviving Sepsis 2021)</strong>
+      1. Hemocultivos (×2) antes de ATB<br>
+      2. ATB empírico de amplio espectro dentro 1 hora<br>
+      3. SF 30 ml/kg en 3 horas (si hipoperfusión)<br>
+      4. Noradrenalina si PAS &lt;65 mmHg post-reanimación<br>
+      5. Medir lactato (repetir si &gt;2 mmol/L)
+    </div>
+    <div class="protocol-step"><strong>Shock Anafiláctico</strong>
+      <strong>Adrenalina IM 0.5 mg (adulto) cara anterolateral muslo</strong><br>
+      Repetir cada 5-15 min si no responde<br>
+      Posición Trendelenburg | O2 alto flujo<br>
+      SF 1-2 L bolo IV | Hidrocortisona 200 mg IV<br>
+      Difenhidramina 50 mg IV | Salbutamol neb si broncoespasmo
+    </div>
+    <div class="protocol-step"><strong>Shock Cardiogénico</strong>Dobutamina 2-20 mcg/kg/min | Noradrenalina si PAS &lt;70 | Restricción hídrica | Considerar soporte mecánico</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="icon">🩸</span> Cetoacidosis Diabética (CAD)</div>
+    <div class="alert alert-yellow">Criterios: Glucosa &gt;250 mg/dL + pH &lt;7.3 + HCO3 &lt;15 + cetonas (+)</div>
+    <div class="protocol-step"><strong>Hidratación (1a hora)</strong>SF 1 L/hr | Después ajustar según estado hemodinámico y débito urinario</div>
+    <div class="protocol-step"><strong>Insulina (ADA 2023)</strong>Insulina regular 0.1 UI/kg/hr en infusión continua IV (SIN bolo inicial)<br>Objetivo: reducir glucosa 50-70 mg/dL/hr<br>Cambiar a D5% cuando glucosa &lt;200 mg/dL</div>
+    <div class="protocol-step"><strong>Potasio</strong>
+      K+ &lt;3.5: reposición antes de insulina (20-40 mEq/hr), NO insulina aún<br>
+      K+ 3.5-5.5: agregar 20-40 mEq/L a suero<br>
+      K+ &gt;5.5: NO aportar, medir c/2h
+    </div>
+    <div class="protocol-step"><strong>Bicarbonato</strong>Solo si pH &lt;7.0 o hipercalemia severa | Dosis: 100 mEq en 2h, reevaluar</div>
+    <div class="protocol-step"><strong>Monitoreo</strong>Glicemia c/1h | ELP c/2h | Gases c/4h | Diuresis c/1h | ECG continuo</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="icon">💔</span> Dolor Torácico / SCA</div>
+    <div class="protocol-step"><strong>Evaluación inicial (10 min)</strong>ECG 12 derivaciones en &lt;10 min del primer contacto médico | Enzimas cardíacas (troponina) | Acceso venoso | Monitoreo</div>
+    <div class="protocol-step"><strong>MONA inicial</strong>
+      Morfina 2-4 mg IV (si dolor severo, titular)<br>
+      O2 si SpO2 &lt;94%<br>
+      Nitroglicerina 0.4 mg SL (contraindicado si PAS &lt;90 o uso reciente PDE5i)<br>
+      AAS 300 mg masticado (si no alérgico)
+    </div>
+    <div class="protocol-step"><strong>IAMCEST — Reperfusión urgente</strong>ICP primaria &lt;90 min (gold standard) | Fibrinólisis si ICP no disponible en &lt;120 min<br>Heparina + doble antiagregación (AAS + ticagrelor/clopidogrel)</div>
+    <div class="protocol-step"><strong>IAMSEST / AI</strong>Anticoagulación + antiagregación doble | Estratificación de riesgo (TIMI/GRACE) | Cateterismo según riesgo</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="icon">📊</span> Signos Vitales Normales — Adulto</div>
+    <div style="overflow-x:auto">
+    <table>
+      <tr><th>Parámetro</th><th>Normal</th><th>Alerta ⚠</th></tr>
+      <tr><td>FR</td><td>12-20 /min</td><td>&lt;10 o &gt;25</td></tr>
+      <tr><td>FC</td><td>60-100 /min</td><td>&lt;50 o &gt;130</td></tr>
+      <tr><td>PAS</td><td>90-140 mmHg</td><td>&lt;90 o &gt;160</td></tr>
+      <tr><td>PAD</td><td>60-90 mmHg</td><td>&gt;100</td></tr>
+      <tr><td>Temperatura</td><td>36-37.5 °C</td><td>&lt;36 o &gt;38.5</td></tr>
+      <tr><td>SpO2</td><td>≥95%</td><td>&lt;92%</td></tr>
+      <tr><td>Glasgow</td><td>15</td><td>≤13</td></tr>
+      <tr><td>Diuresis</td><td>0.5-1 ml/kg/hr</td><td>&lt;0.5 ml/kg/hr</td></tr>
+    </table>
+    </div>
+    <div class="alert alert-blue" style="margin-top:10px;margin-bottom:0">Registrar siempre junto al contexto clínico: edad, medicamentos, comorbilidades.</div>
+  </div>
+
+</div>
+
+<!-- ===== TAB 5: FONASA Y PRESTACIONES ===== -->
+<div class="tab" id="tab4">
+
+  <div class="card">
+    <div class="card-title"><span class="icon">🏥</span> Prestaciones de Enfermería — FONASA</div>
+    <div style="overflow-x:auto">
+    <table class="fonasa-table">
+      <tr><th>Código</th><th>Prestación</th><th>Tramo A/B</th><th>Tramo C/D</th></tr>
+      <tr><td>09-11-001</td><td>Curación simple</td><td>Gratuita</td><td>Copago 10-20%</td></tr>
+      <tr><td>09-11-002</td><td>Curación compleja</td><td>Gratuita</td><td>Copago 10-20%</td></tr>
+      <tr><td>09-11-003</td><td>Curación muy compleja</td><td>Gratuita</td><td>Copago 10-20%</td></tr>
+      <tr><td>09-07-001</td><td>Instalación catéter venoso (Drum)</td><td>Gratuita</td><td>Copago 10%</td></tr>
+      <tr><td>09-08-001</td><td>Instalación SNG</td><td>Gratuita</td><td>Copago 10%</td></tr>
+      <tr><td>09-09-001</td><td>Cateterismo vesical</td><td>Gratuita</td><td>Copago 10%</td></tr>
+      <tr><td>09-02-XXX</td><td>Toma de muestras (sangre/orina)</td><td>Gratuita</td><td>Copago 10%</td></tr>
+      <tr><td>—</td><td>Adm. medicamentos IV (hospitalización)</td><td colspan="2" style="text-align:center">Incluida en tarifa diaria</td></tr>
+    </table>
+    </div>
+    <div class="alert alert-blue" style="margin-top:10px;margin-bottom:0">Tramo A: indigentes/carentes de recursos | Tramo B: hasta ~$300.000/mes | C/D: renta media-alta. Verificar en www.fonasa.cl vigente.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="icon">⭐</span> GES (Garantías Explícitas en Salud)</div>
+    <div class="drug-card">
+      <h4>Diabetes Mellitus Tipo 2</h4>
+      <p>Exámenes garantizados: HbA1c, creatinina, perfil lipídico, fondo de ojo, pie diabético<br>Insumos: glucómetros y tiras reactivas incluidos<br>Educación diabetológica en CESFAM</p>
+    </div>
+    <div class="drug-card">
+      <h4>Hipertensión Arterial</h4>
+      <p>Control trimestral garantizado en PSCV<br>Medicamentos antihipertensivos incluidos<br>Meta PA: &lt;130/80 mmHg (ACC/AHA 2017) o &lt;140/90 (MINSAL)</p>
+    </div>
+    <div class="drug-card">
+      <h4>Infarto Agudo al Miocardio (IAM)</h4>
+      <p>Reperfusión coronaria garantizada: ICP en &lt;90 min o fibrinólisis<br>Rehabilitación cardíaca post-IAM incluida</p>
+    </div>
+    <div class="drug-card">
+      <h4>EPOC</h4>
+      <p>Espirometría diagnóstica garantizada<br>Broncodilatadores incluidos<br>Rehabilitación respiratoria en CESFAM/CRS</p>
+    </div>
+    <div class="drug-card">
+      <h4>Depresión (15 años y más)</h4>
+      <p>Diagnóstico, tratamiento farmacológico y psicoterapia garantizados<br>Seguimiento al mes, 3 meses y 6 meses</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="icon">❤</span> PSCV — Programa Salud Cardiovascular</div>
+    <h3>Criterios de ingreso al PSCV</h3>
+    <div class="protocol-step"><strong>Patologías elegibles</strong>HTA | DM2 | Dislipidemia | Tabaquismo activo | Obesidad (IMC &gt;30) | Antecedente cardiovascular</div>
+    <div class="protocol-step"><strong>Controles de seguimiento</strong>Cada 3-6 meses según riesgo cardiovascular | Enfermera puede realizar controles autónomos en CESFAM (Resolución 1034 MINSAL)</div>
+    <div class="protocol-step"><strong>Exámenes anuales obligatorios</strong>Glicemia en ayunas | Perfil lipídico completo | Creatinina + EFG | ECG (en HTA y mayores de 40a) | Microalbuminuria (DM)</div>
+    <div class="protocol-step"><strong>Rol de enfermería en PSCV</strong>Control de ingreso y seguimiento | Educación individual y grupal | Aplicación pauta de riesgo cardiovascular de Framingham | Derivación oportuna</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="icon">🗑</span> Manejo de Residuos Hospitalarios</div>
+    <div class="alert alert-red" style="margin-bottom:10px"><strong>NUNCA mezclar residuos.</strong> El incumplimiento es sanción grave según Norma Técnica MINSAL 2009.</div>
+    <div style="overflow-x:auto">
+    <table>
+      <tr><th>Bolsa/Contenedor</th><th>Color</th><th>Contenido</th></tr>
+      <tr><td>Residuos biológicos</td><td style="background:#fee2e2;color:#991b1b;font-weight:600">🔴 Roja</td><td>Anatomopatológicos, líquidos corporales, materiales contaminados con sangre</td></tr>
+      <tr><td>Cortopunzantes</td><td style="background:#fef9c3;color:#854d0e;font-weight:600">🟡 Amarilla</td><td>Agujas, bisturís, lancetas — siempre en contenedor rígido ANTES de bolsa amarilla</td></tr>
+      <tr><td>Residuos comunes</td><td style="background:#dcfce7;color:#166534;font-weight:600">🟢 Verde</td><td>Papel, cartón, envases no contaminados, residuos domésticos</td></tr>
+      <tr><td>Residuos especiales</td><td style="background:#dbeafe;color:#1e40af;font-weight:600">🔵 Azul</td><td>Medicamentos vencidos, citostáticos, químicos (según institución)</td></tr>
+    </table>
+    </div>
+    <div class="protocol-step" style="margin-top:10px"><strong>Regla de oro cortopunzantes</strong>NUNCA re-encapuchar con dos manos. Técnica de una mano o pinza. Contenedor máx 3/4 lleno. Nunca apretar ni comprimir.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="icon">💰</span> Escalafón y Remuneraciones EDF 2024</div>
+    <div style="overflow-x:auto">
+    <table>
+      <tr><th>Cargo</th><th>Grado</th><th>Sueldo base</th><th>Con asignaciones</th></tr>
+      <tr><td>EU Enfermera(o) Universitaria</td><td>7</td><td>~$1.800.000</td><td>~$2.200.000 – $2.800.000</td></tr>
+      <tr><td>TENS</td><td>14</td><td>~$850.000</td><td>~$1.100.000 – $1.400.000</td></tr>
+      <tr><td>EU Supervisor(a)</td><td>5-6</td><td>~$2.200.000</td><td>~$2.800.000 – $3.500.000</td></tr>
+      <tr><td>EU Jefe de Servicio</td><td>3-4</td><td>~$2.800.000</td><td>~$3.500.000 – $4.500.000</td></tr>
+    </table>
+    </div>
+    <div class="protocol-step" style="margin-top:10px"><strong>Asignaciones frecuentes</strong>Turno nocturno: +30-35% | Zona extrema: +10-50% | Bienios: +2% c/2 años (máx 20) | Horas extras: primeras 45 hrs con recargo 50-100% | Bonificación bienestar APS</div>
+    <div class="protocol-step"><strong>APS vs Hospitalario</strong>APS (Estatuto Ley 19.378): contrato municipalidades, CESFAM | Hospitalario (Estatuto Administrativo / Ley 15.076): hospitales MINSAL, servicios de salud | Las condiciones difieren en horas, turnos y escala salarial</div>
+    <div class="alert alert-yellow" style="margin-top:10px;margin-bottom:0">Cifras referenciales 2024. Verificar en Remuneraciones Sector Público (www.bcentral.cl) y Colegio de Enfermeras de Chile.</div>
+  </div>
+
+</div>
+
+<script>
+// ===== CLOCK =====
+function updateClock(){
+  const now=new Date();
+  const t=now.toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'});
+  const d=now.toLocaleDateString('es-CL',{day:'2-digit',month:'2-digit',year:'numeric'});
+  const el=document.getElementById('clockDisplay');
+  if(el) el.textContent=t+' · '+d;
+}
+updateClock(); setInterval(updateClock,30000);
+
+// ===== NAV TABS =====
+function showTab(n){
+  document.querySelectorAll('.tab').forEach((t,i)=>{t.classList.toggle('active',i===n)});
+  document.querySelectorAll('nav button').forEach((b,i)=>{b.classList.toggle('active',i===n)});
+}
+
+// ===== LOCAL STORAGE HELPERS =====
+function lsGet(k){try{return JSON.parse(localStorage.getItem('enfermeracl_v1_'+k))||[]}catch{return[]}}
+function lsSet(k,v){try{localStorage.setItem('enfermeracl_v1_'+k,JSON.stringify(v))}catch{}}
+
+// ===== TAB 1: DOSIS =====
+function updateDoseUI(){
+  const t=document.getElementById('doseType').value;
+  document.getElementById('doseInputs').style.display=(t==='infusion')?'none':'block';
+  document.getElementById('infusionInputs').style.display=(t==='infusion')?'block':'none';
+  document.getElementById('weightRow').style.display=(t==='weight')?'block':'none';
+}
+
+function calcDose(){
+  const t=document.getElementById('doseType').value;
+  const res=document.getElementById('doseResult');
+  const main=document.getElementById('doseMainResult');
+  const sub=document.getElementById('doseSubResult');
+  const form=document.getElementById('doseFormula');
+  res.style.display='block';
+
+  if(t==='infusion'){
+    const dose=parseFloat(document.getElementById('infDose').value);
+    const wt=parseFloat(document.getElementById('infWeight').value);
+    const conc=parseFloat(document.getElementById('infConc').value);
+    if(isNaN(dose)||isNaN(wt)||isNaN(conc)||conc===0){main.textContent='Datos incompletos';sub.textContent='';form.textContent='';return;}
+    const mlhr=(dose*wt*60)/(conc*1000);
+    main.textContent=mlhr.toFixed(2)+' ml/hr';
+    sub.textContent='Dosis: '+dose+' mcg/kg/min | Peso: '+wt+' kg | Conc: '+conc+' mg/ml';
+    form.textContent='Fórmula: ('+dose+' × '+wt+' × 60) ÷ ('+conc+' × 1000)';
+    return;
+  }
+
+  const pres=parseFloat(document.getElementById('dosePrescribed').value);
+  const conc=parseFloat(document.getElementById('doseConc').value);
+  const dunit=document.getElementById('doseUnit').value;
+  const cunit=document.getElementById('doseConcUnit').value;
+  if(isNaN(pres)||isNaN(conc)||conc===0){main.textContent='Datos incompletos';sub.textContent='';form.textContent='';return;}
+
+  if(t==='weight'){
+    const wt=parseFloat(document.getElementById('doseWeight').value);
+    if(isNaN(wt)){main.textContent='Ingrese peso';sub.textContent='';form.textContent='';return;}
+    const totalDose=pres*wt;
+    const vol=totalDose/conc;
+    if(cunit.includes('tab')){
+      main.textContent=(totalDose/conc).toFixed(2)+' tabletas';
+      form.textContent='('+pres+' '+dunit+'/kg × '+wt+' kg) ÷ '+conc+' '+cunit;
+    } else {
+      main.textContent=vol.toFixed(2)+' ml';
+      sub.textContent='Dosis total: '+totalDose.toFixed(1)+' '+dunit;
+      form.textContent='('+pres+' '+dunit+'/kg × '+wt+' kg) ÷ '+conc+' '+cunit;
+    }
+  } else {
+    const vol=pres/conc;
+    if(cunit.includes('tab')){
+      main.textContent=vol.toFixed(2)+' tabletas';
+    } else {
+      main.textContent=vol.toFixed(2)+' ml';
+    }
+    sub.textContent='Dosis prescrita: '+pres+' '+dunit+' | Conc: '+conc+' '+cunit;
+    form.textContent='Fórmula: '+pres+' ÷ '+conc+' = '+vol.toFixed(2);
+  }
+}
+
+function calcGoteo(){
+  const vol=parseFloat(document.getElementById('goteVol').value);
+  const hr=parseFloat(document.getElementById('goteTime').value);
+  const fac=parseInt(document.getElementById('goteEquip').value);
+  const res=document.getElementById('goteoResult');
+  const main=document.getElementById('goteoMainResult');
+  const sub=document.getElementById('goteoSubResult');
+  const form=document.getElementById('goteoFormula');
+  res.style.display='block';
+  if(isNaN(vol)||isNaN(hr)||hr===0){main.textContent='Datos incompletos';sub.textContent='';form.textContent='';return;}
+  const mlhr=vol/hr;
+  main.textContent=mlhr.toFixed(1)+' ml/hr';
+  if(fac===0){
+    sub.textContent='Bomba de infusión: programar '+mlhr.toFixed(1)+' ml/hr';
+    form.textContent='';
+  } else {
+    const gpm=(vol*fac)/(hr*60);
+    sub.textContent='Gotas/min: '+gpm.toFixed(1)+' gts/min (factor '+fac+' gts/ml)';
+    form.textContent='Fórmula: '+vol+' ml × '+fac+' ÷ ('+hr+' hr × 60 min)';
+  }
+}
+
+function calcDilucion(){
+  const stock=parseFloat(document.getElementById('dilStock').value);
+  const des=parseFloat(document.getElementById('dilDesired').value);
+  const vf=parseFloat(document.getElementById('dilFinal').value);
+  const res=document.getElementById('dilResult');
+  const main=document.getElementById('dilMainResult');
+  const sub=document.getElementById('dilSubResult');
+  res.style.display='block';
+  if(isNaN(stock)||isNaN(des)||isNaN(vf)||stock===0||des>stock){main.textContent='Datos inválidos';sub.textContent='';return;}
+  const vs=(des*vf)/stock;
+  const vd=vf-vs;
+  main.textContent=vs.toFixed(2)+' ml de stock';
+  sub.textContent='+ '+vd.toFixed(2)+' ml de diluyente = '+vf+' ml total | Conc final: '+des+' mg/ml';
+}
+
+// ===== TAB 2: ESCALAS =====
+function calcGCS(){
+  const o=parseInt(document.getElementById('gcsOcular').value);
+  const v=parseInt(document.getElementById('gcsVerbal').value);
+  const m=parseInt(document.getElementById('gcsMotor').value);
+  const total=o+v+m;
+  document.getElementById('gcsScore').textContent=total+' / 15';
+  let badge,interp,cls;
+  if(total>=13){badge='TCE Leve';interp='Vigilar evolución. Reevaluar periódicamente.';cls='badge-green'}
+  else if(total>=9){badge='TCE Moderado';interp='Monitoreo neurológico continuo. Considerar TAC.';cls='badge-yellow'}
+  else{badge='TCE Severo ≤8';interp='Considerar intubación orotraqueal. Neuroprotección.';cls='badge-red'}
+  document.getElementById('gcsBadge').innerHTML='<span class="badge '+cls+'">'+badge+'</span>';
+  document.getElementById('gcsInterp').textContent=interp;
+}
+calcGCS();
+
+function saveGCS(){
+  const o=parseInt(document.getElementById('gcsOcular').value);
+  const v=parseInt(document.getElementById('gcsVerbal').value);
+  const m=parseInt(document.getElementById('gcsMotor').value);
+  const total=o+v+m;
+  const arr=lsGet('gcs');
+  arr.unshift({ts:new Date().toLocaleString('es-CL'),score:total,o,v,m});
+  if(arr.length>5)arr.pop();
+  lsSet('gcs',arr);
+  renderGCSHistory();
+}
+
+function renderGCSHistory(){
+  const arr=lsGet('gcs');
+  const el=document.getElementById('gcsHistory');
+  if(!arr.length){el.innerHTML='';return;}
+  el.innerHTML=arr.map(x=>`<div class="history-item"><span class="ts">${x.ts}</span> | GCS <strong>${x.score}/15</strong> (O:${x.o} V:${x.v} M:${x.m})</div>`).join('');
+}
+renderGCSHistory();
+
+function updateEVA(val){
+  const pct=(val/10*100)+'%';
+  document.getElementById('evaSlider').style.setProperty('--val',pct);
+  document.getElementById('evaScore').textContent=val+' / 10';
+  let badge,cls;
+  if(val==0){badge='Sin dolor';cls='badge-green'}
+  else if(val<=3){badge='Dolor leve';cls='badge-green'}
+  else if(val<=6){badge='Dolor moderado';cls='badge-yellow'}
+  else{badge='Dolor severo';cls='badge-red'}
+  document.getElementById('evaBadge').innerHTML='<span class="badge '+cls+'">'+badge+'</span>';
+}
+updateEVA(0);
+
+function saveEVA(){
+  const val=document.getElementById('evaSlider').value;
+  const pat=document.getElementById('evaPatient').value||'—';
+  const arr=lsGet('eva');
+  arr.unshift({ts:new Date().toLocaleString('es-CL'),score:val,patient:pat});
+  if(arr.length>5)arr.pop();
+  lsSet('eva',arr);
+  renderEVAHistory();
+}
+
+function renderEVAHistory(){
+  const arr=lsGet('eva');
+  const el=document.getElementById('evaHistory');
+  if(!arr.length){el.innerHTML='';return;}
+  el.innerHTML=arr.map(x=>`<div class="history-item"><span class="ts">${x.ts}</span> | Paciente: ${x.patient} | EVA <strong>${x.score}/10</strong></div>`).join('');
+}
+renderEVAHistory();
+
+function calcBraden(){
+  const p=parseInt(document.getElementById('bPerc').value);
+  const h=parseInt(document.getElementById('bHum').value);
+  const a=parseInt(document.getElementById('bAct').value);
+  const m=parseInt(document.getElementById('bMov').value);
+  const n=parseInt(document.getElementById('bNut').value);
+  const f=parseInt(document.getElementById('bFric').value);
+  const total=p+h+a+m+n+f;
+  document.getElementById('bradenScore').textContent=total+' / 23';
+  let badge,interp,cls;
+  if(total>=19){badge='Sin riesgo';interp='Mantener cuidados preventivos estándar.';cls='badge-green'}
+  else if(total>=15){badge='Riesgo bajo';interp='Cambios posturales c/2-4h. Proteger prominencias óseas.';cls='badge-blue'}
+  else if(total>=13){badge='Riesgo moderado';interp='Cambios posturales c/2h. Colchón de redistribución. Nutrición.';cls='badge-yellow'}
+  else if(total>=10){badge='Riesgo alto';interp='Protocolo intensivo UPP. Superficies especiales. Apósitos preventivos.';cls='badge-orange'}
+  else{badge='Riesgo muy alto';interp='Máximas precauciones. Evaluación diaria especialista heridas.';cls='badge-red'}
+  document.getElementById('bradenBadge').innerHTML='<span class="badge '+cls+'">'+badge+'</span>';
+  document.getElementById('bradenInterp').textContent=interp;
+}
+calcBraden();
+
+function calcMorse(){
+  const items=['morseF1','morseF2','morseF3','morseF4','morseF5','morseF6'];
+  const total=items.reduce((s,id)=>s+parseInt(document.getElementById(id).value),0);
+  document.getElementById('morseScore').textContent=total+' / 125';
+  let badge,interp,cls;
+  if(total<25){badge='Riesgo bajo';interp='Precauciones estándar de caídas.';cls='badge-green'}
+  else if(total<=44){badge='Riesgo moderado';interp='Plan de prevención de caídas activo. Reevaluar c/turno.';cls='badge-yellow'}
+  else{badge='Riesgo ALTO';interp='Protocolo de alto riesgo caídas. Cama baja, barandas, timbre al alcance. Supervisión.';cls='badge-red'}
+  document.getElementById('morseBadge').innerHTML='<span class="badge '+cls+'">'+badge+'</span>';
+  document.getElementById('morseInterp').textContent=interp;
+}
+calcMorse();
+
+function calcAPGAR(){
+  const total=[1,2,3,4,5].reduce((s,n)=>s+parseInt(document.getElementById('apgar'+n).value),0);
+  document.getElementById('apgarScore').textContent=total+' / 10';
+  let badge,cls;
+  if(total>=7){badge='Normal (7-10)';cls='badge-green'}
+  else if(total>=4){badge='Depresión leve (4-6)';cls='badge-yellow'}
+  else{badge='Depresión grave (0-3)';cls='badge-red'}
+  document.getElementById('apgarBadge').innerHTML='<span class="badge '+cls+'">'+badge+' — Registrar 1° y 5° min</span>';
+}
+calcAPGAR();
+
+function calcRamsay(){
+  const lv=parseInt(document.getElementById('ramsayLevel').value);
+  const interps={1:'Nivel de alerta — valorar ansiolítico si necesario',2:'Sedación óptima para procedimientos leves',3:'Sedación adecuada — responde a órdenes',4:'Sedación profunda — buena para ventilación mecánica',5:'Sedación muy profunda — vigilar depresión resp.',6:'Sin respuesta — sedación máxima, monitoreo intensivo'};
+  document.getElementById('ramsayScore').textContent='Ramsay '+lv;
+  document.getElementById('ramsayInterp').textContent=interps[lv];
+}
+calcRamsay();
+
+function scoreNEWS_FR(fr){
+  if(isNaN(fr)) return 0;
+  if(fr<=8||fr>=25) return 3;
+  if(fr>=21) return 2;
+  if(fr<=11) return 1;
+  return 0;
+}
+function scoreNEWS_SpO2(spo2,epoc){
+  if(isNaN(spo2)) return 0;
+  if(!epoc){
+    if(spo2>=96) return 0;
+    if(spo2>=94) return 1;
+    if(spo2>=92) return 2;
+    return 3;
+  } else {
+    if(spo2>=93) return 0;
+    if(spo2>=88) return 1;
+    if(spo2>=86) return 2;
+    return 3;
+  }
+}
+function scoreNEWS_PAS(pas){
+  if(isNaN(pas)) return 0;
+  if(pas>=110) return 0;
+  if(pas>=100) return 1;
+  if(pas>=90) return 2;
+  return 3;
+}
+function scoreNEWS_FC(fc){
+  if(isNaN(fc)) return 0;
+  if(fc<=40||fc>=131) return 3;
+  if(fc>=111) return 2;
+  if(fc<=50||fc>=91) return 1;
+  return 0;
+}
+function scoreNEWS_Temp(t){
+  if(isNaN(t)) return 0;
+  if(t<=35) return 3;
+  if(t<=36) return 1;
+  if(t<=38) return 0;
+  if(t<=39) return 1;
+  if(t<=39.9) return 2;
+  return 2;
+}
+function calcNEWS2(){
+  const fr=parseFloat(document.getElementById('newsFR').value);
+  const spo2=parseFloat(document.getElementById('newsSPO2').value);
+  const epoc=parseInt(document.getElementById('newsEPOC').value);
+  const o2=parseInt(document.getElementById('newsO2').value);
+  const pas=parseFloat(document.getElementById('newsPAS').value);
+  const fc=parseFloat(document.getElementById('newsFC').value);
+  const temp=parseFloat(document.getElementById('newsTemp').value);
+  const conc=parseInt(document.getElementById('newsConc').value);
+
+  const filled=[fr,spo2,pas,fc,temp].filter(x=>!isNaN(x)).length;
+  if(filled<3){document.getElementById('news2Score').textContent='—';document.getElementById('news2Interp').textContent='Ingrese al menos 3 parámetros';document.getElementById('news2Badge').innerHTML='';return;}
+
+  const s=scoreNEWS_FR(fr)+scoreNEWS_SpO2(spo2,epoc)+o2+scoreNEWS_PAS(pas)+scoreNEWS_FC(fc)+scoreNEWS_Temp(temp)+conc;
+  document.getElementById('news2Score').textContent=s+' puntos';
+
+  let badge,interp,cls;
+  if(s<=4){badge='Riesgo BAJO';interp='Monitoreo rutinario cada 4-12 h.';cls='badge-green'}
+  else if(s<=6){badge='Riesgo MEDIO';interp='Monitoreo c/1h. Avisar equipo médico. Evaluar ingreso UCI.';cls='badge-yellow'}
+  else{badge='Riesgo ALTO ≥7';interp='Monitoreo continuo. Activar equipo respuesta rápida. Evaluar UCI urgente.';cls='badge-red'}
+  document.getElementById('news2Badge').innerHTML='<span class="badge '+cls+'">'+badge+'</span>';
+  document.getElementById('news2Interp').textContent=interp;
+}
+
+// ===== TAB 3: CÁLCULOS =====
+function calcIMC(){
+  const h=parseFloat(document.getElementById('imcTalla').value)/100;
+  const w=parseFloat(document.getElementById('imcPeso').value);
+  const sex=document.getElementById('imcSexo').value;
+  const res=document.getElementById('imcResult');
+  res.style.display='block';
+  if(isNaN(h)||isNaN(w)||h<=0){document.getElementById('imcValue').textContent='Datos incompletos';document.getElementById('imcBadge').innerHTML='';document.getElementById('imcSub').textContent='';return;}
+  const imc=w/(h*h);
+  document.getElementById('imcValue').textContent=imc.toFixed(1)+' kg/m²';
+  let badge,cls;
+  if(imc<18.5){badge='Bajo peso';cls='badge-blue'}
+  else if(imc<25){badge='Normal';cls='badge-green'}
+  else if(imc<30){badge='Sobrepeso';cls='badge-yellow'}
+  else if(imc<35){badge='Obesidad grado I';cls='badge-orange'}
+  else if(imc<40){badge='Obesidad grado II';cls='badge-red'}
+  else{badge='Obesidad mórbida';cls='badge-red'}
+  document.getElementById('imcBadge').innerHTML='<span class="badge '+cls+'">'+badge+'</span>';
+  const tallaCm=h*100;
+  const pi=(tallaCm-100)*0.9;
+  const pa=pi+0.4*(w-pi);
+  let sub='Peso ideal Broca: '+pi.toFixed(1)+' kg';
+  if(imc>=30) sub+=' | Peso ajustado: '+pa.toFixed(1)+' kg';
+  document.getElementById('imcSub').textContent=sub;
+}
+
+function calcBalance(){
+  const suero=parseFloat(document.getElementById('bhSuero').value)||0;
+  const meds=parseFloat(document.getElementById('bhMeds').value)||0;
+  const oral=parseFloat(document.getElementById('bhOral').value)||0;
+  const sng=parseFloat(document.getElementById('bhSNG').value)||0;
+  const diu=parseFloat(document.getElementById('bhDiuresis').value)||0;
+  const vom=parseFloat(document.getElementById('bhVomitos').value)||0;
+  const dren=parseFloat(document.getElementById('bhDrenajes').value)||0;
+  const peso=parseFloat(document.getElementById('bhPeso').value)||70;
+  const fiebre=parseFloat(document.getElementById('bhFiebre').value)||0;
+
+  let pi=peso*12;
+  if(fiebre>38) pi+=peso*(fiebre-38)*2.5;
+
+  const ingresos=suero+meds+oral+sng;
+  const egresos=diu+vom+dren+pi;
+  const balance=ingresos-egresos;
+
+  const res=document.getElementById('balanceResult');
+  res.style.display='block';
+  document.getElementById('balanceMain').textContent=(balance>=0?'+':'')+balance.toFixed(0)+' ml';
+  document.getElementById('balanceSub').textContent=
+    'Ingresos: '+ingresos.toFixed(0)+' ml | Egresos medidos: '+(diu+vom+dren).toFixed(0)+' ml | Pérd. insensibles est.: '+pi.toFixed(0)+' ml';
+  document.getElementById('balanceMain').style.color=balance<-500?'var(--red)':balance>1000?'var(--blue)':'var(--accent)';
+}
+
+function calcDiuresis(){
+  const vol=parseFloat(document.getElementById('diurHora').value);
+  const peso=parseFloat(document.getElementById('diurPeso').value);
+  const tipo=document.getElementById('diurTipo').value;
+  const res=document.getElementById('diuresisResult');
+  res.style.display='block';
+  if(isNaN(vol)||isNaN(peso)||peso===0){document.getElementById('diuresisMain').textContent='Datos incompletos';document.getElementById('diuresisSub').textContent='';return;}
+  const rate=vol/peso;
+  const min=tipo==='adult'?0.5:1;
+  document.getElementById('diuresisMain').textContent=rate.toFixed(2)+' ml/kg/hr';
+  let status;
+  if(rate>=min){status='Diuresis adecuada'}
+  else if(rate>=0.3){status='Oliguria leve — monitoreo estricto'}
+  else{status='Oliguria severa — acción inmediata'}
+  document.getElementById('diuresisSub').textContent=status+' | Mínimo aceptable: '+min+' ml/kg/hr';
+  document.getElementById('diuresisMain').style.color=rate>=min?'var(--accent)':rate>=0.3?'var(--yellow)':'var(--red)';
+}
+
+const o2Data={
+  nasal:{1:24,2:28,3:32,4:36,5:40,6:44},
+  simple:{6:35,7:40,8:45,9:50,10:55},
+  reservorio:{6:60,8:80,10:90,12:95,15:99},
+};
+function updateO2(){
+  const method=document.getElementById('o2Method').value;
+  const flow=parseFloat(document.getElementById('o2Flow').value);
+  const fiset=parseFloat(document.getElementById('o2FiO2Set').value);
+  const div=document.getElementById('o2FlowDiv');
+  const fi2div=document.getElementById('o2FiO2Row');
+
+  if(method==='oaf'){div.style.display='block';fi2div.style.display='block';}
+  else{div.style.display='block';fi2div.style.display='none';}
+
+  const main=document.getElementById('o2MainResult');
+  const sub=document.getElementById('o2SubResult');
+
+  if(method==='venturi'){
+    const venturiMap={2:24,4:28,6:31,8:35,10:40,12:60};
+    const keys=Object.keys(venturiMap).map(Number);
+    const closest=keys.reduce((a,b)=>Math.abs(b-flow)<Math.abs(a-flow)?b:a,keys[0]);
+    main.textContent='FiO2 ≈ '+venturiMap[closest]+'%';
+    sub.textContent='Mascarilla Venturi a '+flow+' L/min';
+    return;
+  }
+  if(method==='oaf'){
+    if(!isNaN(flow)&&!isNaN(fiset)){
+      main.textContent='FiO2: '+fiset+'% a '+flow+' L/min';
+      sub.textContent='OAF — Alto flujo nasal. Sistema calefactado humidificado.';
+    }else{main.textContent='Complete los datos';sub.textContent='';}
+    return;
+  }
+
+  if(isNaN(flow)){main.textContent='Seleccione flujo';sub.textContent='';return;}
+
+  const table=o2Data[method];
+  if(table){
+    const keys=Object.keys(table).map(Number);
+    const closest=keys.reduce((a,b)=>Math.abs(b-flow)<Math.abs(a-flow)?b:a,keys[0]);
+    const fi=table[closest];
+    main.textContent='FiO2 ≈ '+fi+'%';
+    sub.textContent='Flujo: '+flow+' L/min | Método: '+method;
+  }
+}
+updateO2();
+
+function updateElectrolito(){
+  const e=document.getElementById('electrolito').value;
+  document.getElementById('elecLabel1').textContent=e==='na'?'Na+ actual (mEq/L)':'K+ actual (mEq/L)';
+  document.getElementById('elecLabel2').textContent=e==='na'?'Na+ deseado (mEq/L)':'K+ deseado (mEq/L)';
+  document.getElementById('elecActual').placeholder=e==='na'?'128':'2.8';
+  document.getElementById('elecDeseado').placeholder=e==='na'?'135':'3.5';
+}
+
+function calcElectrolito(){
+  const e=document.getElementById('electrolito').value;
+  const act=parseFloat(document.getElementById('elecActual').value);
+  const des=parseFloat(document.getElementById('elecDeseado').value);
+  const peso=parseFloat(document.getElementById('elecPeso').value);
+  const res=document.getElementById('elecResult');
+  res.style.display='block';
+  if(isNaN(act)||isNaN(des)||isNaN(peso)){document.getElementById('elecMainResult').textContent='Datos incompletos';document.getElementById('elecSubResult').textContent='';return;}
+
+  if(e==='na'){
+    const def=0.6*peso*(des-act);
+    document.getElementById('elecMainResult').textContent='Déficit Na: '+def.toFixed(0)+' mEq';
+    document.getElementById('elecSubResult').textContent='Velocidad máx corrección: 8-10 mEq/L/día (no >2 mEq/hr) — riesgo mielinólisis póntica si corrección rápida';
+  } else {
+    const def=0.4*peso*(des-act);
+    document.getElementById('elecMainResult').textContent='Déficit K: '+def.toFixed(1)+' mEq';
+    document.getElementById('elecSubResult').textContent='Máx periférico: 40 mEq/L a ≤10-20 mEq/hr. Vía central: hasta 40 mEq/hr con ECG continuo. NUNCA bolo EV.';
+  }
+}
+
+function calcBSA(){
+  const h=parseFloat(document.getElementById('bsaTalla').value);
+  const w=parseFloat(document.getElementById('bsaPeso').value);
+  const res=document.getElementById('bsaResult');
+  res.style.display='block';
+  if(isNaN(h)||isNaN(w)){document.getElementById('bsaMain').textContent='Datos incompletos';document.getElementById('bsaSub').textContent='';return;}
+  const mosteller=Math.sqrt((h*w)/3600);
+  const dubois=0.007184*Math.pow(h,0.725)*Math.pow(w,0.425);
+  document.getElementById('bsaMain').textContent=mosteller.toFixed(2)+' m² (Mosteller)';
+  document.getElementById('bsaSub').textContent='DuBois: '+dubois.toFixed(2)+' m² | Uso: dosificación quimioterapia, índice cardíaco (normal: 2.5-4 L/min/m²)';
+}
+
+// Init demo patient
+window.addEventListener('load',()=>{
+  document.getElementById('doseWeight').value=72;
+  document.getElementById('infWeight').value=72;
+  document.getElementById('diurPeso').value=72;
+  document.getElementById('bhPeso').value=72;
+  document.getElementById('elecPeso').value=72;
+  document.getElementById('imcPeso').value=72;
+  document.getElementById('imcTalla').value=170;
+  document.getElementById('bsaTalla').value=170;
+  document.getElementById('bsaPeso').value=72;
+});
+</script>
+</body>
+</html>

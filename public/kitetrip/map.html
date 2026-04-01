@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kite Spots Map - Patagonia Expedition</title>
+    <link rel="stylesheet" href="../assets/style.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #e2e8f0;
+            overflow: hidden;
+        }
+
+        #map {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: linear-gradient(to bottom, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0));
+            padding: 20px 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .header h1 {
+            font-size: 1.8em;
+            font-weight: 900;
+            background: linear-gradient(135deg, #38bdf8 0%, #fb923c 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            font-size: 0.9em;
+            color: #94a3b8;
+        }
+
+        .back-button {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            padding: 10px 20px;
+            background: rgba(56, 189, 248, 0.2);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            border-radius: 8px;
+            color: #38bdf8;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .back-button:hover {
+            background: rgba(56, 189, 248, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .legend {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            z-index: 1000;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            max-width: 250px;
+        }
+
+        .legend h3 {
+            font-size: 1em;
+            margin-bottom: 15px;
+            color: #38bdf8;
+            font-weight: 700;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 0.85em;
+        }
+
+        .legend-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            margin-right: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9em;
+        }
+
+        .legend-icon.beginner {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+        }
+
+        .legend-icon.intermediate {
+            background: linear-gradient(135deg, #eab308, #f59e0b);
+        }
+
+        .legend-icon.advanced {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+
+        /* Custom Leaflet popup styles */
+        .leaflet-popup-content-wrapper {
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            color: #e2e8f0;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .leaflet-popup-tip {
+            background: rgba(15, 23, 42, 0.95);
+        }
+
+        .popup-content {
+            padding: 5px;
+            min-width: 220px;
+        }
+
+        .popup-content h2 {
+            font-size: 1.3em;
+            font-weight: 900;
+            margin-bottom: 5px;
+            background: linear-gradient(135deg, #38bdf8 0%, #fb923c 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .popup-content .subtitle {
+            font-size: 0.85em;
+            color: #38bdf8;
+            margin-bottom: 10px;
+        }
+
+        .popup-content .description {
+            font-size: 0.85em;
+            line-height: 1.5;
+            color: #cbd5e1;
+            margin-bottom: 15px;
+        }
+
+        .popup-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .popup-stat {
+            background: rgba(56, 189, 248, 0.1);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            border-radius: 8px;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .popup-stat-label {
+            font-size: 0.7em;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .popup-stat-value {
+            font-size: 0.9em;
+            font-weight: 700;
+            color: #38bdf8;
+            margin-top: 3px;
+        }
+
+        .popup-videos {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(56, 189, 248, 0.2);
+        }
+
+        .popup-videos-label {
+            font-size: 0.75em;
+            color: #94a3b8;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .video-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .video-link {
+            display: inline-block;
+            padding: 5px 10px;
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 6px;
+            color: #f87171;
+            text-decoration: none;
+            font-size: 0.75em;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .video-link:hover {
+            background: rgba(239, 68, 68, 0.3);
+            transform: translateY(-2px);
+        }
+
+        /* Custom marker styles */
+        .custom-marker {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3em;
+            border: 3px solid white;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .custom-marker:hover {
+            transform: scale(1.2);
+            box-shadow: 0 6px 25px rgba(56, 189, 248, 0.6);
+        }
+
+        .custom-marker.beginner {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+        }
+
+        .custom-marker.intermediate {
+            background: linear-gradient(135deg, #eab308, #f59e0b);
+        }
+
+        .custom-marker.advanced {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 15px 20px;
+            }
+
+            .header h1 {
+                font-size: 1.3em;
+            }
+
+            .header p {
+                font-size: 0.8em;
+            }
+
+            .back-button {
+                top: 15px;
+                right: 20px;
+                padding: 8px 15px;
+                font-size: 0.85em;
+            }
+
+            .legend {
+                bottom: 20px;
+                left: 20px;
+                padding: 15px;
+                max-width: 200px;
+            }
+
+            .legend h3 {
+                font-size: 0.9em;
+            }
+
+            .legend-item {
+                font-size: 0.75em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 data-es="Mapa de Spots de Kite en la Patagonia" data-en="Patagonia Kite Spots Map">Patagonia Kite Spots Map</h1>
+        <p data-es="Explora 11 spots de kitesurf de clase mundial" data-en="Explore 11 world-class kitesurfing locations">Explore 11 world-class kitesurfing locations</p>
+        <a href="index.html" class="back-button" data-es="← Volver a la Expedición" data-en="← Back to Expedition">← Back to Expedition</a>
+    </div>
+
+    <div id="map"></div>
+
+    <div class="legend">
+        <h3 data-es="Niveles de Habilidad" data-en="Skill Levels">Skill Levels</h3>
+        <div class="legend-item">
+            <div class="legend-icon beginner"></div>
+            <span data-es="Todos los Niveles" data-en="All Levels">All Levels</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-icon intermediate"></div>
+            <span data-es="Intermedio+" data-en="Intermediate+">Intermediate+</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-icon advanced"></div>
+            <span data-es="Avanzado" data-en="Advanced">Advanced</span>
+        </div>
+    </div>
+
+    <script>
+        // Spot data with accurate coordinates from Google Maps
+        const spots = [
+            {
+                name: "El Daddy",
+                subtitle: "San Nicolás River",
+                fauna: "🦩",
+                lat: -41.655942,
+                lng: -73.657341,
+                description: "A world-class spot for observing flamingos. We ride responsibly, respecting their habitat in protected flat waters.",
+                windType: "Thermal",
+                waterType: "Flat / Shallow",
+                skillLevel: "Intermediate+",
+                videos: [
+                    { id: "VMezhRImM7k", title: "Session 1" },
+                    { id: "x1vACRSRW1g", title: "Session 2" },
+                    { id: "LsuDj7BVz4U", title: "Session 3" }
+                ]
+            },
+            {
+                name: "Amortajado",
+                subtitle: "Pacific Coast",
+                fauna: "🌊",
+                lat: -41.636406,
+                lng: -73.669207,
+                description: "The wildest face of the Pacific. A demanding spot with waves and strong winds, only for advanced riders.",
+                windType: "Coastal Thermal",
+                waterType: "Waves / Choppy",
+                skillLevel: "Advanced",
+                videos: [
+                    { id: "x1vACRSRW1g", title: "Waves" }
+                ]
+            },
+            {
+                name: "Playa Wiehoff",
+                subtitle: "Llanquihue City Beach",
+                fauna: "🏖️",
+                lat: -41.25,
+                lng: -73.00,
+                description: "Urban beach in Llanquihue city with stunning lake views. Easy access and perfect flat water conditions.",
+                windType: "Thermal",
+                waterType: "Flat",
+                skillLevel: "All levels",
+                videos: [
+                    { id: "YEIzLu7weKg", title: "Session" }
+                ]
+            },
+            {
+                name: "Llanquihue",
+                subtitle: "Lake & Volcanoes",
+                fauna: "🏔️",
+                lat: -41.26,
+                lng: -73.01,
+                description: "Ride with a breathtaking view of Osorno and Calbuco volcanoes. Perfect for flat-water sessions and big air.",
+                windType: "Thermal SW",
+                waterType: "Flat / Butter",
+                skillLevel: "All levels",
+                videos: [
+                    { id: "GSKcRTGfm2U", title: "Session" }
+                ]
+            },
+            {
+                name: "Puerto Varas",
+                subtitle: "Lake & City",
+                fauna: "🌆",
+                lat: -41.32,
+                lng: -72.98,
+                description: "Urban kiting with stunning lake views. Perfect combination of city amenities and pristine riding conditions.",
+                windType: "Thermal",
+                waterType: "Flat",
+                skillLevel: "All levels",
+                videos: [
+                    { id: "qLYFLvnrAU4", title: "Session" }
+                ]
+            },
+            {
+                name: "Ancud",
+                subtitle: "Piedra Run - Pacific Coast",
+                fauna: "🏝️",
+                lat: -41.920693,
+                lng: -74.007009,
+                description: "Pacific coast at Piedra Run natural monument. Where Pacific winds meet the wild coast of Chiloé. Rich culture and unique riding conditions.",
+                windType: "Coastal",
+                waterType: "Waves",
+                skillLevel: "Intermediate",
+                videos: [
+                    { id: "fxEi-hcY914", title: "Session" }
+                ]
+            },
+            {
+                name: "Puelo",
+                subtitle: "Reloncaví Estuary",
+                fauna: "🐬",
+                lat: -41.675174,
+                lng: -72.355607,
+                description: "Ride at the feet of Yates volcano, where glacial meltwater flows into the estuary. Chance to encounter dolphins.",
+                windType: "Valley Thermal",
+                waterType: "Flat to Chop",
+                skillLevel: "Intermediate+",
+                videos: [
+                    { id: "Rmp_0TwJFCk", title: "Downwinder" },
+                    { id: "_v6GH7xJnfM", title: "Con toninas" },
+                    { id: "JKJEFm-sY_8", title: "Session" }
+                ]
+            },
+            {
+                name: "Ensenada",
+                subtitle: "Llanquihue Lake - East Shore",
+                fauna: "🌲",
+                lat: -41.19,
+                lng: -72.53,
+                description: "Ride on the east shore of Llanquihue Lake, between volcanoes, next to Vicente Pérez Rosales National Park.",
+                windType: "Mountain Thermal",
+                waterType: "Flat",
+                skillLevel: "All levels",
+                videos: [
+                    { id: "6Iw82M_rG_c", title: "Session" },
+                    { id: "SAhefmeyV8g", title: "Volcán Osorno" }
+                ]
+            },
+            {
+                name: "Carelmapu",
+                subtitle: "Ocean & Culture",
+                fauna: "🐋",
+                lat: -41.74,
+                lng: -73.71,
+                description: "Pacific waves with views of Chiloé Island. A whale-watching area with world-class seafood.",
+                windType: "Thermal NW",
+                waterType: "Rough Sea / Waves",
+                skillLevel: "Advanced",
+                videos: [
+                    { id: "xGpkrvAz9PE", title: "Waves" }
+                ]
+            },
+            {
+                name: "Llico Bajo",
+                subtitle: "Beach & River Mouth",
+                fauna: "🦅",
+                lat: -41.283910,
+                lng: -73.842885,
+                description: "A hidden gem. Wild beach with consistent waves at the mouth of Llico River. Remote and pristine.",
+                windType: "Offshore",
+                waterType: "Waves / Beach Break",
+                skillLevel: "Intermediate+",
+                videos: [
+                    { id: "ip76MbN_3LQ", title: "Session" }
+                ]
+            },
+            {
+                name: "Puerto Octay",
+                subtitle: "North Shore of Llanquihue",
+                fauna: "🏡",
+                lat: -40.98,
+                lng: -72.90,
+                description: "A quiet spot with consistent winds and calm waters. Ideal for long, relaxed sessions with panoramic volcano views.",
+                windType: "Thermal",
+                waterType: "Flat",
+                skillLevel: "All levels",
+                videos: [
+                    { id: "bgWwlA5ir0M", title: "Session" }
+                ]
+            }
+        ];
+
+        // Initialize map centered on the region
+        const map = L.map('map', {
+            center: [-41.4, -73.0],
+            zoom: 9,
+            zoomControl: true,
+            scrollWheelZoom: true
+        });
+
+        // Add dark tile layer
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            maxZoom: 19
+        }).addTo(map);
+
+        // Function to get skill level class
+        function getSkillClass(skillLevel) {
+            if (skillLevel === "All levels") return "beginner";
+            if (skillLevel.includes("Intermediate")) return "intermediate";
+            if (skillLevel === "Advanced") return "advanced";
+            return "intermediate";
+        }
+
+        // Add markers for each spot
+        spots.forEach(spot => {
+            const skillClass = getSkillClass(spot.skillLevel);
+
+            // Create custom icon
+            const customIcon = L.divIcon({
+                className: 'custom-div-icon',
+                html: `<div class="custom-marker ${skillClass}">${spot.fauna}</div>`,
+                iconSize: [40, 40],
+                iconAnchor: [20, 40],
+                popupAnchor: [0, -40]
+            });
+
+            // Create popup content
+            const videosHTML = spot.videos.map(video =>
+                `<a href="https://www.youtube.com/watch?v=${video.id}" target="_blank" class="video-link">${video.title}</a>`
+            ).join('');
+
+            const popupContent = `
+                <div class="popup-content">
+                    <h2>${spot.name}</h2>
+                    <div class="subtitle">${spot.subtitle}</div>
+                    <div class="description">${spot.description}</div>
+                    <div class="popup-stats">
+                        <div class="popup-stat">
+                            <div class="popup-stat-label">Wind</div>
+                            <div class="popup-stat-value">${spot.windType}</div>
+                        </div>
+                        <div class="popup-stat">
+                            <div class="popup-stat-label">Water</div>
+                            <div class="popup-stat-value">${spot.waterType}</div>
+                        </div>
+                    </div>
+                    <div class="popup-stat" style="margin-bottom: 0;">
+                        <div class="popup-stat-label">Skill Level</div>
+                        <div class="popup-stat-value">${spot.skillLevel}</div>
+                    </div>
+                    <div class="popup-videos">
+                        <div class="popup-videos-label">Watch Videos</div>
+                        <div class="video-links">${videosHTML}</div>
+                    </div>
+                </div>
+            `;
+
+            // Add marker to map
+            const marker = L.marker([spot.lat, spot.lng], { icon: customIcon })
+                .addTo(map)
+                .bindPopup(popupContent, {
+                    maxWidth: 300,
+                    className: 'custom-popup'
+                });
+        });
+
+        // Fit map to show all markers
+        const group = L.featureGroup(
+            spots.map(spot => L.marker([spot.lat, spot.lng]))
+        );
+        map.fitBounds(group.getBounds().pad(0.1));
+    </script>
+    <script src="../assets/i18n.js"></script>
+</body>
+</html>

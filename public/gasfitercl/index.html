@@ -1,0 +1,1961 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#1d4ed8">
+    <meta name="description" content="GasfiterCL - Gestión integral para gasfíteres chilenos. Trabajos, cotizaciones, inventario, certificaciones SEC, finanzas y base de clientes.">
+    <title>GasfiterCL - Gestión de Gasfíteres</title>
+
+    <link rel="manifest" href="data:application/json,{&quot;name&quot;:&quot;GasfiterCL&quot;,&quot;short_name&quot;:&quot;GasfiterCL&quot;,&quot;description&quot;:&quot;Gestión para gasfíteres&quot;,&quot;start_url&quot;:&quot;/&quot;,&quot;display&quot;:&quot;standalone&quot;,&quot;background_color&quot;:&quot;#ffffff&quot;,&quot;theme_color&quot;:&quot;#1d4ed8&quot;,&quot;icons&quot;:[{&quot;src&quot;:&quot;data:image/svg+xml,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'&gt;&lt;rect fill='%231d4ed8' width='192' height='192'/&gt;&lt;text x='50%' y='50%' font-size='100' font-weight='bold' text-anchor='middle' dominant-baseline='middle' fill='white' font-family='Arial'&gt;G&lt;/text&gt;&lt;/svg&gt;&quot;,&quot;sizes&quot;:&quot;192x192&quot;,&quot;type&quot;:&quot;image/svg+xml&quot;,&quot;purpose&quot;:&quot;any&quot;}]}">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%231d4ed8'/><text x='50' y='60' font-size='60' font-weight='bold' text-anchor='middle' fill='white'>G</text></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #1d4ed8;
+            --primary-dark: #1e40af;
+            --primary-light: #3b82f6;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-500: #6b7280;
+            --gray-700: #374151;
+            --gray-900: #111827;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --light-gray: #f1f5f9;
+            --border-radius: 8px;
+            --transition: all 0.3s ease;
+            --safe-top: max(12px, env(safe-area-inset-top));
+            --safe-bottom: max(12px, env(safe-area-inset-bottom));
+        }
+
+        html {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        body {
+            background-color: var(--gray-50);
+            color: var(--gray-900);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            padding-top: var(--safe-top);
+            padding-bottom: var(--safe-bottom);
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 16px 20px;
+            box-shadow: 0 2px 8px rgba(29, 78, 216, 0.1);
+            flex-shrink: 0;
+        }
+
+        header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .header-subtitle {
+            font-size: 12px;
+            opacity: 0.9;
+            margin-top: 4px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0;
+            background: white;
+            border-bottom: 1px solid var(--gray-200);
+            overflow-x: auto;
+            overflow-y: hidden;
+            flex-shrink: 0;
+            padding: 0 4px;
+        }
+
+        .tabs::-webkit-scrollbar {
+            height: 3px;
+        }
+
+        .tabs::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .tabs::-webkit-scrollbar-thumb {
+            background: var(--gray-300);
+            border-radius: 2px;
+        }
+
+        .tab {
+            padding: 12px 16px;
+            border: none;
+            background: none;
+            color: var(--gray-600);
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            white-space: nowrap;
+            transition: var(--transition);
+            border-bottom: 3px solid transparent;
+            font-family: inherit;
+        }
+
+        .tab:hover {
+            color: var(--primary);
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tab-content {
+            display: none;
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 20px 100px 20px;
+        }
+
+        .tab-content.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .section {
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title::before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 20px;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--gray-700);
+            margin-bottom: 6px;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--gray-300);
+            border-radius: var(--border-radius);
+            font-family: inherit;
+            font-size: 16px;
+            transition: var(--transition);
+            background: white;
+            color: var(--gray-900);
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            box-shadow: 0 4px 12px rgba(29, 78, 216, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--gray-200);
+            color: var(--gray-900);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-300);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-small {
+            padding: 8px 12px;
+            font-size: 12px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 16px;
+            margin-bottom: 12px;
+            border: 1px solid var(--gray-200);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .card-header {
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-status {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-in-progress {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .status-completed {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-urgent {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .card-info {
+            font-size: 13px;
+            color: var(--gray-600);
+            line-height: 1.6;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: var(--gray-600);
+            font-weight: 500;
+        }
+
+        .info-value {
+            color: var(--gray-900);
+            font-weight: 600;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: flex-end;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px 12px 0 0;
+            padding: 24px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(100%);
+            }
+            to {
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--gray-500);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 20px 0;
+            background: white;
+            padding: 16px;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--gray-200);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+            padding: 16px;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--gray-200);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--gray-600);
+            font-weight: 500;
+            margin-bottom: 6px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .list-item {
+            background: white;
+            padding: 12px;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--gray-200);
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .list-item-main {
+            flex: 1;
+        }
+
+        .list-item-title {
+            font-weight: 600;
+            color: var(--gray-900);
+            font-size: 14px;
+        }
+
+        .list-item-subtitle {
+            font-size: 12px;
+            color: var(--gray-600);
+            margin-top: 4px;
+        }
+
+        .list-item-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--gray-500);
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        .empty-state-text {
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            background: var(--gray-200);
+            color: var(--gray-700);
+        }
+
+        .badge-success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .badge-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-danger {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: var(--border-radius);
+            font-size: 13px;
+            margin-bottom: 16px;
+            border-left: 4px solid;
+        }
+
+        .alert-success {
+            background: #ecfdf5;
+            color: #065f46;
+            border-color: var(--success);
+        }
+
+        .alert-error {
+            background: #fef2f2;
+            color: #991b1b;
+            border-color: var(--danger);
+        }
+
+        @media (max-width: 640px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .material-item {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+            padding: 8px;
+            background: var(--gray-100);
+            border-radius: var(--border-radius);
+        }
+
+        .material-item input {
+            flex: 1;
+            margin-bottom: 4px;
+        }
+
+        .material-item-remove {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .urgency-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .urgency-normal {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .urgency-urgente {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .urgency-emergencia {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>GasfiterCL</h1>
+        <div class="header-subtitle">Gestión integral para gasfíteres</div>
+    </header>
+
+    <div class="tabs">
+        <button class="tab active" data-tab="trabajos">Trabajos</button>
+        <button class="tab" data-tab="cotizador">Cotizador</button>
+        <button class="tab" data-tab="inventario">Inventario</button>
+        <button class="tab" data-tab="certificaciones">Certificaciones</button>
+        <button class="tab" data-tab="finanzas">Finanzas</button>
+        <button class="tab" data-tab="clientes">Clientes</button>
+    </div>
+
+    <div class="content">
+        <!-- TRABAJOS TAB -->
+        <div id="trabajos" class="tab-content active">
+            <div class="section">
+                <div class="section-title">Mis Trabajos</div>
+                <button class="button btn-primary" onclick="openJobModal()">+ Nuevo Trabajo</button>
+            </div>
+
+            <div id="jobsList"></div>
+        </div>
+
+        <!-- COTIZADOR TAB -->
+        <div id="cotizador" class="tab-content">
+            <div class="section">
+                <div class="section-title">Calculadora de Cotizaciones</div>
+
+                <div class="form-group">
+                    <label>Tipo de Servicio</label>
+                    <select id="quoteServiceType" onchange="updateQuotePreview()">
+                        <option value="">Selecciona un servicio</option>
+                        <option value="destape">Destape de Cañerías - $40,000</option>
+                        <option value="filtracion">Reparación de Filtraciones - $35,000</option>
+                        <option value="calefont">Instalación Calefont/Termoeléctrico - $120,000</option>
+                        <option value="grifera">Cambio de Grifería - $25,000</option>
+                        <option value="sanitarios">Instalación de Sanitarios - $60,000</option>
+                        <option value="wc">Reparación WC - $30,000</option>
+                        <option value="gas">Certificación SEC Gas - $150,000</option>
+                        <option value="caldera">Mantención Caldera - $80,000</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Horas de Trabajo</label>
+                    <input type="number" id="quoteHours" value="1" min="0.5" step="0.5" onchange="updateQuotePreview()">
+                </div>
+
+                <div class="form-group">
+                    <label>Urgencia</label>
+                    <select id="quoteUrgency" onchange="updateQuotePreview()">
+                        <option value="normal">Normal (0%)</option>
+                        <option value="urgente">Urgente (20%)</option>
+                        <option value="emergencia">Emergencia Nocturna (50%)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Materiales (Opcional)</label>
+                    <div id="quoteMaterials"></div>
+                    <button class="button btn-secondary btn-small" onclick="addQuoteMaterial()">+ Agregar Material</button>
+                </div>
+
+                <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); padding: 16px; border-radius: var(--border-radius); border: 1px solid var(--primary); margin: 20px 0;">
+                    <div class="info-row">
+                        <span class="info-label">Precio Base Servicio:</span>
+                        <span class="info-value" id="quoteBasePrice">$0</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Costo Mano de Obra:</span>
+                        <span class="info-value" id="quoteLaborCost">$0</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Costo Materiales:</span>
+                        <span class="info-value" id="quoteMaterialsCost">$0</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Recargo Urgencia:</span>
+                        <span class="info-value" id="quoteUrgencySurcharge">$0</span>
+                    </div>
+                    <div class="info-row" style="border-top: 2px solid rgba(0,0,0,0.1); margin-top: 8px; padding-top: 12px;">
+                        <span class="info-label">Subtotal:</span>
+                        <span class="info-value" id="quoteSubtotal">$0</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">IVA 19%:</span>
+                        <span class="info-value" id="quoteIVA">$0</span>
+                    </div>
+                    <div class="info-row" style="border-top: 2px solid var(--primary); margin-top: 8px; padding-top: 12px;">
+                        <span class="info-label" style="color: var(--primary); font-size: 16px;">Total:</span>
+                        <span class="info-value" style="font-size: 20px; color: var(--primary);" id="quoteTotal">$0</span>
+                    </div>
+                </div>
+
+                <button class="button btn-primary" onclick="saveQuote()" style="width: 100%;">Guardar Cotización</button>
+            </div>
+        </div>
+
+        <!-- INVENTARIO TAB -->
+        <div id="inventario" class="tab-content">
+            <div class="section">
+                <div class="section-title">Inventario de Materiales</div>
+                <button class="button btn-primary" onclick="openInventoryModal()">+ Agregar Material</button>
+            </div>
+
+            <div id="inventoryList"></div>
+        </div>
+
+        <!-- CERTIFICACIONES TAB -->
+        <div id="certificaciones" class="tab-content">
+            <div class="section">
+                <div class="section-title">Certificaciones SEC Gas</div>
+                <button class="button btn-primary" onclick="openCertificationModal()">+ Nueva Certificación</button>
+            </div>
+
+            <div id="certificationList"></div>
+        </div>
+
+        <!-- FINANZAS TAB -->
+        <div id="finanzas" class="tab-content">
+            <div class="section">
+                <div class="section-title">Resumen Financiero</div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Ingresos Este Mes</div>
+                        <div class="stat-value" id="monthlyRevenue">$0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Gastos Este Mes</div>
+                        <div class="stat-value" id="monthlyExpenses">$0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Ganancia Neta</div>
+                        <div class="stat-value" id="netProfit">$0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Trabajos Completados</div>
+                        <div class="stat-value" id="completedJobs">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Ingresos por Servicio</div>
+                <div class="chart-container">
+                    <canvas id="revenueByServiceChart"></canvas>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Tendencia de Ingresos</div>
+                <div class="chart-container">
+                    <canvas id="revenueTrendChart"></canvas>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Gastos del Negocio</div>
+                <button class="button btn-primary btn-small" onclick="openExpenseModal()">+ Registrar Gasto</button>
+                <div id="expensesList" style="margin-top: 12px;"></div>
+            </div>
+        </div>
+
+        <!-- CLIENTES TAB -->
+        <div id="clientes" class="tab-content">
+            <div class="section">
+                <div class="section-title">Base de Clientes</div>
+                <button class="button btn-primary" onclick="openClientModal()">+ Nuevo Cliente</button>
+            </div>
+
+            <div id="clientsList"></div>
+        </div>
+    </div>
+
+    <!-- MODALS -->
+    <div id="jobModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span id="jobModalTitle">Nuevo Trabajo</span>
+                <button class="modal-close" onclick="closeJobModal()">&times;</button>
+            </div>
+
+            <div class="form-group">
+                <label>Tipo de Servicio *</label>
+                <select id="jobType">
+                    <option value="">Selecciona un servicio</option>
+                    <option value="destape">Destape de Cañerías</option>
+                    <option value="filtracion">Reparación de Filtraciones</option>
+                    <option value="calefont">Instalación Calefont/Termoeléctrico</option>
+                    <option value="grifera">Cambio de Grifería</option>
+                    <option value="sanitarios">Instalación de Sanitarios</option>
+                    <option value="wc">Reparación WC</option>
+                    <option value="gas">Certificación SEC Gas</option>
+                    <option value="caldera">Mantención Caldera</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Cliente *</label>
+                <input type="text" id="jobClient" placeholder="Nombre del cliente">
+            </div>
+
+            <div class="form-group">
+                <label>Dirección *</label>
+                <input type="text" id="jobAddress" placeholder="Dirección">
+            </div>
+
+            <div class="form-group">
+                <label>Urgencia</label>
+                <select id="jobUrgency">
+                    <option value="normal">Normal</option>
+                    <option value="urgente">Urgente</option>
+                    <option value="emergencia">Emergencia Nocturna</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Diagnóstico / Descripción</label>
+                <textarea id="jobDiagnosis" placeholder="Detalles del trabajo..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Materiales Utilizados</label>
+                <textarea id="jobMaterials" placeholder="Listado de materiales..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Precio Acordado</label>
+                <input type="number" id="jobPrice" placeholder="0" min="0">
+            </div>
+
+            <div class="form-group">
+                <label>Estado</label>
+                <select id="jobStatus">
+                    <option value="pendiente">Pendiente</option>
+                    <option value="en-proceso">En Proceso</option>
+                    <option value="completado">Completado</option>
+                    <option value="cancelado">Cancelado</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Fecha</label>
+                <input type="date" id="jobDate">
+            </div>
+
+            <div class="button-group">
+                <button class="button btn-primary" onclick="saveJob()" style="flex: 1;">Guardar</button>
+                <button class="button btn-secondary" onclick="closeJobModal()" style="flex: 1;">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="inventoryModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>Agregar Material al Inventario</span>
+                <button class="modal-close" onclick="closeInventoryModal()">&times;</button>
+            </div>
+
+            <div class="form-group">
+                <label>Nombre del Material *</label>
+                <select id="inventoryName">
+                    <option value="">Selecciona un material</option>
+                    <option value="cañeria-pvc">Cañería PVC</option>
+                    <option value="cañeria-cobre">Cañería Cobre</option>
+                    <option value="cañeria-ppr">Cañería PPR</option>
+                    <option value="fitting">Fitting</option>
+                    <option value="valvula">Válvula</option>
+                    <option value="llave-paso">Llave de Paso</option>
+                    <option value="flexible">Flexible</option>
+                    <option value="wc">Inodoro</option>
+                    <option value="lavamanos">Lavamanos</option>
+                    <option value="grifera">Grifería</option>
+                    <option value="calefont">Calefont</option>
+                    <option value="silicona">Silicona</option>
+                    <option value="teflon">Teflón</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Categoría</label>
+                <select id="inventoryCategory">
+                    <option value="tuberias">Tuberías</option>
+                    <option value="accesorios">Accesorios</option>
+                    <option value="griferia">Grifería</option>
+                    <option value="sanitarios">Sanitarios</option>
+                    <option value="calefaccion">Calefacción</option>
+                    <option value="materiales">Materiales</option>
+                </select>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Stock</label>
+                    <input type="number" id="inventoryStock" value="1" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Costo Unitario</label>
+                    <input type="number" id="inventoryCost" placeholder="0" min="0">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Observaciones</label>
+                <textarea id="inventoryNotes" placeholder="Marca, modelo, etc..."></textarea>
+            </div>
+
+            <div class="button-group">
+                <button class="button btn-primary" onclick="saveInventoryItem()" style="flex: 1;">Guardar</button>
+                <button class="button btn-secondary" onclick="closeInventoryModal()" style="flex: 1;">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="certificationModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>Nueva Certificación SEC Gas</span>
+                <button class="modal-close" onclick="closeCertificationModal()">&times;</button>
+            </div>
+
+            <div class="form-group">
+                <label>Tipo de Certificación *</label>
+                <select id="certType">
+                    <option value="">Selecciona tipo</option>
+                    <option value="instalacion">Instalación</option>
+                    <option value="mantencion">Mantención</option>
+                    <option value="certificacion">Certificación</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Cliente *</label>
+                <input type="text" id="certClient" placeholder="Nombre del cliente">
+            </div>
+
+            <div class="form-group">
+                <label>Número de Certificado SEC *</label>
+                <input type="text" id="certNumber" placeholder="Ej: SEC-2024-001234">
+            </div>
+
+            <div class="form-group">
+                <label>Dirección de Propiedad</label>
+                <input type="text" id="certAddress" placeholder="Dirección">
+            </div>
+
+            <div class="form-group">
+                <label>Fecha de Certificación</label>
+                <input type="date" id="certDate">
+            </div>
+
+            <div class="form-group">
+                <label>Fecha de Expiración</label>
+                <input type="date" id="certExpiry">
+            </div>
+
+            <div class="form-group">
+                <label>Dispositivo Certificado (Ej: Calefont, Termo, etc)</label>
+                <input type="text" id="certDevice" placeholder="Marca, modelo">
+            </div>
+
+            <div class="form-group">
+                <label>Teléfono del Cliente</label>
+                <input type="tel" id="certPhone" placeholder="+56 9 XXXX XXXX">
+            </div>
+
+            <div class="form-group">
+                <label>Notas</label>
+                <textarea id="certNotes" placeholder="Observaciones adicionales..."></textarea>
+            </div>
+
+            <div class="button-group">
+                <button class="button btn-primary" onclick="saveCertification()" style="flex: 1;">Guardar</button>
+                <button class="button btn-secondary" onclick="closeCertificationModal()" style="flex: 1;">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="expenseModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>Registrar Gasto</span>
+                <button class="modal-close" onclick="closeExpenseModal()">&times;</button>
+            </div>
+
+            <div class="form-group">
+                <label>Tipo de Gasto *</label>
+                <select id="expenseType">
+                    <option value="">Selecciona tipo</option>
+                    <option value="combustible">Combustible/Transporte</option>
+                    <option value="herramientas">Herramientas</option>
+                    <option value="materiales">Materiales</option>
+                    <option value="mantenimiento">Mantenimiento Vehículo</option>
+                    <option value="uniforme">Uniforme/EPP</option>
+                    <option value="otros">Otros</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Descripción</label>
+                <input type="text" id="expenseDescription" placeholder="Detalle del gasto">
+            </div>
+
+            <div class="form-group">
+                <label>Monto *</label>
+                <input type="number" id="expenseAmount" placeholder="0" min="0">
+            </div>
+
+            <div class="form-group">
+                <label>Fecha</label>
+                <input type="date" id="expenseDate">
+            </div>
+
+            <div class="button-group">
+                <button class="button btn-primary" onclick="saveExpense()" style="flex: 1;">Guardar</button>
+                <button class="button btn-secondary" onclick="closeExpenseModal()" style="flex: 1;">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="clientModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span id="clientModalTitle">Nuevo Cliente</span>
+                <button class="modal-close" onclick="closeClientModal()">&times;</button>
+            </div>
+
+            <div class="form-group">
+                <label>Nombre Completo *</label>
+                <input type="text" id="clientName" placeholder="Nombre">
+            </div>
+
+            <div class="form-group">
+                <label>Teléfono *</label>
+                <input type="tel" id="clientPhone" placeholder="+56 9 XXXX XXXX">
+            </div>
+
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="clientEmail" placeholder="correo@ejemplo.com">
+            </div>
+
+            <div class="form-group">
+                <label>Dirección</label>
+                <input type="text" id="clientAddress" placeholder="Dirección completa">
+            </div>
+
+            <div class="form-group">
+                <label>Tipo de Propiedad</label>
+                <select id="clientPropertyType">
+                    <option value="casa">Casa</option>
+                    <option value="departamento">Departamento</option>
+                    <option value="comercial">Local Comercial</option>
+                    <option value="industrial">Industrial</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Preferencia Contacto</label>
+                <select id="clientContactPref">
+                    <option value="llamada">Llamada Telefónica</option>
+                    <option value="whatsapp">WhatsApp</option>
+                    <option value="email">Email</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Historial / Notas</label>
+                <textarea id="clientNotes" placeholder="Anotaciones sobre trabajos anteriores..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Equipos Instalados (Ej: Calefont marca/año)</label>
+                <textarea id="clientEquipment" placeholder="Calefont 2020, WC 2018, etc..."></textarea>
+            </div>
+
+            <div class="button-group">
+                <button class="button btn-primary" onclick="saveClient()" style="flex: 1;">Guardar</button>
+                <button class="button btn-secondary" onclick="closeClientModal()" style="flex: 1;">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Safe localStorage wrapper
+        const Storage = {
+            get: (key, defaultValue = []) => {
+                try {
+                    const item = localStorage.getItem(`gasfitercl_${key}`);
+                    return item ? JSON.parse(item) : defaultValue;
+                } catch (e) {
+                    console.error('Storage get error:', e);
+                    return defaultValue;
+                }
+            },
+            set: (key, value) => {
+                try {
+                    localStorage.setItem(`gasfitercl_${key}`, JSON.stringify(value));
+                } catch (e) {
+                    console.error('Storage set error:', e);
+                }
+            }
+        };
+
+        // App State
+        const state = {
+            jobs: Storage.get('jobs', []),
+            inventory: Storage.get('inventory', []),
+            certifications: Storage.get('certifications', []),
+            expenses: Storage.get('expenses', []),
+            clients: Storage.get('clients', []),
+            quotes: Storage.get('quotes', []),
+            currentJobId: null,
+            currentClientId: null,
+            charts: {}
+        };
+
+        // Service Type Base Prices
+        const servicePrices = {
+            destape: 40000,
+            filtracion: 35000,
+            calefont: 120000,
+            grifera: 25000,
+            sanitarios: 60000,
+            wc: 30000,
+            gas: 150000,
+            caldera: 80000
+        };
+
+        const laborRatePerHour = 15000; // CLP per hour
+
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabName = tab.dataset.tab;
+
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+                tab.classList.add('active');
+                document.getElementById(tabName).classList.add('active');
+
+                // Initialize charts when switching to finanzas
+                if (tabName === 'finanzas') {
+                    setTimeout(() => {
+                        initFinanceCharts();
+                    }, 100);
+                }
+            });
+        });
+
+        // Set today's date in date inputs
+        const today = new Date().toISOString().split('T')[0];
+        document.querySelectorAll('input[type="date"]').forEach(input => {
+            if (!input.value) input.value = today;
+        });
+
+        // ===== TRABAJOS =====
+        function openJobModal(jobId = null) {
+            state.currentJobId = jobId;
+            if (jobId) {
+                const job = state.jobs.find(j => j.id === jobId);
+                if (job) {
+                    document.getElementById('jobModalTitle').textContent = 'Editar Trabajo';
+                    document.getElementById('jobType').value = job.type;
+                    document.getElementById('jobClient').value = job.client;
+                    document.getElementById('jobAddress').value = job.address;
+                    document.getElementById('jobUrgency').value = job.urgency;
+                    document.getElementById('jobDiagnosis').value = job.diagnosis;
+                    document.getElementById('jobMaterials').value = job.materials;
+                    document.getElementById('jobPrice').value = job.price;
+                    document.getElementById('jobStatus').value = job.status;
+                    document.getElementById('jobDate').value = job.date;
+                }
+            } else {
+                document.getElementById('jobModalTitle').textContent = 'Nuevo Trabajo';
+                document.getElementById('jobType').value = '';
+                document.getElementById('jobClient').value = '';
+                document.getElementById('jobAddress').value = '';
+                document.getElementById('jobUrgency').value = 'normal';
+                document.getElementById('jobDiagnosis').value = '';
+                document.getElementById('jobMaterials').value = '';
+                document.getElementById('jobPrice').value = '';
+                document.getElementById('jobStatus').value = 'pendiente';
+                document.getElementById('jobDate').value = today;
+            }
+            document.getElementById('jobModal').classList.add('active');
+        }
+
+        function closeJobModal() {
+            document.getElementById('jobModal').classList.remove('active');
+            state.currentJobId = null;
+        }
+
+        function saveJob() {
+            const type = document.getElementById('jobType').value;
+            const client = document.getElementById('jobClient').value;
+            const address = document.getElementById('jobAddress').value;
+
+            if (!type || !client || !address) {
+                alert('Por favor completa los campos obligatorios');
+                return;
+            }
+
+            const job = {
+                id: state.currentJobId || `job_${Date.now()}`,
+                type,
+                client,
+                address,
+                urgency: document.getElementById('jobUrgency').value,
+                diagnosis: document.getElementById('jobDiagnosis').value,
+                materials: document.getElementById('jobMaterials').value,
+                price: parseInt(document.getElementById('jobPrice').value) || 0,
+                status: document.getElementById('jobStatus').value,
+                date: document.getElementById('jobDate').value
+            };
+
+            if (state.currentJobId) {
+                const idx = state.jobs.findIndex(j => j.id === state.currentJobId);
+                if (idx >= 0) state.jobs[idx] = job;
+            } else {
+                state.jobs.push(job);
+            }
+
+            Storage.set('jobs', state.jobs);
+            renderJobs();
+            closeJobModal();
+        }
+
+        function deleteJob(id) {
+            if (confirm('¿Eliminar este trabajo?')) {
+                state.jobs = state.jobs.filter(j => j.id !== id);
+                Storage.set('jobs', state.jobs);
+                renderJobs();
+            }
+        }
+
+        function renderJobs() {
+            const container = document.getElementById('jobsList');
+            if (state.jobs.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📋</div>
+                        <div class="empty-state-text">Sin trabajos registrados. ¡Crea tu primer trabajo!</div>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = state.jobs.sort((a, b) => new Date(b.date) - new Date(a.date)).map(job => `
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div style="font-weight: 700; margin-bottom: 4px;">${job.client}</div>
+                            <div style="font-size: 12px; color: var(--gray-600);">${job.address}</div>
+                        </div>
+                        <span class="urgency-badge urgency-${job.urgency}">${job.urgency}</span>
+                    </div>
+                    <div class="card-info">
+                        <div class="info-row">
+                            <span class="info-label">Servicio:</span>
+                            <span class="info-value">${getServiceName(job.type)}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Estado:</span>
+                            <span class="card-status status-${job.status}">${getStatusName(job.status)}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Precio:</span>
+                            <span class="info-value">$${job.price.toLocaleString('es-CL')}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Fecha:</span>
+                            <span class="info-value">${formatDate(job.date)}</span>
+                        </div>
+                        ${job.diagnosis ? `<div class="info-row">
+                            <span class="info-label">Diagnóstico:</span>
+                            <span class="info-value">${job.diagnosis}</span>
+                        </div>` : ''}
+                    </div>
+                    <div class="button-group" style="margin-top: 12px;">
+                        <button class="button btn-secondary btn-small" onclick="openJobModal('${job.id}')">Editar</button>
+                        <button class="button btn-danger btn-small" onclick="deleteJob('${job.id}')">Eliminar</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ===== COTIZADOR =====
+        function addQuoteMaterial() {
+            const container = document.getElementById('quoteMaterials');
+            const id = `qm_${Date.now()}`;
+            const item = document.createElement('div');
+            item.id = id;
+            item.className = 'material-item';
+            item.innerHTML = `
+                <div style="flex: 1;">
+                    <input type="text" placeholder="Nombre del material" class="quote-material-name" onchange="updateQuotePreview()">
+                    <input type="number" placeholder="Cantidad" min="0" class="quote-material-qty" onchange="updateQuotePreview()" style="margin-top: 4px;">
+                    <input type="number" placeholder="Precio unitario" min="0" class="quote-material-price" onchange="updateQuotePreview()" style="margin-top: 4px;">
+                </div>
+                <button class="material-item-remove" onclick="document.getElementById('${id}').remove(); updateQuotePreview();">Quitar</button>
+            `;
+            container.appendChild(item);
+        }
+
+        function updateQuotePreview() {
+            const serviceType = document.getElementById('quoteServiceType').value;
+            const hours = parseFloat(document.getElementById('quoteHours').value) || 0;
+            const urgency = document.getElementById('quoteUrgency').value;
+
+            const basePrice = servicePrices[serviceType] || 0;
+            const laborCost = hours * laborRatePerHour;
+
+            let materialsCost = 0;
+            document.querySelectorAll('.quote-material-price').forEach((input, idx) => {
+                const price = parseFloat(input.value) || 0;
+                const qty = parseFloat(document.querySelectorAll('.quote-material-qty')[idx].value) || 0;
+                materialsCost += price * qty;
+            });
+
+            let urgencySurcharge = 0;
+            const subtotalBeforeSurcharge = basePrice + laborCost + materialsCost;
+            if (urgency === 'urgente') urgencySurcharge = subtotalBeforeSurcharge * 0.2;
+            else if (urgency === 'emergencia') urgencySurcharge = subtotalBeforeSurcharge * 0.5;
+
+            const subtotal = subtotalBeforeSurcharge + urgencySurcharge;
+            const iva = subtotal * 0.19;
+            const total = subtotal + iva;
+
+            document.getElementById('quoteBasePrice').textContent = `$${basePrice.toLocaleString('es-CL')}`;
+            document.getElementById('quoteLaborCost').textContent = `$${laborCost.toLocaleString('es-CL')}`;
+            document.getElementById('quoteMaterialsCost').textContent = `$${materialsCost.toLocaleString('es-CL')}`;
+            document.getElementById('quoteUrgencySurcharge').textContent = `$${urgencySurcharge.toLocaleString('es-CL')}`;
+            document.getElementById('quoteSubtotal').textContent = `$${subtotal.toLocaleString('es-CL')}`;
+            document.getElementById('quoteIVA').textContent = `$${iva.toLocaleString('es-CL')}`;
+            document.getElementById('quoteTotal').textContent = `$${total.toLocaleString('es-CL')}`;
+        }
+
+        function saveQuote() {
+            const serviceType = document.getElementById('quoteServiceType').value;
+            if (!serviceType) {
+                alert('Selecciona un servicio');
+                return;
+            }
+
+            const quote = {
+                id: `quote_${Date.now()}`,
+                serviceType,
+                hours: parseFloat(document.getElementById('quoteHours').value),
+                urgency: document.getElementById('quoteUrgency').value,
+                total: parseInt(document.getElementById('quoteTotal').textContent.replace(/[^\d]/g, '')),
+                date: today,
+                materials: Array.from(document.querySelectorAll('.quote-material-name')).map((el, idx) => ({
+                    name: el.value,
+                    qty: parseInt(document.querySelectorAll('.quote-material-qty')[idx].value) || 0,
+                    price: parseInt(document.querySelectorAll('.quote-material-price')[idx].value) || 0
+                })).filter(m => m.name)
+            };
+
+            state.quotes.push(quote);
+            Storage.set('quotes', state.quotes);
+            alert('Cotización guardada correctamente');
+
+            // Reset form
+            document.getElementById('quoteServiceType').value = '';
+            document.getElementById('quoteHours').value = '1';
+            document.getElementById('quoteUrgency').value = 'normal';
+            document.getElementById('quoteMaterials').innerHTML = '';
+            updateQuotePreview();
+        }
+
+        // ===== INVENTARIO =====
+        function openInventoryModal() {
+            document.getElementById('inventoryName').value = '';
+            document.getElementById('inventoryCategory').value = 'tuberias';
+            document.getElementById('inventoryStock').value = '1';
+            document.getElementById('inventoryCost').value = '';
+            document.getElementById('inventoryNotes').value = '';
+            document.getElementById('inventoryModal').classList.add('active');
+        }
+
+        function closeInventoryModal() {
+            document.getElementById('inventoryModal').classList.remove('active');
+        }
+
+        function saveInventoryItem() {
+            const name = document.getElementById('inventoryName').value;
+            if (!name) {
+                alert('Selecciona un material');
+                return;
+            }
+
+            const item = {
+                id: `inv_${Date.now()}`,
+                name,
+                category: document.getElementById('inventoryCategory').value,
+                stock: parseInt(document.getElementById('inventoryStock').value),
+                cost: parseInt(document.getElementById('inventoryCost').value) || 0,
+                notes: document.getElementById('inventoryNotes').value,
+                dateAdded: today
+            };
+
+            state.inventory.push(item);
+            Storage.set('inventory', state.inventory);
+            renderInventory();
+            closeInventoryModal();
+        }
+
+        function deleteInventoryItem(id) {
+            if (confirm('¿Eliminar este material?')) {
+                state.inventory = state.inventory.filter(i => i.id !== id);
+                Storage.set('inventory', state.inventory);
+                renderInventory();
+            }
+        }
+
+        function renderInventory() {
+            const container = document.getElementById('inventoryList');
+            if (state.inventory.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📦</div>
+                        <div class="empty-state-text">Sin materiales en inventario</div>
+                    </div>
+                `;
+                return;
+            }
+
+            const byCategory = {};
+            state.inventory.forEach(item => {
+                if (!byCategory[item.category]) byCategory[item.category] = [];
+                byCategory[item.category].push(item);
+            });
+
+            let html = '';
+            Object.entries(byCategory).forEach(([cat, items]) => {
+                html += `<div style="margin-bottom: 20px;">`;
+                html += `<div class="section-title" style="margin-bottom: 12px;">${getCategoryName(cat)}</div>`;
+                items.forEach(item => {
+                    const totalValue = item.stock * item.cost;
+                    html += `
+                        <div class="card">
+                            <div class="card-header">
+                                <div>${item.name}</div>
+                                <span class="badge">Stock: ${item.stock}</span>
+                            </div>
+                            <div class="card-info">
+                                <div class="info-row">
+                                    <span class="info-label">Costo Unitario:</span>
+                                    <span class="info-value">$${item.cost.toLocaleString('es-CL')}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Valor Total Stock:</span>
+                                    <span class="info-value">$${totalValue.toLocaleString('es-CL')}</span>
+                                </div>
+                                ${item.notes ? `<div class="info-row">
+                                    <span class="info-label">Notas:</span>
+                                    <span class="info-value">${item.notes}</span>
+                                </div>` : ''}
+                            </div>
+                            <div class="button-group" style="margin-top: 12px;">
+                                <button class="button btn-danger btn-small" onclick="deleteInventoryItem('${item.id}')">Eliminar</button>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // ===== CERTIFICACIONES SEC =====
+        function openCertificationModal() {
+            document.getElementById('certType').value = '';
+            document.getElementById('certClient').value = '';
+            document.getElementById('certNumber').value = '';
+            document.getElementById('certAddress').value = '';
+            document.getElementById('certDate').value = today;
+            document.getElementById('certExpiry').value = '';
+            document.getElementById('certDevice').value = '';
+            document.getElementById('certPhone').value = '';
+            document.getElementById('certNotes').value = '';
+            document.getElementById('certificationModal').classList.add('active');
+        }
+
+        function closeCertificationModal() {
+            document.getElementById('certificationModal').classList.remove('active');
+        }
+
+        function saveCertification() {
+            const type = document.getElementById('certType').value;
+            const client = document.getElementById('certClient').value;
+            const number = document.getElementById('certNumber').value;
+
+            if (!type || !client || !number) {
+                alert('Por favor completa los campos obligatorios');
+                return;
+            }
+
+            const cert = {
+                id: `cert_${Date.now()}`,
+                type,
+                client,
+                number,
+                address: document.getElementById('certAddress').value,
+                date: document.getElementById('certDate').value,
+                expiry: document.getElementById('certExpiry').value,
+                device: document.getElementById('certDevice').value,
+                phone: document.getElementById('certPhone').value,
+                notes: document.getElementById('certNotes').value
+            };
+
+            state.certifications.push(cert);
+            Storage.set('certifications', state.certifications);
+            renderCertifications();
+            closeCertificationModal();
+        }
+
+        function deleteCertification(id) {
+            if (confirm('¿Eliminar esta certificación?')) {
+                state.certifications = state.certifications.filter(c => c.id !== id);
+                Storage.set('certifications', state.certifications);
+                renderCertifications();
+            }
+        }
+
+        function renderCertifications() {
+            const container = document.getElementById('certificationList');
+            if (state.certifications.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">✅</div>
+                        <div class="empty-state-text">Sin certificaciones registradas</div>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = state.certifications.sort((a, b) => new Date(b.date) - new Date(a.date)).map(cert => {
+                const isExpired = cert.expiry && new Date(cert.expiry) < new Date();
+                return `
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <div style="font-weight: 700;">${cert.client}</div>
+                                <div style="font-size: 12px; color: var(--gray-600);">${cert.number}</div>
+                            </div>
+                            ${isExpired ? '<span class="badge badge-danger">Vencido</span>' : '<span class="badge badge-success">Vigente</span>'}
+                        </div>
+                        <div class="card-info">
+                            <div class="info-row">
+                                <span class="info-label">Tipo:</span>
+                                <span class="info-value">${getCertType(cert.type)}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Dispositivo:</span>
+                                <span class="info-value">${cert.device || '-'}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Dirección:</span>
+                                <span class="info-value">${cert.address || '-'}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Fecha Certificación:</span>
+                                <span class="info-value">${formatDate(cert.date)}</span>
+                            </div>
+                            ${cert.expiry ? `<div class="info-row">
+                                <span class="info-label">Vencimiento:</span>
+                                <span class="info-value">${formatDate(cert.expiry)}</span>
+                            </div>` : ''}
+                            ${cert.phone ? `<div class="info-row">
+                                <span class="info-label">Teléfono:</span>
+                                <span class="info-value">${cert.phone}</span>
+                            </div>` : ''}
+                        </div>
+                        <div class="button-group" style="margin-top: 12px;">
+                            <button class="button btn-danger btn-small" onclick="deleteCertification('${cert.id}')">Eliminar</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ===== FINANZAS =====
+        function openExpenseModal() {
+            document.getElementById('expenseType').value = '';
+            document.getElementById('expenseDescription').value = '';
+            document.getElementById('expenseAmount').value = '';
+            document.getElementById('expenseDate').value = today;
+            document.getElementById('expenseModal').classList.add('active');
+        }
+
+        function closeExpenseModal() {
+            document.getElementById('expenseModal').classList.remove('active');
+        }
+
+        function saveExpense() {
+            const type = document.getElementById('expenseType').value;
+            const amount = parseInt(document.getElementById('expenseAmount').value);
+
+            if (!type || !amount) {
+                alert('Por favor completa los campos obligatorios');
+                return;
+            }
+
+            const expense = {
+                id: `exp_${Date.now()}`,
+                type,
+                description: document.getElementById('expenseDescription').value,
+                amount,
+                date: document.getElementById('expenseDate').value
+            };
+
+            state.expenses.push(expense);
+            Storage.set('expenses', state.expenses);
+            renderExpenses();
+            closeExpenseModal();
+            updateFinanceMetrics();
+        }
+
+        function deleteExpense(id) {
+            if (confirm('¿Eliminar este gasto?')) {
+                state.expenses = state.expenses.filter(e => e.id !== id);
+                Storage.set('expenses', state.expenses);
+                renderExpenses();
+                updateFinanceMetrics();
+            }
+        }
+
+        function renderExpenses() {
+            const container = document.getElementById('expensesList');
+            const thisMonth = state.expenses.filter(e => {
+                const eDate = new Date(e.date);
+                const now = new Date();
+                return eDate.getMonth() === now.getMonth() && eDate.getFullYear() === now.getFullYear();
+            });
+
+            if (thisMonth.length === 0) {
+                container.innerHTML = '<div style="color: var(--gray-500); text-align: center; padding: 20px;">Sin gastos este mes</div>';
+                return;
+            }
+
+            container.innerHTML = thisMonth.sort((a, b) => new Date(b.date) - new Date(a.date)).map(exp => `
+                <div class="list-item">
+                    <div class="list-item-main">
+                        <div class="list-item-title">${exp.description || getExpenseTypeName(exp.type)}</div>
+                        <div class="list-item-subtitle">${formatDate(exp.date)}</div>
+                    </div>
+                    <div class="list-item-actions">
+                        <div style="text-align: right;">
+                            <div class="list-item-title">$${exp.amount.toLocaleString('es-CL')}</div>
+                            <button class="button btn-danger btn-small" onclick="deleteExpense('${exp.id}')">Eliminar</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateFinanceMetrics() {
+            const now = new Date();
+            const thisMonthJobs = state.jobs.filter(j => {
+                const jDate = new Date(j.date);
+                return j.status === 'completado' && jDate.getMonth() === now.getMonth() && jDate.getFullYear() === now.getFullYear();
+            });
+
+            const thisMonthExpenses = state.expenses.filter(e => {
+                const eDate = new Date(e.date);
+                return eDate.getMonth() === now.getMonth() && eDate.getFullYear() === now.getFullYear();
+            });
+
+            const revenue = thisMonthJobs.reduce((sum, j) => sum + j.price, 0);
+            const expenses = thisMonthExpenses.reduce((sum, e) => sum + e.amount, 0);
+            const profit = revenue - expenses;
+
+            document.getElementById('monthlyRevenue').textContent = `$${revenue.toLocaleString('es-CL')}`;
+            document.getElementById('monthlyExpenses').textContent = `$${expenses.toLocaleString('es-CL')}`;
+            document.getElementById('netProfit').textContent = `$${profit.toLocaleString('es-CL')}`;
+            document.getElementById('completedJobs').textContent = thisMonthJobs.length;
+
+            renderExpenses();
+        }
+
+        function initFinanceCharts() {
+            updateFinanceMetrics();
+
+            // Revenue by Service Type
+            const serviceRevenue = {};
+            state.jobs.filter(j => j.status === 'completado').forEach(job => {
+                if (!serviceRevenue[job.type]) serviceRevenue[job.type] = 0;
+                serviceRevenue[job.type] += job.price;
+            });
+
+            const revenueCtx = document.getElementById('revenueByServiceChart');
+            if (revenueCtx && state.charts.revenueByService) {
+                state.charts.revenueByService.destroy();
+            }
+            if (revenueCtx && Object.keys(serviceRevenue).length > 0) {
+                state.charts.revenueByService = new Chart(revenueCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(serviceRevenue).map(k => getServiceName(k)),
+                        datasets: [{
+                            data: Object.values(serviceRevenue),
+                            backgroundColor: ['#1d4ed8', '#3b82f6', '#60a5fa', '#93c5fd', '#dbeafe', '#bfdbfe']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom' } }
+                    }
+                });
+            }
+
+            // Revenue Trend (Last 7 days)
+            const dailyRevenue = {};
+            for (let i = 6; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                const dateStr = date.toISOString().split('T')[0];
+                dailyRevenue[dateStr] = 0;
+            }
+
+            state.jobs.filter(j => j.status === 'completado').forEach(job => {
+                if (dailyRevenue[job.date] !== undefined) {
+                    dailyRevenue[job.date] += job.price;
+                }
+            });
+
+            const trendCtx = document.getElementById('revenueTrendChart');
+            if (trendCtx && state.charts.revenueTrend) {
+                state.charts.revenueTrend.destroy();
+            }
+            if (trendCtx) {
+                state.charts.revenueTrend = new Chart(trendCtx, {
+                    type: 'line',
+                    data: {
+                        labels: Object.keys(dailyRevenue).map(d => new Date(d).toLocaleDateString('es-CL', { month: 'short', day: 'numeric' })),
+                        datasets: [{
+                            label: 'Ingresos Diarios',
+                            data: Object.values(dailyRevenue),
+                            borderColor: '#1d4ed8',
+                            backgroundColor: 'rgba(29, 78, 216, 0.1)',
+                            tension: 0.3,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: true } },
+                        scales: {
+                            y: { beginAtZero: true }
+                        }
+                    }
+                });
+            }
+        }
+
+        // ===== CLIENTES =====
+        function openClientModal(clientId = null) {
+            state.currentClientId = clientId;
+            if (clientId) {
+                const client = state.clients.find(c => c.id === clientId);
+                if (client) {
+                    document.getElementById('clientModalTitle').textContent = 'Editar Cliente';
+                    document.getElementById('clientName').value = client.name;
+                    document.getElementById('clientPhone').value = client.phone;
+                    document.getElementById('clientEmail').value = client.email;
+                    document.getElementById('clientAddress').value = client.address;
+                    document.getElementById('clientPropertyType').value = client.propertyType;
+                    document.getElementById('clientContactPref').value = client.contactPref;
+                    document.getElementById('clientNotes').value = client.notes;
+                    document.getElementById('clientEquipment').value = client.equipment;
+                }
+            } else {
+                document.getElementById('clientModalTitle').textContent = 'Nuevo Cliente';
+                document.getElementById('clientName').value = '';
+                document.getElementById('clientPhone').value = '';
+                document.getElementById('clientEmail').value = '';
+                document.getElementById('clientAddress').value = '';
+                document.getElementById('clientPropertyType').value = 'casa';
+                document.getElementById('clientContactPref').value = 'whatsapp';
+                document.getElementById('clientNotes').value = '';
+                document.getElementById('clientEquipment').value = '';
+            }
+            document.getElementById('clientModal').classList.add('active');
+        }
+
+        function closeClientModal() {
+            document.getElementById('clientModal').classList.remove('active');
+            state.currentClientId = null;
+        }
+
+        function saveClient() {
+            const name = document.getElementById('clientName').value;
+            const phone = document.getElementById('clientPhone').value;
+
+            if (!name || !phone) {
+                alert('Por favor completa los campos obligatorios');
+                return;
+            }
+
+            const client = {
+                id: state.currentClientId || `client_${Date.now()}`,
+                name,
+                phone,
+                email: document.getElementById('clientEmail').value,
+                address: document.getElementById('clientAddress').value,
+                propertyType: document.getElementById('clientPropertyType').value,
+                contactPref: document.getElementById('clientContactPref').value,
+                notes: document.getElementById('clientNotes').value,
+                equipment: document.getElementById('clientEquipment').value,
+                dateAdded: state.currentClientId ? (state.clients.find(c => c.id === state.currentClientId)?.dateAdded || today) : today
+            };
+
+            if (state.currentClientId) {
+                const idx = state.clients.findIndex(c => c.id === state.currentClientId);
+                if (idx >= 0) state.clients[idx] = client;
+            } else {
+                state.clients.push(client);
+            }
+
+            Storage.set('clients', state.clients);
+            renderClients();
+            closeClientModal();
+        }
+
+        function deleteClient(id) {
+            if (confirm('¿Eliminar este cliente?')) {
+                state.clients = state.clients.filter(c => c.id !== id);
+                Storage.set('clients', state.clients);
+                renderClients();
+            }
+        }
+
+        function renderClients() {
+            const container = document.getElementById('clientsList');
+            if (state.clients.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">👥</div>
+                        <div class="empty-state-text">Sin clientes registrados</div>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = state.clients.sort((a, b) => a.name.localeCompare(b.name)).map(client => `
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div style="font-weight: 700;">${client.name}</div>
+                            <div style="font-size: 12px; color: var(--gray-600);">${client.address || 'Sin dirección'}</div>
+                        </div>
+                        <span class="badge">${client.propertyType}</span>
+                    </div>
+                    <div class="card-info">
+                        <div class="info-row">
+                            <span class="info-label">Teléfono:</span>
+                            <span class="info-value"><a href="tel:${client.phone}" style="color: var(--primary); text-decoration: none;">${client.phone}</a></span>
+                        </div>
+                        ${client.email ? `<div class="info-row">
+                            <span class="info-label">Email:</span>
+                            <span class="info-value">${client.email}</span>
+                        </div>` : ''}
+                        <div class="info-row">
+                            <span class="info-label">Preferencia Contacto:</span>
+                            <span class="info-value">${client.contactPref}</span>
+                        </div>
+                        ${client.equipment ? `<div class="info-row">
+                            <span class="info-label">Equipos Instalados:</span>
+                            <span class="info-value">${client.equipment}</span>
+                        </div>` : ''}
+                        ${client.notes ? `<div class="info-row">
+                            <span class="info-label">Notas:</span>
+                            <span class="info-value">${client.notes}</span>
+                        </div>` : ''}
+                    </div>
+                    <div class="button-group" style="margin-top: 12px;">
+                        <button class="button btn-secondary btn-small" onclick="openClientModal('${client.id}')">Editar</button>
+                        <button class="button btn-danger btn-small" onclick="deleteClient('${client.id}')">Eliminar</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ===== UTILITIES =====
+        function getServiceName(type) {
+            const names = {
+                destape: 'Destape de Cañerías',
+                filtracion: 'Reparación de Filtraciones',
+                calefont: 'Instalación Calefont/Termoeléctrico',
+                grifera: 'Cambio de Grifería',
+                sanitarios: 'Instalación de Sanitarios',
+                wc: 'Reparación WC',
+                gas: 'Certificación SEC Gas',
+                caldera: 'Mantención Caldera'
+            };
+            return names[type] || type;
+        }
+
+        function getStatusName(status) {
+            const names = {
+                pendiente: 'Pendiente',
+                'en-proceso': 'En Proceso',
+                completado: 'Completado',
+                cancelado: 'Cancelado'
+            };
+            return names[status] || status;
+        }
+
+        function getCategoryName(cat) {
+            const names = {
+                tuberias: 'Tuberías',
+                accesorios: 'Accesorios',
+                griferia: 'Grifería',
+                sanitarios: 'Sanitarios',
+                calefaccion: 'Calefacción',
+                materiales: 'Materiales'
+            };
+            return names[cat] || cat;
+        }
+
+        function getCertType(type) {
+            const names = {
+                instalacion: 'Instalación',
+                mantencion: 'Mantención',
+                certificacion: 'Certificación'
+            };
+            return names[type] || type;
+        }
+
+        function getExpenseTypeName(type) {
+            const names = {
+                combustible: 'Combustible/Transporte',
+                herramientas: 'Herramientas',
+                materiales: 'Materiales',
+                mantenimiento: 'Mantenimiento Vehículo',
+                uniforme: 'Uniforme/EPP',
+                otros: 'Otros'
+            };
+            return names[type] || type;
+        }
+
+        function formatDate(dateStr) {
+            const date = new Date(dateStr + 'T00:00:00');
+            return date.toLocaleDateString('es-CL', { year: 'numeric', month: 'long', day: 'numeric' });
+        }
+
+        // Initial render
+        renderJobs();
+        renderInventory();
+        renderCertifications();
+        renderClients();
+
+        // Service Worker registration
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('data:application/javascript,' + encodeURIComponent(`
+                self.addEventListener('install', e => self.skipWaiting());
+                self.addEventListener('activate', e => e.waitUntil(clients.claim()));
+            `)).catch(() => {});
+        }
+    </script>
+</body>
+</html>

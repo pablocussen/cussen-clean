@@ -1,0 +1,1703 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="RelojeriaCL">
+    <meta name="theme-color" content="#1a1a2e">
+    <title>RelojeriaCL - Gestión de Reparaciones y Ventas</title>
+    <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22RelojeriaCL%22,%22short_name%22:%22RelojeriaCL%22,%22start_url%22:%22/%22,%22display%22:%22standalone%22,%22background_color%22:%22%231a1a2e%22,%22theme_color%22:%22%23c9a227%22,%22scope%22:%22/%22,%22icons%22:[{%22src%22:%22data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect fill='%231a1a2e' width='192' height='192'/%3E%3Ccircle cx='96' cy='96' r='60' fill='%23c9a227'/%3E%3Ccircle cx='96' cy='96' r='50' fill='%231a1a2e'/%3E%3Cline x1='96' y1='50' x2='96' y2='70' stroke='%23c9a227' stroke-width='3' stroke-linecap='round'/%3E%3Cline x1='96' y1='96' x2='96' y2='120' stroke='%23c9a227' stroke-width='2' stroke-linecap='round'/%3E%3Cline x1='96' y1='96' x2='110' y2='96' stroke='%23c9a227' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E%22,%22sizes%22:%22192x192%22,%22type%22:%22image/svg+xml%22,%22purpose%22:%22any%22}]}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #1a1a2e;
+            color: #e0e0e0;
+            -webkit-font-smoothing: antialiased;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            padding-bottom: max(env(safe-area-inset-bottom), 0px);
+        }
+
+        #app {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #252d47 100%);
+            padding: 16px 20px;
+            border-bottom: 2px solid #c9a227;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #c9a227;
+            letter-spacing: 0.5px;
+            text-align: center;
+        }
+
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 16px 20px;
+            animation: fadeIn 0.2s ease-in;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .tabs {
+            display: flex;
+            background: #252d47;
+            border-top: 1px solid #3a3f5c;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            position: sticky;
+            bottom: 0;
+            z-index: 99;
+        }
+
+        .tab-btn {
+            flex: 1;
+            min-width: 80px;
+            padding: 14px 10px;
+            background: none;
+            border: none;
+            color: #999;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            position: relative;
+            text-align: center;
+            -webkit-user-select: none;
+            user-select: none;
+            white-space: nowrap;
+        }
+
+        .tab-btn.active {
+            color: #c9a227;
+        }
+
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: #c9a227;
+        }
+
+        .section {
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #c9a227;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #3a3f5c;
+        }
+
+        .form-group {
+            margin-bottom: 14px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: #b0b0b0;
+            margin-bottom: 6px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            background: #2a2f47;
+            border: 1px solid #3a3f5c;
+            color: #e0e0e0;
+            border-radius: 6px;
+            font-family: 'Inter', sans-serif;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #c9a227;
+            box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.1);
+        }
+
+        select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23c9a227' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 36px;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        button {
+            padding: 12px 16px;
+            font-size: 14px;
+            font-weight: 600;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            -webkit-appearance: none;
+            appearance: none;
+            transition: all 0.2s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-primary {
+            background: #c9a227;
+            color: #1a1a2e;
+            width: 100%;
+        }
+
+        .btn-primary:active {
+            background: #b89420;
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            background: #3a3f5c;
+            color: #e0e0e0;
+            margin-top: 10px;
+            width: 100%;
+        }
+
+        .btn-secondary:active {
+            background: #4a5070;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn-danger:active {
+            background: #c0392b;
+        }
+
+        .btn-small {
+            padding: 8px 12px;
+            font-size: 12px;
+            width: auto;
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        .card {
+            background: #252d47;
+            border: 1px solid #3a3f5c;
+            border-radius: 8px;
+            padding: 14px;
+            margin-bottom: 12px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 10px;
+        }
+
+        .card-title {
+            font-weight: 600;
+            color: #c9a227;
+            font-size: 14px;
+        }
+
+        .card-subtitle {
+            font-size: 12px;
+            color: #999;
+            margin-top: 4px;
+        }
+
+        .card-status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-recibido { background: #3a4a6a; color: #7fb3d5; }
+        .status-diagnostico { background: #4a5a3a; color: #b8d5a8; }
+        .status-en-reparacion { background: #5a4a3a; color: #d5b8a8; }
+        .status-listo { background: #3a5a4a; color: #a8d5c4; }
+        .status-entregado { background: #4a3a5a; color: #d5a8e0; }
+
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #3a3f5c;
+            font-size: 13px;
+        }
+
+        .list-item:last-child {
+            border-bottom: none;
+        }
+
+        .list-label {
+            color: #999;
+        }
+
+        .list-value {
+            color: #e0e0e0;
+            font-weight: 500;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 20px 0;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 200;
+            padding: 16px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: #1a1a2e;
+            border: 1px solid #3a3f5c;
+            border-radius: 12px;
+            padding: 24px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #3a3f5c;
+        }
+
+        .modal-header h2 {
+            font-size: 18px;
+            color: #c9a227;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: #999;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-close:active {
+            color: #c9a227;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .stat-card {
+            background: #252d47;
+            border: 1px solid #3a3f5c;
+            border-radius: 8px;
+            padding: 14px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #c9a227;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #999;
+            margin-top: 4px;
+        }
+
+        .search-box {
+            position: relative;
+            margin-bottom: 16px;
+        }
+
+        .search-box input {
+            padding-left: 36px;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 12px;
+            color: #999;
+            font-size: 16px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 6px;
+            background: #3a3f5c;
+            color: #e0e0e0;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .currency {
+            color: #c9a227;
+            font-weight: 600;
+        }
+
+        .alert {
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            font-size: 13px;
+        }
+
+        .alert-success {
+            background: #1a3a2a;
+            color: #90ee90;
+            border: 1px solid #3a5a4a;
+        }
+
+        .alert-info {
+            background: #1a2a3a;
+            color: #87ceeb;
+            border: 1px solid #2a4a5a;
+        }
+
+        .alert-warning {
+            background: #3a2a1a;
+            color: #ffa500;
+            border: 1px solid #5a4a3a;
+        }
+
+        .alert-error {
+            background: #3a1a1a;
+            color: #ff6b6b;
+            border: 1px solid #5a3a3a;
+        }
+
+        .divider {
+            height: 1px;
+            background: #3a3f5c;
+            margin: 16px 0;
+        }
+
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        @media (max-width: 500px) {
+            .header h1 {
+                font-size: 20px;
+            }
+
+            .tab-btn {
+                font-size: 11px;
+                padding: 12px 8px;
+            }
+
+            .two-col {
+                grid-template-columns: 1fr;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .swipe-hint {
+            font-size: 11px;
+            color: #666;
+            text-align: center;
+            margin-top: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="header">
+            <h1>⌚ RelojeriaCL</h1>
+        </div>
+
+        <div class="content">
+            <!-- REPARACIONES TAB -->
+            <div id="repairs" class="tab-content active">
+                <div class="section">
+                    <div class="section-title">Agregar Reparación</div>
+                    <form id="repairForm" onsubmit="addRepair(event)">
+                        <div class="two-col">
+                            <div class="form-group">
+                                <label>Nombre Cliente</label>
+                                <input type="text" id="repairClientName" required placeholder="Ej: Juan Pérez">
+                            </div>
+                            <div class="form-group">
+                                <label>Teléfono</label>
+                                <input type="tel" id="repairPhone" placeholder="+56 9 1234 5678">
+                            </div>
+                        </div>
+
+                        <div class="two-col">
+                            <div class="form-group">
+                                <label>Marca Reloj</label>
+                                <select id="repairBrand" required>
+                                    <option value="">Selecciona marca</option>
+                                    <option value="Casio">Casio</option>
+                                    <option value="Seiko">Seiko</option>
+                                    <option value="Citizen">Citizen</option>
+                                    <option value="Tissot">Tissot</option>
+                                    <option value="Swatch">Swatch</option>
+                                    <option value="Orient">Orient</option>
+                                    <option value="Fossil">Fossil</option>
+                                    <option value="Nacional">Nacional/Otro</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Modelo</label>
+                                <input type="text" id="repairModel" required placeholder="Ej: A500WA">
+                            </div>
+                        </div>
+
+                        <div class="two-col">
+                            <div class="form-group">
+                                <label>Número Serial</label>
+                                <input type="text" id="repairSerial" placeholder="Opcional">
+                            </div>
+                            <div class="form-group">
+                                <label>Tipo Problema</label>
+                                <select id="repairProblem" required>
+                                    <option value="">Selecciona problema</option>
+                                    <option value="cambio-pila">Cambio pila</option>
+                                    <option value="cristal-roto">Cristal roto</option>
+                                    <option value="corona">Corona dañada</option>
+                                    <option value="ajuste-correa">Ajuste correa</option>
+                                    <option value="limpieza">Limpieza mecanismo</option>
+                                    <option value="impermeabilizacion">Impermeabilización</option>
+                                    <option value="calibracion">Calibración</option>
+                                    <option value="otro">Otro</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="two-col">
+                            <div class="form-group">
+                                <label>Costo Estimado (CLP)</label>
+                                <input type="number" id="repairEstimatedCost" required min="0" placeholder="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Estado</label>
+                                <select id="repairStatus" required>
+                                    <option value="recibido">Recibido</option>
+                                    <option value="diagnostico">Diagnóstico</option>
+                                    <option value="en-reparacion">En reparación</option>
+                                    <option value="listo">Listo</option>
+                                    <option value="entregado">Entregado</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Notas</label>
+                            <textarea id="repairNotes" placeholder="Detalles adicionales..."></textarea>
+                        </div>
+
+                        <button type="submit" class="btn-primary">Guardar Reparación</button>
+                    </form>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">Reparaciones Registradas</div>
+                    <div class="search-box">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" id="repairSearch" placeholder="Buscar por cliente, marca, estado..." oninput="filterRepairs()">
+                    </div>
+                    <div id="repairsList"></div>
+                </div>
+            </div>
+
+            <!-- INVENTARIO TAB -->
+            <div id="inventory" class="tab-content">
+                <div class="section">
+                    <div class="section-title">Agregar Producto</div>
+                    <form id="inventoryForm" onsubmit="addInventory(event)">
+                        <div class="two-col">
+                            <div class="form-group">
+                                <label>Marca</label>
+                                <select id="invBrand" required>
+                                    <option value="">Selecciona marca</option>
+                                    <option value="Casio">Casio</option>
+                                    <option value="Seiko">Seiko</option>
+                                    <option value="Citizen">Citizen</option>
+                                    <option value="Tissot">Tissot</option>
+                                    <option value="Swatch">Swatch</option>
+                                    <option value="Orient">Orient</option>
+                                    <option value="Fossil">Fossil</option>
+                                    <option value="Generic">Genérico</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Modelo</label>
+                                <input type="text" id="invModel" required placeholder="Ej: A500WA">
+                            </div>
+                        </div>
+
+                        <div class="two-col">
+                            <div class="form-group">
+                                <label>Tipo</label>
+                                <select id="invType" required>
+                                    <option value="">Selecciona tipo</option>
+                                    <option value="analogico">Análogo</option>
+                                    <option value="digital">Digital</option>
+                                    <option value="smartwatch">Smart</option>
+                                    <option value="bolsillo">Bolsillo</option>
+                                    <option value="accesorio">Accesorio</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Movimiento</label>
+                                <select id="invMovement">
+                                    <option value="cuarzo">Cuarzo</option>
+                                    <option value="automatico">Automático</option>
+                                    <option value="mecanico">Mecánico</option>
+                                    <option value="bateria">Batería</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="two-col">
+                            <div class="form-group">
+                                <label>Material</label>
+                                <select id="invMaterial" required>
+                                    <option value="acero">Acero inoxidable</option>
+                                    <option value="cuero">Cuero</option>
+                                    <option value="silicon">Silicón</option>
+                                    <option value="titanio">Titanio</option>
+                                    <option value="plastico">Plástico</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Stock</label>
+                                <input type="number" id="invStock" required min="0" value="1">
+                            </div>
+                        </div>
+
+                        <div class="two-col">
+                            <div class="form-group">
+                                <label>Costo (CLP)</label>
+                                <input type="number" id="invCost" required min="0" placeholder="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Precio Venta (CLP)</label>
+                                <input type="number" id="invPrice" required min="0" placeholder="0">
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-primary">Agregar al Inventario</button>
+                    </form>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">Catálogo</div>
+                    <div class="search-box">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" id="inventorySearch" placeholder="Buscar por marca, modelo, tipo..." oninput="filterInventory()">
+                    </div>
+                    <div id="inventoryList"></div>
+                </div>
+            </div>
+
+            <!-- VENTAS TAB -->
+            <div id="sales" class="tab-content">
+                <div class="section">
+                    <div class="section-title">Nueva Venta</div>
+                    <form id="saleForm" onsubmit="addSale(event)">
+                        <div class="two-col">
+                            <div class="form-group">
+                                <label>Cliente</label>
+                                <input type="text" id="saleClient" placeholder="Nombre (opcional)">
+                            </div>
+                            <div class="form-group">
+                                <label>Producto</label>
+                                <select id="saleProduct" required onchange="selectSaleProduct()">
+                                    <option value="">Selecciona producto</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="two-col">
+                            <div class="form-group">
+                                <label>Cantidad</label>
+                                <input type="number" id="saleQuantity" required min="1" value="1">
+                            </div>
+                            <div class="form-group">
+                                <label>Precio Unitario (CLP)</label>
+                                <input type="number" id="salePrice" required min="0" placeholder="0">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Método Pago</label>
+                            <select id="salePaymentMethod" required>
+                                <option value="efectivo">Efectivo</option>
+                                <option value="transferencia">Transferencia</option>
+                                <option value="tarjeta-credito">Tarjeta Crédito</option>
+                                <option value="tarjeta-debito">Tarjeta Débito</option>
+                                <option value="otro">Otro</option>
+                            </select>
+                        </div>
+
+                        <div class="alert alert-info">
+                            Total: <span class="currency" id="saleTotal">$0</span>
+                        </div>
+
+                        <button type="submit" class="btn-primary">Registrar Venta</button>
+                    </form>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">Historial Ventas - Hoy</div>
+                    <div id="salesList"></div>
+                    <div id="salesEmpty" class="empty-state" style="display: none;">
+                        <div class="empty-state-icon">📋</div>
+                        <p>Sin ventas registradas hoy</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- COTIZADOR TAB -->
+            <div id="quoter" class="tab-content">
+                <div class="section">
+                    <div class="section-title">Calculadora de Cotización</div>
+                    <form id="quoteForm" onsubmit="generateQuote(event)">
+                        <div class="two-col">
+                            <div class="form-group">
+                                <label>Tipo Problema</label>
+                                <select id="quoteProblem" required onchange="updateQuote()">
+                                    <option value="">Selecciona problema</option>
+                                    <option value="cambio-pila">Cambio pila</option>
+                                    <option value="cristal-roto">Cristal roto</option>
+                                    <option value="corona">Corona dañada</option>
+                                    <option value="ajuste-correa">Ajuste correa</option>
+                                    <option value="limpieza">Limpieza mecanismo</option>
+                                    <option value="impermeabilizacion">Impermeabilización</option>
+                                    <option value="calibracion">Calibración</option>
+                                    <option value="otro">Otro</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Tier Marca</label>
+                                <select id="quoteTier" required onchange="updateQuote()">
+                                    <option value="">Selecciona tier</option>
+                                    <option value="basico">Básico (Nacional/Swatch)</option>
+                                    <option value="medio">Medio (Seiko/Citizen/Orient)</option>
+                                    <option value="premium">Premium (Tissot/Fossil)</option>
+                                    <option value="lujo">Lujo (Rolex/Omega)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Costo Piezas (CLP)</label>
+                            <input type="number" id="quoteParts" min="0" value="0" onchange="updateQuote()">
+                        </div>
+
+                        <div id="quotePreview" style="display: none;">
+                            <div class="alert alert-success">
+                                <div class="list-item">
+                                    <span class="list-label">Mano de Obra:</span>
+                                    <span class="list-value currency" id="quoteLaborPrice">$0</span>
+                                </div>
+                                <div class="list-item">
+                                    <span class="list-label">Piezas:</span>
+                                    <span class="list-value currency" id="quotePartsPrice">$0</span>
+                                </div>
+                                <div class="divider"></div>
+                                <div class="list-item">
+                                    <span class="list-label" style="font-weight: 600;">Total Cotización:</span>
+                                    <span class="list-value currency" style="font-size: 18px;" id="quoteTotalPrice">$0</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-primary">Generar Cotización</button>
+                    </form>
+                </div>
+
+                <div class="section" id="quotesHistorySection" style="display: none;">
+                    <div class="section-title">Cotizaciones Generadas</div>
+                    <div id="quotesList"></div>
+                </div>
+            </div>
+
+            <!-- FINANZAS TAB -->
+            <div id="finances" class="tab-content">
+                <div class="section">
+                    <div class="section-title">Resumen Financiero</div>
+                    <div class="grid">
+                        <div class="stat-card">
+                            <div class="stat-value currency" id="finRepairRevenue">$0</div>
+                            <div class="stat-label">Reparaciones (Este mes)</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value currency" id="finSalesRevenue">$0</div>
+                            <div class="stat-label">Ventas (Este mes)</div>
+                        </div>
+                    </div>
+
+                    <div class="grid" style="margin-top: 12px;">
+                        <div class="stat-card">
+                            <div class="stat-value currency" id="finPartsCost">$0</div>
+                            <div class="stat-label">Costo Piezas</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value currency" id="finNetProfit">$0</div>
+                            <div class="stat-label">Utilidad Neta</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">Ingresos por Tipo</div>
+                    <div class="chart-container">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">Movimientos Diarios</div>
+                    <div id="financesList"></div>
+                </div>
+
+                <div class="section">
+                    <button class="btn-secondary" onclick="exportFinances()">Descargar Reporte</button>
+                </div>
+            </div>
+
+            <!-- CLIENTES TAB -->
+            <div id="clients" class="tab-content">
+                <div class="section">
+                    <div class="section-title">Agregar Cliente</div>
+                    <form id="clientForm" onsubmit="addClient(event)">
+                        <div class="two-col">
+                            <div class="form-group">
+                                <label>Nombre</label>
+                                <input type="text" id="clientName" required placeholder="Ej: Juan Pérez">
+                            </div>
+                            <div class="form-group">
+                                <label>Teléfono</label>
+                                <input type="tel" id="clientPhone" required placeholder="+56 9 1234 5678">
+                            </div>
+                        </div>
+
+                        <div class="two-col">
+                            <div class="form-group">
+                                <label>Email</label>
+                                <input type="email" id="clientEmail" placeholder="ejemplo@email.com">
+                            </div>
+                            <div class="form-group">
+                                <label>Dirección</label>
+                                <input type="text" id="clientAddress" placeholder="Opcional">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Relojes en Colección</label>
+                            <textarea id="clientWatches" placeholder="Ej: Casio A500 (negro), Seiko 5 (acero)..."></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Preferencias</label>
+                            <textarea id="clientPreferences" placeholder="Ej: Prefiere reparaciones rápidas, sensible al precio..."></textarea>
+                        </div>
+
+                        <button type="submit" class="btn-primary">Guardar Cliente</button>
+                    </form>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">Directorio de Clientes</div>
+                    <div class="search-box">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" id="clientSearch" placeholder="Buscar por nombre, teléfono..." oninput="filterClients()">
+                    </div>
+                    <div id="clientsList"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('repairs')">🔧 Reparaciones</button>
+            <button class="tab-btn" onclick="switchTab('inventory')">📦 Inventario</button>
+            <button class="tab-btn" onclick="switchTab('sales')">💳 Ventas</button>
+            <button class="tab-btn" onclick="switchTab('quoter')">💰 Cotizador</button>
+            <button class="tab-btn" onclick="switchTab('finances')">📊 Finanzas</button>
+            <button class="tab-btn" onclick="switchTab('clients')">👥 Clientes</button>
+        </div>
+    </div>
+
+    <!-- MODALS -->
+    <div id="repairModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Detalles Reparación</h2>
+                <button class="modal-close" onclick="closeModal('repairModal')">×</button>
+            </div>
+            <div id="repairModalBody"></div>
+        </div>
+    </div>
+
+    <div id="quoteModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Cotización</h2>
+                <button class="modal-close" onclick="closeModal('quoteModal')">×</button>
+            </div>
+            <div id="quoteModalBody"></div>
+        </div>
+    </div>
+
+    <script>
+        // ============ DATA STRUCTURE & STORAGE ============
+        const DATA = {
+            repairs: [],
+            inventory: [],
+            sales: [],
+            quotes: [],
+            clients: []
+        };
+
+        const LABOR_PRICES = {
+            'cambio-pila': 5000,
+            'cristal-roto': 25000,
+            'corona': 35000,
+            'ajuste-correa': 8000,
+            'limpieza': 15000,
+            'impermeabilizacion': 20000,
+            'calibracion': 40000,
+            'otro': 15000
+        };
+
+        const TIER_MULTIPLIERS = {
+            'basico': 0.8,
+            'medio': 1.0,
+            'premium': 1.3,
+            'lujo': 1.8
+        };
+
+        // ============ LOCAL STORAGE ============
+        function saveData() {
+            try {
+                localStorage.setItem('relojeria_data', JSON.stringify(DATA));
+            } catch (e) {
+                console.error('Storage error:', e);
+            }
+        }
+
+        function loadData() {
+            try {
+                const stored = localStorage.getItem('relojeria_data');
+                if (stored) {
+                    const loaded = JSON.parse(stored);
+                    Object.assign(DATA, loaded);
+                }
+            } catch (e) {
+                console.error('Load error:', e);
+            }
+        }
+
+        // ============ TAB SWITCHING ============
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+
+            if (tabName === 'finances') renderFinances();
+            if (tabName === 'sales') renderSales();
+            if (tabName === 'inventory') {
+                populateSaleProducts();
+                renderInventory();
+            }
+            if (tabName === 'repairs') renderRepairs();
+            if (tabName === 'quoter') renderQuotes();
+            if (tabName === 'clients') renderClients();
+        }
+
+        // ============ REPAIRS ============
+        function addRepair(e) {
+            e.preventDefault();
+            const repair = {
+                id: Date.now(),
+                clientName: document.getElementById('repairClientName').value,
+                phone: document.getElementById('repairPhone').value,
+                brand: document.getElementById('repairBrand').value,
+                model: document.getElementById('repairModel').value,
+                serial: document.getElementById('repairSerial').value,
+                problem: document.getElementById('repairProblem').value,
+                estimatedCost: parseInt(document.getElementById('repairEstimatedCost').value) || 0,
+                status: document.getElementById('repairStatus').value,
+                notes: document.getElementById('repairNotes').value,
+                date: new Date().toLocaleDateString('es-CL')
+            };
+
+            DATA.repairs.unshift(repair);
+            saveData();
+            document.getElementById('repairForm').reset();
+            renderRepairs();
+            showAlert('Reparación guardada', 'success');
+        }
+
+        function renderRepairs() {
+            const list = document.getElementById('repairsList');
+            if (DATA.repairs.length === 0) {
+                list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🔧</div><p>Sin reparaciones registradas</p></div>';
+                return;
+            }
+
+            list.innerHTML = DATA.repairs.map(repair => `
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">${repair.clientName} - ${repair.brand} ${repair.model}</div>
+                            <div class="card-subtitle">${repair.date}</div>
+                        </div>
+                        <span class="card-status status-${repair.status.replace(/[^a-z]/g, '-')}">${repair.status}</span>
+                    </div>
+                    <div class="list-item">
+                        <span class="list-label">Problema:</span>
+                        <span class="list-value">${repair.problem}</span>
+                    </div>
+                    <div class="list-item">
+                        <span class="list-label">Costo Est.:</span>
+                        <span class="list-value currency">$${repair.estimatedCost.toLocaleString()}</span>
+                    </div>
+                    <div style="margin-top: 12px; display: flex; gap: 8px;">
+                        <button class="btn-small btn-secondary" onclick="openRepairDetail(${repair.id})">Detalles</button>
+                        <button class="btn-small btn-secondary" onclick="updateRepairStatus(${repair.id})">Cambiar Estado</button>
+                        <button class="btn-small btn-danger" onclick="deleteRepair(${repair.id})">Eliminar</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openRepairDetail(id) {
+            const repair = DATA.repairs.find(r => r.id === id);
+            if (!repair) return;
+
+            const modal = document.getElementById('repairModal');
+            const body = document.getElementById('repairModalBody');
+
+            body.innerHTML = `
+                <div class="list-item">
+                    <span class="list-label">Cliente:</span>
+                    <span class="list-value">${repair.clientName}</span>
+                </div>
+                <div class="list-item">
+                    <span class="list-label">Teléfono:</span>
+                    <span class="list-value">${repair.phone || '-'}</span>
+                </div>
+                <div class="list-item">
+                    <span class="list-label">Reloj:</span>
+                    <span class="list-value">${repair.brand} ${repair.model}</span>
+                </div>
+                <div class="list-item">
+                    <span class="list-label">Serial:</span>
+                    <span class="list-value">${repair.serial || '-'}</span>
+                </div>
+                <div class="list-item">
+                    <span class="list-label">Problema:</span>
+                    <span class="list-value">${repair.problem}</span>
+                </div>
+                <div class="list-item">
+                    <span class="list-label">Costo Estimado:</span>
+                    <span class="list-value currency">$${repair.estimatedCost.toLocaleString()}</span>
+                </div>
+                <div class="list-item">
+                    <span class="list-label">Estado:</span>
+                    <span class="badge" style="background: var(--status-bg);">${repair.status}</span>
+                </div>
+                ${repair.notes ? `
+                <div class="list-item">
+                    <span class="list-label">Notas:</span>
+                    <span class="list-value">${repair.notes}</span>
+                </div>
+                ` : ''}
+                <div class="divider"></div>
+                <button class="btn-secondary" onclick="closeModal('repairModal')">Cerrar</button>
+            `;
+            modal.classList.add('active');
+        }
+
+        function updateRepairStatus(id) {
+            const repair = DATA.repairs.find(r => r.id === id);
+            if (!repair) return;
+
+            const statuses = ['recibido', 'diagnostico', 'en-reparacion', 'listo', 'entregado'];
+            const currentIndex = statuses.indexOf(repair.status);
+            const nextStatus = statuses[(currentIndex + 1) % statuses.length];
+
+            repair.status = nextStatus;
+            saveData();
+            renderRepairs();
+            showAlert(`Estado actualizado a: ${nextStatus}`, 'success');
+        }
+
+        function deleteRepair(id) {
+            if (confirm('¿Eliminar esta reparación?')) {
+                DATA.repairs = DATA.repairs.filter(r => r.id !== id);
+                saveData();
+                renderRepairs();
+                showAlert('Reparación eliminada', 'success');
+            }
+        }
+
+        function filterRepairs() {
+            const search = document.getElementById('repairSearch').value.toLowerCase();
+            const filtered = DATA.repairs.filter(r =>
+                r.clientName.toLowerCase().includes(search) ||
+                r.brand.toLowerCase().includes(search) ||
+                r.status.toLowerCase().includes(search)
+            );
+
+            const list = document.getElementById('repairsList');
+            if (filtered.length === 0) {
+                list.innerHTML = '<div class="empty-state"><p>Sin resultados</p></div>';
+                return;
+            }
+
+            list.innerHTML = filtered.map(repair => `
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">${repair.clientName} - ${repair.brand} ${repair.model}</div>
+                            <div class="card-subtitle">${repair.date}</div>
+                        </div>
+                        <span class="card-status status-${repair.status.replace(/[^a-z]/g, '-')}">${repair.status}</span>
+                    </div>
+                    <div class="list-item">
+                        <span class="list-label">Problema:</span>
+                        <span class="list-value">${repair.problem}</span>
+                    </div>
+                    <div class="list-item">
+                        <span class="list-label">Costo Est.:</span>
+                        <span class="list-value currency">$${repair.estimatedCost.toLocaleString()}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ============ INVENTORY ============
+        function addInventory(e) {
+            e.preventDefault();
+            const item = {
+                id: Date.now(),
+                brand: document.getElementById('invBrand').value,
+                model: document.getElementById('invModel').value,
+                type: document.getElementById('invType').value,
+                movement: document.getElementById('invMovement').value,
+                material: document.getElementById('invMaterial').value,
+                stock: parseInt(document.getElementById('invStock').value) || 1,
+                cost: parseInt(document.getElementById('invCost').value) || 0,
+                price: parseInt(document.getElementById('invPrice').value) || 0
+            };
+
+            DATA.inventory.unshift(item);
+            saveData();
+            document.getElementById('inventoryForm').reset();
+            renderInventory();
+            populateSaleProducts();
+            showAlert('Producto agregado', 'success');
+        }
+
+        function renderInventory() {
+            const list = document.getElementById('inventoryList');
+            if (DATA.inventory.length === 0) {
+                list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📦</div><p>Inventario vacío</p></div>';
+                return;
+            }
+
+            list.innerHTML = DATA.inventory.map(item => `
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">${item.brand} ${item.model}</div>
+                            <div class="card-subtitle">${item.type}</div>
+                        </div>
+                        <span class="badge">${item.stock} un</span>
+                    </div>
+                    <div class="list-item">
+                        <span class="list-label">Material:</span>
+                        <span class="list-value">${item.material}</span>
+                    </div>
+                    <div class="list-item">
+                        <span class="list-label">Movimiento:</span>
+                        <span class="list-value">${item.movement}</span>
+                    </div>
+                    <div class="list-item">
+                        <span class="list-label">Costo:</span>
+                        <span class="list-value currency">$${item.cost.toLocaleString()}</span>
+                    </div>
+                    <div class="list-item">
+                        <span class="list-label">Precio Venta:</span>
+                        <span class="list-value currency">$${item.price.toLocaleString()}</span>
+                    </div>
+                    <div style="margin-top: 12px;">
+                        <button class="btn-small btn-secondary" onclick="editInventory(${item.id})">Editar</button>
+                        <button class="btn-small btn-danger" onclick="deleteInventory(${item.id})">Eliminar</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterInventory() {
+            const search = document.getElementById('inventorySearch').value.toLowerCase();
+            const filtered = DATA.inventory.filter(i =>
+                i.brand.toLowerCase().includes(search) ||
+                i.model.toLowerCase().includes(search) ||
+                i.type.toLowerCase().includes(search)
+            );
+
+            const list = document.getElementById('inventoryList');
+            if (filtered.length === 0) {
+                list.innerHTML = '<div class="empty-state"><p>Sin resultados</p></div>';
+                return;
+            }
+
+            list.innerHTML = filtered.map(item => `
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">${item.brand} ${item.model}</div>
+                            <div class="card-subtitle">${item.type}</div>
+                        </div>
+                        <span class="badge">${item.stock} un</span>
+                    </div>
+                    <div class="list-item">
+                        <span class="list-label">Precio:</span>
+                        <span class="list-value currency">$${item.price.toLocaleString()}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function deleteInventory(id) {
+            if (confirm('¿Eliminar este producto?')) {
+                DATA.inventory = DATA.inventory.filter(i => i.id !== id);
+                saveData();
+                renderInventory();
+                populateSaleProducts();
+                showAlert('Producto eliminado', 'success');
+            }
+        }
+
+        function editInventory(id) {
+            const item = DATA.inventory.find(i => i.id === id);
+            if (!item) return;
+
+            const newStock = prompt('Nuevo stock:', item.stock);
+            if (newStock !== null && !isNaN(newStock)) {
+                item.stock = parseInt(newStock);
+                saveData();
+                renderInventory();
+                showAlert('Stock actualizado', 'success');
+            }
+        }
+
+        // ============ SALES ============
+        function populateSaleProducts() {
+            const select = document.getElementById('saleProduct');
+            select.innerHTML = '<option value="">Selecciona producto</option>' +
+                DATA.inventory.map(i => `<option value="${i.id}" data-price="${i.price}">${i.brand} ${i.model} - Stock: ${i.stock}</option>`).join('');
+        }
+
+        function selectSaleProduct() {
+            const select = document.getElementById('saleProduct');
+            const selected = select.options[select.selectedIndex];
+            if (selected.value) {
+                const price = parseInt(selected.dataset.price) || 0;
+                document.getElementById('salePrice').value = price;
+                updateSaleTotal();
+            }
+        }
+
+        function updateSaleTotal() {
+            const qty = parseInt(document.getElementById('saleQuantity').value) || 1;
+            const price = parseInt(document.getElementById('salePrice').value) || 0;
+            const total = qty * price;
+            document.getElementById('saleTotal').textContent = '$' + total.toLocaleString();
+        }
+
+        function addSale(e) {
+            e.preventDefault();
+            const productId = parseInt(document.getElementById('saleProduct').value);
+            const qty = parseInt(document.getElementById('saleQuantity').value) || 1;
+            const price = parseInt(document.getElementById('salePrice').value) || 0;
+            const total = qty * price;
+
+            const sale = {
+                id: Date.now(),
+                product: DATA.inventory.find(i => i.id === productId)?.model || 'Producto',
+                client: document.getElementById('saleClient').value || 'N/A',
+                quantity: qty,
+                unitPrice: price,
+                total: total,
+                paymentMethod: document.getElementById('salePaymentMethod').value,
+                timestamp: new Date().toLocaleTimeString('es-CL', {hour: '2-digit', minute: '2-digit'})
+            };
+
+            DATA.sales.unshift(sale);
+
+            // Update inventory stock
+            const product = DATA.inventory.find(i => i.id === productId);
+            if (product) {
+                product.stock = Math.max(0, product.stock - qty);
+            }
+
+            saveData();
+            document.getElementById('saleForm').reset();
+            populateSaleProducts();
+            renderSales();
+            showAlert('Venta registrada', 'success');
+        }
+
+        function renderSales() {
+            const list = document.getElementById('salesList');
+            const empty = document.getElementById('salesEmpty');
+            const today = new Date().toLocaleDateString('es-CL');
+
+            const todaySales = DATA.sales.filter(s => {
+                const saleDate = new Date(s.timestamp).toLocaleDateString('es-CL');
+                return saleDate === today;
+            });
+
+            if (todaySales.length === 0) {
+                list.innerHTML = '';
+                empty.style.display = 'block';
+                return;
+            }
+
+            empty.style.display = 'none';
+            const totalSales = todaySales.reduce((sum, s) => sum + s.total, 0);
+
+            list.innerHTML = `
+                <div class="alert alert-info">
+                    Ventas hoy: <span class="currency" style="font-size: 16px;">${todaySales.length}</span> |
+                    Total: <span class="currency" style="font-size: 16px;">$${totalSales.toLocaleString()}</span>
+                </div>
+                ${todaySales.map(sale => `
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <div class="card-title">${sale.product}</div>
+                                <div class="card-subtitle">${sale.timestamp} | ${sale.client}</div>
+                            </div>
+                            <span class="list-value currency">${sale.total > 0 ? '$' + sale.total.toLocaleString() : '-'}</span>
+                        </div>
+                        <div class="list-item">
+                            <span class="list-label">Cantidad:</span>
+                            <span class="list-value">${sale.quantity}</span>
+                        </div>
+                        <div class="list-item">
+                            <span class="list-label">Método Pago:</span>
+                            <span class="list-value">${sale.paymentMethod}</span>
+                        </div>
+                    </div>
+                `).join('')}
+            `;
+        }
+
+        // ============ QUOTER ============
+        function updateQuote() {
+            const problem = document.getElementById('quoteProblem').value;
+            const tier = document.getElementById('quoteTier').value;
+            const partsStr = document.getElementById('quoteParts').value;
+
+            if (!problem || !tier) {
+                document.getElementById('quotePreview').style.display = 'none';
+                return;
+            }
+
+            const laborBase = LABOR_PRICES[problem] || 15000;
+            const tierMultiplier = TIER_MULTIPLIERS[tier] || 1;
+            const laborFinal = Math.round(laborBase * tierMultiplier);
+            const parts = parseInt(partsStr) || 0;
+            const total = laborFinal + parts;
+
+            document.getElementById('quoteLaborPrice').textContent = '$' + laborFinal.toLocaleString();
+            document.getElementById('quotePartsPrice').textContent = '$' + parts.toLocaleString();
+            document.getElementById('quoteTotalPrice').textContent = '$' + total.toLocaleString();
+            document.getElementById('quotePreview').style.display = 'block';
+        }
+
+        function generateQuote(e) {
+            e.preventDefault();
+            const problem = document.getElementById('quoteProblem').value;
+            const tier = document.getElementById('quoteTier').value;
+            const parts = parseInt(document.getElementById('quoteParts').value) || 0;
+
+            const laborBase = LABOR_PRICES[problem] || 15000;
+            const laborFinal = Math.round(laborBase * TIER_MULTIPLIERS[tier]);
+            const total = laborFinal + parts;
+
+            const quote = {
+                id: Date.now(),
+                problem,
+                tier,
+                labor: laborFinal,
+                parts,
+                total,
+                date: new Date().toLocaleDateString('es-CL')
+            };
+
+            DATA.quotes.unshift(quote);
+            saveData();
+
+            const modal = document.getElementById('quoteModal');
+            const body = document.getElementById('quoteModalBody');
+            body.innerHTML = `
+                <div class="list-item">
+                    <span class="list-label">Problema:</span>
+                    <span class="list-value">${problem}</span>
+                </div>
+                <div class="list-item">
+                    <span class="list-label">Tier:</span>
+                    <span class="list-value">${tier}</span>
+                </div>
+                <div class="divider"></div>
+                <div class="list-item">
+                    <span class="list-label">Mano de Obra:</span>
+                    <span class="list-value currency">$${laborFinal.toLocaleString()}</span>
+                </div>
+                <div class="list-item">
+                    <span class="list-label">Piezas:</span>
+                    <span class="list-value currency">$${parts.toLocaleString()}</span>
+                </div>
+                <div class="divider"></div>
+                <div class="list-item">
+                    <span class="list-label" style="font-weight: 600;">TOTAL:</span>
+                    <span class="list-value currency" style="font-size: 18px;">$${total.toLocaleString()}</span>
+                </div>
+                <button class="btn-primary" onclick="closeModal('quoteModal'); printQuote()">Imprimir</button>
+                <button class="btn-secondary" onclick="closeModal('quoteModal')">Cerrar</button>
+            `;
+            modal.classList.add('active');
+
+            renderQuotes();
+            document.getElementById('quotesHistorySection').style.display = 'block';
+        }
+
+        function printQuote() {
+            window.print();
+        }
+
+        function renderQuotes() {
+            const list = document.getElementById('quotesList');
+            if (DATA.quotes.length === 0) return;
+
+            list.innerHTML = DATA.quotes.slice(0, 10).map(q => `
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">${q.problem}</div>
+                            <div class="card-subtitle">${q.date}</div>
+                        </div>
+                        <span class="list-value currency">$${q.total.toLocaleString()}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ============ FINANCES ============
+        function renderFinances() {
+            const thisMonth = new Date().toLocaleDateString('es-CL');
+
+            const monthRepairs = DATA.repairs.filter(r => r.date.includes(thisMonth.substring(3))).reduce((sum, r) => sum + r.estimatedCost, 0);
+            const monthSales = DATA.sales.reduce((sum, s) => sum + s.total, 0);
+            const partsCost = DATA.inventory.reduce((sum, i) => sum + (i.cost * i.stock), 0);
+            const netProfit = monthRepairs + monthSales - partsCost;
+
+            document.getElementById('finRepairRevenue').textContent = '$' + monthRepairs.toLocaleString();
+            document.getElementById('finSalesRevenue').textContent = '$' + monthSales.toLocaleString();
+            document.getElementById('finPartsCost').textContent = '$' + partsCost.toLocaleString();
+            document.getElementById('finNetProfit').textContent = '$' + netProfit.toLocaleString();
+
+            // Revenue Chart
+            setTimeout(() => {
+                const ctx = document.getElementById('revenueChart').getContext('2d');
+                if (window.revenueChartInstance) window.revenueChartInstance.destroy();
+
+                window.revenueChartInstance = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Reparaciones', 'Ventas'],
+                        datasets: [{
+                            data: [monthRepairs || 1, monthSales || 1],
+                            backgroundColor: ['#c9a227', '#b89420'],
+                            borderColor: '#1a1a2e',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: { color: '#e0e0e0', font: { family: "'Inter', sans-serif" } }
+                            }
+                        }
+                    }
+                });
+            }, 100);
+
+            renderFinancesList();
+        }
+
+        function renderFinancesList() {
+            const list = document.getElementById('financesList');
+            const movements = [
+                ...DATA.repairs.map(r => ({type: 'Reparación', name: r.clientName, amount: r.estimatedCost, date: r.date})),
+                ...DATA.sales.map(s => ({type: 'Venta', name: s.product, amount: s.total, date: new Date().toLocaleDateString('es-CL')}))
+            ].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 15);
+
+            list.innerHTML = movements.map(m => `
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">${m.type}</div>
+                            <div class="card-subtitle">${m.name}</div>
+                        </div>
+                        <span class="list-value currency">+$${m.amount.toLocaleString()}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function exportFinances() {
+            const thisMonth = new Date().toLocaleDateString('es-CL');
+            const repairs = DATA.repairs.filter(r => r.date.includes(thisMonth.substring(3)));
+            const sales = DATA.sales;
+
+            let csv = 'Tipo,Descripción,Monto,Fecha\n';
+            repairs.forEach(r => csv += `Reparación,${r.clientName} - ${r.brand},${r.estimatedCost},${r.date}\n`);
+            sales.forEach(s => csv += `Venta,${s.product},${s.total},${new Date().toLocaleDateString('es-CL')}\n`);
+
+            const blob = new Blob([csv], {type: 'text/csv'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `finanzas-${new Date().toLocaleDateString('es-CL')}.csv`;
+            a.click();
+        }
+
+        // ============ CLIENTS ============
+        function addClient(e) {
+            e.preventDefault();
+            const client = {
+                id: Date.now(),
+                name: document.getElementById('clientName').value,
+                phone: document.getElementById('clientPhone').value,
+                email: document.getElementById('clientEmail').value,
+                address: document.getElementById('clientAddress').value,
+                watches: document.getElementById('clientWatches').value,
+                preferences: document.getElementById('clientPreferences').value
+            };
+
+            DATA.clients.unshift(client);
+            saveData();
+            document.getElementById('clientForm').reset();
+            renderClients();
+            showAlert('Cliente guardado', 'success');
+        }
+
+        function renderClients() {
+            const list = document.getElementById('clientsList');
+            if (DATA.clients.length === 0) {
+                list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">👥</div><p>Sin clientes registrados</p></div>';
+                return;
+            }
+
+            list.innerHTML = DATA.clients.map(client => `
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">${client.name}</div>
+                            <div class="card-subtitle">${client.phone}</div>
+                        </div>
+                    </div>
+                    ${client.email ? `<div class="list-item"><span class="list-label">Email:</span><span class="list-value">${client.email}</span></div>` : ''}
+                    ${client.address ? `<div class="list-item"><span class="list-label">Dirección:</span><span class="list-value">${client.address}</span></div>` : ''}
+                    ${client.watches ? `<div class="list-item"><span class="list-label">Relojes:</span><span class="list-value">${client.watches}</span></div>` : ''}
+                    <div style="margin-top: 12px;">
+                        <button class="btn-small btn-danger" onclick="deleteClient(${client.id})">Eliminar</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterClients() {
+            const search = document.getElementById('clientSearch').value.toLowerCase();
+            const filtered = DATA.clients.filter(c =>
+                c.name.toLowerCase().includes(search) ||
+                c.phone.toLowerCase().includes(search)
+            );
+
+            const list = document.getElementById('clientsList');
+            if (filtered.length === 0) {
+                list.innerHTML = '<div class="empty-state"><p>Sin resultados</p></div>';
+                return;
+            }
+
+            list.innerHTML = filtered.map(client => `
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">${client.name}</div>
+                            <div class="card-subtitle">${client.phone}</div>
+                        </div>
+                    </div>
+                    <button class="btn-small btn-secondary" onclick="deleteClient(${client.id})">Eliminar</button>
+                </div>
+            `).join('');
+        }
+
+        function deleteClient(id) {
+            if (confirm('¿Eliminar este cliente?')) {
+                DATA.clients = DATA.clients.filter(c => c.id !== id);
+                saveData();
+                renderClients();
+                showAlert('Cliente eliminado', 'success');
+            }
+        }
+
+        // ============ UTILITIES ============
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        function showAlert(message, type = 'info') {
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            alert.style.position = 'fixed';
+            alert.style.top = '80px';
+            alert.style.left = '50%';
+            alert.style.transform = 'translateX(-50%)';
+            alert.style.zIndex = '300';
+            alert.style.maxWidth = '90%';
+            document.body.appendChild(alert);
+            setTimeout(() => alert.remove(), 3000);
+        }
+
+        // ============ SERVICE WORKER ============
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('data:application/javascript,' + encodeURIComponent(`
+                self.addEventListener('install', () => self.skipWaiting());
+                self.addEventListener('activate', e => e.waitUntil(clients.claim()));
+                self.addEventListener('fetch', () => {});
+            `)).catch(() => {});
+        }
+
+        // ============ INITIALIZATION ============
+        loadData();
+        renderRepairs();
+        populateSaleProducts();
+        renderInventory();
+        renderSales();
+        renderClients();
+
+        // Update sale total on input change
+        document.getElementById('saleQuantity').addEventListener('change', updateSaleTotal);
+        document.getElementById('salePrice').addEventListener('change', updateSaleTotal);
+    </script>
+</body>
+</html>
