@@ -535,17 +535,24 @@ function distanceToSpot(spot) {
 // ========== DATA FETCHING ==========
 const CACHE_TTL = 15 * 60 * 1000; // 15 min
 
-async function fetchWithRetry(url, retries = 3) {
-  for (let attempt = 0; attempt < retries; attempt++) {
+async function fetchWithRetry(url, retries = 2) {
+  for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      const r = await fetch(url);
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
+      const r = await fetch(url, { signal: controller.signal });
+      clearTimeout(timeout);
       if (r.ok) return r.json();
-      if (r.status === 429 && attempt < retries - 1) {
-        await new Promise(ok => setTimeout(ok, 1000 * (attempt + 1)));
+      if (r.status === 429 && attempt < retries) {
+        await new Promise(ok => setTimeout(ok, 1500 * (attempt + 1)));
         continue;
       }
-    } catch(e) {}
-    return null;
+      console.warn('KiteSpot fetch error:', r.status, url.substring(0, 60));
+    } catch(e) {
+      if (e.name === 'AbortError') console.warn('KiteSpot timeout:', url.substring(0, 60));
+      else console.warn('KiteSpot fetch failed:', e.message);
+      if (attempt < retries) await new Promise(ok => setTimeout(ok, 1000));
+    }
   }
   return null;
 }
@@ -1083,7 +1090,16 @@ function renderSpots() {
     return;
   }
 
+  // Count spots with data vs without
+  const withData = sorted.filter(s => spotData[s.id]);
+  const noData = sorted.filter(s => !spotData[s.id]);
+
   list.innerHTML = sorted.map((spot, i) => buildSpotCard(spot, i)).join('');
+
+  // If most spots have no data, show retry
+  if (noData.length > withData.length && !searchTerm) {
+    list.innerHTML += `<div style="text-align:center;padding:16px"><button onclick="localStorage.removeItem('ks_data');localStorage.removeItem('ks_time');location.reload()" style="background:var(--accent);color:#000;border:none;padding:10px 24px;border-radius:8px;font-weight:600;cursor:pointer">${lang==='en'?'Retry loading':'Reintentar carga'}</button><p style="font-size:.7rem;color:var(--muted);margin-top:8px">${lang==='en'?'Data may have failed to load':'Los datos pueden no haber cargado'}</p></div>`;
+  }
 }
 
 function buildSpotCard(spot, idx) {
