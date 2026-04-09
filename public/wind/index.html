@@ -596,9 +596,16 @@ async function fetchAllSpots() {
   }
 
   const now = Date.now();
+  const loadedCount = Object.keys(spotData).length;
+  console.log('KiteSpot: loaded', loadedCount, 'spots');
   localStorage.setItem('ks_data', JSON.stringify(spotData));
   localStorage.setItem('ks_time', String(now));
-  renderSpots();
+  try {
+    renderSpots();
+  } catch(e) {
+    console.error('KiteSpot render error:', e);
+    document.getElementById('spotList').innerHTML = `<div class="empty-state"><p>Error al renderizar. <button onclick="localStorage.clear();location.reload()" style="color:var(--cyan);background:none;border:1px solid var(--cyan);padding:6px 16px;border-radius:8px;cursor:pointer;margin-top:8px">Reiniciar app</button></p></div>`;
+  }
   updateTimestamp(now);
   checkAlerts();
 }
@@ -859,6 +866,7 @@ let _countdownTimer = null;
 
 function renderHero() {
   const el = document.getElementById('heroCard');
+  try {
   const nearby = getNearbySpots();
   if (!nearby.length) { el.innerHTML = '<div class="hero-loading"><div class="spinner"></div></div>'; return; }
 
@@ -934,6 +942,7 @@ function renderHero() {
       cdEl.querySelector('svg').nextSibling.textContent = 'en ' + formatCountdown(target);
     }, 60000);
   }
+  } catch(e) { console.error('Hero render error:', e); el.innerHTML = ''; }
 }
 
 function formatCountdown(target) {
@@ -992,6 +1001,7 @@ function shareSpot(spotId) {
 // ========== WEEK GRID ==========
 function renderWeekGrid() {
   const el = document.getElementById('weekGrid');
+  try {
   const nearby = getNearbySpots();
   if (!nearby.length) { el.innerHTML = ''; return; }
 
@@ -1050,6 +1060,7 @@ function renderWeekGrid() {
   });
 
   el.innerHTML = html;
+  } catch(e) { console.error('WeekGrid error:', e); el.innerHTML = ''; }
 }
 
 function scrollToSpot(spotId) {
@@ -1103,6 +1114,7 @@ function renderSpots() {
 }
 
 function buildSpotCard(spot, idx) {
+  try {
   const d = spotData[spot.id];
   const st = getSpotStatus(spot);
   const wind = d?.wind?.current?.wind_speed_10m != null ? shoreWindCorrection(d.wind.current.wind_speed_10m, spot.shore) : '—';
@@ -1171,6 +1183,7 @@ function buildSpotCard(spot, idx) {
       <div class="chart-wrap"><canvas id="chart-${spot.id}"></canvas></div>
     </div>
   </div>`;
+  } catch(e) { console.error('Card error:', spot?.id, e); return `<div class="spot-card status-red"><div class="spot-name">${spot?.name||'?'}</div><div style="color:var(--muted);font-size:.7rem">Error al cargar</div></div>`; }
 }
 
 function build7DayForecast(spot, d) {
