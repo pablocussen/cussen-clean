@@ -870,10 +870,31 @@ function renderHero() {
   const nearby = getNearbySpots();
   if (!nearby.length) { el.innerHTML = '<div class="hero-loading"><div class="spinner"></div></div>'; return; }
 
-  // Find best spot: green first (nearest), then yellow (nearest)
-  let best = nearby.find(s => getSpotStatus(s).status === 'green');
-  if (!best) best = nearby.find(s => getSpotStatus(s).status === 'yellow');
-  if (!best) best = nearby[0];
+  // Smart recommendation: score each spot by conditions + distance + favorites
+  // Favorites get a boost because the user actually goes there
+  const scored = nearby.map(s => {
+    const st = getSpotStatus(s);
+    const analysis = analyzeBestMoment(s);
+    const isFav = favorites.includes(s.id);
+    const dist = s.dist || 999;
+    let score = 0;
+    // Status score
+    if (st.status === 'green') score += 100;
+    else if (st.status === 'yellow') score += 50;
+    else score += 10;
+    // Good forecast coming soon? Boost if best window within 6h
+    if (analysis.bestWindow?.hoursFromNow <= 6) score += 30;
+    else if (analysis.bestWindow?.hoursFromNow <= 12) score += 15;
+    // Favorite boost (user goes here, trust their judgment)
+    if (isFav) score += 40;
+    // Distance penalty (closer = better)
+    score -= Math.min(dist / 10, 20);
+    // Good days this week boost
+    score += analysis.goodDays * 5;
+    return { spot: s, score, st, analysis };
+  }).sort((a, b) => b.score - a.score);
+
+  let best = scored[0]?.spot || nearby[0];
 
   const st = getSpotStatus(best);
   const d = spotData[best.id];
@@ -1038,7 +1059,7 @@ function renderWeekGrid() {
         const hr = dt.getHours();
         if (hr < 10 || hr > 20) return;
         const key = dt.toDateString();
-        const spd = shoreWindCorrection(sd.wind.hourly.wind_speed_10m[i], s.shore);
+        const spd = shoreWindCorrection(sd.wind.hourly.wind_speed_10m[i], spot.shore);
         if (!peakMap[key] || spd > peakMap[key]) peakMap[key] = spd;
       });
     }
