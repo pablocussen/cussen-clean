@@ -908,7 +908,11 @@ function renderHero() {
   const rain = d?.wind?.current?.precipitation || 0;
   const temp = d?.wind?.current?.temperature_2m;
   const cls = st.status === 'green' ? 'go' : st.status === 'yellow' ? 'maybe' : 'nogo';
-  const msg = st.label === t('rain') ? t('rain') : st.status === 'green' ? t('sendIt') : st.status === 'yellow' ? t('canDo') : t('wait');
+  const distText = dist != null ? ` · ${dist}km` : '';
+  const msg = st.status === 'green' ? (lang==='es'?'ANDA A '+best.name.toUpperCase()+distText:'GO TO '+best.name.toUpperCase()+distText) :
+              st.status === 'yellow' ? (lang==='es'?'SE PUEDE EN '+best.name+distText:'RIDEABLE AT '+best.name+distText) :
+              st.label === t('rain') ? t('rain') :
+              (lang==='es'?'ESPERA — '+best.name+distText:'WAIT — '+best.name+distText);
 
   // Gear
   const gear = getGear(wind);
@@ -1181,6 +1185,7 @@ function buildSpotCard(spot, idx) {
       <div class="card-top-right">
         <span class="status-badge ${st.color}">${st.label}</span>
         <button class="fav-btn ${isFav?'active':''}" onclick="toggleFav(event,'${spot.id}')"><svg viewBox="0 0 20 20" width="16" height="16" fill="${isFav?'currentColor':'none'}" stroke="currentColor" stroke-width="1.5"><path d="M10 2l2.5 5 5.5.8-4 3.9.9 5.3L10 14.5 5.1 17l.9-5.3-4-3.9 5.5-.8z"/></svg></button>
+        ${spot.custom ? `<button class="fav-btn" onclick="deleteCustomSpot(event,'${spot.id}')" title="Eliminar"><svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="var(--red)" stroke-width="1.5"><path d="M4 6h12M8 6V4h4v2M6 6v10h8V6" stroke-linecap="round"/></svg></button>` : ''}
       </div>
     </div>
     ${bestHtml}
@@ -1581,6 +1586,26 @@ function destroyCharts() {
 }
 
 // ========== FAVORITES ==========
+function deleteCustomSpot(e, spotId) {
+  e.stopPropagation();
+  const name = SPOTS.find(s => s.id === spotId)?.name || spotId;
+  if (!confirm((lang==='en'?'Delete ':'Eliminar ') + name + '?')) return;
+  // Remove from SPOTS array
+  const idx = SPOTS.findIndex(s => s.id === spotId);
+  if (idx >= 0) SPOTS.splice(idx, 1);
+  // Remove from localStorage
+  const custom = JSON.parse(localStorage.getItem('ks_custom_spots') || '[]');
+  localStorage.setItem('ks_custom_spots', JSON.stringify(custom.filter(s => s.id !== spotId)));
+  // Remove from favorites
+  favorites = favorites.filter(f => f !== spotId);
+  localStorage.setItem('ks_favs', JSON.stringify(favorites));
+  // Remove cached data
+  delete spotData[spotId];
+  localStorage.setItem('ks_data', JSON.stringify(spotData));
+  renderSpots();
+  renderFavorites();
+}
+
 function toggleFav(e, spotId) {
   e.stopPropagation();
   const wasFav = favorites.includes(spotId);
