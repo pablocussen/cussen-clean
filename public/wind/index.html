@@ -564,10 +564,19 @@ async function fetchAllSpots() {
   const cached = localStorage.getItem('ks_data');
   const cachedTime = parseInt(localStorage.getItem('ks_time') || '0');
   if (cached && Date.now() - cachedTime < CACHE_TTL) {
-    spotData = JSON.parse(cached);
-    renderSpots();
-    updateTimestamp(cachedTime);
-    return;
+    const parsed = JSON.parse(cached);
+    // Validate cache: if most spots have 0 wind, discard stale cache
+    const vals = Object.values(parsed);
+    const zeroCount = vals.filter(v => v?.wind?.current?.wind_speed_10m === 0 || !v?.wind?.current).length;
+    if (vals.length > 0 && zeroCount < vals.length * 0.5) {
+      spotData = parsed;
+      renderSpots();
+      updateTimestamp(cachedTime);
+      return;
+    }
+    console.warn('KiteSpot: cache invalid (too many zeros), refetching');
+    localStorage.removeItem('ks_data');
+    localStorage.removeItem('ks_time');
   }
 
   // Fetch nearby spots (200km) + favorites. Without GPS: top 12 + favorites

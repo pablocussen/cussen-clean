@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kitespot-v15.0';
+const CACHE_NAME = 'kitespot-v16.0';
 const CDN_ASSETS = [
   'https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js',
   'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap'
@@ -20,6 +20,9 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
+
+  // Skip SW completely for API calls — never cache weather data in SW
+  if (url.hostname.includes('open-meteo') || url.hostname.includes('api.')) return;
 
   // Network only for analytics
   if (url.hostname.includes('google-analytics') || url.hostname.includes('googletagmanager')) return;
