@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kitespot-v16.0';
+const CACHE_NAME = 'kitespot-v17.0';
 const CDN_ASSETS = [
   'https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js',
   'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap'

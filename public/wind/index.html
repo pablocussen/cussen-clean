@@ -602,7 +602,7 @@ async function fetchAllSpots() {
     const batch = spotsToFetch.slice(i, i + BATCH);
     const results = await Promise.allSettled(batch.map(async spot => {
       const [wind, marine] = await Promise.all([
-        fetchWithRetry(`https://api.open-meteo.com/v1/forecast?latitude=${spot.lat}&longitude=${spot.lon}&current=wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,weather_code,precipitation&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,precipitation,weather_code&forecast_days=7&wind_speed_unit=kn&timezone=America/Santiago&cell_selection=sea`),
+        fetchWithRetry(`https://api.open-meteo.com/v1/forecast?latitude=${spot.lat}&longitude=${spot.lon}&current=wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,weather_code,precipitation,wind_speed_80m&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,precipitation,weather_code&forecast_days=7&wind_speed_unit=kn&timezone=America/Santiago&cell_selection=sea`),
         fetchWithRetry(`https://marine-api.open-meteo.com/v1/marine?latitude=${spot.lat}&longitude=${spot.lon}&current=wave_height,wave_period,wave_direction,sea_surface_temperature&hourly=wave_height&forecast_days=7&timezone=America/Santiago`)
       ]);
       return { id: spot.id, wind, marine };
@@ -876,6 +876,31 @@ function getGear(windKn) {
   if (windKn >= 14) return { kite: '12-14m', board: 'TT / Foil', icon: 'L' };
   if (windKn >= 10) return { kite: '14-17m', board: 'Foil', icon: 'XL' };
   return { kite: 'Foil only', board: 'Foil', icon: '—' };
+}
+
+// Wind stability: gust factor indicates turbulence
+function getWindStability(wind, gust) {
+  if (!wind || wind < 1) return null;
+  const factor = gust / wind;
+  if (factor < 1.3) return { level: 'stable', label_es: 'Estable', label_en: 'Stable', color: 'var(--green)' };
+  if (factor < 1.6) return { level: 'variable', label_es: 'Variable', label_en: 'Variable', color: 'var(--yellow)' };
+  return { level: 'gusty', label_es: 'Rachoso', label_en: 'Gusty', color: 'var(--red)' };
+}
+
+// Wind trend: is it increasing or decreasing in next 3 hours?
+function getWindTrend(spot) {
+  const d = spotData[spot.id];
+  if (!d?.wind?.hourly) return null;
+  const now = new Date();
+  const times = d.wind.hourly.time;
+  const idx = times.findIndex(t => new Date(t) >= now);
+  if (idx < 0 || idx + 3 >= times.length) return null;
+  const current = shoreWindCorrection(d.wind.hourly.wind_speed_10m[idx], spot.shore);
+  const future = shoreWindCorrection(d.wind.hourly.wind_speed_10m[idx + 3], spot.shore);
+  const diff = future - current;
+  if (diff > 3) return { dir: 'up', label_es: 'Subiendo', label_en: 'Rising', icon: '↑', color: 'var(--green)' };
+  if (diff < -3) return { dir: 'down', label_es: 'Bajando', label_en: 'Dropping', icon: '↓', color: 'var(--red)' };
+  return { dir: 'steady', label_es: 'Estable', label_en: 'Steady', icon: '→', color: 'var(--muted)' };
 }
 
 // ========== HERO CARD ==========
@@ -1212,6 +1237,17 @@ function buildSpotCard(spot, idx) {
       <div class="data-item"><div class="data-label">${t('dir')}</div><div class="data-value"><span class="wind-arrow" style="transform:rotate(${dir+180}deg)">↑</span> ${degToCompass(dir)}</div></div>
       <div class="data-item"><div class="data-label">${t('waves')}</div><div class="data-value">${typeof wave==='number'?wave.toFixed(1):'—'}<span class="data-unit"> m</span></div></div>
     </div>
+    ${(() => {
+      const stab = typeof wind==='number' && typeof gust==='number' ? getWindStability(wind, gust) : null;
+      const trend = getWindTrend(spot);
+      if (!stab && !trend) return '';
+      let html = '<div style="display:flex;gap:8px;margin-bottom:6px;flex-wrap:wrap">';
+      if (stab) html += `<span style="font-size:.6rem;font-weight:600;color:${stab.color}">${lang==='es'?stab.label_es:stab.label_en} (x${(gust/wind).toFixed(1)})</span>`;
+      if (trend) html += `<span style="font-size:.6rem;color:${trend.color}">${trend.icon} ${lang==='es'?trend.label_es:trend.label_en} 3h</span>`;
+      const w80 = d?.wind?.current?.wind_speed_80m;
+      if (w80 != null && typeof wind === 'number') { const ratio = Math.round(shoreWindCorrection(w80, spot.shore)); html += `<span style="font-size:.6rem;color:var(--muted)">80m: ${ratio}kn</span>`; }
+      return html + '</div>';
+    })()}
     ${fcHtml ? `<div class="card-forecast">${fcHtml}</div>` : ''}
     <div class="card-detail" id="detail-${spot.id}">
       <div class="detail-grid">
@@ -1585,7 +1621,7 @@ async function fetchSpotsOnDemand(spots, callback) {
     if (spotData[spot.id]) continue;
     try {
       const [wind, marine] = await Promise.all([
-        fetchWithRetry(`https://api.open-meteo.com/v1/forecast?latitude=${spot.lat}&longitude=${spot.lon}&current=wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,weather_code,precipitation&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,precipitation,weather_code&forecast_days=7&wind_speed_unit=kn&timezone=America/Santiago&cell_selection=sea`),
+        fetchWithRetry(`https://api.open-meteo.com/v1/forecast?latitude=${spot.lat}&longitude=${spot.lon}&current=wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,weather_code,precipitation,wind_speed_80m&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,precipitation,weather_code&forecast_days=7&wind_speed_unit=kn&timezone=America/Santiago&cell_selection=sea`),
         fetchWithRetry(`https://marine-api.open-meteo.com/v1/marine?latitude=${spot.lat}&longitude=${spot.lon}&current=wave_height,wave_period,wave_direction,sea_surface_temperature&hourly=wave_height&forecast_days=7&timezone=America/Santiago`)
       ]);
       if (wind && !wind.error) {
