@@ -500,11 +500,14 @@ function showTab(tab, btn) {
 function getLocation() {
   return new Promise(resolve => {
     if (!navigator.geolocation) { document.getElementById('locationBadge').textContent = t('chile'); resolve(); return; }
-    navigator.geolocation.getCurrentPosition(
-      pos => { userLat = pos.coords.latitude; userLon = pos.coords.longitude; updateLocationBadge(); resolve(); },
-      () => { document.getElementById('locationBadge').textContent = t('chile'); resolve(); },
-      { timeout: 5000, maximumAge: 300000 }
-    );
+    // Try high accuracy first (GPS), fallback to low accuracy (network/IP)
+    let resolved = false;
+    const onSuccess = pos => { if (resolved) return; resolved = true; userLat = pos.coords.latitude; userLon = pos.coords.longitude; updateLocationBadge(); resolve(); };
+    const onError = () => { if (resolved) return; resolved = true; document.getElementById('locationBadge').textContent = t('chile'); console.warn('KiteSpot: GPS failed, showing all spots'); resolve(); };
+    navigator.geolocation.getCurrentPosition(onSuccess, () => {
+      // Retry with low accuracy (faster, uses network/wifi)
+      navigator.geolocation.getCurrentPosition(onSuccess, onError, { timeout: 10000, maximumAge: 600000, enableHighAccuracy: false });
+    }, { timeout: 10000, maximumAge: 300000, enableHighAccuracy: true });
   });
 }
 
@@ -567,13 +570,18 @@ async function fetchAllSpots() {
     return;
   }
 
-  // Only fetch nearby spots (200km) + favorites — not all 29
-  let spotsToFetch = [...SPOTS];
+  // Fetch nearby spots (200km) + favorites. Without GPS: top 12 + favorites
+  let spotsToFetch;
   if (userLat) {
     const nearby = SPOTS.filter(s => haversine(userLat, userLon, s.lat, s.lon) <= NEARBY_RADIUS);
-    const favOnly = SPOTS.filter(s => favorites.includes(s.id) && !nearby.includes(s));
+    const favOnly = SPOTS.filter(s => favorites.includes(s.id) && !nearby.find(n => n.id === s.id));
     spotsToFetch = [...nearby, ...favOnly];
     spotsToFetch.sort((a, b) => haversine(userLat, userLon, a.lat, a.lon) - haversine(userLat, userLon, b.lat, b.lon));
+  } else {
+    // No GPS — load first 12 built-in spots + all favorites
+    const favOnly = SPOTS.filter(s => favorites.includes(s.id));
+    const nonFav = SPOTS.filter(s => !favorites.includes(s.id)).slice(0, 12);
+    spotsToFetch = [...favOnly, ...nonFav];
   }
 
   const total = spotsToFetch.length;
