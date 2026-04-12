@@ -1705,9 +1705,18 @@ async function init() {
   // Auto-refresh every 30 min
   setInterval(() => { refreshData(); }, 30 * 60 * 1000);
 
-  // Register SW
+  // Register SW with forced update — clears old caches
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').catch(() => {});
+    navigator.serviceWorker.getRegistrations().then(regs => {
+      // Unregister ALL old service workers first
+      return Promise.all(regs.map(r => r.unregister()));
+    }).then(() => {
+      // Clear all caches
+      return caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))));
+    }).then(() => {
+      // Register fresh SW
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    }).catch(() => {});
   }
 
   // Pull to refresh
