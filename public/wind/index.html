@@ -127,7 +127,8 @@ a{color:var(--cyan);text-decoration:none}
 .fc-hour.fc-green .fc-wind{color:var(--green)}
 .fc-hour.fc-yellow{background:linear-gradient(180deg,rgba(250,204,21,.1),rgba(250,204,21,.03));box-shadow:inset 0 0 0 1px rgba(250,204,21,.15)}
 .fc-hour.fc-yellow .fc-wind{color:var(--yellow)}
-.fc-hour.fc-red .fc-wind{color:var(--red);opacity:.75}
+.fc-hour.fc-red{opacity:.55}
+.fc-hour.fc-red .fc-wind{color:var(--red)}
 
 /* Expanded card detail */
 .card-detail{display:none;margin-top:8px;padding-top:8px;border-top:1px solid var(--bg3)}
@@ -290,6 +291,13 @@ a{color:var(--cyan);text-decoration:none}
 .thermal-badge svg{flex-shrink:0}
 .tide-badge{display:inline-flex;align-items:center;gap:5px;font-size:.6rem;font-weight:600;padding:4px 10px;border-radius:8px;margin-top:6px;background:rgba(96,165,250,.1);color:#93c5fd;border:1px solid rgba(96,165,250,.18)}
 .tide-icon{font-size:.72rem}
+.tide-spring{color:#fcd34d;margin-left:3px;font-size:.62rem;text-shadow:0 0 6px rgba(252,211,77,.6)}
+
+/* Micro-stats pills (stability, trend, 80m wind) */
+.micro-stats{display:flex;gap:5px;margin:8px 0;flex-wrap:wrap}
+.ms-pill{display:inline-flex;align-items:center;gap:3px;font-size:.58rem;font-weight:600;padding:3px 8px;border-radius:999px;border:1px solid transparent;letter-spacing:.1px;line-height:1.3;white-space:nowrap}
+.ms-pill em{font-style:normal;font-weight:800;opacity:.85}
+.ms-pill.ms-alt{background:rgba(148,163,184,.06);color:var(--muted);border-color:rgba(148,163,184,.12)}
 
 /* Rain overlay on card */
 .rain-overlay{position:absolute;top:0;right:0;padding:4px 8px;border-radius:0 var(--radius) 0 8px;font-size:.6rem;font-weight:700;display:flex;align-items:center;gap:3px}
@@ -789,19 +797,18 @@ function getTideState(date = new Date()) {
 }
 
 function tideHtml(spot) {
-  if (spot.shore === 'sheltered' && !spot.id.includes('ocean')) return ''; // lakes don't have tides
   // Skip lake spots
   if (['pucon','llanquihue','ptovaras','ensenada','ptooctay'].includes(spot.id)) return '';
   const tide = getTideState();
   const label = lang === 'es' ? tide.label_es : tide.label_en;
-  const spring = tide.isSpring ? (lang === 'es' ? ' · Mareas vivas' : ' · Spring tide') : '';
   const nextH = tide.nextHighHrs > 0 ? `${tide.nextHighHrs.toFixed(0)}h` : '';
   const nextL = tide.nextLowHrs > 0 ? `${tide.nextLowHrs.toFixed(0)}h` : '';
-  const next = tide.state === 'high' ? (lang === 'es' ? `Baja en ${nextL}` : `Low in ${nextL}`) :
-               tide.state === 'low' ? (lang === 'es' ? `Sube en ${nextH}` : `High in ${nextH}`) :
-               tide.state === 'falling' ? (lang === 'es' ? `Baja en ${nextL}` : `Low in ${nextL}`) :
-               (lang === 'es' ? `Alta en ${nextH}` : `High in ${nextH}`);
-  return `<div class="tide-badge"><span class="tide-icon">${tide.icon}</span> ${label}${spring} · ${next}</div>`;
+  const next = tide.state === 'high' ? `↓${nextL}` :
+               tide.state === 'low' ? `↑${nextH}` :
+               tide.state === 'falling' ? `↓${nextL}` :
+               `↑${nextH}`;
+  const spring = tide.isSpring ? '<span class="tide-spring" title="Mareas vivas">★</span>' : '';
+  return `<div class="tide-badge"><span class="tide-icon">${tide.icon}</span> ${label} ${next}${spring}</div>`;
 }
 
 // Shore wind correction: sheltered spots lose ~25% wind at shore, semi ~10%
@@ -1243,20 +1250,30 @@ function buildSpotCard(spot, idx) {
     bestHtml = `<div class="best-moment no-window"><svg class="bm-icon" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><path d="M5.5 5.5l5 5M10.5 5.5l-5 5"/></svg><span class="bm-text">${t('noWindow')}</span><div class="week-dots">${analysis.weekDots.map(d=>`<div class="week-dot wd-${d.best}"></div>`).join('')}</div></div>`;
   }
 
-  // Next hours forecast strip
+  // Next hours forecast strip — only navigable hours (10-20h)
   let fcHtml = '';
   if (d?.wind?.hourly) {
     const now = new Date();
     const times = d.wind.hourly.time;
-    const startIdx = times.findIndex(t => new Date(t) >= now);
-    if (startIdx >= 0) {
-      for (let i = startIdx; i < Math.min(startIdx + 8, times.length); i++) {
-        const w = shoreWindCorrection(d.wind.hourly.wind_speed_10m[i], spot.shore);
-        const dd = d.wind.hourly.wind_direction_10m[i];
-        const hr = new Date(times[i]).getHours();
-        const fcSt = w >= spot.windMin && w <= spot.windMax ? 'fc-green' : w >= 8 ? 'fc-yellow' : 'fc-red';
-        fcHtml += `<div class="fc-hour ${fcSt}"><div class="fc-time">${hr}:00</div><div class="fc-wind">${Math.round(w)}</div><div class="fc-arrow" style="transform:rotate(${dd+180}deg)">↑</div></div>`;
+    let added = 0;
+    let lastDay = null;
+    for (let i = 0; i < times.length && added < 8; i++) {
+      const dt = new Date(times[i]);
+      if (dt < now) continue;
+      const hr = dt.getHours();
+      if (hr < 10 || hr > 20) continue;
+      const w = shoreWindCorrection(d.wind.hourly.wind_speed_10m[i], spot.shore);
+      const dd = d.wind.hourly.wind_direction_10m[i];
+      const fcSt = w >= spot.windMin && w <= spot.windMax ? 'fc-green' : w >= 8 ? 'fc-yellow' : 'fc-red';
+      const dayKey = dt.toDateString();
+      let dayLabel = '';
+      if (lastDay !== dayKey) {
+        const isToday = dayKey === now.toDateString();
+        if (!isToday) dayLabel = dt.toLocaleDateString(lang==='en'?'en-US':'es-CL', { weekday: 'short' }).slice(0,2);
+        lastDay = dayKey;
       }
+      fcHtml += `<div class="fc-hour ${fcSt}"><div class="fc-time">${dayLabel ? dayLabel+' ' : ''}${hr}h</div><div class="fc-wind">${Math.round(w)}</div><div class="fc-arrow" style="transform:rotate(${dd+180}deg)">↑</div></div>`;
+      added++;
     }
   }
 
@@ -1281,11 +1298,11 @@ function buildSpotCard(spot, idx) {
       const stab = typeof wind==='number' && typeof gust==='number' ? getWindStability(wind, gust) : null;
       const trend = getWindTrend(spot);
       if (!stab && !trend) return '';
-      let html = '<div style="display:flex;gap:8px;margin-bottom:6px;flex-wrap:wrap">';
-      if (stab) html += `<span style="font-size:.6rem;font-weight:600;color:${stab.color}">${lang==='es'?stab.label_es:stab.label_en} (x${(gust/wind).toFixed(1)})</span>`;
-      if (trend) html += `<span style="font-size:.6rem;color:${trend.color}">${trend.icon} ${lang==='es'?trend.label_es:trend.label_en} 3h</span>`;
+      let html = '<div class="micro-stats">';
+      if (stab) html += `<span class="ms-pill" style="color:${stab.color};border-color:${stab.color}40;background:${stab.color}14">${lang==='es'?stab.label_es:stab.label_en} <em>x${(gust/wind).toFixed(1)}</em></span>`;
+      if (trend) html += `<span class="ms-pill" style="color:${trend.color};border-color:${trend.color}30">${trend.icon} 3h</span>`;
       const w80 = d?.wind?.current?.wind_speed_80m;
-      if (w80 != null && typeof wind === 'number') { const ratio = Math.round(shoreWindCorrection(w80, spot.shore)); html += `<span style="font-size:.6rem;color:var(--muted)">80m: ${ratio}kn</span>`; }
+      if (w80 != null && typeof wind === 'number') { const ratio = Math.round(shoreWindCorrection(w80, spot.shore)); html += `<span class="ms-pill ms-alt">80m <em>${ratio}kn</em></span>`; }
       return html + '</div>';
     })()}
     ${fcHtml ? `<div class="card-forecast">${fcHtml}</div>` : ''}
