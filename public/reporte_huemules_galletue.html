@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análisis Geoespacial | Predios Huemules - Galletué | Cussen Geoespacial</title>
+    <meta name="description" content="Informe técnico de análisis geoespacial de predios en sector Galletué, Lonquimay. Subdivisión Fundo Huemules, 1.779 ha. Accesos, bosque nativo y potencial IFM.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --cussen-dark: #1e3a5f;
+            --cussen-mid: #1e5f8a;
+            --cussen-light: #0ea5e9;
+            --cussen-accent: #f59e0b;
+        }
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+        #map { height: 380px; width: 100%; border-radius: 0 0 12px 12px; z-index: 1; }
+        @media (min-width: 768px) { #map { height: 500px; } }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .section-divider { width: 60px; height: 3px; background: linear-gradient(90deg, #0ea5e9, #0284c7); margin: 0 auto 1.5rem; border-radius: 2px; }
+        .nav-link { position: relative; transition: color 0.2s; }
+        .nav-link:hover { color: #0ea5e9; }
+        .coord-display { position: absolute; bottom: 8px; left: 8px; z-index: 1000; background: rgba(0,0,0,0.75); color: #fff; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-family: 'Inter', monospace; pointer-events: none; display: none; }
+        @media (min-width: 768px) { .coord-display { display: block; } }
+        .animate-in { animation: slideUp 0.6s ease-out; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @media print { .no-print { display: none !important; } }
+    </style>
+</head>
+<body class="text-gray-700">
+
+    <!-- NAVIGATION -->
+    <nav class="bg-white/95 backdrop-blur-md shadow-sm sticky top-0 z-50 no-print">
+        <div class="container mx-auto max-w-7xl px-4 flex items-center h-12 gap-4">
+            <a href="/index.html" class="font-black text-sky-800 text-sm tracking-tight shrink-0">CUSSEN</a>
+            <div class="flex gap-4 md:gap-6 text-xs font-medium text-gray-500 overflow-x-auto scrollbar-hide whitespace-nowrap flex-1 -mx-1 px-1">
+                <a href="#mapa" class="nav-link py-1 shrink-0">Mapa</a>
+                <a href="#subdivision" class="nav-link py-1 shrink-0">Subdivisión</a>
+                <a href="#bosque" class="nav-link py-1 shrink-0">Bosque</a>
+                <a href="#accesos" class="nav-link py-1 shrink-0 text-amber-600 font-bold">Accesos</a>
+                <a href="#ifm" class="nav-link py-1 shrink-0 text-blue-600 font-bold">IFM</a>
+                <a href="#conclusiones" class="nav-link py-1 shrink-0 text-sky-700 font-bold">Conclusiones</a>
+                <a href="#referencias" class="nav-link py-1 shrink-0">Referencias</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- HEADER -->
+    <header id="top" class="bg-gradient-to-br from-slate-950 via-sky-950 to-blue-900 text-center py-8 md:py-12 px-4 shadow-2xl relative overflow-hidden">
+        <div class="absolute inset-0 opacity-5" style="background-image: url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2260%22 height=%2260%22><circle cx=%2230%22 cy=%2230%22 r=%221%22 fill=%22white%22/></svg>');"></div>
+        <div class="relative z-10">
+            <div class="inline-block bg-sky-800/50 border border-sky-700/50 rounded-full px-3 py-1 mb-3">
+                <p class="text-sky-300 text-[10px] md:text-xs font-semibold tracking-widest uppercase">Informe Técnico IT-2026-FCH-003</p>
+            </div>
+            <h1 class="text-2xl md:text-5xl font-black text-white mb-2 md:mb-3 tracking-tight leading-tight">Predios Huemules — Galletué</h1>
+            <p class="text-lg md:text-2xl font-light text-sky-200">Subdivisión Fundo Huemules | 1.779 ha</p>
+            <p class="text-sky-300 text-xs md:text-sm mt-2 font-medium">Lonquimay, Provincia de Malleco, Región de la Araucanía, Chile</p>
+            <div class="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-4 md:mt-6 text-[10px] md:text-xs text-sky-400">
+                <span>9 de abril de 2026</span>
+                <span class="text-sky-600 hidden md:inline">|</span>
+                <span>Datum WGS84 / EPSG:4326</span>
+                <span class="text-sky-600 hidden md:inline">|</span>
+                <span>Cussen Consultoría Geoespacial</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-4 md:p-8 max-w-7xl">
+
+        <!-- KPIs PRINCIPALES -->
+        <section class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 -mt-6 md:-mt-8 mb-10 md:mb-12 relative z-10 animate-in px-1 md:px-0">
+            <div class="bg-white p-3 md:p-5 rounded-xl shadow-lg text-center border border-gray-100">
+                <h4 class="text-xl md:text-3xl font-black text-sky-700">1.779</h4>
+                <p class="text-gray-500 text-[10px] md:text-xs mt-1 font-medium">Hectáreas totales</p>
+                <p class="text-gray-300 text-[8px] md:text-[10px] mt-0.5">Subdivisión Galletué</p>
+            </div>
+            <div class="bg-white p-3 md:p-5 rounded-xl shadow-lg text-center border border-gray-100">
+                <h4 class="text-xl md:text-3xl font-black text-green-600">872</h4>
+                <p class="text-gray-500 text-[10px] md:text-xs mt-1 font-medium">ha Predio Huemules</p>
+                <p class="text-gray-300 text-[8px] md:text-[10px] mt-0.5">Polígono principal</p>
+            </div>
+            <div class="bg-white p-3 md:p-5 rounded-xl shadow-lg text-center border border-gray-100">
+                <h4 class="text-xl md:text-3xl font-black text-amber-600">7</h4>
+                <p class="text-gray-500 text-[10px] md:text-xs mt-1 font-medium">Lotes identificados</p>
+                <p class="text-gray-300 text-[8px] md:text-[10px] mt-0.5">84.1 a 84.6 + A2</p>
+            </div>
+            <div class="bg-white p-3 md:p-5 rounded-xl shadow-lg text-center border border-gray-100">
+                <h4 class="text-xl md:text-3xl font-black text-red-600">9</h4>
+                <p class="text-gray-500 text-[10px] md:text-xs mt-1 font-medium">Servidumbres</p>
+                <p class="text-gray-300 text-[8px] md:text-[10px] mt-0.5">Peatonales + Tránsito</p>
+            </div>
+        </section>
+
+        <!-- RESUMEN EJECUTIVO -->
+        <section class="mb-8 md:mb-14">
+            <h2 class="text-2xl md:text-3xl font-bold text-slate-800 text-center mb-2">Resumen Ejecutivo</h2>
+            <div class="section-divider"></div>
+            <div class="bg-white rounded-xl shadow-lg p-5 md:p-8 border border-gray-100">
+                <div class="prose max-w-none">
+                    <p class="text-sm text-gray-700 leading-relaxed mb-4">
+                        Se analiza el <strong>Predio Los Huemules</strong> (872 ha) y la <strong>Subdivisión Galletué</strong> (1.779 ha totales), ubicados en el sector de Laguna Galletué (~1.150 msnm), comuna de Lonquimay, Provincia de Malleco, Región de la Araucanía. Los predios se encuentran en la zona de nacimiento del <strong>Río Biobío</strong> — segundo río más caudaloso de Chile (380 km, cuenca de 24.264 km²) — a orillas de la Laguna Galletué, adyacentes a la <strong>Reserva Nacional Galletué</strong> (~1.100 ha, CONAF/SNASPE). El acceso desde Lonquimay pueblo es por camino de ripio (~55–65 km), transitable en verano con vehículo 4x4.
+                    </p>
+                    <p class="text-sm text-gray-700 leading-relaxed mb-4">
+                        El levantamiento topográfico proporcionado contiene <strong>234 puntos, 421 polígonos y 454 líneas</strong>, documentando una subdivisión histórica del Fundo Huemules en 7 lotes (84.1 a 84.6 + Lote A2), con servidumbres de tránsito y peatonales entre ellos.
+                    </p>
+                    <div class="bg-amber-50 rounded-lg p-4 border-l-4 border-amber-500">
+                        <p class="text-sm text-gray-700"><strong>Preocupación principal:</strong> Accesos externos e internos. Existe 1 servidumbre peatonal dentro del predio y otra en su borde. A 0,9 km hay una servidumbre de tipo no confirmado; la de tránsito confirmada más cercana está a 2,3 km. Camino público a 1,4 km del borde SW.</p>
+                        <p class="text-sm text-gray-700 mt-2"><strong>Contexto territorial:</strong> Colindancia con Ex Reserva Indígena y Comunidad Quinquén (Ley 19.253 aplica). Sector Laguna Galletué, nacimiento del Biobío.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- MAPA -->
+        <section id="mapa" class="mb-8 md:mb-14">
+            <h2 class="text-2xl md:text-3xl font-bold text-slate-800 text-center mb-2">Ubicación del Predio</h2>
+            <div class="section-divider"></div>
+            <p class="text-center text-xs md:text-sm text-gray-400 mb-6 max-w-2xl mx-auto">Polígono extraído del archivo KMZ proporcionado. Puntos de servidumbres y caminos públicos del levantamiento topográfico.</p>
+
+            <div class="bg-white rounded-xl shadow-lg p-4 mb-4">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-center text-sm">
+                    <div><p class="text-[10px] text-gray-400 font-medium">Centro</p><p class="text-sm font-bold text-sky-700">38.642°S, 71.321°W</p></div>
+                    <div><p class="text-[10px] text-gray-400 font-medium">Superficie Huemules</p><p class="text-sm font-bold text-sky-700">872 ha</p></div>
+                    <div><p class="text-[10px] text-gray-400 font-medium">Perímetro</p><p class="text-sm font-bold text-slate-700">11,7 km</p></div>
+                    <div><p class="text-[10px] text-gray-400 font-medium">Subdivisión total</p><p class="text-sm font-bold text-slate-700">1.779 ha</p></div>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap gap-2 mb-0 no-print bg-gray-50 p-3 rounded-t-xl border border-b-0 border-gray-200">
+                <span class="text-xs font-semibold text-gray-400 self-center mr-1 uppercase tracking-wide">Base:</span>
+                <button class="layer-btn active px-3 py-1 rounded-md text-xs font-medium border border-gray-200 bg-white" onclick="setLayer('satellite', this)">Satelital</button>
+                <button class="layer-btn px-3 py-1 rounded-md text-xs font-medium border border-gray-200" onclick="setLayer('topo', this)">Topográfico</button>
+                <button class="layer-btn px-3 py-1 rounded-md text-xs font-medium border border-gray-200" onclick="setLayer('osm', this)">OpenStreetMap</button>
+            </div>
+
+            <div style="position: relative;">
+                <div id="map"></div>
+                <div id="coord-display" class="coord-display">Lat: -- | Lon: --</div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm p-3 mt-3 border border-gray-100">
+                <div class="flex flex-wrap gap-4 justify-center text-[10px] md:text-xs text-gray-500">
+                    <span><span class="inline-block w-3 h-3 rounded-sm mr-1" style="background:#0ea5e9;opacity:0.6;vertical-align:middle"></span> Predio Los Huemules (872 ha)</span>
+                    <span><span class="inline-block w-3 h-3 rounded-full mr-1" style="background:#ef4444;vertical-align:middle"></span> Servidumbres</span>
+                    <span><span class="inline-block w-3 h-3 rounded-full mr-1" style="background:#22c55e;vertical-align:middle"></span> Caminos públicos</span>
+                    <span><span class="inline-block w-3 h-3 rounded-full mr-1" style="background:#f59e0b;vertical-align:middle"></span> Referencias clave</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- SUBDIVISIÓN -->
+        <section id="subdivision" class="mb-8 md:mb-14">
+            <h2 class="text-2xl md:text-3xl font-bold text-slate-800 text-center mb-2">Estructura de la Subdivisión</h2>
+            <div class="section-divider"></div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div class="bg-white rounded-xl shadow-lg border-t-4 border-sky-500 p-5 md:p-6">
+                    <h3 class="text-base md:text-lg font-bold text-slate-800 mb-3">Lotes Identificados</h3>
+                    <p class="text-sm text-gray-600 mb-4">
+                        La subdivisión del Fundo Huemules comprende 7 lotes numerados del sistema catastral (Lotes 84.1 a 84.6) más un Lote A2. Las iniciales corresponden a propietarios históricos.
+                    </p>
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-xs bg-sky-50 p-2.5 rounded-lg">
+                            <span class="font-semibold text-sky-800">Lote 84.1</span><span class="text-gray-500">—</span>
+                        </div>
+                        <div class="flex justify-between text-xs bg-sky-50 p-2.5 rounded-lg">
+                            <span class="font-semibold text-sky-800">Lote 84.2</span><span class="text-gray-500">—</span>
+                        </div>
+                        <div class="flex justify-between text-xs bg-sky-50 p-2.5 rounded-lg">
+                            <span class="font-semibold text-sky-800">Lote 84.3</span><span class="text-gray-500">S.G.</span>
+                        </div>
+                        <div class="flex justify-between text-xs bg-sky-50 p-2.5 rounded-lg">
+                            <span class="font-semibold text-sky-800">Lote 84.4</span><span class="text-gray-500">S.G.</span>
+                        </div>
+                        <div class="flex justify-between text-xs bg-green-50 p-2.5 rounded-lg border border-green-200">
+                            <span class="font-semibold text-green-800">Lote 84.5</span><span class="text-green-600 font-medium">H.T. — 208 vértices</span>
+                        </div>
+                        <div class="flex justify-between text-xs bg-green-50 p-2.5 rounded-lg border border-green-200">
+                            <span class="font-semibold text-green-800">Lote 84.6</span><span class="text-green-600 font-medium">M.G. — 95 vértices</span>
+                        </div>
+                        <div class="flex justify-between text-xs bg-amber-50 p-2.5 rounded-lg">
+                            <span class="font-semibold text-amber-800">Lote A2</span><span class="text-gray-500">—</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-lg border-t-4 border-amber-500 p-5 md:p-6">
+                    <h3 class="text-base md:text-lg font-bold text-slate-800 mb-3">Contexto Territorial</h3>
+                    <div class="space-y-3">
+                        <div>
+                            <p class="text-xs font-bold text-gray-500 uppercase mb-1">Colindancias</p>
+                            <p class="text-sm text-gray-700"><strong>RESTO FUNDO HUEMULES</strong> — remanente del fundo original no subdividido</p>
+                            <p class="text-sm text-gray-700 mt-1"><strong>EX RESERVA INDÍGENA</strong> — terreno colindante con protección especial</p>
+                            <p class="text-sm text-gray-700 mt-1"><strong>Comunidad Quinquén</strong> (Meliñir) — comunidad Pehuenche colindante, caso emblemático de reivindicación territorial en los años 90; tierras adquiridas por el Estado vía Fondo de Tierras (Art. 20, Ley 19.253)</p>
+                            <p class="text-sm text-gray-700 mt-1"><strong>Paulino Huaiquillan</strong> — propietario vecino (comunidad indígena)</p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-gray-500 uppercase mb-1">Hidrografía</p>
+                            <p class="text-sm text-gray-700"><strong>Laguna Galletué</strong> (~1.150 msnm) — cuerpo de agua principal, nacimiento del Río Biobío. Cercana a Laguna Icalma que también aporta al sistema</p>
+                            <p class="text-sm text-gray-700 mt-1"><strong>Río Biobío</strong> — nace en la laguna, 380 km hasta el Pacífico (Concepción), cuenca de 24.264 km² (DGA)</p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-gray-500 uppercase mb-1">Áreas Protegidas Cercanas</p>
+                            <p class="text-sm text-gray-700"><strong>Reserva Nacional Galletué</strong> — ~1.100 ha, CONAF/SNASPE, adyacente al sector</p>
+                            <p class="text-sm text-gray-700 mt-1"><strong>Reserva Nacional Malalcahuello</strong> y <strong>Reserva Nacional China Muerta</strong> — en la misma comuna</p>
+                        </div>
+                        <div class="bg-red-50 rounded-lg p-3 mt-2">
+                            <p class="text-xs text-red-800"><strong>Ley 19.253:</strong> La colindancia con Ex Reserva Indígena y Comunidad Quinquén implica que cualquier gestión de accesos debe considerar la normativa especial de tierras indígenas.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-5 md:p-6 border border-gray-100">
+                <h3 class="text-sm font-bold text-gray-700 uppercase mb-3">Superficies Referenciadas en el Levantamiento</h3>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    <div class="bg-gray-50 rounded-lg p-3 text-center">
+                        <p class="text-lg font-black text-sky-700">38,15 ha</p>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-3 text-center">
+                        <p class="text-lg font-black text-sky-700">61,24 ha</p>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-3 text-center">
+                        <p class="text-lg font-black text-sky-700">250,00 ha</p>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-3 text-center">
+                        <p class="text-lg font-black text-sky-700">539,70 ha</p>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-3 text-center">
+                        <p class="text-lg font-black text-sky-700">1.279,65 ha</p>
+                    </div>
+                    <div class="bg-sky-50 rounded-lg p-3 text-center border-2 border-sky-200">
+                        <p class="text-lg font-black text-sky-800">1.779,64 ha</p>
+                        <p class="text-[10px] text-sky-600 font-medium">TOTAL SUBDIVISIÓN</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- BOSQUE Y VEGETACIÓN -->
+        <section id="bosque" class="mb-8 md:mb-14">
+            <h2 class="text-2xl md:text-3xl font-bold text-slate-800 text-center mb-2">Bosque y Vegetación</h2>
+            <div class="section-divider"></div>
+
+            <div class="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 rounded-2xl p-5 md:p-8 mb-8">
+                <h3 class="text-lg md:text-xl font-bold text-green-900 mb-4 text-center">Ecosistema Araucaria — Lenga</h3>
+                <p class="text-sm text-gray-700 text-center mb-6">
+                    El sector de Laguna Galletué (1.100-1.500 msnm) se encuentra en la <strong>zona de distribución natural de la Araucaria</strong> (<em>Araucaria araucana</em>), especie protegida como Monumento Natural. El bosque nativo es predominantemente <strong>Araucaria-Lenga</strong> con sotobosque de Caña Colihue.
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-white/80 rounded-xl p-4 shadow-sm">
+                        <p class="text-xs text-gray-400 uppercase font-bold mb-1">1.100-1.200 msnm</p>
+                        <p class="text-lg font-black text-green-700">Araucaria-Coigüe</p>
+                        <p class="text-xs text-gray-600 mt-2">Araucaria, Coigüe, Lenga baja, Caña Colihue</p>
+                    </div>
+                    <div class="bg-white/80 rounded-xl p-4 shadow-sm">
+                        <p class="text-xs text-gray-400 uppercase font-bold mb-1">1.200-1.350 msnm</p>
+                        <p class="text-lg font-black text-emerald-700">Araucaria-Lenga</p>
+                        <p class="text-xs text-gray-600 mt-2">Araucaria dominante, Lenga, Ñirre en claros</p>
+                    </div>
+                    <div class="bg-white/80 rounded-xl p-4 shadow-sm">
+                        <p class="text-xs text-gray-400 uppercase font-bold mb-1">1.350-1.500 msnm</p>
+                        <p class="text-lg font-black text-teal-700">Lenga + Matorral</p>
+                        <p class="text-xs text-gray-600 mt-2">Lenga abierta, Ñirre, matorral subalpino</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 table-scroll">
+                <table class="w-full text-sm min-w-[500px]">
+                    <thead class="bg-gradient-to-r from-green-700 to-green-800 text-white">
+                        <tr>
+                            <th class="p-3 text-left text-xs font-semibold uppercase">Parámetro</th>
+                            <th class="p-3 text-center text-xs font-semibold uppercase">Valor Estimado</th>
+                            <th class="p-3 text-center text-xs font-semibold uppercase">Fuente/Nota</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-b border-gray-100"><td class="p-3 text-xs font-medium">Superficie total subdivisión</td><td class="p-3 text-center font-bold">1.779 ha</td><td class="p-3 text-center text-xs">KMZ / Levantamiento</td></tr>
+                        <tr class="border-b border-gray-100 bg-green-50/50"><td class="p-3 text-xs font-medium">Bosque nativo estimado</td><td class="p-3 text-center font-bold text-green-700">~650 ha (~75%)</td><td class="p-3 text-center text-xs">Estimado por ubicación/altitud</td></tr>
+                        <tr class="border-b border-gray-100"><td class="p-3 text-xs font-medium">Tipo forestal principal</td><td class="p-3 text-center">Araucaria-Lenga</td><td class="p-3 text-center text-xs">Clasificación CONAF</td></tr>
+                        <tr class="border-b border-gray-100 bg-gray-50/50"><td class="p-3 text-xs font-medium">Especie protegida</td><td class="p-3 text-center font-bold text-amber-700">Araucaria araucana</td><td class="p-3 text-center text-xs">Monumento Natural (D.S. 43/1990)</td></tr>
+                        <tr class="border-b border-gray-100"><td class="p-3 text-xs font-medium">Elevación estimada</td><td class="p-3 text-center">1.100 - 1.500 msnm</td><td class="p-3 text-center text-xs">Sector Laguna Galletué</td></tr>
+                        <tr class="bg-green-50"><td class="p-3 text-xs font-medium">Estado del bosque</td><td class="p-3 text-center font-bold text-green-700">Nativo sin manejo intensivo</td><td class="p-3 text-center text-xs">Zona rural cordillerana</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="bg-amber-50 rounded-xl p-5 border-l-4 border-amber-500 mt-6">
+                <p class="text-xs font-bold text-amber-800 mb-2">RESTRICCIÓN ARAUCARIA</p>
+                <p class="text-sm text-gray-700">
+                    La <strong>Araucaria araucana</strong> fue declarada Monumento Natural mediante <strong>D.S. 43/1990 MINAGRI</strong> (previamente, el D.S. 29/1976 ya había prohibido su explotación). Su corta, destrucción y comercialización están <strong>absolutamente prohibidas</strong>, incluyendo madera muerta. Esto aplica a todo el sector de Galletué. Cualquier intervención forestal debe excluir completamente a la Araucaria. Además, está incluida en <strong>CITES Apéndice I</strong> (desde 1979) y clasificada como <strong>En Peligro (EN)</strong> por la UICN.
+                </p>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-5 md:p-6 border border-gray-100 mt-6">
+                <h3 class="text-sm font-bold text-gray-700 uppercase mb-3">Estimación de Carbono y Biomasa</h3>
+                <p class="text-xs text-gray-500 mb-4">Valores de referencia para bosques de tipo forestal Araucaria-Lenga en la cordillera andina de la Araucanía, según literatura publicada.</p>
+                <div class="table-scroll">
+                    <table class="w-full text-xs min-w-[500px]">
+                        <thead class="bg-green-700 text-white">
+                            <tr>
+                                <th class="p-2.5 text-left font-semibold">Componente</th>
+                                <th class="p-2.5 text-center font-semibold">Valor</th>
+                                <th class="p-2.5 text-center font-semibold">Fuente</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b border-gray-100"><td class="p-2.5 font-medium">Biomasa aérea (AGB)</td><td class="p-2.5 text-center font-bold">200–350 Mg/ha</td><td class="p-2.5 text-center">Schlegel & Donoso (2008)</td></tr>
+                            <tr class="border-b border-gray-100 bg-green-50/50"><td class="p-2.5 font-medium">Carbono aéreo + raíces</td><td class="p-2.5 text-center font-bold text-green-700">120–180 tC/ha</td><td class="p-2.5 text-center">Gayoso & Schlegel (2003), CONAF (2016)</td></tr>
+                            <tr class="border-b border-gray-100"><td class="p-2.5 font-medium">Carbono ecosistémico total</td><td class="p-2.5 text-center font-bold">200–350 tC/ha</td><td class="p-2.5 text-center">Incluye suelo (Andisol), necromasa</td></tr>
+                            <tr class="border-b border-gray-100 bg-gray-50"><td class="p-2.5 font-medium">Densidad madera Araucaria</td><td class="p-2.5 text-center">0,45–0,50 g/cm³</td><td class="p-2.5 text-center">Gayoso et al. (2002)</td></tr>
+                            <tr class="border-b border-gray-100"><td class="p-2.5 font-medium">Densidad madera Lenga</td><td class="p-2.5 text-center">0,48–0,53 g/cm³</td><td class="p-2.5 text-center">Gayoso et al. (2002)</td></tr>
+                            <tr class="bg-green-50"><td class="p-2.5 font-medium">Fracción de carbono</td><td class="p-2.5 text-center">0,47</td><td class="p-2.5 text-center">IPCC default, bosque templado</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="text-xs text-gray-500 mt-3">Aplicando 120–180 tC/ha sobre ~650 ha de bosque en Los Huemules (872 ha), el stock estimado sería de <strong>78.000–118.000 toneladas de carbono</strong> (288.000–432.000 tCO₂e).</p>
+            </div>
+        </section>
+
+        <!-- ACCESOS -->
+        <section id="accesos" class="mb-8 md:mb-14">
+            <h2 class="text-2xl md:text-3xl font-bold text-slate-800 text-center mb-2">Análisis de Accesos</h2>
+            <div class="section-divider"></div>
+            <p class="text-center text-xs md:text-sm text-gray-400 mb-6 max-w-2xl mx-auto">Evaluación de accesos externos (caminos públicos) e internos (servidumbres entre lotes) para el predio Los Huemules (872 ha). Distancias medidas al borde más cercano del polígono.</p>
+
+            <!-- Accesos Externos -->
+            <div class="bg-white rounded-xl shadow-lg p-5 md:p-6 border border-gray-100 mb-6">
+                <h3 class="text-base md:text-lg font-bold text-slate-800 mb-4">A) Accesos Externos — Caminos Públicos</h3>
+                <p class="text-sm text-gray-600 mb-4">Se identifican 3 puntos de camino público en el levantamiento. Distancias medidas al borde más cercano del polígono Los Huemules.</p>
+                <div class="space-y-3">
+                    <div class="flex gap-3 text-xs bg-green-50 p-3 rounded-lg border border-green-200">
+                        <span class="text-green-600 font-bold shrink-0 text-base">1</span>
+                        <div>
+                            <p class="font-semibold text-green-800">Camino público (W) — 1,4 km del borde</p>
+                            <p class="text-gray-600 mt-0.5">38.6682°S, 71.3426°W — <strong>Acceso principal más cercano.</strong> Al suroeste del predio, por caminos rurales desde sector Lonquimay/Galletué.</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-3 text-xs bg-gray-50 p-3 rounded-lg">
+                        <span class="text-gray-400 font-bold shrink-0 text-base">2</span>
+                        <div>
+                            <p class="font-semibold text-gray-700">Camino público (SE) — 7,0 km del borde</p>
+                            <p class="text-gray-600 mt-0.5">38.6978°S, 71.2480°W — Acceso secundario, distante.</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-3 text-xs bg-gray-50 p-3 rounded-lg">
+                        <span class="text-gray-400 font-bold shrink-0 text-base">3</span>
+                        <div>
+                            <p class="font-semibold text-gray-700">Camino público (E) — 9,1 km del borde</p>
+                            <p class="text-gray-600 mt-0.5">38.6847°S, 71.2110°W — Acceso lejano, sector oriental.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-blue-50 rounded-lg p-4 mt-4">
+                    <p class="text-xs font-bold text-blue-800 mb-1">Acceso regional</p>
+                    <p class="text-xs text-gray-600">Desde <strong>Temuco</strong>: Ruta 5 → Victoria → Curacautín → Túnel Las Raíces (Ruta R-89) → Lonquimay pueblo → camino de ripio al sector Galletué (<strong>~55–65 km</strong>). También accesible por Ruta 181-CH (Paso Icalma). El acceso puede estar <strong>cortado por nieve de junio a septiembre</strong>. Se requiere vehículo 4x4.</p>
+                </div>
+                <div class="bg-blue-50 rounded-lg p-4 mt-2">
+                    <p class="text-xs font-bold text-blue-800 mb-1">Rutas internas identificadas en imagen Google Earth</p>
+                    <p class="text-xs text-gray-600">La imagen proporcionada muestra rutas marcadas por sectores <strong>Peralada</strong> (Bajo/Gente), <strong>Tarahuin</strong> (Cementerio, Lago) y <strong>Pulpito</strong> (Río, Villa). Corresponden a caminos rurales de ripio/tierra que conectan los predios entre sí y con el camino principal a Lonquimay.</p>
+                </div>
+            </div>
+
+            <!-- Accesos Internos -->
+            <div class="bg-white rounded-xl shadow-lg p-5 md:p-6 border border-gray-100 mb-6">
+                <h3 class="text-base md:text-lg font-bold text-slate-800 mb-4">B) Accesos Internos — Servidumbres</h3>
+                <p class="text-sm text-gray-600 mb-4">Se identifican 9 servidumbres en el levantamiento topográfico de la subdivisión mayor. Distancias medidas al borde más cercano del polígono Los Huemules.</p>
+
+                <div class="table-scroll">
+                    <table class="w-full text-xs min-w-[500px]">
+                        <thead class="bg-slate-700 text-white">
+                            <tr>
+                                <th class="p-2.5 text-left font-semibold">#</th>
+                                <th class="p-2.5 text-left font-semibold">Tipo</th>
+                                <th class="p-2.5 text-center font-semibold">Dist. al borde</th>
+                                <th class="p-2.5 text-center font-semibold">Coordenada</th>
+                                <th class="p-2.5 text-center font-semibold">Obs.</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b border-gray-100 bg-green-50">
+                                <td class="p-2.5 font-bold text-green-700">1</td>
+                                <td class="p-2.5 font-medium">Servidumbre peatonal</td>
+                                <td class="p-2.5 text-center font-bold text-green-700">DENTRO</td>
+                                <td class="p-2.5 text-center font-mono">38.646°S, 71.310°W</td>
+                                <td class="p-2.5 text-center text-green-700 font-bold">Dentro del predio, a 0,2 km del borde</td>
+                            </tr>
+                            <tr class="border-b border-gray-100 bg-sky-50">
+                                <td class="p-2.5 font-bold text-sky-700">2</td>
+                                <td class="p-2.5 font-medium">Servidumbre peatonal</td>
+                                <td class="p-2.5 text-center font-bold text-sky-700">~0 km</td>
+                                <td class="p-2.5 text-center font-mono">38.658°S, 71.315°W</td>
+                                <td class="p-2.5 text-center text-sky-700 font-bold">En el borde del predio</td>
+                            </tr>
+                            <tr class="border-b border-gray-100 bg-amber-50">
+                                <td class="p-2.5 font-bold text-amber-600">3</td>
+                                <td class="p-2.5 font-medium">Servidumbre de... (texto cortado)</td>
+                                <td class="p-2.5 text-center font-bold">0,9 km</td>
+                                <td class="p-2.5 text-center font-mono">38.661°S, 71.300°W</td>
+                                <td class="p-2.5 text-center text-amber-600 font-medium">Tipo no confirmado en KMZ</td>
+                            </tr>
+                            <tr class="border-b border-gray-100">
+                                <td class="p-2.5">4</td>
+                                <td class="p-2.5 font-medium">Servidumbre (sin especificar)</td>
+                                <td class="p-2.5 text-center">1,1 km</td>
+                                <td class="p-2.5 text-center font-mono">38.663°S, 71.298°W</td>
+                                <td class="p-2.5 text-center text-gray-400">Tipo no confirmado en KMZ</td>
+                            </tr>
+                            <tr class="border-b border-gray-100">
+                                <td class="p-2.5">5</td>
+                                <td class="p-2.5 font-medium">Servidumbre peatonal</td>
+                                <td class="p-2.5 text-center">1,2 km</td>
+                                <td class="p-2.5 text-center font-mono">38.633°S, 71.294°W</td>
+                                <td class="p-2.5 text-center text-gray-400">Peatonal</td>
+                            </tr>
+                            <tr class="border-b border-gray-100 bg-gray-50">
+                                <td class="p-2.5">6</td>
+                                <td class="p-2.5 font-medium">Servidumbre peatonal</td>
+                                <td class="p-2.5 text-center">1,4 km</td>
+                                <td class="p-2.5 text-center font-mono">38.650°S, 71.291°W</td>
+                                <td class="p-2.5 text-center text-gray-400">Peatonal</td>
+                            </tr>
+                            <tr class="border-b border-gray-100 bg-amber-50">
+                                <td class="p-2.5 font-bold text-amber-600">7</td>
+                                <td class="p-2.5 font-medium">Servidumbre de Tránsito</td>
+                                <td class="p-2.5 text-center font-bold">2,3 km</td>
+                                <td class="p-2.5 text-center font-mono">38.657°S, 71.281°W</td>
+                                <td class="p-2.5 text-center text-amber-600 font-medium">Vehicular confirmada, la más cercana</td>
+                            </tr>
+                            <tr class="border-b border-gray-100">
+                                <td class="p-2.5">8</td>
+                                <td class="p-2.5 font-medium">Servidumbre peatonal</td>
+                                <td class="p-2.5 text-center">4,5 km</td>
+                                <td class="p-2.5 text-center font-mono">38.626°S, 71.258°W</td>
+                                <td class="p-2.5 text-center text-gray-400">Lejana</td>
+                            </tr>
+                            <tr class="bg-gray-50">
+                                <td class="p-2.5">9</td>
+                                <td class="p-2.5 font-medium">Servidumbre de tránsito</td>
+                                <td class="p-2.5 text-center">6,4 km</td>
+                                <td class="p-2.5 text-center font-mono">38.679°S, 71.242°W</td>
+                                <td class="p-2.5 text-center text-gray-400">Lejana</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Observaciones Críticas -->
+            <div class="bg-red-50 rounded-xl p-5 border-l-4 border-red-500">
+                <p class="text-sm font-bold text-red-800 mb-3">Observaciones Críticas sobre Accesos</p>
+                <ol class="space-y-3 text-sm text-gray-700">
+                    <li class="flex gap-2">
+                        <span class="font-bold text-amber-600 shrink-0">1.</span>
+                        <p><strong>Existe 1 servidumbre peatonal dentro del predio</strong> y otra en su borde sur. Ambas son peatonales — no permiten tránsito vehicular.</p>
+                    </li>
+                    <li class="flex gap-2">
+                        <span class="font-bold text-amber-600 shrink-0">2.</span>
+                        <p>A 0,9 km del borde hay una <strong>servidumbre cuyo tipo no está completo en el KMZ</strong> (dice "Servidumbre de..."). Podría ser de tránsito. La <strong>servidumbre de tránsito confirmada más cercana</strong> está a 2,3 km del borde.</p>
+                    </li>
+                    <li class="flex gap-2">
+                        <span class="font-bold text-amber-600 shrink-0">3.</span>
+                        <p><strong>El camino público más cercano está a 1,4 km del borde SW</strong>. La conexión requiere cruzar predios vecinos de la subdivisión, usando las servidumbres existentes o negociando nuevas.</p>
+                    </li>
+                    <li class="flex gap-2">
+                        <span class="font-bold text-red-600 shrink-0">4.</span>
+                        <p><strong>Colindancia con tierras indígenas:</strong> Ex Reserva Indígena y Comunidad Quinquén. Cualquier negociación de acceso debe considerar Ley 19.253.</p>
+                    </li>
+                    <li class="flex gap-2">
+                        <span class="font-bold text-red-600 shrink-0">5.</span>
+                        <p><strong>Acceso estacional:</strong> El sector Galletué queda cortado por nieve de junio a septiembre. Acceso solo en temporada estival, con vehículo 4x4, por camino de ripio (~55–65 km desde Lonquimay).</p>
+                    </li>
+                </ol>
+            </div>
+        </section>
+
+        <!-- ACCESIBILIDAD IFM -->
+        <section id="ifm" class="mb-8 md:mb-14">
+            <h2 class="text-2xl md:text-3xl font-bold text-slate-800 text-center mb-2">Accesibilidad para Créditos IFM</h2>
+            <div class="section-divider"></div>
+            <p class="text-center text-xs md:text-sm text-gray-400 mb-6 max-w-2xl mx-auto">Evaluación de elegibilidad para créditos de carbono IFM (Isometric). Se requiere capacidad teórica de extracción maderera y acceso demostrable.</p>
+
+            <div class="bg-gradient-to-br from-blue-50 to-cyan-50 border-2 border-blue-200 rounded-2xl p-5 md:p-8 mb-8">
+                <div class="text-center mb-4">
+                    <p class="text-[10px] md:text-xs text-blue-600 font-semibold uppercase tracking-widest mb-2">Evaluación IFM</p>
+                    <h3 class="text-xl md:text-2xl font-black text-amber-700">Cumplimiento parcial — acceso cercano, conexión a formalizar</h3>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                    <div class="bg-white/80 rounded-xl p-4 shadow-sm">
+                        <p class="text-2xl md:text-3xl font-black text-green-600">OK</p>
+                        <p class="text-xs font-semibold text-gray-600 mt-1">Camino público</p>
+                        <p class="text-[10px] text-gray-400 mt-0.5">A 1,4 km del borde</p>
+                    </div>
+                    <div class="bg-white/80 rounded-xl p-4 shadow-sm">
+                        <p class="text-2xl md:text-3xl font-black text-amber-600">~</p>
+                        <p class="text-xs font-semibold text-gray-600 mt-1">Servidumbre vehicular</p>
+                        <p class="text-[10px] text-gray-400 mt-0.5">Confirmada a 2,3 km del borde</p>
+                    </div>
+                    <div class="bg-white/80 rounded-xl p-4 shadow-sm">
+                        <p class="text-2xl md:text-3xl font-black text-green-600">OK</p>
+                        <p class="text-xs font-semibold text-gray-600 mt-1">Bosque nativo extenso</p>
+                        <p class="text-[10px] text-gray-400 mt-0.5">~650 ha estimadas</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-5 md:p-6 border border-gray-100">
+                <h4 class="text-sm font-bold text-gray-700 uppercase mb-3">a) Acceso vial</h4>
+                <div class="space-y-2 mb-5">
+                    <div class="flex gap-2 text-xs text-gray-600 bg-amber-50 p-2.5 rounded-lg">
+                        <span class="text-amber-600 font-bold shrink-0">~</span>
+                        <p>Camino público más cercano a <strong>1,4 km del borde suroeste</strong>. Se requiere conectar el predio a las servidumbres existentes y de ahí al camino público.</p>
+                    </div>
+                    <div class="flex gap-2 text-xs text-gray-600 bg-red-50 p-2.5 rounded-lg">
+                        <span class="text-red-600 font-bold shrink-0">X</span>
+                        <p>A 0,9 km hay una servidumbre de tipo no confirmado; la de <strong>tránsito confirmada más cercana está a 2,3 km</strong>. Se necesita formalizar la conexión vehicular al predio para demostrar capacidad teórica de extracción (requisito IFM).</p>
+                    </div>
+                </div>
+
+                <h4 class="text-sm font-bold text-gray-700 uppercase mb-3">b) Recurso forestal</h4>
+                <div class="space-y-2 mb-5">
+                    <div class="flex gap-2 text-xs text-gray-600 bg-green-50 p-2.5 rounded-lg">
+                        <span class="text-green-600 font-bold shrink-0">OK</span>
+                        <p><strong>Bosque nativo extenso</strong> (Araucaria-Lenga), estimado en ~650 ha dentro del predio Los Huemules (872 ha). Alta biomasa y captura activa de carbono.</p>
+                    </div>
+                    <div class="flex gap-2 text-xs text-gray-600 bg-green-50 p-2.5 rounded-lg">
+                        <span class="text-green-600 font-bold shrink-0">OK</span>
+                        <p>Bosque <strong>sin protección formal actual</strong> (no es parque ni reserva), lo que lo hace elegible para demostrar riesgo de degradación — requisito clave para IFM.</p>
+                    </div>
+                </div>
+
+                <h4 class="text-sm font-bold text-gray-700 uppercase mb-3">c) Hidrografía</h4>
+                <div class="flex gap-2 text-xs text-gray-600 bg-cyan-50 p-2.5 rounded-lg">
+                    <span class="text-cyan-600 font-bold shrink-0">OK</span>
+                    <p><strong>Laguna Galletué y Río Biobío</strong> como cuerpos de agua principales. El río nace en el sector y podría servir como vía de transporte fluvial teórico.</p>
+                </div>
+            </div>
+
+            <div class="bg-amber-50 rounded-xl p-5 border-l-4 border-amber-500 mt-6">
+                <p class="text-xs font-bold text-amber-800 mb-2">CONSIDERACIONES CLAVE PARA IFM</p>
+                <p class="text-sm text-gray-700">
+                    A diferencia de Jungla Peumayen (que ya está bajo protección activa), estos predios <strong>NO están bajo conservación formal</strong>, lo que es favorable para IFM: se puede demostrar riesgo de tala o degradación. Sin embargo, la presencia de <strong>Araucaria araucana</strong> (Monumento Natural) <strong>impide absolutamente la corta</strong> de esta especie, lo que complica la demostración de "capacidad de extracción maderera" requerida por IFM.
+                </p>
+                <p class="text-sm text-gray-700 mt-3"><strong>Stock de carbono estimado:</strong> Con ~650 ha de bosque a 120–180 tC/ha (Gayoso & Schlegel, 2003), el predio contendría <strong>~288.000–432.000 tCO₂e</strong>. A precios de mercado voluntario (USD 5–15/tCO₂e para REDD+; USD 15–40 para ARR), el valor potencial es significativo.</p>
+                <p class="text-sm text-gray-700 mt-3 font-semibold">Estrategia recomendada:</p>
+                <ul class="text-sm text-gray-700 mt-2 space-y-1 ml-4">
+                    <li>- <strong>IFM selectivo (VCS VM0045):</strong> Demostrar capacidad de extracción sobre Lenga y otras especies NO protegidas, excluyendo Araucaria. Falla en adicionalidad si se reclama Araucaria (ya protegida por ley)</li>
+                    <li>- <strong>REDD+ Degradación:</strong> Demostrar amenazas reales: extracción de leña de Lenga, presión ganadera, incendios. Estos son drivers documentados en la Araucanía. Chile tiene ENCCRV como marco nacional REDD+ (CONAF/MINAGRI)</li>
+                    <li>- <strong>ARR (VCS VM0047):</strong> Para zonas degradadas o claros, postular a Aforestación/Reforestación con especies nativas</li>
+                    <li>- <strong>Resolver acceso vehicular primero:</strong> Gestionar servidumbre de tránsito al camino público como paso previo indispensable</li>
+                    <li>- <strong>Oportunidad de primer movimiento:</strong> No existen proyectos de carbono registrados en bosques de Araucaria de la Araucanía (a 2025)</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- CONCLUSIONES -->
+        <section id="conclusiones" class="mb-8 md:mb-14">
+            <h2 class="text-2xl md:text-3xl font-bold text-slate-800 text-center mb-2">Conclusiones</h2>
+            <div class="section-divider"></div>
+
+            <div class="bg-gradient-to-br from-sky-50 to-blue-50 border-2 border-sky-200 rounded-2xl p-5 md:p-8 mb-6">
+                <h3 class="text-lg md:text-xl font-bold text-sky-900 mb-4 text-center">Predio con Alto Potencial, Acceso a Gestionar</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                    <div class="bg-white/80 rounded-xl p-4 shadow-sm">
+                        <p class="text-3xl md:text-4xl font-black text-green-700">~75%</p>
+                        <p class="text-xs font-semibold text-gray-600 mt-1">Cobertura bosque nativo</p>
+                        <p class="text-[10px] text-gray-400 mt-0.5">Araucaria-Lenga</p>
+                    </div>
+                    <div class="bg-white/80 rounded-xl p-4 shadow-sm">
+                        <p class="text-2xl md:text-3xl font-black text-amber-600">1,4 km</p>
+                        <p class="text-xs font-semibold text-gray-600 mt-1">Al camino público</p>
+                        <p class="text-[10px] text-gray-400 mt-0.5">Serv. tránsito a 2,3 km</p>
+                    </div>
+                    <div class="bg-white/80 rounded-xl p-4 shadow-sm">
+                        <p class="text-2xl md:text-3xl font-black text-amber-600">Araucaria</p>
+                        <p class="text-xs font-semibold text-gray-600 mt-1">Monumento Natural</p>
+                        <p class="text-[10px] text-gray-400 mt-0.5">Corta prohibida</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-5 md:p-6 border border-gray-100">
+                <ol class="space-y-4 text-sm text-gray-700">
+                    <li class="flex gap-3">
+                        <span class="font-bold text-sky-600 shrink-0">1.</span>
+                        <p><strong>Accesos:</strong> Existe 1 servidumbre peatonal dentro del predio y otra en su borde. A 0,9 km hay una servidumbre de tipo no confirmado; la de tránsito confirmada más cercana está a <strong>2,3 km</strong>. Camino público a <strong>1,4 km</strong> del borde. <strong>Falta conexión vehicular directa</strong> al predio. Formalizar esa conexión es prerrequisito para cualquier proyecto.</p>
+                    </li>
+                    <li class="flex gap-3">
+                        <span class="font-bold text-sky-600 shrink-0">2.</span>
+                        <p><strong>Bosque nativo valioso:</strong> ~650 ha de bosque Araucaria-Lenga en buen estado. Alta biomasa, captura activa de carbono, y valor ecológico excepcional por la presencia de Araucaria (Monumento Natural).</p>
+                    </li>
+                    <li class="flex gap-3">
+                        <span class="font-bold text-sky-600 shrink-0">3.</span>
+                        <p><strong>Elegibilidad IFM — parcial:</strong> Cumple en recurso forestal (bosque extenso, sin protección formal, riesgo demostrable). Servidumbre de tránsito confirmada a 2,3 km del borde (otra a 0,9 km de tipo no confirmado). <strong>Falta conexión vehicular directa</strong> al predio. La Araucaria protegida complica la demostración de capacidad de extracción. Estrategia: IFM selectivo sobre Lenga + REDD+ complementario.</p>
+                    </li>
+                    <li class="flex gap-3">
+                        <span class="font-bold text-sky-600 shrink-0">4.</span>
+                        <p><strong>Contexto indígena:</strong> Colindancia con Ex Reserva Indígena y Comunidad Quinquén (Pehuenche). Ley 19.253 aplica a toda gestión de accesos y negociación de servidumbres. Se recomienda asesoría jurídica especializada.</p>
+                    </li>
+                    <li class="flex gap-3">
+                        <span class="font-bold text-sky-600 shrink-0">5.</span>
+                        <p><strong>Potencial comparado con Peumayen:</strong> A diferencia de Jungla Peumayen (ya bajo protección MMA), estos predios están <strong>sin protección formal</strong>, lo que favorece elegibilidad IFM/REDD+. Sin embargo, el acceso limitado y la protección de Araucaria son obstáculos que Peumayen no tiene.</p>
+                    </li>
+                    <li class="flex gap-3">
+                        <span class="font-bold text-sky-600 shrink-0">6.</span>
+                        <p><strong>Próximos pasos:</strong> (1) Verificar servidumbres inscritas en CBR de Victoria, (2) Gestionar servidumbre vehicular al camino público, (3) Solicitar catastro CONAF oficial, (4) Visita a terreno con vuelo de drone (LiDAR + multiespectral) para mapeo preciso de cobertura forestal, accesos y biomasa, (5) Evaluar factibilidad IFM selectivo con asesoría en mercado de carbono.</p>
+                    </li>
+                </ol>
+            </div>
+        </section>
+
+        <!-- RECOMENDACIONES -->
+        <section class="mb-8 md:mb-14">
+            <h2 class="text-2xl md:text-3xl font-bold text-slate-800 text-center mb-2">Recomendaciones</h2>
+            <div class="section-divider"></div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-white rounded-xl shadow-lg p-5 border-l-4 border-red-500">
+                    <p class="text-xs font-bold text-red-800 uppercase mb-2">Urgente — Accesos</p>
+                    <ul class="text-sm text-gray-700 space-y-2">
+                        <li>1. Verificar inscripción de servidumbres en <strong>CBR de Victoria</strong> (anchos, tipo, condiciones)</li>
+                        <li>2. Gestionar servidumbre de <strong>tránsito vehicular</strong> al camino público (negociación o vía judicial)</li>
+                        <li>3. Revisar <strong>plano de subdivisión original</strong> para trazados históricos de servidumbres</li>
+                    </ul>
+                </div>
+                <div class="bg-white rounded-xl shadow-lg p-5 border-l-4 border-blue-500">
+                    <p class="text-xs font-bold text-blue-800 uppercase mb-2">Medio plazo — Valorización</p>
+                    <ul class="text-sm text-gray-700 space-y-2">
+                        <li>4. Solicitar <strong>catastro CONAF</strong> oficial del bosque nativo</li>
+                        <li>5. <strong>Visita a terreno</strong> en temporada estival para verificar caminos y estado del bosque</li>
+                        <li>6. <strong>Vuelo de drone</strong> (LiDAR + multiespectral) para generar modelo digital de elevación, ortomosaico de alta resolución, y mapeo preciso de cobertura forestal, caminos existentes y servidumbres en terreno. Permite cuantificar biomasa por rodal y detectar accesos no documentados en el levantamiento topográfico</li>
+                        <li>7. Evaluar <strong>IFM selectivo</strong> (Lenga) + REDD+ con asesoría en mercado de carbono</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- REFERENCIAS -->
+        <section id="referencias" class="mb-8 md:mb-14">
+            <h2 class="text-2xl md:text-3xl font-bold text-slate-800 text-center mb-2">Referencias y Fuentes</h2>
+            <div class="section-divider"></div>
+            <p class="text-center text-xs md:text-sm text-gray-400 mb-6 max-w-2xl mx-auto">Fuentes de acceso público verificadas en abril de 2026.</p>
+
+            <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+                <div class="p-4 bg-sky-50 border-b border-sky-100">
+                    <h3 class="font-bold text-sm text-sky-800 uppercase tracking-wider">Normativa Legal</h3>
+                </div>
+                <div class="divide-y divide-gray-100">
+                    <div class="p-4 flex gap-3">
+                        <span class="text-sky-700 font-bold text-sm shrink-0 w-6">[1]</span>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">D.S. 43/1990 MINAGRI — Monumento Natural Araucaria araucana</p>
+                            <p class="text-xs text-gray-500 mt-0.5">Declara Monumento Natural a la Araucaria. Prohíbe corta, destrucción y comercialización. Diario Oficial 03/04/1990.</p>
+                            <a href="https://www.bcn.cl/leychile" target="_blank" rel="noopener noreferrer" class="text-xs text-sky-600 hover:underline mt-1 inline-block">bcn.cl/leychile</a>
+                        </div>
+                    </div>
+                    <div class="p-4 flex gap-3">
+                        <span class="text-sky-700 font-bold text-sm shrink-0 w-6">[2]</span>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">D.S. 29/1976 MINAGRI — Veda de explotación de Araucaria</p>
+                            <p class="text-xs text-gray-500 mt-0.5">Decreto previo que prohibió la explotación de Araucaria araucana.</p>
+                        </div>
+                    </div>
+                    <div class="p-4 flex gap-3">
+                        <span class="text-sky-700 font-bold text-sm shrink-0 w-6">[3]</span>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">Ley 19.253 (1993) — Ley Indígena</p>
+                            <p class="text-xs text-gray-500 mt-0.5">Normas sobre protección, fomento y desarrollo de los indígenas. Crea CONADI. Art. 13: inalienabilidad de tierras indígenas. Art. 20: Fondo de Tierras (mecanismo de adquisición Quinquén).</p>
+                            <a href="https://www.bcn.cl/leychile/navegar?idNorma=30620" target="_blank" rel="noopener noreferrer" class="text-xs text-sky-600 hover:underline mt-1 inline-block">bcn.cl/leychile/navegar?idNorma=30620</a>
+                        </div>
+                    </div>
+                    <div class="p-4 flex gap-3">
+                        <span class="text-sky-700 font-bold text-sm shrink-0 w-6">[4]</span>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">Ley 20.283 (2008) — Ley de Bosque Nativo</p>
+                            <p class="text-xs text-gray-500 mt-0.5">Recuperación del bosque nativo y fomento forestal. Aplica a toda intervención forestal en el predio.</p>
+                            <a href="https://www.bcn.cl/leychile/navegar?idNorma=274894" target="_blank" rel="noopener noreferrer" class="text-xs text-sky-600 hover:underline mt-1 inline-block">bcn.cl/leychile/navegar?idNorma=274894</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden mt-4">
+                <div class="p-4 bg-green-50 border-b border-green-100">
+                    <h3 class="font-bold text-sm text-green-800 uppercase tracking-wider">Científicas — Carbono y Biomasa</h3>
+                </div>
+                <div class="divide-y divide-gray-100">
+                    <div class="p-4 flex gap-3">
+                        <span class="text-green-700 font-bold text-sm shrink-0 w-6">[5]</span>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">Gayoso, J. & Schlegel, B. (2003)</p>
+                            <p class="text-xs text-gray-500 mt-0.5">Estudio de carbono en bosques templados de Chile. Carbono en bosques Araucaria: 130–180 tC/ha (aéreo + raíces).</p>
+                        </div>
+                    </div>
+                    <div class="p-4 flex gap-3">
+                        <span class="text-green-700 font-bold text-sm shrink-0 w-6">[6]</span>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">Schlegel, B. & Donoso, P. (2008)</p>
+                            <p class="text-xs text-gray-500 mt-0.5">Biomasa y ecuaciones alométricas para bosque nativo de Chile. AGB Araucaria-Lenga: 200–350 Mg/ha en rodales maduros.</p>
+                        </div>
+                    </div>
+                    <div class="p-4 flex gap-3">
+                        <span class="text-green-700 font-bold text-sm shrink-0 w-6">[7]</span>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">CONAF (2016) — Inventario Forestal Nacional Continuo</p>
+                            <p class="text-xs text-gray-500 mt-0.5">Carbono aéreo promedio tipo forestal Araucaria: ~120 tC/ha. Rango: 80–200 tC/ha según edad y densidad.</p>
+                            <a href="https://www.conaf.cl/nuestros-bosques/bosques-en-chile/inventario-forestal-nacional/" target="_blank" rel="noopener noreferrer" class="text-xs text-sky-600 hover:underline mt-1 inline-block">conaf.cl — Inventario Forestal</a>
+                        </div>
+                    </div>
+                    <div class="p-4 flex gap-3">
+                        <span class="text-green-700 font-bold text-sm shrink-0 w-6">[8]</span>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">Donoso, C. (2006)</p>
+                            <p class="text-xs text-gray-500 mt-0.5">Las especies arbóreas de los bosques templados de Chile y Argentina. Ecología y silvicultura. Editorial Marisa Cuneo.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden mt-4">
+                <div class="p-4 bg-amber-50 border-b border-amber-100">
+                    <h3 class="font-bold text-sm text-amber-800 uppercase tracking-wider">Institucionales y Territoriales</h3>
+                </div>
+                <div class="divide-y divide-gray-100">
+                    <div class="p-4 flex gap-3">
+                        <span class="text-amber-700 font-bold text-sm shrink-0 w-6">[9]</span>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">CONAF — Reserva Nacional Galletué</p>
+                            <p class="text-xs text-gray-500 mt-0.5">~1.100 ha, SNASPE. Adyacente al sector de estudio.</p>
+                            <a href="https://www.conaf.cl/parques-nacionales/" target="_blank" rel="noopener noreferrer" class="text-xs text-sky-600 hover:underline mt-1 inline-block">conaf.cl/parques-nacionales</a>
+                        </div>
+                    </div>
+                    <div class="p-4 flex gap-3">
+                        <span class="text-amber-700 font-bold text-sm shrink-0 w-6">[10]</span>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">DGA — Dirección General de Aguas</p>
+                            <p class="text-xs text-gray-500 mt-0.5">Cuenca del Río Biobío: 24.264 km², 380 km de longitud. Nacimiento en Laguna Galletué, Lonquimay.</p>
+                            <a href="https://dga.mop.gob.cl/" target="_blank" rel="noopener noreferrer" class="text-xs text-sky-600 hover:underline mt-1 inline-block">dga.mop.gob.cl</a>
+                        </div>
+                    </div>
+                    <div class="p-4 flex gap-3">
+                        <span class="text-amber-700 font-bold text-sm shrink-0 w-6">[11]</span>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">CONAF — Catastro de Recursos Vegetacionales Nativos de Chile</p>
+                            <p class="text-xs text-gray-500 mt-0.5">Tipos forestales según D.S. 259/1980. Tipo Forestal Araucaria dominante en Lonquimay.</p>
+                            <a href="https://www.conaf.cl/nuestros-bosques/bosques-en-chile/catastro-vegetacional/" target="_blank" rel="noopener noreferrer" class="text-xs text-sky-600 hover:underline mt-1 inline-block">conaf.cl — Catastro Vegetacional</a>
+                        </div>
+                    </div>
+                    <div class="p-4 flex gap-3">
+                        <span class="text-amber-700 font-bold text-sm shrink-0 w-6">[12]</span>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">CITES — Araucaria araucana, Apéndice I</p>
+                            <p class="text-xs text-gray-500 mt-0.5">Listada desde 1979. Prohibición de comercio internacional.</p>
+                            <a href="https://checklist.cites.org/" target="_blank" rel="noopener noreferrer" class="text-xs text-sky-600 hover:underline mt-1 inline-block">checklist.cites.org</a>
+                        </div>
+                    </div>
+                    <div class="p-4 flex gap-3">
+                        <span class="text-amber-700 font-bold text-sm shrink-0 w-6">[13]</span>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">Archivos KMZ proporcionados</p>
+                            <p class="text-xs text-gray-500 mt-0.5">Los Huemules 872 ha (8 vértices) + Subdivisión Galletué 07/04/2026 (234 pts, 421 polígonos, 454 líneas). Datum WGS84. Generados en Google Earth Pro 7.3.7.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- NOTA METODOLÓGICA -->
+        <section class="mb-8 md:mb-14">
+            <div class="bg-sky-50 rounded-xl p-5 border border-sky-200">
+                <h4 class="font-bold text-xs text-sky-800 mb-2 uppercase tracking-wider">Nota Metodológica</h4>
+                <p class="text-xs text-gray-600">
+                    Los valores de superficie, perímetro y centroide fueron calculados desde coordenadas WGS84 de los archivos KMZ mediante fórmula de Haversine. Las distancias a servidumbres y caminos públicos se midieron al borde más cercano del polígono Los Huemules (distancia punto-segmento, Haversine). Las estimaciones de cobertura vegetal son <strong>aproximaciones basadas en el ecosistema típico</strong> del sector Laguna Galletué (1.100-1.500 msnm) y la distribución conocida de Araucaria araucana en la zona. <strong>No corresponden a procesamiento de imágenes satelitales reales.</strong> Para valores exactos se requiere procesamiento de imágenes Sentinel-2 y/o visita a terreno con drone LiDAR + multiespectral.
+                </p>
+            </div>
+        </section>
+
+        <!-- CONFIDENCIALIDAD -->
+        <section class="mb-8 text-center">
+            <div class="inline-block bg-gray-100 rounded-lg px-6 py-3 border border-gray-200">
+                <p class="text-[10px] text-gray-400 uppercase tracking-widest font-semibold">Documento Confidencial</p>
+                <p class="text-xs text-gray-500 mt-1">Prohibida su reproducción o distribución sin autorización de Cussen Consultoría Geoespacial.</p>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-gradient-to-b from-slate-900 to-slate-950 text-center py-8 md:py-10 px-4">
+        <a href="/index.html" class="font-black text-white text-lg md:text-xl tracking-tight no-underline hover:text-sky-200 transition">CUSSEN</a>
+        <p class="text-sky-300 text-xs md:text-sm mt-1">Servicios Profesionales de Teledetección y Geoespacial</p>
+        <p class="text-slate-500 text-[10px] md:text-xs mt-2">Transformando datos geoespaciales en decisiones estratégicas</p>
+        <div class="mt-4 md:mt-6 flex justify-center gap-4 md:gap-6 text-[10px] md:text-xs text-slate-600">
+            <span>contacto@cussen.cl</span>
+            <span>|</span>
+            <span>cussen.cl</span>
+        </div>
+        <p class="text-slate-800 text-[9px] md:text-[10px] mt-4 md:mt-6">IT-2026-FCH-003 | Abril 2026 | Todos los derechos reservados</p>
+    </footer>
+
+    <!-- JAVASCRIPT -->
+    <script>
+    // Polygon: Los Huemules 872 ha (lat, lon format for Leaflet)
+    const huemules = [
+        [-38.65884740064342, -71.33138973115959],
+        [-38.65759106827304, -71.30974916173714],
+        [-38.65062220467038, -71.30709873861547],
+        [-38.62667956840972, -71.3088076927945],
+        [-38.62987644601697, -71.31552782875417],
+        [-38.62841571534754, -71.33106680274136],
+        [-38.63846499924627, -71.34590465015634],
+        [-38.65884740064342, -71.33138973115959]
+    ];
+
+    // Servidumbres (lat, lon)
+    const servidumbres = [
+        { lat: -38.6457915907, lon: -71.3096694755, tipo: "Servidumbre peatonal", dist: "DENTRO (0,2 km del borde)" },
+        { lat: -38.6582133157, lon: -71.3152460262, tipo: "Servidumbre peatonal", dist: "En el borde" },
+        { lat: -38.660972489, lon: -71.2998145311, tipo: "Servidumbre de... (tipo no confirmado)", dist: "0,9 km del borde" },
+        { lat: -38.6626702768, lon: -71.2984223284, tipo: "Servidumbre", dist: "1,1 km del borde" },
+        { lat: -38.6333094717, lon: -71.2940358187, tipo: "Servidumbre peatonal", dist: "1,2 km del borde" },
+        { lat: -38.6500452949, lon: -71.2912725237, tipo: "Servidumbre peatonal", dist: "1,4 km del borde" },
+        { lat: -38.6568960191, lon: -71.2814543861, tipo: "Servidumbre de tránsito", dist: "2,3 km del borde" },
+        { lat: -38.6263500315, lon: -71.2575376413, tipo: "Servidumbre peatonal", dist: "4,5 km del borde" },
+        { lat: -38.6794380632, lon: -71.2420577426, tipo: "Servidumbre de tránsito", dist: "6,4 km del borde" }
+    ];
+
+    // Caminos públicos (lat, lon)
+    const caminos = [
+        { lat: -38.6682129515, lon: -71.3426021124, nombre: "Camino público (W)", dist: "1,4 km del borde" },
+        { lat: -38.6977793486, lon: -71.2479640471, nombre: "Camino público (SE)", dist: "7,0 km del borde" },
+        { lat: -38.6846601983, lon: -71.2109619896, nombre: "Camino público (E)", dist: "9,1 km del borde" }
+    ];
+
+    // Puntos de referencia
+    const referencias = [
+        { lat: -38.6674835033, lon: -71.3136992062, nombre: "746 Mirador" },
+        { lat: -38.6720321768, lon: -71.3072777814, nombre: "r-1470" },
+        { lat: -38.6951751453, lon: -71.2327981128, nombre: "Laguna Galletué" }
+    ];
+
+    // Map initialization
+    const map = L.map('map', { zoomControl: false }).setView([-38.648, -71.290], 12);
+    L.control.zoom({ position: 'topright' }).addTo(map);
+    L.control.scale({ metric: true, imperial: false, position: 'bottomright' }).addTo(map);
+
+    const layers = {
+        satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'ESRI World Imagery', maxZoom: 18 }),
+        topo: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { attribution: 'OpenTopoMap', maxZoom: 17 }),
+        osm: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: 'OSM', maxZoom: 19 })
+    };
+    let currentLayer = layers.satellite;
+    currentLayer.addTo(map);
+
+    const labelsLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { maxZoom: 18, pane: 'overlayPane' });
+    labelsLayer.addTo(map);
+
+    // Polygon Los Huemules
+    const huemulesPoly = L.polygon(huemules, { color: '#0ea5e9', weight: 3, fillColor: '#0ea5e9', fillOpacity: 0.2 }).addTo(map);
+    huemulesPoly.bindTooltip('<strong>Predio Los Huemules</strong><br>872 ha', { permanent: false, direction: 'center' });
+
+    // Centroid marker
+    L.marker([-38.6415, -71.3214]).addTo(map).bindPopup('<strong>Los Huemules</strong><br>872 ha | Lonquimay<br><span style="font-family:monospace;font-size:11px">38.642°S, 71.321°W</span>');
+
+    // Servidumbres (red circles)
+    servidumbres.forEach(s => {
+        const color = s.tipo.includes('tránsito') ? '#f59e0b' : '#ef4444';
+        L.circleMarker([s.lat, s.lon], { radius: 6, color: color, fillColor: color, fillOpacity: 0.8, weight: 1 })
+            .addTo(map)
+            .bindPopup('<strong>' + s.tipo + '</strong><br>Distancia: ' + s.dist + '<br><span style="font-family:monospace;font-size:10px">' + s.lat.toFixed(4) + '°S, ' + Math.abs(s.lon).toFixed(4) + '°W</span>');
+    });
+
+    // Caminos públicos (green circles)
+    caminos.forEach(c => {
+        L.circleMarker([c.lat, c.lon], { radius: 8, color: '#22c55e', fillColor: '#22c55e', fillOpacity: 0.8, weight: 2 })
+            .addTo(map)
+            .bindPopup('<strong>' + c.nombre + '</strong><br>Distancia: ' + c.dist);
+    });
+
+    // Referencias (amber circles)
+    referencias.forEach(r => {
+        L.circleMarker([r.lat, r.lon], { radius: 5, color: '#f59e0b', fillColor: '#f59e0b', fillOpacity: 0.7, weight: 1 })
+            .addTo(map)
+            .bindPopup('<strong>' + r.nombre + '</strong>');
+    });
+
+    // Fit to show all features
+    const allPoints = huemules.concat(servidumbres.map(s => [s.lat, s.lon])).concat(caminos.map(c => [c.lat, c.lon]));
+    map.fitBounds(L.latLngBounds(allPoints), { padding: [30, 30] });
+
+    // Coordinate display
+    const coordDisplay = document.getElementById('coord-display');
+    map.on('mousemove', function(e) {
+        coordDisplay.textContent = 'Lat: ' + e.latlng.lat.toFixed(5) + ' | Lon: ' + e.latlng.lng.toFixed(5);
+    });
+
+    function setLayer(layerName, btn) {
+        map.removeLayer(currentLayer);
+        if (layerName === 'satellite') { if (!map.hasLayer(labelsLayer)) labelsLayer.addTo(map); }
+        else { if (map.hasLayer(labelsLayer)) map.removeLayer(labelsLayer); }
+        currentLayer = layers[layerName];
+        currentLayer.addTo(map);
+        document.querySelectorAll('.layer-btn').forEach(b => b.classList.remove('active', 'bg-white'));
+        btn.classList.add('active', 'bg-white');
+    }
+    </script>
+</body>
+</html>
