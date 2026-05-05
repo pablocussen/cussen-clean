@@ -359,6 +359,31 @@ a{color:var(--cyan);text-decoration:none}
 .map-picker-save:active{transform:scale(.97);opacity:.9}
 .map-picker-save:disabled{opacity:.4;cursor:not-allowed}
 
+/* All-spots map view */
+.all-map-legend{position:absolute;bottom:14px;left:14px;z-index:1000;display:flex;flex-direction:column;gap:5px;background:rgba(7,11,22,.85);backdrop-filter:blur(10px);padding:8px 12px;border-radius:10px;border:1px solid rgba(148,163,184,.12);font-size:.62rem;color:var(--text)}
+.all-map-legend span{display:flex;align-items:center;gap:6px;font-weight:500}
+.all-map-legend i{display:inline-block;width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.all-map-legend .dot-go{background:#4ade80;box-shadow:0 0 6px #4ade80}
+.all-map-legend .dot-mb{background:#facc15}
+.all-map-legend .dot-no{background:#f87171}
+.all-map-legend .dot-cu{background:#fb923c;box-shadow:0 0 6px #fb923c}
+
+/* Map popup styles */
+.leaflet-popup-content-wrapper{background:rgba(7,11,22,.95) !important;border:1px solid rgba(34,211,238,.25) !important;color:var(--text) !important;border-radius:12px !important;box-shadow:0 8px 32px rgba(0,0,0,.5) !important;backdrop-filter:blur(8px)}
+.leaflet-popup-tip{background:rgba(7,11,22,.95) !important;border:1px solid rgba(34,211,238,.25) !important}
+.leaflet-popup-content{margin:12px 14px !important;font-family:'Inter',sans-serif !important}
+.leaflet-popup-close-button{color:var(--muted) !important;font-size:18px !important;padding:8px 8px 0 0 !important}
+.map-popup .mp-name{font-size:.9rem;font-weight:800;letter-spacing:-.2px;line-height:1.2;color:var(--text);margin-bottom:2px}
+.map-popup .mp-region{font-size:.6rem;color:var(--muted);margin-bottom:8px;font-weight:500}
+.map-popup .mp-wind{font-size:.7rem;color:var(--text);margin-bottom:3px;display:flex;align-items:baseline;gap:4px}
+.map-popup .mp-num{font-size:1.4rem;font-weight:900;letter-spacing:-.5px;line-height:1}
+.map-popup .mp-unit{font-size:.6rem;color:var(--muted);font-weight:500}
+.map-popup .mp-meta{font-size:.6rem;color:var(--muted);margin-bottom:6px}
+.map-popup .mp-window{font-size:.62rem;color:var(--green);font-weight:700;background:rgba(74,222,128,.1);padding:4px 8px;border-radius:6px;margin-bottom:8px;border:1px solid rgba(74,222,128,.2)}
+.map-popup .mp-loading{font-size:.65rem;color:var(--dim);font-style:italic;margin-bottom:8px}
+.map-popup .mp-btn{width:100%;background:var(--cyan);color:#020617;border:none;padding:7px 12px;border-radius:8px;font-family:inherit;font-size:.68rem;font-weight:700;cursor:pointer;transition:all .15s;letter-spacing:.2px}
+.map-popup .mp-btn:active{transform:scale(.96);opacity:.9}
+
 /* Pull to refresh */
 .ptr-indicator{text-align:center;height:0;overflow:hidden;transition:height .2s;color:var(--cyan);font-size:.7rem;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px}
 .ptr-indicator.pulling{height:40px}
@@ -403,6 +428,7 @@ a{color:var(--cyan);text-decoration:none}
     <span class="location-badge" id="locationBadge"><svg class="ico-inline" viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="6" r="2.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1C5.2 1 3 3.2 3 6c0 3.5 5 8.5 5 8.5s5-5 5-8.5C13 3.2 10.8 1 8 1z" fill="none" stroke="currentColor" stroke-width="1.5"/></svg> Localizando...</span>
   </div>
   <div style="display:flex;align-items:center;gap:4px">
+    <button class="btn-icon" id="mapBtn" onclick="showAllSpotsMap()" title="Mapa"><svg class="ico-btn" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l5-2 4 2 5-2v12l-5 2-4-2-5 2z"/><path d="M8 4v14M12 6v14" opacity=".5"/></svg></button>
     <button class="lang-toggle" id="langBtn" onclick="toggleLang()">EN</button>
     <button class="btn-icon" id="refreshBtn" onclick="refreshData()" title="Actualizar"><svg class="ico-btn" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 10a7 7 0 0112.9-3.7M17 10a7 7 0 01-12.9 3.7"/><path d="M3 4v4h4M17 16v-4h-4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
   </div>
@@ -2092,6 +2118,118 @@ function closeMapPicker() {
   _mapPickerMarker = null;
   _pickedLat = null;
   _pickedLon = null;
+}
+
+// ========== ALL SPOTS MAP VIEW ==========
+let _allMapInstance = null;
+
+async function showAllSpotsMap() {
+  // Build overlay
+  const overlay = document.createElement('div');
+  overlay.id = 'allSpotsMap';
+  overlay.className = 'map-picker';
+  overlay.innerHTML = `
+    <div class="map-picker-header">
+      <h3>${lang==='es'?'Spots en el mapa':'Spots map'}</h3>
+      <button class="map-picker-close" onclick="closeAllSpotsMap()" aria-label="Close">
+        <svg viewBox="0 0 20 20" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 5l10 10M15 5l-10 10" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="map-picker-body" style="position:relative">
+      <div id="allSpotsMapEl" style="width:100%;height:100%"></div>
+      <div id="allSpotsLegend" class="all-map-legend">
+        <span><i class="dot-go"></i>${lang==='es'?'Se puede':'GO'}</span>
+        <span><i class="dot-mb"></i>${lang==='es'?'Posible':'Maybe'}</span>
+        <span><i class="dot-no"></i>${lang==='es'?'No go':'No go'}</span>
+        <span><i class="dot-cu"></i>${lang==='es'?'Tuyo':'Custom'}</span>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  document.body.style.overflow = 'hidden';
+
+  await loadLeaflet();
+  const centerLat = userLat || -38;
+  const centerLon = userLon || -73;
+  const zoom = userLat ? 8 : 5;
+
+  _allMapInstance = L.map('allSpotsMapEl', { zoomControl: false, attributionControl: false }).setView([centerLat, centerLon], zoom);
+  L.control.zoom({ position: 'bottomright' }).addTo(_allMapInstance);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 18 }).addTo(_allMapInstance);
+
+  // User location marker
+  if (userLat) {
+    L.circleMarker([userLat, userLon], {
+      radius: 8, fillColor: '#22d3ee', fillOpacity: 1, color: '#fff', weight: 2
+    }).addTo(_allMapInstance);
+  }
+
+  // Add all spots as colored markers
+  const customIds = new Set(JSON.parse(localStorage.getItem('ks_custom_spots') || '[]').map(s => s.id));
+
+  SPOTS.forEach(spot => {
+    const st = getSpotStatus(spot);
+    const isCustom = customIds.has(spot.id);
+    let color = '#94a3b8';
+    if (isCustom) color = '#fb923c';
+    else if (st.status === 'green') color = '#4ade80';
+    else if (st.status === 'yellow') color = '#facc15';
+    else if (st.status === 'red') color = '#f87171';
+
+    const marker = L.circleMarker([spot.lat, spot.lon], {
+      radius: isCustom ? 8 : 7,
+      fillColor: color,
+      fillOpacity: .9,
+      color: '#0f172a',
+      weight: 2
+    }).addTo(_allMapInstance);
+
+    // Build popup content
+    const d = spotData[spot.id];
+    let popupHtml = `<div class="map-popup">
+      <div class="mp-name">${spot.name}</div>
+      <div class="mp-region">${spot.region}</div>`;
+
+    if (d?.wind?.current) {
+      const wind = Math.round(shoreWindCorrection(d.wind.current.wind_speed_10m, spot.shore));
+      const dir = d.wind.current.wind_direction_10m;
+      const gust = Math.round(shoreWindCorrection(d.wind.current.wind_gusts_10m, spot.shore));
+      const wave = d?.marine?.current?.wave_height;
+      popupHtml += `<div class="mp-wind"><span class="mp-num" style="color:${color}">${wind}</span><span class="mp-unit">kn</span> · ${degToCompass(dir)}</div>`;
+      popupHtml += `<div class="mp-meta">${lang==='es'?'Rafaga':'Gust'} ${gust}kn${wave!=null?' · '+wave.toFixed(1)+'m':''}</div>`;
+      const analysis = analyzeBestMoment(spot);
+      if (analysis.bestWindow) {
+        popupHtml += `<div class="mp-window">${analysis.bestWindow.label} · ${analysis.bestWindow.detail}</div>`;
+      }
+      const dist = userLat ? Math.round(haversine(userLat, userLon, spot.lat, spot.lon)) : null;
+      popupHtml += `<button class="mp-btn" onclick="closeAllSpotsMap();scrollToSpot('${spot.id}')">${lang==='es'?'Ver detalle':'See detail'}${dist?' · '+dist+'km':''}</button>`;
+    } else {
+      popupHtml += `<div class="mp-loading">${lang==='es'?'Sin datos':'No data'}</div>`;
+      popupHtml += `<button class="mp-btn" onclick="closeAllSpotsMap();scrollToSpot('${spot.id}')">${lang==='es'?'Cargar':'Load'}</button>`;
+    }
+    popupHtml += '</div>';
+
+    marker.bindPopup(popupHtml, { maxWidth: 240, className: 'map-popup-wrap' });
+  });
+
+  // Fit bounds if user has location
+  if (userLat) {
+    const nearbyBounds = SPOTS
+      .map(s => ({ ...s, dist: haversine(userLat, userLon, s.lat, s.lon) }))
+      .filter(s => s.dist <= 250)
+      .map(s => [s.lat, s.lon]);
+    nearbyBounds.push([userLat, userLon]);
+    if (nearbyBounds.length > 1) {
+      _allMapInstance.fitBounds(nearbyBounds, { padding: [40, 40] });
+    }
+  }
+}
+
+function closeAllSpotsMap() {
+  const overlay = document.getElementById('allSpotsMap');
+  if (overlay) overlay.remove();
+  document.body.style.overflow = '';
+  if (_allMapInstance) { _allMapInstance.remove(); _allMapInstance = null; }
 }
 
 function savePickedSpot() {
