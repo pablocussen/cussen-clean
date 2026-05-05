@@ -1167,205 +1167,448 @@ async function generateSpotImage(spotId) {
   const seaT = d?.marine?.current?.sea_surface_temperature;
   const analysis = analyzeBestMoment(spot);
 
-  // 1080x1350 (Instagram portrait), high DPI
+  // 1080x1350 (Instagram portrait, optimal for WhatsApp preview)
   const W = 1080, H = 1350;
   const canvas = document.createElement('canvas');
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext('2d');
 
-  // Background gradient based on status
-  const colors = st.status === 'green' ? ['#0a2818','#0f172a','#020617']
-              : st.status === 'yellow' ? ['#2a1d05','#0f172a','#020617']
-              : ['#1a0510','#0f172a','#020617'];
-  const bg = ctx.createLinearGradient(0, 0, W, H);
-  bg.addColorStop(0, colors[0]); bg.addColorStop(0.5, colors[1]); bg.addColorStop(1, colors[2]);
+  const statusColor = st.status === 'green' ? '#4ade80' : st.status === 'yellow' ? '#facc15' : '#f87171';
+  const statusGlow = statusColor;
+
+  // ===== BACKGROUND: deep gradient with status accent =====
+  const bg = ctx.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, '#0b1220');
+  bg.addColorStop(0.5, '#070b16');
+  bg.addColorStop(1, '#020617');
   ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
 
-  // Status accent radial
-  const statusColor = st.status === 'green' ? '#4ade80' : st.status === 'yellow' ? '#facc15' : '#f87171';
-  const accentGrad = ctx.createRadialGradient(W*0.7, H*0.2, 50, W*0.7, H*0.2, 600);
-  accentGrad.addColorStop(0, statusColor + '33');
-  accentGrad.addColorStop(1, 'transparent');
-  ctx.fillStyle = accentGrad; ctx.fillRect(0, 0, W, H);
+  // Subtle noise/grain effect with semi-transparent dots
+  ctx.fillStyle = 'rgba(148,163,184,.02)';
+  for (let i = 0; i < 800; i++) {
+    ctx.fillRect(Math.random()*W, Math.random()*H, 2, 2);
+  }
 
-  // Wind streaks decoration
-  ctx.strokeStyle = '#22d3ee'; ctx.lineCap = 'round';
-  for (let i = 0; i < 8; i++) {
-    const y = 100 + i * 80;
-    ctx.globalAlpha = 0.06 + Math.random() * 0.08;
-    ctx.lineWidth = 2 + Math.random() * 3;
+  // Status glow at top
+  const statusRadial = ctx.createRadialGradient(W/2, -100, 100, W/2, -100, 800);
+  statusRadial.addColorStop(0, statusColor + '30');
+  statusRadial.addColorStop(0.5, statusColor + '12');
+  statusRadial.addColorStop(1, 'transparent');
+  ctx.fillStyle = statusRadial; ctx.fillRect(0, 0, W, H);
+
+  // Cyan accent bottom-left
+  const cyanRadial = ctx.createRadialGradient(100, H, 50, 100, H, 700);
+  cyanRadial.addColorStop(0, 'rgba(34,211,238,.18)');
+  cyanRadial.addColorStop(1, 'transparent');
+  ctx.fillStyle = cyanRadial; ctx.fillRect(0, 0, W, H);
+
+  // Wind streak decorations
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = '#22d3ee';
+  for (let i = 0; i < 12; i++) {
+    const y = 80 + Math.random() * (H - 200);
+    const x1 = Math.random() * W * 0.6;
+    const len = 100 + Math.random() * 250;
+    const grad = ctx.createLinearGradient(x1, y, x1 + len, y);
+    grad.addColorStop(0, 'rgba(34,211,238,0)');
+    grad.addColorStop(0.5, `rgba(34,211,238,${0.08 + Math.random() * 0.08})`);
+    grad.addColorStop(1, 'rgba(103,232,249,0)');
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = 1.5 + Math.random() * 2;
     ctx.beginPath();
-    ctx.moveTo(50 + Math.random() * 200, y);
-    ctx.lineTo(50 + Math.random() * 200 + 200 + Math.random() * 200, y);
+    ctx.moveTo(x1, y); ctx.lineTo(x1 + len, y);
     ctx.stroke();
   }
-  ctx.globalAlpha = 1;
 
-  // Header brand
-  ctx.font = '700 36px Inter,sans-serif';
-  const brandGrad = ctx.createLinearGradient(80, 0, 380, 0);
-  brandGrad.addColorStop(0, '#22d3ee'); brandGrad.addColorStop(0.5, '#60a5fa'); brandGrad.addColorStop(1, '#fb923c');
-  ctx.fillStyle = brandGrad;
-  ctx.fillText('KiteSpot', 80, 100);
-  ctx.font = '600 22px Inter,sans-serif';
-  ctx.fillStyle = '#94a3b8';
-  ctx.fillText('Chile', 270, 100);
-
-  // Status pill
-  const statusText = st.status === 'green' ? 'SE PUEDE' : st.status === 'yellow' ? 'POSIBLE' : 'NO SE PUEDE';
-  ctx.font = '800 28px Inter,sans-serif';
-  const pillW = ctx.measureText(statusText).width + 60;
-  ctx.fillStyle = statusColor + '22';
-  ctx.strokeStyle = statusColor + '88';
-  ctx.lineWidth = 2;
-  roundRect(ctx, 80, 170, pillW, 60, 30, true, true);
-  ctx.fillStyle = statusColor;
-  ctx.fillText(statusText, 110, 210);
-
-  // Spot name
-  ctx.font = '900 80px Inter,sans-serif';
-  ctx.fillStyle = '#f1f5f9';
+  // ===== HEADER BRAND =====
   ctx.textBaseline = 'top';
-  let name = spot.name;
-  // Wrap if too long
-  if (ctx.measureText(name).width > W - 160) {
-    ctx.font = '900 64px Inter,sans-serif';
-  }
-  ctx.fillText(name, 80, 280);
+  ctx.font = '800 42px Inter,system-ui,sans-serif';
+  const brandGrad = ctx.createLinearGradient(70, 0, 380, 0);
+  brandGrad.addColorStop(0, '#22d3ee');
+  brandGrad.addColorStop(0.5, '#60a5fa');
+  brandGrad.addColorStop(1, '#fb923c');
+  ctx.fillStyle = brandGrad;
+  ctx.fillText('KiteSpot', 70, 75);
 
-  // Region
-  ctx.font = '500 26px Inter,sans-serif';
-  ctx.fillStyle = '#94a3b8';
-  ctx.fillText(spot.region + ' · ' + spot.level, 80, 380);
+  ctx.font = '600 22px Inter,sans-serif';
+  ctx.fillStyle = '#64748b';
+  ctx.fillText('Chile · cussen.cl/wind', 285, 90);
 
-  // BIG wind number
-  ctx.font = '900 280px Inter,sans-serif';
+  // Live indicator (top right)
   ctx.fillStyle = statusColor;
-  ctx.shadowColor = statusColor + '99';
-  ctx.shadowBlur = 50;
-  ctx.fillText(String(wind), 80, 460);
-  ctx.shadowBlur = 0;
-  // kn label
-  ctx.font = '600 50px Inter,sans-serif';
-  ctx.fillStyle = '#94a3b8';
-  const windWidth = ctx.measureText(String(wind)).width;
-  // Calc width with big font
-  ctx.font = '900 280px Inter,sans-serif';
-  const bigW = ctx.measureText(String(wind)).width;
-  ctx.font = '600 50px Inter,sans-serif';
-  ctx.fillText('kn', 80 + bigW + 20, 660);
-
-  // Direction with arrow
-  ctx.save();
-  ctx.translate(W - 200, 600);
-  ctx.rotate((dir + 180) * Math.PI / 180);
-  ctx.fillStyle = statusColor;
-  ctx.shadowColor = statusColor + '88';
-  ctx.shadowBlur = 30;
-  // Draw arrow
   ctx.beginPath();
-  ctx.moveTo(0, -80);
-  ctx.lineTo(40, 40);
-  ctx.lineTo(0, 10);
-  ctx.lineTo(-40, 40);
+  ctx.arc(W - 100, 90, 6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.shadowColor = statusColor; ctx.shadowBlur = 12;
+  ctx.beginPath();
+  ctx.arc(W - 100, 90, 6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.font = '700 18px Inter,sans-serif';
+  ctx.fillStyle = '#94a3b8';
+  ctx.textAlign = 'right';
+  ctx.fillText('LIVE', W - 115, 80);
+  ctx.textAlign = 'left';
+
+  // Time stamp
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+  ctx.font = '600 16px Inter,sans-serif';
+  ctx.fillStyle = '#64748b';
+  ctx.textAlign = 'right';
+  ctx.fillText(timeStr, W - 70, 102);
+  ctx.textAlign = 'left';
+
+  // ===== SECTION DIVIDER =====
+  ctx.strokeStyle = 'rgba(148,163,184,.08)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(70, 155); ctx.lineTo(W - 70, 155);
+  ctx.stroke();
+
+  // ===== STATUS PILL =====
+  const statusText = st.status === 'green' ? 'SE PUEDE NAVEGAR' : st.status === 'yellow' ? 'CONDICIONES POSIBLES' : 'NO RECOMENDADO';
+  ctx.font = '800 24px Inter,sans-serif';
+  const pillW = ctx.measureText(statusText).width + 70;
+  ctx.fillStyle = statusColor + '20';
+  ctx.strokeStyle = statusColor + '60';
+  ctx.lineWidth = 1.5;
+  roundRect(ctx, 70, 195, pillW, 54, 27, true, true);
+  // Pill dot
+  ctx.fillStyle = statusColor;
+  ctx.shadowColor = statusColor; ctx.shadowBlur = 12;
+  ctx.beginPath();
+  ctx.arc(98, 222, 6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = statusColor;
+  ctx.fillText(statusText, 120, 211);
+
+  // ===== SPOT NAME =====
+  let nameSize = 90;
+  ctx.font = `900 ${nameSize}px Inter,sans-serif`;
+  while (ctx.measureText(spot.name).width > W - 140 && nameSize > 56) {
+    nameSize -= 4;
+    ctx.font = `900 ${nameSize}px Inter,sans-serif`;
+  }
+  // Spot name with subtle gradient
+  const nameGrad = ctx.createLinearGradient(70, 0, W, 0);
+  nameGrad.addColorStop(0, '#f1f5f9');
+  nameGrad.addColorStop(1, '#cbd5e1');
+  ctx.fillStyle = nameGrad;
+  ctx.fillText(spot.name, 70, 290);
+
+  // Region with location pin
+  ctx.font = '600 24px Inter,sans-serif';
+  ctx.fillStyle = '#94a3b8';
+  // Draw pin icon
+  ctx.save();
+  ctx.translate(72, 408);
+  ctx.fillStyle = '#64748b';
+  ctx.beginPath();
+  ctx.arc(0, 0, 8, Math.PI, 0);
+  ctx.lineTo(0, 16);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = '#070b16';
+  ctx.beginPath();
+  ctx.arc(0, -2, 3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText(`${spot.region}  ·  ${spot.level}`, 95, 400);
+
+  // ===== HERO WIND DISPLAY =====
+  const heroY = 480;
+
+  // Wind number (huge, glowing)
+  ctx.font = '900 320px Inter,sans-serif';
+  ctx.fillStyle = '#070b16';
+  // Outline first for separation
+  ctx.fillText(String(wind), 70, heroY);
+  // Glow layers
+  ctx.shadowColor = statusGlow + 'cc';
+  ctx.shadowBlur = 60;
+  ctx.fillStyle = statusColor;
+  ctx.fillText(String(wind), 70, heroY);
+  ctx.shadowBlur = 30;
+  ctx.fillText(String(wind), 70, heroY);
+  ctx.shadowBlur = 0;
+
+  const bigW = ctx.measureText(String(wind)).width;
+
+  // "kn" unit
+  ctx.font = '700 56px Inter,sans-serif';
+  ctx.fillStyle = '#64748b';
+  ctx.fillText('kn', 80 + bigW + 16, heroY + 220);
+
+  // Gust line below
+  ctx.font = '600 28px Inter,sans-serif';
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText(`rafaga ${gust}kn`, 80 + bigW + 16, heroY + 290);
+
+  // ===== COMPASS / DIRECTION =====
+  const compX = W - 240, compY = heroY + 180;
+  const compR = 130;
+
+  // Outer ring
+  ctx.strokeStyle = 'rgba(148,163,184,.15)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(compX, compY, compR, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Inner ring
+  ctx.strokeStyle = 'rgba(148,163,184,.08)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.arc(compX, compY, compR - 18, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // N/E/S/W marks
+  ctx.font = '700 18px Inter,sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ['N','E','S','O'].forEach((label, i) => {
+    const angle = (i * 90 - 90) * Math.PI / 180;
+    const x = compX + Math.cos(angle) * (compR - 30);
+    const y = compY + Math.sin(angle) * (compR - 30);
+    ctx.fillStyle = label === 'N' ? '#cbd5e1' : '#475569';
+    ctx.fillText(label, x, y);
+  });
+
+  // Tick marks every 30°
+  ctx.strokeStyle = 'rgba(148,163,184,.2)';
+  for (let a = 0; a < 360; a += 30) {
+    const angle = (a - 90) * Math.PI / 180;
+    const x1 = compX + Math.cos(angle) * (compR - 4);
+    const y1 = compY + Math.sin(angle) * (compR - 4);
+    const x2 = compX + Math.cos(angle) * (compR);
+    const y2 = compY + Math.sin(angle) * (compR);
+    ctx.beginPath();
+    ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
+    ctx.stroke();
+  }
+
+  // Direction arrow (large, glowing)
+  ctx.save();
+  ctx.translate(compX, compY);
+  ctx.rotate((dir + 180) * Math.PI / 180);
+  ctx.shadowColor = statusGlow;
+  ctx.shadowBlur = 30;
+  ctx.fillStyle = statusColor;
+  ctx.beginPath();
+  ctx.moveTo(0, -88);
+  ctx.lineTo(34, 30);
+  ctx.lineTo(0, 14);
+  ctx.lineTo(-34, 30);
   ctx.closePath();
   ctx.fill();
   ctx.shadowBlur = 0;
+  // Center dot
+  ctx.fillStyle = '#070b16';
+  ctx.beginPath();
+  ctx.arc(0, 0, 8, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = statusColor;
+  ctx.beginPath();
+  ctx.arc(0, 0, 4, 0, Math.PI * 2);
+  ctx.fill();
   ctx.restore();
-  ctx.font = '800 50px Inter,sans-serif';
+
+  // Compass label below
+  ctx.font = '900 42px Inter,sans-serif';
   ctx.fillStyle = '#f1f5f9';
   ctx.textAlign = 'center';
-  ctx.fillText(degToCompass(dir), W - 200, 720);
-  ctx.textAlign = 'left';
-
-  // Data row: gust, waves, temp, sea
-  const dataY = 820;
-  ctx.font = '800 48px Inter,sans-serif';
-  ctx.fillStyle = '#f1f5f9';
-  ctx.font = '600 22px Inter,sans-serif';
+  ctx.fillText(degToCompass(dir), compX, compY + compR + 40);
+  ctx.font = '500 18px Inter,sans-serif';
   ctx.fillStyle = '#64748b';
+  ctx.fillText(`${Math.round(dir)}°`, compX, compY + compR + 76);
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
 
+  // ===== STATS ROW =====
   const stats = [];
-  stats.push({ label: 'RAFAGA', value: gust + ' kn' });
-  if (wave != null) stats.push({ label: 'OLAS', value: wave.toFixed(1) + ' m' });
-  if (temp != null) stats.push({ label: 'AIRE', value: Math.round(temp) + '°C' });
-  if (seaT != null) stats.push({ label: 'MAR', value: Math.round(seaT) + '°C' });
-
-  const colW = (W - 160) / stats.length;
-  stats.forEach((s, i) => {
-    const x = 80 + i * colW;
-    ctx.font = '600 22px Inter,sans-serif';
-    ctx.fillStyle = '#64748b';
-    ctx.fillText(s.label, x, dataY);
-    ctx.font = '800 48px Inter,sans-serif';
-    ctx.fillStyle = '#f1f5f9';
-    ctx.fillText(s.value, x, dataY + 32);
-  });
-
-  // Best window
-  if (analysis.bestWindow) {
-    const bw = analysis.bestWindow;
-    const wY = 980;
-    ctx.fillStyle = statusColor + '15';
-    ctx.strokeStyle = statusColor + '55';
-    ctx.lineWidth = 2;
-    roundRect(ctx, 80, wY, W - 160, 130, 20, true, true);
-    ctx.font = '600 22px Inter,sans-serif';
-    ctx.fillStyle = '#94a3b8';
-    ctx.fillText('MEJOR VENTANA', 110, wY + 25);
-    ctx.font = '800 42px Inter,sans-serif';
-    ctx.fillStyle = statusColor;
-    ctx.fillText(bw.label.toUpperCase() + ' · ' + bw.detail, 110, wY + 60);
+  if (wave != null) stats.push({ label: 'OLAS', value: wave.toFixed(1), unit: 'm', color: '#60a5fa' });
+  if (temp != null) stats.push({ label: 'AIRE', value: Math.round(temp), unit: '°C', color: '#fb923c' });
+  if (seaT != null) stats.push({ label: 'MAR', value: Math.round(seaT), unit: '°C', color: '#22d3ee' });
+  // Add gear pill
+  if (st.status !== 'red') {
+    const gear = getGear(wind);
+    stats.push({ label: 'VELA', value: gear.kite.split(' ')[0], unit: '', color: '#a78bfa' });
   }
 
-  // Next 6 hours
+  if (stats.length > 0) {
+    const statsY = 880;
+    const statsCardH = 96;
+    // Background card
+    ctx.fillStyle = 'rgba(30,41,59,.4)';
+    ctx.strokeStyle = 'rgba(148,163,184,.08)';
+    ctx.lineWidth = 1;
+    roundRect(ctx, 70, statsY, W - 140, statsCardH, 16, true, true);
+    const colW = (W - 140) / stats.length;
+    stats.forEach((s, i) => {
+      const x = 70 + i * colW;
+      // Divider
+      if (i > 0) {
+        ctx.strokeStyle = 'rgba(148,163,184,.08)';
+        ctx.beginPath();
+        ctx.moveTo(x, statsY + 18); ctx.lineTo(x, statsY + statsCardH - 18);
+        ctx.stroke();
+      }
+      ctx.textAlign = 'center';
+      ctx.font = '700 14px Inter,sans-serif';
+      ctx.fillStyle = '#64748b';
+      ctx.fillText(s.label, x + colW/2, statsY + 18);
+      ctx.font = '900 38px Inter,sans-serif';
+      ctx.fillStyle = '#f1f5f9';
+      const valText = String(s.value);
+      const valW = ctx.measureText(valText).width;
+      ctx.fillText(valText, x + colW/2 - (s.unit ? 6 : 0), statsY + 42);
+      if (s.unit) {
+        ctx.font = '600 18px Inter,sans-serif';
+        ctx.fillStyle = '#94a3b8';
+        ctx.textAlign = 'left';
+        ctx.fillText(s.unit, x + colW/2 + valW/2 - 4, statsY + 56);
+        ctx.textAlign = 'center';
+      }
+    });
+    ctx.textAlign = 'left';
+  }
+
+  // ===== BEST WINDOW =====
+  if (analysis.bestWindow) {
+    const bw = analysis.bestWindow;
+    const wY = 1010;
+    // Glowing card
+    ctx.shadowColor = statusGlow + '60';
+    ctx.shadowBlur = 30;
+    ctx.fillStyle = statusColor + '15';
+    roundRect(ctx, 70, wY, W - 140, 105, 18, true, false);
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = statusColor + '50';
+    ctx.lineWidth = 1.5;
+    roundRect(ctx, 70, wY, W - 140, 105, 18, false, true);
+
+    // Clock icon
+    ctx.strokeStyle = statusColor;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.arc(110, wY + 52, 18, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(110, wY + 42); ctx.lineTo(110, wY + 52);
+    ctx.lineTo(118, wY + 56);
+    ctx.stroke();
+
+    ctx.font = '700 16px Inter,sans-serif';
+    ctx.fillStyle = '#94a3b8';
+    ctx.fillText('MEJOR VENTANA', 145, wY + 26);
+    ctx.font = '900 32px Inter,sans-serif';
+    ctx.fillStyle = statusColor;
+    ctx.fillText(`${bw.label} · ${bw.detail}`, 145, wY + 52);
+  }
+
+  // ===== HOURLY BAR CHART =====
   if (d.wind.hourly) {
-    const now = new Date();
     const times = d.wind.hourly.time;
     const hours = [];
-    for (let i = 0; i < times.length && hours.length < 6; i++) {
+    for (let i = 0; i < times.length && hours.length < 8; i++) {
       const dt = new Date(times[i]);
       if (dt < now) continue;
       const hr = dt.getHours();
       if (hr < 10 || hr > 20) continue;
       const w = Math.round(shoreWindCorrection(d.wind.hourly.wind_speed_10m[i], spot.shore));
       const dd = d.wind.hourly.wind_direction_10m[i];
-      const isToday = dt.toDateString() === now.toDateString();
-      hours.push({ hr, w, dd, isToday, day: dt });
+      hours.push({ hr, w, dd, day: dt });
     }
     if (hours.length) {
-      const hY = 1140;
-      const hW = (W - 160) / 6;
+      const chY = 1145;
+      const chH = 130;
+      // Chart container
+      ctx.fillStyle = 'rgba(15,23,42,.4)';
+      ctx.strokeStyle = 'rgba(148,163,184,.08)';
+      ctx.lineWidth = 1;
+      roundRect(ctx, 70, chY, W - 140, chH, 16, true, true);
+
+      // Chart label
+      ctx.font = '700 14px Inter,sans-serif';
+      ctx.fillStyle = '#64748b';
+      ctx.fillText('PROXIMAS HORAS', 90, chY + 14);
+
+      // Bars
+      const maxW = 35;
+      const barAreaY = chY + 40;
+      const barAreaH = 70;
+      const barW = (W - 220) / hours.length;
+      let lastDay = null;
       hours.forEach((h, i) => {
-        const x = 80 + i * hW;
-        const cls = h.w >= spot.windMin && h.w <= spot.windMax ? '#4ade80' : h.w >= 8 ? '#facc15' : '#f87171';
-        ctx.fillStyle = cls + '12';
-        ctx.strokeStyle = cls + '40';
-        ctx.lineWidth = 1.5;
-        roundRect(ctx, x + 5, hY, hW - 10, 130, 14, true, true);
-        ctx.font = '600 18px Inter,sans-serif';
-        ctx.fillStyle = '#94a3b8';
+        const x = 90 + i * barW;
+        const ratio = Math.min(1, h.w / maxW);
+        const barH = Math.max(4, ratio * barAreaH);
+        const barY = barAreaY + barAreaH - barH;
+        const isFav = h.w >= spot.windMin && h.w <= spot.windMax;
+        const cls = isFav ? statusColor : h.w >= 8 ? '#facc15' : '#475569';
+
+        // Bar with gradient
+        const barGrad = ctx.createLinearGradient(0, barY, 0, barY + barH);
+        barGrad.addColorStop(0, cls);
+        barGrad.addColorStop(1, cls + '60');
+        ctx.fillStyle = barGrad;
+        roundRect(ctx, x + 4, barY, barW - 14, barH, 4, true, false);
+
+        // Hour label
         ctx.textAlign = 'center';
-        ctx.fillText(h.hr + 'h', x + hW/2, hY + 18);
-        ctx.font = '900 42px Inter,sans-serif';
-        ctx.fillStyle = cls;
-        ctx.fillText(String(h.w), x + hW/2, hY + 50);
-        ctx.font = '500 16px Inter,sans-serif';
+        ctx.font = '700 13px Inter,sans-serif';
         ctx.fillStyle = '#64748b';
-        ctx.fillText(degToCompass(h.dd), x + hW/2, hY + 100);
+        // Day prefix if changed
+        let lbl = h.hr + 'h';
+        const dayKey = h.day.toDateString();
+        if (lastDay && lastDay !== dayKey) {
+          lbl = h.day.toLocaleDateString('es-CL', { weekday: 'short' }).slice(0,2) + ' ' + lbl;
+        }
+        lastDay = dayKey;
+        ctx.fillText(lbl, x + (barW - 10) / 2 + 4, chY + chH - 18);
+
+        // Wind value on top of bar
+        ctx.font = '800 17px Inter,sans-serif';
+        ctx.fillStyle = isFav ? cls : '#94a3b8';
+        ctx.fillText(String(h.w), x + (barW - 10) / 2 + 4, barY - 18);
       });
       ctx.textAlign = 'left';
     }
   }
 
-  // Footer brand
-  ctx.font = '700 28px Inter,sans-serif';
-  ctx.fillStyle = '#22d3ee';
-  ctx.textAlign = 'center';
-  ctx.fillText('cussen.cl/wind', W/2, H - 50);
+  // ===== FOOTER =====
+  // Subtle divider
+  ctx.strokeStyle = 'rgba(148,163,184,.08)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(70, H - 90); ctx.lineTo(W - 70, H - 90);
+  ctx.stroke();
+
+  // Footer brand mark
+  ctx.font = '800 26px Inter,sans-serif';
+  const footerGrad = ctx.createLinearGradient(70, 0, W - 70, 0);
+  footerGrad.addColorStop(0, '#22d3ee');
+  footerGrad.addColorStop(1, '#fb923c');
+  ctx.fillStyle = footerGrad;
+  ctx.fillText('cussen.cl/wind', 70, H - 60);
+
+  ctx.font = '500 16px Inter,sans-serif';
+  ctx.fillStyle = '#475569';
+  ctx.fillText('Condiciones en tiempo real · 27 spots de Chile', 70, H - 32);
+
+  // Tag corner
+  ctx.font = '700 14px Inter,sans-serif';
+  ctx.fillStyle = '#475569';
+  ctx.textAlign = 'right';
+  ctx.fillText('#KITESPOT', W - 70, H - 60);
+  ctx.font = '500 14px Inter,sans-serif';
+  ctx.fillStyle = statusColor;
+  ctx.fillText(spot.region.toUpperCase(), W - 70, H - 38);
   ctx.textAlign = 'left';
 
-  return new Promise(resolve => canvas.toBlob(b => resolve(b), 'image/png'));
+  return new Promise(resolve => canvas.toBlob(b => resolve(b), 'image/png', 0.95));
 }
 
 function roundRect(ctx, x, y, w, h, r, fill, stroke) {
@@ -1404,58 +1647,23 @@ async function shareSpot(spotId) {
 
   // Status emoji
   const emoji = st.status === 'green' ? '🟢' : st.status === 'yellow' ? '🟡' : '🔴';
-  const statusLabel = st.status === 'green' ? 'SE PUEDE' : st.status === 'yellow' ? 'POSIBLE' : 'NO SE PUEDE';
 
-  // Build message
-  let msg = `${emoji} *${spot.name.toUpperCase()}* — ${statusLabel}\n`;
-  msg += `📍 ${spot.region}\n\n`;
+  // Concise text — the image carries the visuals
+  let msg = `${emoji} *${spot.name}*\n`;
+  msg += `${wind}kn ${degToCompass(dir)} · rafaga ${gust}kn`;
+  if (wave != null) msg += ` · olas ${wave.toFixed(1)}m`;
+  msg += '\n';
 
-  msg += `💨 *Ahora:* ${wind}kn ${degToCompass(dir)} (rafaga ${gust}kn)\n`;
-  if (wave != null) msg += `🌊 Olas ${wave.toFixed(1)}m\n`;
-  if (temp != null) msg += `🌡 Aire ${Math.round(temp)}°C${seaT != null ? ` · Mar ${Math.round(seaT)}°C` : ''}\n`;
-
-  // Best window
   if (analysis.bestWindow) {
-    const bw = analysis.bestWindow;
-    msg += `\n⏱ *Mejor ventana:* ${bw.label}\n`;
-    msg += `   ${bw.detail}\n`;
-  }
-
-  // Next 6 navigable hours
-  if (d.wind.hourly) {
-    const now = new Date();
-    const times = d.wind.hourly.time;
-    const lines = [];
-    let lastDay = null;
-    for (let i = 0; i < times.length && lines.length < 6; i++) {
-      const dt = new Date(times[i]);
-      if (dt < now) continue;
-      const hr = dt.getHours();
-      if (hr < 10 || hr > 20) continue;
-      const w = Math.round(shoreWindCorrection(d.wind.hourly.wind_speed_10m[i], spot.shore));
-      const dd = d.wind.hourly.wind_direction_10m[i];
-      const dayKey = dt.toDateString();
-      const isToday = dayKey === now.toDateString();
-      let prefix = '';
-      if (lastDay !== dayKey) {
-        prefix = isToday ? 'Hoy ' : dt.toLocaleDateString('es-CL', { weekday: 'short' }).slice(0,3) + ' ';
-        lastDay = dayKey;
-      }
-      const mark = w >= spot.windMin && w <= spot.windMax ? '🟢' : w >= 8 ? '🟡' : '🔴';
-      lines.push(`${mark} ${prefix}${hr}h — ${w}kn ${degToCompass(dd)}`);
+    msg += `\n⏱ Ventana: ${analysis.bestWindow.label} · ${analysis.bestWindow.detail}`;
+    if (st.status !== 'red' && wind > 0) {
+      const gear = getGear(wind);
+      msg += ` · vela ${gear.kite}`;
     }
-    if (lines.length) {
-      msg += `\n📊 *Proximas horas:*\n` + lines.join('\n') + '\n';
-    }
+    msg += '\n';
   }
 
-  // Gear suggestion
-  if (st.status !== 'red' && wind > 0) {
-    const gear = getGear(wind);
-    msg += `\n🪁 *Vela:* ${gear.kite}\n`;
-  }
-
-  msg += `\n👉 cussen.cl/wind`;
+  msg += `\n📲 cussen.cl/wind`;
 
   // Try to share with image
   let imageBlob = null;
