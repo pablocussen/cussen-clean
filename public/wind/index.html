@@ -360,7 +360,7 @@ a{color:var(--cyan);text-decoration:none}
 .map-picker-save:disabled{opacity:.4;cursor:not-allowed}
 
 /* All-spots map view */
-.all-map-legend{position:absolute;bottom:14px;left:14px;z-index:1000;display:flex;flex-direction:column;gap:5px;background:rgba(7,11,22,.85);backdrop-filter:blur(10px);padding:8px 12px;border-radius:10px;border:1px solid rgba(148,163,184,.12);font-size:.62rem;color:var(--text)}
+.all-map-legend{position:absolute;top:14px;left:14px;z-index:1000;display:flex;flex-wrap:wrap;gap:8px 10px;background:rgba(7,11,22,.85);backdrop-filter:blur(10px);padding:7px 10px;border-radius:10px;border:1px solid rgba(148,163,184,.12);font-size:.58rem;color:var(--text);max-width:calc(100% - 28px)}
 .all-map-legend span{display:flex;align-items:center;gap:6px;font-weight:500}
 .all-map-legend i{display:inline-block;width:9px;height:9px;border-radius:50%;flex-shrink:0}
 .all-map-legend .dot-go{background:#4ade80;box-shadow:0 0 6px #4ade80}
@@ -383,6 +383,22 @@ a{color:var(--cyan);text-decoration:none}
 .map-popup .mp-loading{font-size:.65rem;color:var(--dim);font-style:italic;margin-bottom:8px}
 .map-popup .mp-btn{width:100%;background:var(--cyan);color:#020617;border:none;padding:7px 12px;border-radius:8px;font-family:inherit;font-size:.68rem;font-weight:700;cursor:pointer;transition:all .15s;letter-spacing:.2px}
 .map-popup .mp-btn:active{transform:scale(.96);opacity:.9}
+.map-popup .mp-time{font-size:.6rem;color:var(--cyan);background:rgba(34,211,238,.1);padding:3px 8px;border-radius:6px;margin-bottom:6px;display:inline-block;font-weight:700;letter-spacing:.3px;text-transform:uppercase}
+
+/* Map time travel controls */
+.map-time-controls{position:absolute;bottom:14px;right:14px;left:14px;z-index:1000;background:rgba(7,11,22,.92);backdrop-filter:blur(16px) saturate(1.5);-webkit-backdrop-filter:blur(16px) saturate(1.5);border:1px solid rgba(148,163,184,.15);border-radius:16px;padding:12px 14px;box-shadow:0 8px 32px rgba(0,0,0,.5);max-width:520px;margin:0 auto}
+.mt-top{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.mt-btn{background:linear-gradient(135deg,#22d3ee,#06b6d4);color:#020617;border:none;width:42px;height:42px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s cubic-bezier(.4,0,.2,1);box-shadow:0 4px 16px rgba(34,211,238,.4)}
+.mt-btn:active{transform:scale(.92)}
+.mt-btn-ghost{background:rgba(148,163,184,.1);color:var(--muted);border:1px solid rgba(148,163,184,.15);font-family:inherit;font-size:.65rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:8px 12px;border-radius:10px;cursor:pointer;transition:all .15s}
+.mt-btn-ghost:active{background:var(--cyan-glow);color:var(--cyan);transform:scale(.94)}
+.mt-label{flex:1;display:flex;flex-direction:column;gap:2px;line-height:1.1;min-width:0}
+.mt-label .mt-day{font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mt-label .mt-hr{font-size:1.25rem;font-weight:900;color:var(--text);font-variant-numeric:tabular-nums;letter-spacing:-.3px}
+.mt-slider{width:100%;-webkit-appearance:none;appearance:none;background:linear-gradient(90deg,rgba(74,222,128,.15) 0%,rgba(34,211,238,.15) 50%,rgba(251,146,60,.15) 100%);height:6px;border-radius:3px;outline:none;cursor:pointer}
+.mt-slider::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;background:#22d3ee;border-radius:50%;cursor:pointer;box-shadow:0 2px 12px rgba(34,211,238,.5),0 0 0 3px rgba(34,211,238,.15);border:2px solid #070b16;transition:transform .15s}
+.mt-slider::-webkit-slider-thumb:active{transform:scale(1.15)}
+.mt-slider::-moz-range-thumb{width:22px;height:22px;background:#22d3ee;border-radius:50%;cursor:pointer;box-shadow:0 2px 12px rgba(34,211,238,.5);border:2px solid #070b16}
 
 /* Pull to refresh */
 .ptr-indicator{text-align:center;height:0;overflow:hidden;transition:height .2s;color:var(--cyan);font-size:.7rem;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px}
@@ -2331,14 +2347,142 @@ function closeMapPicker() {
 // ========== ALL SPOTS MAP VIEW ==========
 let _allMapInstance = null;
 
+// ===== Map state =====
+let _mapMarkers = {};       // spotId -> { marker, spot }
+let _mapTimeIdx = 0;        // index into _mapTimeline
+let _mapTimeline = [];      // array of timeline points (every 1h, 10-20h only, next 7 days)
+let _mapPlayTimer = null;
+let _mapPlaying = false;
+
+function buildMapTimeline() {
+  // Build list of navigable hours for next 7 days (10h-20h)
+  const tl = [];
+  const now = new Date();
+  const nowHr = now.getHours();
+  // Start from current hour (rounded down) if within range, else from 10h today/tomorrow
+  for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
+    const d = new Date(now); d.setDate(d.getDate() + dayOffset); d.setMinutes(0,0,0);
+    for (let hr = 10; hr <= 20; hr++) {
+      d.setHours(hr);
+      if (d < now) continue; // skip past hours today
+      tl.push({ time: new Date(d), label: hr+'h', day: dayOffset });
+    }
+  }
+  return tl;
+}
+
+function getStatusAtTime(spot, dateTime) {
+  // Get hourly forecast index for this time
+  const d = spotData[spot.id];
+  if (!d?.wind?.hourly) return null;
+  const target = dateTime.getTime();
+  let idx = -1;
+  let bestDiff = Infinity;
+  for (let i = 0; i < d.wind.hourly.time.length; i++) {
+    const t = new Date(d.wind.hourly.time[i]).getTime();
+    const diff = Math.abs(t - target);
+    if (diff < bestDiff) { bestDiff = diff; idx = i; }
+    if (t > target + 3600000) break; // 1h tolerance, then stop
+  }
+  if (idx < 0 || bestDiff > 3600000 * 2) return null;
+
+  const wind = shoreWindCorrection(d.wind.hourly.wind_speed_10m[idx], spot.shore);
+  const gust = shoreWindCorrection(d.wind.hourly.wind_gusts_10m[idx], spot.shore);
+  const dir = d.wind.hourly.wind_direction_10m[idx];
+  const rain = d.wind.hourly.precipitation?.[idx] || 0;
+
+  let status = 'red';
+  const dirOk = isDirectionFavorable(dir, spot.idealDir);
+  if (rain > 2) status = 'red';
+  else if (wind >= spot.windMin && wind <= spot.windMax && dirOk && gust < 40 && rain < 0.5) status = 'green';
+  else if (wind >= 8 && wind <= 35) status = 'yellow';
+
+  return { wind: Math.round(wind), gust: Math.round(gust), dir, rain, status };
+}
+
+function colorForStatus(status, isCustom) {
+  if (isCustom) return '#fb923c';
+  if (status === 'green') return '#4ade80';
+  if (status === 'yellow') return '#facc15';
+  if (status === 'red') return '#f87171';
+  return '#64748b';
+}
+
+function updateMapForTime() {
+  const point = _mapTimeline[_mapTimeIdx];
+  if (!point) return;
+  const customIds = new Set(JSON.parse(localStorage.getItem('ks_custom_spots') || '[]').map(s => s.id));
+
+  Object.entries(_mapMarkers).forEach(([id, entry]) => {
+    const status = getStatusAtTime(entry.spot, point.time);
+    const isCustom = customIds.has(id);
+    const color = colorForStatus(status?.status || 'unknown', isCustom);
+    entry.marker.setStyle({ fillColor: color, color: '#0f172a' });
+    entry.lastStatus = status;
+    // Pulse animation: scale up briefly
+    const newRadius = isCustom ? 9 : 8;
+    entry.marker.setRadius(newRadius);
+  });
+
+  // Update label
+  const lbl = document.getElementById('mapTimeLabel');
+  if (lbl) {
+    const now = new Date();
+    const isToday = point.time.toDateString() === now.toDateString();
+    const isTomorrow = point.time.toDateString() === new Date(now.getTime() + 86400000).toDateString();
+    const dayLbl = isToday ? (lang==='es'?'Hoy':'Today') :
+                   isTomorrow ? (lang==='es'?'Manana':'Tomorrow') :
+                   point.time.toLocaleDateString(lang==='es'?'es-CL':'en-US', { weekday: 'long', day: 'numeric' });
+    const hr = point.time.getHours();
+    lbl.innerHTML = `<span class="mt-day">${dayLbl}</span><span class="mt-hr">${hr}:00</span>`;
+  }
+  // Update slider value
+  const sl = document.getElementById('mapTimeSlider');
+  if (sl) sl.value = String(_mapTimeIdx);
+}
+
+function setMapTime(idx) {
+  _mapTimeIdx = Math.max(0, Math.min(_mapTimeline.length - 1, idx));
+  updateMapForTime();
+}
+
+function toggleMapPlay() {
+  if (_mapPlaying) {
+    clearInterval(_mapPlayTimer);
+    _mapPlaying = false;
+    _mapPlayTimer = null;
+  } else {
+    _mapPlaying = true;
+    _mapPlayTimer = setInterval(() => {
+      _mapTimeIdx++;
+      if (_mapTimeIdx >= _mapTimeline.length) _mapTimeIdx = 0;
+      updateMapForTime();
+    }, 700);
+  }
+  const btn = document.getElementById('mapPlayBtn');
+  if (btn) btn.innerHTML = _mapPlaying
+    ? '<svg viewBox="0 0 20 20" width="22" height="22" fill="currentColor"><rect x="5" y="4" width="4" height="12" rx="1"/><rect x="11" y="4" width="4" height="12" rx="1"/></svg>'
+    : '<svg viewBox="0 0 20 20" width="22" height="22" fill="currentColor"><path d="M6 4l10 6-10 6z"/></svg>';
+}
+
+function jumpToNow() {
+  if (_mapPlaying) toggleMapPlay();
+  setMapTime(0);
+}
+
 async function showAllSpotsMap() {
-  // Build overlay
+  _mapMarkers = {};
+  _mapTimeline = buildMapTimeline();
+  _mapTimeIdx = 0;
+  _mapPlaying = false;
+
+  // Build overlay with time controls
   const overlay = document.createElement('div');
   overlay.id = 'allSpotsMap';
   overlay.className = 'map-picker';
   overlay.innerHTML = `
     <div class="map-picker-header">
-      <h3>${lang==='es'?'Spots en el mapa':'Spots map'}</h3>
+      <h3>${lang==='es'?'Spots — viaje en el tiempo':'Spots — time travel'}</h3>
       <button class="map-picker-close" onclick="closeAllSpotsMap()" aria-label="Close">
         <svg viewBox="0 0 20 20" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 5l10 10M15 5l-10 10" stroke-linecap="round"/></svg>
       </button>
@@ -2350,6 +2494,17 @@ async function showAllSpotsMap() {
         <span><i class="dot-mb"></i>${lang==='es'?'Posible':'Maybe'}</span>
         <span><i class="dot-no"></i>${lang==='es'?'No go':'No go'}</span>
         <span><i class="dot-cu"></i>${lang==='es'?'Tuyo':'Custom'}</span>
+      </div>
+      <div class="map-time-controls">
+        <div class="mt-top">
+          <button id="mapPlayBtn" class="mt-btn" onclick="toggleMapPlay()" aria-label="Play">
+            <svg viewBox="0 0 20 20" width="22" height="22" fill="currentColor"><path d="M6 4l10 6-10 6z"/></svg>
+          </button>
+          <div id="mapTimeLabel" class="mt-label"></div>
+          <button class="mt-btn-ghost" onclick="jumpToNow()" title="Ahora">${lang==='es'?'Ahora':'Now'}</button>
+        </div>
+        <input type="range" id="mapTimeSlider" min="0" max="${_mapTimeline.length-1}" value="0"
+               oninput="setMapTime(parseInt(this.value))" class="mt-slider"/>
       </div>
     </div>
   `;
@@ -2365,62 +2520,54 @@ async function showAllSpotsMap() {
   L.control.zoom({ position: 'bottomright' }).addTo(_allMapInstance);
   L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 18 }).addTo(_allMapInstance);
 
-  // User location marker
   if (userLat) {
     L.circleMarker([userLat, userLon], {
       radius: 8, fillColor: '#22d3ee', fillOpacity: 1, color: '#fff', weight: 2
     }).addTo(_allMapInstance);
   }
 
-  // Add all spots as colored markers
   const customIds = new Set(JSON.parse(localStorage.getItem('ks_custom_spots') || '[]').map(s => s.id));
 
   SPOTS.forEach(spot => {
-    const st = getSpotStatus(spot);
     const isCustom = customIds.has(spot.id);
-    let color = '#94a3b8';
-    if (isCustom) color = '#fb923c';
-    else if (st.status === 'green') color = '#4ade80';
-    else if (st.status === 'yellow') color = '#facc15';
-    else if (st.status === 'red') color = '#f87171';
-
     const marker = L.circleMarker([spot.lat, spot.lon], {
-      radius: isCustom ? 8 : 7,
-      fillColor: color,
+      radius: isCustom ? 9 : 8,
+      fillColor: '#64748b',
       fillOpacity: .9,
       color: '#0f172a',
       weight: 2
     }).addTo(_allMapInstance);
 
-    // Build popup content
-    const d = spotData[spot.id];
-    let popupHtml = `<div class="map-popup">
-      <div class="mp-name">${spot.name}</div>
-      <div class="mp-region">${spot.region}</div>`;
-
-    if (d?.wind?.current) {
-      const wind = Math.round(shoreWindCorrection(d.wind.current.wind_speed_10m, spot.shore));
-      const dir = d.wind.current.wind_direction_10m;
-      const gust = Math.round(shoreWindCorrection(d.wind.current.wind_gusts_10m, spot.shore));
-      const wave = d?.marine?.current?.wave_height;
-      popupHtml += `<div class="mp-wind"><span class="mp-num" style="color:${color}">${wind}</span><span class="mp-unit">kn</span> · ${degToCompass(dir)}</div>`;
-      popupHtml += `<div class="mp-meta">${lang==='es'?'Rafaga':'Gust'} ${gust}kn${wave!=null?' · '+wave.toFixed(1)+'m':''}</div>`;
-      const analysis = analyzeBestMoment(spot);
-      if (analysis.bestWindow) {
-        popupHtml += `<div class="mp-window">${analysis.bestWindow.label} · ${analysis.bestWindow.detail}</div>`;
+    // Bind popup that updates dynamically based on _mapTimeIdx
+    marker.on('click', () => {
+      const point = _mapTimeline[_mapTimeIdx];
+      const status = getStatusAtTime(spot, point.time);
+      const color = colorForStatus(status?.status, isCustom);
+      const now = new Date();
+      const isNow = point.time.getTime() <= now.getTime() + 3600000;
+      let html = `<div class="map-popup">
+        <div class="mp-name">${spot.name}</div>
+        <div class="mp-region">${spot.region}</div>`;
+      if (status) {
+        html += `<div class="mp-time">${isNow ? (lang==='es'?'Ahora':'Now') : point.time.toLocaleString(lang==='es'?'es-CL':'en-US', { weekday: 'short', hour: '2-digit', minute: '2-digit' })}</div>`;
+        html += `<div class="mp-wind"><span class="mp-num" style="color:${color}">${status.wind}</span><span class="mp-unit">kn</span> · ${degToCompass(status.dir)}</div>`;
+        html += `<div class="mp-meta">${lang==='es'?'Rafaga':'Gust'} ${status.gust}kn`;
+        if (status.rain > 0.3) html += ` · ${status.rain.toFixed(1)}mm`;
+        html += `</div>`;
+        const dist = userLat ? Math.round(haversine(userLat, userLon, spot.lat, spot.lon)) : null;
+        html += `<button class="mp-btn" onclick="closeAllSpotsMap();scrollToSpot('${spot.id}')">${lang==='es'?'Ver detalle':'See detail'}${dist?' · '+dist+'km':''}</button>`;
+      } else {
+        html += `<div class="mp-loading">${lang==='es'?'Sin datos para este horario':'No data for this time'}</div>`;
       }
-      const dist = userLat ? Math.round(haversine(userLat, userLon, spot.lat, spot.lon)) : null;
-      popupHtml += `<button class="mp-btn" onclick="closeAllSpotsMap();scrollToSpot('${spot.id}')">${lang==='es'?'Ver detalle':'See detail'}${dist?' · '+dist+'km':''}</button>`;
-    } else {
-      popupHtml += `<div class="mp-loading">${lang==='es'?'Sin datos':'No data'}</div>`;
-      popupHtml += `<button class="mp-btn" onclick="closeAllSpotsMap();scrollToSpot('${spot.id}')">${lang==='es'?'Cargar':'Load'}</button>`;
-    }
-    popupHtml += '</div>';
+      html += '</div>';
+      marker.setPopupContent(html);
+    });
+    marker.bindPopup('', { maxWidth: 260, className: 'map-popup-wrap' });
 
-    marker.bindPopup(popupHtml, { maxWidth: 240, className: 'map-popup-wrap' });
+    _mapMarkers[spot.id] = { marker, spot };
   });
 
-  // Fit bounds if user has location
+  // Fit bounds
   if (userLat) {
     const nearbyBounds = SPOTS
       .map(s => ({ ...s, dist: haversine(userLat, userLon, s.lat, s.lon) }))
@@ -2431,9 +2578,15 @@ async function showAllSpotsMap() {
       _allMapInstance.fitBounds(nearbyBounds, { padding: [40, 40] });
     }
   }
+
+  // Initial paint
+  updateMapForTime();
 }
 
 function closeAllSpotsMap() {
+  if (_mapPlayTimer) { clearInterval(_mapPlayTimer); _mapPlayTimer = null; }
+  _mapPlaying = false;
+  _mapMarkers = {};
   const overlay = document.getElementById('allSpotsMap');
   if (overlay) overlay.remove();
   document.body.style.overflow = '';
