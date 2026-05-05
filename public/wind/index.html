@@ -271,6 +271,30 @@ a{color:var(--cyan);text-decoration:none}
 .wg-cell:hover .wg-dot{transform:scale(1.5)}
 .wg-peak{font-size:.5rem;color:var(--dim);position:absolute;bottom:1px;font-weight:600}
 
+/* ====== DAY PLANNER ====== */
+.day-planner{margin-bottom:14px;background:linear-gradient(180deg,rgba(30,41,59,.55),rgba(16,24,40,.5));border:1px solid rgba(148,163,184,.08);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-sm)}
+.day-planner:empty{display:none}
+.dp-header{padding:10px 14px;display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid rgba(148,163,184,.06);background:rgba(7,11,22,.3)}
+.dp-header>span:first-child{font-size:.7rem;font-weight:800;color:var(--cyan);text-transform:uppercase;letter-spacing:1px;text-shadow:0 0 8px rgba(34,211,238,.3)}
+.dp-sub{font-size:.55rem;color:var(--dim);text-transform:uppercase;letter-spacing:.6px;font-weight:600}
+.dp-rows{display:flex;flex-direction:column}
+.dp-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid rgba(51,65,85,.18);transition:all .2s;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.dp-row:last-child{border-bottom:none}
+.dp-row:active{background:rgba(34,211,238,.06);transform:scale(.99)}
+.dp-day{flex:0 0 60px;font-size:.62rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+.dp-spot{flex:1;min-width:0}
+.dp-name{font-size:.78rem;font-weight:700;color:var(--text);line-height:1.2;display:flex;align-items:center;gap:5px;letter-spacing:-.1px}
+.dp-window{font-size:.6rem;color:var(--green);margin-top:2px;font-weight:600;font-variant-numeric:tabular-nums}
+.dp-arrow{color:var(--dim);font-size:.85rem;transition:transform .2s}
+.dp-row:active .dp-arrow{transform:translateX(3px)}
+.dp-empty .dp-info{font-size:.65rem;color:var(--dim);font-style:italic}
+.dp-empty{opacity:.5;cursor:default}
+.dp-fire{background:linear-gradient(90deg,rgba(74,222,128,.06) 0%,transparent 100%)}
+.dp-fire .dp-name{color:var(--green)}
+.dp-fire .dp-window{color:var(--green)}
+.dp-flame{color:#fcd34d;text-shadow:0 0 8px rgba(252,211,77,.6);font-size:.7rem;animation:flameFlick 1.5s ease-in-out infinite}
+@keyframes flameFlick{0%,100%{opacity:1;text-shadow:0 0 8px rgba(252,211,77,.6)}50%{opacity:.85;text-shadow:0 0 14px rgba(252,211,77,.9)}}
+
 /* Search mini */
 .spot-list-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding:2px 4px}
 .spot-list-header>span{font-size:.68rem;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:1px}
@@ -400,6 +424,8 @@ a{color:var(--cyan);text-decoration:none}
     </div>
     <!-- Week grid -->
     <div id="weekGrid" class="week-grid"></div>
+    <!-- Day-by-day planner -->
+    <div id="dayPlanner" class="day-planner"></div>
     <!-- Spot list -->
     <div class="spot-list-header">
       <span>Spots cercanos</span>
@@ -1095,7 +1121,238 @@ function buildSessionTimeline(spot, d) {
   return `<div class="session-timeline">${blocks.join('')}</div>`;
 }
 
-function shareSpot(spotId) {
+// ========== SHAREABLE IMAGE ==========
+async function generateSpotImage(spotId) {
+  const spot = SPOTS.find(s => s.id === spotId);
+  const d = spotData[spotId];
+  if (!spot || !d?.wind?.current) return null;
+  const st = getSpotStatus(spot);
+  const wind = Math.round(shoreWindCorrection(d.wind.current.wind_speed_10m, spot.shore));
+  const gust = Math.round(shoreWindCorrection(d.wind.current.wind_gusts_10m, spot.shore));
+  const dir = d.wind.current.wind_direction_10m;
+  const wave = d?.marine?.current?.wave_height;
+  const temp = d.wind.current.temperature_2m;
+  const seaT = d?.marine?.current?.sea_surface_temperature;
+  const analysis = analyzeBestMoment(spot);
+
+  // 1080x1350 (Instagram portrait), high DPI
+  const W = 1080, H = 1350;
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  // Background gradient based on status
+  const colors = st.status === 'green' ? ['#0a2818','#0f172a','#020617']
+              : st.status === 'yellow' ? ['#2a1d05','#0f172a','#020617']
+              : ['#1a0510','#0f172a','#020617'];
+  const bg = ctx.createLinearGradient(0, 0, W, H);
+  bg.addColorStop(0, colors[0]); bg.addColorStop(0.5, colors[1]); bg.addColorStop(1, colors[2]);
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+
+  // Status accent radial
+  const statusColor = st.status === 'green' ? '#4ade80' : st.status === 'yellow' ? '#facc15' : '#f87171';
+  const accentGrad = ctx.createRadialGradient(W*0.7, H*0.2, 50, W*0.7, H*0.2, 600);
+  accentGrad.addColorStop(0, statusColor + '33');
+  accentGrad.addColorStop(1, 'transparent');
+  ctx.fillStyle = accentGrad; ctx.fillRect(0, 0, W, H);
+
+  // Wind streaks decoration
+  ctx.strokeStyle = '#22d3ee'; ctx.lineCap = 'round';
+  for (let i = 0; i < 8; i++) {
+    const y = 100 + i * 80;
+    ctx.globalAlpha = 0.06 + Math.random() * 0.08;
+    ctx.lineWidth = 2 + Math.random() * 3;
+    ctx.beginPath();
+    ctx.moveTo(50 + Math.random() * 200, y);
+    ctx.lineTo(50 + Math.random() * 200 + 200 + Math.random() * 200, y);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+
+  // Header brand
+  ctx.font = '700 36px Inter,sans-serif';
+  const brandGrad = ctx.createLinearGradient(80, 0, 380, 0);
+  brandGrad.addColorStop(0, '#22d3ee'); brandGrad.addColorStop(0.5, '#60a5fa'); brandGrad.addColorStop(1, '#fb923c');
+  ctx.fillStyle = brandGrad;
+  ctx.fillText('KiteSpot', 80, 100);
+  ctx.font = '600 22px Inter,sans-serif';
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText('Chile', 270, 100);
+
+  // Status pill
+  const statusText = st.status === 'green' ? 'SE PUEDE' : st.status === 'yellow' ? 'POSIBLE' : 'NO SE PUEDE';
+  ctx.font = '800 28px Inter,sans-serif';
+  const pillW = ctx.measureText(statusText).width + 60;
+  ctx.fillStyle = statusColor + '22';
+  ctx.strokeStyle = statusColor + '88';
+  ctx.lineWidth = 2;
+  roundRect(ctx, 80, 170, pillW, 60, 30, true, true);
+  ctx.fillStyle = statusColor;
+  ctx.fillText(statusText, 110, 210);
+
+  // Spot name
+  ctx.font = '900 80px Inter,sans-serif';
+  ctx.fillStyle = '#f1f5f9';
+  ctx.textBaseline = 'top';
+  let name = spot.name;
+  // Wrap if too long
+  if (ctx.measureText(name).width > W - 160) {
+    ctx.font = '900 64px Inter,sans-serif';
+  }
+  ctx.fillText(name, 80, 280);
+
+  // Region
+  ctx.font = '500 26px Inter,sans-serif';
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText(spot.region + ' · ' + spot.level, 80, 380);
+
+  // BIG wind number
+  ctx.font = '900 280px Inter,sans-serif';
+  ctx.fillStyle = statusColor;
+  ctx.shadowColor = statusColor + '99';
+  ctx.shadowBlur = 50;
+  ctx.fillText(String(wind), 80, 460);
+  ctx.shadowBlur = 0;
+  // kn label
+  ctx.font = '600 50px Inter,sans-serif';
+  ctx.fillStyle = '#94a3b8';
+  const windWidth = ctx.measureText(String(wind)).width;
+  // Calc width with big font
+  ctx.font = '900 280px Inter,sans-serif';
+  const bigW = ctx.measureText(String(wind)).width;
+  ctx.font = '600 50px Inter,sans-serif';
+  ctx.fillText('kn', 80 + bigW + 20, 660);
+
+  // Direction with arrow
+  ctx.save();
+  ctx.translate(W - 200, 600);
+  ctx.rotate((dir + 180) * Math.PI / 180);
+  ctx.fillStyle = statusColor;
+  ctx.shadowColor = statusColor + '88';
+  ctx.shadowBlur = 30;
+  // Draw arrow
+  ctx.beginPath();
+  ctx.moveTo(0, -80);
+  ctx.lineTo(40, 40);
+  ctx.lineTo(0, 10);
+  ctx.lineTo(-40, 40);
+  ctx.closePath();
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.restore();
+  ctx.font = '800 50px Inter,sans-serif';
+  ctx.fillStyle = '#f1f5f9';
+  ctx.textAlign = 'center';
+  ctx.fillText(degToCompass(dir), W - 200, 720);
+  ctx.textAlign = 'left';
+
+  // Data row: gust, waves, temp, sea
+  const dataY = 820;
+  ctx.font = '800 48px Inter,sans-serif';
+  ctx.fillStyle = '#f1f5f9';
+  ctx.font = '600 22px Inter,sans-serif';
+  ctx.fillStyle = '#64748b';
+
+  const stats = [];
+  stats.push({ label: 'RAFAGA', value: gust + ' kn' });
+  if (wave != null) stats.push({ label: 'OLAS', value: wave.toFixed(1) + ' m' });
+  if (temp != null) stats.push({ label: 'AIRE', value: Math.round(temp) + '°C' });
+  if (seaT != null) stats.push({ label: 'MAR', value: Math.round(seaT) + '°C' });
+
+  const colW = (W - 160) / stats.length;
+  stats.forEach((s, i) => {
+    const x = 80 + i * colW;
+    ctx.font = '600 22px Inter,sans-serif';
+    ctx.fillStyle = '#64748b';
+    ctx.fillText(s.label, x, dataY);
+    ctx.font = '800 48px Inter,sans-serif';
+    ctx.fillStyle = '#f1f5f9';
+    ctx.fillText(s.value, x, dataY + 32);
+  });
+
+  // Best window
+  if (analysis.bestWindow) {
+    const bw = analysis.bestWindow;
+    const wY = 980;
+    ctx.fillStyle = statusColor + '15';
+    ctx.strokeStyle = statusColor + '55';
+    ctx.lineWidth = 2;
+    roundRect(ctx, 80, wY, W - 160, 130, 20, true, true);
+    ctx.font = '600 22px Inter,sans-serif';
+    ctx.fillStyle = '#94a3b8';
+    ctx.fillText('MEJOR VENTANA', 110, wY + 25);
+    ctx.font = '800 42px Inter,sans-serif';
+    ctx.fillStyle = statusColor;
+    ctx.fillText(bw.label.toUpperCase() + ' · ' + bw.detail, 110, wY + 60);
+  }
+
+  // Next 6 hours
+  if (d.wind.hourly) {
+    const now = new Date();
+    const times = d.wind.hourly.time;
+    const hours = [];
+    for (let i = 0; i < times.length && hours.length < 6; i++) {
+      const dt = new Date(times[i]);
+      if (dt < now) continue;
+      const hr = dt.getHours();
+      if (hr < 10 || hr > 20) continue;
+      const w = Math.round(shoreWindCorrection(d.wind.hourly.wind_speed_10m[i], spot.shore));
+      const dd = d.wind.hourly.wind_direction_10m[i];
+      const isToday = dt.toDateString() === now.toDateString();
+      hours.push({ hr, w, dd, isToday, day: dt });
+    }
+    if (hours.length) {
+      const hY = 1140;
+      const hW = (W - 160) / 6;
+      hours.forEach((h, i) => {
+        const x = 80 + i * hW;
+        const cls = h.w >= spot.windMin && h.w <= spot.windMax ? '#4ade80' : h.w >= 8 ? '#facc15' : '#f87171';
+        ctx.fillStyle = cls + '12';
+        ctx.strokeStyle = cls + '40';
+        ctx.lineWidth = 1.5;
+        roundRect(ctx, x + 5, hY, hW - 10, 130, 14, true, true);
+        ctx.font = '600 18px Inter,sans-serif';
+        ctx.fillStyle = '#94a3b8';
+        ctx.textAlign = 'center';
+        ctx.fillText(h.hr + 'h', x + hW/2, hY + 18);
+        ctx.font = '900 42px Inter,sans-serif';
+        ctx.fillStyle = cls;
+        ctx.fillText(String(h.w), x + hW/2, hY + 50);
+        ctx.font = '500 16px Inter,sans-serif';
+        ctx.fillStyle = '#64748b';
+        ctx.fillText(degToCompass(h.dd), x + hW/2, hY + 100);
+      });
+      ctx.textAlign = 'left';
+    }
+  }
+
+  // Footer brand
+  ctx.font = '700 28px Inter,sans-serif';
+  ctx.fillStyle = '#22d3ee';
+  ctx.textAlign = 'center';
+  ctx.fillText('cussen.cl/wind', W/2, H - 50);
+  ctx.textAlign = 'left';
+
+  return new Promise(resolve => canvas.toBlob(b => resolve(b), 'image/png'));
+}
+
+function roundRect(ctx, x, y, w, h, r, fill, stroke) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+  if (fill) ctx.fill();
+  if (stroke) ctx.stroke();
+}
+
+async function shareSpot(spotId) {
   const spot = SPOTS.find(s => s.id === spotId);
   const d = spotData[spotId];
   if (!spot || !d?.wind?.current) return;
@@ -1107,6 +1364,11 @@ function shareSpot(spotId) {
   const temp = d.wind.current.temperature_2m;
   const seaT = d?.marine?.current?.sea_surface_temperature;
   const analysis = analyzeBestMoment(spot);
+
+  // Show loading state on share button
+  const shareBtn = document.querySelector('.hero-share, .share-btn-card');
+  const origHtml = shareBtn?.innerHTML;
+  if (shareBtn) shareBtn.innerHTML = '<span style="opacity:.7">⌛</span>';
 
   // Status emoji
   const emoji = st.status === 'green' ? '🟢' : st.status === 'yellow' ? '🟡' : '🔴';
@@ -1163,21 +1425,158 @@ function shareSpot(spotId) {
 
   msg += `\n👉 cussen.cl/wind`;
 
-  // Share
-  if (navigator.share) {
-    navigator.share({ title: `${spot.name} — KiteSpot`, text: msg }).catch(() => {});
-  } else {
-    navigator.clipboard?.writeText(msg);
-    const btn = document.querySelector('.hero-share, .share-btn-card');
-    if (btn) {
-      const orig = btn.innerHTML;
-      btn.innerHTML = '✓ ' + t('copied');
-      setTimeout(() => { btn.innerHTML = orig; }, 2000);
+  // Try to share with image
+  let imageBlob = null;
+  try { imageBlob = await generateSpotImage(spotId); } catch(e) { console.warn('Image gen failed:', e); }
+
+  // Restore button
+  if (shareBtn && origHtml) shareBtn.innerHTML = origHtml;
+
+  // Share with file if supported
+  if (imageBlob && navigator.canShare) {
+    const file = new File([imageBlob], `${spot.id}-${Date.now()}.png`, { type: 'image/png' });
+    if (navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ title: `${spot.name} — KiteSpot`, text: msg, files: [file] });
+        return;
+      } catch(e) { /* user cancelled or failed, fall through */ }
     }
+  }
+
+  // Fallback: text only
+  if (navigator.share) {
+    try { await navigator.share({ title: `${spot.name} — KiteSpot`, text: msg }); return; } catch(e) {}
+  }
+
+  // Last resort: copy + download image
+  navigator.clipboard?.writeText(msg);
+  if (imageBlob) {
+    const url = URL.createObjectURL(imageBlob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `kitespot-${spot.id}.png`; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  if (shareBtn) {
+    shareBtn.innerHTML = '✓ ' + t('copied');
+    setTimeout(() => { if (origHtml) shareBtn.innerHTML = origHtml; }, 2000);
   }
 }
 
 // ========== WEEK GRID ==========
+// ========== DAY PLANNER ==========
+// For each of the next 7 days, find the BEST spot (best window) and show it
+function renderDayPlanner() {
+  const el = document.getElementById('dayPlanner');
+  if (!el) return;
+  try {
+    const nearby = getNearbySpots();
+    if (!nearby.length) { el.innerHTML = ''; return; }
+
+    const now = new Date();
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(now.getTime() + i * 86400000);
+      d.setHours(0,0,0,0);
+      days.push({ date: d, key: d.toDateString(), idx: i });
+    }
+
+    // For each spot, build best window per day
+    const spotDayWindows = {};
+    nearby.forEach(spot => {
+      const sd = spotData[spot.id];
+      if (!sd?.wind?.hourly) return;
+      const times = sd.wind.hourly.time;
+      const speeds = sd.wind.hourly.wind_speed_10m;
+      const dirs = sd.wind.hourly.wind_direction_10m;
+      const rains = sd.wind.hourly.precipitation || [];
+      spotDayWindows[spot.id] = {};
+      let cur = null;
+      let curDay = null;
+      for (let i = 0; i < times.length; i++) {
+        const dt = new Date(times[i]);
+        const hr = dt.getHours();
+        if (hr < 10 || hr > 20) {
+          if (cur && curDay) {
+            cur.avg /= cur.count;
+            const k = curDay;
+            if (!spotDayWindows[spot.id][k] || cur.score > spotDayWindows[spot.id][k].score) spotDayWindows[spot.id][k] = cur;
+          }
+          cur = null; curDay = null;
+          continue;
+        }
+        if (dt < now) continue;
+        const dayKey = dt.toDateString();
+        const spd = shoreWindCorrection(speeds[i], spot.shore);
+        const rain = rains[i] || 0;
+        const isGood = spd >= spot.windMin && spd <= spot.windMax && isDirectionFavorable(dirs[i], spot.idealDir) && rain < 2;
+
+        if (isGood) {
+          if (!cur || curDay !== dayKey) {
+            if (cur && curDay) {
+              cur.avg /= cur.count;
+              const k = curDay;
+              if (!spotDayWindows[spot.id][k] || cur.score > spotDayWindows[spot.id][k].score) spotDayWindows[spot.id][k] = cur;
+            }
+            cur = { startHr: hr, endHr: hr, avg: spd, count: 1, dir: dirs[i], score: 0 };
+            curDay = dayKey;
+          } else {
+            cur.endHr = hr;
+            cur.avg += spd;
+            cur.count++;
+          }
+          if (cur) cur.score = cur.count * (cur.avg / Math.max(1, cur.count));
+        } else {
+          if (cur && curDay) {
+            cur.avg /= cur.count;
+            const k = curDay;
+            if (!spotDayWindows[spot.id][k] || cur.score > spotDayWindows[spot.id][k].score) spotDayWindows[spot.id][k] = cur;
+          }
+          cur = null; curDay = null;
+        }
+      }
+      if (cur && curDay) {
+        cur.avg /= cur.count;
+        if (!spotDayWindows[spot.id][curDay] || cur.score > spotDayWindows[spot.id][curDay].score) spotDayWindows[spot.id][curDay] = cur;
+      }
+    });
+
+    // For each day, find top spot
+    const dayBests = days.map(day => {
+      let best = null;
+      nearby.forEach(spot => {
+        const w = spotDayWindows[spot.id]?.[day.key];
+        if (!w) return;
+        const score = w.count * w.avg - (spot.dist || 0) * 0.05;
+        if (!best || score > best.score) best = { spot, window: w, score };
+      });
+      return { day, best };
+    });
+
+    // Render
+    let html = `<div class="dp-header"><span>${lang==='es'?'Semana':'Week'}</span><span class="dp-sub">${lang==='es'?'Mejor spot por dia':'Best spot per day'}</span></div>`;
+    html += '<div class="dp-rows">';
+    dayBests.forEach(({day, best}) => {
+      const dayLabel = day.idx === 0 ? t('today') : day.idx === 1 ? t('tomorrow') : day.date.toLocaleDateString(lang==='en'?'en-US':'es-CL', { weekday: 'short', day: 'numeric' });
+      if (!best) {
+        html += `<div class="dp-row dp-empty"><div class="dp-day">${dayLabel}</div><div class="dp-info">${lang==='es'?'Sin ventana':'No window'}</div></div>`;
+      } else {
+        const w = best.window;
+        const isFire = w.count >= 5 && w.avg >= 18;
+        html += `<div class="dp-row${isFire?' dp-fire':''}" onclick="scrollToSpot('${best.spot.id}')">
+          <div class="dp-day">${dayLabel}</div>
+          <div class="dp-spot">
+            <div class="dp-name">${best.spot.name}${isFire?'<span class="dp-flame">★</span>':''}</div>
+            <div class="dp-window">${w.startHr}-${w.endHr+1}h · ${Math.round(w.avg)}kn ${degToCompass(w.dir)}</div>
+          </div>
+          <div class="dp-arrow">→</div>
+        </div>`;
+      }
+    });
+    html += '</div>';
+    el.innerHTML = html;
+  } catch(e) { console.error('Day planner error:', e); el.innerHTML = ''; }
+}
+
 function renderWeekGrid() {
   const el = document.getElementById('weekGrid');
   try {
@@ -1260,6 +1659,7 @@ function renderSpots() {
   // Render hero + grid
   renderHero();
   renderWeekGrid();
+  renderDayPlanner();
 
   // Render spot list — nearby only, sorted by distance
   const list = document.getElementById('spotList');
