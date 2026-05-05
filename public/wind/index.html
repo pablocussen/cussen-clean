@@ -435,7 +435,7 @@ a{color:var(--cyan);text-decoration:none}
 </head>
 <body>
 <!-- Ambient wind particles canvas (fixed background) -->
-<canvas id="windBg" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;opacity:.35"></canvas>
+<canvas id="windBg" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;opacity:.55"></canvas>
 
 
 <header class="header">
@@ -2675,6 +2675,7 @@ function initWindBackground() {
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
   let W = 0, H = 0, particles = [], rafId = null;
+  let t = 0;
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
   function resize() {
@@ -2684,59 +2685,74 @@ function initWindBackground() {
     canvas.height = H * dpr;
     canvas.style.width = W + 'px';
     canvas.style.height = H + 'px';
+    ctx.setTransform(1,0,0,1,0,0);
     ctx.scale(dpr, dpr);
   }
 
-  function spawn() {
-    const layer = Math.random() < 0.4 ? 0 : Math.random() < 0.7 ? 1 : 2;
+  // Flow field: smooth angle field using sum of sines (cheap pseudo-curl-noise)
+  // Returns angle in radians for any (x,y,t)
+  function flowAngle(x, y, time) {
+    const s1 = Math.sin(x * 0.004 + time * 0.0003) * Math.cos(y * 0.004 - time * 0.0002);
+    const s2 = Math.sin(y * 0.0028 + time * 0.00018) * Math.cos(x * 0.003 + time * 0.00012);
+    const s3 = Math.sin((x + y) * 0.002 + time * 0.0001);
+    // Bias toward roughly horizontal flow with swirling perturbation
+    return (s1 + s2 * 0.7 + s3 * 0.5) * Math.PI * 0.8 + Math.PI * 0.05;
+  }
+
+  function spawn(reborn) {
+    const layer = Math.random() < 0.45 ? 0 : Math.random() < 0.78 ? 1 : 2;
+    const speed = 0.5 + Math.random() * 1.0 + layer * 0.7;
     return {
-      x: -50 - Math.random() * 100,
-      y: Math.random() * H,
-      len: 20 + Math.random() * 60 + layer * 20,
-      speed: 0.4 + Math.random() * 0.8 + layer * 0.6,
-      width: 0.6 + layer * 0.4,
-      opacity: 0.15 + layer * 0.15,
-      layer,
-      wobble: Math.random() * Math.PI * 2,
-      wobbleSpeed: 0.008 + Math.random() * 0.015
+      x: reborn ? Math.random() * W : -20 + Math.random() * (W + 40),
+      y: reborn ? Math.random() * H : Math.random() * H,
+      px: 0, py: 0,
+      life: 0,
+      maxLife: 60 + Math.floor(Math.random() * 100) + layer * 30,
+      speed,
+      width: 0.5 + layer * 0.45,
+      opacity: 0.12 + layer * 0.12 + Math.random() * 0.08,
+      layer
     };
   }
 
   function init() {
     resize();
     particles = [];
-    const count = W < 500 ? 30 : 55;
+    const count = W < 500 ? 80 : 140;
     for (let i = 0; i < count; i++) {
-      const p = spawn();
-      p.x = Math.random() * W;
+      const p = spawn(true);
+      p.life = Math.floor(Math.random() * p.maxLife);
       particles.push(p);
     }
   }
 
   function animate() {
-    ctx.clearRect(0, 0, W, H);
-    for (let i = particles.length - 1; i >= 0; i--) {
-      const p = particles[i];
-      p.x += p.speed;
-      p.wobble += p.wobbleSpeed;
-      const yOffset = Math.sin(p.wobble) * 1.5;
+    // Fade trails (instead of clearing) — gives flowing trail look
+    ctx.fillStyle = 'rgba(7,11,22,.10)';
+    ctx.fillRect(0, 0, W, H);
 
-      // Draw wind streak as gradient line
-      const grad = ctx.createLinearGradient(p.x - p.len, p.y, p.x, p.y);
-      grad.addColorStop(0, 'rgba(34,211,238,0)');
-      grad.addColorStop(0.5, `rgba(34,211,238,${p.opacity})`);
-      grad.addColorStop(1, `rgba(103,232,249,${p.opacity * 1.2})`);
-      ctx.strokeStyle = grad;
+    t += 1;
+
+    for (let i = 0; i < particles.length; i++) {
+      const p = particles[i];
+      p.px = p.x; p.py = p.y;
+      const a = flowAngle(p.x, p.y, t);
+      p.x += Math.cos(a) * p.speed;
+      p.y += Math.sin(a) * p.speed;
+      p.life++;
+
+      // Draw segment as small gradient
+      ctx.strokeStyle = `rgba(${p.layer === 2 ? '103,232,249' : '34,211,238'},${p.opacity})`;
       ctx.lineWidth = p.width;
       ctx.lineCap = 'round';
       ctx.beginPath();
-      ctx.moveTo(p.x - p.len, p.y + yOffset);
-      ctx.lineTo(p.x, p.y + yOffset);
+      ctx.moveTo(p.px, p.py);
+      ctx.lineTo(p.x, p.y);
       ctx.stroke();
 
-      // Respawn when off screen
-      if (p.x - p.len > W + 20) {
-        particles[i] = spawn();
+      // Respawn when off-screen or end of life
+      if (p.x < -10 || p.x > W + 10 || p.y < -10 || p.y > H + 10 || p.life > p.maxLife) {
+        particles[i] = spawn(false);
       }
     }
     rafId = requestAnimationFrame(animate);
