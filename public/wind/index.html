@@ -330,7 +330,10 @@ a{color:var(--cyan);text-decoration:none}
 
 
 /* Suggest spot — add button */
-.suggest-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:12px;margin-top:10px;background:var(--bg2);border:1px dashed var(--bg3);border-radius:var(--radius);color:var(--muted);font-family:inherit;font-size:.75rem;cursor:pointer;transition:all .15s}
+.custom-spots-actions{display:flex;gap:6px;margin-top:10px}
+.custom-spots-actions .suggest-btn{margin-top:0;flex:1}
+.suggest-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:12px;margin-top:10px;background:var(--bg2);border:1px dashed var(--bg3);border-radius:var(--radius);color:var(--muted);font-family:inherit;font-size:.72rem;cursor:pointer;transition:all .2s;font-weight:600}
+.suggest-btn.export-btn{font-size:.65rem}
 .suggest-btn:active{background:var(--cyan-glow);color:var(--cyan);border-color:var(--cyan)}
 
 /* Fullscreen map picker */
@@ -435,7 +438,10 @@ a{color:var(--cyan);text-decoration:none}
       </div>
     </div>
     <div class="spot-list" id="spotList"></div>
-    <button class="suggest-btn" onclick="showSuggestModal()"><svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 4v12M4 10h12" stroke-linecap="round"/></svg>Agregar mi spot</button>
+    <div class="custom-spots-actions">
+      <button class="suggest-btn" onclick="showSuggestModal()"><svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 4v12M4 10h12" stroke-linecap="round"/></svg><span data-i18n="addSpot">Agregar mi spot</span></button>
+      <button class="suggest-btn export-btn" onclick="exportCustomSpots()" title="Compartir mis spots agregados"><svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 8h12M12 8l-3-3M12 8l-3 3M4 14v2h12v-2" stroke-linecap="round"/></svg><span data-i18n="shareSpots">Compartir mis spots</span></button>
+    </div>
     <div class="updated" id="updatedTime"></div>
   </div>
 
@@ -490,7 +496,7 @@ const I18N = {
     spots:'SPOTS',favs:'FAVS',
     pullRelease:'Suelta para actualizar',updating:'Actualizando...',
     notifBanner:'Activa notificaciones para saber cuando un spot se pone bueno',activate:'Activar',
-    nearbySpots:'Spots cercanos',search:'Buscar...',addSpot:'Agregar mi spot',
+    nearbySpots:'Spots cercanos',search:'Buscar...',addSpot:'Agregar mi spot',shareSpots:'Compartir mis spots',
     updated:'Actualizado',loading:'Cargando',of:'de',
     sendIt:'SEND IT',canDo:'SE PUEDE',wait:'ESPERA',rain:'LLUVIA',
     maybe:'Maybe',noGo:'No go',noData:'Sin datos',
@@ -514,7 +520,7 @@ const I18N = {
     spots:'SPOTS',favs:'FAVS',
     pullRelease:'Release to refresh',updating:'Updating...',
     notifBanner:'Enable notifications to know when a spot gets good',activate:'Enable',
-    nearbySpots:'Nearby spots',search:'Search...',addSpot:'Add my spot',
+    nearbySpots:'Nearby spots',search:'Search...',addSpot:'Add my spot',shareSpots:'Share my spots',
     updated:'Updated',loading:'Loading',of:'of',
     sendIt:'SEND IT',canDo:'RIDEABLE',wait:'WAIT',rain:'RAIN',
     maybe:'Maybe',noGo:'No go',noData:'No data',
@@ -2333,9 +2339,61 @@ function checkAlerts() {
 }
 
 // ========== INIT ==========
+// Export custom spots as base64 string for sharing/backup
+function exportCustomSpots() {
+  const custom = JSON.parse(localStorage.getItem('ks_custom_spots') || '[]');
+  if (!custom.length) {
+    alert(lang==='es' ? 'No tienes spots agregados' : 'No custom spots to export');
+    return;
+  }
+  const json = JSON.stringify(custom);
+  const code = btoa(unescape(encodeURIComponent(json)));
+  const url = location.origin + location.pathname + '?spots=' + code;
+  if (navigator.share) {
+    navigator.share({ title:'KiteSpot — mis spots', text:`Mis spots (${custom.length}): ${custom.map(s=>s.name).join(', ')}`, url }).catch(()=>{});
+  } else {
+    navigator.clipboard?.writeText(url);
+    alert((lang==='es'?'Link copiado: ':'Link copied: ') + url.substring(0,60) + '...');
+  }
+}
+
+// Import spots from URL ?spots=base64
+function importCustomSpotsFromURL() {
+  const params = new URLSearchParams(location.search);
+  const code = params.get('spots');
+  if (!code) return 0;
+  try {
+    const json = decodeURIComponent(escape(atob(code)));
+    const incoming = JSON.parse(json);
+    if (!Array.isArray(incoming)) return 0;
+    const existing = JSON.parse(localStorage.getItem('ks_custom_spots') || '[]');
+    let added = 0;
+    incoming.forEach(s => {
+      if (s && s.id && s.lat && s.lon && !existing.find(e => e.id === s.id)) {
+        existing.push(s);
+        added++;
+      }
+    });
+    if (added > 0) {
+      localStorage.setItem('ks_custom_spots', JSON.stringify(existing));
+      // Auto-favorite imported spots
+      const favs = JSON.parse(localStorage.getItem('ks_favs') || '[]');
+      incoming.forEach(s => { if (s.id && !favs.includes(s.id)) favs.push(s.id); });
+      localStorage.setItem('ks_favs', JSON.stringify(favs));
+      // Clean URL
+      history.replaceState({}, '', location.pathname);
+      setTimeout(() => alert((lang==='es'?'Importado: ':'Imported: ') + added + (lang==='es'?' spots':' spots')), 800);
+    }
+    return added;
+  } catch(e) { console.warn('Import failed:', e); return 0; }
+}
+
 async function init() {
   // Set lang button
   document.getElementById('langBtn').textContent = lang === 'es' ? 'EN' : 'ES';
+
+  // Import any spots from URL
+  importCustomSpotsFromURL();
 
   // Load custom spots from localStorage
   const customSpots = JSON.parse(localStorage.getItem('ks_custom_spots') || '[]');
