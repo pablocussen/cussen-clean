@@ -2022,8 +2022,28 @@ function buildSpotCard(spot, idx) {
       let html = '<div class="micro-stats">';
       if (stab) html += `<span class="ms-pill" style="color:${stab.color};border-color:${stab.color}40;background:${stab.color}14">${lang==='es'?stab.label_es:stab.label_en} <em>x${(gust/wind).toFixed(1)}</em></span>`;
       if (trend) html += `<span class="ms-pill" style="color:${trend.color};border-color:${trend.color}30">${trend.icon} 3h</span>`;
+      // Wind shear: 10m vs 80m altitude
       const w80 = d?.wind?.current?.wind_speed_80m;
-      if (w80 != null && typeof wind === 'number') { const ratio = Math.round(shoreWindCorrection(w80, spot.shore)); html += `<span class="ms-pill ms-alt">80m <em>${ratio}kn</em></span>`; }
+      if (w80 != null && typeof wind === 'number' && wind > 0) {
+        const w80c = shoreWindCorrection(w80, spot.shore);
+        const ratio = w80c / wind;
+        const pct = Math.round((ratio - 1) * 100);
+        let shearColor, shearLabel, shearIcon;
+        if (ratio < 1.2) {
+          shearColor = '#94a3b8'; shearIcon = '≈';
+          shearLabel = lang==='es' ? 'Uniforme' : 'Uniform';
+        } else if (ratio < 1.6) {
+          shearColor = '#22d3ee'; shearIcon = '↑';
+          shearLabel = lang==='es' ? 'Hay viento aloft' : 'Wind aloft';
+        } else if (ratio < 2.2) {
+          shearColor = '#facc15'; shearIcon = '⚠';
+          shearLabel = lang==='es' ? 'Shear alto' : 'High shear';
+        } else {
+          shearColor = '#f87171'; shearIcon = '⚠';
+          shearLabel = lang==='es' ? 'Shear peligroso' : 'Dangerous shear';
+        }
+        html += `<span class="ms-pill" style="color:${shearColor};border-color:${shearColor}40;background:${shearColor}10" title="10m: ${Math.round(wind)}kn / 80m: ${Math.round(w80c)}kn">${shearIcon} ${shearLabel} <em>+${pct}%</em></span>`;
+      }
       return html + '</div>';
     })()}
     ${fcHtml ? `<div class="card-forecast">${fcHtml}</div>` : ''}
