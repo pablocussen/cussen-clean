@@ -1098,17 +1098,82 @@ function buildSessionTimeline(spot, d) {
 function shareSpot(spotId) {
   const spot = SPOTS.find(s => s.id === spotId);
   const d = spotData[spotId];
+  if (!spot || !d?.wind?.current) return;
   const st = getSpotStatus(spot);
-  const wind = shoreWindCorrection(d?.wind?.current?.wind_speed_10m ?? 0, spot?.shore);
-  const dir = d?.wind?.current?.wind_direction_10m ?? 0;
-  const status = st.label;
-  const text = `${spot.name}: ${Math.round(wind)}kn ${degToCompass(dir)} (${status}) — cussen.cl/wind`;
+  const wind = Math.round(shoreWindCorrection(d.wind.current.wind_speed_10m, spot.shore));
+  const gust = Math.round(shoreWindCorrection(d.wind.current.wind_gusts_10m, spot.shore));
+  const dir = d.wind.current.wind_direction_10m;
+  const wave = d?.marine?.current?.wave_height;
+  const temp = d.wind.current.temperature_2m;
+  const seaT = d?.marine?.current?.sea_surface_temperature;
+  const analysis = analyzeBestMoment(spot);
+
+  // Status emoji
+  const emoji = st.status === 'green' ? '🟢' : st.status === 'yellow' ? '🟡' : '🔴';
+  const statusLabel = st.status === 'green' ? 'SE PUEDE' : st.status === 'yellow' ? 'POSIBLE' : 'NO SE PUEDE';
+
+  // Build message
+  let msg = `${emoji} *${spot.name.toUpperCase()}* — ${statusLabel}\n`;
+  msg += `📍 ${spot.region}\n\n`;
+
+  msg += `💨 *Ahora:* ${wind}kn ${degToCompass(dir)} (rafaga ${gust}kn)\n`;
+  if (wave != null) msg += `🌊 Olas ${wave.toFixed(1)}m\n`;
+  if (temp != null) msg += `🌡 Aire ${Math.round(temp)}°C${seaT != null ? ` · Mar ${Math.round(seaT)}°C` : ''}\n`;
+
+  // Best window
+  if (analysis.bestWindow) {
+    const bw = analysis.bestWindow;
+    msg += `\n⏱ *Mejor ventana:* ${bw.label}\n`;
+    msg += `   ${bw.detail}\n`;
+  }
+
+  // Next 6 navigable hours
+  if (d.wind.hourly) {
+    const now = new Date();
+    const times = d.wind.hourly.time;
+    const lines = [];
+    let lastDay = null;
+    for (let i = 0; i < times.length && lines.length < 6; i++) {
+      const dt = new Date(times[i]);
+      if (dt < now) continue;
+      const hr = dt.getHours();
+      if (hr < 10 || hr > 20) continue;
+      const w = Math.round(shoreWindCorrection(d.wind.hourly.wind_speed_10m[i], spot.shore));
+      const dd = d.wind.hourly.wind_direction_10m[i];
+      const dayKey = dt.toDateString();
+      const isToday = dayKey === now.toDateString();
+      let prefix = '';
+      if (lastDay !== dayKey) {
+        prefix = isToday ? 'Hoy ' : dt.toLocaleDateString('es-CL', { weekday: 'short' }).slice(0,3) + ' ';
+        lastDay = dayKey;
+      }
+      const mark = w >= spot.windMin && w <= spot.windMax ? '🟢' : w >= 8 ? '🟡' : '🔴';
+      lines.push(`${mark} ${prefix}${hr}h — ${w}kn ${degToCompass(dd)}`);
+    }
+    if (lines.length) {
+      msg += `\n📊 *Proximas horas:*\n` + lines.join('\n') + '\n';
+    }
+  }
+
+  // Gear suggestion
+  if (st.status !== 'red' && wind > 0) {
+    const gear = getGear(wind);
+    msg += `\n🪁 *Vela:* ${gear.kite}\n`;
+  }
+
+  msg += `\n👉 cussen.cl/wind`;
+
+  // Share
   if (navigator.share) {
-    navigator.share({ title: 'KiteSpot', text }).catch(() => {});
+    navigator.share({ title: `${spot.name} — KiteSpot`, text: msg }).catch(() => {});
   } else {
-    navigator.clipboard?.writeText(text);
-    const btn = document.querySelector('.hero-share');
-    if (btn) { btn.textContent = t('copied'); setTimeout(() => { btn.innerHTML = '<svg viewBox="0 0 16 16" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 8h8M12 8l-3-3M12 8l-3 3"/></svg>'+t('send'); }, 2000); }
+    navigator.clipboard?.writeText(msg);
+    const btn = document.querySelector('.hero-share, .share-btn-card');
+    if (btn) {
+      const orig = btn.innerHTML;
+      btn.innerHTML = '✓ ' + t('copied');
+      setTimeout(() => { btn.innerHTML = orig; }, 2000);
+    }
   }
 }
 
