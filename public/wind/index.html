@@ -311,6 +311,24 @@ a{color:var(--cyan);text-decoration:none}
 .dp-opt-name{font-size:.74rem;font-weight:700;color:var(--text);line-height:1.2;letter-spacing:-.1px}
 .dp-opt-window{font-size:.58rem;color:var(--muted);margin-top:2px;font-variant-numeric:tabular-nums}
 .dp-option .dp-arrow{color:var(--dim);font-size:.8rem;flex-shrink:0}
+
+/* Trip / "Voy" UI */
+.dp-btn-go{background:linear-gradient(135deg,var(--cyan),#06b6d4);color:#020617;border:none;padding:6px 14px;border-radius:18px;font-family:inherit;font-size:.62rem;font-weight:800;letter-spacing:1px;cursor:pointer;flex-shrink:0;box-shadow:0 2px 8px rgba(34,211,238,.3);transition:all .15s}
+.dp-btn-go:active{transform:scale(.92);box-shadow:0 1px 4px rgba(34,211,238,.4)}
+.dp-option-primary{background:rgba(34,211,238,.04)}
+.dp-option-primary .dp-opt-bullet{background:var(--cyan);box-shadow:0 0 10px var(--cyan)}
+
+/* Committed trip row */
+.dp-day-block.dp-committed{background:linear-gradient(90deg,rgba(74,222,128,.1),rgba(7,11,22,.4))}
+.dp-row.dp-trip{padding-right:10px}
+.dp-row.dp-trip .dp-name{color:var(--green);font-weight:800}
+.dp-trip-tag{display:inline-block;font-size:.52rem;font-weight:900;background:var(--green);color:#020617;padding:2px 7px;border-radius:8px;letter-spacing:.8px;margin-left:4px;vertical-align:1px;box-shadow:0 0 12px rgba(74,222,128,.4)}
+.dp-trip-actions{display:flex;gap:6px;flex-shrink:0}
+.dp-btn-share,.dp-btn-cancel{background:rgba(148,163,184,.1);color:var(--text);border:1px solid rgba(148,163,184,.15);width:32px;height:32px;border-radius:50%;font-size:.85rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.dp-btn-share{color:var(--cyan);border-color:rgba(34,211,238,.25);background:rgba(34,211,238,.08)}
+.dp-btn-share:active{background:rgba(34,211,238,.2);transform:scale(.9)}
+.dp-btn-cancel{color:var(--red);border-color:rgba(248,113,113,.2)}
+.dp-btn-cancel:active{background:rgba(248,113,113,.15);transform:scale(.9)}
 @keyframes flameFlick{0%,100%{opacity:1;text-shadow:0 0 8px rgba(252,211,77,.6)}50%{opacity:.85;text-shadow:0 0 14px rgba(252,211,77,.9)}}
 
 /* Search mini */
@@ -1758,14 +1776,69 @@ async function shareSpot(spotId) {
 
 // ========== WEEK GRID ==========
 // ========== DAY PLANNER ==========
+// User's committed trips: [{spotId, dateStr, startHr, endHr, avg, dir, addedAt}]
+let myTrips = JSON.parse(localStorage.getItem('ks_my_trips') || '[]');
+// Cleanup: remove trips older than today
+function cleanupTrips() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  myTrips = myTrips.filter(t => new Date(t.dateStr).getTime() >= today.getTime());
+  localStorage.setItem('ks_my_trips', JSON.stringify(myTrips));
+}
+cleanupTrips();
+
+function getTripForDay(dayKey) {
+  return myTrips.find(t => t.dateStr === dayKey);
+}
+
+function pickTrip(spotId, dayKey, startHr, endHr, avg, dir) {
+  // Replace any existing trip for that day
+  myTrips = myTrips.filter(t => t.dateStr !== dayKey);
+  myTrips.push({ spotId, dateStr: dayKey, startHr, endHr, avg: Math.round(avg), dir: Math.round(dir), addedAt: Date.now() });
+  localStorage.setItem('ks_my_trips', JSON.stringify(myTrips));
+  renderDayPlanner();
+}
+
+function unpickTrip(dayKey) {
+  myTrips = myTrips.filter(t => t.dateStr !== dayKey);
+  localStorage.setItem('ks_my_trips', JSON.stringify(myTrips));
+  renderDayPlanner();
+}
+
+function shareTrip(dayKey) {
+  const trip = getTripForDay(dayKey);
+  if (!trip) return;
+  const spot = SPOTS.find(s => s.id === trip.spotId);
+  if (!spot) return;
+  const date = new Date(dayKey);
+  const today = new Date(); today.setHours(0,0,0,0);
+  const tomorrow = new Date(today.getTime() + 86400000);
+  const isToday = date.toDateString() === today.toDateString();
+  const isTomorrow = date.toDateString() === tomorrow.toDateString();
+  const dayLbl = isToday ? 'hoy' : isTomorrow ? 'manana' : date.toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric' });
+  const userName = localStorage.getItem('ks_user_name') || '';
+  const who = userName ? `*${userName}*` : 'Voy';
+  const msg = `🪁 ${who} a *${spot.name}* ${dayLbl} ${trip.startHr}-${trip.endHr+1}h\n💨 ${trip.avg}kn ${degToCompass(trip.dir)}\n\n¿Quien se suma?\n\n📲 cussen.cl/wind`;
+  if (navigator.share) {
+    navigator.share({ title:'KiteSpot — voy a navegar', text: msg }).catch(()=>{});
+  } else {
+    navigator.clipboard?.writeText(msg);
+    alert('Mensaje copiado');
+  }
+}
+
+function setUserName() {
+  const current = localStorage.getItem('ks_user_name') || '';
+  const name = prompt('Tu nombre o apodo (para los mensajes):', current);
+  if (name && name.trim()) {
+    localStorage.setItem('ks_user_name', name.trim());
+    renderDayPlanner();
+  }
+}
+
 function toggleDayOptions(id) {
   const el = document.getElementById(id);
-  if (!el) {
-    // No options to expand — just scroll to the spot in the parent row
-    return;
-  }
+  if (!el) return;
   el.classList.toggle('dp-open');
-  // Toggle chevron animation on parent
   const block = el.closest('.dp-day-block');
   if (block) block.classList.toggle('dp-block-open');
 }
@@ -1860,45 +1933,84 @@ function renderDayPlanner() {
     });
 
     // Render
-    let html = `<div class="dp-header"><span>${lang==='es'?'Semana':'Week'}</span><span class="dp-sub">${lang==='es'?'Toca el dia para ver opciones':'Tap day to see options'}</span></div>`;
+    const userName = localStorage.getItem('ks_user_name') || '';
+    let html = `<div class="dp-header">
+      <span>${lang==='es'?'Semana':'Week'}</span>
+      <span class="dp-sub">${userName ? userName : '<a onclick="setUserName()" style="color:var(--cyan);cursor:pointer">'+(lang==='es'?'Pon tu nombre':'Set your name')+'</a>'}</span>
+    </div>`;
     html += '<div class="dp-rows">';
     dayPicks.forEach(({day, candidates}, dayIdx) => {
       const dayLabel = day.idx === 0 ? t('today') : day.idx === 1 ? t('tomorrow') : day.date.toLocaleDateString(lang==='en'?'en-US':'es-CL', { weekday: 'short', day: 'numeric' });
-      if (!candidates.length) {
+      const trip = getTripForDay(day.key);
+
+      if (!candidates.length && !trip) {
         html += `<div class="dp-row dp-empty"><div class="dp-day">${dayLabel}</div><div class="dp-info">${lang==='es'?'Sin ventana':'No window'}</div></div>`;
-      } else {
-        const best = candidates[0];
-        const w = best.window;
-        const isFire = w.count >= 5 && w.avg >= 18;
-        const moreCount = candidates.length - 1;
-        const dayId = `dp-day-${dayIdx}`;
-        html += `<div class="dp-day-block">
-          <div class="dp-row${isFire?' dp-fire':''}" onclick="toggleDayOptions('${dayId}')">
-            <div class="dp-day">${dayLabel}</div>
-            <div class="dp-spot">
-              <div class="dp-name">${best.spot.name}${isFire?'<span class="dp-flame">★</span>':''}</div>
-              <div class="dp-window">${w.startHr}-${w.endHr+1}h · ${Math.round(w.avg)}kn ${degToCompass(w.dir)}${best.spot.dist!=null?' · '+Math.round(best.spot.dist)+'km':''}</div>
-            </div>
-            <div class="dp-chevron">${moreCount > 0 ? `+${moreCount}` : '→'}</div>
-          </div>`;
-        if (moreCount > 0) {
-          html += `<div class="dp-options" id="${dayId}">`;
-          candidates.slice(1).forEach(c => {
-            const ww = c.window;
-            const fire = ww.count >= 5 && ww.avg >= 18;
-            html += `<div class="dp-option${fire?' dp-fire':''}" onclick="event.stopPropagation();scrollToSpot('${c.spot.id}')">
-              <div class="dp-opt-bullet"></div>
-              <div class="dp-opt-info">
-                <div class="dp-opt-name">${c.spot.name}${fire?' <span class="dp-flame">★</span>':''}</div>
-                <div class="dp-opt-window">${ww.startHr}-${ww.endHr+1}h · ${Math.round(ww.avg)}kn ${degToCompass(ww.dir)}${c.spot.dist!=null?' · '+Math.round(c.spot.dist)+'km':''}</div>
-              </div>
-              <div class="dp-arrow">→</div>
-            </div>`;
-          });
-          html += '</div>';
-        }
-        html += `</div>`;
+        return;
       }
+
+      // If user has committed to a trip for this day, show it FIRST
+      if (trip) {
+        const tripSpot = SPOTS.find(s => s.id === trip.spotId);
+        if (tripSpot) {
+          const tripDist = tripSpot.dist != null ? Math.round(tripSpot.dist) : null;
+          html += `<div class="dp-day-block dp-committed">
+            <div class="dp-row dp-trip">
+              <div class="dp-day">${dayLabel}</div>
+              <div class="dp-spot">
+                <div class="dp-name">✓ ${tripSpot.name} <span class="dp-trip-tag">${lang==='es'?'VOY':'GOING'}</span></div>
+                <div class="dp-window">${trip.startHr}-${trip.endHr+1}h · ${trip.avg}kn ${degToCompass(trip.dir)}${tripDist?' · '+tripDist+'km':''}</div>
+              </div>
+              <div class="dp-trip-actions">
+                <button class="dp-btn-share" onclick="event.stopPropagation();shareTrip('${day.key}')" title="Compartir">↗</button>
+                <button class="dp-btn-cancel" onclick="event.stopPropagation();unpickTrip('${day.key}')" title="Cancelar">×</button>
+              </div>
+            </div>
+          </div>`;
+          return; // skip showing options when committed
+        }
+      }
+
+      const best = candidates[0];
+      const w = best.window;
+      const isFire = w.count >= 5 && w.avg >= 18;
+      const moreCount = candidates.length - 1;
+      const dayId = `dp-day-${dayIdx}`;
+
+      html += `<div class="dp-day-block">
+        <div class="dp-row${isFire?' dp-fire':''}" onclick="toggleDayOptions('${dayId}')">
+          <div class="dp-day">${dayLabel}</div>
+          <div class="dp-spot">
+            <div class="dp-name">${best.spot.name}${isFire?'<span class="dp-flame">★</span>':''}</div>
+            <div class="dp-window">${w.startHr}-${w.endHr+1}h · ${Math.round(w.avg)}kn ${degToCompass(w.dir)}${best.spot.dist!=null?' · '+Math.round(best.spot.dist)+'km':''}</div>
+          </div>
+          <div class="dp-chevron">${moreCount > 0 ? `+${moreCount}` : '→'}</div>
+        </div>`;
+
+      // Show options + go button (always render, even if no extras — user can still pick the primary)
+      html += `<div class="dp-options" id="${dayId}">`;
+      // Primary option as a pickable too
+      html += `<div class="dp-option dp-option-primary" onclick="event.stopPropagation()">
+        <div class="dp-opt-bullet"></div>
+        <div class="dp-opt-info">
+          <div class="dp-opt-name">${best.spot.name}${isFire?' <span class="dp-flame">★</span>':''}</div>
+          <div class="dp-opt-window">${w.startHr}-${w.endHr+1}h · ${Math.round(w.avg)}kn ${degToCompass(w.dir)}${best.spot.dist!=null?' · '+Math.round(best.spot.dist)+'km':''}</div>
+        </div>
+        <button class="dp-btn-go" onclick="event.stopPropagation();pickTrip('${best.spot.id}','${day.key}',${w.startHr},${w.endHr},${w.avg},${w.dir})">${lang==='es'?'VOY':'GO'}</button>
+      </div>`;
+      candidates.slice(1).forEach(c => {
+        const ww = c.window;
+        const fire = ww.count >= 5 && ww.avg >= 18;
+        html += `<div class="dp-option${fire?' dp-fire':''}" onclick="event.stopPropagation()">
+          <div class="dp-opt-bullet"></div>
+          <div class="dp-opt-info" onclick="scrollToSpot('${c.spot.id}')" style="cursor:pointer">
+            <div class="dp-opt-name">${c.spot.name}${fire?' <span class="dp-flame">★</span>':''}</div>
+            <div class="dp-opt-window">${ww.startHr}-${ww.endHr+1}h · ${Math.round(ww.avg)}kn ${degToCompass(ww.dir)}${c.spot.dist!=null?' · '+Math.round(c.spot.dist)+'km':''}</div>
+          </div>
+          <button class="dp-btn-go" onclick="event.stopPropagation();pickTrip('${c.spot.id}','${day.key}',${ww.startHr},${ww.endHr},${ww.avg},${ww.dir})">${lang==='es'?'VOY':'GO'}</button>
+        </div>`;
+      });
+      html += '</div>';
+      html += `</div>`;
     });
     html += '</div>';
     el.innerHTML = html;
