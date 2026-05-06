@@ -818,15 +818,22 @@ function isDirectionFavorable(actual, idealDirs) {
 
 // Unified hourly grading — used everywhere (forecast strips, share, map, planner)
 // Returns 'green' | 'yellow' | 'red'
+// Philosophy: RED only for truly unrideable. YELLOW for "rideable but not ideal".
 function gradeHour(spot, wind, dir, rain) {
   rain = rain || 0;
-  if (rain >= 2) return 'red';
+  // Hard red: heavy rain/storm or dangerous wind
+  if (rain >= 5) return 'red';
   if (wind == null || wind < 0) return 'red';
+  if (wind > 40) return 'red';      // peligroso
+  if (wind < 6) return 'red';       // sin viento
+
   const dirOk = dir == null || isDirectionFavorable(dir, spot.idealDir);
   const inRange = wind >= spot.windMin && wind <= spot.windMax;
+
+  // Green: ideal conditions
   if (inRange && dirOk && rain < 2) return 'green';
-  if (wind >= 8 && wind <= 35 && rain < 2) return 'yellow';
-  return 'red';
+  // Yellow: rideable somehow (light wind, off-direction, light rain)
+  return 'yellow';
 }
 
 // ========== TIDE ESTIMATION (lunar cycle) ==========
