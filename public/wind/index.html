@@ -274,8 +274,12 @@ a{color:var(--cyan);text-decoration:none}
 /* ====== DAY PLANNER ====== */
 .day-planner{margin-bottom:14px;background:linear-gradient(180deg,rgba(30,41,59,.55),rgba(16,24,40,.5));border:1px solid rgba(148,163,184,.08);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-sm)}
 .day-planner:empty{display:none}
-.dp-header{padding:10px 14px;display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid rgba(148,163,184,.06);background:rgba(7,11,22,.3)}
-.dp-header>span:first-child{font-size:.7rem;font-weight:800;color:var(--cyan);text-transform:uppercase;letter-spacing:1px;text-shadow:0 0 8px rgba(34,211,238,.3)}
+.dp-header{padding:10px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px;border-bottom:1px solid rgba(148,163,184,.06);background:rgba(7,11,22,.3)}
+.dp-header-left{display:flex;align-items:baseline;gap:8px;flex:1;min-width:0}
+.dp-header-left>span:first-child{font-size:.7rem;font-weight:800;color:var(--cyan);text-transform:uppercase;letter-spacing:1px;text-shadow:0 0 8px rgba(34,211,238,.3)}
+.dp-share-week{display:flex;align-items:center;gap:5px;background:linear-gradient(135deg,var(--cyan),#06b6d4);color:#020617;border:none;padding:6px 11px;border-radius:14px;font-family:inherit;font-size:.62rem;font-weight:800;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;box-shadow:0 2px 8px rgba(34,211,238,.3);transition:all .15s;flex-shrink:0}
+.dp-share-week:active{transform:scale(.94)}
+.dp-share-count{background:rgba(7,11,22,.7);color:var(--cyan);width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:900;margin-left:2px}
 .dp-sub{font-size:.55rem;color:var(--dim);text-transform:uppercase;letter-spacing:.6px;font-weight:600}
 .dp-rows{display:flex;flex-direction:column}
 .dp-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid rgba(51,65,85,.18);transition:all .2s;cursor:pointer;-webkit-tap-highlight-color:transparent}
@@ -1818,6 +1822,47 @@ function unpickTrip(dayKey) {
   renderDayPlanner();
 }
 
+function shareWholeCalendar() {
+  if (!myTrips.length) {
+    alert(lang==='es'?'Aun no has elegido viajes. Toca VOY en algun dia.':'No trips selected yet.');
+    return;
+  }
+  const userName = localStorage.getItem('ks_user_name') || '';
+  const who = userName ? userName.toUpperCase() : 'MI';
+
+  // Sort trips by date
+  const sorted = [...myTrips].sort((a,b) => new Date(a.dateStr) - new Date(b.dateStr));
+  const today = new Date(); today.setHours(0,0,0,0);
+  const tomorrow = new Date(today.getTime() + 86400000);
+
+  let msg = `🪁 *${who} — MI SEMANA KITE*\n`;
+  msg += `━━━━━━━━━━━━━━━━━\n\n`;
+
+  sorted.forEach(trip => {
+    const spot = SPOTS.find(s => s.id === trip.spotId);
+    if (!spot) return;
+    const date = new Date(trip.dateStr);
+    const isToday = date.toDateString() === today.toDateString();
+    const isTomorrow = date.toDateString() === tomorrow.toDateString();
+    const dayLbl = isToday ? 'HOY' : isTomorrow ? 'MAÑANA' :
+                   date.toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric' }).toUpperCase();
+    msg += `📆 *${dayLbl}*\n`;
+    msg += `   📍 ${spot.name}\n`;
+    msg += `   ⏱  ${trip.startHr}-${trip.endHr+1}h · 💨 ${trip.avg}kn ${degToCompass(trip.dir)}\n\n`;
+  });
+
+  msg += `*¿Quien se suma a algun dia?*\n\n`;
+  msg += `━━━━━━━━━━━━━━━━━\n`;
+  msg += `📲 cussen.cl/wind`;
+
+  if (navigator.share) {
+    navigator.share({ title:'Mi semana KiteSpot', text: msg }).catch(()=>{});
+  } else {
+    navigator.clipboard?.writeText(msg);
+    alert('Copiado al portapapeles');
+  }
+}
+
 function shareTrip(dayKey) {
   const trip = getTripForDay(dayKey);
   if (!trip) return;
@@ -1959,9 +2004,13 @@ function renderDayPlanner() {
 
     // Render
     const userName = localStorage.getItem('ks_user_name') || '';
+    const tripsCount = myTrips.length;
     let html = `<div class="dp-header">
-      <span>${lang==='es'?'Semana':'Week'}</span>
-      <span class="dp-sub">${userName ? userName : '<a onclick="setUserName()" style="color:var(--cyan);cursor:pointer">'+(lang==='es'?'Pon tu nombre':'Set your name')+'</a>'}</span>
+      <div class="dp-header-left">
+        <span>${lang==='es'?'Semana':'Week'}</span>
+        <span class="dp-sub">${userName ? userName : '<a onclick="setUserName()" style="color:var(--cyan);cursor:pointer">'+(lang==='es'?'Pon tu nombre':'Set name')+'</a>'}</span>
+      </div>
+      ${tripsCount > 0 ? `<button class="dp-share-week" onclick="shareWholeCalendar()" title="${lang==='es'?'Compartir mi semana':'Share my week'}"><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8h8M12 8l-3-3M12 8l-3 3" stroke-linecap="round"/></svg> ${lang==='es'?'Compartir semana':'Share week'} <span class="dp-share-count">${tripsCount}</span></button>` : ''}
     </div>`;
     html += '<div class="dp-rows">';
     dayPicks.forEach(({day, candidates}, dayIdx) => {
