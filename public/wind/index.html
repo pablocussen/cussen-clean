@@ -1747,44 +1747,70 @@ async function shareSpot(spotId) {
   if (shareBtn) shareBtn.innerHTML = '<span style="opacity:.7">⌛</span>';
 
   const emoji = st.status === 'green' ? '🟢' : st.status === 'yellow' ? '🟡' : '🔴';
-  const statusLabel = st.status === 'green' ? 'SE PUEDE' : st.status === 'yellow' ? 'POSIBLE' : 'NO GO';
+  const statusLabel = st.status === 'green' ? 'SE PUEDE NAVEGAR' : st.status === 'yellow' ? 'CONDICIONES BORDERLINE' : 'NO RECOMENDADO';
 
-  // Premium text-only message with unicode dividers
-  let msg = `${emoji} *${spot.name.toUpperCase()}* — ${statusLabel}\n`;
-  msg += `━━━━━━━━━━━━━━━━━\n`;
-  msg += `\n💨  *${wind} kn*  ↑ ${degToCompass(dir)}\n`;
-  msg += `🌊  rafaga ${gust}kn`;
+  // Quien va a ese spot proximamente
+  const myId = Crew.getMyId();
+  const today = new Date(); today.setHours(0,0,0,0);
+  const otherTrips = Crew.getTripsForSpot(spot.id).filter(t => t.userId !== myId && new Date(t.dateStr) >= today);
+
+  // Premium magazine-style message
+  let msg = `${emoji} *${spot.name.toUpperCase()}*\n`;
+  msg += `${statusLabel}\n`;
+  msg += `━━━━━━━━━━━━━━━━━━━━━\n\n`;
+  msg += `   💨 *${wind} kn*  ${dirArrow(dir)} ${degToCompass(dir)}\n`;
+  msg += `   🌊 rafaga ${gust}kn`;
   if (wave != null) msg += ` · olas ${wave.toFixed(1)}m`;
   msg += '\n';
 
   if (analysis.bestWindow) {
     const bw = analysis.bestWindow;
-    msg += `\n⏱  *${bw.label}* — ${bw.detail}\n`;
+    msg += `\n   ⏱ *${bw.label}*  ${bw.detail}\n`;
   }
 
   if (st.status !== 'red' && wind >= 4) {
     const gear = getGear(wind);
-    msg += `🪁  Vela ${gear.kite}\n`;
+    msg += `   🪁 Vela ${gear.kite}\n`;
   }
 
   if (temp != null || seaT != null) {
     const parts = [];
     if (temp != null) parts.push(`Aire ${Math.round(temp)}°C`);
     if (seaT != null) parts.push(`Mar ${Math.round(seaT)}°C`);
-    msg += `🌡️  ${parts.join(' · ')}\n`;
+    msg += `   🌡 ${parts.join(' · ')}\n`;
   }
 
   if (tide) {
     const tideLbl = tide.label_es;
-    const next = tide.state === 'high' ? `Baja en ${tide.nextLowHrs.toFixed(0)}h` :
-                 tide.state === 'low' ? `Sube en ${tide.nextHighHrs.toFixed(0)}h` :
-                 tide.state === 'falling' ? `Baja en ${tide.nextLowHrs.toFixed(0)}h` :
-                 `Alta en ${tide.nextHighHrs.toFixed(0)}h`;
-    msg += `${tide.icon}  ${tideLbl} · ${next}${tide.isSpring ? ' ★' : ''}\n`;
+    const next = tide.state === 'high' ? `baja en ${tide.nextLowHrs.toFixed(0)}h` :
+                 tide.state === 'low' ? `sube en ${tide.nextHighHrs.toFixed(0)}h` :
+                 tide.state === 'falling' ? `baja en ${tide.nextLowHrs.toFixed(0)}h` :
+                 `alta en ${tide.nextHighHrs.toFixed(0)}h`;
+    msg += `   ${tide.icon} ${tideLbl} · ${next}${tide.isSpring ? ' ★' : ''}\n`;
   }
 
-  msg += `\n━━━━━━━━━━━━━━━━━\n`;
-  msg += `📲 cussen.cl/wind/?s=${spot.id}`;
+  if (otherTrips.length) {
+    const days = {};
+    otherTrips.forEach(t => {
+      if (!days[t.dateStr]) days[t.dateStr] = new Set();
+      if (t.userName) days[t.dateStr].add(t.userName);
+    });
+    const dayKeys = Object.keys(days).sort((a,b) => new Date(a)-new Date(b)).slice(0,3);
+    if (dayKeys.length) {
+      msg += `\n   👥 *Crew:*`;
+      dayKeys.forEach(k => {
+        const d = new Date(k);
+        const isToday = d.toDateString() === today.toDateString();
+        const lbl = isToday ? 'hoy' : d.toLocaleDateString('es-CL',{weekday:'short',day:'numeric'});
+        const names = [...days[k]].slice(0,3).join(', ');
+        msg += `\n      • ${lbl}: ${names}`;
+      });
+      msg += '\n';
+    }
+  }
+
+  msg += `\n━━━━━━━━━━━━━━━━━━━━━\n`;
+  msg += `\n📲 cussen.cl/wind/?s=${spot.id}`;
 
   // Restore button
   if (shareBtn && origHtml) shareBtn.innerHTML = origHtml;
@@ -1842,21 +1868,52 @@ async function unpickTrip(dayKey) {
   }
 }
 
+// Direction unicode arrow
+function dirArrow(dir) {
+  const d = ((dir % 360) + 360) % 360;
+  if (d < 22.5 || d >= 337.5) return '↑';
+  if (d < 67.5) return '↗';
+  if (d < 112.5) return '→';
+  if (d < 157.5) return '↘';
+  if (d < 202.5) return '↓';
+  if (d < 247.5) return '↙';
+  if (d < 292.5) return '←';
+  return '↖';
+}
+
+// Status emoji for wind quality
+function statusEmojiForTrip(trip) {
+  const spot = SPOTS.find(s => s.id === trip.spotId);
+  if (!spot) return '🟡';
+  if (trip.avg >= spot.windMin && trip.avg <= spot.windMax) return '🟢';
+  if (trip.avg >= 8) return '🟡';
+  return '🔴';
+}
+
 function shareWholeCalendar() {
   if (!myTrips.length) {
     alert(lang==='es'?'Aun no has elegido viajes. Toca VOY en algun dia.':'No trips selected yet.');
     return;
   }
   const userName = localStorage.getItem('ks_user_name') || '';
-  const who = userName ? userName.toUpperCase() : 'MI';
+  const who = userName ? userName.toUpperCase() : 'CREW';
 
-  // Sort trips by date
   const sorted = [...myTrips].sort((a,b) => new Date(a.dateStr) - new Date(b.dateStr));
   const today = new Date(); today.setHours(0,0,0,0);
   const tomorrow = new Date(today.getTime() + 86400000);
 
-  let msg = `🪁 *${who} — MI SEMANA KITE*\n`;
-  msg += `━━━━━━━━━━━━━━━━━\n\n`;
+  // Distinct spots used
+  const spotNames = [...new Set(sorted.map(t => SPOTS.find(s => s.id === t.spotId)?.name).filter(Boolean))];
+
+  let msg = `🪁 *${who} · MI SEMANA KITE*\n`;
+  msg += `━━━━━━━━━━━━━━━━━━━━━\n`;
+  msg += `\n   *${sorted.length} sesiones* programadas\n`;
+  if (spotNames.length <= 3) {
+    msg += `   ${spotNames.join(' · ')}\n`;
+  } else {
+    msg += `   ${spotNames.slice(0,2).join(' · ')} +${spotNames.length-2}\n`;
+  }
+  msg += `\n━━━━━━━━━━━━━━━━━━━━━\n\n`;
 
   sorted.forEach(trip => {
     const spot = SPOTS.find(s => s.id === trip.spotId);
@@ -1864,16 +1921,22 @@ function shareWholeCalendar() {
     const date = new Date(trip.dateStr);
     const isToday = date.toDateString() === today.toDateString();
     const isTomorrow = date.toDateString() === tomorrow.toDateString();
-    const dayLbl = isToday ? 'HOY' : isTomorrow ? 'MAÑANA' :
+    const dayLbl = isToday ? `HOY · ${date.toLocaleDateString('es-CL',{weekday:'long'})}` :
+                   isTomorrow ? `MAÑANA · ${date.toLocaleDateString('es-CL',{weekday:'long'})}` :
                    date.toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric' }).toUpperCase();
-    msg += `📆 *${dayLbl}*\n`;
-    msg += `   📍 ${spot.name}\n`;
-    msg += `   ⏱  ${trip.startHr}-${trip.endHr+1}h · 💨 ${trip.avg}kn ${degToCompass(trip.dir)}\n\n`;
+    const gear = getGear(trip.avg);
+    const status = statusEmojiForTrip(trip);
+    const cleanSpot = spot.name.split('(')[0].trim();
+
+    msg += `${status} *${dayLbl}*\n`;
+    msg += `   ▸ ${cleanSpot}\n`;
+    msg += `   💨 *${trip.avg}kn*  ${dirArrow(trip.dir)} ${degToCompass(trip.dir)}\n`;
+    msg += `   ⏱ ${trip.startHr}-${trip.endHr+1}h  ·  🪁 ${gear.kite}\n\n`;
   });
 
-  msg += `*¿Quien se suma a algun dia?*\n\n`;
-  msg += `━━━━━━━━━━━━━━━━━\n`;
-  msg += `📲 cussen.cl/wind`;
+  msg += `━━━━━━━━━━━━━━━━━━━━━\n`;
+  msg += `\n🔥 *¿Quién se suma?*\n`;
+  msg += `\n📲 cussen.cl/wind`;
 
   if (navigator.share) {
     navigator.share({ title:'Mi semana KiteSpot', text: msg }).catch(()=>{});
@@ -1893,20 +1956,31 @@ function shareTrip(dayKey) {
   const tomorrow = new Date(today.getTime() + 86400000);
   const isToday = date.toDateString() === today.toDateString();
   const isTomorrow = date.toDateString() === tomorrow.toDateString();
-  const dayLbl = isToday ? 'HOY' : isTomorrow ? 'MAÑANA' : date.toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric' }).toUpperCase();
+  const dayLbl = isToday ? `HOY · ${date.toLocaleDateString('es-CL',{weekday:'long'})}` :
+                 isTomorrow ? `MAÑANA · ${date.toLocaleDateString('es-CL',{weekday:'long'})}` :
+                 date.toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric' }).toUpperCase();
   const userName = localStorage.getItem('ks_user_name') || '';
   const who = userName ? userName.toUpperCase() : 'VOY';
   const gear = getGear(trip.avg);
+  const status = statusEmojiForTrip(trip);
 
-  let msg = `🪁 *${who} A NAVEGAR*\n`;
-  msg += `━━━━━━━━━━━━━━━━━\n`;
-  msg += `\n📍  *${spot.name}*\n`;
-  msg += `📆  ${dayLbl}  *${trip.startHr}-${trip.endHr+1}h*\n`;
-  msg += `\n💨  ${trip.avg}kn  ↑ ${degToCompass(trip.dir)}\n`;
-  msg += `🪁  Vela ${gear.kite}\n`;
-  msg += `\n*¿Quien se suma?*\n`;
-  msg += `\n━━━━━━━━━━━━━━━━━\n`;
-  msg += `📲 cussen.cl/wind/?s=${spot.id}`;
+  // Quien mas va a este spot ese dia (crew)
+  const myId = Crew.getMyId();
+  const others = Crew.getTripsForSpot(spot.id, dayKey).filter(t => t.userId !== myId).map(t => t.userName);
+
+  let msg = `🪁 *${who} VA A NAVEGAR*\n`;
+  msg += `━━━━━━━━━━━━━━━━━━━━━\n\n`;
+  msg += `${status} *${dayLbl}*\n`;
+  msg += `   ▸ ${spot.name}\n`;
+  msg += `   💨 *${trip.avg}kn*  ${dirArrow(trip.dir)} ${degToCompass(trip.dir)}\n`;
+  msg += `   ⏱ ${trip.startHr}-${trip.endHr+1}h  ·  🪁 ${gear.kite}\n`;
+  if (others.length) {
+    const list = others.slice(0,4).join(', ') + (others.length > 4 ? ` +${others.length-4}` : '');
+    msg += `   👥 con ${list}\n`;
+  }
+  msg += `\n━━━━━━━━━━━━━━━━━━━━━\n`;
+  msg += `\n🤙 *¿Te sumas?*\n`;
+  msg += `\n📲 cussen.cl/wind/?s=${spot.id}`;
 
   if (navigator.share) {
     navigator.share({ title:'KiteSpot — voy a navegar', text: msg }).catch(()=>{});
