@@ -558,7 +558,8 @@ const SPOTS = [
   { id:'quellon', name:'Quellon (Punta de Lapas)', region:'Los Lagos', lat:-43.12, lon:-73.62, windMin:12, windMax:25, idealDir:[225,247,270,292,315], level:'Intermedio', shore:'exposed', desc:'Costa sur de Chiloe. Viento oceanico y oleaje expuesto.' },
   { id:'carelmapu', name:'Carelmapu', region:'Los Lagos', lat:-41.74, lon:-73.71, windMin:15, windMax:30, idealDir:[225,247,270,292,315], level:'Avanzado', shore:'exposed', desc:'Mar abierto frente a Chiloe. Oleaje fuerte, viento potente.' },
   { id:'llicobajo', name:'Llico Bajo', region:'Los Lagos', lat:-41.284, lon:-73.843, windMin:12, windMax:25, idealDir:[225,247,270,292,315], level:'Intermedio', shore:'semi', desc:'Playa y desembocadura de rio. Beach break con viento side-shore.' },
-  { id:'puertomontt', name:'Pelluco (Pto Montt)', region:'Los Lagos', lat:-41.4715, lon:-72.8925, windMin:10, windMax:20, idealDir:[135,157,180,202,225,247,270,292,315], level:'Todos', shore:'semi', desc:'Playa Pelluco, bahia abierta al sur del seno de Reloncavi. Funciona con vientos del cuadrante sur (SE/S/SW/W/NW). N y E son offshore.' },
+  { id:'puertomontt', name:'Pelluco (Pto Montt)', region:'Los Lagos', lat:-41.493852, lon:-72.898620, windMin:10, windMax:20, idealDir:[135,157,180,202,225,247,270,292,315], level:'Todos', shore:'semi', desc:'Playa Pelluco, bahia abierta al sur del seno de Reloncavi. Funciona con vientos del cuadrante sur (SE/S/SW/W/NW). N y E son offshore.' },
+  { id:'coihuin', name:'Coihuin', region:'Los Lagos', lat:-41.491154, lon:-72.865578, windMin:10, windMax:22, idealDir:[135,157,180,202,225,247,270,292,315], level:'Todos', shore:'semi', desc:'Flataso en pleamar (dura lo que dura la alta). Spot dependiente de marea — chequea pleamar antes de ir.', tideDependent:true },
   { id:'tenglo', name:'Isla Tenglo', region:'Los Lagos', lat:-41.489036, lon:-72.950641, windMin:10, windMax:22, idealDir:[135,157,180,202,225,247,270,292,315], level:'Todos', shore:'sheltered', desc:'Canal de Tenglo, frente a Pto Montt. Aguas protegidas, flat water. Viento del cuadrante sur funciona bien.' },
   // Costa Sur
   { id:'pucatrihue', name:'Pucatrihue', region:'Los Rios', lat:-40.53, lon:-73.72, windMin:15, windMax:30, idealDir:[225,247,270], level:'Avanzado', shore:'exposed', desc:'Playa oceanica expuesta. Olas grandes y viento fuerte, solo expertos.' },
@@ -1711,63 +1712,65 @@ async function shareSpot(spotId) {
   const temp = d.wind.current.temperature_2m;
   const seaT = d?.marine?.current?.sea_surface_temperature;
   const analysis = analyzeBestMoment(spot);
+  const tide = ['pucon','llanquihue','ptovaras','ensenada','ptooctay'].includes(spot.id) ? null : getTideState();
 
-  // Show loading state on share button
   const shareBtn = document.querySelector('.hero-share, .share-btn-card');
   const origHtml = shareBtn?.innerHTML;
   if (shareBtn) shareBtn.innerHTML = '<span style="opacity:.7">⌛</span>';
 
-  // Status emoji
   const emoji = st.status === 'green' ? '🟢' : st.status === 'yellow' ? '🟡' : '🔴';
+  const statusLabel = st.status === 'green' ? 'SE PUEDE' : st.status === 'yellow' ? 'POSIBLE' : 'NO GO';
 
-  // Concise text — the image carries the visuals
-  let msg = `${emoji} *${spot.name}*\n`;
-  msg += `${wind}kn ${degToCompass(dir)} · rafaga ${gust}kn`;
+  // Premium text-only message with unicode dividers
+  let msg = `${emoji} *${spot.name.toUpperCase()}* — ${statusLabel}\n`;
+  msg += `━━━━━━━━━━━━━━━━━\n`;
+  msg += `\n💨  *${wind} kn*  ↑ ${degToCompass(dir)}\n`;
+  msg += `🌊  rafaga ${gust}kn`;
   if (wave != null) msg += ` · olas ${wave.toFixed(1)}m`;
   msg += '\n';
 
   if (analysis.bestWindow) {
-    msg += `\n⏱ Ventana: ${analysis.bestWindow.label} · ${analysis.bestWindow.detail}`;
-    if (st.status !== 'red' && wind > 0) {
-      const gear = getGear(wind);
-      msg += ` · vela ${gear.kite}`;
-    }
-    msg += '\n';
+    const bw = analysis.bestWindow;
+    msg += `\n⏱  *${bw.label}* — ${bw.detail}\n`;
   }
 
-  msg += `\n📲 cussen.cl/wind`;
+  if (st.status !== 'red' && wind >= 4) {
+    const gear = getGear(wind);
+    msg += `🪁  Vela ${gear.kite}\n`;
+  }
 
-  // Try to share with image
-  let imageBlob = null;
-  try { imageBlob = await generateSpotImage(spotId); } catch(e) { console.warn('Image gen failed:', e); }
+  if (temp != null || seaT != null) {
+    const parts = [];
+    if (temp != null) parts.push(`Aire ${Math.round(temp)}°C`);
+    if (seaT != null) parts.push(`Mar ${Math.round(seaT)}°C`);
+    msg += `🌡️  ${parts.join(' · ')}\n`;
+  }
+
+  if (tide) {
+    const tideLbl = tide.label_es;
+    const next = tide.state === 'high' ? `Baja en ${tide.nextLowHrs.toFixed(0)}h` :
+                 tide.state === 'low' ? `Sube en ${tide.nextHighHrs.toFixed(0)}h` :
+                 tide.state === 'falling' ? `Baja en ${tide.nextLowHrs.toFixed(0)}h` :
+                 `Alta en ${tide.nextHighHrs.toFixed(0)}h`;
+    msg += `${tide.icon}  ${tideLbl} · ${next}${tide.isSpring ? ' ★' : ''}\n`;
+  }
+
+  msg += `\n━━━━━━━━━━━━━━━━━\n`;
+  msg += `📲 cussen.cl/wind/?s=${spot.id}`;
 
   // Restore button
   if (shareBtn && origHtml) shareBtn.innerHTML = origHtml;
 
-  // Share with file if supported
-  if (imageBlob && navigator.canShare) {
-    const file = new File([imageBlob], `${spot.id}-${Date.now()}.png`, { type: 'image/png' });
-    if (navigator.canShare({ files: [file] })) {
-      try {
-        await navigator.share({ title: `${spot.name} — KiteSpot`, text: msg, files: [file] });
-        return;
-      } catch(e) { /* user cancelled or failed, fall through */ }
-    }
-  }
-
-  // Fallback: text only
+  // Pure text share — works perfectly in WhatsApp without ugly attachment
   if (navigator.share) {
-    try { await navigator.share({ title: `${spot.name} — KiteSpot`, text: msg }); return; } catch(e) {}
+    try {
+      await navigator.share({ title: `${spot.name} — KiteSpot`, text: msg });
+      return;
+    } catch(e) {}
   }
 
-  // Last resort: copy + download image
+  // Fallback: copy to clipboard
   navigator.clipboard?.writeText(msg);
-  if (imageBlob) {
-    const url = URL.createObjectURL(imageBlob);
-    const a = document.createElement('a');
-    a.href = url; a.download = `kitespot-${spot.id}.png`; a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-  }
   if (shareBtn) {
     shareBtn.innerHTML = '✓ ' + t('copied');
     setTimeout(() => { if (origHtml) shareBtn.innerHTML = origHtml; }, 2000);
@@ -1814,15 +1817,26 @@ function shareTrip(dayKey) {
   const tomorrow = new Date(today.getTime() + 86400000);
   const isToday = date.toDateString() === today.toDateString();
   const isTomorrow = date.toDateString() === tomorrow.toDateString();
-  const dayLbl = isToday ? 'hoy' : isTomorrow ? 'manana' : date.toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric' });
+  const dayLbl = isToday ? 'HOY' : isTomorrow ? 'MAÑANA' : date.toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric' }).toUpperCase();
   const userName = localStorage.getItem('ks_user_name') || '';
-  const who = userName ? `*${userName}*` : 'Voy';
-  const msg = `🪁 ${who} a *${spot.name}* ${dayLbl} ${trip.startHr}-${trip.endHr+1}h\n💨 ${trip.avg}kn ${degToCompass(trip.dir)}\n\n¿Quien se suma?\n\n📲 cussen.cl/wind`;
+  const who = userName ? userName.toUpperCase() : 'VOY';
+  const gear = getGear(trip.avg);
+
+  let msg = `🪁 *${who} A NAVEGAR*\n`;
+  msg += `━━━━━━━━━━━━━━━━━\n`;
+  msg += `\n📍  *${spot.name}*\n`;
+  msg += `📆  ${dayLbl}  *${trip.startHr}-${trip.endHr+1}h*\n`;
+  msg += `\n💨  ${trip.avg}kn  ↑ ${degToCompass(trip.dir)}\n`;
+  msg += `🪁  Vela ${gear.kite}\n`;
+  msg += `\n*¿Quien se suma?*\n`;
+  msg += `\n━━━━━━━━━━━━━━━━━\n`;
+  msg += `📲 cussen.cl/wind/?s=${spot.id}`;
+
   if (navigator.share) {
     navigator.share({ title:'KiteSpot — voy a navegar', text: msg }).catch(()=>{});
   } else {
     navigator.clipboard?.writeText(msg);
-    alert('Mensaje copiado');
+    alert('Mensaje copiado al portapapeles');
   }
 }
 
@@ -3123,6 +3137,29 @@ async function init() {
 
   await getLocation();
   fetchAllSpots();
+
+  // Deep link: ?s=spotId scrolls to that spot once data loads
+  const params = new URLSearchParams(location.search);
+  const targetSpot = params.get('s');
+  if (targetSpot) {
+    // Wait for data, then scroll to the spot
+    const tryScroll = (attempts = 0) => {
+      if (attempts > 20) return;
+      const card = document.getElementById('card-' + targetSpot);
+      if (card && spotData[targetSpot]) {
+        scrollToSpot(targetSpot);
+        // Highlight briefly
+        card.style.transition = 'box-shadow .4s';
+        card.style.boxShadow = '0 0 0 3px var(--cyan), 0 8px 32px rgba(34,211,238,.4)';
+        setTimeout(() => { card.style.boxShadow = ''; }, 2500);
+        // Clean URL
+        history.replaceState({}, '', location.pathname);
+      } else {
+        setTimeout(() => tryScroll(attempts + 1), 500);
+      }
+    };
+    setTimeout(() => tryScroll(), 1500);
+  }
 
   // Show notification banner if not granted
   if ('Notification' in window && Notification.permission === 'default') {
