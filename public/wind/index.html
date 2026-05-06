@@ -1900,6 +1900,14 @@ async function pickTrip(spotId, dayKey, startHr, endHr, avg, dir) {
   myTrips.push(trip);
   localStorage.setItem('ks_my_trips', JSON.stringify(myTrips));
   renderDayPlanner();
+  // Toast feedback
+  const spot = SPOTS.find(s => s.id === spotId);
+  const date = new Date(dayKey);
+  const today = new Date(); today.setHours(0,0,0,0);
+  const isToday = date.toDateString() === today.toDateString();
+  const isTomorrow = date.toDateString() === new Date(today.getTime()+86400000).toDateString();
+  const dayLbl = isToday ? 'hoy' : isTomorrow ? 'mañana' : date.toLocaleDateString('es-CL', { weekday:'short', day:'numeric' });
+  if (typeof showToast === 'function') showToast(`🪁 Voy a ${spot?.name || 'spot'} ${dayLbl} ${startHr}h`);
   // Sync to cloud
   try { await Crew.publishTrip(trip); } catch(e) { console.warn('Crew sync (publish):', e); }
 }
@@ -1909,6 +1917,7 @@ async function unpickTrip(dayKey) {
   myTrips = myTrips.filter(t => t.dateStr !== dayKey);
   localStorage.setItem('ks_my_trips', JSON.stringify(myTrips));
   renderDayPlanner();
+  if (typeof showToast === 'function') showToast('Viaje cancelado');
   if (removed) {
     try { await Crew.removeTrip(dayKey); } catch(e) { console.warn('Crew sync (remove):', e); }
   }
