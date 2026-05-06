@@ -1033,31 +1033,39 @@ function renderHero() {
   const nearby = getNearbySpots();
   if (!nearby.length) { el.innerHTML = '<div class="hero-loading"><div class="spinner"></div></div>'; return; }
 
-  // Smart recommendation: score each spot by conditions + distance + favorites
-  // Favorites get a boost because the user actually goes there
-  const scored = nearby.map(s => {
+  // Smart recommendation: respect user preferences (favorites first)
+  // 1. If user has favorites with a navigable window this week, pick best of THOSE
+  // 2. Only if all favorites are unrideable, fall back to best non-favorite
+  const scoreSpot = (s) => {
     const st = getSpotStatus(s);
     const analysis = analyzeBestMoment(s);
-    const isFav = favorites.includes(s.id);
     const dist = s.dist || 999;
     let score = 0;
-    // Status score
     if (st.status === 'green') score += 100;
     else if (st.status === 'yellow') score += 50;
     else score += 10;
-    // Good forecast coming soon? Boost if best window within 6h
     if (analysis.bestWindow?.hoursFromNow <= 6) score += 30;
     else if (analysis.bestWindow?.hoursFromNow <= 12) score += 15;
-    // Favorite boost (user goes here, trust their judgment)
-    if (isFav) score += 40;
-    // Distance penalty (closer = better)
     score -= Math.min(dist / 10, 20);
-    // Good days this week boost
     score += analysis.goodDays * 5;
     return { spot: s, score, st, analysis };
-  }).sort((a, b) => b.score - a.score);
+  };
 
-  let best = scored[0]?.spot || nearby[0];
+  const favoriteSpots = nearby.filter(s => favorites.includes(s.id));
+  const favScored = favoriteSpots.map(scoreSpot);
+  // A favorite "qualifies" if green/yellow now OR has any window this week
+  const usableFavs = favScored.filter(x => x.st.status !== 'red' || (x.analysis.bestWindow && x.analysis.goodDays > 0));
+
+  let best;
+  if (usableFavs.length > 0) {
+    // Prefer favorites — sort them by their score
+    usableFavs.sort((a, b) => b.score - a.score);
+    best = usableFavs[0].spot;
+  } else {
+    // No usable favorites — fall back to best overall
+    const allScored = nearby.map(scoreSpot).sort((a, b) => b.score - a.score);
+    best = allScored[0]?.spot || nearby[0];
+  }
 
   const st = getSpotStatus(best);
   const d = spotData[best.id];
