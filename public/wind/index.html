@@ -2099,9 +2099,10 @@ function createNewCrew() {
   Crew.setCrewCode(code);
   closeCrewModal();
   setTimeout(() => {
-    alert((lang==='es'?'¡Crew creado! Tu codigo es: ':'Crew created! Your code: ') + code + (lang==='es'?'\n\nComparte este codigo con tus amigos para que se unan.':'\n\nShare this code with friends to join.'));
     showCrewModal();
     renderDayPlanner();
+    renderSpots();
+    showToast(`👥 Crew creado: ${code}`);
     try { Crew.republishAll(); } catch(e) {}
   }, 100);
 }
@@ -2111,12 +2112,14 @@ function joinCrewFromInput() {
   if (!input) return;
   const code = input.value.trim().toUpperCase();
   if (!code || code.length < 4) {
-    alert(lang==='es'?'El codigo debe tener al menos 4 caracteres':'Code must be at least 4 chars');
+    showToast(lang==='es'?'Codigo muy corto (min 4 letras)':'Code too short (min 4 chars)');
     return;
   }
   Crew.setCrewCode(code);
   closeCrewModal();
   renderDayPlanner();
+  renderSpots();
+  showToast(`👥 ${lang==='es'?'Te uniste a':'Joined'} ${code}`);
   try { Crew.republishAll(); } catch(e) {}
 }
 
@@ -2125,6 +2128,8 @@ function leaveCrew() {
   Crew.setCrewCode(null);
   closeCrewModal();
   renderDayPlanner();
+  renderSpots();
+  showToast(lang==='es'?'Saliste del crew':'Left crew');
   try { Crew.republishAll(); } catch(e) {}
 }
 
@@ -3799,7 +3804,7 @@ function importCrewFromURL() {
     if (confirm((lang==='es'?'¿Unirte al crew ':'Join crew ') + clean + '?')) {
       Crew.setCrewCode(clean);
       try { Crew.republishAll(); } catch(e) {}
-      try { renderDayPlanner(); } catch(e) {}
+      try { renderDayPlanner(); renderSpots(); showToast(`👥 Te uniste a ${clean}`); } catch(e) {}
     }
     history.replaceState({}, '', location.pathname);
   }, 1500);
