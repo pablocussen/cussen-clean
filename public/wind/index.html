@@ -1749,8 +1749,10 @@ function renderDayPlanner() {
     if (!nearby.length) { el.innerHTML = ''; return; }
 
     const now = new Date();
+    // Skip today if no navigable hours left (after 19h, today is over)
+    const skipToday = now.getHours() >= 19;
     const days = [];
-    for (let i = 0; i < 7; i++) {
+    for (let i = skipToday ? 1 : 0; i < (skipToday ? 8 : 7); i++) {
       const d = new Date(now.getTime() + i * 86400000);
       d.setHours(0,0,0,0);
       days.push({ date: d, key: d.toDateString(), idx: i });
@@ -1861,14 +1863,15 @@ function renderWeekGrid() {
   nearby = nearby.filter(s => spotData[s.id]?.wind?.hourly).slice(0, 8);
   if (!nearby.length) { el.innerHTML = ''; return; }
 
-  // Get day labels (next 7 days)
+  // Get day labels (skip today if past 19h — day is over)
   const now = new Date();
+  const skipToday = now.getHours() >= 19;
   const days = [];
-  for (let i = 0; i < 7; i++) {
+  for (let i = skipToday ? 1 : 0; i < (skipToday ? 8 : 7); i++) {
     const d = new Date(now.getTime() + i * 86400000);
     days.push({
       date: d,
-      label: i === 0 ? t('today') : d.toLocaleDateString(lang==='en'?'en-US':'es-CL', { weekday: 'short' }).slice(0,2),
+      label: i === 0 ? t('today') : (i === 1 && skipToday ? t('tomorrow').slice(0,2).toLowerCase() : d.toLocaleDateString(lang==='en'?'en-US':'es-CL', { weekday: 'short' }).slice(0,2)),
       dateStr: d.toDateString(),
       isToday: i === 0
     });
