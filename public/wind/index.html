@@ -816,6 +816,19 @@ function isDirectionFavorable(actual, idealDirs) {
   });
 }
 
+// Unified hourly grading — used everywhere (forecast strips, share, map, planner)
+// Returns 'green' | 'yellow' | 'red'
+function gradeHour(spot, wind, dir, rain) {
+  rain = rain || 0;
+  if (rain >= 2) return 'red';
+  if (wind == null || wind < 0) return 'red';
+  const dirOk = dir == null || isDirectionFavorable(dir, spot.idealDir);
+  const inRange = wind >= spot.windMin && wind <= spot.windMax;
+  if (inRange && dirOk && rain < 2) return 'green';
+  if (wind >= 8 && wind <= 35 && rain < 2) return 'yellow';
+  return 'red';
+}
+
 // ========== TIDE ESTIMATION (lunar cycle) ==========
 // Approximate tide state from moon position — not station-precise but gives correct trend
 function getTideState(date = new Date()) {
@@ -1570,8 +1583,9 @@ async function generateSpotImage(spotId) {
         const ratio = Math.min(1, h.w / maxW);
         const barH = Math.max(4, ratio * barAreaH);
         const barY = barAreaY + barAreaH - barH;
-        const isFav = h.w >= spot.windMin && h.w <= spot.windMax;
-        const cls = isFav ? statusColor : h.w >= 8 ? '#facc15' : '#475569';
+        const grade = gradeHour(spot, h.w, h.dd, h.rain || 0);
+        const isFav = grade === 'green';
+        const cls = grade === 'green' ? statusColor : grade === 'yellow' ? '#facc15' : '#475569';
 
         // Bar with gradient
         const barGrad = ctx.createLinearGradient(0, barY, 0, barY + barH);
@@ -1993,7 +2007,9 @@ function buildSpotCard(spot, idx) {
       if (hr < 10 || hr > 20) continue;
       const w = shoreWindCorrection(d.wind.hourly.wind_speed_10m[i], spot.shore);
       const dd = d.wind.hourly.wind_direction_10m[i];
-      const fcSt = w >= spot.windMin && w <= spot.windMax ? 'fc-green' : w >= 8 ? 'fc-yellow' : 'fc-red';
+      const rn = d.wind.hourly.precipitation?.[i] || 0;
+      const grade = gradeHour(spot, w, dd, rn);
+      const fcSt = grade === 'green' ? 'fc-green' : grade === 'yellow' ? 'fc-yellow' : 'fc-red';
       const dayKey = dt.toDateString();
       let dayLabel = '';
       if (lastDay !== dayKey) {
@@ -2105,7 +2121,8 @@ function build7DayForecast(spot, d) {
     const rn = d.wind.hourly.precipitation?.[i] || 0;
     const tp = d.wind.hourly.temperature_2m?.[i];
     const noRn = rn < 2;
-    const cls = (w >= spot.windMin && w <= spot.windMax && noRn) ? 'dg' : w >= 8 ? 'dy' : 'dr';
+    const grade = gradeHour(spot, w, dd, rn);
+    const cls = grade === 'green' ? 'dg' : grade === 'yellow' ? 'dy' : 'dr';
     const extraCls = (rn > 0.5 ? ' fc-rain' : '') + (tp != null && tp < 10 ? ' fc-cold' : '');
     dayHtml += `<div class="fc-day-item ${cls}${extraCls}"><div class="fc-time">${hr}h</div><div class="fc-wind">${Math.round(w)}</div><div class="fc-arrow" style="transform:rotate(${dd+180}deg)">&#8593;</div></div>`;
   }
@@ -2419,11 +2436,8 @@ function getStatusAtTime(spot, dateTime) {
   const dir = d.wind.hourly.wind_direction_10m[idx];
   const rain = d.wind.hourly.precipitation?.[idx] || 0;
 
-  let status = 'red';
-  const dirOk = isDirectionFavorable(dir, spot.idealDir);
-  if (rain > 2) status = 'red';
-  else if (wind >= spot.windMin && wind <= spot.windMax && dirOk && gust < 40 && rain < 0.5) status = 'green';
-  else if (wind >= 8 && wind <= 35) status = 'yellow';
+  // Use unified grading
+  const status = gradeHour(spot, wind, dir, rain);
 
   return { wind: Math.round(wind), gust: Math.round(gust), dir, rain, status };
 }
