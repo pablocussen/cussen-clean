@@ -770,42 +770,32 @@ function getSpotStatus(spot) {
 
   const windRaw = d.wind.current.wind_speed_10m;
   const gustRaw = d.wind.current.wind_gusts_10m;
-  // Apply shore correction: sheltered spots get less wind at beach level
   const wind = shoreWindCorrection(windRaw, spot.shore);
   const gust = shoreWindCorrection(gustRaw, spot.shore);
   const dir = d.wind.current.wind_direction_10m;
   const rain = d.wind.current.precipitation || 0;
   const temp = d.wind.current.temperature_2m;
-  const wcode = d.wind.current.weather_code || 0;
 
-  // Rain: >2mm/h = no go, >0.5mm = warning
-  const heavyRain = rain > 2 || wcode >= 63;
-  const lightRain = rain > 0.5 || (wcode >= 51 && wcode < 63);
-  // Cold: <10°C warning
-  const cold = temp != null && temp < 10;
+  // Use unified gradeHour for consistency with rest of app
+  const grade = gradeHour(spot, wind, dir, rain);
 
-  if (heavyRain) return { status: 'red', color: 'red', label: t('rain'), warn: `${rain.toFixed(1)}mm/h` };
-
-  const dirOk = isDirectionFavorable(dir, spot.idealDir);
-  const gustOk = gust < 40;
-  const gustWarn = gust >= 35;
-
+  // Build warning
   let warn = '';
-  if (lightRain) warn = t('drizzle');
-  if (cold) warn += (warn ? ' + ' : '') + `${Math.round(temp)}°C`;
-  if (spot.shore === 'sheltered') warn += (warn ? ' + ' : '') + t('shoreWarn');
+  if (rain > 0.5) warn = `${rain.toFixed(1)}mm`;
+  if (temp != null && temp < 10) warn += (warn ? ' · ' : '') + `${Math.round(temp)}°C`;
+  if (gust >= 35) warn += (warn ? ' · ' : '') + `rafaga ${Math.round(gust)}kn`;
 
-  if (wind >= spot.windMin && wind <= spot.windMax && dirOk && gustOk && !gustWarn && !lightRain) {
+  if (grade === 'green') {
     const thermal = getThermalRisk(spot);
     if (thermal?.level === 'bad') {
       return { status: 'yellow', color: 'yellow', label: t('thermal'), warn: thermal.msg };
     }
     return { status: 'green', color: 'green', label: t('sendIt'), warn };
   }
-  if ((wind >= 8 && wind < spot.windMin) || (wind > spot.windMax && wind <= 35) || !dirOk || gustWarn || lightRain) {
-    if (wind >= 8 && wind <= 35) return { status: 'yellow', color: 'yellow', label: lightRain ? t('drizzle') : t('maybe'), warn };
+  if (grade === 'yellow') {
+    return { status: 'yellow', color: 'yellow', label: rain > 2 ? t('rain') : t('maybe'), warn };
   }
-  return { status: 'red', color: 'red', label: t('noGo'), warn };
+  return { status: 'red', color: 'red', label: rain >= 10 ? t('rain') : t('noGo'), warn };
 }
 
 function isDirectionFavorable(actual, idealDirs) {
@@ -819,20 +809,20 @@ function isDirectionFavorable(actual, idealDirs) {
 // Unified hourly grading — used everywhere (forecast strips, share, map, planner)
 // Returns 'green' | 'yellow' | 'red'
 // Philosophy: RED only for truly unrideable. YELLOW for "rideable but not ideal".
+// Rain alone NEVER makes red (Chile/Chiloe llueve seguido y se puede igual).
 function gradeHour(spot, wind, dir, rain) {
   rain = rain || 0;
-  // Hard red: heavy rain/storm or dangerous wind
-  if (rain >= 5) return 'red';
   if (wind == null || wind < 0) return 'red';
-  if (wind > 40) return 'red';      // peligroso
-  if (wind < 6) return 'red';       // sin viento
+  if (wind < 4) return 'red';        // sin viento real
+  if (wind > 45) return 'red';       // peligroso
+  if (rain >= 10) return 'red';      // tormenta torrencial
 
   const dirOk = dir == null || isDirectionFavorable(dir, spot.idealDir);
   const inRange = wind >= spot.windMin && wind <= spot.windMax;
 
-  // Green: ideal conditions
-  if (inRange && dirOk && rain < 2) return 'green';
-  // Yellow: rideable somehow (light wind, off-direction, light rain)
+  // Green: ideal — viento en rango + direccion + lluvia ligera ok
+  if (inRange && dirOk && rain < 3) return 'green';
+  // Yellow: rideable de alguna forma
   return 'yellow';
 }
 
@@ -1754,7 +1744,8 @@ function renderDayPlanner() {
   const el = document.getElementById('dayPlanner');
   if (!el) return;
   try {
-    const nearby = getNearbySpots();
+    let nearby = getNearbySpots();
+    nearby = nearby.filter(s => spotData[s.id]?.wind?.hourly);
     if (!nearby.length) { el.innerHTML = ''; return; }
 
     const now = new Date();
@@ -1865,7 +1856,9 @@ function renderDayPlanner() {
 function renderWeekGrid() {
   const el = document.getElementById('weekGrid');
   try {
-  const nearby = getNearbySpots();
+  let nearby = getNearbySpots();
+  // Only keep spots WITH data and limit to 8 closest
+  nearby = nearby.filter(s => spotData[s.id]?.wind?.hourly).slice(0, 8);
   if (!nearby.length) { el.innerHTML = ''; return; }
 
   // Get day labels (next 7 days)
