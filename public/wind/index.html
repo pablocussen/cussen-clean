@@ -293,6 +293,24 @@ a{color:var(--cyan);text-decoration:none}
 .dp-fire .dp-name{color:var(--green)}
 .dp-fire .dp-window{color:var(--green)}
 .dp-flame{color:#fcd34d;text-shadow:0 0 8px rgba(252,211,77,.6);font-size:.7rem;animation:flameFlick 1.5s ease-in-out infinite}
+
+/* Day planner — expandable options */
+.dp-day-block{border-bottom:1px solid rgba(51,65,85,.18)}
+.dp-day-block:last-child{border-bottom:none}
+.dp-day-block .dp-row{border-bottom:none}
+.dp-chevron{font-size:.62rem;font-weight:800;color:var(--cyan);background:rgba(34,211,238,.1);padding:4px 8px;border-radius:10px;border:1px solid rgba(34,211,238,.2);min-width:28px;text-align:center;letter-spacing:.3px;transition:transform .25s cubic-bezier(.4,0,.2,1)}
+.dp-block-open .dp-chevron{transform:rotate(45deg);background:rgba(34,211,238,.18)}
+.dp-options{max-height:0;overflow:hidden;transition:max-height .35s cubic-bezier(.4,0,.2,1);background:rgba(7,11,22,.4)}
+.dp-options.dp-open{max-height:500px;border-top:1px solid rgba(148,163,184,.06)}
+.dp-option{display:flex;align-items:center;gap:10px;padding:9px 14px 9px 28px;cursor:pointer;transition:background .15s;border-bottom:1px solid rgba(51,65,85,.12);-webkit-tap-highlight-color:transparent}
+.dp-option:last-child{border-bottom:none}
+.dp-option:active{background:rgba(34,211,238,.08);transform:scale(.99)}
+.dp-opt-bullet{width:6px;height:6px;border-radius:50%;background:var(--cyan);flex-shrink:0;box-shadow:0 0 8px rgba(34,211,238,.5)}
+.dp-option.dp-fire .dp-opt-bullet{background:var(--green);box-shadow:0 0 8px rgba(74,222,128,.6)}
+.dp-opt-info{flex:1;min-width:0}
+.dp-opt-name{font-size:.74rem;font-weight:700;color:var(--text);line-height:1.2;letter-spacing:-.1px}
+.dp-opt-window{font-size:.58rem;color:var(--muted);margin-top:2px;font-variant-numeric:tabular-nums}
+.dp-option .dp-arrow{color:var(--dim);font-size:.8rem;flex-shrink:0}
 @keyframes flameFlick{0%,100%{opacity:1;text-shadow:0 0 8px rgba(252,211,77,.6)}50%{opacity:.85;text-shadow:0 0 14px rgba(252,211,77,.9)}}
 
 /* Search mini */
@@ -1740,6 +1758,19 @@ async function shareSpot(spotId) {
 
 // ========== WEEK GRID ==========
 // ========== DAY PLANNER ==========
+function toggleDayOptions(id) {
+  const el = document.getElementById(id);
+  if (!el) {
+    // No options to expand — just scroll to the spot in the parent row
+    return;
+  }
+  el.classList.toggle('dp-open');
+  // Toggle chevron animation on parent
+  const block = el.closest('.dp-day-block');
+  if (block) block.classList.toggle('dp-block-open');
+}
+
+
 // For each of the next 7 days, find the BEST spot (best window) and show it
 function renderDayPlanner() {
   const el = document.getElementById('dayPlanner');
@@ -1819,35 +1850,54 @@ function renderDayPlanner() {
       }
     });
 
-    // For each day, find top spot
-    const dayBests = days.map(day => {
-      // Pick the CLOSEST spot that has any window for this day
+    // For each day, find ALL spots with a window, sorted by distance
+    const dayPicks = days.map(day => {
       const candidates = nearby
         .map(spot => ({ spot, window: spotDayWindows[spot.id]?.[day.key] }))
         .filter(c => c.window);
-      if (!candidates.length) return { day, best: null };
       candidates.sort((a, b) => (a.spot.dist || 999) - (b.spot.dist || 999));
-      return { day, best: { spot: candidates[0].spot, window: candidates[0].window } };
+      return { day, candidates };
     });
 
     // Render
-    let html = `<div class="dp-header"><span>${lang==='es'?'Semana':'Week'}</span><span class="dp-sub">${lang==='es'?'Spot mas cercano por dia':'Closest spot per day'}</span></div>`;
+    let html = `<div class="dp-header"><span>${lang==='es'?'Semana':'Week'}</span><span class="dp-sub">${lang==='es'?'Toca el dia para ver opciones':'Tap day to see options'}</span></div>`;
     html += '<div class="dp-rows">';
-    dayBests.forEach(({day, best}) => {
+    dayPicks.forEach(({day, candidates}, dayIdx) => {
       const dayLabel = day.idx === 0 ? t('today') : day.idx === 1 ? t('tomorrow') : day.date.toLocaleDateString(lang==='en'?'en-US':'es-CL', { weekday: 'short', day: 'numeric' });
-      if (!best) {
+      if (!candidates.length) {
         html += `<div class="dp-row dp-empty"><div class="dp-day">${dayLabel}</div><div class="dp-info">${lang==='es'?'Sin ventana':'No window'}</div></div>`;
       } else {
+        const best = candidates[0];
         const w = best.window;
         const isFire = w.count >= 5 && w.avg >= 18;
-        html += `<div class="dp-row${isFire?' dp-fire':''}" onclick="scrollToSpot('${best.spot.id}')">
-          <div class="dp-day">${dayLabel}</div>
-          <div class="dp-spot">
-            <div class="dp-name">${best.spot.name}${isFire?'<span class="dp-flame">★</span>':''}</div>
-            <div class="dp-window">${w.startHr}-${w.endHr+1}h · ${Math.round(w.avg)}kn ${degToCompass(w.dir)}</div>
-          </div>
-          <div class="dp-arrow">→</div>
-        </div>`;
+        const moreCount = candidates.length - 1;
+        const dayId = `dp-day-${dayIdx}`;
+        html += `<div class="dp-day-block">
+          <div class="dp-row${isFire?' dp-fire':''}" onclick="toggleDayOptions('${dayId}')">
+            <div class="dp-day">${dayLabel}</div>
+            <div class="dp-spot">
+              <div class="dp-name">${best.spot.name}${isFire?'<span class="dp-flame">★</span>':''}</div>
+              <div class="dp-window">${w.startHr}-${w.endHr+1}h · ${Math.round(w.avg)}kn ${degToCompass(w.dir)}${best.spot.dist!=null?' · '+Math.round(best.spot.dist)+'km':''}</div>
+            </div>
+            <div class="dp-chevron">${moreCount > 0 ? `+${moreCount}` : '→'}</div>
+          </div>`;
+        if (moreCount > 0) {
+          html += `<div class="dp-options" id="${dayId}">`;
+          candidates.slice(1).forEach(c => {
+            const ww = c.window;
+            const fire = ww.count >= 5 && ww.avg >= 18;
+            html += `<div class="dp-option${fire?' dp-fire':''}" onclick="event.stopPropagation();scrollToSpot('${c.spot.id}')">
+              <div class="dp-opt-bullet"></div>
+              <div class="dp-opt-info">
+                <div class="dp-opt-name">${c.spot.name}${fire?' <span class="dp-flame">★</span>':''}</div>
+                <div class="dp-opt-window">${ww.startHr}-${ww.endHr+1}h · ${Math.round(ww.avg)}kn ${degToCompass(ww.dir)}${c.spot.dist!=null?' · '+Math.round(c.spot.dist)+'km':''}</div>
+              </div>
+              <div class="dp-arrow">→</div>
+            </div>`;
+          });
+          html += '</div>';
+        }
+        html += `</div>`;
       }
     });
     html += '</div>';
