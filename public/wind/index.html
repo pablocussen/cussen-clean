@@ -280,6 +280,19 @@ a{color:var(--cyan);text-decoration:none}
 .dp-share-week{display:flex;align-items:center;gap:5px;background:linear-gradient(135deg,var(--cyan),#06b6d4);color:#020617;border:none;padding:6px 11px;border-radius:14px;font-family:inherit;font-size:.62rem;font-weight:800;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;box-shadow:0 2px 8px rgba(34,211,238,.3);transition:all .15s;flex-shrink:0}
 .dp-share-week:active{transform:scale(.94)}
 .dp-share-count{background:rgba(7,11,22,.7);color:var(--cyan);width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:900;margin-left:2px}
+
+/* Crew badges — who else is going */
+.dp-crew{font-size:.6rem;color:var(--green);margin-top:4px;font-weight:600;letter-spacing:.1px;line-height:1.3}
+.dp-crew strong{color:var(--green);text-shadow:0 0 6px rgba(74,222,128,.4);font-weight:800}
+.dp-opt-crew{font-size:.55rem;color:#a78bfa;margin-top:3px;font-weight:600;letter-spacing:.2px}
+.dp-others{padding:6px 14px 10px;display:flex;flex-direction:column;gap:4px;border-top:1px dashed rgba(148,163,184,.1)}
+.dp-other-row{display:flex;align-items:center;gap:8px;font-size:.6rem;cursor:pointer;padding:5px 8px;border-radius:8px;background:rgba(148,163,184,.04);transition:all .15s}
+.dp-other-row:active{background:rgba(167,139,250,.1);transform:scale(.99)}
+.dp-other-icon{color:var(--dim);font-size:.7rem;flex-shrink:0}
+.dp-other-spot{color:var(--text);font-weight:700;flex-shrink:0}
+.dp-other-names{color:#a78bfa;flex:1;text-align:right;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.card-crew{font-size:.6rem;color:#a78bfa;margin-top:6px;font-weight:600;display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:8px;background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.18)}
+.card-crew strong{color:#c4b5fd;font-weight:800}
 .dp-sub{font-size:.55rem;color:var(--dim);text-transform:uppercase;letter-spacing:.6px;font-weight:600}
 .dp-rows{display:flex;flex-direction:column}
 .dp-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid rgba(51,65,85,.18);transition:all .2s;cursor:pointer;-webkit-tap-highlight-color:transparent}
@@ -1808,18 +1821,25 @@ function getTripForDay(dayKey) {
   return myTrips.find(t => t.dateStr === dayKey);
 }
 
-function pickTrip(spotId, dayKey, startHr, endHr, avg, dir) {
+async function pickTrip(spotId, dayKey, startHr, endHr, avg, dir) {
   // Replace any existing trip for that day
   myTrips = myTrips.filter(t => t.dateStr !== dayKey);
-  myTrips.push({ spotId, dateStr: dayKey, startHr, endHr, avg: Math.round(avg), dir: Math.round(dir), addedAt: Date.now() });
+  const trip = { spotId, dateStr: dayKey, startHr, endHr, avg: Math.round(avg), dir: Math.round(dir), addedAt: Date.now() };
+  myTrips.push(trip);
   localStorage.setItem('ks_my_trips', JSON.stringify(myTrips));
   renderDayPlanner();
+  // Sync to cloud
+  try { await Crew.publishTrip(trip); } catch(e) { console.warn('Crew sync (publish):', e); }
 }
 
-function unpickTrip(dayKey) {
+async function unpickTrip(dayKey) {
+  const removed = myTrips.find(t => t.dateStr === dayKey);
   myTrips = myTrips.filter(t => t.dateStr !== dayKey);
   localStorage.setItem('ks_my_trips', JSON.stringify(myTrips));
   renderDayPlanner();
+  if (removed) {
+    try { await Crew.removeTrip(dayKey); } catch(e) { console.warn('Crew sync (remove):', e); }
+  }
 }
 
 function shareWholeCalendar() {
@@ -1898,10 +1918,12 @@ function shareTrip(dayKey) {
 
 function setUserName() {
   const current = localStorage.getItem('ks_user_name') || '';
-  const name = prompt('Tu nombre o apodo (para los mensajes):', current);
+  const name = prompt('Tu nombre o apodo (para los mensajes y crew):', current);
   if (name && name.trim()) {
     localStorage.setItem('ks_user_name', name.trim());
     renderDayPlanner();
+    // Re-publish all trips with new name
+    try { Crew.republishAll(); } catch(e) {}
   }
 }
 
@@ -2027,18 +2049,52 @@ function renderDayPlanner() {
         const tripSpot = SPOTS.find(s => s.id === trip.spotId);
         if (tripSpot) {
           const tripDist = tripSpot.dist != null ? Math.round(tripSpot.dist) : null;
+          // Find others going to same spot same day
+          const myId = Crew.getMyId();
+          const otherCrewSameSpot = Crew.getTripsForSpot(trip.spotId, day.key).filter(t => t.userId !== myId);
+          const crewNamesSame = otherCrewSameSpot.map(t => t.userName).filter(n => n).slice(0, 5);
+          // Find others going to OTHER spots same day (so user knows what crew is doing)
+          const otherCrewOtherSpots = Crew.getTripsForDay(day.key).filter(t => t.userId !== myId && t.spotId !== trip.spotId);
+
+          let crewBadge = '';
+          if (crewNamesSame.length > 0) {
+            crewBadge = `<div class="dp-crew">👥 <strong>${crewNamesSame.join(', ')}</strong> ${lang==='es'?'tambien va':'also going'}</div>`;
+          }
+
+          let othersHtml = '';
+          if (otherCrewOtherSpots.length > 0) {
+            othersHtml = '<div class="dp-others">';
+            const grouped = {};
+            otherCrewOtherSpots.forEach(t => {
+              if (!grouped[t.spotId]) grouped[t.spotId] = [];
+              grouped[t.spotId].push(t.userName);
+            });
+            Object.entries(grouped).forEach(([sid, names]) => {
+              const s = SPOTS.find(x => x.id === sid);
+              if (!s) return;
+              othersHtml += `<div class="dp-other-row" onclick="scrollToSpot('${sid}')">
+                <span class="dp-other-icon">→</span>
+                <span class="dp-other-spot">${s.name}</span>
+                <span class="dp-other-names">${names.slice(0,3).join(', ')}${names.length>3?' +'+(names.length-3):''}</span>
+              </div>`;
+            });
+            othersHtml += '</div>';
+          }
+
           html += `<div class="dp-day-block dp-committed">
             <div class="dp-row dp-trip">
               <div class="dp-day">${dayLabel}</div>
               <div class="dp-spot">
                 <div class="dp-name">✓ ${tripSpot.name} <span class="dp-trip-tag">${lang==='es'?'VOY':'GOING'}</span></div>
                 <div class="dp-window">${trip.startHr}-${trip.endHr+1}h · ${trip.avg}kn ${degToCompass(trip.dir)}${tripDist?' · '+tripDist+'km':''}</div>
+                ${crewBadge}
               </div>
               <div class="dp-trip-actions">
                 <button class="dp-btn-share" onclick="event.stopPropagation();shareTrip('${day.key}')" title="Compartir">↗</button>
                 <button class="dp-btn-cancel" onclick="event.stopPropagation();unpickTrip('${day.key}')" title="Cancelar">×</button>
               </div>
             </div>
+            ${othersHtml}
           </div>`;
           return; // skip showing options when committed
         }
@@ -2062,12 +2118,21 @@ function renderDayPlanner() {
 
       // Show options + go button (always render, even if no extras — user can still pick the primary)
       html += `<div class="dp-options" id="${dayId}">`;
+      const myId = Crew.getMyId();
+      const renderCrewBadge = (spotId) => {
+        const others = Crew.getTripsForSpot(spotId, day.key).filter(t => t.userId !== myId);
+        if (!others.length) return '';
+        const names = others.map(t => t.userName).filter(n => n).slice(0, 3);
+        const more = others.length > 3 ? ` +${others.length - 3}` : '';
+        return `<div class="dp-opt-crew">👥 ${names.join(', ')}${more}</div>`;
+      };
       // Primary option as a pickable too
       html += `<div class="dp-option dp-option-primary" onclick="event.stopPropagation()">
         <div class="dp-opt-bullet"></div>
         <div class="dp-opt-info">
           <div class="dp-opt-name">${best.spot.name}${isFire?' <span class="dp-flame">★</span>':''}</div>
           <div class="dp-opt-window">${w.startHr}-${w.endHr+1}h · ${Math.round(w.avg)}kn ${degToCompass(w.dir)}${best.spot.dist!=null?' · '+Math.round(best.spot.dist)+'km':''}</div>
+          ${renderCrewBadge(best.spot.id)}
         </div>
         <button class="dp-btn-go" onclick="event.stopPropagation();pickTrip('${best.spot.id}','${day.key}',${w.startHr},${w.endHr},${w.avg},${w.dir})">${lang==='es'?'VOY':'GO'}</button>
       </div>`;
@@ -2079,6 +2144,7 @@ function renderDayPlanner() {
           <div class="dp-opt-info" onclick="scrollToSpot('${c.spot.id}')" style="cursor:pointer">
             <div class="dp-opt-name">${c.spot.name}${fire?' <span class="dp-flame">★</span>':''}</div>
             <div class="dp-opt-window">${ww.startHr}-${ww.endHr+1}h · ${Math.round(ww.avg)}kn ${degToCompass(ww.dir)}${c.spot.dist!=null?' · '+Math.round(c.spot.dist)+'km':''}</div>
+            ${renderCrewBadge(c.spot.id)}
           </div>
           <button class="dp-btn-go" onclick="event.stopPropagation();pickTrip('${c.spot.id}','${day.key}',${ww.startHr},${ww.endHr},${ww.avg},${ww.dir})">${lang==='es'?'VOY':'GO'}</button>
         </div>`;
@@ -2264,7 +2330,30 @@ function buildSpotCard(spot, idx) {
   return `<div class="spot-card status-${st.status}" onclick="toggleDetail('${spot.id}', this)" id="card-${spot.id}">
     ${rainOverlayHtml(spot)}
     <div class="card-top">
-      <div><div class="spot-name">${spot.name}${distHtml}</div><div class="spot-region">${spot.region} · ${spot.level}</div>${thermalBadgeHtml(spot)}${tideHtml(spot)}</div>
+      <div><div class="spot-name">${spot.name}${distHtml}</div><div class="spot-region">${spot.region} · ${spot.level}</div>${thermalBadgeHtml(spot)}${tideHtml(spot)}${(() => {
+        const myId = Crew.getMyId();
+        const trips = Crew.getTripsForSpot(spot.id).filter(t => t.userId !== myId);
+        if (!trips.length) return '';
+        const today = new Date(); today.setHours(0,0,0,0);
+        const days = {};
+        trips.forEach(t => {
+          const d = new Date(t.dateStr);
+          if (d < today) return;
+          const key = d.toDateString();
+          if (!days[key]) days[key] = { date: d, names: new Set() };
+          if (t.userName) days[key].names.add(t.userName);
+        });
+        const dayKeys = Object.keys(days).sort((a,b) => new Date(a)-new Date(b));
+        if (!dayKeys.length) return '';
+        const firstDay = days[dayKeys[0]];
+        const isToday = firstDay.date.toDateString() === today.toDateString();
+        const isTomorrow = firstDay.date.toDateString() === new Date(today.getTime() + 86400000).toDateString();
+        const dayLbl = isToday ? 'hoy' : isTomorrow ? 'mañana' : firstDay.date.toLocaleDateString('es-CL', { weekday: 'short', day: 'numeric' });
+        const namesArr = [...firstDay.names].slice(0, 3);
+        const more = firstDay.names.size > 3 ? ` +${firstDay.names.size - 3}` : '';
+        const extraDays = dayKeys.length > 1 ? ` · +${dayKeys.length-1} ${lang==='es'?'dia(s)':'day(s)'}` : '';
+        return `<div class="card-crew">👥 <strong>${namesArr.join(', ')}${more}</strong> ${dayLbl}${extraDays}</div>`;
+      })()}</div>
       <div class="card-top-right">
         <span class="status-badge ${st.color}">${st.label}</span>
         <button class="fav-btn ${isFav?'active':''}" onclick="toggleFav(event,'${spot.id}')"><svg viewBox="0 0 20 20" width="16" height="16" fill="${isFav?'currentColor':'none'}" stroke="currentColor" stroke-width="1.5"><path d="M10 2l2.5 5 5.5.8-4 3.9.9 5.3L10 14.5 5.1 17l.9-5.3-4-3.9 5.5-.8z"/></svg></button>
@@ -2950,6 +3039,115 @@ function destroyCharts() {
 }
 
 // ========== FAVORITES ==========
+// ========== CREW (Firebase Firestore social check-ins) ==========
+// Anonymous community board: anyone using the app can mark VOY and see others
+const Crew = (() => {
+  let db = null;
+  let ready = false;
+  let crewTrips = []; // [{userId, userName, spotId, dateStr, startHr, endHr, avg, dir, ...}]
+  let unsubscribe = null;
+  let listeners = [];
+
+  const FIREBASE_CONFIG = {
+    apiKey: 'AIzaSyB95CzNAqIGuJvLvnKbhbEAdv3ZdBiVvdM',
+    authDomain: 'cussen-46735.firebaseapp.com',
+    projectId: 'cussen-46735',
+    storageBucket: 'cussen-46735.firebasestorage.app',
+    messagingSenderId: '1096806226647',
+    appId: '1:1096806226647:web:0489c16f139197e24aae92'
+  };
+
+  function getOrCreateUserId() {
+    let id = localStorage.getItem('ks_user_id');
+    if (!id) {
+      id = 'u_' + Math.random().toString(36).substring(2, 11) + Date.now().toString(36);
+      localStorage.setItem('ks_user_id', id);
+    }
+    return id;
+  }
+
+  async function init() {
+    if (ready) return;
+    try {
+      const [{ initializeApp }, fs] = await Promise.all([
+        import('https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js'),
+        import('https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js')
+      ]);
+      const app = initializeApp(FIREBASE_CONFIG);
+      db = fs.getFirestore(app);
+      Crew._fs = fs;
+      ready = true;
+      // Start listening to all trips (only future + recent)
+      const q = fs.query(fs.collection(db, 'kitetrips'));
+      unsubscribe = fs.onSnapshot(q, snap => {
+        crewTrips = [];
+        const today = new Date(); today.setHours(0,0,0,0);
+        snap.forEach(doc => {
+          const d = doc.data();
+          if (!d.dateStr) return;
+          const tripDate = new Date(d.dateStr);
+          if (tripDate < today) return; // skip past trips
+          crewTrips.push({ ...d, _id: doc.id });
+        });
+        listeners.forEach(fn => { try { fn(); } catch(e) {} });
+      });
+      console.log('Crew: connected');
+    } catch(e) {
+      console.warn('Crew init failed:', e);
+    }
+  }
+
+  async function publishTrip(trip) {
+    if (!ready) await init();
+    if (!ready) return;
+    const userId = getOrCreateUserId();
+    const userName = (localStorage.getItem('ks_user_name') || '').trim() || 'Anonimo';
+    const docId = `${userId}_${trip.dateStr.replace(/\s/g,'_')}`;
+    const fs = Crew._fs;
+    await fs.setDoc(fs.doc(db, 'kitetrips', docId), {
+      userId, userName,
+      spotId: trip.spotId,
+      dateStr: trip.dateStr,
+      startHr: trip.startHr, endHr: trip.endHr,
+      avg: trip.avg, dir: trip.dir,
+      timestamp: Date.now()
+    });
+  }
+
+  async function removeTrip(dayKey) {
+    if (!ready) return;
+    const userId = getOrCreateUserId();
+    const docId = `${userId}_${dayKey.replace(/\s/g,'_')}`;
+    const fs = Crew._fs;
+    try { await fs.deleteDoc(fs.doc(db, 'kitetrips', docId)); } catch(e) { console.warn(e); }
+  }
+
+  async function republishAll() {
+    if (!ready) return;
+    for (const trip of myTrips) {
+      try { await publishTrip(trip); } catch(e) {}
+    }
+  }
+
+  function getTripsForSpot(spotId, dateStr) {
+    if (dateStr) return crewTrips.filter(t => t.spotId === spotId && t.dateStr === dateStr);
+    return crewTrips.filter(t => t.spotId === spotId);
+  }
+
+  function getTripsForDay(dateStr) {
+    return crewTrips.filter(t => t.dateStr === dateStr);
+  }
+
+  function onUpdate(fn) { listeners.push(fn); }
+
+  function getMyId() { return getOrCreateUserId(); }
+
+  return { init, publishTrip, removeTrip, republishAll, getTripsForSpot, getTripsForDay, onUpdate, getMyId,
+    get isReady() { return ready; },
+    get all() { return crewTrips; }
+  };
+})();
+
 // ========== AMBIENT WIND BACKGROUND ==========
 function initWindBackground() {
   const canvas = document.getElementById('windBg');
@@ -3231,6 +3429,16 @@ async function init() {
 
   // Ambient wind particles — makes the whole app feel alive
   initWindBackground();
+
+  // Initialize Crew (Firestore social check-ins)
+  Crew.init().then(() => {
+    // Re-publish my trips on init (in case they weren't synced yet)
+    Crew.republishAll();
+    // Re-render planner when crew updates arrive
+    Crew.onUpdate(() => {
+      try { renderDayPlanner(); renderSpots(); } catch(e) {}
+    });
+  });
 
   // Register SW with forced update — clears old caches
   if ('serviceWorker' in navigator) {

@@ -1,0 +1,37 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Kite trips — community check-ins
+    // Trust-based model (small kite community): anyone can read and write
+    // with valid structure. UserId is client-generated UUID stored locally.
+    match /kitetrips/{tripId} {
+      allow read: if true;
+
+      allow create: if request.resource.data.keys().hasAll(['userId','userName','spotId','dateStr','startHr','endHr','avg','dir'])
+                    && request.resource.data.userId is string
+                    && request.resource.data.userId.size() >= 8
+                    && request.resource.data.userId.size() <= 40
+                    && request.resource.data.userName is string
+                    && request.resource.data.userName.size() >= 1
+                    && request.resource.data.userName.size() <= 30
+                    && request.resource.data.spotId is string
+                    && request.resource.data.spotId.size() <= 50
+                    && request.resource.data.dateStr is string
+                    && request.resource.data.startHr is number
+                    && request.resource.data.endHr is number
+                    && request.resource.data.avg is number
+                    && request.resource.data.dir is number;
+
+      // Allow update/delete only if userId in payload matches the doc's userId
+      allow update: if request.resource.data.userId == resource.data.userId;
+      allow delete: if true; // Allow delete by anyone (community cleanup)
+    }
+
+    // Block everything else
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
