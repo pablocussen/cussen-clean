@@ -732,6 +732,17 @@ async function fetchAllSpots() {
       spotData = parsed;
       renderSpots();
       updateTimestamp(cachedTime);
+      // Even with valid cache, fetch any nearby spots that aren't in cache (newly added)
+      const missingNearby = SPOTS.filter(s => {
+        if (spotData[s.id]) return false;
+        if (!userLat) return false;
+        const dist = haversine(userLat, userLon, s.lat, s.lon);
+        return dist <= NEARBY_RADIUS;
+      });
+      if (missingNearby.length > 0) {
+        console.log('KiteSpot: fetching', missingNearby.length, 'new spots not in cache');
+        fetchSpotsOnDemand(missingNearby);
+      }
       return;
     }
     console.warn('KiteSpot: cache invalid (too many zeros), refetching');
