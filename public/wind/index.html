@@ -1820,18 +1820,17 @@ function renderDayPlanner() {
 
     // For each day, find top spot
     const dayBests = days.map(day => {
-      let best = null;
-      nearby.forEach(spot => {
-        const w = spotDayWindows[spot.id]?.[day.key];
-        if (!w) return;
-        const score = w.count * w.avg - (spot.dist || 0) * 0.05;
-        if (!best || score > best.score) best = { spot, window: w, score };
-      });
-      return { day, best };
+      // Pick the CLOSEST spot that has any window for this day
+      const candidates = nearby
+        .map(spot => ({ spot, window: spotDayWindows[spot.id]?.[day.key] }))
+        .filter(c => c.window);
+      if (!candidates.length) return { day, best: null };
+      candidates.sort((a, b) => (a.spot.dist || 999) - (b.spot.dist || 999));
+      return { day, best: { spot: candidates[0].spot, window: candidates[0].window } };
     });
 
     // Render
-    let html = `<div class="dp-header"><span>${lang==='es'?'Semana':'Week'}</span><span class="dp-sub">${lang==='es'?'Mejor spot por dia':'Best spot per day'}</span></div>`;
+    let html = `<div class="dp-header"><span>${lang==='es'?'Semana':'Week'}</span><span class="dp-sub">${lang==='es'?'Spot mas cercano por dia':'Closest spot per day'}</span></div>`;
     html += '<div class="dp-rows">';
     dayBests.forEach(({day, best}) => {
       const dayLabel = day.idx === 0 ? t('today') : day.idx === 1 ? t('tomorrow') : day.date.toLocaleDateString(lang==='en'?'en-US':'es-CL', { weekday: 'short', day: 'numeric' });
