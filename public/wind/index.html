@@ -727,7 +727,7 @@ function getLocation() {
     if (!navigator.geolocation) { document.getElementById('locationBadge').textContent = t('chile'); resolve(); return; }
     // Try high accuracy first (GPS), fallback to low accuracy (network/IP)
     let resolved = false;
-    const onSuccess = pos => { if (resolved) return; resolved = true; userLat = pos.coords.latitude; userLon = pos.coords.longitude; updateLocationBadge(); resolve(); };
+    const onSuccess = pos => { if (resolved) return; resolved = true; userLat = pos.coords.latitude; userLon = pos.coords.longitude; invalidateNearbyCache(); updateLocationBadge(); resolve(); };
     const onError = () => { if (resolved) return; resolved = true; document.getElementById('locationBadge').textContent = t('chile'); console.warn('KiteSpot: GPS failed, showing all spots'); resolve(); };
     navigator.geolocation.getCurrentPosition(onSuccess, () => {
       // Retry with low accuracy (faster, uses network/wifi)
@@ -1100,15 +1100,23 @@ function analyzeBestMoment(spot) {
 
 // ========== NEARBY SPOTS ==========
 const NEARBY_RADIUS = 200; // km
+let _nearbyCache = null;
+let _nearbyCacheKey = null;
+function invalidateNearbyCache() { _nearbyCache = null; _nearbyCacheKey = null; }
 
 function getNearbySpots() {
+  // Cache key includes location + spot count (so adding custom spots invalidates)
+  const key = `${userLat||0}_${userLon||0}_${SPOTS.length}`;
+  if (_nearbyCacheKey === key && _nearbyCache) return _nearbyCache;
   let nearby = [...SPOTS];
   if (userLat) {
     nearby = nearby.map(s => ({ ...s, dist: haversine(userLat, userLon, s.lat, s.lon) }));
     nearby = nearby.filter(s => s.dist <= NEARBY_RADIUS);
     nearby.sort((a, b) => a.dist - b.dist);
   }
-  return nearby.slice(0, 12); // max 12 nearby
+  _nearbyCache = nearby.slice(0, 12);
+  _nearbyCacheKey = key;
+  return _nearbyCache;
 }
 
 // ========== GEAR RECOMMENDATION ==========
@@ -3296,6 +3304,7 @@ function savePickedSpot() {
 
   // Add to SPOTS array
   SPOTS.push(customSpot);
+  invalidateNearbyCache();
 
   // Add to favorites automatically
   if (!favorites.includes(customSpot.id)) {
@@ -3421,6 +3430,7 @@ const Crew = (() => {
       ready = true;
       // Start listening to all trips (only future + recent)
       const q = fs.query(fs.collection(db, 'kitetrips'));
+      let renderDebounce = null;
       unsubscribe = fs.onSnapshot(q, snap => {
         const prevTripIds = new Set(crewTrips.map(t => t._id));
         crewTrips = [];
@@ -3432,7 +3442,11 @@ const Crew = (() => {
           if (tripDate < today) return; // skip past trips
           crewTrips.push({ ...d, _id: doc.id });
         });
-        listeners.forEach(fn => { try { fn(); } catch(e) {} });
+        // Debounce listener calls — when many docs change at once, render only once
+        clearTimeout(renderDebounce);
+        renderDebounce = setTimeout(() => {
+          listeners.forEach(fn => { try { fn(); } catch(e) {} });
+        }, 150);
         // Notify when someone joins a spot/day where I have a trip
         const myId = getOrCreateUserId();
         const myCrew = getCrewCode();
@@ -3642,12 +3656,20 @@ function initWindBackground() {
     }
   }
 
-  function animate() {
+  // Throttle to ~30fps to save battery (target ~33ms per frame)
+  let lastFrame = 0;
+  const FRAME_INTERVAL = 33;
+  function animate(now) {
+    rafId = requestAnimationFrame(animate);
+    if (now - lastFrame < FRAME_INTERVAL) return;
+    lastFrame = now;
+
     // Fade trails (instead of clearing) — gives flowing trail look
     ctx.fillStyle = 'rgba(7,11,22,.10)';
     ctx.fillRect(0, 0, W, H);
 
     t += 1;
+    ctx.lineCap = 'round';
 
     for (let i = 0; i < particles.length; i++) {
       const p = particles[i];
@@ -3660,7 +3682,6 @@ function initWindBackground() {
       // Draw segment as small gradient
       ctx.strokeStyle = `rgba(${p.layer === 2 ? '103,232,249' : '34,211,238'},${p.opacity})`;
       ctx.lineWidth = p.width;
-      ctx.lineCap = 'round';
       ctx.beginPath();
       ctx.moveTo(p.px, p.py);
       ctx.lineTo(p.x, p.y);
@@ -3671,7 +3692,6 @@ function initWindBackground() {
         particles[i] = spawn(false);
       }
     }
-    rafId = requestAnimationFrame(animate);
   }
 
   init();
@@ -3697,6 +3717,7 @@ function deleteCustomSpot(e, spotId) {
   // Remove from SPOTS array
   const idx = SPOTS.findIndex(s => s.id === spotId);
   if (idx >= 0) SPOTS.splice(idx, 1);
+  invalidateNearbyCache();
   // Remove from localStorage
   const custom = JSON.parse(localStorage.getItem('ks_custom_spots') || '[]');
   localStorage.setItem('ks_custom_spots', JSON.stringify(custom.filter(s => s.id !== spotId)));
